@@ -85,6 +85,11 @@ export default function RootLayout({
       <body className="bg-[#0a0a0a] text-white min-h-full flex flex-col">
         <NavBar />
         <main className="flex-1">{children}</main>
+        <footer className="border-t border-gray-800 py-6 px-6 mt-auto">
+          <p className="text-center font-pixel text-[9px] text-gray-500 tracking-widest">
+            © VIBE GAME 2026 PURILAB
+          </p>
+        </footer>
       </body>
     </html>
   )
