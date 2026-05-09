@@ -40,11 +40,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Vibrax' }],
   creator: 'Vibrax',
-  metadataBase: new URL('https://vibrax.vercel.app'),
+  metadataBase: new URL('https://vibrax-rho.vercel.app'),
   openGraph: {
     type: 'website',
     locale: 'ko_KR',
-    url: 'https://vibrax.vercel.app',
+    url: 'https://vibrax-rho.vercel.app',
     siteName: 'Vibrax',
     title: 'Vibrax — AI 바이브코딩 게임 플랫폼',
     description:
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   alternates: {
-    canonical: 'https://vibrax.vercel.app',
+    canonical: 'https://vibrax-rho.vercel.app',
   },
   robots: {
     index: true,
