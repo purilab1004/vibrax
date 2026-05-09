@@ -67,7 +67,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
   }
 
   const inputClass =
-    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-600'
+    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-500'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
@@ -114,7 +114,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           placeholder="https://your-game.railway.app"
           className={inputClass}
         />
-        <p className="text-xs text-gray-600 mt-1">Railway, Vercel 등 배포 URL</p>
+        <p className="text-xs text-gray-300 mt-1">Railway, Vercel 등 배포 URL</p>
       </div>
 
       <div>
@@ -132,9 +132,9 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
             file:hover:bg-[#00cc33] file:transition-colors"
         />
         {thumbnailFile && (
-          <p className="text-xs text-gray-500 mt-1">선택됨: {thumbnailFile.name}</p>
+          <p className="text-xs text-gray-400 mt-1">선택됨: {thumbnailFile.name}</p>
         )}
-        <p className="text-xs text-gray-600 mt-1">16:9 비율 권장 (PNG, JPG, WebP)</p>
+        <p className="text-xs text-gray-300 mt-1">16:9 비율 권장 (PNG, JPG, WebP)</p>
       </div>
 
       {error && (

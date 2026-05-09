@@ -26,7 +26,7 @@ export default function SignupPage() {
   }
 
   const inputClass =
-    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-600'
+    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-500'
 
   return (
     <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
@@ -34,7 +34,7 @@ export default function SignupPage() {
         <h1 className="font-pixel text-[#00ff41] text-base mb-2 text-center tracking-widest">
           SIGNUP
         </h1>
-        <p className="text-gray-600 text-xs text-center mb-8">
+        <p className="text-gray-300 text-xs text-center mb-8">
           무료로 가입하고 게임을 등록하세요
         </p>
         {message ? (
@@ -43,7 +43,7 @@ export default function SignupPage() {
             <p className="text-gray-300 text-sm leading-relaxed">{message}</p>
             <Link
               href="/login"
-              className="inline-block mt-4 text-xs text-gray-500 hover:text-[#00ff41] transition-colors"
+              className="inline-block mt-4 text-xs text-gray-400 hover:text-[#00ff41] transition-colors"
             >
               → 로그인 페이지로
             </Link>
@@ -91,7 +91,7 @@ export default function SignupPage() {
             </button>
           </form>
         )}
-        <p className="text-center text-xs text-gray-600 mt-6">
+        <p className="text-center text-xs text-gray-300 mt-6">
           이미 계정이 있으신가요?{' '}
           <Link href="/login" className="text-[#00ff41] hover:underline">
             LOGIN

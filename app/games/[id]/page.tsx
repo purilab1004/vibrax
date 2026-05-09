@@ -75,7 +75,7 @@ export default async function GameDetailPage({ params }: Props) {
     <div className="max-w-5xl mx-auto px-6 py-10">
       <Link
         href="/games"
-        className="text-xs text-gray-600 hover:text-[#00ff41] transition-colors mb-6 inline-block tracking-wider"
+        className="text-xs text-gray-300 hover:text-[#00ff41] transition-colors mb-6 inline-block tracking-wider"
       >
         ← BACK TO GAMES
       </Link>
@@ -100,7 +100,7 @@ export default async function GameDetailPage({ params }: Props) {
           <h1 className="text-2xl font-semibold text-white mb-2 leading-tight">
             {game.title}
           </h1>
-          <p className="text-gray-600 text-xs tracking-wider">
+          <p className="text-gray-300 text-xs tracking-wider">
             by {author}
           </p>
         </div>

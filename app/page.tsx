@@ -40,7 +40,7 @@ export default async function HomePage() {
                   </h2>
                   <Link
                     href={`/games?genre=${key}`}
-                    className="text-xs text-gray-600 hover:text-[#00ff41] transition-colors tracking-wider"
+                    className="text-xs text-gray-300 hover:text-[#00ff41] transition-colors tracking-wider"
                   >
                     VIEW ALL →
                   </Link>
@@ -58,7 +58,7 @@ export default async function HomePage() {
             <p className="font-pixel text-[10px] text-[#00ff41] tracking-widest mb-4">
               GAME OVER?
             </p>
-            <p className="text-gray-500 text-sm mb-8">
+            <p className="text-gray-400 text-sm mb-8">
               아직 등록된 게임이 없습니다.<br />첫 번째로 AI로 만든 게임을 등록해보세요!
             </p>
             <Link

@@ -9,7 +9,15 @@
       "Bash(npm run *)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit -m 'feat: Vibrax MVP — AI 바이브코딩 게임 플랫폼 초기 구현 *)"
+      "Bash(git commit -m 'feat: Vibrax MVP — AI 바이브코딩 게임 플랫폼 초기 구현 *)",
+      "Bash(gh repo *)",
+      "Bash(gh pr *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(npx vercel *)",
+      "Bash(npm_config_cache=/tmp/npm-vibrax-cache npx vercel *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(xargs sed -i '' -e s/text-gray-600/text-gray-300/g -e s/text-gray-500/text-gray-400/g -e s/placeholder-gray-600/placeholder-gray-500/g)"
     ]
   }
 }

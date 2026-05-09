@@ -30,7 +30,7 @@ function LoginForm() {
   }
 
   const inputClass =
-    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-600'
+    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-500'
 
   return (
     <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
@@ -38,7 +38,7 @@ function LoginForm() {
         <h1 className="font-pixel text-[#00ff41] text-base mb-2 text-center tracking-widest">
           LOGIN
         </h1>
-        <p className="text-gray-600 text-xs text-center mb-8">
+        <p className="text-gray-300 text-xs text-center mb-8">
           Vibrax 계정으로 로그인하세요
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -81,7 +81,7 @@ function LoginForm() {
             {isPending ? 'LOADING...' : 'LOGIN'}
           </button>
         </form>
-        <p className="text-center text-xs text-gray-600 mt-6">
+        <p className="text-center text-xs text-gray-300 mt-6">
           계정이 없으신가요?{' '}
           <Link href="/signup" className="text-[#00ff41] hover:underline">
             SIGNUP
