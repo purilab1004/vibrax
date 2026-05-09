@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest *)",
+      "Bash(npm cache *)",
+      "Bash(npm_config_cache=/tmp/npm-vibrax-cache npx create-next-app@latest *)",
+      "WebFetch(domain:cinefox.com)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat: Vibrax MVP — AI 바이브코딩 게임 플랫폼 초기 구현 *)"
+    ]
+  }
+}
