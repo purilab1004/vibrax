@@ -2,8 +2,6 @@ import Anthropic from '@anthropic-ai/sdk'
 import { BJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
 
-export const runtime = 'edge'
-
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
