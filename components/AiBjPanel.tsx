@@ -12,26 +12,42 @@ interface Message {
 
 interface Props {
   genre: Genre
+  gameTitle: string
 }
 
-export default function AiBjPanel({ genre }: Props) {
+export default function AiBjPanel({ genre, gameTitle }: Props) {
   const persona = AJ_PERSONAS[genre]
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [floatingMsg, setFloatingMsg] = useState<{ text: string; key: number } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const greetedRef = useRef(false)
+  const prevStreaming = useRef(false)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Show floating message on mobile when chat is closed and AI finishes responding
+  useEffect(() => {
+    if (prevStreaming.current && !isStreaming && !mobileOpen) {
+      const last = messages[messages.length - 1]
+      if (last?.role === 'assistant' && last.content) {
+        setFloatingMsg({ text: last.content, key: Date.now() })
+      }
+    }
+    prevStreaming.current = isStreaming
+  }, [isStreaming, mobileOpen, messages])
+
   useEffect(() => {
     if (greetedRef.current) return
     greetedRef.current = true
-    setMessages([{ role: 'assistant', content: persona.greeting }])
-  }, [persona.greeting])
+    // Dynamic greeting mentioning the specific game
+    const greeting = `${persona.greeting.split('—')[0].trim()} — 오늘은 "${gameTitle}" 방송이야! 이 게임 어떤 게임인지 한번 살펴볼게. 게임 하다가 뭔가 있으면 말 걸어줘!`
+    setMessages([{ role: 'assistant', content: greeting }])
+  }, [persona.greeting, gameTitle])
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isStreaming) return
@@ -47,7 +63,7 @@ export default function AiBjPanel({ genre }: Props) {
       const res = await fetch('/api/ai-bj/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ genre, message: text, history }),
+        body: JSON.stringify({ genre, gameTitle, message: text, history }),
       })
       if (!res.ok || !res.body) throw new Error('API error')
       const reader = res.body.getReader()
@@ -154,6 +170,26 @@ export default function AiBjPanel({ genre }: Props) {
           </div>
         </div>
       </div>
+
+      {/* ─── Mobile: floating message (rises above toggle bar when chat is closed) ─── */}
+      {floatingMsg && !mobileOpen && (
+        <div
+          key={floatingMsg.key}
+          className="md:hidden absolute left-3 right-3 z-10 pointer-events-none"
+          style={{ bottom: '60px', animation: 'floatUpFade 3.8s ease-out forwards' }}
+          onAnimationEnd={() => setFloatingMsg(null)}
+        >
+          <div
+            className="bg-black/75 backdrop-blur-sm border border-gray-700 rounded px-3 py-2 text-xs text-gray-200 overflow-hidden"
+            style={{ maskImage: 'linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)', WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)' }}
+          >
+            <span className={`font-pixel text-[9px] ${persona.borderColor.replace('border-', 'text-')}`}>
+              {persona.name}
+            </span>
+            <p className="mt-0.5 leading-relaxed line-clamp-2">{floatingMsg.text}</p>
+          </div>
+        </div>
+      )}
 
       {/* ─── Mobile: bottom sheet (absolute within modal, preserves iframe space via pb-[53px]) ─── */}
       <div className="md:hidden pointer-events-none">

@@ -16,6 +16,13 @@ body {
   color: var(--foreground);
 }
 
+@keyframes floatUpFade {
+  0%   { transform: translateY(0px);   opacity: 0; }
+  12%  { transform: translateY(-8px);  opacity: 1; }
+  75%  { transform: translateY(-52px); opacity: 0.75; }
+  100% { transform: translateY(-72px); opacity: 0; }
+}
+
 @layer utilities {
   .pixel-border {
     box-shadow:

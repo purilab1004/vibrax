@@ -126,7 +126,7 @@ export default function GameCard({ game }: GameCardProps) {
                 title={game.title}
               />
             </div>
-            <AiBjPanel genre={game.genre} />
+            <AiBjPanel genre={game.genre} gameTitle={game.title} />
           </div>
         </div>
       )}

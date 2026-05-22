@@ -59,7 +59,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
                 title={game.title}
               />
             </div>
-            <AiBjPanel genre={game.genre} />
+            <AiBjPanel genre={game.genre} gameTitle={game.title} />
           </div>
         </div>
       )}
