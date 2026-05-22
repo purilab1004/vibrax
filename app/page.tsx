@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import HeroSection from '@/components/HeroSection'
 import GameCard from '@/components/GameCard'
+import AiBjProfileStrip from '@/components/AiBjProfileStrip'
 import Link from 'next/link'
 import type { Game } from '@/lib/supabase/types'
 
@@ -45,6 +46,7 @@ export default async function HomePage() {
                     VIEW ALL →
                   </Link>
                 </div>
+                <AiBjProfileStrip genre={key} />
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {genreGames.slice(0, 5).map(game => (
                     <GameCard key={game.id} game={game} />
