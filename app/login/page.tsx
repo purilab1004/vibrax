@@ -4,6 +4,7 @@ import { useState, useTransition, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useLang } from '@/lib/i18n/context'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -14,6 +15,8 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') ?? '/'
   const supabase = createClient()
+  const { T } = useLang()
+  const a = T.auth
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,15 +39,13 @@ function LoginForm() {
     <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <h1 className="font-pixel text-[#00ff41] text-base mb-2 text-center tracking-widest">
-          LOGIN
+          {a.loginHeading}
         </h1>
-        <p className="text-gray-300 text-xs text-center mb-8">
-          Vibrax 계정으로 로그인하세요
-        </p>
+        <p className="text-gray-300 text-xs text-center mb-8">{a.loginSubtitle}</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
-              EMAIL
+              {a.email}
             </label>
             <input
               type="email"
@@ -57,7 +58,7 @@ function LoginForm() {
           </div>
           <div>
             <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
-              PASSWORD
+              {a.password}
             </label>
             <input
               type="password"
@@ -78,11 +79,11 @@ function LoginForm() {
             disabled={isPending}
             className="w-full bg-[#00ff41] text-black font-pixel text-[11px] py-3 hover:bg-[#00cc33] transition-colors disabled:opacity-50 mt-2 tracking-widest"
           >
-            {isPending ? 'LOADING...' : 'LOGIN'}
+            {isPending ? a.loading : a.login}
           </button>
         </form>
         <p className="text-center text-xs text-gray-300 mt-6">
-          계정이 없으신가요?{' '}
+          {a.noAccount}{' '}
           <Link href="/signup" className="text-[#00ff41] hover:underline">
             SIGNUP
           </Link>

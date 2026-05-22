@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import type { Game } from '@/lib/supabase/types'
+import GamePlayButton from '@/components/GamePlayButton'
+import LikeButton from '@/components/LikeButton'
 
 type GameWithProfile = Game & { profiles: { username: string } | null }
 
@@ -100,18 +102,15 @@ export default async function GameDetailPage({ params }: Props) {
           <h1 className="text-2xl font-semibold text-white mb-2 leading-tight">
             {game.title}
           </h1>
-          <p className="text-gray-300 text-xs tracking-wider">
-            by {author}
-          </p>
+          <p className="text-gray-300 text-xs tracking-wider mb-3">by {author}</p>
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5 text-xs text-gray-500 font-pixel">
+              <span>👁</span>{game.view_count ?? 0}
+            </span>
+            <LikeButton gameId={game.id} size="md" />
+          </div>
         </div>
-        <a
-          href={game.play_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 font-pixel text-[11px] bg-[#00ff41] text-black px-8 py-4 hover:bg-[#00cc33] transition-colors whitespace-nowrap tracking-widest"
-        >
-          ▶ PLAY NOW
-        </a>
+        <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} />
       </div>
     </div>
   )

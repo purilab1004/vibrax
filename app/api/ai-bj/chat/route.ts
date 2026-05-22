@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { BJ_PERSONAS } from '@/lib/ai-bj/personas'
+import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
 
 interface ChatMessage {
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const body: RequestBody = await req.json()
   const { genre, message, history } = body
 
-  const persona = BJ_PERSONAS[genre]
+  const persona = AJ_PERSONAS[genre]
   if (!persona) {
     return new Response('Invalid genre', { status: 400 })
   }

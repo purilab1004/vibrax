@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Genre } from '@/lib/supabase/types'
+import { useLang } from '@/lib/i18n/context'
 
 const GENRES: { value: Genre; label: string }[] = [
   { value: 'action', label: 'ACTION' },
@@ -21,11 +22,13 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
   const supabase = createClient()
+  const { T } = useLang()
+  const s = T.submit
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!thumbnailFile) {
-      setError('썸네일을 업로드해주세요.')
+      setError(s.thumbnailRequired)
       return
     }
     setError(null)
@@ -73,21 +76,21 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
     <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
       <div>
         <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
-          TITLE
+          {s.titleLabel}
         </label>
         <input
           type="text"
           value={title}
           onChange={e => setTitle(e.target.value)}
           required
-          placeholder="게임 제목을 입력하세요"
+          placeholder={s.titlePlaceholder}
           className={inputClass}
         />
       </div>
 
       <div>
         <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
-          GENRE
+          {s.genreLabel}
         </label>
         <select
           value={genre}
@@ -104,22 +107,22 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
 
       <div>
         <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
-          PLAY URL
+          {s.urlLabel}
         </label>
         <input
           type="url"
           value={playUrl}
           onChange={e => setPlayUrl(e.target.value)}
           required
-          placeholder="https://your-game.railway.app"
+          placeholder={s.urlPlaceholder}
           className={inputClass}
         />
-        <p className="text-xs text-gray-300 mt-1">Railway, Vercel 등 배포 URL</p>
+        <p className="text-xs text-gray-300 mt-1">{s.urlHint}</p>
       </div>
 
       <div>
         <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
-          THUMBNAIL
+          {s.thumbnailLabel}
         </label>
         <input
           type="file"
@@ -134,7 +137,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
         {thumbnailFile && (
           <p className="text-xs text-gray-400 mt-1">선택됨: {thumbnailFile.name}</p>
         )}
-        <p className="text-xs text-gray-300 mt-1">16:9 비율 권장 (PNG, JPG, WebP)</p>
+        <p className="text-xs text-gray-300 mt-1">{s.thumbnailHint}</p>
       </div>
 
       {error && (
@@ -148,7 +151,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
         disabled={isPending}
         className="w-full bg-[#00ff41] text-black font-pixel text-[11px] py-4 hover:bg-[#00cc33] transition-colors disabled:opacity-50 disabled:cursor-not-allowed tracking-widest"
       >
-        {isPending ? 'UPLOADING...' : 'SUBMIT GAME'}
+        {isPending ? s.uploading : s.submit}
       </button>
     </form>
   )

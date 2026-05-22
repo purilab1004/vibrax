@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import LikeButton from './LikeButton'
 import AiBjPanel from './AiBjPanel'
-import { BJ_PERSONAS } from '@/lib/ai-bj/personas'
+import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 
 const GENRE_LABELS: Record<Game['genre'], string> = {
   action: 'ACTION',
@@ -71,19 +71,19 @@ export default function GameCard({ game }: GameCardProps) {
               </span>
               <LikeButton gameId={game.id} size="sm" />
             </div>
-            {/* AI BJ indicator */}
+            {/* AI AJ indicator */}
             <div className={`flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-800`}>
-              <div className={`w-5 h-5 shrink-0 rounded-full border ${BJ_PERSONAS[game.genre].borderColor} overflow-hidden`}>
+              <div className={`w-5 h-5 shrink-0 rounded-full border ${AJ_PERSONAS[game.genre].borderColor} overflow-hidden`}>
                 <Image
                   src="/aibot.png"
-                  alt={BJ_PERSONAS[game.genre].name}
+                  alt={AJ_PERSONAS[game.genre].name}
                   width={20}
                   height={20}
                   className="w-full h-full object-cover"
                   unoptimized
                 />
               </div>
-              <span className="font-pixel text-[9px] text-gray-400">{BJ_PERSONAS[game.genre].name}</span>
+              <span className="font-pixel text-[9px] text-gray-400">{AJ_PERSONAS[game.genre].name}</span>
               <span className="flex items-center gap-0.5 text-[8px] text-red-500 font-pixel ml-auto">
                 <span className="w-1 h-1 rounded-full bg-red-500 animate-pulse inline-block" />
                 LIVE
@@ -116,7 +116,7 @@ export default function GameCard({ game }: GameCardProps) {
             </button>
           </div>
 
-          {/* Body: iframe + AI BJ panel */}
+          {/* Body: iframe + AI AJ panel */}
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="flex-1 min-h-0 pb-[53px] md:pb-0">
               <iframe

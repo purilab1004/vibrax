@@ -2,6 +2,9 @@ import type { Metadata } from 'next'
 import { Press_Start_2P } from 'next/font/google'
 import './globals.css'
 import NavBar from '@/components/NavBar'
+import { LangProvider } from '@/lib/i18n/context'
+import { cookies, headers } from 'next/headers'
+import type { Lang } from '@/lib/i18n/translations'
 
 const pressStart = Press_Start_2P({
   weight: '400',
@@ -75,22 +78,40 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+async function detectLang(): Promise<Lang> {
+  const cookieStore = await cookies()
+  const saved = cookieStore.get('vibrax-lang')?.value
+  if (saved === 'ko' || saved === 'en') return saved
+  const headersList = await headers()
+  const acceptLang = headersList.get('accept-language') ?? ''
+  return acceptLang.toLowerCase().includes('ko') ? 'ko' : 'en'
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const lang = await detectLang()
   return (
-    <html lang="ko" className={`${pressStart.variable} h-full`}>
+    <html lang={lang} className={`${pressStart.variable} h-full`}>
       <body className="bg-[#0a0a0a] text-white min-h-full flex flex-col">
-        <NavBar />
-        <main className="flex-1">{children}</main>
-        <footer className="border-t border-gray-800 py-6 px-6 mt-auto">
-          <p className="text-center font-pixel text-[9px] text-gray-500 tracking-widest">
-            © VIBE GAME 2026 PURILAB
-          </p>
-        </footer>
+        <LangProvider initialLang={lang}>
+          <NavBar />
+          <main className="flex-1">{children}</main>
+          <footer className="border-t border-gray-800 py-6 px-6 mt-auto">
+            <FooterCopyright />
+          </footer>
+        </LangProvider>
       </body>
     </html>
+  )
+}
+
+function FooterCopyright() {
+  return (
+    <p className="text-center font-pixel text-[9px] text-gray-500 tracking-widest">
+      © VIBE GAME 2026 PURILAB
+    </p>
   )
 }

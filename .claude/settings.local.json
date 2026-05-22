@@ -17,7 +17,21 @@
       "Bash(npm_config_cache=/tmp/npm-vibrax-cache npx vercel *)",
       "Bash(git commit *)",
       "Bash(git push *)",
-      "Bash(xargs sed -i '' -e s/text-gray-600/text-gray-300/g -e s/text-gray-500/text-gray-400/g -e s/placeholder-gray-600/placeholder-gray-500/g)"
+      "Bash(xargs sed -i '' -e s/text-gray-600/text-gray-300/g -e s/text-gray-500/text-gray-400/g -e s/placeholder-gray-600/placeholder-gray-500/g)",
+      "Bash(npm_config_cache=/tmp/npm-vibrax-cache npx tsc --noEmit)",
+      "Bash(npm_config_cache=/tmp/npm-vibrax-cache npx next build)",
+      "Bash(npm_config_cache=/tmp/npm-vibrax-cache npx --no-install vercel --prod --yes)",
+      "Bash(npm_config_cache=/tmp/npm-vibrax-cache npm install -g vercel)",
+      "Bash(npm install *)",
+      "Bash(sudo chown -R 501:20 \"/Users/sungjunahn/.npm\")",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/sungjunahn/Library/pnpm/**)",
+      "Read(//private/tmp/npm-vibrax-cache/_npx/**)",
+      "Read(//private/tmp/npm-vibrax-cache/**)",
+      "Bash(/tmp/npm-vibrax-cache/_npx/69f9afb961c37556/node_modules/.bin/vercel --prod --yes)",
+      "Bash(npx supabase *)",
+      "Bash(npm_config_cache=/tmp/npm-vibrax-cache npx supabase *)",
+      "Bash(vercel env *)"
     ]
   }
 }

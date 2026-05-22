@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { BJ_PERSONAS } from '@/lib/ai-bj/personas'
+import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
 
 interface Message {
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function AiBjPanel({ genre }: Props) {
-  const persona = BJ_PERSONAS[genre]
+  const persona = AJ_PERSONAS[genre]
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
@@ -112,7 +112,7 @@ export default function AiBjPanel({ genre }: Props) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
-          placeholder="BJ에게 말걸기..."
+          placeholder="AJ에게 말걸기..."
           disabled={isStreaming}
           className="flex-1 bg-gray-900 border border-gray-700 text-white text-xs px-2.5 py-2 placeholder-gray-600 focus:outline-none focus:border-[#00ff41] disabled:opacity-50"
         />

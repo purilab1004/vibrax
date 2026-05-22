@@ -8,6 +8,14 @@ export interface Game {
   thumbnail_url: string
   user_id: string
   created_at: string
+  view_count: number
+}
+
+export interface GameLike {
+  id: string
+  game_id: string
+  user_id: string
+  created_at: string
 }
 
 export interface Profile {

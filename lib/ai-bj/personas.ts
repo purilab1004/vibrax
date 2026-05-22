@@ -1,6 +1,6 @@
 import type { Genre } from '@/lib/supabase/types'
 
-export interface BjPersona {
+export interface AjPersona {
   name: string
   genre: Genre
   borderColor: string
@@ -10,7 +10,7 @@ export interface BjPersona {
   systemPrompt: string
 }
 
-export const BJ_PERSONAS: Record<Genre, BjPersona> = {
+export const AJ_PERSONAS: Record<Genre, AjPersona> = {
   action: {
     name: 'ACE',
     genre: 'action',
