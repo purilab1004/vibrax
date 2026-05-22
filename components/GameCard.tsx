@@ -117,7 +117,7 @@ export default function GameCard({ game }: GameCardProps) {
           </div>
 
           {/* Body: iframe + AI BJ panel */}
-          <div className="relative flex md:flex-row flex-1 min-h-0">
+          <div className="relative flex flex-row flex-1 min-h-0">
             <iframe
               src={game.play_url}
               className="flex-1 border-0 min-h-0"
