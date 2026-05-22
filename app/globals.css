@@ -55,6 +55,13 @@ body {
   100% { transform: translateX(-120px); opacity: 0; }
 }
 
+/* Prevent iOS Safari zoom on input focus */
+@media screen and (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
 @layer utilities {
   .pixel-border {
     box-shadow:
