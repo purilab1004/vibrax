@@ -19,6 +19,7 @@ export default function AiBjPanel({ genre }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const greetedRef = useRef(false)
 
@@ -40,7 +41,6 @@ export default function AiBjPanel({ genre }: Props) {
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setIsStreaming(true)
-
     setMessages(prev => [...prev, { role: 'assistant', content: '' }])
 
     try {
@@ -82,38 +82,8 @@ export default function AiBjPanel({ genre }: Props) {
     }
   }
 
-  return (
-    <div className={`
-      w-full h-[45vh] shrink-0
-      md:w-72 md:h-full
-      flex flex-col
-      border-t md:border-t-0 md:border-l border-gray-800
-      bg-[#0a0a0a]
-    `}>
-      {/* Chat header + BJ profile (compact row on mobile) */}
-      <div className={`px-3 py-2 border-b border-gray-800 shrink-0 border-l-2 ${persona.borderColor} flex items-center gap-2`}>
-        <div className={`w-7 h-7 shrink-0 rounded-full border ${persona.borderColor} overflow-hidden`}>
-          <Image
-            src="/aibot.png"
-            alt={persona.name}
-            width={28}
-            height={28}
-            className="w-full h-full object-cover"
-            unoptimized
-          />
-        </div>
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <span className="font-pixel text-[10px] text-white">{persona.name}</span>
-          <span className="flex items-center gap-0.5 text-[8px] text-red-500 font-pixel">
-            <span className="w-1 h-1 rounded-full bg-red-500 animate-pulse inline-block" />
-            LIVE
-          </span>
-        </div>
-        <span className="font-pixel text-[9px] text-[#00ff41] tracking-widest hidden md:inline">
-          💬 LIVE CHAT
-        </span>
-      </div>
-
+  const chatContent = (
+    <>
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0">
         {messages.map((msg, i) => (
@@ -123,14 +93,7 @@ export default function AiBjPanel({ genre }: Props) {
           >
             {msg.role === 'assistant' && (
               <div className={`w-5 h-5 shrink-0 rounded-full border ${persona.borderColor} overflow-hidden mt-0.5`}>
-                <Image
-                  src="/aibot.png"
-                  alt={persona.name}
-                  width={20}
-                  height={20}
-                  className="w-full h-full object-cover"
-                  unoptimized
-                />
+                <Image src="/aibot.png" alt={persona.name} width={20} height={20} className="w-full h-full object-cover" unoptimized />
               </div>
             )}
             <div className={`max-w-[85%] text-xs px-2.5 py-1.5 rounded leading-relaxed ${
@@ -169,32 +132,72 @@ export default function AiBjPanel({ genre }: Props) {
           </button>
         </div>
       </div>
+    </>
+  )
 
-      {/* BJ Profile (desktop only, full card) */}
-      <div className={`hidden md:block px-3 py-3 border-t border-gray-800 shrink-0 border-l-2 ${persona.borderColor}`}>
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 shrink-0 rounded-full border-2 ${persona.borderColor} overflow-hidden`}>
-            <Image
-              src="/aibot.png"
-              alt={persona.name}
-              width={40}
-              height={40}
-              className="w-full h-full object-cover"
-              unoptimized
-            />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="font-pixel text-[10px] text-white">{persona.name}</span>
-              <span className="flex items-center gap-0.5 text-[9px] text-red-500 font-pixel">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
-                LIVE
-              </span>
+  return (
+    <>
+      {/* ── Desktop: fixed side panel ── */}
+      <div className="hidden md:flex w-72 shrink-0 flex-col border-l border-gray-800 bg-[#0a0a0a] h-full">
+        {/* Header */}
+        <div className="px-3 py-2 border-b border-gray-800 shrink-0">
+          <span className="font-pixel text-[9px] text-[#00ff41] tracking-widest">💬 LIVE CHAT</span>
+        </div>
+
+        {chatContent}
+
+        {/* BJ Profile */}
+        <div className={`px-3 py-3 border-t border-gray-800 shrink-0 border-l-2 ${persona.borderColor}`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 shrink-0 rounded-full border-2 ${persona.borderColor} overflow-hidden`}>
+              <Image src="/aibot.png" alt={persona.name} width={40} height={40} className="w-full h-full object-cover" unoptimized />
             </div>
-            <p className="text-[10px] text-gray-400 truncate">{persona.catchphrase}</p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="font-pixel text-[10px] text-white">{persona.name}</span>
+                <span className="flex items-center gap-0.5 text-[9px] text-red-500 font-pixel">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
+                  LIVE
+                </span>
+              </div>
+              <p className="text-[10px] text-gray-400 truncate">{persona.catchphrase}</p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* ── Mobile: bottom sheet (overlays game, doesn't shift layout) ── */}
+      <div className="md:hidden absolute bottom-0 left-0 right-0 z-20">
+        {/* Toggle bar — always visible */}
+        <button
+          onClick={() => setMobileOpen(v => !v)}
+          className={`w-full flex items-center gap-2.5 px-4 py-3 bg-[#0d0d0d] border-t border-gray-700 border-l-2 ${persona.borderColor} active:opacity-80 transition-opacity`}
+        >
+          <div className={`w-7 h-7 shrink-0 rounded-full border ${persona.borderColor} overflow-hidden`}>
+            <Image src="/aibot.png" alt={persona.name} width={28} height={28} className="w-full h-full object-cover" unoptimized />
+          </div>
+          <span className="font-pixel text-[10px] text-white">{persona.name}</span>
+          <span className="flex items-center gap-1 text-[9px] text-red-500 font-pixel">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
+            LIVE
+          </span>
+          <span className="ml-auto font-pixel text-[9px] text-[#00ff41]">
+            {mobileOpen ? '▼ 닫기' : '💬 채팅'}
+          </span>
+        </button>
+
+        {/* Slide-up chat sheet */}
+        <div
+          className={`flex flex-col bg-[#0a0a0a] border-t border-gray-800 overflow-hidden transition-all duration-300 ease-in-out`}
+          style={{ maxHeight: mobileOpen ? '55vh' : '0px' }}
+        >
+          {/* Drag handle */}
+          <div className="flex justify-center py-2 shrink-0">
+            <div className="w-10 h-1 rounded-full bg-gray-700" />
+          </div>
+          {chatContent}
+        </div>
+      </div>
+    </>
   )
 }

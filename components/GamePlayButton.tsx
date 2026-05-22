@@ -50,7 +50,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
               ✕ CLOSE
             </button>
           </div>
-          <div className="flex flex-col md:flex-row flex-1 min-h-0">
+          <div className="relative flex md:flex-row flex-1 min-h-0">
             <iframe
               src={game.play_url}
               className="flex-1 border-0 min-h-0"
