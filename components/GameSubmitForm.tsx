@@ -15,6 +15,7 @@ const GENRES: { value: Genre; label: string }[] = [
 
 export default function GameSubmitForm({ userId }: { userId: string }) {
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [genre, setGenre] = useState<Genre>('action')
   const [playUrl, setPlayUrl] = useState('')
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
@@ -53,6 +54,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
         {
           title,
           genre,
+          description: description.trim() || null,
           play_url: playUrl,
           thumbnail_url: publicUrl,
           user_id: userId,
@@ -86,6 +88,21 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           placeholder={s.titlePlaceholder}
           className={inputClass}
         />
+      </div>
+
+      <div>
+        <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
+          AI AJ 게임 설명 <span className="text-gray-600 normal-case font-sans text-[10px]">(선택 — AJ가 게임 방식을 이해하는 데 사용)</span>
+        </label>
+        <textarea
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          rows={4}
+          maxLength={500}
+          placeholder="예: 위아래 화살표로 캐릭터가 점프해서 장애물을 피하는 게임. 별을 먹으면 무적, 적에게 닿으면 죽음. 스테이지가 올라갈수록 속도가 빨라짐."
+          className={inputClass + ' resize-none'}
+        />
+        <p className="text-[10px] text-gray-600 mt-1">{description.length}/500 — 자세할수록 AJ가 더 정확하게 중계해요</p>
       </div>
 
       <div>

@@ -4,6 +4,7 @@ export interface Game {
   id: string
   title: string
   genre: Genre
+  description?: string | null
   play_url: string
   thumbnail_url: string
   user_id: string

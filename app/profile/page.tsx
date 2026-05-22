@@ -25,6 +25,7 @@ interface EditingGame {
   id: string
   title: string
   genre: Genre
+  description: string
   play_url: string
   thumbnail_url: string
   newThumbnail?: File | null
@@ -43,6 +44,11 @@ export default function ProfilePage() {
   const [profileMsg, setProfileMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const [gameMsg, setGameMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [agentName, setAgentName] = useState('')
+  const [agentPersona, setAgentPersona] = useState('')
+  const [agentAvatarUrl, setAgentAvatarUrl] = useState('')
+  const [agentAvatarFile, setAgentAvatarFile] = useState<File | null>(null)
+  const [agentMsg, setAgentMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const [loading, setLoading] = useState(true)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
@@ -54,6 +60,9 @@ export default function ProfilePage() {
       setUser(user)
       loadProfile(user.id)
       loadGames(user.id)
+      setAgentName(user.user_metadata?.agent_name ?? '')
+      setAgentPersona(user.user_metadata?.agent_persona ?? '')
+      setAgentAvatarUrl(user.user_metadata?.agent_avatar_url ?? '')
     })
   }, [])
 
@@ -96,6 +105,35 @@ export default function ProfilePage() {
     })
   }
 
+  const handleSaveAgent = () => {
+    startTransition(async () => {
+      let avatarUrl = agentAvatarUrl
+
+      if (agentAvatarFile && user) {
+        const ext = agentAvatarFile.name.split('.').pop() ?? 'png'
+        const path = `agent-avatars/${user.id}.${ext}`
+        const { error: uploadErr } = await supabase.storage
+          .from('avatars')
+          .upload(path, agentAvatarFile, { upsert: true })
+        if (uploadErr) { flash(setAgentMsg, '이미지 업로드 실패: ' + uploadErr.message, false); return }
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+        avatarUrl = publicUrl
+        setAgentAvatarUrl(publicUrl)
+        setAgentAvatarFile(null)
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          agent_name: agentName.trim(),
+          agent_persona: agentPersona.trim(),
+          agent_avatar_url: avatarUrl || null,
+        },
+      })
+      if (error) { flash(setAgentMsg, '저장 실패: ' + error.message, false); return }
+      flash(setAgentMsg, '에이전트가 저장되었습니다.', true)
+    })
+  }
+
   const handleSaveGame = () => {
     if (!editingGame || !user) return
     startTransition(async () => {
@@ -114,12 +152,13 @@ export default function ProfilePage() {
       const { error } = await supabase.from('games').update({
         title: editingGame.title,
         genre: editingGame.genre,
+        description: editingGame.description.trim() || null,
         play_url: editingGame.play_url,
         thumbnail_url: thumbnailUrl,
       } as never).eq('id', editingGame.id)
 
       if (error) { flash(setGameMsg, '저장 실패: ' + error.message, false); return }
-      setGames(prev => prev.map(g => g.id === editingGame.id ? { ...g, title: editingGame.title, genre: editingGame.genre, play_url: editingGame.play_url, thumbnail_url: thumbnailUrl } : g))
+      setGames(prev => prev.map(g => g.id === editingGame.id ? { ...g, title: editingGame.title, genre: editingGame.genre, description: editingGame.description.trim() || null, play_url: editingGame.play_url, thumbnail_url: thumbnailUrl } : g))
       setEditingGame(null)
       flash(setGameMsg, '수정되었습니다.', true)
     })
@@ -193,6 +232,99 @@ export default function ProfilePage() {
         </button>
       </section>
 
+      {/* ── My Agent ── */}
+      <section className="border border-gray-800 bg-[#0d0d0d] p-6 space-y-5">
+        <div>
+          <h2 className="font-pixel text-[10px] text-gray-400 tracking-widest">MY AGENT</h2>
+          <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+            게임을 플레이하는 동안 <span className="text-purple-400">나 대신 AI 스트리머 AJ와 실시간으로 대화</span>해주는 나만의 AI 에이전트예요.<br />
+            당신이 게임에 집중하는 사이, 에이전트가 AJ와 채팅하며 방송의 흥을 이어가줍니다.
+          </p>
+          <div className="mt-3 border border-purple-900/40 bg-purple-900/10 px-4 py-3 space-y-1">
+            <p className="font-pixel text-[8px] text-purple-400 tracking-widest">AGENT란?</p>
+            <p className="text-[11px] text-gray-400 leading-relaxed">• 이름과 성격을 부여하면 그대로 행동하는 AI</p>
+            <p className="text-[11px] text-gray-400 leading-relaxed">• 게임 방송 중 18초마다 AJ에게 말을 걸어줌</p>
+            <p className="text-[11px] text-gray-400 leading-relaxed">• 게임 진입 시 AGENT 설정이 필요해요</p>
+          </div>
+        </div>
+        {/* Avatar */}
+        <div>
+          <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">에이전트 프로필 사진</p>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full border-2 border-purple-700/50 overflow-hidden bg-gray-900 shrink-0 flex items-center justify-center">
+              {(agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl) ? (
+                <Image
+                  src={agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl}
+                  alt="agent avatar"
+                  width={64}
+                  height={64}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <span className="text-2xl">🤖</span>
+              )}
+            </div>
+            <div className="flex-1">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/gif,image/webp"
+                onChange={e => setAgentAvatarFile(e.target.files?.[0] ?? null)}
+                className="w-full bg-[#0d0d0d] border border-gray-700 px-3 py-2 text-xs text-gray-400
+                  file:mr-3 file:py-1 file:px-3 file:border-0
+                  file:bg-purple-800 file:text-white file:text-[9px] file:font-pixel file:cursor-pointer
+                  file:hover:bg-purple-700 file:transition-colors"
+              />
+              {agentAvatarFile && <p className="text-[10px] text-gray-500 mt-1">{agentAvatarFile.name}</p>}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">에이전트 이름</p>
+          <input
+            className={inputClass + ' max-w-xs'}
+            value={agentName}
+            onChange={e => setAgentName(e.target.value)}
+            placeholder="예: 도라에몽, 철수, ..."
+            maxLength={20}
+          />
+        </div>
+        <div>
+          <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">성격 / 말투</p>
+          <textarea
+            className={inputClass + ' max-w-sm resize-none'}
+            rows={3}
+            value={agentPersona}
+            onChange={e => setAgentPersona(e.target.value)}
+            placeholder="예: 항상 긍정적이고 열정적인 게이머. 재밌으면 크게 리액션함."
+            maxLength={100}
+          />
+          <p className="text-[10px] text-gray-600 mt-1">{agentPersona.length}/100</p>
+        </div>
+        {agentMsg && <p className={`text-xs font-pixel tracking-widest ${agentMsg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{agentMsg.text}</p>}
+        <button
+          onClick={handleSaveAgent}
+          disabled={isPending || (!agentName.trim() && !agentPersona.trim())}
+          className="font-pixel text-[10px] bg-[#00ff41] text-black px-6 py-2.5 hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest"
+        >
+          {isPending ? 'SAVING...' : 'SAVE AGENT'}
+        </button>
+        {agentName.trim() && (
+          <div className="border border-purple-800/40 bg-purple-900/10 px-4 py-3 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full border border-purple-700/50 overflow-hidden bg-gray-900 shrink-0 flex items-center justify-center">
+              {agentAvatarUrl ? (
+                <Image src={agentAvatarUrl} alt={agentName} width={32} height={32} className="w-full h-full object-cover" unoptimized />
+              ) : (
+                <span className="text-sm">🤖</span>
+              )}
+            </div>
+            <span className="font-pixel text-[9px] text-purple-400">{agentName}</span>
+            {agentPersona && <span className="text-xs text-gray-500 truncate">{agentPersona}</span>}
+          </div>
+        )}
+      </section>
+
       {/* ── My Games ── */}
       <section>
         <div className="flex items-center justify-between mb-6">
@@ -222,7 +354,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
-                      onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, play_url: game.play_url, thumbnail_url: game.thumbnail_url, newThumbnail: null })}
+                      onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, newThumbnail: null })}
                       className="font-pixel text-[9px] border border-gray-700 text-gray-400 hover:border-[#00ff41] hover:text-[#00ff41] px-3 py-1.5 transition-colors tracking-widest"
                     >
                       EDIT
@@ -278,6 +410,17 @@ export default function ProfilePage() {
               <div>
                 <label className="block font-pixel text-[9px] text-gray-500 tracking-widest mb-2">TITLE</label>
                 <input className={inputClass} value={editingGame.title} onChange={e => setEditingGame(prev => prev ? { ...prev, title: e.target.value } : null)} />
+              </div>
+              <div>
+                <label className="block font-pixel text-[9px] text-gray-500 tracking-widest mb-2">AI AJ 게임 설명</label>
+                <textarea
+                  rows={3}
+                  maxLength={500}
+                  className={inputClass + ' resize-none'}
+                  value={editingGame.description}
+                  onChange={e => setEditingGame(prev => prev ? { ...prev, description: e.target.value } : null)}
+                  placeholder="조작 방법, 적, 아이템, 목표 등을 설명해주세요"
+                />
               </div>
               <div>
                 <label className="block font-pixel text-[9px] text-gray-500 tracking-widest mb-2">GENRE</label>
