@@ -155,19 +155,19 @@ export default function AiBjPanel({ genre }: Props) {
         </div>
       </div>
 
-      {/* ─── Mobile: bottom sheet (fixed over game, outside flex flow) ─── */}
-      <div className="md:hidden">
+      {/* ─── Mobile: bottom sheet (absolute within modal, preserves iframe space via pb-[53px]) ─── */}
+      <div className="md:hidden pointer-events-none">
         {/* Backdrop — tap to close */}
         {mobileOpen && (
           <div
-            className="fixed inset-0 z-30 bg-black/40"
+            className="absolute inset-0 z-10 bg-black/40 pointer-events-auto"
             onClick={() => setMobileOpen(false)}
           />
         )}
 
         {/* Bottom sheet + toggle bar */}
         <div
-          className="fixed left-0 right-0 bottom-0 z-40 flex flex-col"
+          className="absolute left-0 right-0 bottom-0 z-20 flex flex-col pointer-events-auto"
           style={{ transform: 'translateZ(0)' }}
         >
           {/* Chat sheet — slides up */}

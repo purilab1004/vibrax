@@ -51,12 +51,14 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
             </button>
           </div>
           <div className="relative flex flex-row flex-1 min-h-0">
-            <iframe
-              src={game.play_url}
-              className="flex-1 border-0 min-h-0"
-              allow="fullscreen; autoplay"
-              title={game.title}
-            />
+            <div className="flex-1 min-h-0 pb-[53px] md:pb-0">
+              <iframe
+                src={game.play_url}
+                className="w-full h-full border-0"
+                allow="fullscreen; autoplay"
+                title={game.title}
+              />
+            </div>
             <AiBjPanel genre={game.genre} />
           </div>
         </div>
