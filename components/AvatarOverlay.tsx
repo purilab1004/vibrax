@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const AVATAR_URL = '/avatars/companion.glb'
 const TTS_KEY = process.env.NEXT_PUBLIC_GOOGLE_TTS_API_KEY ?? ''
@@ -13,27 +13,46 @@ function getAudioCtx(): AudioContext {
   return sharedAudioCtx
 }
 
+type Status = 'loading' | 'ready' | 'error'
+
 export default function AvatarOverlay() {
   const containerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const headRef = useRef<any>(null)
   const readyRef = useRef(false)
+  const [status, setStatus] = useState<Status>('loading')
+  const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
     if (!containerRef.current) return
     let cancelled = false
 
     async function init() {
+      console.log('[Avatar] Starting init...')
+
+      // 1. Check GLB reachable
+      const glbCheck = await fetch(AVATAR_URL, { method: 'HEAD' }).catch(() => null)
+      console.log('[Avatar] GLB HEAD status:', glbCheck?.status ?? 'fetch failed')
+
+      // 2. Load TalkingHead module
+      console.log('[Avatar] Loading talkinghead.mjs...')
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const { TalkingHead } = await import(/* webpackIgnore: true */ '/talkinghead.mjs')
+      const mod = await import(/* webpackIgnore: true */ '/talkinghead.mjs')
+      console.log('[Avatar] Module loaded, exports:', Object.keys(mod))
+
       if (cancelled || !containerRef.current) return
 
+      const { TalkingHead } = mod
+      if (!TalkingHead) throw new Error('TalkingHead export not found')
+
+      console.log('[Avatar] Creating TalkingHead instance...')
       const head = new TalkingHead(containerRef.current, {
         ttsEndpoint: `https://texttospeech.googleapis.com/v1/text:synthesize?key=${TTS_KEY}`,
         cameraView: 'upper',
       })
 
+      console.log('[Avatar] Loading avatar GLB:', AVATAR_URL)
       await head.showAvatar({
         url: AVATAR_URL,
         body: 'F',
@@ -41,11 +60,18 @@ export default function AvatarOverlay() {
         ttsLang: 'ko-KR',
       })
 
+      console.log('[Avatar] Avatar ready!')
       headRef.current = head
       readyRef.current = true
+      setStatus('ready')
     }
 
-    init().catch(console.error)
+    init().catch((err) => {
+      console.error('[Avatar] Init failed:', err)
+      setErrorMsg(String(err))
+      setStatus('error')
+    })
+
     return () => { cancelled = true }
   }, [])
 
@@ -70,7 +96,7 @@ export default function AvatarOverlay() {
           }
         )
         const json = await res.json()
-        if (!json.audioContent) return
+        if (!json.audioContent) { console.warn('[Avatar] TTS no audioContent:', json); return }
 
         const binary = atob(json.audioContent)
         const bytes = new Uint8Array(binary.length)
@@ -79,10 +105,9 @@ export default function AvatarOverlay() {
         const ctx = getAudioCtx()
         if (ctx.state === 'suspended') await ctx.resume()
         const audio = await ctx.decodeAudioData(bytes.buffer.slice(0))
-
         head.speakAudio({ audio })
       } catch (err) {
-        console.error('[AvatarOverlay] speak error:', err)
+        console.error('[Avatar] speak error:', err)
       }
     }
 
@@ -90,5 +115,21 @@ export default function AvatarOverlay() {
     return () => window.removeEventListener('avatar:speak', handler)
   }, [])
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative', background: '#050508' }}>
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
+          <div className="w-6 h-6 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin" />
+          <span className="font-pixel text-[8px] text-gray-500">LOADING AJ...</span>
+        </div>
+      )}
+      {status === 'error' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-3 pointer-events-none">
+          <span className="font-pixel text-[8px] text-red-500">AVATAR ERROR</span>
+          <span className="text-[8px] text-gray-600 text-center break-all">{errorMsg.slice(0, 80)}</span>
+        </div>
+      )}
+    </div>
+  )
 }
