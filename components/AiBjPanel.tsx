@@ -1,33 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
 
-// Pre-seeded audience rows (front=bottom, small=far)
-const AUDIENCE_ROWS = [
-  { count: 12, size: 10, gap: 3 },
-  { count: 16, size: 8,  gap: 2 },
-  { count: 21, size: 7,  gap: 1.5 },
-  { count: 27, size: 6,  gap: 1 },
-  { count: 32, size: 5,  gap: 0.5 },
-]
-const HEAD_COLORS = ['#ff6935','#f4831f','#f72585','#4361ee','#4cc9f0','#7b2d8b','#fb8500','#3a86ff']
-const GLOW_COLORS = ['#ff6935','#f72585','#4cc9f0','#7fff00','#fb8500','#4361ee']
-const STAGE_COLORS = ['#ff6935','#f72585','#4cc9f0','#00ff41','#fb8500','#4361ee','#f4831f','#7b2d8b']
-function seededColor(r: number, i: number) {
-  return HEAD_COLORS[(r * 7 + i * 3 + r) % HEAD_COLORS.length]
-}
-function seededDelay(r: number, i: number) {
-  return ((r * 11 + i * 7) % 23) * 0.08
-}
-function seededBob(r: number, i: number) {
-  return (r * 5 + i * 4) % 3 !== 2
-}
-function seededGlow(r: number, i: number) {
-  return (r * 5 + i * 7) % 4 === 0
-}
+const AvatarOverlay = dynamic(() => import('./AvatarOverlay'), { ssr: false })
+
 
 interface Message {
   role: 'user' | 'assistant'
@@ -337,92 +317,9 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         {messageList}
         {inputBar}
 
-        {/* ─── Desktop: audience stadium ─── */}
-        <div className="relative overflow-hidden shrink-0 border-t border-gray-800/40" style={{ height: '134px', background: 'linear-gradient(to bottom, #030509 0%, #070710 50%, #0a0a0a 100%)' }}>
-          {/* Colored light beams from stage */}
-          <div className="absolute top-0 left-0 right-0 pointer-events-none" style={{ height: '64px', zIndex: 1 }}>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2" style={{ width: '56px', height: '60px', background: 'radial-gradient(ellipse at top, rgba(0,255,65,0.22) 0%, transparent 70%)' }} />
-            {([
-              { pos: { left: '17%' }, color: 'rgba(255,105,53,0.55)', skew: '-11deg' },
-              { pos: { left: '30%' }, color: 'rgba(247,37,133,0.45)', skew: '-5deg' },
-              { pos: { right: '17%' }, color: 'rgba(67,97,238,0.55)', skew: '11deg' },
-              { pos: { right: '30%' }, color: 'rgba(76,201,240,0.45)', skew: '5deg' },
-            ] as { pos: Record<string,string>; color: string; skew: string }[]).map((beam, b) => (
-              <div key={b} className="absolute top-0" style={{
-                ...beam.pos,
-                width: '5px',
-                height: '54px',
-                background: `linear-gradient(to bottom, ${beam.color} 0%, transparent 100%)`,
-                transform: `skewX(${beam.skew})`,
-              }} />
-            ))}
-          </div>
-          {/* Stage: LED screens + AJ */}
-          <div className="absolute top-0 left-0 right-0 flex items-end justify-center gap-3 px-4" style={{ height: '30px', zIndex: 2 }}>
-            <div className="flex flex-col gap-px" style={{ animation: 'stageFlicker 4.5s ease-in-out infinite' }}>
-              {Array.from({ length: 3 }, (_, row) => (
-                <div key={row} className="flex gap-px">
-                  {Array.from({ length: 4 }, (_, col) => (
-                    <div key={col} style={{ width: 3, height: 3, backgroundColor: STAGE_COLORS[(row * 4 + col) % STAGE_COLORS.length] }} />
-                  ))}
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-col items-center" style={{ marginBottom: '1px' }}>
-              <div className={`rounded-full border overflow-hidden ${persona.borderColor}`} style={{ width: 20, height: 20, animation: 'stageFlicker 3s ease-in-out infinite' }}>
-                <Image src="/aibot.png" alt={persona.name} width={20} height={20} className="w-full h-full object-cover" unoptimized />
-              </div>
-              <span className="font-pixel text-[5px] text-[#00ff41]">{persona.name}</span>
-            </div>
-            <div className="flex flex-col gap-px" style={{ animation: 'stageFlicker 4.5s ease-in-out infinite', animationDelay: '0.7s' }}>
-              {Array.from({ length: 3 }, (_, row) => (
-                <div key={row} className="flex gap-px">
-                  {Array.from({ length: 4 }, (_, col) => (
-                    <div key={col} style={{ width: 3, height: 3, backgroundColor: STAGE_COLORS[(row * 4 + col + 3) % STAGE_COLORS.length] }} />
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* Stage floor */}
-          <div className="absolute left-0 right-0" style={{ top: '30px', height: '1px', zIndex: 2, background: 'linear-gradient(to right, transparent, rgba(0,255,65,0.7) 20%, rgba(0,255,65,0.7) 80%, transparent)' }} />
-          {/* Audience rows — bottom=front large, top=back small */}
-          <div className="absolute left-0 right-0 flex flex-col-reverse" style={{ bottom: 0, top: '32px', padding: '2px 3px 1px', gap: '1px' }}>
-            {AUDIENCE_ROWS.map((row, r) => (
-              <div key={r} className="flex justify-center" style={{ gap: `${row.gap}px`, opacity: 1 - r * 0.09 }}>
-                {Array.from({ length: row.count }, (_, i) => {
-                  const hasGlow = seededGlow(r, i)
-                  const glowColor = GLOW_COLORS[(r * 3 + i * 5) % GLOW_COLORS.length]
-                  const headColor = seededColor(r, i)
-                  return (
-                    <div key={i} style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center',
-                      flexShrink: 0,
-                      animation: seededBob(r, i) ? `audienceBob ${0.75 + ((r * 11 + i * 7) % 4) * 0.12}s ease-in-out infinite` : undefined,
-                      animationDelay: `${seededDelay(r, i)}s`,
-                    }}>
-                      {hasGlow && (
-                        <div style={{
-                          width: 2,
-                          height: Math.max(4, Math.round(row.size * 0.65)),
-                          backgroundColor: glowColor,
-                          borderRadius: '1px 1px 0 0',
-                          marginBottom: '1px',
-                          animation: `glowStick ${1.1 + ((r + i) % 5) * 0.25}s ease-in-out infinite`,
-                          animationDelay: `${seededDelay(r, i) * 1.5}s`,
-                          boxShadow: `0 0 3px ${glowColor}`,
-                        }} />
-                      )}
-                      <div style={{ width: row.size, height: row.size, backgroundColor: headColor, borderRadius: '50%', flexShrink: 0 }} />
-                      <div style={{ width: Math.round(row.size * 1.35), height: Math.max(3, Math.round(row.size * 0.5)), backgroundColor: headColor + 'aa', borderRadius: '35% 35% 8% 8%', marginTop: '0.5px', flexShrink: 0 }} />
-                    </div>
-                  )
-                })}
-              </div>
-            ))}
-          </div>
-          {/* Floor */}
-          <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'rgba(0,255,65,0.12)' }} />
+        {/* ─── Desktop: 3D AJ avatar ─── */}
+        <div className="shrink-0 border-t border-gray-800/40 bg-[#050508]" style={{ height: '220px' }}>
+          <AvatarOverlay />
         </div>
 
         <div className={`px-3 py-3 border-t border-gray-800 shrink-0 border-l-2 ${persona.borderColor}`}>
