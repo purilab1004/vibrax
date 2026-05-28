@@ -22,12 +22,12 @@
 * SOFTWARE.
 */
 
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
-import { FBXLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/FBXLoader.js';
-import { RoomEnvironment } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/environments/RoomEnvironment.js';
-import Stats from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/stats.module.js';
+import * as THREE from 'https://esm.sh/three@0.180.0';
+import { OrbitControls } from 'https://esm.sh/three@0.180.0/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
+import { FBXLoader } from 'https://esm.sh/three@0.180.0/examples/jsm/loaders/FBXLoader.js';
+import { RoomEnvironment } from 'https://esm.sh/three@0.180.0/examples/jsm/environments/RoomEnvironment.js';
+import Stats from 'https://esm.sh/three@0.180.0/examples/jsm/libs/stats.module.js';
 
 import{ DynamicBones } from './dynamicbones.mjs';
 
