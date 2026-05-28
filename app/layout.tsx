@@ -95,6 +95,20 @@ export default async function RootLayout({
   const lang = await detectLang()
   return (
     <html lang={lang} className={`${pressStart.variable} h-full`}>
+      <head>
+        {/* Required for TalkingHead CDN ESM — must appear before any module scripts */}
+        <script
+          type="importmap"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              imports: {
+                three: 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js',
+                'three/': 'https://cdn.jsdelivr.net/npm/three@0.180.0/',
+              },
+            }),
+          }}
+        />
+      </head>
       <body className="bg-[#0a0a0a] text-white min-h-full flex flex-col">
         <LangProvider initialLang={lang}>
           <NavBar />

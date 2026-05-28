@@ -3,10 +3,13 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import { useLang } from '@/lib/i18n/context'
 import AiBjPanel from './AiBjPanel'
+
+const AvatarOverlay = dynamic(() => import('./AvatarOverlay'), { ssr: false })
 
 interface Props {
   game: Game
@@ -103,13 +106,17 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
             </button>
           </div>
           <div className="relative flex flex-row flex-1 min-h-0">
-            <div className="flex-1 min-h-0 pb-[53px] md:pb-0">
+            <div className="relative flex-1 min-h-0 pb-[53px] md:pb-0">
               <iframe
                 src={game.play_url}
                 className="w-full h-full border-0"
                 allow="fullscreen; autoplay"
                 title={game.title}
               />
+              {/* 3D AJ avatar overlay — bottom-right of game area */}
+              <div className="absolute bottom-16 right-3 md:bottom-4 md:right-4 z-10 pointer-events-none" style={{ width: 180, height: 240 }}>
+                <AvatarOverlay />
+              </div>
             </div>
             <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} />
           </div>

@@ -170,15 +170,20 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
       if (!res.ok || !res.body) throw new Error()
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
+      let fullText = ''
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
         const chunk = decoder.decode(value)
+        fullText += chunk
         setMessages(prev => {
           const u = [...prev]
           u[u.length - 1] = { ...u[u.length - 1], content: u[u.length - 1].content + chunk }
           return u
         })
+      }
+      if (fullText.trim()) {
+        window.dispatchEvent(new CustomEvent('avatar:speak', { detail: { text: fullText.trim() } }))
       }
     } catch {
       setMessages(prev => {
