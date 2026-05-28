@@ -24,10 +24,9 @@ export default function AvatarOverlay() {
     let cancelled = false
 
     async function init() {
-      const { TalkingHead } = await import(
-        // @ts-expect-error CDN ESM — no type declarations
-        'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.3/modules/talkinghead.mjs'
-      )
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const { TalkingHead } = await import(/* webpackIgnore: true */ '/talkinghead.mjs')
       if (cancelled || !containerRef.current) return
 
       const head = new TalkingHead(containerRef.current, {
