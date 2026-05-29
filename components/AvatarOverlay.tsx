@@ -49,6 +49,7 @@ export default function AvatarOverlay() {
       console.log('[Avatar] Creating TalkingHead instance...')
       const head = new TalkingHead(containerRef.current, {
         ttsEndpoint: `https://texttospeech.googleapis.com/v1/text:synthesize?key=${TTS_KEY}`,
+        lipsyncModules: ['en'],
         cameraView: 'upper',
       })
 
@@ -57,7 +58,7 @@ export default function AvatarOverlay() {
         url: AVATAR_URL,
         body: 'F',
         avatarMood: 'neutral',
-        ttsLang: 'ko-KR',
+        ttsLang: 'en-US',
       })
 
       console.log('[Avatar] Avatar ready!')
@@ -90,7 +91,7 @@ export default function AvatarOverlay() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               input: { text },
-              voice: { languageCode: 'ko-KR', name: 'ko-KR-Wavenet-A' },
+              voice: { languageCode: 'en-US', name: 'en-US-Wavenet-F' },
               audioConfig: { audioEncoding: 'MP3' },
             }),
           }
@@ -105,7 +106,20 @@ export default function AvatarOverlay() {
         const ctx = getAudioCtx()
         if (ctx.state === 'suspended') await ctx.resume()
         const audio = await ctx.decodeAudioData(bytes.buffer.slice(0))
-        head.speakAudio({ audio })
+
+        // English word-timing lipsync
+        const words = text.split(/\s+/).filter(Boolean)
+        const totalMs = audio.duration * 1000
+        const perWord = totalMs / Math.max(words.length, 1)
+        head.speakAudio(
+          {
+            audio,
+            words,
+            wtimes: words.map((_, i) => i * perWord),
+            wdurations: words.map(() => perWord * 0.85),
+          },
+          { lipsyncLang: 'en' }
+        )
       } catch (err) {
         console.error('[Avatar] speak error:', err)
       }

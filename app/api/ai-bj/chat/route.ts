@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
 ${gameContext}
 
-규칙: 10자 이내. 한 단어~짧은 감탄 수준으로만.`
+Rule: Keep it under 10 words. One short punchy phrase only.`
 
   // Claude requires messages to start with 'user' and strictly alternate roles
   const sanitized: ChatMessage[] = []
