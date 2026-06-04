@@ -403,9 +403,9 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
               style={{ transform: 'translateX(10px) scaleX(1)', willChange: 'transform', transformOrigin: 'center bottom' }}
             >
               <div style={{
-                animation: charState === 'walk' ? 'charBounce 0.38s ease-in-out infinite'
-                  : charState === 'die' ? 'charDie 0.6s ease-in forwards'
-                  : 'charEject 0.5s ease-in forwards',
+                animation: charState === 'die' ? 'charDie 0.6s ease-in forwards'
+                  : charState === 'eject' ? 'charEject 0.5s ease-in forwards'
+                  : 'none',
               }}>
                 <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-800/60">
                   <Image

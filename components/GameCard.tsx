@@ -51,9 +51,12 @@ export default function GameCard({ game }: GameCardProps) {
 
   return (
     <>
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={handlePlay}
-        className="group block w-full text-left"
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePlay() } }}
+        className="group block w-full text-left cursor-pointer"
       >
         <div className="bg-[#111] border border-gray-800 group-hover:border-[#00ff41] transition-all duration-200 overflow-hidden">
           <div className="relative aspect-video w-full overflow-hidden bg-gray-900">
@@ -112,7 +115,7 @@ export default function GameCard({ game }: GameCardProps) {
             </div>
           </div>
         </div>
-      </button>
+      </div>
 
       {agentGate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4" onClick={() => setAgentGate(null)}>
