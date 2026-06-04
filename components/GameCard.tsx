@@ -71,11 +71,18 @@ export default function GameCard({ game }: GameCardProps) {
             </div>
           </div>
           <div className="p-3">
-            <span
-              className={`inline-block font-pixel text-[9px] px-2 py-1 text-white ${GENRE_COLORS[game.genre]}`}
-            >
-              {GENRE_LABELS[game.genre]}
-            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span
+                className={`inline-block font-pixel text-[9px] px-2 py-1 text-white ${GENRE_COLORS[game.genre]}`}
+              >
+                {GENRE_LABELS[game.genre]}
+              </span>
+              {game.language && (
+                <span className="inline-block font-pixel text-[9px] px-2 py-1 border border-gray-700 text-gray-400">
+                  {game.language === 'ko' ? '한국어' : 'EN'}
+                </span>
+              )}
+            </div>
             <h3 className="mt-2 text-sm font-medium text-gray-100 truncate leading-tight">
               {game.title}
             </h3>

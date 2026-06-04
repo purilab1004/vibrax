@@ -7,6 +7,11 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Game, Genre } from '@/lib/supabase/types'
 
+const LANGUAGES = [
+  { value: 'ko', label: '한국어' },
+  { value: 'en', label: 'English' },
+]
+
 const GENRES: { value: Genre; label: string }[] = [
   { value: 'action', label: 'ACTION' },
   { value: 'adventure', label: 'ADVENTURE' },
@@ -26,9 +31,12 @@ interface EditingGame {
   title: string
   genre: Genre
   description: string
+  language: string
+  game_manual: string
   play_url: string
   thumbnail_url: string
   newThumbnail?: File | null
+  newManual?: File | null
 }
 
 export default function ProfilePage() {
@@ -149,16 +157,23 @@ export default function ProfilePage() {
         thumbnailUrl = publicUrl
       }
 
+      let gameManual = editingGame.game_manual || null
+      if (editingGame.newManual) {
+        gameManual = await editingGame.newManual.text()
+      }
+
       const { error } = await supabase.from('games').update({
         title: editingGame.title,
         genre: editingGame.genre,
         description: editingGame.description.trim() || null,
+        language: editingGame.language || null,
+        game_manual: gameManual,
         play_url: editingGame.play_url,
         thumbnail_url: thumbnailUrl,
       } as never).eq('id', editingGame.id)
 
       if (error) { flash(setGameMsg, '저장 실패: ' + error.message, false); return }
-      setGames(prev => prev.map(g => g.id === editingGame.id ? { ...g, title: editingGame.title, genre: editingGame.genre, description: editingGame.description.trim() || null, play_url: editingGame.play_url, thumbnail_url: thumbnailUrl } : g))
+      setGames(prev => prev.map(g => g.id === editingGame.id ? { ...g, title: editingGame.title, genre: editingGame.genre, description: editingGame.description.trim() || null, language: editingGame.language || null, game_manual: gameManual, play_url: editingGame.play_url, thumbnail_url: thumbnailUrl } : g))
       setEditingGame(null)
       flash(setGameMsg, '수정되었습니다.', true)
     })
@@ -348,13 +363,19 @@ export default function ProfilePage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`font-pixel text-[8px] px-1.5 py-0.5 text-white ${GENRE_COLORS[game.genre]}`}>{game.genre.toUpperCase()}</span>
+                      {game.language && (
+                        <span className="font-pixel text-[8px] px-1.5 py-0.5 text-gray-300 border border-gray-700">{game.language === 'ko' ? '한국어' : 'EN'}</span>
+                      )}
+                      {game.game_manual && (
+                        <span className="font-pixel text-[8px] px-1.5 py-0.5 text-gray-400 border border-gray-800">📄 MD</span>
+                      )}
                     </div>
                     <p className="text-sm text-white truncate font-medium">{game.title}</p>
                     <p className="text-xs text-gray-500 truncate mt-0.5">{game.play_url}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
-                      onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, newThumbnail: null })}
+                      onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, newThumbnail: null, newManual: null })}
                       className="font-pixel text-[9px] border border-gray-700 text-gray-400 hover:border-[#00ff41] hover:text-[#00ff41] px-3 py-1.5 transition-colors tracking-widest"
                     >
                       EDIT
@@ -412,6 +433,12 @@ export default function ProfilePage() {
                 <input className={inputClass} value={editingGame.title} onChange={e => setEditingGame(prev => prev ? { ...prev, title: e.target.value } : null)} />
               </div>
               <div>
+                <label className="block font-pixel text-[9px] text-gray-500 tracking-widest mb-2">게임 언어</label>
+                <select className={inputClass} value={editingGame.language} onChange={e => setEditingGame(prev => prev ? { ...prev, language: e.target.value } : null)}>
+                  {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                </select>
+              </div>
+              <div>
                 <label className="block font-pixel text-[9px] text-gray-500 tracking-widest mb-2">AI AJ 게임 설명</label>
                 <textarea
                   rows={3}
@@ -421,6 +448,24 @@ export default function ProfilePage() {
                   onChange={e => setEditingGame(prev => prev ? { ...prev, description: e.target.value } : null)}
                   placeholder="조작 방법, 적, 아이템, 목표 등을 설명해주세요"
                 />
+              </div>
+              <div>
+                <label className="block font-pixel text-[9px] text-gray-500 tracking-widest mb-2">
+                  게임 메뉴얼 <span className="text-gray-600 normal-case font-sans text-[9px]">(.md 파일)</span>
+                </label>
+                {editingGame.game_manual && !editingGame.newManual && (
+                  <p className="text-[10px] text-[#00ff41] mb-2">✓ 메뉴얼 등록됨 — 새 파일 업로드 시 교체됩니다</p>
+                )}
+                <input
+                  type="file"
+                  accept=".md,text/markdown,text/plain"
+                  onChange={e => setEditingGame(prev => prev ? { ...prev, newManual: e.target.files?.[0] ?? null } : null)}
+                  className="w-full bg-[#0d0d0d] border border-gray-700 px-4 py-2.5 text-sm text-gray-400
+                    file:mr-4 file:py-1 file:px-3 file:border-0
+                    file:bg-gray-700 file:text-white file:text-[10px] file:font-pixel file:cursor-pointer
+                    file:hover:bg-gray-600 file:transition-colors"
+                />
+                {editingGame.newManual && <p className="text-xs text-gray-400 mt-1">선택됨: {editingGame.newManual.name}</p>}
               </div>
               <div>
                 <label className="block font-pixel text-[9px] text-gray-500 tracking-widest mb-2">GENRE</label>

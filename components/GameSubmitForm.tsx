@@ -6,6 +6,11 @@ import { createClient } from '@/lib/supabase/client'
 import type { Genre } from '@/lib/supabase/types'
 import { useLang } from '@/lib/i18n/context'
 
+const LANGUAGES = [
+  { value: 'ko', label: '한국어' },
+  { value: 'en', label: 'English' },
+]
+
 const GENRES: { value: Genre; label: string }[] = [
   { value: 'action', label: 'ACTION' },
   { value: 'adventure', label: 'ADVENTURE' },
@@ -17,6 +22,8 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [genre, setGenre] = useState<Genre>('action')
+  const [language, setLanguage] = useState('ko')
+  const [manualFile, setManualFile] = useState<File | null>(null)
   const [playUrl, setPlayUrl] = useState('')
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -50,11 +57,18 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
         data: { publicUrl },
       } = supabase.storage.from('thumbnails').getPublicUrl(path)
 
+      let gameManual: string | null = null
+      if (manualFile) {
+        gameManual = await manualFile.text()
+      }
+
       const { error: insertError } = await supabase.from('games').insert([
         {
           title,
           genre,
           description: description.trim() || null,
+          language,
+          game_manual: gameManual,
           play_url: playUrl,
           thumbnail_url: publicUrl,
           user_id: userId,
@@ -92,6 +106,21 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
 
       <div>
         <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
+          게임 언어
+        </label>
+        <select
+          value={language}
+          onChange={e => setLanguage(e.target.value)}
+          className={inputClass}
+        >
+          {LANGUAGES.map(l => (
+            <option key={l.value} value={l.value}>{l.label}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
           AI AJ 게임 설명 <span className="text-gray-600 normal-case font-sans text-[10px]">(선택 — AJ가 게임 방식을 이해하는 데 사용)</span>
         </label>
         <textarea
@@ -103,6 +132,25 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           className={inputClass + ' resize-none'}
         />
         <p className="text-[10px] text-gray-600 mt-1">{description.length}/500 — 자세할수록 AJ가 더 정확하게 중계해요</p>
+      </div>
+
+      <div>
+        <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
+          게임 메뉴얼 <span className="text-gray-600 normal-case font-sans text-[10px]">(선택 — .md 파일 / 실행 방식·진행 방식 설명)</span>
+        </label>
+        <input
+          type="file"
+          accept=".md,text/markdown,text/plain"
+          onChange={e => setManualFile(e.target.files?.[0] ?? null)}
+          className="w-full bg-[#0d0d0d] border border-gray-700 px-4 py-3 text-sm text-gray-400
+            file:mr-4 file:py-1 file:px-3 file:border-0
+            file:bg-gray-700 file:text-white file:text-[10px] file:font-pixel file:cursor-pointer
+            file:hover:bg-gray-600 file:transition-colors"
+        />
+        {manualFile && (
+          <p className="text-xs text-gray-400 mt-1">선택됨: {manualFile.name}</p>
+        )}
+        <p className="text-[10px] text-gray-600 mt-1">AJ가 이 파일을 읽고 게임 진행 방식을 이해해 더 정확하게 방송합니다</p>
       </div>
 
       <div>
