@@ -47,38 +47,26 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
   const [mobileOpen, setMobileOpen] = useState(false)
   const [floatingMsg, setFloatingMsg] = useState<{ text: string; key: number } | null>(null)
 
-  const [charState, setCharState] = useState<'walk' | 'die' | 'eject'>('walk')
+  // 아바타를 데스크탑/모바일 한 곳에만 마운트하기 위한 뷰포트 감지
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  )
 
   const isStreamingRef = useRef(false)
   const messagesRef = useRef<Message[]>([])
   const prevStreaming = useRef(false)
   const commentaryIdx = useRef(0)
-  const yardCharRef = useRef<HTMLDivElement>(null)
-  const walkPosRef = useRef(10)
-  const walkDirRef = useRef(1)
-
 
   useEffect(() => { isStreamingRef.current = isStreaming }, [isStreaming])
   useEffect(() => { messagesRef.current = messages }, [messages])
 
-  // Walk animation (RAF-based, no re-renders)
   useEffect(() => {
-    let animId: number
-    const walk = () => {
-      // Mobile single character
-      const el = yardCharRef.current
-      if (el && charState === 'walk') {
-        const maxPos = (el.parentElement?.offsetWidth ?? 320) - 44
-        walkPosRef.current += walkDirRef.current * 0.7
-        if (walkPosRef.current >= maxPos) { walkPosRef.current = maxPos; walkDirRef.current = -1 }
-        if (walkPosRef.current <= 8) { walkPosRef.current = 8; walkDirRef.current = 1 }
-        el.style.transform = `translateX(${walkPosRef.current}px) scaleX(${walkDirRef.current})`
-      }
-      animId = requestAnimationFrame(walk)
-    }
-    animId = requestAnimationFrame(walk)
-    return () => cancelAnimationFrame(animId)
-  }, [charState])
+    const mq = window.matchMedia('(max-width: 767px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   // Always scroll to bottom — instant during streaming, smooth otherwise
   const endRef = useRef<HTMLDivElement>(null)
@@ -86,27 +74,16 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
     endRef.current?.scrollIntoView({ behavior: isStreaming ? 'instant' : 'smooth' })
   }, [messages, isStreaming])
 
-  // Floating message + death trigger
+  // Floating message (mobile)
   useEffect(() => {
     if (prevStreaming.current && !isStreaming && !mobileOpen) {
       const last = messagesRef.current[messagesRef.current.length - 1]
       if (last?.role === 'assistant' && last.content) {
         setFloatingMsg({ text: last.content, key: Date.now() })
-        const deathWords = ['죽', '게임오버', 'game over', '실패', '졌', '탈락', '아웃', '넘어', '떨어', '충돌', '끝났']
-        const isDead = deathWords.some(w => last.content.toLowerCase().includes(w))
-        if (isDead && charState === 'walk') {
-          setCharState('die')
-          setTimeout(() => setCharState('eject'), 650)
-          setTimeout(() => {
-            walkPosRef.current = 10
-            walkDirRef.current = 1
-            setCharState('walk')
-          }, 1300)
-        }
       }
     }
     prevStreaming.current = isStreaming
-  }, [isStreaming, mobileOpen, charState])
+  }, [isStreaming, mobileOpen])
 
   // Core AJ stream function
   const streamAj = useCallback(async (
@@ -319,7 +296,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
 
         {/* ─── Desktop: 3D AJ avatar ─── */}
         <div className="shrink-0 border-t border-gray-800/40 bg-[#050508]" style={{ height: '220px' }}>
-          <AvatarOverlay />
+          {!isMobile && <AvatarOverlay />}
         </div>
 
         <div className={`px-3 py-3 border-t border-gray-800 shrink-0 border-l-2 ${persona.borderColor}`}>
@@ -367,6 +344,15 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
 
       {/* ─── Mobile: bottom sheet ─── */}
       <div className="md:hidden pointer-events-none">
+        {/* Mobile: 3D AJ avatar, bottom-right */}
+        {isMobile && (
+          <div
+            className="absolute right-2 z-10 overflow-hidden rounded-lg border border-gray-800 bg-[#050508] pointer-events-none"
+            style={{ bottom: '72px', width: 116, height: 150 }}
+          >
+            <AvatarOverlay />
+          </div>
+        )}
         {mobileOpen && (
           <div className="absolute inset-0 z-10 bg-black/40 pointer-events-auto" onClick={() => setMobileOpen(false)} />
         )}
@@ -387,38 +373,6 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             </div>
             {messageList}
             {inputBar}
-          </div>
-          {/* ─── Character yard ─── */}
-          <div className="relative h-11 overflow-hidden bg-[#060606] pointer-events-none shrink-0">
-            <div className="absolute inset-0 flex items-start pt-1.5 px-3 gap-5 opacity-20 pointer-events-none">
-              {[0,1,2,3,4,5,6,7,8].map(i => (
-                <span key={i} className="text-[8px] text-gray-400 shrink-0" style={{ marginTop: `${(i * 11) % 10}px` }}>·</span>
-              ))}
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 h-3 bg-[#0d0d0d]" />
-            <div className="absolute bottom-3 left-0 right-0 h-px bg-[#00ff41]/10" />
-            <div
-              ref={yardCharRef}
-              className="absolute bottom-3"
-              style={{ transform: 'translateX(10px) scaleX(1)', willChange: 'transform', transformOrigin: 'center bottom' }}
-            >
-              <div style={{
-                animation: charState === 'die' ? 'charDie 0.6s ease-in forwards'
-                  : charState === 'eject' ? 'charEject 0.5s ease-in forwards'
-                  : 'none',
-              }}>
-                <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-800/60">
-                  <Image
-                    src={agentConfig?.avatarUrl || '/aibot.png'}
-                    alt="character"
-                    width={24}
-                    height={24}
-                    className="w-full h-full object-cover"
-                    unoptimized
-                  />
-                </div>
-              </div>
-            </div>
           </div>
 
           <button
