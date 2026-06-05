@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
@@ -37,6 +37,14 @@ export default function GameCard({ game }: GameCardProps) {
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
   const supabase = createClient()
   const router = useRouter()
+
+  // 모달이 열리면 뒤 홈페이지 스크롤 잠금
+  useEffect(() => {
+    if (!open && !agentGate) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [open, agentGate])
 
   const handlePlay = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -158,7 +166,7 @@ export default function GameCard({ game }: GameCardProps) {
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex flex-col bg-black/95"
+          className="fixed inset-0 z-50 flex flex-col bg-black"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
           {/* Header bar */}

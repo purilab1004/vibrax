@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
@@ -24,6 +24,14 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
   const { T } = useLang()
   const supabase = createClient()
   const router = useRouter()
+
+  // 모달이 열리면 뒤 홈페이지 스크롤 잠금
+  useEffect(() => {
+    if (!open && !agentGate) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [open, agentGate])
 
   const handlePlay = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -86,7 +94,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex flex-col bg-black/95"
+          className="fixed inset-0 z-50 flex flex-col bg-black"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-[#0a0a0a] shrink-0">
