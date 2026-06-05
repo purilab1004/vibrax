@@ -55,6 +55,11 @@ body {
   100% { transform: translateX(-120px); opacity: 0; }
 }
 
+@keyframes titleRise {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
 /* Prevent iOS Safari zoom on input focus */
 @media screen and (max-width: 768px) {
   input, textarea, select {

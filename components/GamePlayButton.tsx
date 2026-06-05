@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import { useLang } from '@/lib/i18n/context'
 import AiBjPanel from './AiBjPanel'
+import LiveTitleTicker from './LiveTitleTicker'
 
 interface Props {
   game: Game
@@ -89,15 +90,15 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-[#0a0a0a] shrink-0">
-            <div className="flex items-center gap-3">
-              <span className={`font-pixel text-[9px] px-2 py-1 text-white ${genreColor}`}>
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <span className={`font-pixel text-[9px] px-2 py-1 text-white shrink-0 ${genreColor}`}>
                 {genreLabel}
               </span>
-              <span className="text-sm font-medium text-white">{game.title}</span>
+              <LiveTitleTicker title={game.title} />
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="font-pixel text-[10px] text-gray-400 hover:text-[#00ff41] transition-colors px-3 py-1 border border-gray-700 hover:border-[#00ff41]"
+              className="shrink-0 ml-3 font-pixel text-[10px] text-gray-400 hover:text-[#00ff41] transition-colors px-3 py-1 border border-gray-700 hover:border-[#00ff41]"
             >
               ✕ CLOSE
             </button>

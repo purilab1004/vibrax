@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import LikeButton from './LikeButton'
 import AiBjPanel from './AiBjPanel'
+import LiveTitleTicker from './LiveTitleTicker'
 import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 
 const GENRE_LABELS: Record<Game['genre'], string> = {
@@ -162,17 +163,17 @@ export default function GameCard({ game }: GameCardProps) {
         >
           {/* Header bar */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-[#0a0a0a] shrink-0">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <span
-                className={`font-pixel text-[9px] px-2 py-1 text-white ${GENRE_COLORS[game.genre]}`}
+                className={`font-pixel text-[9px] px-2 py-1 text-white shrink-0 ${GENRE_COLORS[game.genre]}`}
               >
                 {GENRE_LABELS[game.genre]}
               </span>
-              <span className="text-sm font-medium text-white">{game.title}</span>
+              <LiveTitleTicker title={game.title} />
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="font-pixel text-[10px] text-gray-400 hover:text-[#00ff41] transition-colors px-3 py-1 border border-gray-700 hover:border-[#00ff41]"
+              className="shrink-0 ml-3 font-pixel text-[10px] text-gray-400 hover:text-[#00ff41] transition-colors px-3 py-1 border border-gray-700 hover:border-[#00ff41]"
             >
               ✕ CLOSE
             </button>
