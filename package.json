@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
-    "@pixiv/three-vrm": "^3.5.4",
+    "@pixiv/three-vrm": "^3.5.3",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
     "next": "16.2.6",
