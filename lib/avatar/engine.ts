@@ -133,7 +133,10 @@ export class AvatarEngine {
         this.slots.set(cat, { variantId: desired, loaded })
         if (cat === 'face') { this.faceRef = loaded as LoadedFacePart; this.faceRef.setEyeColor(this.eyeColor) }
         loaded.setVisible(true)
-        if ((loaded as LoadedPart).root) this.toonify((loaded as LoadedPart).root)
+        // Only static GLB parts arrive as MeshStandardMaterial and need the toon pass.
+        // Spring/face parts load via VRMLoaderPlugin (MToon, already toon) and their
+        // `root` is the shared base scene — toonifying it again is a wasted full traversal.
+        if (resolved.kind === 'static') this.toonify((loaded as LoadedPart).root)
       } catch (err) {
         if (this.gen.get(cat) === g) console.error(`[avatar:${cat}] load failed`, err)
       }
@@ -193,7 +196,8 @@ export class AvatarEngine {
       if (this.speakTrack) {
         const tMs = performance.now() - this.speakStart
         aa = sampleViseme(this.speakTrack, tMs)
-        if (tMs > this.speakTrack[this.speakTrack.length - 1].t) this.speakTrack = null
+        const last = this.speakTrack[this.speakTrack.length - 1]
+        if (!last || tMs > last.t) this.speakTrack = null
       }
       em.setValue('aa', aa)
     }
