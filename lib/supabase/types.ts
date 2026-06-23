@@ -1,3 +1,5 @@
+import type { AvatarConfig } from '@/lib/avatar/config'
+
 export type Genre = 'action' | 'adventure' | 'strategy' | 'sports'
 
 export interface Game {
@@ -25,6 +27,7 @@ export interface Profile {
   id: string
   username: string
   created_at: string
+  avatar_config?: AvatarConfig | null
 }
 
 export type Database = {
