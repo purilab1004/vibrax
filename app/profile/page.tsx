@@ -1,11 +1,16 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Game, Genre } from '@/lib/supabase/types'
+import { loadAvatarConfig } from '@/lib/avatar/storage'
+import type { AvatarConfig } from '@/lib/avatar/config'
+
+const AvatarMiniView = dynamic(() => import('@/lib/avatar/companion/AvatarMiniView'), { ssr: false })
 
 const LANGUAGES = [
   { value: 'ko', label: '한국어' },
@@ -57,6 +62,7 @@ export default function ProfilePage() {
   const [agentAvatarUrl, setAgentAvatarUrl] = useState('')
   const [agentAvatarFile, setAgentAvatarFile] = useState<File | null>(null)
   const [agentMsg, setAgentMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [myAvatarConfig, setMyAvatarConfig] = useState<AvatarConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
@@ -68,6 +74,7 @@ export default function ProfilePage() {
       setUser(user)
       loadProfile(user.id)
       loadGames(user.id)
+      loadAvatarConfig(supabase, user.id).then(setMyAvatarConfig).catch(() => {})
       setAgentName(user.user_metadata?.agent_name ?? '')
       setAgentPersona(user.user_metadata?.agent_persona ?? '')
       setAgentAvatarUrl(user.user_metadata?.agent_avatar_url ?? '')
@@ -262,85 +269,106 @@ export default function ProfilePage() {
             <p className="text-[11px] text-gray-400 leading-relaxed">• 게임 진입 시 AGENT 설정이 필요해요</p>
           </div>
         </div>
-        {/* Avatar */}
-        <div>
-          <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">에이전트 프로필 사진</p>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full border-2 border-purple-700/50 overflow-hidden bg-gray-900 shrink-0 flex items-center justify-center">
-              {(agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl) ? (
-                <Image
-                  src={agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl}
-                  alt="agent avatar"
-                  width={64}
-                  height={64}
-                  className="w-full h-full object-cover"
-                  unoptimized
-                />
-              ) : (
-                <span className="text-2xl">🤖</span>
-              )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          {/* ── Col 1: 에이전트 설정 ── */}
+          <div className="space-y-5">
+            {/* Avatar */}
+            <div>
+              <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">에이전트 프로필 사진</p>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full border-2 border-purple-700/50 overflow-hidden bg-gray-900 shrink-0 flex items-center justify-center">
+                  {(agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl) ? (
+                    <Image
+                      src={agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl}
+                      alt="agent avatar"
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <span className="text-2xl">🤖</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/gif,image/webp"
+                    onChange={e => setAgentAvatarFile(e.target.files?.[0] ?? null)}
+                    className="w-full bg-[#0d0d0d] border border-gray-700 px-3 py-2 text-xs text-gray-400
+                      file:mr-3 file:py-1 file:px-3 file:border-0
+                      file:bg-purple-800 file:text-white file:text-[9px] file:font-pixel file:cursor-pointer
+                      file:hover:bg-purple-700 file:transition-colors"
+                  />
+                  {agentAvatarFile && <p className="text-[10px] text-gray-500 mt-1">{agentAvatarFile.name}</p>}
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/gif,image/webp"
-                onChange={e => setAgentAvatarFile(e.target.files?.[0] ?? null)}
-                className="w-full bg-[#0d0d0d] border border-gray-700 px-3 py-2 text-xs text-gray-400
-                  file:mr-3 file:py-1 file:px-3 file:border-0
-                  file:bg-purple-800 file:text-white file:text-[9px] file:font-pixel file:cursor-pointer
-                  file:hover:bg-purple-700 file:transition-colors"
-              />
-              {agentAvatarFile && <p className="text-[10px] text-gray-500 mt-1">{agentAvatarFile.name}</p>}
-            </div>
-          </div>
-        </div>
 
-        <div>
-          <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">에이전트 이름</p>
-          <input
-            className={inputClass + ' max-w-xs'}
-            value={agentName}
-            onChange={e => setAgentName(e.target.value)}
-            placeholder="예: 도라에몽, 철수, ..."
-            maxLength={20}
-          />
-        </div>
-        <div>
-          <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">성격 / 말투</p>
-          <textarea
-            className={inputClass + ' max-w-sm resize-none'}
-            rows={3}
-            value={agentPersona}
-            onChange={e => setAgentPersona(e.target.value)}
-            placeholder="예: 항상 긍정적이고 열정적인 게이머. 재밌으면 크게 리액션함."
-            maxLength={100}
-          />
-          <p className="text-[10px] text-gray-600 mt-1">{agentPersona.length}/100</p>
-        </div>
-        {agentMsg && <p className={`text-xs font-pixel tracking-widest ${agentMsg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{agentMsg.text}</p>}
-        <button
-          onClick={handleSaveAgent}
-          disabled={isPending || (!agentName.trim() && !agentPersona.trim())}
-          className="font-pixel text-[10px] bg-[#00ff41] text-black px-6 py-2.5 hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest"
-        >
-          {isPending ? 'SAVING...' : 'SAVE AGENT'}
-        </button>
-        <a href="/avatar" className="inline-block font-pixel text-[10px] border border-[#00ff41] text-[#00ff41] px-6 py-2.5 hover:bg-[#00ff41] hover:text-black transition-colors tracking-widest">
-          🎨 아바타 설정
-        </a>
-        {agentName.trim() && (
-          <div className="border border-purple-800/40 bg-purple-900/10 px-4 py-3 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full border border-purple-700/50 overflow-hidden bg-gray-900 shrink-0 flex items-center justify-center">
-              {agentAvatarUrl ? (
-                <Image src={agentAvatarUrl} alt={agentName} width={32} height={32} className="w-full h-full object-cover" unoptimized />
+            <div>
+              <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">에이전트 이름</p>
+              <input
+                className={inputClass + ' max-w-xs'}
+                value={agentName}
+                onChange={e => setAgentName(e.target.value)}
+                placeholder="예: 도라에몽, 철수, ..."
+                maxLength={20}
+              />
+            </div>
+            <div>
+              <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">성격 / 말투</p>
+              <textarea
+                className={inputClass + ' max-w-sm resize-none'}
+                rows={3}
+                value={agentPersona}
+                onChange={e => setAgentPersona(e.target.value)}
+                placeholder="예: 항상 긍정적이고 열정적인 게이머. 재밌으면 크게 리액션함."
+                maxLength={100}
+              />
+              <p className="text-[10px] text-gray-600 mt-1">{agentPersona.length}/100</p>
+            </div>
+            {agentMsg && <p className={`text-xs font-pixel tracking-widest ${agentMsg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{agentMsg.text}</p>}
+            <button
+              onClick={handleSaveAgent}
+              disabled={isPending || (!agentName.trim() && !agentPersona.trim())}
+              className="font-pixel text-[10px] bg-[#00ff41] text-black px-6 py-2.5 hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest"
+            >
+              {isPending ? 'SAVING...' : 'SAVE AGENT'}
+            </button>
+            {agentName.trim() && (
+              <div className="border border-purple-800/40 bg-purple-900/10 px-4 py-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full border border-purple-700/50 overflow-hidden bg-gray-900 shrink-0 flex items-center justify-center">
+                  {agentAvatarUrl ? (
+                    <Image src={agentAvatarUrl} alt={agentName} width={32} height={32} className="w-full h-full object-cover" unoptimized />
+                  ) : (
+                    <span className="text-sm">🤖</span>
+                  )}
+                </div>
+                <span className="font-pixel text-[9px] text-purple-400">{agentName}</span>
+                {agentPersona && <span className="text-xs text-gray-500 truncate">{agentPersona}</span>}
+              </div>
+            )}
+          </div>
+
+          {/* ── Col 2: 내 아바타 (게임 방송 BJ) ── */}
+          <div className="space-y-3">
+            <p className="font-pixel text-[9px] text-gray-600 tracking-widest">MY CHARACTER · 게임 방송 BJ</p>
+            <div className="relative w-full max-w-[260px] aspect-[3/4] border border-gray-800 bg-[#050508] overflow-hidden">
+              {myAvatarConfig ? (
+                <AvatarMiniView config={myAvatarConfig} />
               ) : (
-                <span className="text-sm">🤖</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
+                  <span className="text-3xl">🧍</span>
+                  <p className="text-[11px] text-gray-500">아직 저장한 아바타가 없어요</p>
+                </div>
               )}
             </div>
-            <span className="font-pixel text-[9px] text-purple-400">{agentName}</span>
-            {agentPersona && <span className="text-xs text-gray-500 truncate">{agentPersona}</span>}
+            <a href="/avatar" className="inline-block font-pixel text-[10px] border border-[#00ff41] text-[#00ff41] px-6 py-2.5 hover:bg-[#00ff41] hover:text-black transition-colors tracking-widest">
+              🎨 아바타 설정
+            </a>
+            <p className="text-[10px] text-gray-500 leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요.</p>
           </div>
-        )}
+        </div>
       </section>
 
       {/* ── My Games ── */}
