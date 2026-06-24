@@ -51,7 +51,7 @@ export default function AvatarEditorPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-gray-950">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-gray-950">
       <div className="flex items-center gap-4 px-4 h-12 shrink-0 border-b border-gray-800 bg-gray-900">
         <button
           onClick={() => router.push('/profile')}
@@ -65,9 +65,9 @@ export default function AvatarEditorPage() {
         <button
           onClick={handleSave}
           disabled={!ready || saving}
-          className="font-pixel text-[10px] bg-[#00ff41] text-black px-6 py-2 hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest"
+          className="font-pixel text-[11px] bg-[#00ff41] text-black px-7 py-2.5 hover:bg-[#00cc33] transition-colors disabled:opacity-40 tracking-widest shadow-[0_0_12px_rgba(0,255,65,0.35)]"
         >
-          {saving ? 'SAVING...' : '저장하기'}
+          {saving ? '저장 중…' : '💾 저장하기'}
         </button>
       </div>
       <div className="flex-1 min-h-0">
