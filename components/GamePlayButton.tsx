@@ -44,6 +44,8 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
     const persona = user.user_metadata?.agent_persona?.trim()
     const avatarUrl = user.user_metadata?.agent_avatar_url ?? ''
     setAgentConfig({ name, persona: persona ?? '', avatarUrl })
+    // 게임 제작자의 저장된 아바타를 BJ 로 사용 (없으면 AiBjPanel 이 기본 아바타 fallback)
+    loadAvatarConfig(supabase, game.user_id).then(setBjAvatarConfig).catch(() => {})
     setOpen(true)
     supabase.rpc('increment_view_count', { game_id: game.id }).then(() => {})
   }
@@ -123,7 +125,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
                 title={game.title}
               />
             </div>
-            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} />
+            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} />
           </div>
         </div>
       )}

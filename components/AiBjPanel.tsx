@@ -5,8 +5,10 @@ import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
+import type { AvatarConfig } from '@/lib/avatar/config'
 
 const AvatarOverlay = dynamic(() => import('./AvatarOverlay'), { ssr: false })
+const CustomBjOverlay = dynamic(() => import('@/lib/avatar/companion/CustomBjOverlay'), { ssr: false })
 
 
 interface Message {
@@ -27,6 +29,8 @@ interface Props {
   gameTitle: string
   gameDescription?: string | null
   agentConfig?: AgentConfig | null
+  // 게임 제작자의 저장된 아바타 — 있으면 BJ 3D 아바타로 사용(없으면 기본 AvatarOverlay)
+  bjAvatarConfig?: AvatarConfig | null
 }
 
 const AUTO_COMMENTARY = [
@@ -39,8 +43,9 @@ const AUTO_COMMENTARY = [
   '플레이어가 잘하고 있는지 못하고 있는지 게임 맥락에 맞게 짧게 외쳐줘.',
 ]
 
-export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig }: Props) {
+export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig }: Props) {
   const persona = AJ_PERSONAS[genre]
+  const bjAvatar = bjAvatarConfig ? <CustomBjOverlay config={bjAvatarConfig} /> : <AvatarOverlay />
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
@@ -296,7 +301,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
 
         {/* ─── Desktop: 3D AJ avatar ─── */}
         <div className="shrink-0 border-t border-gray-800/40 bg-[#050508]" style={{ height: '220px' }}>
-          {!isMobile && <AvatarOverlay />}
+          {!isMobile && bjAvatar}
         </div>
 
         <div className={`px-3 py-3 border-t border-gray-800 shrink-0 border-l-2 ${persona.borderColor}`}>
@@ -350,7 +355,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             className="absolute right-2 z-10 overflow-hidden rounded-lg border border-gray-800 bg-[#050508] pointer-events-none"
             style={{ bottom: '72px', width: 116, height: 150 }}
           >
-            <AvatarOverlay />
+            {isMobile && bjAvatar}
           </div>
         )}
         {mobileOpen && (
