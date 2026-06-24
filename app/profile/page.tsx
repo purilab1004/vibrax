@@ -240,13 +240,15 @@ export default function ProfilePage() {
       {/* ── Password ── */}
       <section className="border border-gray-800 bg-[#0d0d0d] p-6 space-y-4">
         <h2 className="font-pixel text-[10px] text-gray-400 tracking-widest">CHANGE PASSWORD</h2>
-        <div>
-          <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">NEW PASSWORD</p>
-          <input type="password" className={inputClass + ' max-w-xs'} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="최소 6자리" />
-        </div>
-        <div>
-          <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">CONFIRM PASSWORD</p>
-          <input type="password" className={inputClass + ' max-w-xs'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="비밀번호 재입력" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
+          <div>
+            <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">NEW PASSWORD</p>
+            <input type="password" className={inputClass} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="최소 6자리" />
+          </div>
+          <div>
+            <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">CONFIRM PASSWORD</p>
+            <input type="password" className={inputClass} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="비밀번호 재입력" />
+          </div>
         </div>
         {pwMsg && <p className={`text-xs font-pixel tracking-widest ${pwMsg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{pwMsg.text}</p>}
         <button onClick={handleChangePassword} disabled={isPending || !newPassword || !confirmPassword} className="font-pixel text-[10px] bg-[#00ff41] text-black px-6 py-2.5 hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest">
@@ -276,7 +278,7 @@ export default function ProfilePage() {
             <div>
               <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">에이전트 프로필 사진</p>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full border-2 border-purple-700/50 overflow-hidden bg-gray-900 shrink-0 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full border border-dashed border-gray-700 overflow-hidden bg-gray-900/50 shrink-0 flex items-center justify-center">
                   {(agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl) ? (
                     <Image
                       src={agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl}
@@ -287,7 +289,7 @@ export default function ProfilePage() {
                       unoptimized
                     />
                   ) : (
-                    <span className="text-2xl">🤖</span>
+                    <span className="font-pixel text-[8px] text-gray-600 tracking-widest">사진</span>
                   )}
                 </div>
                 <div className="flex-1">
@@ -308,7 +310,7 @@ export default function ProfilePage() {
             <div>
               <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">에이전트 이름</p>
               <input
-                className={inputClass + ' max-w-xs'}
+                className={inputClass}
                 value={agentName}
                 onChange={e => setAgentName(e.target.value)}
                 placeholder="예: 도라에몽, 철수, ..."
@@ -318,7 +320,7 @@ export default function ProfilePage() {
             <div>
               <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">성격 / 말투</p>
               <textarea
-                className={inputClass + ' max-w-sm resize-none'}
+                className={inputClass + ' resize-none'}
                 rows={3}
                 value={agentPersona}
                 onChange={e => setAgentPersona(e.target.value)}
@@ -337,14 +339,12 @@ export default function ProfilePage() {
             </button>
             {agentName.trim() && (
               <div className="border border-purple-800/40 bg-purple-900/10 px-4 py-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full border border-purple-700/50 overflow-hidden bg-gray-900 shrink-0 flex items-center justify-center">
-                  {agentAvatarUrl ? (
+                {agentAvatarUrl && (
+                  <div className="w-8 h-8 rounded-full border border-purple-700/50 overflow-hidden bg-gray-900 shrink-0">
                     <Image src={agentAvatarUrl} alt={agentName} width={32} height={32} className="w-full h-full object-cover" unoptimized />
-                  ) : (
-                    <span className="text-sm">🤖</span>
-                  )}
-                </div>
-                <span className="font-pixel text-[9px] text-purple-400">{agentName}</span>
+                  </div>
+                )}
+                <span className="font-pixel text-[9px] text-purple-400 shrink-0">{agentName}</span>
                 {agentPersona && <span className="text-xs text-gray-500 truncate">{agentPersona}</span>}
               </div>
             )}
