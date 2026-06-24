@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import { useLang } from '@/lib/i18n/context'
+import { loadAvatarConfig } from '@/lib/avatar/storage'
+import type { AvatarConfig } from '@/lib/avatar/config'
 import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
 
@@ -21,6 +23,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
   const [open, setOpen] = useState(false)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
+  const [bjAvatarConfig, setBjAvatarConfig] = useState<AvatarConfig | null>(null)
   const { T } = useLang()
   const supabase = createClient()
   const router = useRouter()

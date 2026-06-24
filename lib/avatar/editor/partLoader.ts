@@ -1,4 +1,4 @@
-import { VRM, VRMHumanBoneName, VRMLoaderPlugin } from '@pixiv/three-vrm'
+import { VRM, VRMHumanBoneName, VRMLoaderPlugin, MToonMaterial } from '@pixiv/three-vrm'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
@@ -10,6 +10,13 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 // 이 파일이 그 경로다. ASSET_SPEC §1 컨벤션 락(동일 본 이름 / A-pose / scale 1.0)을 전제로
 // 본 이름 매칭 후 boneInverses 를 재사용해 rebind 한다.
 // ───────────────────────────────────────────────────────────────────────────
+
+// 파츠 로더가 가시성을 '소유'해 숨긴 base 메시 표식(userData 키). 얼굴 교체 시 base 얼굴은
+// 삭제가 아니라 숨김으로 남는데, 에디터 메시 리스트(collectMeshInfos)가 이걸 그대로 수집하면
+//   ① swap 얼굴과 같은 부위 라벨로 중복 행이 뜨고
+//   ② 숨김 행을 토글하면 가시성 effect 가 로더의 숨김을 덮어써 두 얼굴이 겹친다(이중 소유 충돌).
+// → 이 표식이 달린 메시는 리스트에서 제외해 중복·충돌을 함께 차단한다. dispose 시 해제.
+export const SHADOWED_BY_PART = '__shadowedByPart'
 
 export interface LoadedPart {
   root: THREE.Object3D // base scene 에 추가된 객체(또는 head 본에 부착된 리지드 루트)
@@ -90,6 +97,57 @@ function rebindToBase(
   sm.frustumCulled = false // 변형으로 바운딩박스가 어긋나 컬링되는 사고 방지
 }
 
+// ─── MToon 입히기 (옷 GLB 파츠) ──────────────────────────────────────────────
+// 옷 파츠는 추출 시 gltf-transform prune 이 VRMC_materials_mtoon 을 떨궈 PBR(MeshStandardMaterial)
+// 로 로드된다 → 베이스 몸체·얼굴(MToon 툰)과 톤이 어긋난다. 런타임에 베이스컬러 텍스처/색을 옮겨
+// MToonMaterial 로 재구성해 톤을 맞춘다. 저작 shade 색은 prune 에서 소실 → male_base.vrm 실측
+// 표준값으로 합성(옷 소스 VRM 도 동일: toony 0.95 · shift -0.05 · shade≈base×0.87).
+//
+// 아웃라인(외곽선)은 의도적으로 안 붙인다: 소매단·프릴 등 촘촘한 의류 지오메트리에선 BackSide 확장
+// 외곽선이 겹쳐 검은 뭉침으로 보였다. 실루엣 외곽선은 base 몸체가 이미 갖고 있으므로 셰이딩 톤만 맞춘다.
+const MTOON_SHADE_MUL = 0.87 // 저작 shade 가 대략 base×0.85~0.9 라 그 중간값으로 근사
+
+function toMToon(src: THREE.Material): MToonMaterial {
+  const std = src as THREE.MeshStandardMaterial
+  const color = (std.color ?? new THREE.Color(1, 1, 1)).clone()
+  const mat = new MToonMaterial({})
+  mat.name = src.name
+  // 표면 속성 이식
+  mat.color = color
+  mat.map = std.map ?? null
+  mat.normalMap = std.normalMap ?? null
+  if (std.normalScale) mat.normalScale.copy(std.normalScale)
+  mat.emissiveMap = std.emissiveMap ?? null
+  if (std.emissive) mat.emissive = std.emissive.clone()
+  mat.transparent = src.transparent
+  mat.opacity = src.opacity
+  mat.alphaTest = src.alphaTest
+  mat.depthWrite = src.depthWrite
+  mat.side = src.side
+  // 툰 셰이딩 — base 몸체/얼굴과 동일 표준값(male_base.vrm 실측, 옷 소스 VRM 도 동일).
+  mat.shadeColorFactor = color.clone().multiplyScalar(MTOON_SHADE_MUL)
+  mat.shadeMultiplyTexture = std.map ?? null
+  mat.shadingToonyFactor = 0.95
+  mat.shadingShiftFactor = -0.05
+  // 알파 컷아웃(레이스/프릴, alphaMode MASK) 동기화: MToon 은 alphaTest 임계값을 별도 uniform 으로
+  // 들고 매 프레임 update(delta) 에서만 갱신한다(VRM 본체는 three-vrm 가 틱해 줌). 수동 생성한 옷
+  // 머티리얼은 틱되지 않으므로 uniform 이 0 으로 남아 컷아웃이 버려지지 않고 투명영역의 검정이 찍힌다.
+  // 옷은 UV 애니메이션이 없어 생성 시 1회 동기화로 충분하다.
+  mat.uniforms.alphaTest.value = mat.alphaTest
+  return mat
+}
+
+// 메시의 PBR 머티리얼을 MToon 으로 교체한다. 멀티프리미티브 파츠(예: 여자1 원피스 = 1메시 4프리미티브
+// → 머티리얼 배열 + 지오 그룹)도 슬롯별로 변환한다. 지오 그룹은 그대로 두므로 매핑 보존. 이미 MToon 이면 통과.
+function convertPartToMToon(mesh: THREE.Mesh): void {
+  const orig = mesh.material
+  const list = Array.isArray(orig) ? orig : [orig]
+  if (list.every((m) => m instanceof MToonMaterial)) return
+  const converted = list.map((m) => (m instanceof MToonMaterial ? m : toMToon(m)))
+  list.forEach((m) => { if (!(m instanceof MToonMaterial)) m.dispose() })
+  mesh.material = Array.isArray(orig) ? converted : converted[0]
+}
+
 // authored GLB 파츠 1개를 로드해 base VRM 에 조립한다.
 //   - 스킨드 파츠(상의/하의/스킨 헤어): SkinnedMesh 를 base 스켈레톤으로 rebind 후 scene 에 add
 //   - 리지드 파츠(고정 헤어): 스킨드 메시가 없으면 head 원시 본에 통째로 parent
@@ -115,6 +173,7 @@ export async function loadPart(url: string, baseVrm: VRM): Promise<LoadedPart> {
     // 스킨드 파츠: 메시만 떼어 base 스켈레톤에 rebind
     for (const sm of skinned) {
       rebindToBase(sm, baseBoneByName, missingBones)
+      convertPartToMToon(sm) // PBR → MToon (베이스 툰과 톤 일치)
       sm.removeFromParent()
       baseVrm.scene.add(sm)
     }
@@ -122,6 +181,10 @@ export async function loadPart(url: string, baseVrm: VRM): Promise<LoadedPart> {
     // 리지드 파츠: head 원시 본에 통째로 부착
     const headRaw = baseVrm.humanoid.getRawBoneNode(VRMHumanBoneName.Head)
     if (headRaw) {
+      gltf.scene.traverse((o) => {
+        const m = o as THREE.Mesh
+        if (m.isMesh) convertPartToMToon(m)
+      })
       headRaw.add(gltf.scene)
       rigid.push(gltf.scene)
     }
@@ -174,7 +237,8 @@ export async function loadPart(url: string, baseVrm: VRM): Promise<LoadedPart> {
 //   그리고 스탠드인은 base 보다 2.5cm 커서 헤어도 그만큼 떠 보임(④와 동일, loadPart 버그 아님).
 
 export interface LoadedSpringPart {
-  mesh: THREE.SkinnedMesh | null
+  mesh: THREE.SkinnedMesh | null // 첫 메시(호환용); 전체는 meshes
+  meshes: THREE.SkinnedMesh[] // 헤어 메시 전체(female 은 앞머리+뒷머리 2개)
   graftedBones: THREE.Object3D[] // base Head 아래로 이식된 헤어 스프링 본 루트
   mergedJoints: number // base 매니저에 병합된 스프링 조인트 수
   missingBones: string[]
@@ -205,16 +269,17 @@ export async function loadSpringPart(url: string, baseVrm: VRM): Promise<LoadedS
     }
   }
 
-  // 2) 헤어 SkinnedMesh 를 base 스켈레톤으로 rebind (이식된 헤어 본은 이제 base scene 에 있어 매칭됨)
-  let mesh: THREE.SkinnedMesh | null = null
+  // 2) 헤어 SkinnedMesh(들)을 base 스켈레톤으로 rebind (이식된 헤어 본은 이제 base scene 에 있어 매칭됨).
+  //    female 헤어는 앞머리(Hair001) + 뒷머리(HairBack) 2메시 분산이라 '모든 SkinnedMesh'를 처리한다.
+  //    male 단일 헤어도 같은 경로(N=1). 스프링본 graft·조인트 병합은 이미 개수 무관.
+  const meshes: THREE.SkinnedMesh[] = []
   partVrm.scene.traverse((o) => {
     const sm = o as THREE.SkinnedMesh
-    if (sm.isSkinnedMesh && !mesh) mesh = sm
+    if (sm.isSkinnedMesh) meshes.push(sm)
   })
   const missingBones: string[] = []
-  if (mesh) {
-    const m = mesh as THREE.SkinnedMesh
-    const baseBoneByName = indexBaseBones(baseVrm) // 이식 후 호출 → 헤어 본 포함
+  const baseBoneByName = indexBaseBones(baseVrm) // 이식 후 호출 → 헤어 본 포함
+  for (const m of meshes) {
     rebindToBase(m, baseBoneByName, missingBones)
     m.removeFromParent()
     baseVrm.scene.add(m)
@@ -240,8 +305,7 @@ export async function loadSpringPart(url: string, baseVrm: VRM): Promise<LoadedS
       for (const j of merged) baseMgr.deleteJoint(j as any)
     }
     for (const b of graftedBones) b.removeFromParent()
-    if (mesh) {
-      const m = mesh as THREE.SkinnedMesh
+    for (const m of meshes) {
       m.removeFromParent()
       m.geometry.dispose()
       const mats = Array.isArray(m.material) ? m.material : [m.material]
@@ -249,9 +313,9 @@ export async function loadSpringPart(url: string, baseVrm: VRM): Promise<LoadedS
     }
   }
 
-  const setVisible = (v: boolean) => { if (mesh) (mesh as THREE.SkinnedMesh).visible = v }
+  const setVisible = (v: boolean) => { for (const m of meshes) m.visible = v }
 
-  return { mesh, graftedBones, mergedJoints, missingBones, setVisible, dispose }
+  return { mesh: meshes[0] ?? null, meshes, graftedBones, mergedJoints, missingBones, setVisible, dispose }
 }
 
 // ─── ⑦ 얼굴 교체 (B트랙: 모양 변형) ──────────────────────────────────────────
@@ -337,12 +401,22 @@ export async function loadFacePart(url: string, baseVrm: VRM): Promise<LoadedFac
     meshes.push(sm)
   }
 
-  // 3) 미러 페어링: base 얼굴 ↔ 새 얼굴을 머티리얼 이름으로 1:1 매칭(양쪽 동일 8 머티리얼)
+  // 3) 미러 페어링: base 얼굴 ↔ 새 얼굴을 머티리얼 이름으로 1:1 매칭.
+  //    짝 없는 새 메시(예: female_base 엔 없는 FaceEyelash)는 donor(표정 모프를 가진 아무 base 얼굴
+  //    메시)로 폴백 — VRoid 얼굴 프리미티브는 동일 57 표정 모프를 인덱스 정렬로 공유하므로 어느 base
+  //    얼굴이든 같은 influences 를 들고 있어, donor 로 구동해도 표정이 정확히 따라온다(페어 미러와 동일한
+  //    교차파일 인덱스 정렬 가정). donor 조차 없으면(이 base 에 표정 얼굴 메시 부재) 경고만.
+  const donor = baseFaceMeshes.find((bm) => bm.morphTargetInfluences?.length) ?? null
   const pairs: { base: THREE.SkinnedMesh; neo: THREE.SkinnedMesh }[] = []
+  const unpaired: string[] = []
   for (const neo of meshes) {
-    const base = baseFaceMeshes.find((bm) => matNameOf(bm) === matNameOf(neo))
-    if (base && base.morphTargetInfluences && neo.morphTargetInfluences) pairs.push({ base, neo })
+    if (!neo.morphTargetInfluences) continue
+    const exact = baseFaceMeshes.find((bm) => matNameOf(bm) === matNameOf(neo) && bm.morphTargetInfluences)
+    const base = exact ?? donor
+    if (base) pairs.push({ base, neo })
+    if (!exact && base) unpaired.push(matNameOf(neo))
   }
+  if (unpaired.length) console.warn(`[face] base 짝 없는 메시 ${unpaired.length} → donor 폴백 미러: ${unpaired.join(', ')}`)
   // 눈 lookAt 미러: base lookAt(bone 타입)이 base 눈 본을 돌리지만, 보이는 눈은 graft 된 변형 눈 본이다.
   //   base 눈 본의 local 회전을 graft 눈 본에 복사 → 새 얼굴 눈도 같은 타깃을 추종(같은 Head 부모라 정합).
   const baseLeftEye = baseVrm.humanoid.getRawBoneNode(VRMHumanBoneName.LeftEye)
@@ -387,10 +461,14 @@ export async function loadFacePart(url: string, baseVrm: VRM): Promise<LoadedFac
     }
   }
 
-  // 6) 가시성: 새 얼굴 ON → base 얼굴 숨김(겹침 방지) / OFF → base 얼굴 복원
+  // 6) 가시성: 새 얼굴 ON → base 얼굴 숨김(겹침 방지) / OFF → base 얼굴 복원.
+  //    숨길 때 base 얼굴에 SHADOWED_BY_PART 표식 → 에디터 리스트가 제외(중복 행·토글 충돌 차단).
   const setVisible = (v: boolean) => {
     meshes.forEach((m) => { m.visible = v })
-    baseFaceMeshes.forEach((m) => { m.visible = !v })
+    baseFaceMeshes.forEach((m) => {
+      m.visible = !v
+      m.userData[SHADOWED_BY_PART] = v
+    })
   }
 
   const dispose = () => {
@@ -401,7 +479,7 @@ export async function loadFacePart(url: string, baseVrm: VRM): Promise<LoadedFac
       mats.forEach((mat) => mat.dispose())
     }
     for (const b of graftedBones) b.removeFromParent()
-    baseFaceMeshes.forEach((m) => { m.visible = true }) // base 얼굴 복원
+    baseFaceMeshes.forEach((m) => { m.visible = true; delete m.userData[SHADOWED_BY_PART] }) // base 얼굴 복원 + 표식 해제
   }
 
   return { meshes, baseFaceMeshes, graftedBones, missingBones, sync, setEyeColor, setVisible, dispose }

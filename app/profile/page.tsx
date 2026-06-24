@@ -326,7 +326,7 @@ export default function ProfilePage() {
           {isPending ? 'SAVING...' : 'SAVE AGENT'}
         </button>
         <a href="/avatar" className="inline-block font-pixel text-[10px] border border-[#00ff41] text-[#00ff41] px-6 py-2.5 hover:bg-[#00ff41] hover:text-black transition-colors tracking-widest">
-          🎨 MY CHARACTER 만들기
+          🎨 아바타 설정
         </a>
         {agentName.trim() && (
           <div className="border border-purple-800/40 bg-purple-900/10 px-4 py-3 flex items-center gap-3">
