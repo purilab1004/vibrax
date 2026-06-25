@@ -10,6 +10,7 @@ import LikeButton from './LikeButton'
 import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
 import type { AvatarConfig } from '@/lib/avatar/config'
+import { countryFlag } from '@/lib/country'
 
 const GENRE_LABELS: Record<Game['genre'], string> = {
   action: 'ACTION',
@@ -29,12 +30,14 @@ interface GameCardProps {
   game: Game
   creatorName?: string | null
   creatorAvatarUrl?: string | null   // 제작자 아바타 프리뷰 PNG (avatar_config.previewUrl)
+  creatorCountry?: string | null     // 제작자 국가코드 (ISO alpha-2) → 국기
   bjAvatarConfig?: AvatarConfig | null // 제작자 저장 아바타 — 게임 내 BJ 로 사용
 }
 
 interface AgentConfig { name: string; persona: string; avatarUrl?: string }
 
-export default function GameCard({ game, creatorName, creatorAvatarUrl, bjAvatarConfig }: GameCardProps) {
+export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig }: GameCardProps) {
+  const flag = countryFlag(creatorCountry)
   const [open, setOpen] = useState(false)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
@@ -123,6 +126,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, bjAvatar
                   <span className="font-pixel text-[8px] text-gray-500">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
                 )}
               </div>
+              {flag && <span className="text-[12px] leading-none shrink-0" title={creatorCountry ?? ''}>{flag}</span>}
               <span className="font-pixel text-[9px] text-gray-400 truncate">{creatorName ?? 'unknown'}</span>
               <span className="flex items-center gap-0.5 text-[8px] text-red-500 font-pixel ml-auto shrink-0">
                 <span className="w-1 h-1 rounded-full bg-red-500 animate-pulse inline-block" />

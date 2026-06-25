@@ -41,6 +41,7 @@ async function GameGrid({ genre, q }: { genre?: string; q?: string }) {
           game={game}
           creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
           creatorAvatarUrl={game.profiles?.avatar_config?.previewUrl ?? null}
+          creatorCountry={game.profiles?.country ?? null}
           bjAvatarConfig={game.profiles?.avatar_config ?? null}
         />
       ))}

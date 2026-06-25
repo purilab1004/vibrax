@@ -141,6 +141,8 @@ export default function ProfilePage() {
     setCountry(code)
     startTransition(async () => {
       const { error } = await supabase.auth.updateUser({ data: { country: code || null } })
+      // 공개 표시용 — 게임 카드에서 다른 사용자가 읽도록 profiles 에도 저장
+      if (user) await supabase.from('profiles').update({ country: code || null } as never).eq('id', user.id)
       flash(setProfileMsg, error ? '저장 실패: ' + error.message : '국가가 저장되었습니다.', !error)
     })
   }

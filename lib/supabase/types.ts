@@ -35,6 +35,7 @@ export interface Profile {
 export interface GameCreator {
   username: string
   agent_name: string | null
+  country: string | null
   avatar_config: AvatarConfig | null
 }
 export type GameWithCreator = Game & { profiles: GameCreator | null }

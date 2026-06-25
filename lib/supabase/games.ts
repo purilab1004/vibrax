@@ -6,19 +6,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const WITH_AGENT = '*, profiles(username, agent_name, avatar_config)'
-const FALLBACK = '*, profiles(username, avatar_config)'
+// agent_name / country are newer public columns; either may not exist yet.
+// Try the most complete creator join first and degrade so the list never breaks.
+const SELECTS = [
+  '*, profiles(username, agent_name, country, avatar_config)',
+  '*, profiles(username, agent_name, avatar_config)',
+  '*, profiles(username, avatar_config)',
+]
 
 // Run a games select with the creator join, applying caller filters/modifiers.
 // `apply` receives the PostgREST query from `.select(...)` and returns it with
-// order/eq/single chained. Retries without agent_name on column-missing errors.
+// order/eq/single chained.
 export async function selectGamesWithCreator<T>(
   supabase: SupabaseClient,
   apply: (q: any) => any,
 ): Promise<T | null> {
-  let res = await apply(supabase.from('games').select(WITH_AGENT))
-  if (res.error) {
-    res = await apply(supabase.from('games').select(FALLBACK))
+  for (const sel of SELECTS) {
+    const res = await apply(supabase.from('games').select(sel))
+    if (!res.error) return (res.data ?? null) as T | null
   }
-  return (res.data ?? null) as T | null
+  return null
 }
