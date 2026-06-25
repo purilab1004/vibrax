@@ -17,6 +17,33 @@ const LANGUAGES = [
   { value: 'en', label: 'English' },
 ]
 
+const COUNTRIES: { code: string; flag: string; name: string }[] = [
+  { code: 'KR', flag: '🇰🇷', name: '대한민국' },
+  { code: 'US', flag: '🇺🇸', name: 'United States' },
+  { code: 'JP', flag: '🇯🇵', name: 'Japan' },
+  { code: 'CN', flag: '🇨🇳', name: 'China' },
+  { code: 'TW', flag: '🇹🇼', name: 'Taiwan' },
+  { code: 'HK', flag: '🇭🇰', name: 'Hong Kong' },
+  { code: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
+  { code: 'DE', flag: '🇩🇪', name: 'Germany' },
+  { code: 'FR', flag: '🇫🇷', name: 'France' },
+  { code: 'ES', flag: '🇪🇸', name: 'Spain' },
+  { code: 'IT', flag: '🇮🇹', name: 'Italy' },
+  { code: 'NL', flag: '🇳🇱', name: 'Netherlands' },
+  { code: 'CA', flag: '🇨🇦', name: 'Canada' },
+  { code: 'AU', flag: '🇦🇺', name: 'Australia' },
+  { code: 'BR', flag: '🇧🇷', name: 'Brazil' },
+  { code: 'MX', flag: '🇲🇽', name: 'Mexico' },
+  { code: 'IN', flag: '🇮🇳', name: 'India' },
+  { code: 'ID', flag: '🇮🇩', name: 'Indonesia' },
+  { code: 'VN', flag: '🇻🇳', name: 'Vietnam' },
+  { code: 'TH', flag: '🇹🇭', name: 'Thailand' },
+  { code: 'PH', flag: '🇵🇭', name: 'Philippines' },
+  { code: 'SG', flag: '🇸🇬', name: 'Singapore' },
+  { code: 'TR', flag: '🇹🇷', name: 'Türkiye' },
+  { code: 'RU', flag: '🇷🇺', name: 'Russia' },
+]
+
 const GENRES: { value: Genre; label: string }[] = [
   { value: 'action', label: 'ACTION' },
   { value: 'adventure', label: 'ADVENTURE' },
@@ -57,6 +84,7 @@ export default function ProfilePage() {
   const [profileMsg, setProfileMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const [gameMsg, setGameMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [country, setCountry] = useState('')
   const [agentName, setAgentName] = useState('')
   const [agentPersona, setAgentPersona] = useState('')
   const [agentAvatarUrl, setAgentAvatarUrl] = useState('')
@@ -75,6 +103,7 @@ export default function ProfilePage() {
       loadProfile(user.id)
       loadGames(user.id)
       loadAvatarConfig(supabase, user.id).then(setMyAvatarConfig).catch(() => {})
+      setCountry(user.user_metadata?.country ?? '')
       setAgentName(user.user_metadata?.agent_name ?? '')
       setAgentPersona(user.user_metadata?.agent_persona ?? '')
       setAgentAvatarUrl(user.user_metadata?.agent_avatar_url ?? '')
@@ -105,6 +134,14 @@ export default function ProfilePage() {
       setUsername(newUsername.trim())
       setEditingUsername(false)
       flash(setProfileMsg, '저장되었습니다.', true)
+    })
+  }
+
+  const handleChangeCountry = (code: string) => {
+    setCountry(code)
+    startTransition(async () => {
+      const { error } = await supabase.auth.updateUser({ data: { country: code || null } })
+      flash(setProfileMsg, error ? '저장 실패: ' + error.message : '국가가 저장되었습니다.', !error)
     })
   }
 
@@ -237,8 +274,25 @@ export default function ProfilePage() {
               <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="font-pixel text-[9px] text-gray-500 hover:text-[#00ff41] transition-colors border border-gray-800 hover:border-[#00ff41] px-3 py-1 tracking-widest">EDIT</button>
             </div>
           )}
-          {profileMsg && <p className={`text-xs font-pixel tracking-widest mt-2 ${profileMsg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{profileMsg.text}</p>}
         </div>
+
+        {/* Country */}
+        <div>
+          <p className="font-pixel text-[9px] text-gray-600 tracking-widest mb-2">COUNTRY</p>
+          <select
+            value={country}
+            onChange={e => handleChangeCountry(e.target.value)}
+            disabled={isPending}
+            className={inputClass + ' max-w-xs cursor-pointer disabled:opacity-50'}
+          >
+            <option value="">선택 안 함</option>
+            {COUNTRIES.map(c => (
+              <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {profileMsg && <p className={`text-xs font-pixel tracking-widest ${profileMsg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{profileMsg.text}</p>}
       </section>
 
       {/* ── Password ── */}
