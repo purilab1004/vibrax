@@ -28,11 +28,13 @@ export interface Profile {
   username: string
   created_at: string
   avatar_config?: AvatarConfig | null
+  agent_name?: string | null   // 공개 표시명(에이전트 이름) — 게임 카드/상세에 username 대신 노출
 }
 
 // 게임 + 제작자(올린 사람) 프로필 조인 — 리스트/카드에서 제작자 아바타·이름 표시용
 export interface GameCreator {
   username: string
+  agent_name: string | null
   avatar_config: AvatarConfig | null
 }
 export type GameWithCreator = Game & { profiles: GameCreator | null }

@@ -145,6 +145,10 @@ export default function ProfilePage() {
         },
       })
       if (error) { flash(setAgentMsg, '저장 실패: ' + error.message, false); return }
+      // 공개 표시명 — 다른 사용자가 게임 카드에서 읽을 수 있도록 profiles 에도 저장
+      if (user) {
+        await supabase.from('profiles').update({ agent_name: agentName.trim() || null } as never).eq('id', user.id)
+      }
       flash(setAgentMsg, '에이전트가 저장되었습니다.', true)
     })
   }
@@ -363,18 +367,10 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            {myAvatarConfig && (
-              <div className="max-w-[260px]">
-                <p className="font-pixel text-[8px] text-gray-600 tracking-widest mb-0.5">공개 닉네임</p>
-                <p className="text-sm text-[#00ff41] font-medium truncate">
-                  {myAvatarConfig.nickname || <span className="text-gray-500 text-xs">미설정 — 아바타 설정에서 닉네임을 정해주세요</span>}
-                </p>
-              </div>
-            )}
             <a href="/avatar" className="inline-block font-pixel text-[10px] border border-[#00ff41] text-[#00ff41] px-6 py-2.5 hover:bg-[#00ff41] hover:text-black transition-colors tracking-widest">
               🎨 아바타 설정
             </a>
-            <p className="text-[10px] text-gray-500 leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요. 게임 목록엔 아이디 대신 이 닉네임이 표시됩니다.</p>
+            <p className="text-[10px] text-gray-500 leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요. 게임 목록엔 아이디 대신 <span className="text-purple-400">에이전트 이름</span>이 표시됩니다.</p>
           </div>
         </div>
       </section>

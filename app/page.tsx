@@ -15,7 +15,7 @@ export default async function HomePage() {
   const supabase = await createClient()
   const { data: rawGames } = await supabase
     .from('games')
-    .select('*, profiles(username, avatar_config)')
+    .select('*, profiles(username, agent_name, avatar_config)')
     .order('created_at', { ascending: false })
   const games = rawGames as GameWithCreator[] | null
 
@@ -50,7 +50,7 @@ export default async function HomePage() {
                     <GameCard
                       key={game.id}
                       game={game}
-                      creatorName={game.profiles?.avatar_config?.nickname ?? game.profiles?.username ?? null}
+                      creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
                       creatorAvatarUrl={game.profiles?.avatar_config?.previewUrl ?? null}
                       bjAvatarConfig={game.profiles?.avatar_config ?? null}
                     />
