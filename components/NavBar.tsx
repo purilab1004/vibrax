@@ -85,7 +85,7 @@ export default function NavBar() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm">
-        <nav className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
+        <nav className="w-full px-5 h-14 flex items-center gap-4">
           <Link
             href="/"
             className="font-pixel text-[#00ff41] text-xs tracking-widest hover:text-white transition-colors shrink-0"
