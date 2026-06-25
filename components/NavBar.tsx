@@ -11,6 +11,7 @@ import type { Lang } from '@/lib/i18n/translations'
 export default function NavBar() {
   const [user, setUser] = useState<User | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [query, setQuery] = useState('')
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -33,6 +34,19 @@ export default function NavBar() {
     router.push('/')
     router.refresh()
   }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = query.trim()
+    setMenuOpen(false)
+    router.push(q ? `/games?q=${encodeURIComponent(q)}` : '/games')
+  }
+
+  const SearchIcon = () => (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
+      <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
+    </svg>
+  )
 
   const navLinkDesktop = (href: string, label: string) => (
     <Link
@@ -71,16 +85,32 @@ export default function NavBar() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm">
-        <nav className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+        <nav className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
           <Link
             href="/"
-            className="font-pixel text-[#00ff41] text-xs tracking-widest hover:text-white transition-colors"
+            className="font-pixel text-[#00ff41] text-xs tracking-widest hover:text-white transition-colors shrink-0"
           >
             VIBRAX
           </Link>
 
-          {/* ── Desktop nav ── */}
-          <div className="hidden md:flex items-center gap-6">
+          {/* ── Center: search ── */}
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-auto">
+            <div className="relative w-full">
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder={T.nav.searchPlaceholder}
+                className="w-full bg-[#111] border border-gray-800 focus:border-[#00ff41] rounded-none pl-9 pr-3 py-1.5 text-xs text-white placeholder-gray-600 outline-none transition-colors"
+                aria-label={T.nav.search}
+              />
+              <button type="submit" aria-label={T.nav.search} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#00ff41] transition-colors">
+                <SearchIcon />
+              </button>
+            </div>
+          </form>
+
+          {/* ── Desktop nav (right) ── */}
+          <div className="hidden md:flex items-center gap-6 shrink-0">
             {navLinkDesktop('/games', T.nav.games)}
             {navLinkDesktop('/about', T.nav.about)}
             {user ? (
@@ -110,7 +140,7 @@ export default function NavBar() {
           </div>
 
           {/* ── Mobile: lang switcher + hamburger ── */}
-          <div className="flex md:hidden items-center gap-3">
+          <div className="flex md:hidden items-center gap-3 ml-auto">
             <div className="flex items-center gap-1">
               {langBtn('ko', 'KO')}
               <span className="text-gray-700 text-[10px]">|</span>
@@ -154,8 +184,23 @@ export default function NavBar() {
         </div>
 
         {/* Menu items */}
-        <div className="flex flex-col px-8 pt-10 pb-6 flex-1 justify-between">
+        <div className="flex flex-col px-8 pt-8 pb-6 flex-1 justify-between">
           <nav className="flex flex-col">
+            {/* Mobile search */}
+            <form onSubmit={handleSearch} className="mb-6">
+              <div className="relative">
+                <input
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder={T.nav.searchPlaceholder}
+                  className="w-full bg-[#111] border border-gray-800 focus:border-[#00ff41] pl-10 pr-3 py-3 text-sm text-white placeholder-gray-600 outline-none transition-colors"
+                  aria-label={T.nav.search}
+                />
+                <button type="submit" aria-label={T.nav.search} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  <SearchIcon />
+                </button>
+              </div>
+            </form>
             {navLinkMobile('/games', T.nav.games)}
             {navLinkMobile('/about', T.nav.about)}
             {user ? (

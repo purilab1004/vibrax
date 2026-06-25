@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Press_Start_2P } from 'next/font/google'
 import './globals.css'
 import NavBar from '@/components/NavBar'
+import RightRail from '@/components/RightRail'
+import { Suspense } from 'react'
 import { LangProvider } from '@/lib/i18n/context'
 import { cookies, headers } from 'next/headers'
 import type { Lang } from '@/lib/i18n/translations'
@@ -98,8 +100,11 @@ export default async function RootLayout({
 <body className="bg-[#0a0a0a] text-white min-h-full flex flex-col">
         <LangProvider initialLang={lang}>
           <NavBar />
-          <main className="flex-1">{children}</main>
-          <footer className="border-t border-gray-800 py-6 px-6 mt-auto">
+          <Suspense fallback={null}>
+            <RightRail />
+          </Suspense>
+          <main className="flex-1 lg:pr-14">{children}</main>
+          <footer className="border-t border-gray-800 py-6 px-6 mt-auto lg:pr-14">
             <FooterCopyright />
           </footer>
         </LangProvider>
