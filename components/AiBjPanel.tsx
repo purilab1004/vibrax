@@ -31,6 +31,8 @@ interface Props {
   agentConfig?: AgentConfig | null
   // 게임 제작자의 저장된 아바타 — 있으면 BJ 3D 아바타로 사용(없으면 기본 AvatarOverlay)
   bjAvatarConfig?: AvatarConfig | null
+  // 게임 제작자의 공개 표시명(에이전트 이름) — 하단 BJ 프로필에 AJ 페르소나 대신 노출
+  bjName?: string | null
 }
 
 const AUTO_COMMENTARY = [
@@ -43,9 +45,12 @@ const AUTO_COMMENTARY = [
   '플레이어가 잘하고 있는지 못하고 있는지 게임 맥락에 맞게 짧게 외쳐줘.',
 ]
 
-export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig }: Props) {
+export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName }: Props) {
   const persona = AJ_PERSONAS[genre]
   const bjAvatar = bjAvatarConfig ? <CustomBjOverlay config={bjAvatarConfig} /> : <AvatarOverlay />
+  // 하단 BJ 프로필 — 제작자 에이전트 이름 + 아바타(없으면 AJ 페르소나 fallback)
+  const bjLabel = bjName?.trim() || persona.name
+  const bjPic = bjAvatarConfig?.previewUrl ?? null
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
@@ -307,11 +312,11 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         <div className={`px-3 py-3 border-t border-gray-800 shrink-0 border-l-2 ${persona.borderColor}`}>
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full border-2 ${persona.borderColor} overflow-hidden shrink-0`}>
-              <Image src="/aibot.png" alt={persona.name} width={40} height={40} className="w-full h-full object-cover" unoptimized />
+              <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={40} height={40} className={`w-full h-full object-cover ${bjPic ? 'object-top' : ''}`} unoptimized />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="font-pixel text-[10px] text-white">{persona.name}</span>
+                <span className="font-pixel text-[10px] text-white truncate">{bjLabel}</span>
                 <span className="flex items-center gap-0.5 text-[9px] text-red-500 font-pixel">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
                   LIVE
@@ -385,11 +390,11 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             className={`flex items-center gap-3 w-full px-4 py-3 bg-[#0d0d0d] border-t-2 ${persona.borderColor} active:brightness-125 transition-all`}
           >
             <div className={`w-8 h-8 rounded-full border-2 ${persona.borderColor} overflow-hidden shrink-0`}>
-              <Image src="/aibot.png" alt={persona.name} width={32} height={32} className="w-full h-full object-cover" unoptimized />
+              <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={32} height={32} className={`w-full h-full object-cover ${bjPic ? 'object-top' : ''}`} unoptimized />
             </div>
             <div className="flex flex-col items-start min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="font-pixel text-[11px] text-white">{persona.name}</span>
+                <span className="font-pixel text-[11px] text-white truncate">{bjLabel}</span>
                 <span className="flex items-center gap-1 text-[9px] text-red-400 font-pixel">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
                   LIVE

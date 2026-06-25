@@ -15,11 +15,12 @@ interface Props {
   game: Game
   genreColor: string
   genreLabel: string
+  bjName?: string | null   // 제작자 공개 표시명(에이전트 이름) — 하단 BJ 프로필용
 }
 
 interface AgentConfig { name: string; persona: string; avatarUrl?: string }
 
-export default function GamePlayButton({ game, genreColor, genreLabel }: Props) {
+export default function GamePlayButton({ game, genreColor, genreLabel, bjName }: Props) {
   const [open, setOpen] = useState(false)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
@@ -125,7 +126,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel }: Props) 
                 title={game.title}
               />
             </div>
-            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} />
+            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={bjName} />
           </div>
         </div>
       )}

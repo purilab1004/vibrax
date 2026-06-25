@@ -116,7 +116,7 @@ export default async function GameDetailPage({ params }: Props) {
             <LikeButton gameId={game.id} size="md" />
           </div>
         </div>
-        <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} />
+        <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
       </div>
     </div>
   )
