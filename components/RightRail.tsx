@@ -6,8 +6,8 @@ import { useState } from 'react'
 import { useLang } from '@/lib/i18n/context'
 import type { Genre } from '@/lib/supabase/types'
 
-// 우측 고정 레일 — 홈 + 장르별 게임 카테고리. 기본은 아이콘만, 토글(☰)로 이름 노출.
-// 데스크탑(lg+) 전용. 모바일은 헤더 햄버거 메뉴가 내비를 담당.
+// 좌측 고정 레일 — 홈 + 장르별 게임 카테고리. 기본은 아이콘만, 토글(☰)로 이름 노출.
+// 데스크탑(md+) 전용. 모바일은 헤더 햄버거 메뉴가 내비를 담당.
 
 const ICON = 'w-5 h-5 shrink-0'
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
@@ -41,7 +41,7 @@ export default function RightRail() {
 
   return (
     <aside
-      className={`hidden md:flex fixed top-14 right-0 bottom-0 z-40 flex-col overflow-hidden border-l border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm transition-[width] duration-200 ${open ? 'w-44' : 'w-14'}`}
+      className={`hidden md:flex fixed top-14 left-0 bottom-0 z-40 flex-col overflow-hidden border-r border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm transition-[width] duration-200 ${open ? 'w-44' : 'w-14'}`}
       aria-label="categories"
     >
       {/* 상단 우측 메뉴 토글 — 카테고리명 노출 */}

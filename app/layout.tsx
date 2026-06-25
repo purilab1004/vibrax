@@ -103,8 +103,8 @@ export default async function RootLayout({
           <Suspense fallback={null}>
             <RightRail />
           </Suspense>
-          <main className="flex-1 md:pr-14">{children}</main>
-          <footer className="border-t border-gray-800 py-6 px-6 mt-auto md:pr-14">
+          <main className="flex-1 md:pl-14">{children}</main>
+          <footer className="border-t border-gray-800 py-6 px-6 mt-auto md:pl-14">
             <FooterCopyright />
           </footer>
         </LangProvider>
