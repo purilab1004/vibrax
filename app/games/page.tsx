@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import GameCard from '@/components/GameCard'
 import GenreFilter from '@/components/GenreFilter'
 import { Suspense } from 'react'
-import type { Game, Genre } from '@/lib/supabase/types'
+import type { Genre, GameWithCreator } from '@/lib/supabase/types'
 
 const VALID_GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 
@@ -16,7 +16,7 @@ async function GameGrid({ genre }: { genre?: string }) {
 
   let query = supabase
     .from('games')
-    .select('*')
+    .select('*, profiles(username, avatar_config)')
     .order('created_at', { ascending: false })
 
   if (validGenre) {
@@ -24,7 +24,7 @@ async function GameGrid({ genre }: { genre?: string }) {
   }
 
   const { data: rawGames } = await query
-  const games = rawGames as Game[] | null
+  const games = rawGames as GameWithCreator[] | null
 
   if (!games || games.length === 0) {
     return (
@@ -37,7 +37,13 @@ async function GameGrid({ genre }: { genre?: string }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {games.map(game => (
-        <GameCard key={game.id} game={game} />
+        <GameCard
+          key={game.id}
+          game={game}
+          creatorName={game.profiles?.username ?? null}
+          creatorAvatarUrl={game.profiles?.avatar_config?.previewUrl ?? null}
+          bjAvatarConfig={game.profiles?.avatar_config ?? null}
+        />
       ))}
     </div>
   )

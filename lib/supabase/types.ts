@@ -30,6 +30,13 @@ export interface Profile {
   avatar_config?: AvatarConfig | null
 }
 
+// 게임 + 제작자(올린 사람) 프로필 조인 — 리스트/카드에서 제작자 아바타·이름 표시용
+export interface GameCreator {
+  username: string
+  avatar_config: AvatarConfig | null
+}
+export type GameWithCreator = Game & { profiles: GameCreator | null }
+
 export type Database = {
   public: {
     Tables: {

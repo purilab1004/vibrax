@@ -9,7 +9,7 @@ import type { Game } from '@/lib/supabase/types'
 import LikeButton from './LikeButton'
 import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
-import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
+import type { AvatarConfig } from '@/lib/avatar/config'
 
 const GENRE_LABELS: Record<Game['genre'], string> = {
   action: 'ACTION',
@@ -27,11 +27,14 @@ const GENRE_COLORS: Record<Game['genre'], string> = {
 
 interface GameCardProps {
   game: Game
+  creatorName?: string | null
+  creatorAvatarUrl?: string | null   // 제작자 아바타 프리뷰 PNG (avatar_config.previewUrl)
+  bjAvatarConfig?: AvatarConfig | null // 제작자 저장 아바타 — 게임 내 BJ 로 사용
 }
 
 interface AgentConfig { name: string; persona: string; avatarUrl?: string }
 
-export default function GameCard({ game }: GameCardProps) {
+export default function GameCard({ game, creatorName, creatorAvatarUrl, bjAvatarConfig }: GameCardProps) {
   const [open, setOpen] = useState(false)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
@@ -104,20 +107,24 @@ export default function GameCard({ game }: GameCardProps) {
               </span>
               <LikeButton gameId={game.id} size="sm" />
             </div>
-            {/* AI AJ indicator */}
-            <div className={`flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-800`}>
-              <div className={`w-5 h-5 shrink-0 rounded-full border ${AJ_PERSONAS[game.genre].borderColor} overflow-hidden`}>
-                <Image
-                  src="/aibot.png"
-                  alt={AJ_PERSONAS[game.genre].name}
-                  width={20}
-                  height={20}
-                  className="w-full h-full object-cover"
-                  unoptimized
-                />
+            {/* 제작자(올린 사람) — 아바타 프로필 사진 + 이름 */}
+            <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-800">
+              <div className="w-5 h-5 shrink-0 rounded-full border border-gray-700 overflow-hidden bg-gray-900 flex items-center justify-center">
+                {creatorAvatarUrl ? (
+                  <Image
+                    src={creatorAvatarUrl}
+                    alt={creatorName ?? 'creator'}
+                    width={20}
+                    height={20}
+                    className="w-full h-full object-cover object-top"
+                    unoptimized
+                  />
+                ) : (
+                  <span className="font-pixel text-[8px] text-gray-500">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
+                )}
               </div>
-              <span className="font-pixel text-[9px] text-gray-400">{AJ_PERSONAS[game.genre].name}</span>
-              <span className="flex items-center gap-0.5 text-[8px] text-red-500 font-pixel ml-auto">
+              <span className="font-pixel text-[9px] text-gray-400 truncate">{creatorName ?? 'unknown'}</span>
+              <span className="flex items-center gap-0.5 text-[8px] text-red-500 font-pixel ml-auto shrink-0">
                 <span className="w-1 h-1 rounded-full bg-red-500 animate-pulse inline-block" />
                 LIVE
               </span>
@@ -197,7 +204,7 @@ export default function GameCard({ game }: GameCardProps) {
                 title={game.title}
               />
             </div>
-            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} />
+            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} />
           </div>
         </div>
       )}

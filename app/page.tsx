@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import HeroSection from '@/components/HeroSection'
 import GameCard from '@/components/GameCard'
 import Link from 'next/link'
-import type { Game } from '@/lib/supabase/types'
+import type { Game, GameWithCreator } from '@/lib/supabase/types'
 
 const GENRES: { key: Game['genre']; label: string }[] = [
   { key: 'action', label: 'ACTION' },
@@ -15,9 +15,9 @@ export default async function HomePage() {
   const supabase = await createClient()
   const { data: rawGames } = await supabase
     .from('games')
-    .select('*')
+    .select('*, profiles(username, avatar_config)')
     .order('created_at', { ascending: false })
-  const games = rawGames as Game[] | null
+  const games = rawGames as GameWithCreator[] | null
 
   const gamesByGenre = (genre: Game['genre']) =>
     (games ?? []).filter(g => g.genre === genre)
@@ -47,7 +47,13 @@ export default async function HomePage() {
                 </div>
 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {genreGames.slice(0, 5).map(game => (
-                    <GameCard key={game.id} game={game} />
+                    <GameCard
+                      key={game.id}
+                      game={game}
+                      creatorName={game.profiles?.username ?? null}
+                      creatorAvatarUrl={game.profiles?.avatar_config?.previewUrl ?? null}
+                      bjAvatarConfig={game.profiles?.avatar_config ?? null}
+                    />
                   ))}
                 </div>
               </section>
