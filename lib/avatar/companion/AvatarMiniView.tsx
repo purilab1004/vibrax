@@ -23,16 +23,24 @@ export default function AvatarMiniView({ config }: { config: AvatarConfig }) {
   // Apply config to the shared store once, before the avatar child mounts.
   useState(() => { applyConfig(config); return null })
   const [cam, setCam] = useState<CameraSettings | null>(null)
+  const [assembled, setAssembled] = useState(false)
   const noop = useCallback(() => {}, [])
 
   return (
-    <Canvas camera={{ position: [0, 1.4, 2.5], fov: 28 }} gl={{ antialias: true, alpha: true }} style={{ background: 'transparent' }}>
-      <SceneLights />
-      <Suspense fallback={null}>
-        <CompanionAvatar speaking={false} mood="neutral" onReady={noop} onCameraReady={setCam} />
-      </Suspense>
-      {cam && <CameraRig settings={cam} />}
-      <GradingEffects />
-    </Canvas>
+    <div className="w-full h-full relative">
+      <Canvas camera={{ position: [0, 1.4, 2.5], fov: 28 }} gl={{ antialias: true, alpha: true }} style={{ background: 'transparent' }}>
+        <SceneLights />
+        <Suspense fallback={null}>
+          <CompanionAvatar speaking={false} mood="neutral" onReady={noop} onCameraReady={setCam} onAssembledChange={setAssembled} />
+        </Suspense>
+        {cam && <CameraRig settings={cam} />}
+        <GradingEffects />
+      </Canvas>
+      {!assembled && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-6 h-6 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+    </div>
   )
 }

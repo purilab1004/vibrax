@@ -40,6 +40,7 @@ export default function CustomBjOverlay({ config }: { config: AvatarConfig }) {
   const speakRef = useRef<((payload: SpeakPayload) => void) | null>(null)
   const [bubble, setBubble] = useState<string | null>(null)
   const [speaking, setSpeaking] = useState(false)
+  const [assembled, setAssembled] = useState(false)
   const [cameraSettings, setCameraSettings] = useState<CameraSettings | null>(null)
 
   const handleReady = useCallback((speak: (payload: SpeakPayload) => void) => {
@@ -76,11 +77,17 @@ export default function CustomBjOverlay({ config }: { config: AvatarConfig }) {
       <Canvas camera={{ position: [0, 1.4, 2.5], fov: 28 }} gl={{ antialias: true, alpha: true }} style={{ background: 'transparent' }}>
         <SceneLights />
         <Suspense fallback={null}>
-          <CompanionAvatar speaking={speaking} mood="neutral" onReady={handleReady} onCameraReady={setCameraSettings} />
+          <CompanionAvatar speaking={speaking} mood="neutral" onReady={handleReady} onCameraReady={setCameraSettings} onAssembledChange={setAssembled} />
         </Suspense>
         {cameraSettings && <CameraRig settings={cameraSettings} />}
         <GradingEffects />
       </Canvas>
+      {!assembled && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
+          <div className="w-6 h-6 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin" />
+          <span className="font-pixel text-[8px] text-gray-500 tracking-widest">BJ 로딩 중…</span>
+        </div>
+      )}
       {bubble && (
         <div className="absolute left-1.5 right-1.5 top-1.5 pointer-events-none">
           <div className="bg-black/75 border border-gray-700 rounded px-2 py-1 text-[10px] text-gray-100 leading-snug line-clamp-3">
