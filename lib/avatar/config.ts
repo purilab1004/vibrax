@@ -21,7 +21,10 @@ export interface AvatarConfig {
   meshInfos: MeshInfo[]
   gender?: Gender
   previewUrl?: string | null
+  nickname?: string | null   // 공개 표시명 — 게임 카드/방송 BJ 에 username 대신 노출
 }
+
+export const NICKNAME_MAX = 20
 
 const CHARACTER_IDS = CHARACTERS.map((c) => c.id)
 const HEX = /^#[0-9a-fA-F]{6}$/i
@@ -99,6 +102,7 @@ export function validateConfig(raw: unknown): AvatarConfig | null {
   const eyeColor = isHex(r.eyeColor) ? r.eyeColor : null
   const gender: Gender | undefined = r.gender === 'female' ? 'female' : r.gender === 'male' ? 'male' : undefined
   const previewUrl = typeof r.previewUrl === 'string' ? r.previewUrl : null
+  const nickname = typeof r.nickname === 'string' && r.nickname.trim() ? r.nickname.trim().slice(0, NICKNAME_MAX) : null
 
-  return { version: 1, characterId, selection, eyeColor, shader, lighting, grading, meshInfos, gender, previewUrl }
+  return { version: 1, characterId, selection, eyeColor, shader, lighting, grading, meshInfos, gender, previewUrl, nickname }
 }

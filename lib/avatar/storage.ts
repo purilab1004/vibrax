@@ -6,7 +6,8 @@ import { useAvatarStore } from './store'
 
 // ─── store ↔ config bridge ──────────────────────────────────────────────────
 // Read the persistable slice of the editor store into a serializable config.
-export function serializeConfig(previewUrl?: string | null): AvatarConfig {
+// nickname/previewUrl are editor-page metadata (not in the 3D store) passed in.
+export function serializeConfig(extras?: { previewUrl?: string | null; nickname?: string | null }): AvatarConfig {
   const s = useAvatarStore.getState()
   return {
     version: 1,
@@ -17,7 +18,8 @@ export function serializeConfig(previewUrl?: string | null): AvatarConfig {
     lighting: s.lighting,
     grading: s.grading,
     meshInfos: s.meshInfos,
-    previewUrl: previewUrl ?? null,
+    previewUrl: extras?.previewUrl ?? null,
+    nickname: extras?.nickname ?? null,
   }
 }
 

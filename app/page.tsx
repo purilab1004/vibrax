@@ -50,7 +50,7 @@ export default async function HomePage() {
                     <GameCard
                       key={game.id}
                       game={game}
-                      creatorName={game.profiles?.username ?? null}
+                      creatorName={game.profiles?.avatar_config?.nickname ?? game.profiles?.username ?? null}
                       creatorAvatarUrl={game.profiles?.avatar_config?.previewUrl ?? null}
                       bjAvatarConfig={game.profiles?.avatar_config ?? null}
                     />

@@ -7,7 +7,7 @@ import type { Game } from '@/lib/supabase/types'
 import GamePlayButton from '@/components/GamePlayButton'
 import LikeButton from '@/components/LikeButton'
 
-type GameWithProfile = Game & { profiles: { username: string } | null }
+type GameWithProfile = Game & { profiles: { username: string; avatar_config: { nickname?: string | null } | null } | null }
 
 const GENRE_LABELS: Record<string, string> = {
   action: 'ACTION',
@@ -62,14 +62,14 @@ export default async function GameDetailPage({ params }: Props) {
 
   const { data: rawGameDetail } = await supabase
     .from('games')
-    .select('*, profiles(username)')
+    .select('*, profiles(username, avatar_config)')
     .eq('id', id)
     .single()
   const game = rawGameDetail as GameWithProfile | null
 
   if (!game) notFound()
 
-  const author = game.profiles?.username ?? 'unknown'
+  const author = game.profiles?.avatar_config?.nickname ?? game.profiles?.username ?? 'unknown'
   const genreLabel = GENRE_LABELS[game.genre] ?? game.genre.toUpperCase()
   const genreColor = GENRE_COLORS[game.genre] ?? 'bg-gray-700'
 

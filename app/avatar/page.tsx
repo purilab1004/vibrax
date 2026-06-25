@@ -24,6 +24,7 @@ export default function AvatarEditorPage() {
   const [user, setUser] = useState<User | null>(null)
   const [ready, setReady] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [nickname, setNickname] = useState('')
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null)
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function AvatarEditorPage() {
       if (!user) { router.push('/login?redirect=/avatar'); return }
       setUser(user)
       const saved = await loadAvatarConfig(supabase, user.id)
-      if (saved) applyConfig(saved)
+      if (saved) { applyConfig(saved); setNickname(saved.nickname ?? '') }
       setReady(true)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -43,7 +44,7 @@ export default function AvatarEditorPage() {
     setMsg(null)
     const blob = await snapshotCanvas()
     const previewUrl = blob ? await uploadPreview(supabase, user.id, blob) : null
-    const config = serializeConfig(previewUrl)
+    const config = serializeConfig({ previewUrl, nickname: nickname.trim() || null })
     const { error } = await saveAvatarConfig(supabase, user.id, config)
     setSaving(false)
     setMsg(error ? { text: '저장 실패: ' + error, ok: false } : { text: '저장되었습니다.', ok: true })
@@ -60,6 +61,16 @@ export default function AvatarEditorPage() {
           ← 내정보
         </button>
         <h1 className="font-pixel text-[#00ff41] text-[11px] tracking-widest">아바타 설정</h1>
+        <div className="flex items-center gap-2 ml-2">
+          <label className="font-pixel text-[8px] text-gray-500 tracking-widest hidden sm:block">닉네임</label>
+          <input
+            value={nickname}
+            onChange={e => setNickname(e.target.value)}
+            placeholder="아바타 닉네임"
+            maxLength={20}
+            className="w-40 bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-3 py-1.5 text-xs text-white placeholder-gray-600 outline-none transition-colors"
+          />
+        </div>
         <div className="flex-1" />
         {msg && <span className={`text-xs font-pixel tracking-widest ${msg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{msg.text}</span>}
         <button
