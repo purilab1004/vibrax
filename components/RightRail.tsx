@@ -24,7 +24,7 @@ const GENRE_ICON: Record<Genre, React.ReactNode> = {
 
 const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 
-export default function RightRail() {
+export default function RightRail({ newGenres = [] }: { newGenres?: string[] }) {
   const pathname = usePathname()
   const params = useSearchParams()
   const { T } = useLang()
@@ -34,44 +34,57 @@ export default function RightRail() {
   const isHome = pathname === '/'
 
   const row = (active: boolean) =>
-    `flex items-center gap-3 h-11 px-3.5 transition-colors ${
+    `flex items-center h-11 transition-colors ${
       active ? 'text-[#00ff41] bg-[#00ff41]/10' : 'text-gray-300 hover:text-[#00ff41] hover:bg-white/5'
     }`
-  const label = `font-pixel text-[9px] tracking-widest whitespace-nowrap transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`
+  // 아이콘은 접힌 폭(w-14)과 같은 고정 컬럼에 가운데 정렬 → 접힌 상태에서 중앙에 보임
+  const iconCol = 'w-14 shrink-0 flex items-center justify-center'
+  const label = `font-pixel text-[9px] tracking-widest whitespace-nowrap pr-3 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`
 
   return (
     <aside
       className={`hidden md:flex fixed top-14 left-0 bottom-0 z-40 flex-col overflow-hidden border-r border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm transition-[width] duration-200 ${open ? 'w-44' : 'w-14'}`}
       aria-label="categories"
     >
-      {/* 상단 우측 메뉴 토글 — 카테고리명 노출 */}
+      {/* 상단 메뉴 토글 — 카테고리명 노출 */}
       <button
         onClick={() => setOpen(o => !o)}
         aria-label={open ? 'collapse' : 'expand'}
-        className="flex items-center gap-3 h-12 px-3.5 shrink-0 border-b border-gray-800 text-gray-400 hover:text-[#00ff41] transition-colors"
+        className="flex items-center h-12 shrink-0 border-b border-gray-800 text-gray-400 hover:text-[#00ff41] transition-colors"
       >
-        {open ? (
-          <svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="m6 6 12 12M18 6 6 18" /></svg>
-        ) : (
-          <svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 6h16M4 12h16M4 18h16" /></svg>
-        )}
+        <span className={iconCol}>
+          {open ? (
+            <svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="m6 6 12 12M18 6 6 18" /></svg>
+          ) : (
+            <svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+          )}
+        </span>
         <span className={label}>{T.nav.categories}</span>
       </button>
 
       <nav className="flex flex-col py-1">
         <Link href="/" className={row(isHome)} title={T.nav.home}>
-          <HomeIcon />
+          <span className={iconCol}><HomeIcon /></span>
           <span className={label}>{T.nav.home}</span>
         </Link>
 
-        <div className="my-1 mx-3.5 border-t border-gray-800/70" />
+        <div className="my-1 mx-3 border-t border-gray-800/70" />
 
-        {GENRES.map(g => (
-          <Link key={g} href={`/games?genre=${g}`} className={row(activeGenre === g)} title={T.genres[g]}>
-            {GENRE_ICON[g]}
-            <span className={label}>{T.genres[g]}</span>
-          </Link>
-        ))}
+        {GENRES.map(g => {
+          const isNew = newGenres.includes(g)
+          return (
+            <Link key={g} href={`/games?genre=${g}`} className={row(activeGenre === g)} title={isNew ? `${T.genres[g]} (NEW)` : T.genres[g]}>
+              <span className={`${iconCol} relative`}>
+                {GENRE_ICON[g]}
+                {isNew && <span className="absolute top-2 right-3.5 w-1.5 h-1.5 rounded-full bg-[#00ff41] ring-2 ring-[#0a0a0a]" />}
+              </span>
+              <span className={label}>{T.genres[g]}</span>
+              {isNew && open && (
+                <span className="font-pixel text-[7px] text-black bg-[#00ff41] px-1 py-px tracking-widest shrink-0">NEW</span>
+              )}
+            </Link>
+          )
+        })}
       </nav>
     </aside>
   )

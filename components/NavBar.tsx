@@ -93,8 +93,8 @@ export default function NavBar() {
             VIBRAX
           </Link>
 
-          {/* ── Center: search ── */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-auto">
+          {/* ── Left: search ── */}
+          <form onSubmit={handleSearch} className="hidden md:flex w-full max-w-xs">
             <div className="relative w-full">
               <input
                 value={query}
@@ -108,6 +108,9 @@ export default function NavBar() {
               </button>
             </div>
           </form>
+
+          {/* spacer — push the rest to the right */}
+          <div className="hidden md:block flex-1" />
 
           {/* ── Desktop nav (right) ── */}
           <div className="hidden md:flex items-center gap-6 shrink-0">

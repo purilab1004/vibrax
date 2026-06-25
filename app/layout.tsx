@@ -5,6 +5,7 @@ import NavBar from '@/components/NavBar'
 import RightRail from '@/components/RightRail'
 import { Suspense } from 'react'
 import { LangProvider } from '@/lib/i18n/context'
+import { createClient } from '@/lib/supabase/server'
 import { cookies, headers } from 'next/headers'
 import type { Lang } from '@/lib/i18n/translations'
 
@@ -95,13 +96,29 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   const lang = await detectLang()
+
+  // 사이드 레일 NEW 표기 — 최근(7일 내) 업로드 + 가장 최신 게임의 장르를 모음
+  const supabase = await createClient()
+  // 서버 컴포넌트(요청당 1회 실행) — Date.now 사용 정상
+  // eslint-disable-next-line react-hooks/purity
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: recent } = await supabase
+    .from('games')
+    .select('genre, created_at')
+    .order('created_at', { ascending: false })
+    .limit(50)
+  const rows = (recent ?? []) as { genre: string; created_at: string }[]
+  const newGenres = Array.from(
+    new Set(rows.filter((g, i) => i === 0 || g.created_at > since).map(g => g.genre)),
+  )
+
   return (
     <html lang={lang} className={`${pressStart.variable} h-full`}>
 <body className="bg-[#0a0a0a] text-white min-h-full flex flex-col">
         <LangProvider initialLang={lang}>
           <NavBar />
           <Suspense fallback={null}>
-            <RightRail />
+            <RightRail newGenres={newGenres} />
           </Suspense>
           <main className="flex-1 md:pl-14">{children}</main>
           <footer className="border-t border-gray-800 py-6 px-6 mt-auto md:pl-14">
