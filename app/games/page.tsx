@@ -3,6 +3,7 @@ import GameCard from '@/components/GameCard'
 import GenreFilter from '@/components/GenreFilter'
 import { Suspense } from 'react'
 import type { Genre, GameWithCreator } from '@/lib/supabase/types'
+import { selectGamesWithCreator } from '@/lib/supabase/games'
 
 const VALID_GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 
@@ -14,17 +15,11 @@ async function GameGrid({ genre }: { genre?: string }) {
   const supabase = await createClient()
   const validGenre = VALID_GENRES.includes(genre as Genre) ? (genre as Genre) : undefined
 
-  let query = supabase
-    .from('games')
-    .select('*, profiles(username, agent_name, avatar_config)')
-    .order('created_at', { ascending: false })
-
-  if (validGenre) {
-    query = query.eq('genre', validGenre)
-  }
-
-  const { data: rawGames } = await query
-  const games = rawGames as GameWithCreator[] | null
+  const games = await selectGamesWithCreator<GameWithCreator[]>(supabase, q => {
+    let x = q.order('created_at', { ascending: false })
+    if (validGenre) x = x.eq('genre', validGenre)
+    return x
+  })
 
   if (!games || games.length === 0) {
     return (

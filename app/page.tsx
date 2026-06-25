@@ -3,6 +3,7 @@ import HeroSection from '@/components/HeroSection'
 import GameCard from '@/components/GameCard'
 import Link from 'next/link'
 import type { Game, GameWithCreator } from '@/lib/supabase/types'
+import { selectGamesWithCreator } from '@/lib/supabase/games'
 
 const GENRES: { key: Game['genre']; label: string }[] = [
   { key: 'action', label: 'ACTION' },
@@ -13,11 +14,10 @@ const GENRES: { key: Game['genre']; label: string }[] = [
 
 export default async function HomePage() {
   const supabase = await createClient()
-  const { data: rawGames } = await supabase
-    .from('games')
-    .select('*, profiles(username, agent_name, avatar_config)')
-    .order('created_at', { ascending: false })
-  const games = rawGames as GameWithCreator[] | null
+  const games = await selectGamesWithCreator<GameWithCreator[]>(
+    supabase,
+    q => q.order('created_at', { ascending: false }),
+  )
 
   const gamesByGenre = (genre: Game['genre']) =>
     (games ?? []).filter(g => g.genre === genre)

@@ -6,6 +6,7 @@ import type { Metadata } from 'next'
 import type { Game } from '@/lib/supabase/types'
 import GamePlayButton from '@/components/GamePlayButton'
 import LikeButton from '@/components/LikeButton'
+import { selectGamesWithCreator } from '@/lib/supabase/games'
 
 type GameWithProfile = Game & { profiles: { username: string; agent_name: string | null } | null }
 
@@ -60,12 +61,10 @@ export default async function GameDetailPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: rawGameDetail } = await supabase
-    .from('games')
-    .select('*, profiles(username, agent_name)')
-    .eq('id', id)
-    .single()
-  const game = rawGameDetail as GameWithProfile | null
+  const game = await selectGamesWithCreator<GameWithProfile>(
+    supabase,
+    q => q.eq('id', id).single(),
+  )
 
   if (!game) notFound()
 
