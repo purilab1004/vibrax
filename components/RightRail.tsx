@@ -35,13 +35,13 @@ export default function RightRail() {
 
   const row = (active: boolean) =>
     `flex items-center gap-3 h-11 px-3.5 transition-colors ${
-      active ? 'text-[#00ff41] bg-[#00ff41]/10' : 'text-gray-500 hover:text-white hover:bg-white/5'
+      active ? 'text-[#00ff41] bg-[#00ff41]/10' : 'text-gray-300 hover:text-[#00ff41] hover:bg-white/5'
     }`
   const label = `font-pixel text-[9px] tracking-widest whitespace-nowrap transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`
 
   return (
     <aside
-      className={`hidden lg:flex fixed top-14 right-0 bottom-0 z-40 flex-col overflow-hidden border-l border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm transition-[width] duration-200 ${open ? 'w-44' : 'w-14'}`}
+      className={`hidden md:flex fixed top-14 right-0 bottom-0 z-40 flex-col overflow-hidden border-l border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm transition-[width] duration-200 ${open ? 'w-44' : 'w-14'}`}
       aria-label="categories"
     >
       {/* 상단 우측 메뉴 토글 — 카테고리명 노출 */}
