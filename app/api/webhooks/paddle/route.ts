@@ -29,8 +29,8 @@ export async function POST(req: Request) {
   const { error } = await admin.from('credit_ledger').insert([
     { user_id: userId, amount: credits, reason: 'purchase', ref_id: txId },
   ] as never)
-  // unique 위반 = 이미 지급(중복 웹훅) → 정상 처리
-  if (error && !error.message.toLowerCase().includes('duplicate')) {
+  // unique 위반(23505) = 이미 지급(중복 웹훅) → 정상 처리
+  if (error && error.code !== '23505') {
     return new Response('error', { status: 500 })
   }
   return new Response('ok', { status: 200 })
