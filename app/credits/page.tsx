@@ -28,6 +28,16 @@ export default function CreditsPage() {
   const balanceRef = useRef<number | null>(null)
   useEffect(() => { balanceRef.current = balance }, [balance])
 
+  // 결제 완료 후 잔액 폴링 타이머 — 언마운트/중복 이벤트 시 정리
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const stopPolling = () => {
+    if (pollTimerRef.current !== null) {
+      clearInterval(pollTimerRef.current)
+      pollTimerRef.current = null
+    }
+  }
+  useEffect(() => stopPolling, [])
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {
@@ -45,14 +55,15 @@ export default function CreditsPage() {
       eventCallback: event => {
         if (event.name === 'checkout.completed') {
           setStatus('processing')
-          // 웹훅 지급이 반영될 때까지 짧게 폴링
+          // 웹훅 지급이 반영될 때까지 짧게 폴링 (중복 이벤트 시 기존 타이머 교체)
+          stopPolling()
           const before = balanceRef.current ?? 0
           let tries = 0
-          const timer = setInterval(async () => {
+          pollTimerRef.current = setInterval(async () => {
             tries += 1
             const now = await refreshBalance()
             if (now > before || tries >= 10) {
-              clearInterval(timer)
+              stopPolling()
               setStatus(now > before ? 'done' : 'idle')
             }
           }, 2000)
