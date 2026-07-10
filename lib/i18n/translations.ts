@@ -82,6 +82,8 @@ export const t = {
       alreadyPublished: '이미 게시된 게임입니다. 새 버전이 자동 반영됩니다.',
       loading: 'LOADING...',
       backToStudio: '← 스튜디오',
+      listError: '목록을 불러오지 못했습니다. 새로고침해 주세요.',
+      createError: '프로젝트 생성에 실패했습니다. 다시 시도해 주세요.',
     },
     credits: {
       heading: 'CREDITS',
@@ -216,6 +218,8 @@ export const t = {
       alreadyPublished: 'Already published. New versions go live automatically.',
       loading: 'LOADING...',
       backToStudio: '← STUDIO',
+      listError: 'Failed to load your projects. Please refresh.',
+      createError: 'Failed to create project. Please try again.',
     },
     credits: {
       heading: 'CREDITS',
