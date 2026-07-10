@@ -44,11 +44,12 @@ export default function StudioComposerPage() {
   }
 
   const loadVersionHtml = async (versionId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('studio_versions')
       .select('html')
       .eq('id', versionId)
       .single()
+    if (error) console.error('[studio]', error)
     if (data) {
       setHtml((data as { html: string }).html)
       setCurrentVersionId(versionId)
@@ -86,53 +87,74 @@ export default function StudioComposerPage() {
     setMessages(m => [...m, { role: 'user', content: prompt }])
     setStreaming({ description: '', htmlBytes: 0 })
 
-    const res = await fetch('/api/studio/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: id, prompt }),
-    })
+    try {
+      const res = await fetch('/api/studio/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: id, prompt }),
+      })
 
-    if (res.status === 402) {
+      if (res.status === 402) {
+        setStreaming(null)
+        setMessages(m => m.slice(0, -1))
+        setError(s.insufficient)
+        return
+      }
+      if (!res.ok || !res.body) {
+        setStreaming(null)
+        setMessages(m => m.slice(0, -1))
+        setError(s.requestError)
+        return
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let full = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        full += decoder.decode(value, { stream: true })
+        const p = parseGeneration(full)
+        setStreaming({ description: p.description, htmlBytes: p.htmlBytes })
+      }
+      full += decoder.decode()
       setStreaming(null)
-      setMessages(m => m.slice(0, -1))
-      setError(s.insufficient)
-      return
-    }
-    if (!res.ok || !res.body) {
-      setStreaming(null)
-      setMessages(m => m.slice(0, -1))
-      setError(s.genError)
-      return
-    }
 
-    const reader = res.body.getReader()
-    const decoder = new TextDecoder()
-    let full = ''
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      full += decoder.decode(value, { stream: true })
-      const p = parseGeneration(full)
-      setStreaming({ description: p.description, htmlBytes: p.htmlBytes })
-    }
-    setStreaming(null)
+      if (hasGenError(full)) {
+        setMessages(m => m.slice(0, -1))
+        setError(s.genError)
+        await refreshBalance()
+        return
+      }
 
-    if (hasGenError(full)) {
-      setError(s.genError)
+      const parsed = parseGeneration(full)
+      setMessages(m => [...m, { role: 'assistant', content: parsed.description }])
+      if (parsed.html) setHtml(parsed.html)
+      const list = await refreshVersions()
+      if (list.length > 0) setCurrentVersionId(list[0].id)
       await refreshBalance()
-      return
+      // 첫 생성이면 서버가 제목을 갱신했을 수 있음
+      const { data: proj } = await supabase
+        .from('studio_projects').select('*').eq('id', id).maybeSingle()
+      if (proj) setProject(proj as StudioProject)
+    } catch (e) {
+      console.error('[studio]', e)
+      setStreaming(null)
+      setMessages(m => m.slice(0, -1))
+      setError(s.networkError)
+      try {
+        await refreshBalance()
+        await refreshVersions()
+        const { data: msgs } = await supabase
+          .from('studio_messages')
+          .select('role, content')
+          .eq('project_id', id)
+          .order('created_at', { ascending: true })
+        setMessages((msgs as ChatMsg[] | null) ?? [])
+      } catch {
+        // best-effort resync; ignore
+      }
     }
-
-    const parsed = parseGeneration(full)
-    setMessages(m => [...m, { role: 'assistant', content: parsed.description }])
-    if (parsed.html) setHtml(parsed.html)
-    const list = await refreshVersions()
-    if (list.length > 0) setCurrentVersionId(list[0].id)
-    await refreshBalance()
-    // 첫 생성이면 서버가 제목을 갱신했을 수 있음
-    const { data: proj } = await supabase
-      .from('studio_projects').select('*').eq('id', id).maybeSingle()
-    if (proj) setProject(proj as StudioProject)
   }
 
   if (!project) {

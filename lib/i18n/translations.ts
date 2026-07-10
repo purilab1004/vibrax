@@ -84,6 +84,8 @@ export const t = {
       backToStudio: '← 스튜디오',
       listError: '목록을 불러오지 못했습니다. 새로고침해 주세요.',
       createError: '프로젝트 생성에 실패했습니다. 다시 시도해 주세요.',
+      networkError: '연결이 끊겼습니다. 잔액과 결과를 다시 불러왔어요 — 이어서 시도해 주세요.',
+      requestError: '요청을 처리하지 못했습니다. 다시 시도해 주세요.',
     },
     credits: {
       heading: 'CREDITS',
@@ -220,6 +222,8 @@ export const t = {
       backToStudio: '← STUDIO',
       listError: 'Failed to load your projects. Please refresh.',
       createError: 'Failed to create project. Please try again.',
+      networkError: 'Connection lost. Balance and results were reloaded — please try again.',
+      requestError: 'Request failed. Please try again.',
     },
     credits: {
       heading: 'CREDITS',
