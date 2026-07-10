@@ -115,6 +115,7 @@ export default function NavBar() {
           {/* ── Desktop nav (right) ── */}
           <div className="hidden md:flex items-center gap-6 shrink-0">
             {navLinkDesktop('/games', T.nav.games)}
+            {navLinkDesktop('/studio', T.nav.studio)}
             {navLinkDesktop('/about', T.nav.about)}
             {user ? (
               <>
@@ -205,6 +206,7 @@ export default function NavBar() {
               </div>
             </form>
             {navLinkMobile('/games', T.nav.games)}
+            {navLinkMobile('/studio', T.nav.studio)}
             {navLinkMobile('/about', T.nav.about)}
             {user ? (
               <>
