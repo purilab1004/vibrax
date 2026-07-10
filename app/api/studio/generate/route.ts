@@ -7,8 +7,16 @@ import { parseGeneration, extractTitle, GEN_ERROR_MARKER } from '@/lib/studio/pa
 export const maxDuration = 300
 
 export async function POST(req: Request) {
-  const { projectId, prompt } = await req.json()
-  if (!projectId || !prompt?.trim()) return new Response('bad request', { status: 400 })
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return new Response('bad request', { status: 400 })
+  }
+  const { projectId, prompt } = (body ?? {}) as { projectId?: unknown; prompt?: unknown }
+  if (typeof projectId !== 'string' || typeof prompt !== 'string' || !projectId || !prompt.trim()) {
+    return new Response('bad request', { status: 400 })
+  }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -32,6 +40,11 @@ export async function POST(req: Request) {
     })
   }
 
+  const refund = async () => {
+    const { error } = await supabase.rpc('refund_credits', { p_amount: GENERATION_COST, p_ref: spendRef } as never)
+    if (error) console.error('[studio/generate] refund failed', error)
+  }
+
   const [latestRes, historyRes] = await Promise.all([
     supabase.from('studio_versions').select('html, version')
       .eq('project_id', projectId).order('version', { ascending: false })
@@ -39,6 +52,11 @@ export async function POST(req: Request) {
     supabase.from('studio_messages').select('role, content')
       .eq('project_id', projectId).order('created_at', { ascending: true }),
   ])
+  if (latestRes.error || historyRes.error) {
+    console.error('[studio/generate] context fetch failed', latestRes.error, historyRes.error)
+    await refund()
+    return new Response('context fetch failed', { status: 500 })
+  }
   const latest = latestRes.data as { html: string; version: number } | null
   const history = (historyRes.data ?? []) as ChatTurn[]
 
@@ -50,13 +68,11 @@ export async function POST(req: Request) {
     messages: buildMessages({ prompt, currentHtml: latest?.html ?? null, history }),
   })
 
-  const refund = () =>
-    supabase.rpc('refund_credits', { p_amount: GENERATION_COST, p_ref: spendRef } as never)
-
   const encoder = new TextEncoder()
   const readable = new ReadableStream({
     async start(controller) {
       let full = ''
+      let versionPersisted = false
       try {
         for await (const chunk of stream) {
           if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
@@ -77,22 +93,34 @@ export async function POST(req: Request) {
             await refund()
             controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
           } else {
-            await supabase.from('studio_messages').insert([
-              { project_id: projectId, role: 'user', content: prompt },
-              { project_id: projectId, role: 'assistant', content: parsed.description },
-            ] as never)
-            if (nextVersion === 1) {
-              const title = extractTitle(parsed.html)
-              if (title) {
-                await supabase.from('studio_projects')
-                  .update({ title } as never).eq('id', projectId)
+            // 버전이 저장된 이상 생성은 성공이다 — 이후 실패는 환불도, 에러 마커도 없다.
+            versionPersisted = true
+            try {
+              const { error: mErr } = await supabase.from('studio_messages').insert([
+                { project_id: projectId, role: 'user', content: prompt },
+                { project_id: projectId, role: 'assistant', content: parsed.description },
+              ] as never)
+              if (mErr) console.error('[studio/generate] messages insert failed', mErr)
+              if (nextVersion === 1) {
+                const title = extractTitle(parsed.html)
+                if (title) {
+                  const { error: tErr } = await supabase.from('studio_projects')
+                    .update({ title } as never).eq('id', projectId)
+                  if (tErr) console.error('[studio/generate] title update failed', tErr)
+                }
               }
+            } catch (postErr) {
+              console.error('[studio/generate] post-save step failed', postErr)
             }
           }
         }
-      } catch {
-        await refund()
-        controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
+      } catch (err) {
+        if (!versionPersisted) {
+          await refund()
+          controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
+        } else {
+          console.error('[studio/generate] error after version persisted', err)
+        }
       }
       controller.close()
     },
