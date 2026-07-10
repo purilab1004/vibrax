@@ -85,6 +85,8 @@ export default function StudioComposerPage() {
   const send = async (prompt: string) => {
     setError(null)
     setMessages(m => [...m, { role: 'user', content: prompt }])
+    // 낙관적 user 메시지가 아직 롤백 대상인지 추적 (성공/GEN_ERROR 처리 후에는 롤백 금지)
+    let optimisticPending = true
     setStreaming({ description: '', htmlBytes: 0 })
 
     try {
@@ -122,25 +124,36 @@ export default function StudioComposerPage() {
 
       if (hasGenError(full)) {
         setMessages(m => m.slice(0, -1))
+        optimisticPending = false
         setError(s.genError)
-        await refreshBalance()
+        try {
+          await refreshBalance()
+        } catch (e) {
+          console.error('[studio]', e)
+        }
         return
       }
 
       const parsed = parseGeneration(full)
       setMessages(m => [...m, { role: 'assistant', content: parsed.description }])
+      optimisticPending = false
       if (parsed.html) setHtml(parsed.html)
-      const list = await refreshVersions()
-      if (list.length > 0) setCurrentVersionId(list[0].id)
-      await refreshBalance()
-      // 첫 생성이면 서버가 제목을 갱신했을 수 있음
-      const { data: proj } = await supabase
-        .from('studio_projects').select('*').eq('id', id).maybeSingle()
-      if (proj) setProject(proj as StudioProject)
+      // 이 시점에는 서버에 이미 저장 완료 — 후처리 실패해도 롤백하지 않는다
+      try {
+        const list = await refreshVersions()
+        if (list.length > 0) setCurrentVersionId(list[0].id)
+        await refreshBalance()
+        // 첫 생성이면 서버가 제목을 갱신했을 수 있음
+        const { data: proj } = await supabase
+          .from('studio_projects').select('*').eq('id', id).maybeSingle()
+        if (proj) setProject(proj as StudioProject)
+      } catch (e) {
+        console.error('[studio]', e)
+      }
     } catch (e) {
       console.error('[studio]', e)
       setStreaming(null)
-      setMessages(m => m.slice(0, -1))
+      if (optimisticPending) setMessages(m => m.slice(0, -1))
       setError(s.networkError)
       try {
         await refreshBalance()
