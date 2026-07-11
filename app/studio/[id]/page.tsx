@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import StudioChat, { type ChatMsg } from '@/components/studio/StudioChat'
 import GamePreview from '@/components/studio/GamePreview'
+import PublishModal from '@/components/studio/PublishModal'
 import { parseGeneration, hasGenError } from '@/lib/studio/parse'
 import type { StudioProject, StudioVersionMeta } from '@/lib/supabase/types'
 
@@ -213,11 +214,12 @@ export default function StudioComposerPage() {
           busy={streaming !== null}
         />
       </div>
-      {/* PublishModal은 Task 10에서 연결 */}
       {showPublish && (
-        <div className="fixed inset-0 z-[70] bg-black/70 flex items-center justify-center" onClick={() => setShowPublish(false)}>
-          <p className="text-gray-400 text-sm">publish: coming in Task 10</p>
-        </div>
+        <PublishModal
+          projectId={id}
+          defaultTitle={project.title}
+          onClose={() => setShowPublish(false)}
+        />
       )}
     </div>
   )
