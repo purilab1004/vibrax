@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { GENERATION_COST } from '@/lib/studio/constants'
 import { SYSTEM_PROMPT, buildMessages, type ChatTurn } from '@/lib/studio/prompt'
 import { parseGeneration, extractTitle, GEN_ERROR_MARKER } from '@/lib/studio/parse'
@@ -40,8 +41,15 @@ export async function POST(req: Request) {
     })
   }
 
+  // refund_credits는 service role 전용(자기 자신 대상이라도 클라이언트에서
+  // 직접 RPC를 호출해 성공 건을 임의로 환불하는 것을 막기 위함) — admin
+  // 클라이언트로 호출하고, 검증된 user.id를 p_user_id로 넘긴다.
   const refund = async () => {
-    const { error } = await supabase.rpc('refund_credits', { p_amount: GENERATION_COST, p_ref: spendRef } as never)
+    const { error } = await createAdminClient().rpc('refund_credits', {
+      p_user_id: user.id,
+      p_amount: GENERATION_COST,
+      p_ref: spendRef,
+    } as never)
     if (error) console.error('[studio/generate] refund failed', error)
   }
 
@@ -60,13 +68,22 @@ export async function POST(req: Request) {
   const latest = latestRes.data as { html: string; version: number } | null
   const history = (historyRes.data ?? []) as ChatTurn[]
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-  const stream = client.messages.stream({
-    model: 'claude-sonnet-5',
-    max_tokens: 64000,
-    system: SYSTEM_PROMPT,
-    messages: buildMessages({ prompt, currentHtml: latest?.html ?? null, history }),
-  })
+  // 차감은 이미 성공했다 — 여기서 동기적으로 던지면(예: ANTHROPIC_API_KEY 누락)
+  // 환불 없이 크레딧만 사라지므로 반드시 감싼다.
+  let stream: ReturnType<Anthropic['messages']['stream']>
+  try {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    stream = client.messages.stream({
+      model: 'claude-sonnet-5',
+      max_tokens: 64000,
+      system: SYSTEM_PROMPT,
+      messages: buildMessages({ prompt, currentHtml: latest?.html ?? null, history }),
+    })
+  } catch (e) {
+    await refund()
+    console.error('[studio/generate]', e)
+    return new Response('generation failed', { status: 500 })
+  }
 
   const encoder = new TextEncoder()
   const readable = new ReadableStream({

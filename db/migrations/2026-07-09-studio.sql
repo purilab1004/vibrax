@@ -51,35 +51,65 @@ alter table public.games
 create unique index if not exists games_studio_project_unique
   on public.games (studio_project_id) where studio_project_id is not null;
 
+-- 게시 소유권 검증: games 행의 user_id가 해당 studio 프로젝트의 소유자여야 함
+-- (FK는 RLS를 우회하므로 games INSERT만으로는 타인의 비공개 프로젝트를
+-- studio_project_id로 지정해 게시할 수 있음 — 별도 permissive 정책 추가는
+-- 접근 범위만 넓히므로 트리거로 차단한다)
+create or replace function public.check_studio_project_owner() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.studio_project_id is not null and not exists (
+    select 1 from studio_projects p
+    where p.id = new.studio_project_id and p.user_id = new.user_id
+  ) then
+    raise exception 'NOT_PROJECT_OWNER';
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists games_studio_project_owner on public.games;
+create trigger games_studio_project_owner
+  before insert or update on public.games
+  for each row execute function public.check_studio_project_owner();
+
 alter table public.studio_projects enable row level security;
 alter table public.studio_messages enable row level security;
 alter table public.studio_versions enable row level security;
 alter table public.credit_ledger enable row level security;
 
+drop policy if exists "own projects select" on public.studio_projects;
 create policy "own projects select" on public.studio_projects
   for select using (user_id = auth.uid());
+drop policy if exists "own projects insert" on public.studio_projects;
 create policy "own projects insert" on public.studio_projects
   for insert with check (user_id = auth.uid());
+drop policy if exists "own projects update" on public.studio_projects;
 create policy "own projects update" on public.studio_projects
   for update using (user_id = auth.uid());
+drop policy if exists "own projects delete" on public.studio_projects;
 create policy "own projects delete" on public.studio_projects
   for delete using (user_id = auth.uid());
 
+drop policy if exists "own messages select" on public.studio_messages;
 create policy "own messages select" on public.studio_messages for select
   using (exists (select 1 from public.studio_projects p
                  where p.id = project_id and p.user_id = auth.uid()));
+drop policy if exists "own messages insert" on public.studio_messages;
 create policy "own messages insert" on public.studio_messages for insert
   with check (exists (select 1 from public.studio_projects p
                       where p.id = project_id and p.user_id = auth.uid()));
 
+drop policy if exists "own versions select" on public.studio_versions;
 create policy "own versions select" on public.studio_versions for select
   using (exists (select 1 from public.studio_projects p
                  where p.id = project_id and p.user_id = auth.uid()));
+drop policy if exists "own versions insert" on public.studio_versions;
 create policy "own versions insert" on public.studio_versions for insert
   with check (exists (select 1 from public.studio_projects p
                       where p.id = project_id and p.user_id = auth.uid()));
 
 -- 원장: 본인 조회만. INSERT/UPDATE/DELETE 정책 없음(= 함수/service role 외 차단)
+drop policy if exists "own ledger select" on public.credit_ledger;
 create policy "own ledger select" on public.credit_ledger
   for select using (user_id = auth.uid());
 
@@ -104,18 +134,21 @@ begin
 end $$;
 
 -- 환불: 같은 ref의 차감 건이 있어야만 지급(임의 호출로 크레딧 생성 불가),
--- credit_ledger_refund_ref 인덱스가 이중 환불 차단
-create or replace function public.refund_credits(p_amount int, p_ref text) returns void
+-- credit_ledger_refund_ref 인덱스가 이중 환불 차단.
+-- authenticated에는 부여하지 않음(자기 자신 대상 환불이라도 클라이언트가 직접
+-- 호출하면 임의 성공 건을 조회해 환불을 청구할 수 있음) — service role 전용,
+-- 호출자는 반드시 서버에서 검증된 p_user_id를 넘긴다.
+create or replace function public.refund_credits(p_user_id uuid, p_amount int, p_ref text) returns void
 language plpgsql security definer set search_path = public as $$
 begin
-  if auth.uid() is null then raise exception 'NOT_AUTHENTICATED'; end if;
+  if p_user_id is null then raise exception 'INVALID_USER'; end if;
   if not exists (select 1 from credit_ledger
-                 where user_id = auth.uid() and reason = 'generation'
+                 where user_id = p_user_id and reason = 'generation'
                    and ref_id = p_ref and amount = -p_amount) then
     raise exception 'NO_MATCHING_SPEND';
   end if;
   insert into credit_ledger (user_id, amount, reason, ref_id)
-    values (auth.uid(), p_amount, 'refund', p_ref);
+    values (p_user_id, p_amount, 'refund', p_ref);
 end $$;
 
 -- 가입 보너스 30크레딧 1회 지급, 항상 현재 잔액 반환
@@ -132,5 +165,10 @@ end $$;
 
 grant execute on function public.credit_balance() to authenticated;
 grant execute on function public.spend_credits(int, text) to authenticated;
-grant execute on function public.refund_credits(int, text) to authenticated;
 grant execute on function public.grant_signup_bonus() to authenticated;
+
+-- refund_credits는 서버(서비스 롤)에서 검증된 p_user_id로만 호출한다.
+-- authenticated에 부여하면 사용자가 자신의 ledger에서 ref_id를 읽어
+-- 브라우저에서 직접 RPC를 호출해 성공한 생성 건을 임의로 환불(크레딧 편취)할 수 있다.
+revoke all on function public.refund_credits(uuid, int, text) from public;
+grant execute on function public.refund_credits(uuid, int, text) to service_role;
