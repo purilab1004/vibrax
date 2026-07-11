@@ -47,6 +47,10 @@ create unique index if not exists credit_ledger_refund_ref
 alter table public.games
   add column if not exists studio_project_id uuid references public.studio_projects(id);
 
+-- 프로젝트당 게시 1회 (동시 게시 레이스 차단)
+create unique index if not exists games_studio_project_unique
+  on public.games (studio_project_id) where studio_project_id is not null;
+
 alter table public.studio_projects enable row level security;
 alter table public.studio_messages enable row level security;
 alter table public.studio_versions enable row level security;

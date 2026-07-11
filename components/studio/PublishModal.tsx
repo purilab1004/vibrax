@@ -61,7 +61,9 @@ export default function PublishModal({
         },
       ] as never)
       if (insertError) {
-        setError(insertError.message)
+        // 23505 = 다른 탭/요청이 먼저 게시함 (games_studio_project_unique)
+        if (insertError.code === '23505') setAlreadyPublished(true)
+        else setError(insertError.message)
         return
       }
       setDone(true)
