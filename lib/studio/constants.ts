@@ -1,4 +1,6 @@
 export const GENERATION_COST = 10
+// 홈 히어로 입력창 → 스튜디오로 넘기는 첫 프롬프트의 sessionStorage 키
+export const INITIAL_PROMPT_KEY = 'vibrax-initial-prompt'
 // SIGNUP_BONUS는 표시용 — 실제 지급액은 migration의 grant_signup_bonus()에 있다
 export const SIGNUP_BONUS = 30
 

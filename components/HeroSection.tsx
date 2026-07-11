@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { useLang } from '@/lib/i18n/context'
+import HeroPromptInput from '@/components/HeroPromptInput'
 
 export default function HeroSection() {
   const { T } = useLang()
-  const [line1, line2] = T.hero.heading.split('\n')
+  const [line1, line2] = T.hero.promptHeading.split('\n')
 
   return (
     <section className="relative overflow-hidden border-b border-gray-800 min-h-[480px] md:min-h-[560px]">
@@ -43,26 +44,24 @@ export default function HeroSection() {
         }}
       />
 
-      <div className="relative max-w-7xl mx-auto px-6 py-20 md:py-28">
+      <div className="relative max-w-7xl mx-auto px-6 py-20 md:py-28 flex flex-col items-center text-center">
         <p className="font-pixel text-[#00ff41] text-[10px] tracking-[0.3em] mb-5">
           {T.hero.tagline}
         </p>
-        <h1 className="font-pixel text-white text-2xl md:text-[2.5rem] leading-[1.8] mb-6 max-w-2xl">
+        <h1 className="font-pixel text-white text-2xl md:text-[2.5rem] leading-[1.8] mb-10">
           {line1}{line2 && <><br /><span className="text-[#00ff41]">{line2}</span></>}
         </h1>
-        <p className="text-gray-300 text-sm md:text-base mb-10 leading-relaxed max-w-lg whitespace-pre-line">
-          {T.hero.desc}
-        </p>
-        <div className="flex items-center gap-4 flex-wrap">
+        <HeroPromptInput />
+        <div className="flex items-center gap-4 flex-wrap justify-center mt-12">
           <Link
             href="/games"
-            className="font-pixel text-[11px] bg-[#00ff41] text-black px-6 py-3 hover:bg-[#00cc33] transition-colors"
+            className="font-pixel text-[10px] border border-gray-700 text-gray-300 px-5 py-2.5 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors"
           >
             {T.hero.playGames}
           </Link>
           <Link
             href="/submit"
-            className="font-pixel text-[11px] border border-[#00ff41] text-[#00ff41] px-6 py-3 hover:bg-[#00ff41] hover:text-black transition-colors"
+            className="font-pixel text-[10px] border border-gray-700 text-gray-300 px-5 py-2.5 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors"
           >
             {T.hero.submitGame}
           </Link>

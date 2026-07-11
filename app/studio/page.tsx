@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import type { StudioProject } from '@/lib/supabase/types'
+import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 
 export default function StudioPage() {
   const [projects, setProjects] = useState<StudioProject[] | null>(null)
@@ -24,12 +25,29 @@ export default function StudioPage() {
         router.push('/login?redirect=/studio')
         return
       }
-      // 첫 진입 보너스(멱등) — 반환값이 현재 잔액
+      // 첫 진입 보너스(멱등) — 반환값이 현재 잔액.
+      // 홈 히어로에서 곧장 넘어온 신규 유저도 보너스를 먼저 받아야 첫 생성이 402가 안 난다.
       const { data: bal, error: bonusError } = await supabase.rpc('grant_signup_bonus' as never)
       if (bonusError) {
         console.error('[studio]', bonusError)
       } else {
         setBalance(typeof bal === 'number' ? bal : 0)
+      }
+      // 홈 히어로에서 넘어온 첫 프롬프트가 있으면 바로 프로젝트 생성 후 제작 화면으로
+      const initialPrompt = sessionStorage.getItem(INITIAL_PROMPT_KEY)
+      if (initialPrompt) {
+        const { data: proj, error: autoError } = await supabase
+          .from('studio_projects')
+          .insert([{ user_id: user.id }] as never)
+          .select()
+          .single()
+        if (!autoError && proj) {
+          router.replace(`/studio/${(proj as StudioProject).id}`)
+          return
+        }
+        // 실패 시 프롬프트는 storage에 남겨 재시도 가능하게 두고 목록을 계속 로드
+        console.error('[studio]', autoError)
+        setCreateError(true)
       }
       const { data, error: listError } = await supabase
         .from('studio_projects')

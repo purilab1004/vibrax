@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -9,6 +9,7 @@ import StudioChat, { type ChatMsg } from '@/components/studio/StudioChat'
 import GamePreview from '@/components/studio/GamePreview'
 import PublishModal from '@/components/studio/PublishModal'
 import { parseGeneration, hasGenError } from '@/lib/studio/parse'
+import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import type { StudioProject, StudioVersionMeta } from '@/lib/supabase/types'
 
 export default function StudioComposerPage() {
@@ -27,6 +28,8 @@ export default function StudioComposerPage() {
   const [streaming, setStreaming] = useState<{ description: string; htmlBytes: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showPublish, setShowPublish] = useState(false)
+  // 홈 히어로에서 넘어온 첫 프롬프트 자동 전송은 1회만 (StrictMode 이중 실행 가드)
+  const autoSentRef = useRef(false)
 
   const refreshBalance = async () => {
     const { data } = await supabase.rpc('credit_balance' as never)
@@ -56,32 +59,6 @@ export default function StudioComposerPage() {
       setCurrentVersionId(versionId)
     }
   }
-
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) {
-        router.push(`/login?redirect=/studio/${id}`)
-        return
-      }
-      const { data: proj } = await supabase
-        .from('studio_projects').select('*').eq('id', id).maybeSingle()
-      if (!proj) {
-        router.push('/studio')
-        return
-      }
-      setProject(proj as StudioProject)
-      const { data: msgs } = await supabase
-        .from('studio_messages')
-        .select('role, content')
-        .eq('project_id', id)
-        .order('created_at', { ascending: true })
-      setMessages((msgs as ChatMsg[] | null) ?? [])
-      const list = await refreshVersions()
-      if (list.length > 0) await loadVersionHtml(list[0].id)
-      await refreshBalance()
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
 
   const send = async (prompt: string) => {
     setError(null)
@@ -170,6 +147,43 @@ export default function StudioComposerPage() {
       }
     }
   }
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) {
+        router.push(`/login?redirect=/studio/${id}`)
+        return
+      }
+      const { data: proj } = await supabase
+        .from('studio_projects').select('*').eq('id', id).maybeSingle()
+      if (!proj) {
+        router.push('/studio')
+        return
+      }
+      setProject(proj as StudioProject)
+      const { data: msgs } = await supabase
+        .from('studio_messages')
+        .select('role, content')
+        .eq('project_id', id)
+        .order('created_at', { ascending: true })
+      const loadedMsgs = (msgs as ChatMsg[] | null) ?? []
+      setMessages(loadedMsgs)
+      const list = await refreshVersions()
+      if (list.length > 0) await loadVersionHtml(list[0].id)
+      await refreshBalance()
+      // 홈 히어로에서 넘어온 첫 프롬프트 자동 전송 — 빈 프로젝트에서 1회만.
+      // 전송 직전에 storage에서 제거해 새로고침 시 중복 차감을 막는다.
+      if (loadedMsgs.length === 0 && !autoSentRef.current) {
+        const initialPrompt = sessionStorage.getItem(INITIAL_PROMPT_KEY)
+        if (initialPrompt) {
+          autoSentRef.current = true
+          sessionStorage.removeItem(INITIAL_PROMPT_KEY)
+          send(initialPrompt)
+        }
+      }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   if (!project) {
     return (
