@@ -10,6 +10,7 @@ import type { Lang } from '@/lib/i18n/translations'
 
 export default function NavBar() {
   const [user, setUser] = useState<User | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const router = useRouter()
@@ -27,6 +28,12 @@ export default function NavBar() {
 
   // Close menu on route change
   useEffect(() => { setMenuOpen(false) }, [pathname])
+
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return }
+    supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+      .then(({ data }) => setIsAdmin((data as { role?: string } | null)?.role === 'admin'))
+  }, [user])
 
   const handleSignOut = async () => {
     setMenuOpen(false)
@@ -116,11 +123,13 @@ export default function NavBar() {
           <div className="hidden md:flex items-center gap-6 shrink-0">
             {navLinkDesktop('/games', T.nav.games)}
             {navLinkDesktop('/studio', T.nav.studio)}
+            {navLinkDesktop('/blog', T.nav.blog)}
             {navLinkDesktop('/about', T.nav.about)}
             {user ? (
               <>
                 {navLinkDesktop('/submit', T.nav.submit)}
                 {navLinkDesktop('/profile', T.nav.mypage)}
+                {isAdmin && navLinkDesktop('/admin', T.nav.admin)}
                 <button
                   onClick={handleSignOut}
                   className="text-xs tracking-widest text-gray-400 hover:text-[#00ff41] transition-colors"
@@ -207,11 +216,13 @@ export default function NavBar() {
             </form>
             {navLinkMobile('/games', T.nav.games)}
             {navLinkMobile('/studio', T.nav.studio)}
+            {navLinkMobile('/blog', T.nav.blog)}
             {navLinkMobile('/about', T.nav.about)}
             {user ? (
               <>
                 {navLinkMobile('/submit', T.nav.submit)}
                 {navLinkMobile('/profile', T.nav.mypage)}
+                {isAdmin && navLinkMobile('/admin', T.nav.admin)}
                 <button
                   onClick={handleSignOut}
                   className="font-pixel text-2xl tracking-widest text-left text-gray-400 hover:text-[#00ff41] transition-colors py-3"
