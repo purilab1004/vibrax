@@ -30,6 +30,8 @@ export interface Profile {
   created_at: string
   avatar_config?: AvatarConfig | null
   agent_name?: string | null   // 공개 표시명(에이전트 이름) — 게임 카드/상세에 username 대신 노출
+  role?: 'user' | 'admin'
+  banned_at?: string | null
 }
 
 export interface StudioProject {
@@ -62,9 +64,87 @@ export interface CreditLedgerEntry {
   id: string
   user_id: string
   amount: number
-  reason: 'purchase' | 'generation' | 'refund' | 'signup_bonus'
+  reason: 'purchase' | 'generation' | 'refund' | 'signup_bonus' | 'admin_adjust'
   ref_id: string | null
   created_at: string
+}
+
+export interface BlogCategory {
+  id: string
+  name: string
+  slug: string
+  sort_order: number
+  created_at: string
+}
+
+export interface BlogPost {
+  id: string
+  category_id: string | null
+  author_id: string
+  title: string
+  thumbnail_url: string | null
+  content: string   // Tiptap HTML — admin만 쓸 수 있으므로 렌더 시 sanitize 없이 신뢰
+  excerpt: string
+  published: boolean
+  published_at: string | null
+  view_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface Notice {
+  id: string
+  title: string
+  content: string
+  pinned: boolean
+  published: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface SiteSetting {
+  key: string
+  value: unknown
+  updated_at: string
+}
+
+export interface BannerSetting {
+  enabled: boolean
+  text: string
+  link: string
+}
+
+// admin_list_members() RPC 행
+export interface AdminMember {
+  id: string
+  email: string
+  username: string
+  agent_name: string | null
+  role: string
+  banned_at: string | null
+  created_at: string
+  balance: number
+  games_count: number
+}
+
+// admin_dashboard_stats() RPC 반환
+export interface DashboardDaily {
+  day: string
+  signups: number
+  games: number
+  generations: number
+  purchases: number
+}
+export interface DashboardStats {
+  totals: {
+    members: number
+    games: number
+    game_views: number
+    generations: number
+    credits_purchased: number
+    credits_spent: number
+  }
+  daily: DashboardDaily[]
 }
 
 // 게임 + 제작자(올린 사람) 프로필 조인 — 리스트/카드에서 제작자 아바타·이름 표시용
@@ -115,6 +195,34 @@ export type Database = {
         Row: CreditLedgerEntry
         Insert: Omit<CreditLedgerEntry, 'id' | 'created_at'> & { id?: string; created_at?: string }
         Update: never
+        Relationships: []
+      }
+      blog_categories: {
+        Row: BlogCategory
+        Insert: Omit<BlogCategory, 'id' | 'created_at'> & { id?: string; created_at?: string }
+        Update: Partial<Omit<BlogCategory, 'id'>>
+        Relationships: []
+      }
+      blog_posts: {
+        Row: BlogPost
+        Insert: Omit<BlogPost, 'id' | 'created_at' | 'updated_at' | 'view_count'> & {
+          id?: string; created_at?: string; updated_at?: string; view_count?: number
+        }
+        Update: Partial<Omit<BlogPost, 'id'>>
+        Relationships: []
+      }
+      notices: {
+        Row: Notice
+        Insert: Omit<Notice, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string; created_at?: string; updated_at?: string
+        }
+        Update: Partial<Omit<Notice, 'id'>>
+        Relationships: []
+      }
+      site_settings: {
+        Row: SiteSetting
+        Insert: SiteSetting & { updated_at?: string }
+        Update: Partial<SiteSetting>
         Relationships: []
       }
     }
