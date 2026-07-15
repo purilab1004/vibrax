@@ -80,7 +80,7 @@ vibrax에 (1) 관리자 전용 블로그(티스토리 스타일: 카테고리·�
 - `app/blog/[id]/page.tsx` — 제목/카테고리/날짜/썸네일 + 본문 HTML 렌더, 조회수 증가는 `increment_blog_view(p_post_id)` security definer RPC.
 - `app/notices/page.tsx` — 목록(pinned 상단 고정), `app/notices/[id]/page.tsx` 상세.
 - `components/HomeBanner.tsx` — site_settings.banner 읽어 enabled면 홈 최상단 얇은 배너(문구+링크). `app/page.tsx`에 배치.
-- NavBar에 블로그·공지 링크(데스크톱+모바일).
+- NavBar에 블로그 링크(데스크톱+모바일). 공지는 블로그 페이지의 공지 탭 링크와 홈 배너로 진입(내비 과밀 방지).
 - i18n: `blog.*`, `notices.*`, `admin.*` 키 ko/en 완전 패리티.
 
 ## 구현 순서 (SDD 태스크 단계)
