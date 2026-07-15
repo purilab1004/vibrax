@@ -1,6 +1,10 @@
 -- 관리자/블로그/공지/설정. 멱등 작성 — Supabase SQL Editor에서 여러 번 실행해도 안전.
 
 -- 1) profiles: role + banned_at ---------------------------------------------
+-- agent_name/country는 앱 코드가 기대하는 신규 컬럼인데 일부 환경에 없다
+-- (admin_list_members가 참조하므로 여기서 보장)
+alter table public.profiles add column if not exists agent_name text;
+alter table public.profiles add column if not exists country text;
 alter table public.profiles add column if not exists role text not null default 'user';
 do $$ begin
   alter table public.profiles add constraint profiles_role_check check (role in ('user','admin'));
