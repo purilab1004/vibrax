@@ -13,7 +13,7 @@ function Btn({ onClick, active, children }: {
       type="button"
       onMouseDown={e => e.preventDefault()}
       onClick={onClick}
-      className={`px-2.5 py-1.5 text-xs border transition-colors ${
+      className={`px-2.5 py-1.5 text-sm border transition-colors ${
         active ? 'border-[#00ff41] text-[#00ff41]' : 'border-gray-800 text-gray-400 hover:text-white'
       }`}
     >

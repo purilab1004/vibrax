@@ -56,29 +56,29 @@ export default function AdminNoticesPage() {
   }
 
   const inputClass =
-    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-500'
+    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-base outline-none transition-colors text-white placeholder-gray-500'
 
   if (editing !== null) {
     return (
       <div className="space-y-5">
-        <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest">{editing === 'new' ? a.newNotice : a.edit}</h1>
+        <h1 className="font-pixel text-[#00ff41] text-base tracking-widest">{editing === 'new' ? a.newNotice : a.edit}</h1>
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder={a.noticeTitle} className={inputClass} />
         <RichTextEditor value={content} onChange={setContent} onUploadImage={f => uploadBlogImage(supabase, f)} />
         <div className="flex gap-6">
-          <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+          <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
             <input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} className="accent-[#00ff41]" />
             {a.pinnedLabel}
           </label>
-          <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+          <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
             <input type="checkbox" checked={published} onChange={e => setPublished(e.target.checked)} className="accent-[#00ff41]" />
             {a.publishedLabel}
           </label>
         </div>
         <div className="flex gap-3">
-          <button onClick={save} disabled={saving} className="font-pixel text-[10px] tracking-widest bg-[#00ff41] text-black px-6 py-3 hover:bg-[#00cc33] transition-colors disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#00ff41] text-black px-6 py-3 hover:bg-[#00cc33] transition-colors disabled:opacity-50">
             {a.save}
           </button>
-          <button onClick={() => setEditing(null)} className="font-pixel text-[10px] tracking-widest border border-gray-700 text-gray-400 px-6 py-3 hover:border-gray-500 transition-colors">
+          <button onClick={() => setEditing(null)} className="font-pixel text-xs tracking-widest border border-gray-700 text-gray-400 px-6 py-3 hover:border-gray-500 transition-colors">
             {a.cancel}
           </button>
         </div>
@@ -89,21 +89,21 @@ export default function AdminNoticesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest">{a.noticesHeading}</h1>
-        <button onClick={() => open('new')} className="font-pixel text-[10px] bg-[#00ff41] text-black px-4 py-2.5 hover:bg-[#00cc33] transition-colors tracking-widest">
+        <h1 className="font-pixel text-[#00ff41] text-base tracking-widest">{a.noticesHeading}</h1>
+        <button onClick={() => open('new')} className="font-pixel text-xs bg-[#00ff41] text-black px-4 py-2.5 hover:bg-[#00cc33] transition-colors tracking-widest">
           {a.newNotice}
         </button>
       </div>
       <div className="border border-gray-800 divide-y divide-gray-800">
         {notices.map(n => (
           <div key={n.id} className="flex items-center gap-4 px-4 py-3 bg-[#111]">
-            {n.pinned && <span className="font-pixel text-[8px] text-[#00ff41] border border-[#00ff41] px-1.5 py-0.5 shrink-0">📌</span>}
+            {n.pinned && <span className="font-pixel text-[10px] text-[#00ff41] border border-[#00ff41] px-1.5 py-0.5 shrink-0">📌</span>}
             <div className="min-w-0 flex-1">
-              <p className={`text-sm truncate ${n.published ? 'text-white' : 'text-gray-600'}`}>{n.title || '—'}</p>
-              <p className="text-[10px] text-gray-600">{new Date(n.created_at).toLocaleDateString()}</p>
+              <p className={`text-base truncate ${n.published ? 'text-white' : 'text-gray-600'}`}>{n.title || '—'}</p>
+              <p className="text-xs text-gray-600">{new Date(n.created_at).toLocaleDateString()}</p>
             </div>
-            <button onClick={() => open(n)} className="font-pixel text-[9px] text-gray-400 hover:text-[#00ff41] tracking-widest shrink-0">{a.edit}</button>
-            <button onClick={() => remove(n.id)} className="font-pixel text-[9px] text-gray-600 hover:text-red-400 tracking-widest shrink-0">{a.delete}</button>
+            <button onClick={() => open(n)} className="font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] tracking-widest shrink-0">{a.edit}</button>
+            <button onClick={() => remove(n.id)} className="font-pixel text-[11px] text-gray-600 hover:text-red-400 tracking-widest shrink-0">{a.delete}</button>
           </div>
         ))}
       </div>

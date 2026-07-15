@@ -52,14 +52,14 @@ export default function AdminGamesPage() {
 
   return (
     <div>
-      <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest mb-6">{a.gamesHeading}</h1>
+      <h1 className="font-pixel text-[#00ff41] text-base tracking-widest mb-6">{a.gamesHeading}</h1>
       <div className="flex gap-3 mb-6 flex-wrap">
         <form onSubmit={e => { e.preventDefault(); load() }} className="flex-1 min-w-[200px] max-w-sm">
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder={a.searchGames}
-            className="w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-2.5 text-sm outline-none text-white placeholder-gray-600"
+            className="w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-2.5 text-base outline-none text-white placeholder-gray-600"
           />
         </form>
         <div className="flex gap-1">
@@ -67,7 +67,7 @@ export default function AdminGamesPage() {
             <button
               key={s}
               onClick={() => setSort(s)}
-              className={`font-pixel text-[9px] tracking-widest px-3 py-2 border transition-colors ${
+              className={`font-pixel text-[11px] tracking-widest px-3 py-2 border transition-colors ${
                 sort === s ? 'border-[#00ff41] text-[#00ff41]' : 'border-gray-800 text-gray-500 hover:text-white'
               }`}
             >
@@ -77,12 +77,12 @@ export default function AdminGamesPage() {
         </div>
       </div>
       {games === null ? (
-        <p className="font-pixel text-[10px] text-gray-400 tracking-widest">{a.loading}</p>
+        <p className="font-pixel text-xs text-gray-400 tracking-widest">{a.loading}</p>
       ) : (
         <div className="overflow-x-auto border border-gray-800">
-          <table className="w-full text-xs">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#111] text-gray-500 font-pixel text-[9px] tracking-widest">
+              <tr className="bg-[#111] text-gray-500 font-pixel text-[11px] tracking-widest">
                 <th className="text-left px-4 py-3">{a.colGame}</th>
                 <th className="text-left px-4 py-3">{a.colGenre}</th>
                 <th className="text-right px-4 py-3">{a.colViews}</th>
@@ -98,7 +98,7 @@ export default function AdminGamesPage() {
                       <input
                         value={editTitle}
                         onChange={e => setEditTitle(e.target.value)}
-                        className="w-full bg-[#0d0d0d] border border-[#00ff41] px-2 py-1 text-xs outline-none text-white"
+                        className="w-full bg-[#0d0d0d] border border-[#00ff41] px-2 py-1 text-sm outline-none text-white"
                       />
                     ) : (
                       <a href={g.play_url} target="_blank" rel="noreferrer" className="text-white hover:text-[#00ff41] transition-colors">
@@ -111,7 +111,7 @@ export default function AdminGamesPage() {
                       <select
                         value={editGenre}
                         onChange={e => setEditGenre(e.target.value as Genre)}
-                        className="bg-[#0d0d0d] border border-[#00ff41] px-2 py-1 text-xs outline-none text-white"
+                        className="bg-[#0d0d0d] border border-[#00ff41] px-2 py-1 text-sm outline-none text-white"
                       >
                         {GENRES.map(x => <option key={x} value={x}>{T.genres[x]}</option>)}
                       </select>
@@ -125,13 +125,13 @@ export default function AdminGamesPage() {
                     <div className="flex gap-2 justify-end">
                       {editingId === g.id ? (
                         <>
-                          <button onClick={saveEdit} className="font-pixel text-[8px] bg-[#00ff41] text-black px-2 py-1">{a.save}</button>
-                          <button onClick={() => setEditingId(null)} className="font-pixel text-[8px] border border-gray-700 text-gray-400 px-2 py-1">{a.cancel}</button>
+                          <button onClick={saveEdit} className="font-pixel text-[10px] bg-[#00ff41] text-black px-2 py-1">{a.save}</button>
+                          <button onClick={() => setEditingId(null)} className="font-pixel text-[10px] border border-gray-700 text-gray-400 px-2 py-1">{a.cancel}</button>
                         </>
                       ) : (
                         <>
-                          <button onClick={() => startEdit(g)} className="font-pixel text-[8px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors">{a.edit}</button>
-                          <button onClick={() => remove(g.id)} className="font-pixel text-[8px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-red-400 hover:text-red-400 transition-colors">{a.delete}</button>
+                          <button onClick={() => startEdit(g)} className="font-pixel text-[10px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors">{a.edit}</button>
+                          <button onClick={() => remove(g.id)} className="font-pixel text-[10px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-red-400 hover:text-red-400 transition-colors">{a.delete}</button>
                         </>
                       )}
                     </div>

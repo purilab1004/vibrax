@@ -16,8 +16,8 @@ export default function TrendChart({ label, sub, values, color = '#00ff41' }: {
   return (
     <div className="border border-gray-800 bg-[#111] p-5">
       <div className="flex items-baseline justify-between mb-3">
-        <p className="font-pixel text-[9px] text-gray-500 tracking-widest">{label}</p>
-        <p className="font-pixel text-[9px] text-gray-600">{sub} · {total.toLocaleString()}</p>
+        <p className="font-pixel text-[11px] text-gray-500 tracking-widest">{label}</p>
+        <p className="font-pixel text-[11px] text-gray-600">{sub} · {total.toLocaleString()}</p>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-20" preserveAspectRatio="none">
         {points && (

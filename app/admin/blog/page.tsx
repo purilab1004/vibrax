@@ -34,33 +34,33 @@ export default function AdminBlogPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest">{a.blogHeading}</h1>
-        <Link href="/admin/blog/new" className="font-pixel text-[10px] bg-[#00ff41] text-black px-4 py-2.5 hover:bg-[#00cc33] transition-colors tracking-widest">
+        <h1 className="font-pixel text-[#00ff41] text-base tracking-widest">{a.blogHeading}</h1>
+        <Link href="/admin/blog/new" className="font-pixel text-xs bg-[#00ff41] text-black px-4 py-2.5 hover:bg-[#00cc33] transition-colors tracking-widest">
           {a.newPost}
         </Link>
       </div>
       <div className="mb-8"><CategoryManager onChanged={load} /></div>
       {posts.length === 0 ? (
-        <p className="text-gray-500 text-sm">{a.noPosts}</p>
+        <p className="text-gray-500 text-base">{a.noPosts}</p>
       ) : (
         <div className="border border-gray-800 divide-y divide-gray-800">
           {posts.map(p => (
             <div key={p.id} className="flex items-center gap-4 px-4 py-3 bg-[#111]">
-              <span className={`font-pixel text-[8px] tracking-widest px-1.5 py-0.5 border shrink-0 ${
+              <span className={`font-pixel text-[10px] tracking-widest px-1.5 py-0.5 border shrink-0 ${
                 p.published ? 'border-[#00ff41] text-[#00ff41]' : 'border-gray-700 text-gray-500'
               }`}>
                 {p.published ? a.published : a.draft}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-white text-sm truncate">{p.title || '—'}</p>
-                <p className="text-[10px] text-gray-600">
+                <p className="text-white text-base truncate">{p.title || '—'}</p>
+                <p className="text-xs text-gray-600">
                   {catName(p.category_id)} · {new Date(p.created_at).toLocaleDateString()} · 👁 {p.view_count}
                 </p>
               </div>
-              <Link href={`/admin/blog/${p.id}`} className="font-pixel text-[9px] text-gray-400 hover:text-[#00ff41] tracking-widest shrink-0">
+              <Link href={`/admin/blog/${p.id}`} className="font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] tracking-widest shrink-0">
                 {a.edit}
               </Link>
-              <button onClick={() => remove(p.id)} className="font-pixel text-[9px] text-gray-600 hover:text-red-400 tracking-widest shrink-0">
+              <button onClick={() => remove(p.id)} className="font-pixel text-[11px] text-gray-600 hover:text-red-400 tracking-widest shrink-0">
                 {a.delete}
               </button>
             </div>

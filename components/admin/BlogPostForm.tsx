@@ -86,21 +86,21 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
     }
   }
 
-  if (!loaded) return <p className="font-pixel text-[10px] text-gray-400 tracking-widest">{a.loading}</p>
+  if (!loaded) return <p className="font-pixel text-xs text-gray-400 tracking-widest">{a.loading}</p>
 
   const inputClass =
-    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-500'
+    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-base outline-none transition-colors text-white placeholder-gray-500'
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <span className={`font-pixel text-[9px] tracking-widest px-2 py-1 border ${
+        <span className={`font-pixel text-[11px] tracking-widest px-2 py-1 border ${
           published ? 'border-[#00ff41] text-[#00ff41]' : 'border-gray-700 text-gray-500'
         }`}>
           {published ? a.published : a.draft}
         </span>
-        {msg === 'saved' && <span className="text-[#00ff41] text-xs">{a.saved}</span>}
-        {msg === 'failed' && <span className="text-red-400 text-xs">{a.saveFailed}</span>}
+        {msg === 'saved' && <span className="text-[#00ff41] text-sm">{a.saved}</span>}
+        {msg === 'failed' && <span className="text-red-400 text-sm">{a.saveFailed}</span>}
       </div>
       <input value={title} onChange={e => setTitle(e.target.value)} placeholder={a.postTitle} className={inputClass} />
       <div className="flex gap-3 flex-wrap">
@@ -108,7 +108,7 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
           <option value="">{a.noCategory}</option>
           {cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <label className="flex items-center gap-3 cursor-pointer border border-gray-700 px-4 text-xs text-gray-400 hover:border-gray-500">
+        <label className="flex items-center gap-3 cursor-pointer border border-gray-700 px-4 text-sm text-gray-400 hover:border-gray-500">
           {a.postThumb}
           <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={uploadThumb} className="hidden" />
           {thumbnailUrl && (
@@ -122,14 +122,14 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
         <button
           onClick={() => save(published)}
           disabled={saving}
-          className="font-pixel text-[10px] tracking-widest border border-gray-600 text-gray-300 px-6 py-3 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors disabled:opacity-50"
+          className="font-pixel text-xs tracking-widest border border-gray-600 text-gray-300 px-6 py-3 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors disabled:opacity-50"
         >
           {a.save}
         </button>
         <button
           onClick={() => save(!published)}
           disabled={saving}
-          className="font-pixel text-[10px] tracking-widest bg-[#00ff41] text-black px-6 py-3 hover:bg-[#00cc33] transition-colors disabled:opacity-50"
+          className="font-pixel text-xs tracking-widest bg-[#00ff41] text-black px-6 py-3 hover:bg-[#00cc33] transition-colors disabled:opacity-50"
         >
           {published ? a.unpublishToggle : a.publishToggle}
         </button>

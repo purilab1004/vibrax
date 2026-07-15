@@ -25,14 +25,14 @@ export default function AdminDashboardPage() {
     })
   }, [])
 
-  if (error) return <p className="text-red-400 text-xs border border-red-900 bg-red-900/20 px-3 py-2">{a.loadFailed}</p>
-  if (!stats) return <p className="font-pixel text-[10px] text-gray-400 tracking-widest">{a.loading}</p>
+  if (error) return <p className="text-red-400 text-sm border border-red-900 bg-red-900/20 px-3 py-2">{a.loadFailed}</p>
+  if (!stats) return <p className="font-pixel text-xs text-gray-400 tracking-widest">{a.loading}</p>
 
   const t = stats.totals
   const daily = stats.daily
   return (
     <div>
-      <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest mb-8">{a.dashHeading}</h1>
+      <h1 className="font-pixel text-[#00ff41] text-base tracking-widest mb-8">{a.dashHeading}</h1>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <StatCard label={a.statMembers} value={t.members} />
         <StatCard label={a.statGames} value={t.games} />

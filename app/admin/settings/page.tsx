@@ -49,15 +49,15 @@ export default function AdminSettingsPage() {
     setSaving(false)
   }
 
-  if (!loaded) return <p className="font-pixel text-[10px] text-gray-400 tracking-widest">{a.loading}</p>
+  if (!loaded) return <p className="font-pixel text-xs text-gray-400 tracking-widest">{a.loading}</p>
 
   const inputClass =
-    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-500'
-  const labelClass = 'block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest'
+    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-base outline-none transition-colors text-white placeholder-gray-500'
+  const labelClass = 'block font-pixel text-xs mb-2 text-gray-400 tracking-widest'
 
   return (
     <div className="max-w-lg">
-      <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest mb-8">{a.settingsHeading}</h1>
+      <h1 className="font-pixel text-[#00ff41] text-base tracking-widest mb-8">{a.settingsHeading}</h1>
       <div className="space-y-6">
         <div>
           <label className={labelClass}>{a.setSignupBonus}</label>
@@ -68,8 +68,8 @@ export default function AdminSettingsPage() {
           <input type="number" min={1} value={generationCost} onChange={e => setGenerationCost(e.target.value)} className={inputClass} />
         </div>
         <div className="border border-gray-800 bg-[#111] p-5 space-y-4">
-          <p className="font-pixel text-[10px] text-gray-400 tracking-widest">{a.setBanner}</p>
-          <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+          <p className="font-pixel text-xs text-gray-400 tracking-widest">{a.setBanner}</p>
+          <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
             <input type="checkbox" checked={bannerEnabled} onChange={e => setBannerEnabled(e.target.checked)} className="accent-[#00ff41]" />
             {a.setBannerEnabled}
           </label>
@@ -77,11 +77,11 @@ export default function AdminSettingsPage() {
           <input value={bannerLink} onChange={e => setBannerLink(e.target.value)} placeholder={a.setBannerLink} className={inputClass} />
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={save} disabled={saving} className="font-pixel text-[10px] tracking-widest bg-[#00ff41] text-black px-6 py-3 hover:bg-[#00cc33] transition-colors disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#00ff41] text-black px-6 py-3 hover:bg-[#00cc33] transition-colors disabled:opacity-50">
             {a.save}
           </button>
-          {msg === 'saved' && <span className="text-[#00ff41] text-xs">{a.saved}</span>}
-          {msg === 'failed' && <span className="text-red-400 text-xs">{a.saveFailed}</span>}
+          {msg === 'saved' && <span className="text-[#00ff41] text-sm">{a.saved}</span>}
+          {msg === 'failed' && <span className="text-red-400 text-sm">{a.saveFailed}</span>}
         </div>
       </div>
     </div>

@@ -25,7 +25,7 @@ export default function AdminNav() {
           <Link
             key={href}
             href={href}
-            className={`font-pixel text-[10px] tracking-widest px-4 py-3 border transition-colors whitespace-nowrap ${
+            className={`font-pixel text-xs tracking-widest px-4 py-3 border transition-colors whitespace-nowrap ${
               active(href)
                 ? 'border-[#00ff41] text-[#00ff41] bg-[#00ff41]/5'
                 : 'border-gray-800 text-gray-400 hover:border-gray-600 hover:text-white'

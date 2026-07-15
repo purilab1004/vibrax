@@ -48,23 +48,23 @@ export default function AdminMembersPage() {
 
   return (
     <div>
-      <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest mb-6">{a.membersHeading}</h1>
+      <h1 className="font-pixel text-[#00ff41] text-base tracking-widest mb-6">{a.membersHeading}</h1>
       <form onSubmit={search} className="mb-6">
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={a.searchMembers}
-          className="w-full max-w-sm bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-2.5 text-sm outline-none text-white placeholder-gray-600"
+          className="w-full max-w-sm bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-2.5 text-base outline-none text-white placeholder-gray-600"
         />
       </form>
-      {error && <p className="text-red-400 text-xs border border-red-900 bg-red-900/20 px-3 py-2 mb-4">{a.actionFailed}</p>}
+      {error && <p className="text-red-400 text-sm border border-red-900 bg-red-900/20 px-3 py-2 mb-4">{a.actionFailed}</p>}
       {members === null ? (
-        <p className="font-pixel text-[10px] text-gray-400 tracking-widest">{a.loading}</p>
+        <p className="font-pixel text-xs text-gray-400 tracking-widest">{a.loading}</p>
       ) : (
         <div className="overflow-x-auto border border-gray-800">
-          <table className="w-full text-xs">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#111] text-gray-500 font-pixel text-[9px] tracking-widest">
+              <tr className="bg-[#111] text-gray-500 font-pixel text-[11px] tracking-widest">
                 <th className="text-left px-4 py-3">{a.colMember}</th>
                 <th className="text-left px-4 py-3">{a.colJoined}</th>
                 <th className="text-right px-4 py-3">{a.colBalance}</th>
@@ -84,30 +84,30 @@ export default function AdminMembersPage() {
                   <td className="px-4 py-3 text-right text-[#00ff41]">{m.balance.toLocaleString()}</td>
                   <td className="px-4 py-3 text-right text-gray-400">{m.games_count}</td>
                   <td className="px-4 py-3">
-                    <span className={`font-pixel text-[8px] tracking-widest ${m.role === 'admin' ? 'text-[#00ff41]' : 'text-gray-500'}`}>
+                    <span className={`font-pixel text-[10px] tracking-widest ${m.role === 'admin' ? 'text-[#00ff41]' : 'text-gray-500'}`}>
                       {m.role === 'admin' ? a.roleAdmin : a.roleUser}
                     </span>
-                    {m.banned_at && <span className="font-pixel text-[8px] text-red-400 ml-2">{a.bannedTag}</span>}
+                    {m.banned_at && <span className="font-pixel text-[10px] text-red-400 ml-2">{a.bannedTag}</span>}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2 justify-end flex-wrap">
                       <button
                         onClick={() => run('admin_set_role', { p_user_id: m.id, p_role: m.role === 'admin' ? 'user' : 'admin' })}
-                        className="font-pixel text-[8px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors"
+                        className="font-pixel text-[10px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors"
                       >
                         {m.role === 'admin' ? a.demote : a.promote}
                       </button>
                       {m.role !== 'admin' && (
                         <button
                           onClick={() => run('admin_set_ban', { p_user_id: m.id, p_banned: !m.banned_at })}
-                          className="font-pixel text-[8px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-red-400 hover:text-red-400 transition-colors"
+                          className="font-pixel text-[10px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-red-400 hover:text-red-400 transition-colors"
                         >
                           {m.banned_at ? a.unban : a.ban}
                         </button>
                       )}
                       <button
                         onClick={() => setAdjusting(m)}
-                        className="font-pixel text-[8px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors"
+                        className="font-pixel text-[10px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors"
                       >
                         ±
                       </button>
@@ -123,20 +123,20 @@ export default function AdminMembersPage() {
       {adjusting && (
         <div className="fixed inset-0 z-[70] bg-black/70 flex items-center justify-center px-4" onClick={() => setAdjusting(null)}>
           <div className="bg-[#111] border border-gray-800 p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-            <h2 className="font-pixel text-[#00ff41] text-xs tracking-widest mb-1">{a.adjustCredits}</h2>
-            <p className="text-gray-500 text-xs mb-4">{adjusting.email}</p>
+            <h2 className="font-pixel text-[#00ff41] text-sm tracking-widest mb-1">{a.adjustCredits}</h2>
+            <p className="text-gray-500 text-sm mb-4">{adjusting.email}</p>
             <input
               type="number"
               value={amount}
               onChange={e => setAmount(e.target.value)}
               placeholder={a.adjustAmount}
-              className="w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none text-white placeholder-gray-500 mb-3"
+              className="w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-base outline-none text-white placeholder-gray-500 mb-3"
             />
             <input
               value={note}
               onChange={e => setNote(e.target.value)}
               placeholder={a.adjustNote}
-              className="w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none text-white placeholder-gray-500 mb-4"
+              className="w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-base outline-none text-white placeholder-gray-500 mb-4"
             />
             <button onClick={applyAdjust} className="w-full bg-[#00ff41] text-black font-pixel text-[11px] py-3 hover:bg-[#00cc33] transition-colors tracking-widest">
               {a.apply}
