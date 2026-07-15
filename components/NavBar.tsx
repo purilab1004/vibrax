@@ -130,13 +130,13 @@ export default function NavBar() {
               <>
                 {navLinkDesktop('/submit', T.nav.submit)}
                 {navLinkDesktop('/profile', T.nav.mypage)}
-                {isAdmin && navLinkDesktop('/admin', T.nav.admin)}
                 <button
                   onClick={handleSignOut}
                   className="text-xs tracking-widest text-gray-400 hover:text-[#00ff41] transition-colors"
                 >
                   {T.nav.logout}
                 </button>
+                {isAdmin && navLinkDesktop('/admin', `⚙ ${T.nav.admin}`)}
               </>
             ) : (
               <Link
@@ -223,13 +223,13 @@ export default function NavBar() {
               <>
                 {navLinkMobile('/submit', T.nav.submit)}
                 {navLinkMobile('/profile', T.nav.mypage)}
-                {isAdmin && navLinkMobile('/admin', T.nav.admin)}
                 <button
                   onClick={handleSignOut}
                   className="font-pixel text-2xl tracking-widest text-left text-gray-400 hover:text-[#00ff41] transition-colors py-3"
                 >
                   {T.nav.logout}
                 </button>
+                {isAdmin && navLinkMobile('/admin', `⚙ ${T.nav.admin}`)}
               </>
             ) : (
               <Link
