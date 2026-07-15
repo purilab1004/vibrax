@@ -5,6 +5,23 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 
+function Btn({ onClick, active, children }: {
+  onClick: () => void; active?: boolean; children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onMouseDown={e => e.preventDefault()}
+      onClick={onClick}
+      className={`px-2.5 py-1.5 text-xs border transition-colors ${
+        active ? 'border-[#00ff41] text-[#00ff41]' : 'border-gray-800 text-gray-400 hover:text-white'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
 export default function RichTextEditor({ value, onChange, onUploadImage }: {
   value: string
   onChange: (html: string) => void
@@ -38,20 +55,6 @@ export default function RichTextEditor({ value, onChange, onUploadImage }: {
     else editor.chain().focus().setLink({ href: url }).run()
   }
 
-  const Btn = ({ onClick, active, children }: {
-    onClick: () => void; active?: boolean; children: React.ReactNode
-  }) => (
-    <button
-      type="button"
-      onMouseDown={e => e.preventDefault()}
-      onClick={onClick}
-      className={`px-2.5 py-1.5 text-xs border transition-colors ${
-        active ? 'border-[#00ff41] text-[#00ff41]' : 'border-gray-800 text-gray-400 hover:text-white'
-      }`}
-    >
-      {children}
-    </button>
-  )
   const c = () => editor.chain().focus()
 
   return (

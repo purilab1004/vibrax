@@ -29,8 +29,9 @@ export default function NavBar() {
   // Close menu on route change
   useEffect(() => { setMenuOpen(false) }, [pathname])
 
+  // 관리자 링크는 user 블록 안에서만 렌더되므로 로그아웃 시 초기화가 필요 없다
   useEffect(() => {
-    if (!user) { setIsAdmin(false); return }
+    if (!user) return
     supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
       .then(({ data }) => setIsAdmin((data as { role?: string } | null)?.role === 'admin'))
   }, [user])
