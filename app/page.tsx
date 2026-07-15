@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import HeroSection from '@/components/HeroSection'
+import HomeBanner from '@/components/HomeBanner'
 import GameCard from '@/components/GameCard'
 import Link from 'next/link'
 import type { Game, GameWithCreator } from '@/lib/supabase/types'
@@ -26,6 +27,7 @@ export default async function HomePage() {
 
   return (
     <div>
+      <HomeBanner />
       <HeroSection />
       <div className="max-w-7xl mx-auto px-6 py-12 space-y-14">
         {hasAnyGame ? (
