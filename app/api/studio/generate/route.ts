@@ -23,6 +23,17 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return new Response('unauthorized', { status: 401 })
 
+  // 밴 유저 차단 + 생성 비용을 설정에서 읽기 (실패 시 GENERATION_COST 폴백)
+  const [{ data: profileRow }, { data: costRow }] = await Promise.all([
+    supabase.from('profiles').select('banned_at').eq('id', user.id).maybeSingle(),
+    supabase.from('site_settings').select('value').eq('key', 'generation_cost').maybeSingle(),
+  ])
+  if ((profileRow as { banned_at?: string | null } | null)?.banned_at) {
+    return new Response('banned', { status: 403 })
+  }
+  const parsedCost = Number((costRow as { value?: unknown } | null)?.value)
+  const cost = Number.isFinite(parsedCost) && parsedCost >= 1 ? parsedCost : GENERATION_COST
+
   // RLS로 본인 프로젝트만 조회됨 — 없으면 404
   const { data: project } = await supabase
     .from('studio_projects').select('id, title').eq('id', projectId).maybeSingle()
@@ -31,7 +42,7 @@ export async function POST(req: Request) {
   // 크레딧 원자적 차감 — 실패 경로에서 이 ref로 환불
   const spendRef = `gen:${projectId}:${crypto.randomUUID()}`
   const { error: spendError } = await supabase.rpc('spend_credits', {
-    p_amount: GENERATION_COST,
+    p_amount: cost,
     p_ref: spendRef,
   } as never)
   if (spendError) {
@@ -47,7 +58,7 @@ export async function POST(req: Request) {
   const refund = async () => {
     const { error } = await createAdminClient().rpc('refund_credits', {
       p_user_id: user.id,
-      p_amount: GENERATION_COST,
+      p_amount: cost,
       p_ref: spendRef,
     } as never)
     if (error) console.error('[studio/generate] refund failed', error)
