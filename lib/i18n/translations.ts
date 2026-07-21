@@ -103,6 +103,7 @@ export const t = {
       note: '결제는 Paddle을 통해 안전하게 처리됩니다. 결제 완료 후 크레딧이 자동 지급됩니다.',
       processing: '결제 확인 중...',
       done: '충전이 완료되었습니다!',
+      notReady: '결제 서비스 오픈 준비 중입니다. 조금만 기다려주세요!',
     },
     blog: {
       heading: '블로그',
@@ -346,6 +347,7 @@ export const t = {
       note: 'Payments are securely processed by Paddle. Credits are granted automatically after checkout.',
       processing: 'Confirming payment...',
       done: 'Credits added!',
+      notReady: 'Payments are being set up. Coming soon!',
     },
     blog: {
       heading: 'BLOG',

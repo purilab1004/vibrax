@@ -7,6 +7,10 @@ import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import { CREDIT_PACKS, packPriceId } from '@/lib/studio/constants'
 
+// Paddle 미설정(키/가격 ID 없음)이면 구매 버튼 대신 준비 중 안내를 보여준다
+const paddleConfigured =
+  !!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN && CREDIT_PACKS.every(p => packPriceId(p.key))
+
 export default function CreditsPage() {
   const [balance, setBalance] = useState<number | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -48,6 +52,7 @@ export default function CreditsPage() {
       await refreshBalance()
     })
 
+    if (!paddleConfigured) return
     initializePaddle({
       environment:
         process.env.NEXT_PUBLIC_PADDLE_ENV === 'production' ? 'production' : 'sandbox',
@@ -94,6 +99,11 @@ export default function CreditsPage() {
         <span className="font-pixel text-[#00ff41] text-lg tracking-widest">{balance ?? '—'}</span>
       </div>
 
+      {!paddleConfigured && (
+        <p className="mb-6 text-yellow-400 text-xs border border-yellow-900 bg-yellow-900/20 px-3 py-2.5">
+          {c.notReady}
+        </p>
+      )}
       {status === 'processing' && (
         <p className="mb-6 text-[#00ff41] text-xs font-pixel tracking-widest animate-pulse">
           {c.processing}
@@ -110,7 +120,8 @@ export default function CreditsPage() {
             <span className="text-[#00ff41] text-sm">{c.packCredits(p.credits)}</span>
             <button
               onClick={() => buy(p.key)}
-              className="w-full bg-[#00ff41] text-black font-pixel text-[10px] py-3 hover:bg-[#00cc33] transition-colors tracking-widest"
+              disabled={!paddleConfigured}
+              className="w-full bg-[#00ff41] text-black font-pixel text-[10px] py-3 hover:bg-[#00cc33] transition-colors tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {c.buy}
             </button>
