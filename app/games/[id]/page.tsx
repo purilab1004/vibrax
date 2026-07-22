@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import type { Game } from '@/lib/supabase/types'
 import GamePlayButton from '@/components/GamePlayButton'
+import ViewerIcon from '@/components/ViewerIcon'
 import LikeButton from '@/components/LikeButton'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
 
@@ -111,7 +112,7 @@ export default async function GameDetailPage({ params }: Props) {
           <p className="text-gray-300 text-xs tracking-wider mb-3">by {author}</p>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5 text-xs text-gray-500 font-pixel">
-              <span>👁</span>{game.view_count ?? 0}
+              <ViewerIcon className="w-3.5 h-3.5" />{game.view_count ?? 0}
             </span>
             <LikeButton gameId={game.id} size="md" />
           </div>

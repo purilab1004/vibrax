@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import type { BlogCategory, BlogPost } from '@/lib/supabase/types'
+import ViewerIcon from '@/components/ViewerIcon'
 import CategoryManager from '@/components/admin/CategoryManager'
 
 export default function AdminBlogPage() {
@@ -54,7 +55,7 @@ export default function AdminBlogPage() {
               <div className="min-w-0 flex-1">
                 <p className="text-white text-base truncate">{p.title || '—'}</p>
                 <p className="text-xs text-gray-600">
-                  {catName(p.category_id)} · {new Date(p.created_at).toLocaleDateString()} · 👁 {p.view_count}
+                  {catName(p.category_id)} · {new Date(p.created_at).toLocaleDateString()} · <ViewerIcon className="w-3 h-3 inline align-[-2px]" /> {p.view_count}
                 </p>
               </div>
               <Link href={`/admin/blog/${p.id}`} className="font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] tracking-widest shrink-0">
