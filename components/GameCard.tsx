@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
@@ -40,6 +40,21 @@ interface AgentConfig { name: string; persona: string; avatarUrl?: string }
 export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig }: GameCardProps) {
   const flag = countryFlag(creatorCountry)
   const [open, setOpen] = useState(false)
+  // 호버 라이브 미리보기 — 잠깐 스친 마우스에 iframe이 뜨지 않게 지연 후 실행
+  const [preview, setPreview] = useState(false)
+  const [previewReady, setPreviewReady] = useState(false)
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const startPreview = () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current)
+    hoverTimer.current = setTimeout(() => setPreview(true), 500)
+  }
+  const stopPreview = () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current)
+    hoverTimer.current = null
+    setPreview(false)
+    setPreviewReady(false)
+  }
+  useEffect(() => () => { if (hoverTimer.current) clearTimeout(hoverTimer.current) }, [])
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
   const supabase = createClient()
@@ -76,7 +91,11 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
       >
         {/* 유튜브 홈 문법 — 테두리 없는 카드: 둥근 썸네일이 화면에 뜨고, 아래는 차분한 정보 블록 */}
         <div>
-          <div className="relative aspect-video w-full overflow-hidden bg-gray-900 rounded-xl ring-1 ring-gray-800/60">
+          <div
+            className="relative aspect-video w-full overflow-hidden bg-gray-900 rounded-xl ring-1 ring-gray-800/60"
+            onMouseEnter={startPreview}
+            onMouseLeave={stopPreview}
+          >
             {/* 채도·밝기 한 단계 다운 → 격자 전체가 차분해지고, 호버 시 원본 색으로 살아남 */}
             <Image
               src={game.thumbnail_url}
@@ -84,6 +103,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
               fill
               className="object-cover saturate-[.8] brightness-90 group-hover:saturate-100 group-hover:brightness-100 group-hover:scale-[1.03] transition-all duration-300"
             />
+            {/* 호버 라이브 미리보기 — 게임이 실제로 실행됨. 클릭은 카드로 통과(pointer-events-none) */}
+            {preview && (
+              <iframe
+                src={game.play_url}
+                tabIndex={-1}
+                title={`${game.title} preview`}
+                onLoad={() => setPreviewReady(true)}
+                className={`absolute inset-0 w-full h-full border-0 pointer-events-none transition-opacity duration-500 ${previewReady ? 'opacity-100' : 'opacity-0'}`}
+              />
+            )}
             {/* 공통 하단 그라데이션 — 제각각인 썸네일에 통일감 */}
             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
             {/* LIVE 배지 — 절제된 크기·투명도 */}
