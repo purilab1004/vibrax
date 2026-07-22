@@ -122,9 +122,27 @@ export default async function RootLayout({
     .slice(0, 5)
     .map(pick)
 
+  // 사이트 구조화 데이터 — 구글/네이버/AI 검색이 서비스 정체를 이해하도록
+  const siteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Vibrexcup',
+    alternateName: ['바이브렉스컵', 'VIBREXCUP'],
+    url: 'https://vibrexcup.com',
+    description:
+      'AI game creation and sharing platform — build playable HTML5 games from a single prompt, streamed live by AI streamer AJ.',
+    publisher: {
+      '@type': 'Organization',
+      name: 'Vibrexcup',
+      url: 'https://vibrexcup.com',
+      email: 'dev@puritechlab.com',
+    },
+  }
+
   return (
     <html lang={lang} className={`${pressStart.variable} h-full`}>
 <body className="bg-[#0a0a0a] text-white min-h-full flex flex-col">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />
         <LangProvider initialLang={lang}>
           <NavBar />
           <Suspense fallback={null}>
