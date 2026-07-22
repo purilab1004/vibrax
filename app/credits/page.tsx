@@ -18,7 +18,7 @@ export default function CreditsPage() {
   const paddleRef = useRef<Paddle | null>(null)
   const router = useRouter()
   const supabase = createClient()
-  const { T } = useLang()
+  const { T, lang } = useLang()
   const c = T.credits
 
   const refreshBalance = async () => {
@@ -86,6 +86,8 @@ export default function CreditsPage() {
     paddleRef.current.Checkout.open({
       items: [{ priceId, quantity: 1 }],
       customData: { user_id: userId },
+      // 사이트 언어(KO/EN)와 결제창 언어 동기화 — 그 외 언어는 Paddle이 브라우저 기준 자동 감지
+      settings: { locale: lang },
     })
   }
 
