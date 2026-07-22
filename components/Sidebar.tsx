@@ -20,7 +20,6 @@ export interface SidebarChannel {
   view_count: number
 }
 
-const RAIL_KEY = 'vibrax-rail-open'
 const ICON = 'w-5 h-5 shrink-0'
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 
@@ -45,14 +44,9 @@ export default function Sidebar({ newGenres = [], channels = [] }: {
   const { T } = useLang()
   const [open, setOpen] = useState(true)
 
-  // 저장된 접힘 상태 복원 + 본문 여백 동기화
-  useEffect(() => {
-    const saved = localStorage.getItem(RAIL_KEY)
-    if (saved === '0') setOpen(false)
-  }, [])
+  // 본문(main/footer) 여백을 사이드바 폭과 동기화
   useEffect(() => {
     document.documentElement.style.setProperty('--rail-w', open ? '14rem' : '3.5rem')
-    localStorage.setItem(RAIL_KEY, open ? '1' : '0')
   }, [open])
 
   const activeGenre = pathname === '/games' ? params.get('genre') : null

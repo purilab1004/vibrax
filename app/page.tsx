@@ -1,17 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import HeroSection from '@/components/HeroSection'
 import HomeBanner from '@/components/HomeBanner'
-import GameCard from '@/components/GameCard'
+import LiveGrid from '@/components/home/LiveGrid'
 import Link from 'next/link'
-import type { Game, GameWithCreator } from '@/lib/supabase/types'
+import type { GameWithCreator } from '@/lib/supabase/types'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
-
-const GENRES: { key: Game['genre']; label: string }[] = [
-  { key: 'action', label: 'ACTION' },
-  { key: 'adventure', label: 'ADVENTURE' },
-  { key: 'strategy', label: 'STRATEGY' },
-  { key: 'sports', label: 'SPORTS' },
-]
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -20,48 +13,15 @@ export default async function HomePage() {
     q => q.order('created_at', { ascending: false }),
   )
 
-  const gamesByGenre = (genre: Game['genre']) =>
-    (games ?? []).filter(g => g.genre === genre)
-
   const hasAnyGame = (games ?? []).length > 0
 
   return (
     <div>
       <HomeBanner />
       <HeroSection />
-      <div className="max-w-7xl mx-auto px-6 py-12 space-y-14">
+      <div className="max-w-7xl mx-auto px-6 py-10">
         {hasAnyGame ? (
-          GENRES.map(({ key, label }) => {
-            const genreGames = gamesByGenre(key)
-            if (genreGames.length === 0) return null
-            return (
-              <section key={key}>
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="font-pixel text-[#00ff41] text-xs tracking-widest">
-                    {label}
-                  </h2>
-                  <Link
-                    href={`/games?genre=${key}`}
-                    className="text-xs text-gray-300 hover:text-[#00ff41] transition-colors tracking-wider"
-                  >
-                    VIEW ALL →
-                  </Link>
-                </div>
-<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {genreGames.slice(0, 5).map(game => (
-                    <GameCard
-                      key={game.id}
-                      game={game}
-                      creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
-                      creatorAvatarUrl={game.profiles?.avatar_config?.previewUrl ?? null}
-                      creatorCountry={game.profiles?.country ?? null}
-                      bjAvatarConfig={game.profiles?.avatar_config ?? null}
-                    />
-                  ))}
-                </div>
-              </section>
-            )
-          })
+          <LiveGrid games={games ?? []} />
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center">
             <p className="font-pixel text-[10px] text-[#00ff41] tracking-widest mb-4">

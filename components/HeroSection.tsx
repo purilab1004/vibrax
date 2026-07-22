@@ -9,7 +9,7 @@ export default function HeroSection() {
   const [line1, line2] = T.hero.promptHeading.split('\n')
 
   return (
-    <section className="relative overflow-hidden border-b border-gray-800 min-h-[480px] md:min-h-[560px]">
+    <section className="relative overflow-hidden border-b border-gray-800">
       {/* Background image — right side visible, fades left */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -44,28 +44,15 @@ export default function HeroSection() {
         }}
       />
 
-      <div className="relative max-w-7xl mx-auto px-6 py-20 md:py-28 flex flex-col items-center text-center">
-        <p className="font-pixel text-[#00ff41] text-[10px] tracking-[0.3em] mb-5">
+      {/* 컴팩트 히어로 — 프롬프트 입력이 핵심, 아래 kick식 라이브 그리드가 메인 */}
+      <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-14 flex flex-col items-center text-center">
+        <p className="font-pixel text-[#00ff41] text-[9px] tracking-[0.3em] mb-4">
           {T.hero.tagline}
         </p>
-        <h1 className="font-pixel text-white text-2xl md:text-[2.5rem] leading-[1.8] mb-10">
+        <h1 className="font-pixel text-white text-lg md:text-2xl leading-[1.8] mb-7">
           {line1}{line2 && <><br /><span className="text-[#00ff41]">{line2}</span></>}
         </h1>
         <HeroPromptInput />
-        <div className="flex items-center gap-4 flex-wrap justify-center mt-12">
-          <Link
-            href="/games"
-            className="font-pixel text-[10px] border border-gray-700 text-gray-300 px-5 py-2.5 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors"
-          >
-            {T.hero.playGames}
-          </Link>
-          <Link
-            href="/submit"
-            className="font-pixel text-[10px] border border-gray-700 text-gray-300 px-5 py-2.5 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors"
-          >
-            {T.hero.submitGame}
-          </Link>
-        </div>
       </div>
     </section>
   )
