@@ -11,6 +11,7 @@ import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
 import type { AvatarConfig } from '@/lib/avatar/config'
 import { countryFlag } from '@/lib/country'
+import { formatViewers } from '@/lib/format'
 
 const GENRE_LABELS: Record<Game['genre'], string> = {
   action: 'ACTION',
@@ -74,6 +75,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         className="group block w-full text-left cursor-pointer"
       >
         <div className="bg-[#111] border border-gray-800 group-hover:border-[#00ff41] transition-all duration-200 overflow-hidden">
+          {/* 썸네일 — kick 스트림 카드 문법: LIVE 배지 + 시청자수 오버레이 */}
           <div className="relative aspect-video w-full overflow-hidden bg-gray-900">
             <Image
               src={game.thumbnail_url}
@@ -81,58 +83,50 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
+            <span className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white font-pixel text-[8px] px-1.5 py-1 tracking-widest">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              AJ LIVE
+            </span>
+            <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/75 text-gray-100 text-[10px] px-1.5 py-0.5">
+              <span className="text-[11px]">👁</span>{formatViewers(game.view_count ?? 0)}
+            </span>
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <span className="font-pixel text-[10px] text-white bg-[#00ff41]/90 text-black px-3 py-2">
+              <span className="font-pixel text-[10px] bg-[#00ff41]/90 text-black px-3 py-2">
                 ▶ PLAY
               </span>
             </div>
           </div>
-          <div className="p-3">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span
-                className={`inline-block font-pixel text-[9px] px-2 py-1 text-white ${GENRE_COLORS[game.genre]}`}
-              >
-                {GENRE_LABELS[game.genre]}
-              </span>
-              {game.language && (
-                <span className="inline-block font-pixel text-[9px] px-2 py-1 border border-gray-700 text-gray-400">
-                  {game.language === 'ko' ? '한국어' : 'EN'}
-                </span>
+          {/* 하단 정보 — 제작자 아바타 + 제목/제작자/장르 (kick 스트리머 정보 배치) */}
+          <div className="p-3 flex items-start gap-2.5">
+            <div className="w-8 h-8 shrink-0 rounded-full border border-gray-700 overflow-hidden bg-gray-900 flex items-center justify-center">
+              {creatorAvatarUrl ? (
+                <Image
+                  src={creatorAvatarUrl}
+                  alt={creatorName ?? 'creator'}
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover object-top"
+                  unoptimized
+                />
+              ) : (
+                <span className="font-pixel text-[10px] text-gray-500">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
               )}
             </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-100 truncate leading-tight">
-              {game.title}
-            </h3>
-            <div className="flex items-center justify-between mt-2">
-              <span className="flex items-center gap-1 text-[10px] text-gray-600 font-pixel">
-                <span className="text-[11px]">👁</span>{game.view_count ?? 0}
-              </span>
-              <LikeButton gameId={game.id} size="sm" />
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-gray-100 truncate leading-tight">
+                {game.title}
+              </h3>
+              <p className="mt-0.5 flex items-center gap-1 min-w-0">
+                <span className="font-pixel text-[9px] text-gray-400 truncate">{creatorName ?? 'unknown'}</span>
+                {flag && <span className="text-[11px] leading-none shrink-0" title={creatorCountry ?? ''}>{flag}</span>}
+              </p>
+              <p className="mt-0.5 font-pixel text-[8px] text-gray-600 tracking-widest truncate">
+                {GENRE_LABELS[game.genre]}
+                {game.language && ` · ${game.language === 'ko' ? '한국어' : 'EN'}`}
+              </p>
             </div>
-            {/* 제작자(올린 사람) — 아바타 프로필 사진 + 이름 */}
-            <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-800">
-              <div className="w-5 h-5 shrink-0 rounded-full border border-gray-700 overflow-hidden bg-gray-900 flex items-center justify-center">
-                {creatorAvatarUrl ? (
-                  <Image
-                    src={creatorAvatarUrl}
-                    alt={creatorName ?? 'creator'}
-                    width={20}
-                    height={20}
-                    className="w-full h-full object-cover object-top"
-                    unoptimized
-                  />
-                ) : (
-                  <span className="font-pixel text-[8px] text-gray-500">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
-                )}
-              </div>
-              {flag && <span className="text-[12px] leading-none shrink-0" title={creatorCountry ?? ''}>{flag}</span>}
-              <span className="font-pixel text-[9px] text-gray-400 truncate">{creatorName ?? 'unknown'}</span>
-              <span className="flex items-center gap-0.5 text-[8px] text-red-500 font-pixel ml-auto shrink-0">
-                <span className="w-1 h-1 rounded-full bg-red-500 animate-pulse inline-block" />
-                LIVE
-              </span>
-            </div>
+            <LikeButton gameId={game.id} size="sm" />
           </div>
         </div>
       </div>
