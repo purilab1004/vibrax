@@ -96,7 +96,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
             </div>
           </div>
           {/* 정보 블록 — 아바타 + 2줄 제목 + 채널명 + 조회수·장르 (유튜브 메타 순서) */}
-          <div className="mt-3 flex items-start gap-3 px-0.5">
+          <div className="mt-4 flex items-start gap-3 px-0.5">
             <div className="w-9 h-9 shrink-0 rounded-full border border-gray-800 overflow-hidden bg-gray-900 flex items-center justify-center">
               {creatorAvatarUrl ? (
                 <Image
