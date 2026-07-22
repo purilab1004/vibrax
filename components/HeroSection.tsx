@@ -49,7 +49,7 @@ export default function HeroSection() {
         <p className="font-pixel text-[#00ff41] text-[11px] tracking-[0.3em] mb-4">
           {T.hero.tagline}
         </p>
-        <h1 className="font-pixel text-white text-lg md:text-2xl leading-[1.8] mb-7">
+        <h1 className="font-pixel font-extrabold text-white text-lg md:text-2xl leading-[1.8] mb-7">
           {line1}{line2 && <><br /><span className="text-[#00ff41]">{line2}</span></>}
         </h1>
         <HeroPromptInput />

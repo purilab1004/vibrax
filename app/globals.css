@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-pixel: var(--font-press-start), monospace;
+  /* Press Start 2P는 한글 글리프가 없다 — 한글은 Pretendard로 폴백 (monospace 금지) */
+  --font-pixel: var(--font-press-start), 'Pretendard Variable', Pretendard, sans-serif;
   --color-accent: #00ff41;
   --color-bg: #0a0a0a;
 }

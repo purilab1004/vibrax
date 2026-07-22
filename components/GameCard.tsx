@@ -76,19 +76,21 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
       >
         {/* 유튜브 홈 문법 — 테두리 없는 카드: 둥근 썸네일이 화면에 뜨고, 아래는 차분한 정보 블록 */}
         <div>
-          <div className="relative aspect-video w-full overflow-hidden bg-gray-900 rounded-xl ring-1 ring-gray-800/60 group-hover:ring-[#00ff41]/70 transition-all duration-200">
+          <div className="relative aspect-video w-full overflow-hidden bg-gray-900 rounded-xl ring-1 ring-gray-800/60">
+            {/* 채도·밝기 한 단계 다운 → 격자 전체가 차분해지고, 호버 시 원본 색으로 살아남 */}
             <Image
               src={game.thumbnail_url}
               alt={game.title}
               fill
-              className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
+              className="object-cover saturate-[.8] brightness-90 group-hover:saturate-100 group-hover:brightness-100 group-hover:scale-[1.03] transition-all duration-300"
             />
-            {/* LIVE 배지 — 유튜브 라이브처럼 좌하단, 조용한 크기 */}
-            <span className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-red-600/95 text-white font-pixel text-[10px] px-1.5 py-1 rounded tracking-widest">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            {/* 공통 하단 그라데이션 — 제각각인 썸네일에 통일감 */}
+            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+            {/* LIVE 배지 — 절제된 크기·투명도 */}
+            <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-red-600/80 text-white font-pixel text-[10px] px-1.5 py-0.5 rounded tracking-widest">
+              <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
               AJ LIVE
             </span>
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <span className="font-pixel text-[11px] bg-[#00ff41]/90 text-black px-3 py-2 rounded">
                 ▶ PLAY
