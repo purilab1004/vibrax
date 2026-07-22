@@ -20,7 +20,7 @@ export const t = {
       notices: '공지',
       admin: '관리자',
     },
-    genres: { action: '액션', adventure: '어드벤처', strategy: '전략', sports: '스포츠' },
+    genres: { action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS' },
     hero: {
       tagline: 'VIBE CODED · AI STREAMED · YOUR GAME',
       heading: '바이브로 게임 만들고\nAI가 STREAMING 한다',
