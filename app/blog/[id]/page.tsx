@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { BlogCategory, BlogPost } from '@/lib/supabase/types'
 import { stripHtml, makeExcerpt } from '@/lib/blog/excerpt'
 import BlogViewPing from '@/components/BlogViewPing'
+import BlogActions from '@/components/blog/BlogActions'
 
 // 검색엔진·AI 크롤러가 본문과 메타를 읽을 수 있도록 서버 렌더링한다.
 export const revalidate = 300
@@ -87,6 +88,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ id: s
       )}
       {/* content는 RLS로 admin만 작성 가능 — 신뢰 경계 내 HTML */}
       <div className="rte-content" dangerouslySetInnerHTML={{ __html: post.content }} />
+      <div className="mt-10 pt-6 border-t border-gray-800">
+        <BlogActions postId={post.id} size="md" />
+      </div>
     </article>
   )
 }

@@ -5,6 +5,10 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import type { BlogCategory, BlogPost } from '@/lib/supabase/types'
+import { formatViewers } from '@/lib/format'
+import BlogActions from '@/components/blog/BlogActions'
+
+const RANK_COLOR = ['text-[#ffd24d]', 'text-gray-300', 'text-amber-600']
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[] | null>(null)
@@ -27,12 +31,15 @@ export default function BlogPage() {
     q.then(({ data }) => setPosts((data as BlogPost[] | null) ?? []))
   }, [activeCat])
 
+  const catName = (id: string | null) => cats.find(c => c.id === id)?.name ?? ''
+  const popular = [...(posts ?? [])].sort((a, z) => (z.view_count ?? 0) - (a.view_count ?? 0)).slice(0, 5)
+
   const catBtn = (id: string, label: string) => (
     <button
       key={id || 'all'}
       onClick={() => setActiveCat(id)}
-      className={`font-pixel text-[11px] tracking-widest px-4 py-2 border transition-colors ${
-        activeCat === id ? 'border-[#00ff41] text-[#00ff41]' : 'border-gray-800 text-gray-500 hover:text-white'
+      className={`text-[13px] font-medium px-4 py-2 rounded-full border transition-colors ${
+        activeCat === id ? 'border-[#00ff41] text-black bg-[#00ff41]' : 'border-gray-800 text-gray-400 hover:text-white hover:border-gray-600'
       }`}
     >
       {label}
@@ -41,41 +48,79 @@ export default function BlogPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
-      <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest mb-8">{b.heading}</h1>
-      <div className="flex justify-between gap-2 flex-wrap mb-8">
+      <h1 className="font-pixel text-[#00ff41] text-base tracking-widest mb-6">{b.heading}</h1>
+      <div className="flex justify-between gap-2 flex-wrap mb-6">
         <div className="flex gap-2 flex-wrap">
           {catBtn('', b.all)}
           {cats.map(c => catBtn(c.id, c.name))}
         </div>
-        <Link href="/notices" className="font-pixel text-[11px] tracking-widest px-4 py-2 border border-gray-800 text-gray-500 hover:text-[#00ff41] hover:border-[#00ff41] transition-colors">
+        <Link href="/notices" className="text-[13px] font-medium px-4 py-2 rounded-full border border-gray-800 text-gray-500 hover:text-[#00ff41] hover:border-[#00ff41] transition-colors">
           {T.notices.heading} →
         </Link>
       </div>
-      {posts === null ? null : posts.length === 0 ? (
-        <p className="text-gray-500 text-sm">{b.empty}</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {posts.map(p => (
-            <Link key={p.id} href={`/blog/${p.id}`} className="border border-gray-800 bg-[#111] hover:border-[#00ff41] transition-colors group">
-              {p.thumbnail_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.thumbnail_url} alt={p.title} className="w-full aspect-video object-cover border-b border-gray-800" />
-              ) : (
-                <div className="w-full aspect-video border-b border-gray-800 flex items-center justify-center">
-                  <span className="font-pixel text-[#00ff41]/30 text-xs">VIBREX<span className="text-[#ffd24d]/30">CUP</span></span>
+
+      <div className="flex gap-8 items-start">
+        {/* 레딧식 피드 */}
+        <div className="flex-1 min-w-0 space-y-3">
+          {posts === null ? null : posts.length === 0 ? (
+            <p className="text-gray-500 text-base">{b.empty}</p>
+          ) : (
+            posts.map(p => (
+              <Link
+                key={p.id}
+                href={`/blog/${p.id}`}
+                className="flex gap-4 p-4 bg-[#111] border border-gray-800 rounded-xl hover:border-gray-600 transition-colors group"
+              >
+                {p.thumbnail_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.thumbnail_url} alt="" className="hidden sm:block w-32 h-24 object-cover rounded-lg border border-gray-800 shrink-0" />
+                ) : (
+                  <div className="hidden sm:flex w-32 h-24 rounded-lg border border-gray-800 shrink-0 items-center justify-center bg-[#0d0d0d]">
+                    <span className="font-pixel text-[#00ff41]/25 text-[10px]">VIBREX<span className="text-[#ffd24d]/25">CUP</span></span>
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-500 mb-1">
+                    {catName(p.category_id) && <span className="text-[#00ff41] font-medium mr-2">{catName(p.category_id)}</span>}
+                    {p.published_at ? new Date(p.published_at).toLocaleDateString('ko-KR') : ''}
+                  </p>
+                  <h2 className="text-[17px] font-semibold text-white leading-snug line-clamp-2 group-hover:text-[#00ff41] transition-colors">
+                    {p.title}
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500 line-clamp-2">{p.excerpt}</p>
+                  <div className="mt-2.5 flex items-center gap-4 text-[13px] text-gray-500">
+                    <span className="flex items-center gap-1.5">
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" /></svg>
+                      {formatViewers(p.view_count)}
+                    </span>
+                    <BlogActions postId={p.id} />
+                  </div>
                 </div>
-              )}
-              <div className="p-4">
-                <h2 className="text-white text-sm mb-2 line-clamp-2 group-hover:text-[#00ff41] transition-colors">{p.title}</h2>
-                <p className="text-gray-500 text-xs line-clamp-2 mb-3">{p.excerpt}</p>
-                <p className="text-[11px] text-gray-600">
-                  {p.published_at ? new Date(p.published_at).toLocaleDateString() : ''} · {b.views(p.view_count)}
-                </p>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))
+          )}
         </div>
-      )}
+
+        {/* 우측 POPULAR 레일 */}
+        <aside className="hidden lg:block w-80 shrink-0 sticky top-20">
+          <div className="border border-gray-800 bg-[#111] rounded-xl overflow-hidden">
+            <p className="px-5 py-3.5 border-b border-gray-800 font-pixel text-[11px] text-[#00ff41] tracking-widest">
+              🔥 {b.popular}
+            </p>
+            <div className="divide-y divide-gray-800/70">
+              {popular.map((p, i) => (
+                <Link key={p.id} href={`/blog/${p.id}`} className="flex gap-3 px-5 py-3.5 hover:bg-white/5 transition-colors group">
+                  <span className={`font-pixel text-[13px] shrink-0 ${RANK_COLOR[i] ?? 'text-gray-600'}`}>#{i + 1}</span>
+                  <span className="min-w-0">
+                    <span className="block text-sm text-gray-200 leading-snug line-clamp-2 group-hover:text-[#00ff41] transition-colors">{p.title}</span>
+                    <span className="block mt-1 text-xs text-gray-600">{b.views(p.view_count)}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   )
 }

@@ -124,6 +124,10 @@ export const t = {
       views: (n: number) => `조회 ${n}`,
       back: '목록으로',
       notFound: '글을 찾을 수 없습니다.',
+      popular: 'POPULAR',
+      share: '공유',
+      copied: '링크 복사됨!',
+      loginToLike: '로그인 후 좋아요 가능',
     },
     notices: {
       heading: '공지사항',
@@ -385,6 +389,10 @@ export const t = {
       views: (n: number) => `${n} views`,
       back: 'BACK TO LIST',
       notFound: 'Post not found.',
+      popular: 'POPULAR',
+      share: 'Share',
+      copied: 'Link copied!',
+      loginToLike: 'Sign in to like',
     },
     notices: {
       heading: 'NOTICES',
