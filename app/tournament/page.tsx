@@ -184,6 +184,24 @@ export default function TournamentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // 총상금 카운트업 — 0 → 8,750,000 (ease-out, 2초)
+  const [prizeCount, setPrizeCount] = useState(0)
+  useEffect(() => {
+    const target = 8_750_000
+    const dur = 2000
+    let raf = 0
+    let start: number | null = null
+    const tick = (t: number) => {
+      if (start === null) start = t
+      const prog = Math.min((t - start) / dur, 1)
+      const eased = 1 - Math.pow(1 - prog, 3)
+      setPrizeCount(Math.round((target * eased) / 1000) * 1000)
+      if (prog < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (status === 'busy' || !user) return
@@ -214,79 +232,7 @@ export default function TournamentPage() {
 
   const divisions: Division[] = ['individual', 'school', 'world', 'company']
 
-  return (
-    <div>
-      {/* ── 히어로 ── */}
-      <section className="relative overflow-hidden border-b border-gray-800">
-        <div
-          className="absolute inset-0 opacity-[0.04] pointer-events-none"
-          style={{
-            backgroundImage: 'linear-gradient(#00ff41 1px, transparent 1px), linear-gradient(90deg, #00ff41 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-          }}
-        />
-        <div className="relative max-w-5xl mx-auto px-6 py-16 md:py-24 text-center">
-          <span className="inline-flex items-center gap-2 font-pixel text-[11px] text-red-400 border border-red-500/50 rounded-full px-4 py-2 tracking-[0.25em] mb-8 animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
-            {c.openingSoon}
-          </span>
-          <h1 className="font-pixel text-2xl md:text-4xl text-white tracking-widest leading-relaxed mb-4">
-            🏆 <span className="text-[#00ff41]">VIBREX</span><span className="text-[#ffd24d]">CUP</span>
-            <br />TOURNAMENT
-          </h1>
-          <p className="text-gray-300 text-base md:text-lg mb-10">{c.tagline}</p>
-          <div className="inline-block border border-[#ffd24d]/40 bg-[#ffd24d]/5 rounded-2xl px-10 py-6">
-            <p className="font-pixel text-[11px] text-gray-400 tracking-widest mb-2">{c.totalPrize}</p>
-            <p className="font-pixel text-2xl md:text-3xl text-[#ffd24d]">{c.totalPrizeValue}</p>
-          </div>
-          <p className="text-[13px] text-gray-500 mt-8">{c.schedule}</p>
-        </div>
-      </section>
-
-      {/* ── 부문 카드 ── */}
-      <section className="max-w-6xl mx-auto px-6 py-14">
-        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.divisionsHeading}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-          {divisions.map(d => {
-            const info = c.divisions[d]
-            const color = DIVISION_COLOR[d]
-            return (
-              <div key={d} className="border border-gray-800 bg-[#111] rounded-2xl p-6 flex flex-col hover:border-gray-600 transition-colors">
-                <span className="font-pixel text-[10px] tracking-widest px-2 py-1 rounded self-start mb-4" style={{ color, border: `1px solid ${color}55`, background: `${color}11` }}>
-                  {info.sub}
-                </span>
-                <h3 className="text-white text-xl font-bold mb-2">{info.name}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed mb-5 flex-1">{info.desc}</p>
-                <div className="border-t border-gray-800 pt-4 space-y-1.5">
-                  {[c.winner, c.second, c.third].map((rank, i) => (
-                    <div key={rank} className="flex justify-between text-sm">
-                      <span className={i === 0 ? 'text-[#ffd24d] font-pixel text-[11px]' : 'text-gray-500 font-pixel text-[11px]'}>{rank}</span>
-                      <span className={i === 0 ? 'text-white font-semibold' : 'text-gray-300'}>{info.prizes[i]}</span>
-                    </div>
-                  ))}
-                  <p className="text-[11px] text-gray-600 pt-2">{info.extra}</p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* ── 진행 방식 ── */}
-      <section className="max-w-6xl mx-auto px-6 pb-14">
-        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.howHeading}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-          {c.how.map(([h, p]) => (
-            <div key={h} className="border border-gray-800 bg-[#111] rounded-2xl p-6">
-              <h3 className="text-[#00ff41] text-base font-bold mb-2">{h}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">{p}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── 신청서 ── */}
-      <section className="max-w-2xl mx-auto px-6 pb-20">
+  const applyCard = (
         <div className="border border-gray-800 bg-[#111] rounded-2xl p-8">
           <h2 className="font-pixel text-sm text-[#00ff41] tracking-widest mb-2">{c.applyHeading}</h2>
           <p className="text-gray-400 text-sm mb-8">{c.applyDesc}</p>
@@ -384,7 +330,86 @@ export default function TournamentPage() {
             </form>
           )}
         </div>
+  )
+
+  return (
+    <div>
+      {/* ── 히어로 ── */}
+      <section className="relative overflow-hidden border-b border-gray-800">
+        <div
+          className="absolute inset-0 opacity-[0.04] pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(#00ff41 1px, transparent 1px), linear-gradient(90deg, #00ff41 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
+        <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-14 grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+          {/* 우측(모바일 상단): 대회 정보 */}
+          <div className="text-center order-1 lg:order-2 lg:sticky lg:top-24">
+            <span className="inline-flex items-center gap-2 font-pixel text-[11px] text-red-400 border border-red-500/50 rounded-full px-4 py-2 tracking-[0.25em] mb-8 animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-red-500" />
+              {c.openingSoon}
+            </span>
+            <h1 className="font-pixel text-2xl md:text-4xl text-white tracking-widest leading-relaxed mb-4">
+              🏆 <span className="text-[#00ff41]">VIBREX</span><span className="text-[#ffd24d]">CUP</span>
+              <br />TOURNAMENT
+            </h1>
+            <p className="text-gray-300 text-base md:text-lg mb-10">{c.tagline}</p>
+            <div className="inline-block border border-[#ffd24d]/40 bg-[#ffd24d]/5 rounded-2xl px-10 py-6">
+              <p className="font-pixel text-[11px] text-gray-400 tracking-widest mb-2">{c.totalPrize}</p>
+              <p className="font-pixel text-2xl md:text-3xl text-[#ffd24d] tabular-nums">₩{prizeCount.toLocaleString()}+</p>
+            </div>
+            <p className="text-[13px] text-gray-500 mt-8">{c.schedule}</p>
+          </div>
+          {/* 좌측: 참가 신청 폼 */}
+          <div className="order-2 lg:order-1">
+            {applyCard}
+          </div>
+        </div>
       </section>
+
+      {/* ── 부문 카드 ── */}
+      <section className="max-w-6xl mx-auto px-6 py-14">
+        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.divisionsHeading}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {divisions.map(d => {
+            const info = c.divisions[d]
+            const color = DIVISION_COLOR[d]
+            return (
+              <div key={d} className="border border-gray-800 bg-[#111] rounded-2xl p-6 flex flex-col hover:border-gray-600 transition-colors">
+                <span className="font-pixel text-[10px] tracking-widest px-2 py-1 rounded self-start mb-4" style={{ color, border: `1px solid ${color}55`, background: `${color}11` }}>
+                  {info.sub}
+                </span>
+                <h3 className="text-white text-xl font-bold mb-2">{info.name}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed mb-5 flex-1">{info.desc}</p>
+                <div className="border-t border-gray-800 pt-4 space-y-1.5">
+                  {[c.winner, c.second, c.third].map((rank, i) => (
+                    <div key={rank} className="flex justify-between text-sm">
+                      <span className={i === 0 ? 'text-[#ffd24d] font-pixel text-[11px]' : 'text-gray-500 font-pixel text-[11px]'}>{rank}</span>
+                      <span className={i === 0 ? 'text-white font-semibold' : 'text-gray-300'}>{info.prizes[i]}</span>
+                    </div>
+                  ))}
+                  <p className="text-[11px] text-gray-600 pt-2">{info.extra}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* ── 진행 방식 ── */}
+      <section className="max-w-6xl mx-auto px-6 pb-14">
+        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.howHeading}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {c.how.map(([h, p]) => (
+            <div key={h} className="border border-gray-800 bg-[#111] rounded-2xl p-6">
+              <h3 className="text-[#00ff41] text-base font-bold mb-2">{h}</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">{p}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
     </div>
   )
 }
