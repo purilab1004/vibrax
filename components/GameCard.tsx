@@ -74,38 +74,36 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePlay() } }}
         className="group block w-full text-left cursor-pointer"
       >
-        <div className="bg-[#111] border border-gray-800 group-hover:border-[#00ff41] transition-all duration-200 overflow-hidden">
-          {/* 썸네일 — kick 스트림 카드 문법: LIVE 배지 + 시청자수 오버레이 */}
-          <div className="relative aspect-video w-full overflow-hidden bg-gray-900">
+        {/* 유튜브 홈 문법 — 테두리 없는 카드: 둥근 썸네일이 화면에 뜨고, 아래는 차분한 정보 블록 */}
+        <div>
+          <div className="relative aspect-video w-full overflow-hidden bg-gray-900 rounded-xl ring-1 ring-gray-800/60 group-hover:ring-[#00ff41]/70 transition-all duration-200">
             <Image
               src={game.thumbnail_url}
               alt={game.title}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
             />
-            <span className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white font-pixel text-[10px] px-1.5 py-1 tracking-widest">
+            {/* LIVE 배지 — 유튜브 라이브처럼 좌하단, 조용한 크기 */}
+            <span className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-red-600/95 text-white font-pixel text-[10px] px-1.5 py-1 rounded tracking-widest">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               AJ LIVE
             </span>
-            <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/75 text-gray-100 text-[11px] px-1.5 py-0.5">
-              <span className="text-[11px]">👁</span>{formatViewers(game.view_count ?? 0)}
-            </span>
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <span className="font-pixel text-[11px] bg-[#00ff41]/90 text-black px-3 py-2">
+              <span className="font-pixel text-[11px] bg-[#00ff41]/90 text-black px-3 py-2 rounded">
                 ▶ PLAY
               </span>
             </div>
           </div>
-          {/* 하단 정보 — 제작자 아바타 + 제목/제작자/장르 (kick 스트리머 정보 배치) */}
-          <div className="p-3 flex items-start gap-2.5">
-            <div className="w-8 h-8 shrink-0 rounded-full border border-gray-700 overflow-hidden bg-gray-900 flex items-center justify-center">
+          {/* 정보 블록 — 아바타 + 2줄 제목 + 채널명 + 조회수·장르 (유튜브 메타 순서) */}
+          <div className="mt-3 flex items-start gap-3 px-0.5">
+            <div className="w-9 h-9 shrink-0 rounded-full border border-gray-800 overflow-hidden bg-gray-900 flex items-center justify-center">
               {creatorAvatarUrl ? (
                 <Image
                   src={creatorAvatarUrl}
                   alt={creatorName ?? 'creator'}
-                  width={32}
-                  height={32}
+                  width={36}
+                  height={36}
                   className="w-full h-full object-cover object-top"
                   unoptimized
                 />
@@ -114,15 +112,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-[15px] font-semibold text-gray-100 truncate leading-tight">
+              <h3 className="text-[15px] font-semibold text-gray-100 line-clamp-2 leading-snug">
                 {game.title}
               </h3>
-              <p className="mt-1 flex items-center gap-1 min-w-0">
-                <span className="text-xs text-gray-400 truncate">{creatorName ?? 'unknown'}</span>
-                {flag && <span className="text-[11px] leading-none shrink-0" title={creatorCountry ?? ''}>{flag}</span>}
+              <p className="mt-1 flex items-center gap-1 min-w-0 text-[13px] text-gray-400">
+                <span className="truncate">{creatorName ?? 'unknown'}</span>
+                {flag && <span className="text-[12px] leading-none shrink-0" title={creatorCountry ?? ''}>{flag}</span>}
               </p>
-              <p className="mt-0.5 font-pixel text-[10px] text-gray-600 tracking-widest truncate">
-                {GENRE_LABELS[game.genre]}
+              <p className="text-[13px] text-gray-500 truncate">
+                {'👁 '}{formatViewers(game.view_count ?? 0)}
+                {' · '}{GENRE_LABELS[game.genre]}
                 {game.language && ` · ${game.language === 'ko' ? '한국어' : 'EN'}`}
               </p>
             </div>
