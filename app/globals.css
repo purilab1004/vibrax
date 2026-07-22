@@ -14,6 +14,10 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  /* 본문 기본 폰트 — 한글은 Pretendard, 픽셀 폰트는 .font-pixel 클래스로만 */
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo',
+    'Noto Sans KR', 'Malgun Gothic', sans-serif;
 }
 
 @keyframes floatUpFade {

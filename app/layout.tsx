@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Press_Start_2P } from 'next/font/google'
+import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
 import './globals.css'
 import NavBar from '@/components/NavBar'
 import FooterLinks from '@/components/FooterLinks'
