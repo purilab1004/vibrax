@@ -127,6 +127,14 @@ export default function NavBar() {
           <div className="hidden md:flex items-center gap-6 shrink-0">
             {navLinkDesktop('/games', T.nav.games)}
             {navLinkDesktop('/studio', T.nav.studio)}
+            <Link
+              href="/tournament"
+              className={`text-[13px] font-medium tracking-wider transition-colors hover:text-[#ffd24d] ${
+                pathname === '/tournament' ? 'text-[#ffd24d]' : 'text-gray-400'
+              }`}
+            >
+              🏆 {T.nav.tournament}
+            </Link>
             {navLinkDesktop('/blog', T.nav.blog)}
             {navLinkDesktop('/about', T.nav.about)}
             {user ? (
@@ -223,6 +231,15 @@ export default function NavBar() {
             </form>
             {navLinkMobile('/games', T.nav.games)}
             {navLinkMobile('/studio', T.nav.studio)}
+            <Link
+              href="/tournament"
+              onClick={() => setMenuOpen(false)}
+              className={`font-pixel text-2xl tracking-widest transition-colors py-3 ${
+                pathname === '/tournament' ? 'text-[#ffd24d]' : 'text-white hover:text-[#ffd24d]'
+              }`}
+            >
+              🏆 {T.nav.tournament}
+            </Link>
             {navLinkMobile('/blog', T.nav.blog)}
             {navLinkMobile('/about', T.nav.about)}
             {user ? (
