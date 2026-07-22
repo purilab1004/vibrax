@@ -3,7 +3,7 @@ import { Press_Start_2P } from 'next/font/google'
 import './globals.css'
 import NavBar from '@/components/NavBar'
 import FooterLinks from '@/components/FooterLinks'
-import RightRail from '@/components/RightRail'
+import Sidebar, { type SidebarChannel } from '@/components/Sidebar'
 import { Suspense } from 'react'
 import { LangProvider } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/server'
@@ -98,20 +98,24 @@ export default async function RootLayout({
 }) {
   const lang = await detectLang()
 
-  // 사이드 레일 NEW 표기 — 최근(7일 내) 업로드 + 가장 최신 게임의 장르를 모음
+  // 사이드바 데이터 — NEW 장르 표기 + 라이브 채널 목록(조회수 상위)을 한 쿼리로
   const supabase = await createClient()
   // 서버 컴포넌트(요청당 1회 실행) — Date.now 사용 정상
   // eslint-disable-next-line react-hooks/purity
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const { data: recent } = await supabase
     .from('games')
-    .select('genre, created_at')
+    .select('id, title, thumbnail_url, genre, created_at, view_count')
     .order('created_at', { ascending: false })
     .limit(50)
-  const rows = (recent ?? []) as { genre: string; created_at: string }[]
+  const rows = (recent ?? []) as (SidebarChannel & { created_at: string })[]
   const newGenres = Array.from(
     new Set(rows.filter((g, i) => i === 0 || g.created_at > since).map(g => g.genre)),
   )
+  const channels: SidebarChannel[] = [...rows]
+    .sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0))
+    .slice(0, 10)
+    .map(({ id, title, thumbnail_url, genre, view_count }) => ({ id, title, thumbnail_url, genre, view_count }))
 
   return (
     <html lang={lang} className={`${pressStart.variable} h-full`}>
@@ -119,10 +123,10 @@ export default async function RootLayout({
         <LangProvider initialLang={lang}>
           <NavBar />
           <Suspense fallback={null}>
-            <RightRail newGenres={newGenres} />
+            <Sidebar newGenres={newGenres} channels={channels} />
           </Suspense>
-          <main className="flex-1 md:pl-14">{children}</main>
-          <footer className="border-t border-gray-800 py-6 px-6 mt-auto md:pl-14">
+          <main className="flex-1 md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">{children}</main>
+          <footer className="border-t border-gray-800 py-6 px-6 mt-auto md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">
             <FooterLinks />
           </footer>
         </LangProvider>

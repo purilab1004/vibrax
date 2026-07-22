@@ -14,6 +14,7 @@ export const t = {
       categories: '카테고리',
       searchPlaceholder: '게임 검색...',
       search: '검색',
+      liveChannels: 'LIVE CHANNELS',
       blog: 'BLOG',
       notices: '공지',
       admin: '관리자',
@@ -32,6 +33,8 @@ export const t = {
     },
     games: {
       heading: 'GAMES',
+      liveNow: 'LIVE NOW',
+      all: '전체',
       subtitle: 'AI 바이브코딩 게임 모음',
       empty: '아직 등록된 게임이 없습니다.',
       emptyGenre: (genre: string) => `${genre.toUpperCase()} 장르의 게임이 없습니다.`,
@@ -263,6 +266,7 @@ export const t = {
       categories: 'CATEGORIES',
       searchPlaceholder: 'Search games...',
       search: 'Search',
+      liveChannels: 'LIVE CHANNELS',
       blog: 'BLOG',
       notices: 'NOTICES',
       admin: 'ADMIN',
@@ -281,6 +285,8 @@ export const t = {
     },
     games: {
       heading: 'GAMES',
+      liveNow: 'LIVE NOW',
+      all: 'ALL',
       subtitle: 'AI Vibe-Coded Game Collection',
       empty: 'No games registered yet.',
       emptyGenre: (genre: string) => `No games in ${genre.toUpperCase()} genre.`,
