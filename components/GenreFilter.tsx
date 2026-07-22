@@ -35,7 +35,7 @@ export default function GenreFilter() {
         <button
           key={key}
           onClick={() => handleSelect(key)}
-          className={`font-pixel text-[10px] px-4 py-2 border transition-colors ${
+          className={`font-pixel text-[11px] px-4 py-2 border transition-colors ${
             current === key
               ? 'bg-[#00ff41] text-black border-[#00ff41]'
               : 'text-gray-400 border-gray-700 hover:border-[#00ff41] hover:text-[#00ff41]'

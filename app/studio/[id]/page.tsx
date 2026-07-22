@@ -188,7 +188,7 @@ export default function StudioComposerPage() {
   if (!project) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <p className="font-pixel text-[10px] text-gray-400 tracking-widest">{s.loading}</p>
+        <p className="font-pixel text-[11px] text-gray-400 tracking-widest">{s.loading}</p>
       </div>
     )
   }
@@ -198,7 +198,7 @@ export default function StudioComposerPage() {
       <div className="flex items-center gap-4 border-b border-gray-800 px-4 py-2 shrink-0">
         <Link
           href="/studio"
-          className="font-pixel text-[10px] text-gray-400 hover:text-[#00ff41] tracking-widest transition-colors shrink-0"
+          className="font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] tracking-widest transition-colors shrink-0"
         >
           {s.backToStudio}
         </Link>
@@ -206,7 +206,7 @@ export default function StudioComposerPage() {
         <div className="flex-1" />
         <Link
           href="/credits"
-          className="font-pixel text-[10px] text-[#00ff41] tracking-widest shrink-0 hover:underline"
+          className="font-pixel text-[11px] text-[#00ff41] tracking-widest shrink-0 hover:underline"
         >
           {s.balance(balance ?? 0)}
         </Link>

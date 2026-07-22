@@ -31,7 +31,7 @@ export default function BlogPage() {
     <button
       key={id || 'all'}
       onClick={() => setActiveCat(id)}
-      className={`font-pixel text-[10px] tracking-widest px-4 py-2 border transition-colors ${
+      className={`font-pixel text-[11px] tracking-widest px-4 py-2 border transition-colors ${
         activeCat === id ? 'border-[#00ff41] text-[#00ff41]' : 'border-gray-800 text-gray-500 hover:text-white'
       }`}
     >
@@ -47,7 +47,7 @@ export default function BlogPage() {
           {catBtn('', b.all)}
           {cats.map(c => catBtn(c.id, c.name))}
         </div>
-        <Link href="/notices" className="font-pixel text-[10px] tracking-widest px-4 py-2 border border-gray-800 text-gray-500 hover:text-[#00ff41] hover:border-[#00ff41] transition-colors">
+        <Link href="/notices" className="font-pixel text-[11px] tracking-widest px-4 py-2 border border-gray-800 text-gray-500 hover:text-[#00ff41] hover:border-[#00ff41] transition-colors">
           {T.notices.heading} →
         </Link>
       </div>
@@ -68,7 +68,7 @@ export default function BlogPage() {
               <div className="p-4">
                 <h2 className="text-white text-sm mb-2 line-clamp-2 group-hover:text-[#00ff41] transition-colors">{p.title}</h2>
                 <p className="text-gray-500 text-xs line-clamp-2 mb-3">{p.excerpt}</p>
-                <p className="text-[10px] text-gray-600">
+                <p className="text-[11px] text-gray-600">
                   {p.published_at ? new Date(p.published_at).toLocaleDateString() : ''} · {b.views(p.view_count)}
                 </p>
               </div>

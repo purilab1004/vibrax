@@ -34,14 +34,14 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
     return (
       <div className="max-w-3xl mx-auto px-6 py-20 text-center">
         <p className="text-gray-400 text-sm mb-6">{b.notFound}</p>
-        <Link href="/blog" className="font-pixel text-[10px] text-[#00ff41] tracking-widest">{b.back}</Link>
+        <Link href="/blog" className="font-pixel text-[11px] text-[#00ff41] tracking-widest">{b.back}</Link>
       </div>
     )
   }
 
   return (
     <article className="max-w-3xl mx-auto px-6 py-10">
-      <Link href="/blog" className="font-pixel text-[9px] text-gray-500 hover:text-[#00ff41] tracking-widest">← {b.back}</Link>
+      <Link href="/blog" className="font-pixel text-[11px] text-gray-500 hover:text-[#00ff41] tracking-widest">← {b.back}</Link>
       <h1 className="text-white text-2xl md:text-3xl font-bold mt-6 mb-3">{post.title}</h1>
       <p className="text-[11px] text-gray-500 mb-8">
         {cat && <span className="text-[#00ff41] mr-3">{cat.name}</span>}

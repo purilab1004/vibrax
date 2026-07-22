@@ -44,7 +44,7 @@ function LoginForm() {
         <p className="text-gray-300 text-xs text-center mb-8">{a.loginSubtitle}</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
+            <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
               {a.email}
             </label>
             <input
@@ -57,7 +57,7 @@ function LoginForm() {
             />
           </div>
           <div>
-            <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
+            <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
               {a.password}
             </label>
             <input

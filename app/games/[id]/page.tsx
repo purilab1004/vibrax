@@ -95,12 +95,12 @@ export default async function GameDetailPage({ params }: Props) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-3">
             <span
-              className={`inline-block font-pixel text-[9px] px-2 py-1 text-white ${genreColor}`}
+              className={`inline-block font-pixel text-[11px] px-2 py-1 text-white ${genreColor}`}
             >
               {genreLabel}
             </span>
             {game.language && (
-              <span className="inline-block font-pixel text-[9px] px-2 py-1 border border-gray-700 text-gray-400">
+              <span className="inline-block font-pixel text-[11px] px-2 py-1 border border-gray-700 text-gray-400">
                 {game.language === 'ko' ? '한국어' : 'English'}
               </span>
             )}

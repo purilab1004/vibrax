@@ -30,7 +30,7 @@ export default function FooterLinks() {
           dev@puritechlab.com
         </a>
       </nav>
-      <p className="text-center font-pixel text-[9px] text-gray-500 tracking-widest">
+      <p className="text-center font-pixel text-[11px] text-gray-500 tracking-widest">
         {f.copyright}
       </p>
     </div>

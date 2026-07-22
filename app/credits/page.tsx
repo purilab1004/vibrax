@@ -97,7 +97,7 @@ export default function CreditsPage() {
       <p className="text-gray-300 text-sm mb-8">{c.subtitle}</p>
 
       <div className="border border-gray-800 bg-[#111] px-5 py-4 mb-10 flex items-center justify-between">
-        <span className="font-pixel text-[10px] text-gray-400 tracking-widest">{c.balance}</span>
+        <span className="font-pixel text-[11px] text-gray-400 tracking-widest">{c.balance}</span>
         <span className="font-pixel text-[#00ff41] text-lg tracking-widest">{balance ?? '—'}</span>
       </div>
 
@@ -123,7 +123,7 @@ export default function CreditsPage() {
             <button
               onClick={() => buy(p.key)}
               disabled={!paddleConfigured}
-              className="w-full bg-[#00ff41] text-black font-pixel text-[10px] py-3 hover:bg-[#00cc33] transition-colors tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full bg-[#00ff41] text-black font-pixel text-[11px] py-3 hover:bg-[#00cc33] transition-colors tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {c.buy}
             </button>

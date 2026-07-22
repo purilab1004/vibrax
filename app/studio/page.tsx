@@ -92,7 +92,7 @@ export default function StudioPage() {
   if (projects === null) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <p className="font-pixel text-[10px] text-gray-400 tracking-widest">{s.loading}</p>
+        <p className="font-pixel text-[11px] text-gray-400 tracking-widest">{s.loading}</p>
       </div>
     )
   }
@@ -102,12 +102,12 @@ export default function StudioPage() {
       <div className="flex items-end justify-between mb-2 flex-wrap gap-3">
         <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest">{s.heading}</h1>
         <div className="flex items-center gap-4">
-          <span className="font-pixel text-[10px] text-gray-400 tracking-widest">
+          <span className="font-pixel text-[11px] text-gray-400 tracking-widest">
             {balance === null ? '—' : s.balance(balance)}
           </span>
           <Link
             href="/credits"
-            className="font-pixel text-[10px] tracking-widest text-[#00ff41] border border-[#00ff41] px-3 py-1.5 hover:bg-[#00ff41] hover:text-black transition-colors"
+            className="font-pixel text-[11px] tracking-widest text-[#00ff41] border border-[#00ff41] px-3 py-1.5 hover:bg-[#00ff41] hover:text-black transition-colors"
           >
             {T.credits.heading}
           </Link>
@@ -146,10 +146,10 @@ export default function StudioPage() {
             >
               <h2 className="text-white text-sm mb-2 truncate">{p.title || s.untitled}</h2>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-gray-600">
+                <span className="text-[11px] text-gray-600">
                   {new Date(p.created_at).toLocaleDateString()}
                 </span>
-                <span className="font-pixel text-[10px] text-gray-500 group-hover:text-[#00ff41] tracking-widest transition-colors">
+                <span className="font-pixel text-[11px] text-gray-500 group-hover:text-[#00ff41] tracking-widest transition-colors">
                   {s.openProject}
                 </span>
               </div>

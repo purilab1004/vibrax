@@ -61,7 +61,7 @@ export default function StudioChat({
             <div className="max-w-[85%] px-3 py-2 text-sm bg-[#161616] border border-gray-800 text-gray-200 whitespace-pre-wrap">
               {streaming.description || s.thinking}
               {streaming.htmlBytes > 0 && (
-                <p className="font-pixel text-[10px] text-[#00ff41] mt-2 tracking-widest animate-pulse">
+                <p className="font-pixel text-[11px] text-[#00ff41] mt-2 tracking-widest animate-pulse">
                   {s.writingCode((streaming.htmlBytes / 1024).toFixed(1))}
                 </p>
               )}
@@ -93,12 +93,12 @@ export default function StudioChat({
           <button
             type="submit"
             disabled={busy || !input.trim()}
-            className="bg-[#00ff41] text-black font-pixel text-[10px] px-4 hover:bg-[#00cc33] transition-colors disabled:opacity-40 tracking-widest"
+            className="bg-[#00ff41] text-black font-pixel text-[11px] px-4 hover:bg-[#00cc33] transition-colors disabled:opacity-40 tracking-widest"
           >
             {s.send}
           </button>
         </div>
-        <p className="text-[10px] text-gray-600 mt-2">{s.costNote}</p>
+        <p className="text-[11px] text-gray-600 mt-2">{s.costNote}</p>
       </form>
     </div>
   )

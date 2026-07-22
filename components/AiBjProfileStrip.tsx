@@ -23,16 +23,16 @@ export default function AiBjProfileStrip({ genre }: Props) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="font-pixel text-[10px] text-white">{persona.name}</span>
-          <span className={`font-pixel text-[8px] px-1.5 py-0.5 text-white ${persona.tagColor}`}>
+          <span className="font-pixel text-[11px] text-white">{persona.name}</span>
+          <span className={`font-pixel text-[10px] px-1.5 py-0.5 text-white ${persona.tagColor}`}>
             AI AJ
           </span>
-          <span className="flex items-center gap-0.5 text-[9px] text-red-500 font-pixel ml-auto">
+          <span className="flex items-center gap-0.5 text-[11px] text-red-500 font-pixel ml-auto">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
             LIVE
           </span>
         </div>
-        <p className="text-[10px] text-gray-500 truncate">{persona.catchphrase}</p>
+        <p className="text-[11px] text-gray-500 truncate">{persona.catchphrase}</p>
       </div>
     </div>
   )

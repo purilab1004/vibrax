@@ -59,7 +59,7 @@ export default function NavBar() {
   const navLinkDesktop = (href: string, label: string) => (
     <Link
       href={href}
-      className={`text-xs tracking-widest transition-colors hover:text-[#00ff41] ${
+      className={`text-[13px] font-medium tracking-wider transition-colors hover:text-[#00ff41] ${
         pathname === href ? 'text-[#00ff41]' : 'text-gray-400'
       }`}
     >
@@ -82,7 +82,7 @@ export default function NavBar() {
   const langBtn = (l: Lang, label: string) => (
     <button
       onClick={() => setLang(l)}
-      className={`text-[10px] tracking-widest font-pixel transition-colors ${
+      className={`text-[11px] tracking-widest font-pixel transition-colors ${
         lang === l ? 'text-[#00ff41]' : 'text-gray-600 hover:text-gray-400'
       }`}
     >
@@ -108,7 +108,7 @@ export default function NavBar() {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={T.nav.searchPlaceholder}
-                className="w-full bg-[#111] border border-gray-800 focus:border-[#00ff41] rounded-none pl-9 pr-3 py-1.5 text-xs text-white placeholder-gray-600 outline-none transition-colors"
+                className="w-full bg-[#111] border border-gray-800 focus:border-[#00ff41] rounded-none pl-9 pr-3 py-2 text-[13px] text-white placeholder-gray-600 outline-none transition-colors"
                 aria-label={T.nav.search}
               />
               <button type="submit" aria-label={T.nav.search} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#00ff41] transition-colors">
@@ -132,7 +132,7 @@ export default function NavBar() {
                 {navLinkDesktop('/profile', T.nav.mypage)}
                 <button
                   onClick={handleSignOut}
-                  className="text-xs tracking-widest text-gray-400 hover:text-[#00ff41] transition-colors"
+                  className="text-[13px] font-medium tracking-wider text-gray-400 hover:text-[#00ff41] transition-colors"
                 >
                   {T.nav.logout}
                 </button>
@@ -141,14 +141,14 @@ export default function NavBar() {
             ) : (
               <Link
                 href="/login"
-                className="text-xs tracking-widest bg-[#00ff41] text-black px-4 py-1.5 hover:bg-[#00cc33] transition-colors font-pixel"
+                className="font-pixel text-[11px] tracking-widest bg-[#00ff41] text-black px-5 py-2 hover:bg-[#00cc33] transition-colors"
               >
                 {T.nav.login}
               </Link>
             )}
             <div className="flex items-center gap-1 border-l border-gray-800 pl-5">
               {langBtn('ko', 'KO')}
-              <span className="text-gray-700 text-[10px]">|</span>
+              <span className="text-gray-700 text-[11px]">|</span>
               {langBtn('en', 'EN')}
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function NavBar() {
           <div className="flex md:hidden items-center gap-3 ml-auto">
             <div className="flex items-center gap-1">
               {langBtn('ko', 'KO')}
-              <span className="text-gray-700 text-[10px]">|</span>
+              <span className="text-gray-700 text-[11px]">|</span>
               {langBtn('en', 'EN')}
             </div>
             <button
@@ -246,10 +246,10 @@ export default function NavBar() {
           <div className="flex items-center gap-4 border-t border-gray-800 pt-6">
             <div className="flex items-center gap-2">
               {langBtn('ko', 'KO')}
-              <span className="text-gray-700 text-[10px]">|</span>
+              <span className="text-gray-700 text-[11px]">|</span>
               {langBtn('en', 'EN')}
             </div>
-            <span className="text-[10px] text-gray-700 font-pixel ml-auto">© VIBREXCUP 2026</span>
+            <span className="text-[11px] text-gray-700 font-pixel ml-auto">© VIBREXCUP 2026</span>
           </div>
         </div>
       </div>

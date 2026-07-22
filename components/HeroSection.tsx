@@ -46,7 +46,7 @@ export default function HeroSection() {
 
       {/* 컴팩트 히어로 — 프롬프트 입력이 핵심, 아래 kick식 라이브 그리드가 메인 */}
       <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-14 flex flex-col items-center text-center">
-        <p className="font-pixel text-[#00ff41] text-[9px] tracking-[0.3em] mb-4">
+        <p className="font-pixel text-[#00ff41] text-[11px] tracking-[0.3em] mb-4">
           {T.hero.tagline}
         </p>
         <h1 className="font-pixel text-white text-lg md:text-2xl leading-[1.8] mb-7">

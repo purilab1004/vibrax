@@ -24,7 +24,7 @@ export default async function HomePage() {
           <LiveGrid games={games ?? []} />
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center">
-            <p className="font-pixel text-[10px] text-[#00ff41] tracking-widest mb-4">
+            <p className="font-pixel text-[11px] text-[#00ff41] tracking-widest mb-4">
               GAME OVER?
             </p>
             <p className="text-gray-400 text-sm mb-8">

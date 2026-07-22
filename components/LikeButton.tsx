@@ -53,7 +53,7 @@ export default function LikeButton({ gameId, size = 'sm' }: Props) {
     })
   }
 
-  const textSize = size === 'md' ? 'text-xs' : 'text-[10px]'
+  const textSize = size === 'md' ? 'text-xs' : 'text-[11px]'
   const iconSize = size === 'md' ? 'text-sm' : 'text-[11px]'
 
   return (

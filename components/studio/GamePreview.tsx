@@ -24,7 +24,7 @@ export default function GamePreview({
         <button
           onClick={() => setFrameKey(k => k + 1)}
           disabled={!html}
-          className="font-pixel text-[10px] text-gray-400 hover:text-[#00ff41] transition-colors disabled:opacity-40 tracking-widest"
+          className="font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] transition-colors disabled:opacity-40 tracking-widest"
         >
           {s.refresh}
         </button>
@@ -46,7 +46,7 @@ export default function GamePreview({
         <button
           onClick={onPublish}
           disabled={!html || busy}
-          className="bg-[#00ff41] text-black font-pixel text-[10px] px-4 py-1.5 hover:bg-[#00cc33] transition-colors disabled:opacity-40 tracking-widest"
+          className="bg-[#00ff41] text-black font-pixel text-[11px] px-4 py-1.5 hover:bg-[#00cc33] transition-colors disabled:opacity-40 tracking-widest"
         >
           {s.publish}
         </button>
@@ -62,7 +62,7 @@ export default function GamePreview({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <p className="font-pixel text-[10px] text-gray-700 tracking-widest">{s.emptyPreview}</p>
+            <p className="font-pixel text-[11px] text-gray-700 tracking-widest">{s.emptyPreview}</p>
           </div>
         )}
       </div>

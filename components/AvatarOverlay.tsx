@@ -209,13 +209,13 @@ export default function AvatarOverlay() {
       {status === 'loading' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
           <div className="w-6 h-6 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin" />
-          <span className="font-pixel text-[8px] text-gray-500">LOADING AJ...</span>
+          <span className="font-pixel text-[10px] text-gray-500">LOADING AJ...</span>
         </div>
       )}
       {status === 'error' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-3 pointer-events-none">
-          <span className="font-pixel text-[8px] text-red-500">AVATAR ERROR</span>
-          <span className="text-[8px] text-gray-600 text-center break-all">{errorMsg.slice(0, 80)}</span>
+          <span className="font-pixel text-[10px] text-red-500">AVATAR ERROR</span>
+          <span className="text-[10px] text-gray-600 text-center break-all">{errorMsg.slice(0, 80)}</span>
         </div>
       )}
     </div>

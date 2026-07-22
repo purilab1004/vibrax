@@ -55,7 +55,7 @@ export default function AvatarEditorPage() {
       <div className="flex items-center gap-4 px-4 h-12 shrink-0 border-b border-gray-800 bg-gray-900">
         <button
           onClick={() => router.push('/profile')}
-          className="font-pixel text-[10px] text-gray-400 hover:text-white tracking-widest"
+          className="font-pixel text-[11px] text-gray-400 hover:text-white tracking-widest"
         >
           ← 내정보
         </button>

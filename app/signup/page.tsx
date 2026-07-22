@@ -40,7 +40,7 @@ export default function SignupPage() {
         <p className="text-gray-300 text-xs text-center mb-8">{a.signupSubtitle}</p>
         {message ? (
           <div className="border border-[#00ff41]/30 bg-[#00ff41]/5 p-6 text-center">
-            <p className="font-pixel text-[#00ff41] text-[10px] mb-3">{a.sent}</p>
+            <p className="font-pixel text-[#00ff41] text-[11px] mb-3">{a.sent}</p>
             <p className="text-gray-300 text-sm leading-relaxed">{message}</p>
             <Link
               href="/login"
@@ -52,7 +52,7 @@ export default function SignupPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
+              <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
                 {a.email}
               </label>
               <input
@@ -65,7 +65,7 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label className="block font-pixel text-[10px] mb-2 text-gray-400 tracking-widest">
+              <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
                 {a.password}
               </label>
               <input

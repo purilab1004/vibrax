@@ -37,7 +37,7 @@ export default function HeroPromptInput() {
           {T.hero.promptCta}
         </button>
       </div>
-      <p className="text-[11px] text-gray-400 mt-3">{T.hero.promptHint}</p>
+      <p className="text-xs text-gray-400 mt-3">{T.hero.promptHint}</p>
     </form>
   )
 }

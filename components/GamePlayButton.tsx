@@ -64,7 +64,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4" onClick={() => setAgentGate(null)}>
           <div className="w-full max-w-sm bg-[#0a0a0a] border border-purple-700/60" onClick={e => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
-              <span className="font-pixel text-[10px] text-purple-400 tracking-widest">AGENT REQUIRED</span>
+              <span className="font-pixel text-[11px] text-purple-400 tracking-widest">AGENT REQUIRED</span>
               <button onClick={() => setAgentGate(null)} className="text-gray-600 hover:text-white text-lg">✕</button>
             </div>
             <div className="px-6 py-6 space-y-4">
@@ -72,7 +72,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
                 <>
                   <p className="text-white text-sm font-semibold">로그인이 필요해요</p>
                   <p className="text-gray-400 text-xs leading-relaxed">게임에 참여하려면 로그인 후 나만의 AGENT를 만들어야 해요.</p>
-                  <button onClick={() => router.push('/login')} className="w-full font-pixel text-[10px] bg-[#00ff41] text-black py-3 hover:bg-[#00cc33] transition-colors tracking-widest">
+                  <button onClick={() => router.push('/login')} className="w-full font-pixel text-[11px] bg-[#00ff41] text-black py-3 hover:bg-[#00cc33] transition-colors tracking-widest">
                     → 로그인하기
                   </button>
                 </>
@@ -88,7 +88,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
                     <p className="text-[11px] text-gray-400">• 내가 게임할 동안 AJ와 채팅 대신</p>
                     <p className="text-[11px] text-gray-400">• 프로필 → MY AGENT에서 1분이면 완료</p>
                   </div>
-                  <Link href="/profile" className="block w-full font-pixel text-[10px] bg-purple-700 text-white py-3 hover:bg-purple-600 transition-colors tracking-widest text-center">
+                  <Link href="/profile" className="block w-full font-pixel text-[11px] bg-purple-700 text-white py-3 hover:bg-purple-600 transition-colors tracking-widest text-center">
                     🤖 AGENT 만들러 가기
                   </Link>
                 </>
@@ -105,14 +105,14 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-[#0a0a0a] shrink-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <span className={`font-pixel text-[9px] px-2 py-1 text-white shrink-0 ${genreColor}`}>
+              <span className={`font-pixel text-[11px] px-2 py-1 text-white shrink-0 ${genreColor}`}>
                 {genreLabel}
               </span>
               <LiveTitleTicker title={game.title} />
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="shrink-0 ml-3 font-pixel text-[10px] text-gray-400 hover:text-[#00ff41] transition-colors px-3 py-1 border border-gray-700 hover:border-[#00ff41]"
+              className="shrink-0 ml-3 font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] transition-colors px-3 py-1 border border-gray-700 hover:border-[#00ff41]"
             >
               ✕ CLOSE
             </button>

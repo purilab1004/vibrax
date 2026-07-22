@@ -29,10 +29,10 @@ export default function NoticesPage() {
           {notices.map(item => (
             <Link key={item.id} href={`/notices/${item.id}`} className="flex items-center gap-3 px-5 py-4 bg-[#111] hover:bg-[#161616] transition-colors group">
               {item.pinned && (
-                <span className="font-pixel text-[8px] text-[#00ff41] border border-[#00ff41] px-1.5 py-0.5 shrink-0">{n.pinned}</span>
+                <span className="font-pixel text-[10px] text-[#00ff41] border border-[#00ff41] px-1.5 py-0.5 shrink-0">{n.pinned}</span>
               )}
               <span className="text-sm text-white group-hover:text-[#00ff41] transition-colors truncate flex-1">{item.title}</span>
-              <span className="text-[10px] text-gray-600 shrink-0">{new Date(item.created_at).toLocaleDateString()}</span>
+              <span className="text-[11px] text-gray-600 shrink-0">{new Date(item.created_at).toLocaleDateString()}</span>
             </Link>
           ))}
         </div>

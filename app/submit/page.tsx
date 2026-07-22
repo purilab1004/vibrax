@@ -28,7 +28,7 @@ export default function SubmitPage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <p className="font-pixel text-[10px] text-gray-400 tracking-widest">{T.submit.loading}</p>
+        <p className="font-pixel text-[11px] text-gray-400 tracking-widest">{T.submit.loading}</p>
       </div>
     )
   }

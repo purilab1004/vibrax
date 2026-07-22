@@ -83,16 +83,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
-            <span className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white font-pixel text-[8px] px-1.5 py-1 tracking-widest">
+            <span className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white font-pixel text-[10px] px-1.5 py-1 tracking-widest">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               AJ LIVE
             </span>
-            <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/75 text-gray-100 text-[10px] px-1.5 py-0.5">
+            <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/75 text-gray-100 text-[11px] px-1.5 py-0.5">
               <span className="text-[11px]">👁</span>{formatViewers(game.view_count ?? 0)}
             </span>
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <span className="font-pixel text-[10px] bg-[#00ff41]/90 text-black px-3 py-2">
+              <span className="font-pixel text-[11px] bg-[#00ff41]/90 text-black px-3 py-2">
                 ▶ PLAY
               </span>
             </div>
@@ -110,18 +110,18 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   unoptimized
                 />
               ) : (
-                <span className="font-pixel text-[10px] text-gray-500">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
+                <span className="font-pixel text-[11px] text-gray-500">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-medium text-gray-100 truncate leading-tight">
+              <h3 className="text-[15px] font-semibold text-gray-100 truncate leading-tight">
                 {game.title}
               </h3>
-              <p className="mt-0.5 flex items-center gap-1 min-w-0">
-                <span className="font-pixel text-[9px] text-gray-400 truncate">{creatorName ?? 'unknown'}</span>
+              <p className="mt-1 flex items-center gap-1 min-w-0">
+                <span className="text-xs text-gray-400 truncate">{creatorName ?? 'unknown'}</span>
                 {flag && <span className="text-[11px] leading-none shrink-0" title={creatorCountry ?? ''}>{flag}</span>}
               </p>
-              <p className="mt-0.5 font-pixel text-[8px] text-gray-600 tracking-widest truncate">
+              <p className="mt-0.5 font-pixel text-[10px] text-gray-600 tracking-widest truncate">
                 {GENRE_LABELS[game.genre]}
                 {game.language && ` · ${game.language === 'ko' ? '한국어' : 'EN'}`}
               </p>
@@ -135,7 +135,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4" onClick={() => setAgentGate(null)}>
           <div className="w-full max-w-sm bg-[#0a0a0a] border border-purple-700/60" onClick={e => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
-              <span className="font-pixel text-[10px] text-purple-400 tracking-widest">AGENT REQUIRED</span>
+              <span className="font-pixel text-[11px] text-purple-400 tracking-widest">AGENT REQUIRED</span>
               <button onClick={() => setAgentGate(null)} className="text-gray-600 hover:text-white text-lg">✕</button>
             </div>
             <div className="px-6 py-6 space-y-4">
@@ -143,7 +143,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 <>
                   <p className="text-white text-sm font-semibold">로그인이 필요해요</p>
                   <p className="text-gray-400 text-xs leading-relaxed">게임에 참여하려면 로그인 후 나만의 AGENT를 만들어야 해요.</p>
-                  <button onClick={() => router.push('/login')} className="w-full font-pixel text-[10px] bg-[#00ff41] text-black py-3 hover:bg-[#00cc33] transition-colors tracking-widest">
+                  <button onClick={() => router.push('/login')} className="w-full font-pixel text-[11px] bg-[#00ff41] text-black py-3 hover:bg-[#00cc33] transition-colors tracking-widest">
                     → 로그인하기
                   </button>
                 </>
@@ -159,7 +159,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                     <p className="text-[11px] text-gray-400">• 내가 게임할 동안 AJ와 채팅 대신</p>
                     <p className="text-[11px] text-gray-400">• 프로필 → MY AGENT에서 1분이면 완료</p>
                   </div>
-                  <Link href="/profile" className="block w-full font-pixel text-[10px] bg-purple-700 text-white py-3 hover:bg-purple-600 transition-colors tracking-widest text-center">
+                  <Link href="/profile" className="block w-full font-pixel text-[11px] bg-purple-700 text-white py-3 hover:bg-purple-600 transition-colors tracking-widest text-center">
                     🤖 AGENT 만들러 가기
                   </Link>
                 </>
@@ -178,7 +178,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-[#0a0a0a] shrink-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <span
-                className={`font-pixel text-[9px] px-2 py-1 text-white shrink-0 ${GENRE_COLORS[game.genre]}`}
+                className={`font-pixel text-[11px] px-2 py-1 text-white shrink-0 ${GENRE_COLORS[game.genre]}`}
               >
                 {GENRE_LABELS[game.genre]}
               </span>
@@ -186,7 +186,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="shrink-0 ml-3 font-pixel text-[10px] text-gray-400 hover:text-[#00ff41] transition-colors px-3 py-1 border border-gray-700 hover:border-[#00ff41]"
+              className="shrink-0 ml-3 font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] transition-colors px-3 py-1 border border-gray-700 hover:border-[#00ff41]"
             >
               ✕ CLOSE
             </button>

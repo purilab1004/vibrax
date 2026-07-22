@@ -26,7 +26,7 @@ export default function LiveGrid({ games }: { games: GameWithCreator[] }) {
     <button
       key={value || 'all'}
       onClick={() => setGenre(value)}
-      className={`font-pixel text-[9px] tracking-widest px-3.5 py-2 border transition-colors ${
+      className={`font-pixel text-[11px] tracking-widest px-4 py-2.5 border transition-colors ${
         genre === value
           ? 'border-[#00ff41] text-[#00ff41] bg-[#00ff41]/10'
           : 'border-gray-800 text-gray-400 hover:text-white hover:border-gray-600'

@@ -58,7 +58,7 @@ export default function Sidebar({ newGenres = [], channels = [] }: {
     }`
   // 아이콘은 접힌 폭(w-14)과 같은 고정 컬럼에 가운데 정렬 → 접힌 상태에서 중앙에 보임
   const iconCol = 'w-14 shrink-0 flex items-center justify-center'
-  const label = `font-pixel text-[9px] tracking-widest whitespace-nowrap pr-2 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`
+  const label = `font-pixel text-[11px] tracking-widest whitespace-nowrap pr-2 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`
 
   return (
     <aside
@@ -99,7 +99,7 @@ export default function Sidebar({ newGenres = [], channels = [] }: {
                 </span>
                 <span className={label}>{T.genres[g]}</span>
                 {isNew && open && (
-                  <span className="font-pixel text-[7px] text-black bg-[#00ff41] px-1 py-px tracking-widest shrink-0">NEW</span>
+                  <span className="font-pixel text-[10px] text-black bg-[#00ff41] px-1 py-px tracking-widest shrink-0">NEW</span>
                 )}
               </Link>
             )
@@ -110,7 +110,7 @@ export default function Sidebar({ newGenres = [], channels = [] }: {
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (
-                <span className="font-pixel text-[8px] text-gray-500 tracking-widest whitespace-nowrap">{T.nav.liveChannels}</span>
+                <span className="font-pixel text-[10px] text-gray-500 tracking-widest whitespace-nowrap">{T.nav.liveChannels}</span>
               ) : (
                 <span className="w-full border-t border-gray-800/70" />
               )}
@@ -129,12 +129,12 @@ export default function Sidebar({ newGenres = [], channels = [] }: {
                     </span>
                   </span>
                   <span className={`flex-1 min-w-0 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
-                    <span className="block text-[11px] text-gray-200 truncate leading-tight group-hover:text-[#00ff41] transition-colors">{ch.title}</span>
-                    <span className="block font-pixel text-[7px] text-gray-600 tracking-widest">{T.genres[ch.genre]}</span>
+                    <span className="block text-[13px] text-gray-200 truncate leading-tight group-hover:text-[#00ff41] transition-colors">{ch.title}</span>
+                    <span className="block font-pixel text-[10px] text-gray-600 tracking-widest">{T.genres[ch.genre]}</span>
                   </span>
                   <span className={`flex items-center gap-1 pr-3 shrink-0 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[10px] text-gray-400">{formatViewers(ch.view_count)}</span>
+                    <span className="text-[11px] text-gray-400">{formatViewers(ch.view_count)}</span>
                   </span>
                 </Link>
               ))}
