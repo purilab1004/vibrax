@@ -9,10 +9,11 @@ export interface ChatMsg {
 }
 
 export default function StudioChat({
-  messages, streaming, error, onSend, busy,
+  messages, streaming, usage, error, onSend, busy,
 }: {
   messages: ChatMsg[]
   streaming: { description: string; htmlBytes: number; codeTail: string } | null
+  usage?: { input: number; output: number } | null
   error: string | null
   onSend: (prompt: string) => void
   busy: boolean
@@ -21,6 +22,16 @@ export default function StudioChat({
   const listRef = useRef<HTMLDivElement>(null)
   const { T } = useLang()
   const s = T.studio
+
+  // 생성 경과 시간 — 초기 단계(모델 연결·구상)에도 시스템이 일하고 있음을 보여준다
+  const [elapsed, setElapsed] = useState(0)
+  const active = streaming !== null
+  useEffect(() => {
+    if (!active) { setElapsed(0); return }
+    const t0 = Date.now()
+    const iv = setInterval(() => setElapsed(Math.floor((Date.now() - t0) / 1000)), 1000)
+    return () => clearInterval(iv)
+  }, [active])
 
   // 채팅 컨테이너 내부만 스크롤 — scrollIntoView는 페이지 전체를 끌어내려서 금지
   useEffect(() => {
@@ -62,6 +73,14 @@ export default function StudioChat({
           <div className="flex justify-start">
             <div className="w-full max-w-[95%] px-3 py-2 text-sm bg-[#161616] border border-gray-800 text-gray-200 whitespace-pre-wrap rounded-lg">
               {streaming.description || s.thinking}
+              {/* 코드가 오기 전 단계 — 시스템 상태 로그 */}
+              {streaming.htmlBytes === 0 && (
+                <p className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                  <span className="w-3 h-3 border-2 border-[#00ff41]/60 border-t-transparent rounded-full animate-spin" />
+                  {elapsed < 3 ? s.sysConnecting : elapsed < 8 ? s.sysPlanning : s.sysDesigning}
+                  <span className="text-gray-600">· {s.elapsed(elapsed)}</span>
+                </p>
+              )}
               {streaming.htmlBytes > 0 && (
                 <>
                   {/* 실시간 코드 터미널 — 실제 생성 중인 코드의 꼬리를 흘려보여준다 */}
@@ -72,8 +91,11 @@ export default function StudioChat({
                         <span className="w-2 h-2 rounded-full bg-yellow-500/80" />
                         <span className="w-2 h-2 rounded-full bg-[#00ff41]/80" />
                       </span>
-                      <span className="font-pixel text-[10px] text-[#00ff41] tracking-widest animate-pulse">
-                        {s.writingCode((streaming.htmlBytes / 1024).toFixed(1))}
+                      <span className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-500">{s.elapsed(elapsed)} · {s.tokensApprox(Math.round(streaming.htmlBytes / 4).toLocaleString())}</span>
+                        <span className="font-pixel text-[10px] text-[#00ff41] tracking-widest animate-pulse">
+                          {s.writingCode((streaming.htmlBytes / 1024).toFixed(1))}
+                        </span>
                       </span>
                     </div>
                     <pre className="px-3 py-2 h-28 overflow-hidden flex flex-col justify-end font-mono text-[11px] leading-relaxed text-[#00ff41]/70 whitespace-pre-wrap break-all">
@@ -85,6 +107,12 @@ export default function StudioChat({
               )}
             </div>
           </div>
+        )}
+        {/* 완료된 마지막 생성의 실제 토큰 사용량 */}
+        {!streaming && usage && (
+          <p className="text-[11px] text-gray-600 text-center">
+            {s.usageLine(usage.input.toLocaleString(), usage.output.toLocaleString())}
+          </p>
         )}
         {error && (
           <p className="text-red-400 text-xs border border-red-900 bg-red-900/20 px-3 py-2">

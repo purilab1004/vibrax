@@ -26,6 +26,7 @@ export default function StudioComposerPage() {
   const [html, setHtml] = useState<string | null>(null)
   const [balance, setBalance] = useState<number | null>(null)
   const [streaming, setStreaming] = useState<{ description: string; htmlBytes: number; codeTail: string } | null>(null)
+  const [usage, setUsage] = useState<{ input: number; output: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showPublish, setShowPublish] = useState(false)
   // 홈 히어로에서 넘어온 첫 프롬프트 자동 전송은 1회만 (StrictMode 이중 실행 가드)
@@ -101,6 +102,9 @@ export default function StudioComposerPage() {
         setStreaming({ description: p.description, htmlBytes: p.htmlBytes, codeTail })
       }
       full += decoder.decode()
+      // 서버가 붙여준 실제 토큰 사용량 마커 파싱
+      const um = full.match(/\[\[USAGE:(\d+):(\d+)\]\]/)
+      if (um) setUsage({ input: Number(um[1]), output: Number(um[2]) })
       setStreaming(null)
 
       if (hasGenError(full)) {
@@ -218,6 +222,7 @@ export default function StudioComposerPage() {
         <StudioChat
           messages={messages}
           streaming={streaming}
+          usage={usage}
           error={error}
           onSend={send}
           busy={streaming !== null}

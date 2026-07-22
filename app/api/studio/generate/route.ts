@@ -114,6 +114,13 @@ export async function POST(req: Request) {
             controller.enqueue(encoder.encode(chunk.delta.text))
           }
         }
+        // 실제 토큰 사용량을 마커로 전달 — 클라이언트가 파싱해 표시하고 본문에선 제외
+        try {
+          const fin = await stream.finalMessage()
+          controller.enqueue(encoder.encode(
+            `\n[[USAGE:${fin.usage?.input_tokens ?? 0}:${fin.usage?.output_tokens ?? 0}]]`,
+          ))
+        } catch { /* usage 실패는 무시 — 생성 자체엔 영향 없음 */ }
         const parsed = parseGeneration(full)
         if (!parsed.html) {
           await refund()
