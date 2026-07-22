@@ -35,9 +35,13 @@ const GENRE_ICON: Record<Genre, React.ReactNode> = {
 
 const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 
-export default function Sidebar({ newGenres = [], channels = [] }: {
+// 순위(1~3위) 강조색 — 금·은·동
+const RANK_COLOR = ['text-[#ffd24d]', 'text-gray-300', 'text-amber-600']
+
+export default function Sidebar({ newGenres = [], channels = [], tournament = [] }: {
   newGenres?: string[]
   channels?: SidebarChannel[]
+  tournament?: SidebarChannel[]
 }) {
   const pathname = usePathname()
   const params = useSearchParams()
@@ -135,6 +139,41 @@ export default function Sidebar({ newGenres = [], channels = [] }: {
                   <span className={`flex items-center gap-1 pr-3 shrink-0 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                     <span className="text-[11px] text-gray-400">{formatViewers(ch.view_count)}</span>
+                  </span>
+                </Link>
+              ))}
+            </nav>
+          </>
+        )}
+
+        {tournament.length > 0 && (
+          <>
+            <div className="mt-2 mb-1 px-4 h-6 flex items-center">
+              {open ? (
+                <span className="font-pixel text-[10px] text-gray-500 tracking-widest whitespace-nowrap">🏆 {T.nav.tournament}</span>
+              ) : (
+                <span className="w-full border-t border-gray-800/70" />
+              )}
+            </div>
+            <nav className="flex flex-col pb-3">
+              {tournament.map((ch, i) => (
+                <Link
+                  key={ch.id}
+                  href={`/games/${ch.id}`}
+                  className="flex items-center h-11 text-gray-300 hover:bg-white/5 transition-colors group"
+                  title={`#${i + 1} ${ch.title}`}
+                >
+                  <span className={iconCol}>
+                    <span className="relative w-7 h-7 rounded-full overflow-hidden border border-gray-700 group-hover:border-[#00ff41] transition-colors">
+                      <Image src={ch.thumbnail_url} alt={ch.title} fill className="object-cover" sizes="28px" />
+                    </span>
+                  </span>
+                  <span className={`flex-1 min-w-0 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
+                    <span className="block text-[13px] text-gray-200 truncate leading-tight group-hover:text-[#00ff41] transition-colors">{ch.title}</span>
+                    <span className="block text-[11px] text-gray-500">👁 {formatViewers(ch.view_count)}</span>
+                  </span>
+                  <span className={`pr-3.5 shrink-0 font-pixel text-[11px] ${RANK_COLOR[i] ?? 'text-gray-600'} transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
+                    #{i + 1}
                   </span>
                 </Link>
               ))}

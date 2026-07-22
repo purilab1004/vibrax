@@ -113,10 +113,14 @@ export default async function RootLayout({
   const newGenres = Array.from(
     new Set(rows.filter((g, i) => i === 0 || g.created_at > since).map(g => g.genre)),
   )
-  const channels: SidebarChannel[] = [...rows]
+  const pick = ({ id, title, thumbnail_url, genre, view_count }: SidebarChannel) =>
+    ({ id, title, thumbnail_url, genre, view_count })
+  // LIVE CHANNELS = 최신 게임 5 (막 방송을 시작한 채널), TOURNAMENT = 조회수 TOP 5 순위
+  const channels: SidebarChannel[] = rows.slice(0, 5).map(pick)
+  const tournament: SidebarChannel[] = [...rows]
     .sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0))
-    .slice(0, 10)
-    .map(({ id, title, thumbnail_url, genre, view_count }) => ({ id, title, thumbnail_url, genre, view_count }))
+    .slice(0, 5)
+    .map(pick)
 
   return (
     <html lang={lang} className={`${pressStart.variable} h-full`}>
@@ -124,7 +128,7 @@ export default async function RootLayout({
         <LangProvider initialLang={lang}>
           <NavBar />
           <Suspense fallback={null}>
-            <Sidebar newGenres={newGenres} channels={channels} />
+            <Sidebar newGenres={newGenres} channels={channels} tournament={tournament} />
           </Suspense>
           <main className="flex-1 md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">{children}</main>
           <footer className="border-t border-gray-800 py-6 px-6 mt-auto md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">
