@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/submit', '/login', '/signup'],
       },
     ],
-    sitemap: 'https://vibrax-rho.vercel.app/sitemap.xml',
+    sitemap: 'https://vibrexcup.com/sitemap.xml',
   }
 }

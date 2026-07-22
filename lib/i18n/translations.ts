@@ -243,7 +243,12 @@ export const t = {
       },
       s5: { label: 'START NOW', heading: '지금 바로 시작하세요', cta: '바이브코딩 + AI 스트리머 + 나만의 AGENT', body: '게임을 만들고, AJ와 함께 방송하고, 에이전트가 수익까지 만들어가는 새로운 플랫폼. 지금 Vibrexcup에서 시작하세요.', btn1: '▶ 게임 보러가기', btn2: '+ 게임 등록하기' },
     },
-    footer: { copyright: '© VIBE GAME 2026 PURILAB' },
+    footer: {
+      copyright: '© VIBE GAME 2026 PURILAB',
+      terms: '이용약관',
+      privacy: '개인정보처리방침',
+      refund: '환불정책',
+    },
   },
   en: {
     nav: {
@@ -487,7 +492,12 @@ export const t = {
       },
       s5: { label: 'START NOW', heading: 'Start right now', cta: 'Vibe Code. AI Stream. Agent Earns.', body: 'Build a game, have AJ broadcast it live, and let your agent generate revenue — all on one platform. Start on Vibrexcup today.', btn1: '▶ Browse Games', btn2: '+ Submit Game' },
     },
-    footer: { copyright: '© VIBE GAME 2026 PURILAB' },
+    footer: {
+      copyright: '© VIBE GAME 2026 PURILAB',
+      terms: 'Terms',
+      privacy: 'Privacy',
+      refund: 'Refunds',
+    },
   },
 }
 

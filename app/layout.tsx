@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Press_Start_2P } from 'next/font/google'
 import './globals.css'
 import NavBar from '@/components/NavBar'
+import FooterLinks from '@/components/FooterLinks'
 import RightRail from '@/components/RightRail'
 import { Suspense } from 'react'
 import { LangProvider } from '@/lib/i18n/context'
@@ -46,11 +47,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Vibrexcup' }],
   creator: 'Vibrexcup',
-  metadataBase: new URL('https://vibrax-rho.vercel.app'),
+  metadataBase: new URL('https://vibrexcup.com'),
   openGraph: {
     type: 'website',
     locale: 'ko_KR',
-    url: 'https://vibrax-rho.vercel.app',
+    url: 'https://vibrexcup.com',
     siteName: 'Vibrexcup',
     title: 'Vibrexcup — AI 바이브코딩 게임 플랫폼',
     description:
@@ -72,7 +73,7 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   alternates: {
-    canonical: 'https://vibrax-rho.vercel.app',
+    canonical: 'https://vibrexcup.com',
   },
   robots: {
     index: true,
@@ -122,18 +123,10 @@ export default async function RootLayout({
           </Suspense>
           <main className="flex-1 md:pl-14">{children}</main>
           <footer className="border-t border-gray-800 py-6 px-6 mt-auto md:pl-14">
-            <FooterCopyright />
+            <FooterLinks />
           </footer>
         </LangProvider>
       </body>
     </html>
-  )
-}
-
-function FooterCopyright() {
-  return (
-    <p className="text-center font-pixel text-[9px] text-gray-500 tracking-widest">
-      © VIBE GAME 2026 PURILAB
-    </p>
   )
 }
