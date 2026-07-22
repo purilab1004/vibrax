@@ -228,7 +228,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (
-                <span className="font-pixel text-[10px] text-gray-500 tracking-widest whitespace-nowrap">🏆 {T.nav.tournament}</span>
+                <Link href="/tournament" className="font-pixel text-[10px] text-gray-500 hover:text-[#ffd24d] tracking-widest whitespace-nowrap transition-colors">🏆 {T.nav.tournament} →</Link>
               ) : (
                 <span className="w-full border-t border-gray-800/70" />
               )}
