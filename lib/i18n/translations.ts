@@ -28,7 +28,7 @@ export const t = {
       submitGame: '+ 게임 등록',
       promptHeading: '프롬프트 한 줄로\n나만의 게임을 만드세요',
       promptPlaceholder: '예: 화살표로 조작하는 벽돌깨기 게임 만들어줘',
-      promptCta: '만들기',
+      promptCta: 'BUILD',
       promptHint: 'AI가 게임을 만들어 바로 실행해줘요 · 생성 1회 = 10크레딧',
     },
     games: {
@@ -280,7 +280,7 @@ export const t = {
       submitGame: '+ SUBMIT GAME',
       promptHeading: 'Build your own game\nwith a single prompt',
       promptPlaceholder: 'e.g. Make a brick-breaker game with arrow keys',
-      promptCta: 'CREATE',
+      promptCta: 'BUILD',
       promptHint: 'AI builds and runs it instantly · 1 generation = 10 credits',
     },
     games: {
