@@ -1,55 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import Link from 'next/link'
 import GameCard from '@/components/GameCard'
 import { useLang } from '@/lib/i18n/context'
 import type { GameWithCreator, Genre } from '@/lib/supabase/types'
 
 const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 
-// kick식 홈 그리드 — 🔴 LIVE NOW 헤더 + 장르 칩 필터 + 통합 카드 그리드.
-// 전체 보기일 때 최다 조회수 게임 1개를 2칸 폭 피처드로 키운다.
-export default function LiveGrid({ games }: { games: GameWithCreator[] }) {
-  const [genre, setGenre] = useState<'' | Genre>('')
-  const { T } = useLang()
-
-  const filtered = genre ? games.filter(g => g.genre === genre) : games
-  const featuredId =
-    !genre && filtered.length > 3
-      ? [...filtered].sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0))[0].id
-      : null
-  const ordered = featuredId
-    ? [filtered.find(g => g.id === featuredId)!, ...filtered.filter(g => g.id !== featuredId)]
-    : filtered
-
-  const chip = (value: '' | Genre, label: string) => (
-    <button
-      key={value || 'all'}
-      onClick={() => setGenre(value)}
-      className={`font-pixel text-[11px] tracking-widest px-4 py-2.5 border transition-colors ${
-        genre === value
-          ? 'border-[#00ff41] text-[#00ff41] bg-[#00ff41]/10'
-          : 'border-gray-800 text-gray-400 hover:text-white hover:border-gray-600'
-      }`}
-    >
-      {label}
-    </button>
-  )
-
+// 넷플릭스식 가로 슬라이더 행 — 큰 카드가 한 줄에 2~3장만 보여 하나하나에 집중된다.
+function Row({ heading, headerExtra, games, large }: {
+  heading: React.ReactNode
+  headerExtra?: React.ReactNode
+  games: GameWithCreator[]
+  large?: boolean
+}) {
+  if (games.length === 0) return null
   return (
-    <section>
-      <div className="flex items-center gap-2 mb-5 flex-wrap">
-        <h2 className="font-pixel text-xs text-white tracking-widest flex items-center gap-2 mr-4">
-          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          {T.games.liveNow}
-        </h2>
-        {chip('', T.games.all)}
-        {GENRES.map(g => chip(g, T.genres[g]))}
+    <section className="mb-12">
+      <div className="flex items-center justify-between mb-5">
+        {heading}
+        {headerExtra}
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-5 gap-y-10">
-        {ordered.map(game => (
-          <div key={game.id} className={game.id === featuredId ? 'sm:col-span-2' : ''}>
+      <div className="flex gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-6 px-6 pb-2">
+        {games.map(game => (
+          <div
+            key={game.id}
+            className={`shrink-0 snap-start ${large ? 'w-[320px] sm:w-[420px] xl:w-[480px]' : 'w-[280px] sm:w-[360px] xl:w-[400px]'}`}
+          >
             <GameCard
               game={game}
               creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
@@ -61,5 +38,45 @@ export default function LiveGrid({ games }: { games: GameWithCreator[] }) {
         ))}
       </div>
     </section>
+  )
+}
+
+export default function LiveGrid({ games }: { games: GameWithCreator[] }) {
+  const { T } = useLang()
+
+  const topLive = [...games]
+    .sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0))
+    .slice(0, 8)
+
+  return (
+    <div>
+      <Row
+        large
+        heading={
+          <h2 className="font-pixel text-sm text-white tracking-widest flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            {T.games.liveNow}
+          </h2>
+        }
+        games={topLive}
+      />
+      {GENRES.map(g => (
+        <Row
+          key={g}
+          heading={
+            <h2 className="font-pixel text-xs text-[#00ff41] tracking-widest">{T.genres[g]}</h2>
+          }
+          headerExtra={
+            <Link
+              href={`/games?genre=${g}`}
+              className="text-[13px] text-gray-400 hover:text-[#00ff41] transition-colors tracking-wider"
+            >
+              {T.games.viewAll}
+            </Link>
+          }
+          games={games.filter(x => x.genre === g)}
+        />
+      ))}
+    </div>
   )
 }
