@@ -1,6 +1,5 @@
 'use client'
 
-import { useRef } from 'react'
 import Link from 'next/link'
 import GameCard from '@/components/GameCard'
 import { useLang } from '@/lib/i18n/context'
@@ -8,87 +7,31 @@ import type { GameWithCreator, Genre } from '@/lib/supabase/types'
 
 const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 
-// 장르별 섹션 — 각 섹션은 오버레이 타일(higgsfield)의 가로 슬라이더(넷플릭스).
-// 터치/트랙패드 스크롤 + 마우스 드래그 + 헤더 화살표 버튼 지원.
-function Row({ heading, headerExtra, games, large }: {
+// 유튜브식 홈 — 슬라이더 대신 오른쪽 끝까지 꽉 차는 그리드. 섹션별로 행이 줄바꿈된다.
+function Section({ heading, headerExtra, games, limit }: {
   heading: React.ReactNode
   headerExtra?: React.ReactNode
   games: GameWithCreator[]
-  large?: boolean
+  limit: number
 }) {
-  const track = useRef<HTMLDivElement>(null)
-  const drag = useRef({ down: false, startX: 0, scrollLeft: 0, moved: false })
-
   if (games.length === 0) return null
-
-  const scrollByDir = (dir: 1 | -1) =>
-    track.current?.scrollBy({ left: dir * track.current.clientWidth * 0.8, behavior: 'smooth' })
-
-  // 마우스 드래그로 슬라이드 — 드래그였다면 카드 클릭(플레이)은 무시
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType !== 'mouse' || !track.current) return
-    drag.current = { down: true, startX: e.clientX, scrollLeft: track.current.scrollLeft, moved: false }
-  }
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag.current.down || !track.current) return
-    const dx = e.clientX - drag.current.startX
-    if (Math.abs(dx) > 5) drag.current.moved = true
-    track.current.scrollLeft = drag.current.scrollLeft - dx
-  }
-  const endDrag = () => { drag.current.down = false }
-  const onClickCapture = (e: React.MouseEvent) => {
-    if (drag.current.moved) {
-      e.preventDefault()
-      e.stopPropagation()
-      drag.current.moved = false
-    }
-  }
-
-  const arrowBtn = (dir: 1 | -1, glyph: string) => (
-    <button
-      onClick={() => scrollByDir(dir)}
-      aria-label={dir === 1 ? 'scroll right' : 'scroll left'}
-      className="w-8 h-8 flex items-center justify-center border border-gray-800 text-gray-400 hover:text-[#00ff41] hover:border-[#00ff41] transition-colors text-sm"
-    >
-      {glyph}
-    </button>
-  )
-
   return (
     <section className="mb-14">
       <div className="flex items-center justify-between mb-5 gap-3">
         {heading}
-        <div className="flex items-center gap-3">
-          {headerExtra}
-          <div className="hidden md:flex gap-1.5">
-            {arrowBtn(-1, '‹')}
-            {arrowBtn(1, '›')}
-          </div>
-        </div>
+        {headerExtra}
       </div>
-      <div
-        ref={track}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerLeave={endDrag}
-        onClickCapture={onClickCapture}
-        className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-proximity -mx-6 px-6 pb-2 cursor-grab active:cursor-grabbing select-none"
-      >
-        {games.map(game => (
-          <div
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+        {games.slice(0, limit).map(game => (
+          <GameCard
             key={game.id}
-            className={`shrink-0 snap-start ${large ? 'w-[320px] sm:w-[440px] xl:w-[520px]' : 'w-[280px] sm:w-[360px] xl:w-[420px]'}`}
-          >
-            <GameCard
-              variant="tile"
-              game={game}
-              creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
-              creatorAvatarUrl={game.profiles?.avatar_config?.previewUrl ?? null}
-              creatorCountry={game.profiles?.country ?? null}
-              bjAvatarConfig={game.profiles?.avatar_config ?? null}
-            />
-          </div>
+            variant="tile"
+            game={game}
+            creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
+            creatorAvatarUrl={game.profiles?.avatar_config?.previewUrl ?? null}
+            creatorCountry={game.profiles?.country ?? null}
+            bjAvatarConfig={game.profiles?.avatar_config ?? null}
+          />
         ))}
       </div>
     </section>
@@ -104,8 +47,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
 
   return (
     <div>
-      <Row
-        large
+      <Section
         heading={
           <h2 className="font-pixel text-sm text-white tracking-widest flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
@@ -113,9 +55,10 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
           </h2>
         }
         games={topLive}
+        limit={8}
       />
       {GENRES.map(g => (
-        <Row
+        <Section
           key={g}
           heading={
             <h2 className="font-pixel text-sm text-[#00ff41] tracking-widest">{T.genres[g]}</h2>
@@ -129,6 +72,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
             </Link>
           }
           games={games.filter(x => x.genre === g)}
+          limit={4}
         />
       ))}
     </div>
