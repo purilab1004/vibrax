@@ -218,23 +218,28 @@ export default function StudioComposerPage() {
           {s.balance(balance ?? 0)}
         </Link>
       </div>
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[2fr_3fr] min-h-0">
-        <StudioChat
-          messages={messages}
-          streaming={streaming}
-          usage={usage}
-          error={error}
-          onSend={send}
-          busy={streaming !== null}
-        />
-        <GamePreview
-          html={html}
-          versions={versions}
-          currentVersionId={currentVersionId}
-          onSelectVersion={loadVersionHtml}
-          onPublish={() => setShowPublish(true)}
-          busy={streaming !== null}
-        />
+      {/* 모바일: 상 45% 프리뷰 / 하 55% 채팅, 데스크톱: 좌 채팅 / 우 프리뷰 */}
+      <div className="flex-1 grid grid-cols-1 grid-rows-[45%_55%] md:grid-rows-1 md:grid-cols-[2fr_3fr] min-h-0">
+        <div className="order-2 md:order-1 min-h-0 h-full">
+          <StudioChat
+            messages={messages}
+            streaming={streaming}
+            usage={usage}
+            error={error}
+            onSend={send}
+            busy={streaming !== null}
+          />
+        </div>
+        <div className="order-1 md:order-2 min-h-0 h-full border-b md:border-b-0 border-gray-800">
+          <GamePreview
+            html={html}
+            versions={versions}
+            currentVersionId={currentVersionId}
+            onSelectVersion={loadVersionHtml}
+            onPublish={() => setShowPublish(true)}
+            busy={streaming !== null}
+          />
+        </div>
       </div>
       {showPublish && (
         <PublishModal
