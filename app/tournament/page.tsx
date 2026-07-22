@@ -26,6 +26,7 @@ const COPY = {
     totalPrizeValue: '₩8,750,000+',
     schedule: '일정은 곧 공개됩니다 — 지금 신청하면 오픈 소식을 가장 먼저 받습니다',
     sponsorNote: '후원금에 따라 상금은 지속적으로 올라갑니다!',
+    sponsorPledge: '후원금의 70%는 그대로 상금이 됩니다. 무조건.',
     sponsorCta: '🤝 후원하기',
     sponsorMailSubject: 'Vibrexcup Tournament 후원 문의',
     divisionsHeading: '4개 부문',
@@ -101,6 +102,7 @@ const COPY = {
     totalPrizeValue: '₩8,750,000+',
     schedule: 'Schedule to be announced — apply now to hear first',
     sponsorNote: 'The prize pool keeps rising with every sponsorship!',
+    sponsorPledge: '70% of every sponsorship goes straight into the prize pool. No exceptions.',
     sponsorCta: '🤝 BECOME A SPONSOR',
     sponsorMailSubject: 'Vibrexcup Tournament Sponsorship Inquiry',
     divisionsHeading: '4 DIVISIONS',
@@ -375,6 +377,9 @@ export default function TournamentPage() {
             </div>
             <p className="glow-gold mt-7 text-lg md:text-2xl font-extrabold leading-snug">
               💰 {c.sponsorNote}
+            </p>
+            <p className="mt-3 text-base md:text-xl font-extrabold text-white">
+              {c.sponsorPledge}
             </p>
             <a
               href={`mailto:dev@puritechlab.com?subject=${encodeURIComponent(c.sponsorMailSubject)}`}
