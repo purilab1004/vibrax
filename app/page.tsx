@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import HeroSection from '@/components/HeroSection'
 import HomeBanner from '@/components/HomeBanner'
-import LiveGrid from '@/components/home/LiveGrid'
+import HomeMosaic from '@/components/home/HomeMosaic'
 import Link from 'next/link'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
@@ -21,7 +21,7 @@ export default async function HomePage() {
       <HeroSection />
       <div className="max-w-7xl mx-auto px-6 py-10">
         {hasAnyGame ? (
-          <LiveGrid games={games ?? []} />
+          <HomeMosaic games={games ?? []} />
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center">
             <p className="font-pixel text-[11px] text-[#00ff41] tracking-widest mb-4">

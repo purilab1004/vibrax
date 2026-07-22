@@ -33,11 +33,13 @@ interface GameCardProps {
   creatorAvatarUrl?: string | null   // 제작자 아바타 프리뷰 PNG (avatar_config.previewUrl)
   creatorCountry?: string | null     // 제작자 국가코드 (ISO alpha-2) → 국기
   bjAvatarConfig?: AvatarConfig | null // 제작자 저장 아바타 — 게임 내 BJ 로 사용
+  // 'card' = 썸네일 아래 정보 블록(목록용), 'tile' = 정보를 썸네일 위 오버레이로(홈 모자이크용)
+  variant?: 'card' | 'tile'
 }
 
 interface AgentConfig { name: string; persona: string; avatarUrl?: string }
 
-export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig }: GameCardProps) {
+export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card' }: GameCardProps) {
   const flag = countryFlag(creatorCountry)
   const [open, setOpen] = useState(false)
   // 호버 라이브 미리보기 — 잠깐 스친 마우스에 iframe이 뜨지 않게 지연 후 실행
@@ -113,20 +115,37 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 className={`absolute inset-0 w-full h-full border-0 pointer-events-none transition-opacity duration-500 ${previewReady ? 'opacity-100' : 'opacity-0'}`}
               />
             )}
-            {/* 공통 하단 그라데이션 — 제각각인 썸네일에 통일감 */}
-            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+            {/* 공통 하단 그라데이션 — 제각각인 썸네일에 통일감 (tile은 텍스트 가독을 위해 더 짙게) */}
+            <div className={`absolute inset-x-0 bottom-0 bg-gradient-to-t to-transparent pointer-events-none ${
+              variant === 'tile' ? 'h-1/2 from-black/75' : 'h-1/3 from-black/40'
+            }`} />
             {/* LIVE 배지 — 절제된 크기·투명도 */}
-            <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-red-600/80 text-white font-pixel text-[10px] px-1.5 py-0.5 rounded tracking-widest">
+            <span className={`absolute left-2 flex items-center gap-1 bg-red-600/80 text-white font-pixel text-[10px] px-1.5 py-0.5 rounded tracking-widest ${
+              variant === 'tile' ? 'top-2' : 'bottom-2'
+            }`}>
               <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
               AJ LIVE
             </span>
+            {/* tile: 정보를 썸네일 위 오버레이로 — higgsfield식 콘텐츠 벽 */}
+            {variant === 'tile' && (
+              <div className="absolute inset-x-0 bottom-0 p-3 flex items-end justify-between gap-2 pointer-events-none">
+                <div className="min-w-0">
+                  <h3 className="text-[14px] font-semibold text-white truncate leading-tight">{game.title}</h3>
+                  <p className="text-[11px] text-gray-300/90 truncate">
+                    {creatorName ?? 'unknown'}{flag && ` ${flag}`}
+                  </p>
+                </div>
+                <span className="shrink-0 text-[11px] text-gray-300/90">👁 {formatViewers(game.view_count ?? 0)}</span>
+              </div>
+            )}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <span className="font-pixel text-[11px] bg-[#00ff41]/90 text-black px-3 py-2 rounded">
                 ▶ PLAY
               </span>
             </div>
           </div>
-          {/* 정보 블록 — 아바타 + 2줄 제목 + 채널명 + 조회수·장르 (유튜브 메타 순서) */}
+          {/* 정보 블록 — 아바타 + 2줄 제목 + 채널명 + 조회수·장르 (card 변형 전용) */}
+          {variant === 'card' && (
           <div className="mt-4 flex items-start gap-3 px-0.5">
             <div className="w-9 h-9 shrink-0 rounded-full border border-gray-800 overflow-hidden bg-gray-900 flex items-center justify-center">
               {creatorAvatarUrl ? (
@@ -158,6 +177,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
             </div>
             <LikeButton gameId={game.id} size="sm" />
           </div>
+          )}
         </div>
       </div>
 
