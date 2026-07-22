@@ -16,11 +16,11 @@ export default function HeroSection() {
         style={{ backgroundImage: "url('/slider-image.png')" }}
       />
 
-      {/* Strong dark overlay on left (text area), fades to subtle on right */}
+      {/* 배경 이미지를 강하게 눌러 은은한 질감만 남김 — 프롬프트 입력창이 주인공 */}
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(to right, rgba(10,10,10,0.93) 0%, rgba(10,10,10,0.88) 30%, rgba(10,10,10,0.5) 55%, rgba(10,10,10,0.15) 75%, rgba(10,10,10,0.05) 100%)',
+          background: 'linear-gradient(to right, rgba(10,10,10,0.97) 0%, rgba(10,10,10,0.92) 40%, rgba(10,10,10,0.88) 70%, rgba(10,10,10,0.92) 100%)',
         }}
       />
 
