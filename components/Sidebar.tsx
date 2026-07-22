@@ -78,6 +78,21 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
     if (data) router.push(`/studio/${(data as StudioProject).id}`)
   }
 
+  const deleteProject = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm(T.studio.deleteConfirm)) return
+    const supabase = createClient()
+    const { error } = await supabase.from('studio_projects').delete().eq('id', id)
+    if (error) {
+      // 23503 = 게시된 게임(games.studio_project_id)이 참조 중 — 공개 게임 보호
+      alert(error.code === '23503' ? T.studio.cantDeletePublished : T.studio.requestError)
+      return
+    }
+    setProjects(prev => prev.filter(p => p.id !== id))
+    if (pathname === `/studio/${id}`) router.push('/studio')
+  }
+
   const activeGenre = pathname === '/games' ? params.get('genre') : null
   const isHome = pathname === '/'
 
@@ -136,13 +151,20 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
               {projects.map(p => {
                 const active = pathname === `/studio/${p.id}`
                 return (
-                  <Link key={p.id} href={`/studio/${p.id}`} className={row(active)} title={p.title || T.studio.untitled}>
+                  <Link key={p.id} href={`/studio/${p.id}`} className={`${row(active)} group/proj`} title={p.title || T.studio.untitled}>
                     <span className={iconCol}>
                       <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" {...stroke}><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01" /></svg>
                     </span>
-                    <span className={`flex-1 min-w-0 text-[13px] truncate pr-3 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'} ${active ? 'text-[#00ff41]' : 'text-gray-300'}`}>
+                    <span className={`flex-1 min-w-0 text-[13px] truncate transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'} ${active ? 'text-[#00ff41]' : 'text-gray-300'}`}>
                       {p.title || T.studio.untitled}
                     </span>
+                    <button
+                      onClick={e => deleteProject(e, p.id)}
+                      aria-label="delete project"
+                      className={`pr-3 shrink-0 text-gray-600 hover:text-red-400 transition-all text-sm opacity-0 group-hover/proj:opacity-100 ${open ? '' : 'hidden'}`}
+                    >
+                      ✕
+                    </button>
                   </Link>
                 )
               })}

@@ -97,6 +97,8 @@ export const t = {
       createError: '프로젝트 생성에 실패했습니다. 다시 시도해 주세요.',
       networkError: '연결이 끊겼습니다. 잔액과 결과를 다시 불러왔어요 — 이어서 시도해 주세요.',
       requestError: '요청을 처리하지 못했습니다. 다시 시도해 주세요.',
+      deleteConfirm: '이 게임 프로젝트를 삭제할까요? 대화와 모든 버전이 함께 삭제됩니다.',
+      cantDeletePublished: '이미 게시된 게임의 프로젝트는 삭제할 수 없습니다. 관리자에서 게임을 먼저 내려주세요.',
     },
     credits: {
       heading: 'CREDITS',
@@ -350,6 +352,8 @@ export const t = {
       createError: 'Failed to create project. Please try again.',
       networkError: 'Connection lost. Balance and results were reloaded — please try again.',
       requestError: 'Request failed. Please try again.',
+      deleteConfirm: 'Delete this game project? The chat and all versions will be removed.',
+      cantDeletePublished: 'This project has a published game and cannot be deleted. Unpublish the game in Admin first.',
     },
     credits: {
       heading: 'CREDITS',
