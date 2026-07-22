@@ -25,7 +25,9 @@ const COPY = {
     totalPrize: '총상금',
     totalPrizeValue: '₩8,750,000+',
     schedule: '일정은 곧 공개됩니다 — 지금 신청하면 오픈 소식을 가장 먼저 받습니다',
-    sponsorNote: '🎁 후원이 더해질수록 총상금은 계속 올라갑니다',
+    sponsorNote: '후원금에 따라 상금은 지속적으로 올라갑니다!',
+    sponsorCta: '🤝 후원하기',
+    sponsorMailSubject: 'Vibrexcup Tournament 후원 문의',
     divisionsHeading: '4개 부문',
     prize: '상금',
     winner: '1위',
@@ -98,7 +100,9 @@ const COPY = {
     totalPrize: 'TOTAL PRIZE POOL',
     totalPrizeValue: '₩8,750,000+',
     schedule: 'Schedule to be announced — apply now to hear first',
-    sponsorNote: '🎁 The prize pool keeps growing as sponsors join',
+    sponsorNote: 'The prize pool keeps rising with every sponsorship!',
+    sponsorCta: '🤝 BECOME A SPONSOR',
+    sponsorMailSubject: 'Vibrexcup Tournament Sponsorship Inquiry',
     divisionsHeading: '4 DIVISIONS',
     prize: 'Prizes',
     winner: '1st',
@@ -368,9 +372,17 @@ export default function TournamentPage() {
             <div className="inline-block border border-[#ffd24d]/40 bg-[#ffd24d]/5 rounded-2xl px-10 py-6">
               <p className="font-pixel text-[11px] text-gray-400 tracking-widest mb-2">{c.totalPrize}</p>
               <p className="font-pixel text-2xl md:text-3xl text-[#ffd24d] tabular-nums">₩{prizeCount.toLocaleString()}+</p>
-              <p className="text-[12px] text-[#ffd24d]/70 mt-3">{c.sponsorNote}</p>
             </div>
-            <p className="text-[13px] text-gray-500 mt-8">{c.schedule}</p>
+            <p className="glow-gold mt-7 text-lg md:text-2xl font-extrabold leading-snug">
+              💰 {c.sponsorNote}
+            </p>
+            <a
+              href={`mailto:dev@puritechlab.com?subject=${encodeURIComponent(c.sponsorMailSubject)}`}
+              className="inline-block mt-5 bg-[#ffd24d] text-black font-pixel text-[12px] px-10 py-4 rounded-lg hover:bg-[#ffe9a8] transition-colors tracking-widest"
+            >
+              {c.sponsorCta}
+            </a>
+            <p className="text-[13px] text-gray-500 mt-7">{c.schedule}</p>
           </div>
           {/* 좌측: 참가 신청 폼 */}
           <div className="order-2 lg:order-1">
