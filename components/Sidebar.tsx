@@ -170,7 +170,10 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
                   </span>
                   <span className={`flex-1 min-w-0 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
                     <span className="block text-[13px] text-gray-200 truncate leading-tight group-hover:text-[#00ff41] transition-colors">{ch.title}</span>
-                    <span className="block text-[11px] text-gray-500">👁 {formatViewers(ch.view_count)}</span>
+                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor" aria-hidden><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" /></svg>
+                      {formatViewers(ch.view_count)}
+                    </span>
                   </span>
                   <span className={`pr-3.5 shrink-0 font-pixel text-[11px] ${RANK_COLOR[i] ?? 'text-gray-600'} transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
                     #{i + 1}

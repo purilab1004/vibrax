@@ -20,6 +20,15 @@ const GENRE_LABELS: Record<Game['genre'], string> = {
   sports: 'SPORTS',
 }
 
+// 시청자 아이콘 — 눈(👁) 대신 사람 실루엣
+function ViewerIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" />
+    </svg>
+  )
+}
+
 const GENRE_COLORS: Record<Game['genre'], string> = {
   action: 'bg-red-700',
   adventure: 'bg-amber-700',
@@ -128,14 +137,17 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
             </span>
             {/* tile: 정보를 썸네일 위 오버레이로 — higgsfield식 콘텐츠 벽 */}
             {variant === 'tile' && (
-              <div className="absolute inset-x-0 bottom-0 p-3 flex items-end justify-between gap-2 pointer-events-none">
+              <div className="absolute inset-x-0 bottom-0 p-4 flex items-end justify-between gap-3 pointer-events-none">
                 <div className="min-w-0">
-                  <h3 className="text-[14px] font-semibold text-white truncate leading-tight">{game.title}</h3>
-                  <p className="text-[11px] text-gray-300/90 truncate">
+                  <h3 className="text-lg font-bold text-white truncate leading-tight">{game.title}</h3>
+                  <p className="mt-0.5 text-[13px] text-gray-300 truncate">
                     {creatorName ?? 'unknown'}{flag && ` ${flag}`}
                   </p>
                 </div>
-                <span className="shrink-0 text-[11px] text-gray-300/90">👁 {formatViewers(game.view_count ?? 0)}</span>
+                <span className="shrink-0 flex items-center gap-1.5 text-[15px] font-medium text-gray-200">
+                  <ViewerIcon className="w-4 h-4" />
+                  {formatViewers(game.view_count ?? 0)}
+                </span>
               </div>
             )}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -162,15 +174,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-[15px] font-semibold text-gray-100 line-clamp-2 leading-snug">
+              <h3 className="text-[17px] font-semibold text-gray-100 line-clamp-2 leading-snug">
                 {game.title}
               </h3>
-              <p className="mt-1 flex items-center gap-1 min-w-0 text-[13px] text-gray-400">
+              <p className="mt-1 flex items-center gap-1 min-w-0 text-sm text-gray-400">
                 <span className="truncate">{creatorName ?? 'unknown'}</span>
-                {flag && <span className="text-[12px] leading-none shrink-0" title={creatorCountry ?? ''}>{flag}</span>}
+                {flag && <span className="text-[13px] leading-none shrink-0" title={creatorCountry ?? ''}>{flag}</span>}
               </p>
-              <p className="text-[13px] text-gray-500 truncate">
-                {'👁 '}{formatViewers(game.view_count ?? 0)}
+              <p className="flex items-center gap-1.5 text-sm text-gray-500 truncate">
+                <ViewerIcon className="w-4 h-4 shrink-0" />
+                {formatViewers(game.view_count ?? 0)}
                 {' · '}{GENRE_LABELS[game.genre]}
                 {game.language && ` · ${game.language === 'ko' ? '한국어' : 'EN'}`}
               </p>
