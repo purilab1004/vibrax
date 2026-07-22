@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
-import type { Genre } from '@/lib/supabase/types'
+import type { Genre, StudioProject } from '@/lib/supabase/types'
 import { formatViewers } from '@/lib/format'
 
 // kick 스타일 좌측 사이드바 — 홈/장르 메뉴 + 라이브 게임 채널 목록.
@@ -45,13 +46,37 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
 }) {
   const pathname = usePathname()
   const params = useSearchParams()
+  const router = useRouter()
   const { T } = useLang()
   const [open, setOpen] = useState(true)
+  // 스튜디오에서는 장르/채널 대신 내 프로젝트 목록을 보여준다
+  const inStudio = pathname.startsWith('/studio')
+  const [projects, setProjects] = useState<StudioProject[]>([])
 
   // 본문(main/footer) 여백을 사이드바 폭과 동기화
   useEffect(() => {
     document.documentElement.style.setProperty('--rail-w', open ? '14rem' : '3.5rem')
   }, [open])
+
+  useEffect(() => {
+    if (!inStudio) return
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase.from('studio_projects').select('id, user_id, title, created_at')
+        .order('created_at', { ascending: false }).limit(30)
+        .then(({ data }) => setProjects((data as StudioProject[] | null) ?? []))
+    })
+  }, [inStudio, pathname])
+
+  const createProject = async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/login?redirect=/studio'); return }
+    const { data } = await supabase.from('studio_projects')
+      .insert([{ user_id: user.id }] as never).select().single()
+    if (data) router.push(`/studio/${(data as StudioProject).id}`)
+  }
 
   const activeGenre = pathname === '/games' ? params.get('genre') : null
   const isHome = pathname === '/'
@@ -93,7 +118,38 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
 
           <div className="my-1 mx-3 border-t border-gray-800/70" />
 
-          {GENRES.map(g => {
+          {inStudio && (
+            <>
+              <button onClick={createProject} className={row(false)} title={T.studio.newProject}>
+                <span className={iconCol}>
+                  <svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 5v14M5 12h14" /></svg>
+                </span>
+                <span className={label}>{T.studio.newProject.replace('+ ', '')}</span>
+              </button>
+              <div className="mt-2 mb-1 px-4 h-6 flex items-center">
+                {open ? (
+                  <span className="font-pixel text-[10px] text-gray-500 tracking-widest whitespace-nowrap">MY GAMES</span>
+                ) : (
+                  <span className="w-full border-t border-gray-800/70" />
+                )}
+              </div>
+              {projects.map(p => {
+                const active = pathname === `/studio/${p.id}`
+                return (
+                  <Link key={p.id} href={`/studio/${p.id}`} className={row(active)} title={p.title || T.studio.untitled}>
+                    <span className={iconCol}>
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" {...stroke}><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01" /></svg>
+                    </span>
+                    <span className={`flex-1 min-w-0 text-[13px] truncate pr-3 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'} ${active ? 'text-[#00ff41]' : 'text-gray-300'}`}>
+                      {p.title || T.studio.untitled}
+                    </span>
+                  </Link>
+                )
+              })}
+            </>
+          )}
+
+          {!inStudio && GENRES.map(g => {
             const isNew = newGenres.includes(g)
             return (
               <Link key={g} href={`/games?genre=${g}`} className={row(activeGenre === g)} title={isNew ? `${T.genres[g]} (NEW)` : T.genres[g]}>
@@ -110,7 +166,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           })}
         </nav>
 
-        {channels.length > 0 && (
+        {!inStudio && channels.length > 0 && (
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (
@@ -146,7 +202,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           </>
         )}
 
-        {tournament.length > 0 && (
+        {!inStudio && tournament.length > 0 && (
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (

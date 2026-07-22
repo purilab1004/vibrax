@@ -18,12 +18,14 @@ export default function StudioChat({
   busy: boolean
 }) {
   const [input, setInput] = useState('')
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
   const { T } = useLang()
   const s = T.studio
 
+  // 채팅 컨테이너 내부만 스크롤 — scrollIntoView는 페이지 전체를 끌어내려서 금지
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const el = listRef.current
+    if (el) el.scrollTop = el.scrollHeight
   }, [messages.length, streaming?.description, streaming?.htmlBytes])
 
   const submit = (e: React.FormEvent) => {
@@ -36,7 +38,7 @@ export default function StudioChat({
 
   return (
     <div className="flex flex-col h-full border-r border-gray-800">
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.length === 0 && !streaming && (
           <div className="text-gray-500 text-sm pt-8 text-center">
             <p className="mb-2">{s.emptyPreview}</p>
@@ -73,31 +75,28 @@ export default function StudioChat({
             {error}
           </p>
         )}
-        <div ref={bottomRef} />
       </div>
       <form onSubmit={submit} className="border-t border-gray-800 p-3">
-        <div className="flex gap-2">
-          <textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                submit(e)
-              }
-            }}
-            rows={2}
-            placeholder={s.chatPlaceholder}
-            className="flex-1 bg-[#111] border border-gray-800 focus:border-[#00ff41] px-3 py-2 text-sm text-white placeholder-gray-600 outline-none transition-colors resize-none"
-          />
-          <button
-            type="submit"
-            disabled={busy || !input.trim()}
-            className="bg-[#00ff41] text-black font-pixel text-[11px] px-4 hover:bg-[#00cc33] transition-colors disabled:opacity-40 tracking-widest"
-          >
-            {s.send}
-          </button>
-        </div>
+        <textarea
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              submit(e)
+            }
+          }}
+          rows={3}
+          placeholder={s.chatPlaceholder}
+          className="w-full bg-[#111] border border-gray-800 focus:border-[#00ff41] px-3.5 py-3 text-sm text-white placeholder-gray-600 outline-none transition-colors resize-none rounded-lg"
+        />
+        <button
+          type="submit"
+          disabled={busy || !input.trim()}
+          className="w-full mt-2 bg-[#00ff41] text-black text-sm font-semibold py-3 rounded-lg hover:bg-[#00cc33] transition-colors disabled:opacity-40"
+        >
+          {s.send}
+        </button>
         <p className="text-[11px] text-gray-600 mt-2">{s.costNote}</p>
       </form>
     </div>

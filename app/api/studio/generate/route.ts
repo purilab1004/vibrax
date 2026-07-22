@@ -25,12 +25,15 @@ export async function POST(req: Request) {
 
   // 밴 유저 차단 + 생성 비용을 설정에서 읽기 (실패 시 GENERATION_COST 폴백)
   const [{ data: profileRow }, { data: costRow }] = await Promise.all([
-    supabase.from('profiles').select('banned_at').eq('id', user.id).maybeSingle(),
+    supabase.from('profiles').select('banned_at, role').eq('id', user.id).maybeSingle(),
     supabase.from('site_settings').select('value').eq('key', 'generation_cost').maybeSingle(),
   ])
-  if ((profileRow as { banned_at?: string | null } | null)?.banned_at) {
+  const profile = profileRow as { banned_at?: string | null; role?: string } | null
+  if (profile?.banned_at) {
     return new Response('banned', { status: 403 })
   }
+  // 관리자는 크레딧 없이 생성 가능 (운영·테스트 용도)
+  const isAdminUser = profile?.role === 'admin'
   const parsedCost = Number((costRow as { value?: unknown } | null)?.value)
   const cost = Number.isFinite(parsedCost) && parsedCost >= 1 ? parsedCost : GENERATION_COST
 
@@ -39,23 +42,26 @@ export async function POST(req: Request) {
     .from('studio_projects').select('id, title').eq('id', projectId).maybeSingle()
   if (!project) return new Response('not found', { status: 404 })
 
-  // 크레딧 원자적 차감 — 실패 경로에서 이 ref로 환불
+  // 크레딧 원자적 차감 — 실패 경로에서 이 ref로 환불 (관리자는 차감 없음)
   const spendRef = `gen:${projectId}:${crypto.randomUUID()}`
-  const { error: spendError } = await supabase.rpc('spend_credits', {
-    p_amount: cost,
-    p_ref: spendRef,
-  } as never)
-  if (spendError) {
-    const insufficient = spendError.message.includes('INSUFFICIENT_CREDITS')
-    return new Response(insufficient ? 'insufficient credits' : 'spend failed', {
-      status: insufficient ? 402 : 500,
-    })
+  if (!isAdminUser) {
+    const { error: spendError } = await supabase.rpc('spend_credits', {
+      p_amount: cost,
+      p_ref: spendRef,
+    } as never)
+    if (spendError) {
+      const insufficient = spendError.message.includes('INSUFFICIENT_CREDITS')
+      return new Response(insufficient ? 'insufficient credits' : 'spend failed', {
+        status: insufficient ? 402 : 500,
+      })
+    }
   }
 
   // refund_credits는 service role 전용(자기 자신 대상이라도 클라이언트에서
   // 직접 RPC를 호출해 성공 건을 임의로 환불하는 것을 막기 위함) — admin
   // 클라이언트로 호출하고, 검증된 user.id를 p_user_id로 넘긴다.
   const refund = async () => {
+    if (isAdminUser) return // 차감이 없었으니 환불도 없다
     const { error } = await createAdminClient().rpc('refund_credits', {
       p_user_id: user.id,
       p_amount: cost,
