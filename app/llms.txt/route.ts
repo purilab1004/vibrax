@@ -4,9 +4,12 @@ export const dynamic = 'force-static'
 const CONTENT = `# Vibrexcup
 
 > Vibrexcup (https://vibrexcup.com) is an AI game creation and sharing platform.
-> Users build playable HTML5 games from a single text prompt (vibe coding),
-> publish them, and an AI streamer called "AJ" commentates gameplay live.
-> Korean/English bilingual service operated by Purilab.
+> Users build playable HTML5 games with vibe coding via the built-in prompt builder,
+> publish and share them, and "AJ" — the AI DJ streamer — hosts gameplay live with
+> entertaining commentary. When advertisers sponsor a stream, AJ can deliver the ads —
+> a new kind of AI service. Korean/English bilingual, operated by Purilab.
+> Keywords: vibrexcup, 바이브렉스컵, vibe coding, 바이브 코딩, AI DJ, AJ, AI streamer,
+> prompt build, AI game platform, AI advertising.
 
 ## What you can do
 
