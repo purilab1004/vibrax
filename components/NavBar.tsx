@@ -129,9 +129,7 @@ export default function NavBar() {
             {navLinkDesktop('/studio', T.nav.studio)}
             <Link
               href="/tournament"
-              className={`text-[13px] font-medium tracking-wider transition-colors hover:text-[#ffd24d] ${
-                pathname === '/tournament' ? 'text-[#ffd24d]' : 'text-gray-400'
-              }`}
+              className="glow-gold text-[13px] font-semibold tracking-wider transition-colors hover:text-[#ffe9a8]"
             >
               🏆 {T.nav.tournament}
             </Link>
@@ -234,9 +232,7 @@ export default function NavBar() {
             <Link
               href="/tournament"
               onClick={() => setMenuOpen(false)}
-              className={`font-pixel text-2xl tracking-widest transition-colors py-3 ${
-                pathname === '/tournament' ? 'text-[#ffd24d]' : 'text-white hover:text-[#ffd24d]'
-              }`}
+              className="glow-gold font-pixel text-2xl tracking-widest transition-colors py-3"
             >
               🏆 {T.nav.tournament}
             </Link>

@@ -103,3 +103,13 @@ body {
 .rte-content pre code { background: none; padding: 0; }
 .rte-content img { max-width: 100%; height: auto; margin: 1em 0; border: 1px solid #1f2937; }
 .rte-content hr { border: none; border-top: 1px solid #1f2937; margin: 2em 0; }
+
+/* 토너먼트 메뉴 — 금색 글로우 (은은하게 숨쉬는 효과) */
+@keyframes goldGlow {
+  0%, 100% { text-shadow: 0 0 8px rgba(255,210,77,0.55), 0 0 18px rgba(255,210,77,0.25); }
+  50%      { text-shadow: 0 0 14px rgba(255,210,77,0.9), 0 0 28px rgba(255,210,77,0.45); }
+}
+.glow-gold {
+  color: #ffd24d;
+  animation: goldGlow 2.4s ease-in-out infinite;
+}
