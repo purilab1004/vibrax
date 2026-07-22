@@ -12,7 +12,7 @@ export default function StudioChat({
   messages, streaming, error, onSend, busy,
 }: {
   messages: ChatMsg[]
-  streaming: { description: string; htmlBytes: number } | null
+  streaming: { description: string; htmlBytes: number; codeTail: string } | null
   error: string | null
   onSend: (prompt: string) => void
   busy: boolean
@@ -60,12 +60,28 @@ export default function StudioChat({
         ))}
         {streaming && (
           <div className="flex justify-start">
-            <div className="max-w-[85%] px-3 py-2 text-sm bg-[#161616] border border-gray-800 text-gray-200 whitespace-pre-wrap">
+            <div className="w-full max-w-[95%] px-3 py-2 text-sm bg-[#161616] border border-gray-800 text-gray-200 whitespace-pre-wrap rounded-lg">
               {streaming.description || s.thinking}
               {streaming.htmlBytes > 0 && (
-                <p className="font-pixel text-[11px] text-[#00ff41] mt-2 tracking-widest animate-pulse">
-                  {s.writingCode((streaming.htmlBytes / 1024).toFixed(1))}
-                </p>
+                <>
+                  {/* 실시간 코드 터미널 — 실제 생성 중인 코드의 꼬리를 흘려보여준다 */}
+                  <div className="mt-3 bg-black border border-[#00ff41]/25 rounded-md overflow-hidden">
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#00ff41]/15">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-red-500/80" />
+                        <span className="w-2 h-2 rounded-full bg-yellow-500/80" />
+                        <span className="w-2 h-2 rounded-full bg-[#00ff41]/80" />
+                      </span>
+                      <span className="font-pixel text-[10px] text-[#00ff41] tracking-widest animate-pulse">
+                        {s.writingCode((streaming.htmlBytes / 1024).toFixed(1))}
+                      </span>
+                    </div>
+                    <pre className="px-3 py-2 h-28 overflow-hidden flex flex-col justify-end font-mono text-[11px] leading-relaxed text-[#00ff41]/70 whitespace-pre-wrap break-all">
+                      {streaming.codeTail}
+                      <span className="inline-block w-2 h-3.5 bg-[#00ff41] animate-pulse align-text-bottom" />
+                    </pre>
+                  </div>
+                </>
               )}
             </div>
           </div>

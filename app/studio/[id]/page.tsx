@@ -25,7 +25,7 @@ export default function StudioComposerPage() {
   const [currentVersionId, setCurrentVersionId] = useState<string | null>(null)
   const [html, setHtml] = useState<string | null>(null)
   const [balance, setBalance] = useState<number | null>(null)
-  const [streaming, setStreaming] = useState<{ description: string; htmlBytes: number } | null>(null)
+  const [streaming, setStreaming] = useState<{ description: string; htmlBytes: number; codeTail: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showPublish, setShowPublish] = useState(false)
   // 홈 히어로에서 넘어온 첫 프롬프트 자동 전송은 1회만 (StrictMode 이중 실행 가드)
@@ -65,7 +65,7 @@ export default function StudioComposerPage() {
     setMessages(m => [...m, { role: 'user', content: prompt }])
     // 낙관적 user 메시지가 아직 롤백 대상인지 추적 (성공/GEN_ERROR 처리 후에는 롤백 금지)
     let optimisticPending = true
-    setStreaming({ description: '', htmlBytes: 0 })
+    setStreaming({ description: '', htmlBytes: 0, codeTail: '' })
 
     try {
       const res = await fetch('/api/studio/generate', {
@@ -95,7 +95,10 @@ export default function StudioComposerPage() {
         if (done) break
         full += decoder.decode(value, { stream: true })
         const p = parseGeneration(full)
-        setStreaming({ description: p.description, htmlBytes: p.htmlBytes })
+        // 코드가 실제로 짜이는 모습을 보여주기 위한 스트림 꼬리 (마지막 ~600자)
+        const gameIdx = full.indexOf('<game>')
+        const codeTail = gameIdx >= 0 ? full.slice(Math.max(gameIdx + 6, full.length - 600)) : ''
+        setStreaming({ description: p.description, htmlBytes: p.htmlBytes, codeTail })
       }
       full += decoder.decode()
       setStreaming(null)
