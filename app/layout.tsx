@@ -20,7 +20,7 @@ const pressStart = Press_Start_2P({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Vibrexcup — AI 바이브코딩 게임 플랫폼',
+    default: 'Vibrexcup (Beta) — AI 바이브코딩 게임 플랫폼',
     template: '%s | Vibrexcup',
   },
   description:

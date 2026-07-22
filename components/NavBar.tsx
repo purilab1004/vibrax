@@ -99,6 +99,9 @@ export default function NavBar() {
             className="group font-pixel text-[#00ff41] text-xs tracking-widest hover:text-white transition-colors shrink-0"
           >
             VIBREX<span className="text-[#ffd24d] group-hover:text-white transition-colors">CUP</span>
+            <span className="ml-1.5 align-top font-pixel text-[10px] px-1.5 py-0.5 border border-gray-600 text-gray-400 rounded">
+              BETA
+            </span>
           </Link>
 
           {/* ── Left: search ── */}
@@ -187,6 +190,9 @@ export default function NavBar() {
             className="font-pixel text-[#00ff41] text-xs tracking-widest"
           >
             VIBREX<span className="text-[#ffd24d]">CUP</span>
+            <span className="ml-1.5 align-top font-pixel text-[10px] px-1.5 py-0.5 border border-gray-600 text-gray-400 rounded">
+              BETA
+            </span>
           </Link>
           <button
             onClick={() => setMenuOpen(false)}
