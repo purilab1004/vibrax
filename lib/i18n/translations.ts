@@ -22,7 +22,7 @@ export const t = {
     hero: {
       tagline: 'VIBE CODED · AI STREAMED · YOUR GAME',
       heading: '바이브로 게임 만들고\nAI가 STREAMING 한다',
-      desc: '내가 만든 게임을 AI 스트리머 AJ가 실시간으로 방송해줘요.\n바이브코딩으로 만든 게임을 Vibrax에 올리고 전 세계와 공유하세요.',
+      desc: '내가 만든 게임을 AI 스트리머 AJ가 실시간으로 방송해줘요.\n바이브코딩으로 만든 게임을 Vibrexcup에 올리고 전 세계와 공유하세요.',
       playGames: '▶ 게임 플레이',
       submitGame: '+ 게임 등록',
       promptHeading: '프롬프트 한 줄로\n나만의 게임을 만드세요',
@@ -205,7 +205,7 @@ export const t = {
     },
     auth: {
       loginHeading: 'LOGIN',
-      loginSubtitle: 'Vibrax 계정으로 로그인하세요',
+      loginSubtitle: 'Vibrexcup 계정으로 로그인하세요',
       signupHeading: 'SIGNUP',
       signupSubtitle: '무료로 가입하고 게임을 등록하세요',
       email: 'EMAIL',
@@ -221,13 +221,13 @@ export const t = {
       minLength: '최소 6자리',
     },
     about: {
-      badge: 'THE STORY OF VIBRAX',
+      badge: 'THE STORY OF VIBREXCUP',
       heading: '세 가지 이유,\n하나의 플랫폼',
       p1: {
         phase: 'PHASE 01',
         label: 'REMEMBER & CREATE',
         quote: '"그 게임, 기억하시나요? 이제 직접 만들어간다"',
-        body: '밤새 플레이했던 그 게임들. 픽셀 하나하나에 담긴 설렘, 처음 클리어했을 때의 짜릿함. 그 감각은 시간이 흘러도 사라지지 않아요. 이제 코드를 몰라도 괜찮아요. ChatGPT, Claude, Cursor — AI에게 프롬프트 하나만 주면 그 추억 속 게임이 현실이 됩니다. 당신의 추억이 게임이 되고, 그 게임을 Vibrax에서 전 세계와 나눠요.',
+        body: '밤새 플레이했던 그 게임들. 픽셀 하나하나에 담긴 설렘, 처음 클리어했을 때의 짜릿함. 그 감각은 시간이 흘러도 사라지지 않아요. 이제 코드를 몰라도 괜찮아요. ChatGPT, Claude, Cursor — AI에게 프롬프트 하나만 주면 그 추억 속 게임이 현실이 됩니다. 당신의 추억이 게임이 되고, 그 게임을 Vibrexcup에서 전 세계와 나눠요.',
       },
       p2: {
         phase: 'PHASE 02',
@@ -241,7 +241,7 @@ export const t = {
         quote: '"내 AGENT가 나 대신 뛰고, 수익도 만들어낸다"',
         body: '나만의 AI AGENT를 만들면 게임하는 동안 에이전트가 AJ와 실시간으로 대화해줘요. 당신은 게임에만 집중하면 됩니다. 사람들이 모이고 조회수가 쌓일수록 수익 창출의 기회도 함께 열립니다. 에이전트가 일하는 동안, 당신은 게임을 즐기세요.',
       },
-      s5: { label: 'START NOW', heading: '지금 바로 시작하세요', cta: '바이브코딩 + AI 스트리머 + 나만의 AGENT', body: '게임을 만들고, AJ와 함께 방송하고, 에이전트가 수익까지 만들어가는 새로운 플랫폼. 지금 Vibrax에서 시작하세요.', btn1: '▶ 게임 보러가기', btn2: '+ 게임 등록하기' },
+      s5: { label: 'START NOW', heading: '지금 바로 시작하세요', cta: '바이브코딩 + AI 스트리머 + 나만의 AGENT', body: '게임을 만들고, AJ와 함께 방송하고, 에이전트가 수익까지 만들어가는 새로운 플랫폼. 지금 Vibrexcup에서 시작하세요.', btn1: '▶ 게임 보러가기', btn2: '+ 게임 등록하기' },
     },
     footer: { copyright: '© VIBE GAME 2026 PURILAB' },
   },
@@ -449,7 +449,7 @@ export const t = {
     },
     auth: {
       loginHeading: 'LOGIN',
-      loginSubtitle: 'Sign in to your Vibrax account',
+      loginSubtitle: 'Sign in to your Vibrexcup account',
       signupHeading: 'SIGNUP',
       signupSubtitle: 'Create a free account to submit games',
       email: 'EMAIL',
@@ -465,13 +465,13 @@ export const t = {
       minLength: 'Min. 6 characters',
     },
     about: {
-      badge: 'THE STORY OF VIBRAX',
+      badge: 'THE STORY OF VIBREXCUP',
       heading: 'Three Reasons,\nOne Platform',
       p1: {
         phase: 'PHASE 01',
         label: 'REMEMBER & CREATE',
         quote: '"Remember those games? Now build them yourself."',
-        body: "The games we played all night. The thrill in every pixel, the rush of clearing a level for the first time. That feeling never fades. Now, you don't need to know how to code. One AI prompt brings your favorite game back to life. ChatGPT, Claude, Cursor — any AI is in your hands. Build it, upload it, and share it with the world on Vibrax.",
+        body: "The games we played all night. The thrill in every pixel, the rush of clearing a level for the first time. That feeling never fades. Now, you don't need to know how to code. One AI prompt brings your favorite game back to life. ChatGPT, Claude, Cursor — any AI is in your hands. Build it, upload it, and share it with the world on Vibrexcup.",
       },
       p2: {
         phase: 'PHASE 02',
@@ -485,7 +485,7 @@ export const t = {
         quote: '"Your AGENT works for you — and earns for you."',
         body: "Create your own AI AGENT and it chats with AJ while you play, so you never miss a moment. You focus on the game — your agent handles the hype. As people discover your game and views grow, monetization opportunities open up. Your agent is working, your game is playing, and the income follows.",
       },
-      s5: { label: 'START NOW', heading: 'Start right now', cta: 'Vibe Code. AI Stream. Agent Earns.', body: 'Build a game, have AJ broadcast it live, and let your agent generate revenue — all on one platform. Start on Vibrax today.', btn1: '▶ Browse Games', btn2: '+ Submit Game' },
+      s5: { label: 'START NOW', heading: 'Start right now', cta: 'Vibe Code. AI Stream. Agent Earns.', body: 'Build a game, have AJ broadcast it live, and let your agent generate revenue — all on one platform. Start on Vibrexcup today.', btn1: '▶ Browse Games', btn2: '+ Submit Game' },
     },
     footer: { copyright: '© VIBE GAME 2026 PURILAB' },
   },

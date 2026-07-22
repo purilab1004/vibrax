@@ -38,20 +38,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .single()
   const game = rawGame as Pick<Game, 'title' | 'genre' | 'thumbnail_url'> | null
 
-  if (!game) return { title: 'Game — Vibrax' }
+  if (!game) return { title: 'Game — Vibrexcup' }
 
   const genreLabel = GENRE_LABELS[game.genre] ?? game.genre
   return {
-    title: `${game.title} — Vibrax`,
-    description: `${game.title}은(는) AI 바이브코딩으로 만들어진 ${genreLabel} 게임입니다. Vibrax에서 지금 바로 플레이하세요.`,
+    title: `${game.title} — Vibrexcup`,
+    description: `${game.title}은(는) AI 바이브코딩으로 만들어진 ${genreLabel} 게임입니다. Vibrexcup에서 지금 바로 플레이하세요.`,
     openGraph: {
-      title: `${game.title} — Vibrax`,
+      title: `${game.title} — Vibrexcup`,
       description: `AI 바이브코딩 ${genreLabel} 게임 — ${game.title}`,
       images: [{ url: game.thumbnail_url, alt: game.title }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${game.title} — Vibrax`,
+      title: `${game.title} — Vibrexcup`,
       images: [game.thumbnail_url],
     },
   }

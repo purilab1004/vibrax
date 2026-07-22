@@ -62,7 +62,7 @@ export default function BlogPage() {
                 <img src={p.thumbnail_url} alt={p.title} className="w-full aspect-video object-cover border-b border-gray-800" />
               ) : (
                 <div className="w-full aspect-video border-b border-gray-800 flex items-center justify-center">
-                  <span className="font-pixel text-[#00ff41]/30 text-xs">VIBRAX</span>
+                  <span className="font-pixel text-[#00ff41]/30 text-xs">VIBREX<span className="text-[#ffd24d]/30">CUP</span></span>
                 </div>
               )}
               <div className="p-4">
