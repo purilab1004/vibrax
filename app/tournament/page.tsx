@@ -25,6 +25,7 @@ const COPY = {
     totalPrize: '총상금',
     totalPrizeValue: '₩8,750,000+',
     schedule: '일정은 곧 공개됩니다 — 지금 신청하면 오픈 소식을 가장 먼저 받습니다',
+    sponsorNote: '🎁 후원이 더해질수록 총상금은 계속 올라갑니다',
     divisionsHeading: '4개 부문',
     prize: '상금',
     winner: '1위',
@@ -97,6 +98,7 @@ const COPY = {
     totalPrize: 'TOTAL PRIZE POOL',
     totalPrizeValue: '₩8,750,000+',
     schedule: 'Schedule to be announced — apply now to hear first',
+    sponsorNote: '🎁 The prize pool keeps growing as sponsors join',
     divisionsHeading: '4 DIVISIONS',
     prize: 'Prizes',
     winner: '1st',
@@ -184,22 +186,30 @@ export default function TournamentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 총상금 카운트업 — 0 → 8,750,000 (ease-out, 2초)
+  // 총상금 카운트업 — 관리자 설정(tournament_prize)에서 목표액을 읽어 0부터 상승
+  // 후원이 추가되면 관리자 설정에서 금액만 올리면 즉시 반영된다.
   const [prizeCount, setPrizeCount] = useState(0)
   useEffect(() => {
-    const target = 8_750_000
-    const dur = 2000
     let raf = 0
-    let start: number | null = null
-    const tick = (t: number) => {
-      if (start === null) start = t
-      const prog = Math.min((t - start) / dur, 1)
-      const eased = 1 - Math.pow(1 - prog, 3)
-      setPrizeCount(Math.round((target * eased) / 1000) * 1000)
-      if (prog < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    let cancelled = false
+    supabase.from('site_settings').select('value').eq('key', 'tournament_prize').maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return
+        const v = Number((data as { value?: unknown } | null)?.value)
+        const target = Number.isFinite(v) && v > 0 ? v : 8_750_000
+        const dur = 2000
+        let start: number | null = null
+        const tick = (t: number) => {
+          if (start === null) start = t
+          const prog = Math.min((t - start) / dur, 1)
+          const eased = 1 - Math.pow(1 - prog, 3)
+          setPrizeCount(Math.round((target * eased) / 1000) * 1000)
+          if (prog < 1) raf = requestAnimationFrame(tick)
+        }
+        raf = requestAnimationFrame(tick)
+      })
+    return () => { cancelled = true; cancelAnimationFrame(raf) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const submit = async (e: React.FormEvent) => {
@@ -358,6 +368,7 @@ export default function TournamentPage() {
             <div className="inline-block border border-[#ffd24d]/40 bg-[#ffd24d]/5 rounded-2xl px-10 py-6">
               <p className="font-pixel text-[11px] text-gray-400 tracking-widest mb-2">{c.totalPrize}</p>
               <p className="font-pixel text-2xl md:text-3xl text-[#ffd24d] tabular-nums">₩{prizeCount.toLocaleString()}+</p>
+              <p className="text-[12px] text-[#ffd24d]/70 mt-3">{c.sponsorNote}</p>
             </div>
             <p className="text-[13px] text-gray-500 mt-8">{c.schedule}</p>
           </div>

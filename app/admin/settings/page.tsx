@@ -9,6 +9,7 @@ export default function AdminSettingsPage() {
   const [loaded, setLoaded] = useState(false)
   const [signupBonus, setSignupBonus] = useState('30')
   const [generationCost, setGenerationCost] = useState('10')
+  const [tournamentPrize, setTournamentPrize] = useState('8750000')
   const [bannerEnabled, setBannerEnabled] = useState(false)
   const [bannerText, setBannerText] = useState('')
   const [bannerLink, setBannerLink] = useState('')
@@ -23,6 +24,7 @@ export default function AdminSettingsPage() {
       for (const row of (data as SiteSetting[] | null) ?? []) {
         if (row.key === 'signup_bonus') setSignupBonus(String(row.value))
         if (row.key === 'generation_cost') setGenerationCost(String(row.value))
+        if (row.key === 'tournament_prize') setTournamentPrize(String(row.value))
         if (row.key === 'banner') {
           const b = row.value as BannerSetting
           setBannerEnabled(!!b.enabled)
@@ -41,6 +43,7 @@ export default function AdminSettingsPage() {
     const rows = [
       { key: 'signup_bonus', value: Math.max(0, parseInt(signupBonus, 10) || 0), updated_at: new Date().toISOString() },
       { key: 'generation_cost', value: Math.max(1, parseInt(generationCost, 10) || 1), updated_at: new Date().toISOString() },
+      { key: 'tournament_prize', value: Math.max(0, parseInt(tournamentPrize, 10) || 0), updated_at: new Date().toISOString() },
       { key: 'banner', value: { enabled: bannerEnabled, text: bannerText.trim(), link: bannerLink.trim() }, updated_at: new Date().toISOString() },
     ]
     const { error } = await supabase.from('site_settings').upsert(rows as never)
@@ -66,6 +69,10 @@ export default function AdminSettingsPage() {
         <div>
           <label className={labelClass}>{a.setGenerationCost}</label>
           <input type="number" min={1} value={generationCost} onChange={e => setGenerationCost(e.target.value)} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>{a.setTournamentPrize}</label>
+          <input type="number" min={0} step={50000} value={tournamentPrize} onChange={e => setTournamentPrize(e.target.value)} className={inputClass} />
         </div>
         <div className="border border-gray-800 bg-[#111] p-5 space-y-4">
           <p className="font-pixel text-xs text-gray-400 tracking-widest">{a.setBanner}</p>
