@@ -134,6 +134,7 @@ export default function NavBar() {
               🏆 {T.nav.tournament}
             </Link>
             {navLinkDesktop('/blog', T.nav.blog)}
+            {navLinkDesktop('/partner', T.nav.partner)}
             {navLinkDesktop('/about', T.nav.about)}
             {user ? (
               <>
@@ -237,6 +238,7 @@ export default function NavBar() {
               🏆 {T.nav.tournament}
             </Link>
             {navLinkMobile('/blog', T.nav.blog)}
+            {navLinkMobile('/partner', T.nav.partner)}
             {navLinkMobile('/about', T.nav.about)}
             {user ? (
               <>
