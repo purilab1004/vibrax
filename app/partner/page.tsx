@@ -164,54 +164,7 @@ export default function PartnerPage() {
   const labelClass = 'block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest'
   const orgTypes: OrgType[] = ['school', 'company', 'organization', 'institution', 'other']
 
-  return (
-    <div>
-      {/* ── 히어로 ── */}
-      <section className="relative overflow-hidden border-b border-gray-800">
-        <div
-          className="absolute inset-0 opacity-[0.04] pointer-events-none"
-          style={{
-            backgroundImage: 'linear-gradient(#00ff41 1px, transparent 1px), linear-gradient(90deg, #00ff41 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-          }}
-        />
-        <div className="relative max-w-4xl mx-auto px-6 py-16 md:py-24 text-center">
-          <p className="font-pixel text-[11px] text-[#00ff41] tracking-[0.3em] mb-6">{c.badge}</p>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-6">{c.heading}</h1>
-          <p className="text-gray-300 text-base md:text-lg leading-relaxed whitespace-pre-line">{c.tagline}</p>
-        </div>
-      </section>
-
-      {/* ── 파트너 로고 ── */}
-      <section className="max-w-6xl mx-auto px-6 py-14">
-        <h2 className="font-pixel text-sm text-white tracking-widest mb-8 text-center">{c.partnersHeading}</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {DEFAULT_PARTNERS.map(p => (
-            <div
-              key={p.name}
-              className="border border-gray-800 bg-[#111] rounded-2xl h-28 flex items-center justify-center hover:border-gray-600 transition-colors grayscale-[0.15] hover:grayscale-0"
-            >
-              {p.logo}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── 혜택 ── */}
-      <section className="max-w-6xl mx-auto px-6 pb-14">
-        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.benefitsHeading}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-          {c.benefits.map(([h, p]) => (
-            <div key={h} className="border border-gray-800 bg-[#111] rounded-2xl p-6">
-              <h3 className="text-white text-base font-bold mb-2">{h}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">{p}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── 신청 폼 ── */}
-      <section className="max-w-2xl mx-auto px-6 pb-20">
+  const applyCard = (
         <div className="border border-gray-800 bg-[#111] rounded-2xl p-8">
           <h2 className="font-pixel text-sm text-[#00ff41] tracking-widest mb-2">{c.formHeading}</h2>
           <p className="text-gray-400 text-sm mb-8">{c.formDesc}</p>
@@ -274,7 +227,68 @@ export default function PartnerPage() {
             </form>
           )}
         </div>
+  )
+
+  return (
+    <div>
+      {/* ── 히어로 ── */}
+      <section className="relative overflow-hidden border-b border-gray-800">
+        <div
+          className="absolute inset-0 opacity-[0.04] pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(#00ff41 1px, transparent 1px), linear-gradient(90deg, #00ff41 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
+        <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+          {/* 좌측: 모집 문구 */}
+          <div className="order-1 lg:sticky lg:top-24 text-center lg:text-left">
+            <p className="font-pixel text-[11px] text-[#00ff41] tracking-[0.3em] mb-6">{c.badge}</p>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">{c.heading}</h1>
+            <p className="text-gray-300 text-base md:text-lg leading-relaxed whitespace-pre-line mb-10">{c.tagline}</p>
+            <div className="hidden lg:grid grid-cols-2 gap-4">
+              {c.benefits.map(([h]) => (
+                <div key={h} className="border border-gray-800 bg-[#111] rounded-xl px-4 py-3 text-sm text-gray-300">
+                  {h}
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* 우측: 신청 폼 */}
+          <div className="order-2">
+            {applyCard}
+          </div>
+        </div>
       </section>
+
+      {/* ── 파트너 로고 ── */}
+      <section className="max-w-6xl mx-auto px-6 py-14">
+        <h2 className="font-pixel text-sm text-white tracking-widest mb-8 text-center">{c.partnersHeading}</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {DEFAULT_PARTNERS.map(p => (
+            <div
+              key={p.name}
+              className="border border-gray-800 bg-[#111] rounded-2xl h-28 flex items-center justify-center hover:border-gray-600 transition-colors grayscale-[0.15] hover:grayscale-0"
+            >
+              {p.logo}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 혜택 ── */}
+      <section className="max-w-6xl mx-auto px-6 pb-14">
+        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.benefitsHeading}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {c.benefits.map(([h, p]) => (
+            <div key={h} className="border border-gray-800 bg-[#111] rounded-2xl p-6">
+              <h3 className="text-white text-base font-bold mb-2">{h}</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">{p}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
     </div>
   )
 }
