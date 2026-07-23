@@ -252,7 +252,7 @@ export default function ProfilePage() {
       <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest">MY PAGE</h1>
 
       {/* ── Profile ── */}
-      <section className="border border-gray-800 bg-[#0d0d0d] p-6 space-y-6">
+      <section id="profile" className="scroll-mt-20 border border-gray-800 bg-[#0d0d0d] p-6 space-y-6">
         <h2 className="font-pixel text-[11px] text-gray-400 tracking-widest">PROFILE</h2>
 
         {/* Email */}
@@ -298,7 +298,7 @@ export default function ProfilePage() {
       </section>
 
       {/* ── Password ── */}
-      <section className="border border-gray-800 bg-[#0d0d0d] p-6 space-y-4">
+      <section id="password" className="scroll-mt-20 border border-gray-800 bg-[#0d0d0d] p-6 space-y-4">
         <h2 className="font-pixel text-[11px] text-gray-400 tracking-widest">CHANGE PASSWORD</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
           <div>
@@ -317,7 +317,7 @@ export default function ProfilePage() {
       </section>
 
       {/* ── My Agent ── */}
-      <section className="border border-gray-800 bg-[#0d0d0d] p-6 space-y-5">
+      <section id="agent" className="scroll-mt-20 border border-gray-800 bg-[#0d0d0d] p-6 space-y-5">
         <div>
           <h2 className="font-pixel text-[11px] text-gray-400 tracking-widest">MY AGENT</h2>
           <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">

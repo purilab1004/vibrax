@@ -51,6 +51,8 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   const [open, setOpen] = useState(true)
   // 스튜디오에서는 장르/채널 대신 내 프로젝트 목록을 보여준다
   const inStudio = pathname.startsWith('/studio')
+  // 마이페이지에서는 프로필 섹션 메뉴만 보여준다
+  const inProfile = pathname.startsWith('/profile')
   const [projects, setProjects] = useState<StudioProject[]>([])
 
   // 본문(main/footer) 여백을 사이드바 폭과 동기화
@@ -171,7 +173,22 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
             </>
           )}
 
-          {!inStudio && GENRES.map(g => {
+          {inProfile && (
+            <>
+              {([
+                ['#profile', 'PROFILE', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" /></svg>],
+                ['#password', 'CHANGE PASSWORD', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>],
+                ['#agent', 'MY AGENT', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="7" width="14" height="11" rx="2" /><path d="M12 7V4M9 12h.01M15 12h.01M9.5 15.5c.8.7 4.2.7 5 0" /></svg>],
+              ] as [string, string, React.ReactNode][]).map(([hash, label2, icon]) => (
+                <a key={hash} href={`/profile${hash}`} className={row(false)} title={label2}>
+                  <span className={iconCol}>{icon}</span>
+                  <span className={label}>{label2}</span>
+                </a>
+              ))}
+            </>
+          )}
+
+          {!inStudio && !inProfile && GENRES.map(g => {
             const isNew = newGenres.includes(g)
             return (
               <Link key={g} href={`/games?genre=${g}`} className={row(activeGenre === g)} title={isNew ? `${T.genres[g]} (NEW)` : T.genres[g]}>
@@ -188,7 +205,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           })}
         </nav>
 
-        {!inStudio && channels.length > 0 && (
+        {!inStudio && !inProfile && channels.length > 0 && (
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (
@@ -224,7 +241,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           </>
         )}
 
-        {!inStudio && tournament.length > 0 && (
+        {!inStudio && !inProfile && tournament.length > 0 && (
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (
