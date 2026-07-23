@@ -104,7 +104,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
     }`
   // 아이콘은 접힌 폭(w-14)과 같은 고정 컬럼에 가운데 정렬 → 접힌 상태에서 중앙에 보임
   const iconCol = 'w-14 shrink-0 flex items-center justify-center'
-  const label = `font-pixel text-[11px] tracking-widest whitespace-nowrap pr-2 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`
+  const label = `text-[13px] font-medium tracking-wider whitespace-nowrap pr-2 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`
 
   return (
     <aside
