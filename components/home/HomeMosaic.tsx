@@ -150,6 +150,11 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
                   <div className="avatar-idle w-full h-full" style={{ animationDelay: `${i * 0.6}s` }}>
                     {/* 얼굴 중심 줌 — 아이들 모션(래퍼)과 transform 충돌을 피해 이미지에서 확대 */}
                     <img src={cr.avatarUrl} alt={cr.name} className="w-full h-full object-cover" style={{ objectPosition: '50% 10%', transform: 'scale(1.7)', transformOrigin: '50% 16%' }} />
+                    {/* 광택 스윕 + 반짝이 입자 — 카드마다 시차를 둬서 제각각 반짝임 */}
+                    <span className="avatar-shine" style={{ animationDelay: `${i * 0.9 + 0.4}s` }} />
+                    <span className="avatar-sparkle" style={{ top: '14%', left: '16%', animationDelay: `${i * 0.7}s` }}>✦</span>
+                    <span className="avatar-sparkle" style={{ top: '30%', right: '14%', fontSize: 10, animationDelay: `${i * 0.7 + 1.3}s` }}>✦</span>
+                    <span className="avatar-sparkle" style={{ bottom: '22%', left: '22%', fontSize: 11, animationDelay: `${i * 0.7 + 2.2}s` }}>✦</span>
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
