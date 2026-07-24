@@ -139,39 +139,44 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
   return (
     <section className="mb-14">
       <h2 className="font-pixel text-sm text-[#ffd24d] tracking-widest mb-5">🏆 {heading}</h2>
-      <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-6 px-6 pt-2 pb-3">
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-6 px-6 pt-1 pb-2">
         {creators.map((cr, i) => {
           const rank = RANK_STYLE[i]
           return (
-            <Link key={cr.id} href={`/games?creator=${cr.id}`} className="shrink-0 w-[150px] sm:w-[170px] group/creator">
-              <div className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-[#111] border border-gray-800 ${rank ? rank.ring : ''}`}>
+            <Link
+              key={cr.id}
+              href={`/games?creator=${cr.id}`}
+              className="shrink-0 flex items-center gap-3 bg-[#111] border border-gray-800 hover:border-gray-600 rounded-full pl-2 pr-5 py-2 transition-colors group/creator"
+            >
+              {/* 원형 아바타 — 상위 3위는 금/은/동 링, 광택 스윕 */}
+              <div className={`relative w-14 h-14 rounded-full overflow-hidden bg-[#0d0d0d] shrink-0 ${rank ? rank.ring : 'border border-gray-700'}`}>
                 {cr.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <div className="avatar-idle w-full h-full" style={{ animationDelay: `${i * 0.6}s` }}>
-                    {/* 얼굴 중심 줌 — 아이들 모션(래퍼)과 transform 충돌을 피해 이미지에서 확대 */}
-                    <img src={cr.avatarUrl} alt={cr.name} className="w-full h-full object-cover" style={{ objectPosition: '50% 10%', transform: 'scale(1.7)', transformOrigin: '50% 16%' }} />
-                    {/* 광택 스윕 + 반짝이 입자 — 카드마다 시차를 둬서 제각각 반짝임 */}
+                    {/* 얼굴 중심 줌 */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={cr.avatarUrl} alt={cr.name} className="w-full h-full object-cover" style={{ objectPosition: '50% 8%', transform: 'scale(2.1)', transformOrigin: '50% 14%' }} />
                     <span className="avatar-shine" style={{ animationDelay: `${i * 0.9 + 0.4}s` }} />
-                    <span className="avatar-sparkle" style={{ top: '14%', left: '16%', animationDelay: `${i * 0.7}s` }}>✦</span>
-                    <span className="avatar-sparkle" style={{ top: '30%', right: '14%', fontSize: 10, animationDelay: `${i * 0.7 + 1.3}s` }}>✦</span>
-                    <span className="avatar-sparkle" style={{ bottom: '22%', left: '22%', fontSize: 11, animationDelay: `${i * 0.7 + 2.2}s` }}>✦</span>
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="font-pixel text-3xl text-gray-700">{cr.name.charAt(0).toUpperCase()}</span>
+                    <span className="font-pixel text-lg text-gray-700">{cr.name.charAt(0).toUpperCase()}</span>
                   </div>
                 )}
-                <span className={`absolute top-2 left-2 font-pixel text-[11px] px-2 py-1 rounded ${rank ? rank.badge : 'bg-black/70 text-gray-300'}`}>
-                  #{i + 1}
-                </span>
               </div>
-              <p className="mt-2.5 text-sm font-semibold text-white truncate group-hover/creator:text-[#00ff41] transition-colors">{cr.name}</p>
-              <p className="text-[13px] text-gray-500 flex items-center gap-1.5">
-                {T.games.gamesCount(cr.games)}
-                <span className="text-gray-700">·</span>
-                <ViewerIcon className="w-3.5 h-3.5" />
-                {formatViewers(cr.views)}
-              </p>
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-sm font-bold text-white group-hover/creator:text-[#00ff41] transition-colors">
+                  {rank && (
+                    <span className={`font-pixel text-[9px] px-1.5 py-0.5 rounded ${rank.badge}`}>#{i + 1}</span>
+                  )}
+                  <span className="truncate max-w-[140px]">{cr.name}</span>
+                </p>
+                <p className="mt-0.5 text-[13px] text-gray-500 flex items-center gap-1.5 whitespace-nowrap">
+                  {T.games.gamesCount(cr.games)}
+                  <span className="text-gray-700">·</span>
+                  <ViewerIcon className="w-3.5 h-3.5" />
+                  {formatViewers(cr.views)}
+                </p>
+              </div>
             </Link>
           )
         })}
