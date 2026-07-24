@@ -8,10 +8,10 @@ import { selectGamesWithCreator } from '@/lib/supabase/games'
 const VALID_GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 
 interface Props {
-  searchParams: Promise<{ genre?: string; q?: string }>
+  searchParams: Promise<{ genre?: string; q?: string; creator?: string }>
 }
 
-async function GameGrid({ genre, q }: { genre?: string; q?: string }) {
+async function GameGrid({ genre, q, creator }: { genre?: string; q?: string; creator?: string }) {
   const supabase = await createClient()
   const validGenre = VALID_GENRES.includes(genre as Genre) ? (genre as Genre) : undefined
   const term = q?.trim()
@@ -20,6 +20,7 @@ async function GameGrid({ genre, q }: { genre?: string; q?: string }) {
     let x = query.order('created_at', { ascending: false })
     if (validGenre) x = x.eq('genre', validGenre)
     if (term) x = x.ilike('title', `%${term}%`)
+    if (creator) x = x.eq('user_id', creator)
     return x
   })
 
@@ -50,7 +51,7 @@ async function GameGrid({ genre, q }: { genre?: string; q?: string }) {
 }
 
 export default async function GamesPage({ searchParams }: Props) {
-  const { genre, q } = await searchParams
+  const { genre, q, creator } = await searchParams
   const term = q?.trim()
 
   return (
@@ -67,14 +68,14 @@ export default async function GamesPage({ searchParams }: Props) {
         </Suspense>
       </div>
       <Suspense
-        key={`${genre ?? ''}-${term ?? ''}`}
+        key={`${genre ?? ''}-${term ?? ''}-${creator ?? ''}`}
         fallback={
           <div className="text-center text-gray-300 text-xs py-24 font-pixel tracking-widest">
             LOADING...
           </div>
         }
       >
-        <GameGrid genre={genre} q={q} />
+        <GameGrid genre={genre} q={q} creator={creator} />
       </Suspense>
     </div>
   )

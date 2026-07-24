@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { loadAvatarConfig, saveAvatarConfig, uploadPreview, serializeConfig, applyConfig } from '@/lib/avatar/storage'
+import { useAvatarStore } from '@/lib/avatar/store'
+import { getCharacter } from '@/lib/avatar/editor/constants'
 
 const EditorScene = dynamic(() => import('@/lib/avatar/editor/EditorScene').then((m) => m.EditorScene), {
   ssr: false,
@@ -26,6 +28,16 @@ export default function AvatarEditorPage() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null)
 
+  // 파츠(머리·옷 등)가 전부 로드된 뒤에만 저장 허용 — 조립 전 스냅샷(대머리 프리뷰) 방지
+  const characterId = useAvatarStore((st) => st.characterId)
+  const selection = useAvatarStore((st) => st.selection)
+  const partStatus = useAvatarStore((st) => st.partStatus)
+  const partsReady = getCharacter(characterId).catalog.every((c) => {
+    if (!selection[c.id]) return true
+    const st = partStatus[c.id]
+    return st === 'loaded' || st === 'error' || st === 'missing'
+  })
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/login?redirect=/avatar'); return }
@@ -38,9 +50,11 @@ export default function AvatarEditorPage() {
   }, [])
 
   const handleSave = async () => {
-    if (!user) return
+    if (!user || !partsReady) return
     setSaving(true)
     setMsg(null)
+    // 렌더 프레임이 최신 조립 상태를 그린 뒤 캡처
+    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())))
     const blob = await snapshotCanvas()
     const previewUrl = blob ? await uploadPreview(supabase, user.id, blob) : null
     const config = serializeConfig(previewUrl)
@@ -64,10 +78,10 @@ export default function AvatarEditorPage() {
         {msg && <span className={`text-xs font-pixel tracking-widest ${msg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{msg.text}</span>}
         <button
           onClick={handleSave}
-          disabled={!ready || saving}
+          disabled={!ready || saving || !partsReady}
           className="font-pixel text-[11px] bg-[#00ff41] text-black px-7 py-2.5 hover:bg-[#00cc33] transition-colors disabled:opacity-40 tracking-widest shadow-[0_0_12px_rgba(0,255,65,0.35)]"
         >
-          {saving ? '저장 중…' : '💾 저장하기'}
+          {saving ? '저장 중…' : !partsReady ? '아바타 로딩 중…' : '💾 저장하기'}
         </button>
       </div>
       <div className="flex-1 min-h-0">

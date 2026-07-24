@@ -143,7 +143,7 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
         {creators.map((cr, i) => {
           const rank = RANK_STYLE[i]
           return (
-            <div key={cr.id} className="shrink-0 w-[150px] sm:w-[170px]">
+            <Link key={cr.id} href={`/games?creator=${cr.id}`} className="shrink-0 w-[150px] sm:w-[170px] group/creator">
               <div className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-[#111] border border-gray-800 ${rank ? rank.ring : ''}`}>
                 {cr.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -165,14 +165,14 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
                   #{i + 1}
                 </span>
               </div>
-              <p className="mt-2.5 text-sm font-semibold text-white truncate">{cr.name}</p>
+              <p className="mt-2.5 text-sm font-semibold text-white truncate group-hover/creator:text-[#00ff41] transition-colors">{cr.name}</p>
               <p className="text-[13px] text-gray-500 flex items-center gap-1.5">
                 {T.games.gamesCount(cr.games)}
                 <span className="text-gray-700">·</span>
                 <ViewerIcon className="w-3.5 h-3.5" />
                 {formatViewers(cr.views)}
               </p>
-            </div>
+            </Link>
           )
         })}
       </div>
