@@ -49,5 +49,6 @@ export async function uploadPreview(supabase: SupabaseClient, userId: string, bl
   const path = `avatar-models/${userId}.png`
   const { error } = await supabase.storage.from('avatars').upload(path, blob, { upsert: true, contentType: 'image/png' })
   if (error) { console.error('[avatar] preview upload failed:', error); return null }
-  return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+  // 같은 경로에 덮어써도 CDN/브라우저가 옛 이미지를 캐시하지 않도록 버전 쿼리를 붙인다
+  return `${supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl}?v=${Date.now()}`
 }
