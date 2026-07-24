@@ -3,6 +3,8 @@
 import { useRef } from 'react'
 import Link from 'next/link'
 import GameCard from '@/components/GameCard'
+import ViewerIcon from '@/components/ViewerIcon'
+import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import type { GameWithCreator, Genre } from '@/lib/supabase/types'
 
@@ -95,6 +97,81 @@ function Row({ heading, headerExtra, games, large }: {
   )
 }
 
+// 순위 강조 — 금/은/동 링과 배지
+const RANK_STYLE = [
+  { ring: 'ring-2 ring-[#ffd24d] shadow-[0_0_24px_rgba(255,210,77,0.35)]', badge: 'bg-[#ffd24d] text-black' },
+  { ring: 'ring-2 ring-gray-300', badge: 'bg-gray-300 text-black' },
+  { ring: 'ring-2 ring-amber-600', badge: 'bg-amber-600 text-black' },
+] as const
+
+interface Creator {
+  id: string
+  name: string
+  avatarUrl: string | null
+  games: number
+  views: number
+}
+
+// 제작자 랭킹 — 게임 개수 우선, 동률이면 총 조회수
+function topCreatorsOf(games: GameWithCreator[]): Creator[] {
+  const map = new Map<string, Creator>()
+  for (const g of games) {
+    const cur = map.get(g.user_id) ?? {
+      id: g.user_id,
+      name: g.profiles?.agent_name ?? g.profiles?.username ?? 'unknown',
+      avatarUrl: g.profiles?.avatar_config?.previewUrl ?? null,
+      games: 0,
+      views: 0,
+    }
+    cur.games += 1
+    cur.views += g.view_count ?? 0
+    map.set(g.user_id, cur)
+  }
+  return [...map.values()]
+    .sort((a, b) => b.games - a.games || b.views - a.views)
+    .slice(0, 10)
+}
+
+function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: string }) {
+  const { T } = useLang()
+  const creators = topCreatorsOf(games)
+  if (creators.length === 0) return null
+  return (
+    <section className="mb-14">
+      <h2 className="font-pixel text-sm text-[#ffd24d] tracking-widest mb-5">🏆 {heading}</h2>
+      <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-6 px-6 pb-2">
+        {creators.map((cr, i) => {
+          const rank = RANK_STYLE[i]
+          return (
+            <div key={cr.id} className="shrink-0 w-[150px] sm:w-[170px]">
+              <div className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-[#111] border border-gray-800 ${rank ? rank.ring : ''}`}>
+                {cr.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={cr.avatarUrl} alt={cr.name} className="w-full h-full object-cover object-top" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="font-pixel text-3xl text-gray-700">{cr.name.charAt(0).toUpperCase()}</span>
+                  </div>
+                )}
+                <span className={`absolute top-2 left-2 font-pixel text-[11px] px-2 py-1 rounded ${rank ? rank.badge : 'bg-black/70 text-gray-300'}`}>
+                  #{i + 1}
+                </span>
+              </div>
+              <p className="mt-2.5 text-sm font-semibold text-white truncate">{cr.name}</p>
+              <p className="text-[13px] text-gray-500 flex items-center gap-1.5">
+                {T.games.gamesCount(cr.games)}
+                <span className="text-gray-700">·</span>
+                <ViewerIcon className="w-3.5 h-3.5" />
+                {formatViewers(cr.views)}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
   const { T } = useLang()
 
@@ -114,6 +191,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
         }
         games={topLive}
       />
+      <TopCreators games={games} heading={T.games.topCreators} />
       {GENRES.map(g => (
         <Row
           key={g}
