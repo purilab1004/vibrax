@@ -14,6 +14,7 @@ export default function AdminNav() {
     ['/admin/blog', a.navBlog],
     ['/admin/notices', a.navNotices],
     ['/admin/members', a.navMembers],
+    ['/admin/applications', a.navApplications],
     ['/admin/settings', a.navSettings],
   ]
   const active = (href: string) =>
