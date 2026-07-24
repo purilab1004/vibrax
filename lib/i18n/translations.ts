@@ -36,7 +36,7 @@ export const t = {
     games: {
       heading: 'GAMES',
       liveNow: 'LIVE NOW',
-      topCreators: 'TOP CREATORS',
+      topCreators: 'TOP AI AVATAR',
       gamesCount: (n: number) => `게임 ${n}개`,
       all: '전체',
       subtitle: 'AI 바이브코딩 게임 모음',
@@ -308,7 +308,7 @@ export const t = {
     games: {
       heading: 'GAMES',
       liveNow: 'LIVE NOW',
-      topCreators: 'TOP CREATORS',
+      topCreators: 'TOP AI AVATAR',
       gamesCount: (n: number) => `${n} games`,
       all: 'ALL',
       subtitle: 'AI Vibe-Coded Game Collection',

@@ -48,6 +48,6 @@ export async function saveAvatarConfig(supabase: SupabaseClient, userId: string,
 export async function uploadPreview(supabase: SupabaseClient, userId: string, blob: Blob): Promise<string | null> {
   const path = `avatar-models/${userId}.png`
   const { error } = await supabase.storage.from('avatars').upload(path, blob, { upsert: true, contentType: 'image/png' })
-  if (error) return null
+  if (error) { console.error('[avatar] preview upload failed:', error); return null }
   return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
 }
