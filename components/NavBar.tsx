@@ -129,7 +129,7 @@ export default function NavBar() {
             {navLinkDesktop('/studio', T.nav.studio)}
             <Link
               href="/tournament"
-              className="glow-gold text-[13px] font-semibold tracking-wider transition-colors hover:text-[#ffe9a8]"
+              className="glow-gold glass-shine px-1.5 py-1 rounded text-[13px] font-semibold tracking-wider transition-colors hover:text-[#ffe9a8]"
             >
               🏆 {T.nav.tournament}
             </Link>
@@ -233,7 +233,7 @@ export default function NavBar() {
             <Link
               href="/tournament"
               onClick={() => setMenuOpen(false)}
-              className="glow-gold font-pixel text-2xl tracking-widest transition-colors py-3"
+              className="glow-gold glass-shine font-pixel text-2xl tracking-widest transition-colors py-3 px-1 rounded"
             >
               🏆 {T.nav.tournament}
             </Link>
