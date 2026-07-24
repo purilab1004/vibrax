@@ -113,3 +113,16 @@ body {
   color: #ffd24d;
   animation: goldGlow 2.4s ease-in-out infinite;
 }
+
+/* TOP AI AVATAR — 숨쉬듯 흔들리는 아이들 모션 */
+@keyframes avatarIdle {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  25%      { transform: translateY(-3px) rotate(-0.6deg) scale(1.015); }
+  50%      { transform: translateY(0) rotate(0deg) scale(1.03); }
+  75%      { transform: translateY(-2px) rotate(0.6deg) scale(1.015); }
+}
+.avatar-idle {
+  animation: avatarIdle 4.5s ease-in-out infinite;
+  transform-origin: 50% 85%;
+  will-change: transform;
+}

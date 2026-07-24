@@ -139,7 +139,7 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
   return (
     <section className="mb-14">
       <h2 className="font-pixel text-sm text-[#ffd24d] tracking-widest mb-5">🏆 {heading}</h2>
-      <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-6 px-6 pb-2">
+      <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-6 px-6 pt-2 pb-3">
         {creators.map((cr, i) => {
           const rank = RANK_STYLE[i]
           return (
@@ -147,7 +147,7 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
               <div className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-[#111] border border-gray-800 ${rank ? rank.ring : ''}`}>
                 {cr.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={cr.avatarUrl} alt={cr.name} className="w-full h-full object-cover object-top" />
+                  <img src={cr.avatarUrl} alt={cr.name} className="avatar-idle w-full h-full object-cover object-top" style={{ animationDelay: `${i * 0.6}s` }} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="font-pixel text-3xl text-gray-700">{cr.name.charAt(0).toUpperCase()}</span>
