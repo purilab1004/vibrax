@@ -147,7 +147,10 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
               <div className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-[#111] border border-gray-800 ${rank ? rank.ring : ''}`}>
                 {cr.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={cr.avatarUrl} alt={cr.name} className="avatar-idle w-full h-full object-cover object-top" style={{ animationDelay: `${i * 0.6}s` }} />
+                  <div className="avatar-idle w-full h-full" style={{ animationDelay: `${i * 0.6}s` }}>
+                    {/* 얼굴 중심 줌 — 아이들 모션(래퍼)과 transform 충돌을 피해 이미지에서 확대 */}
+                    <img src={cr.avatarUrl} alt={cr.name} className="w-full h-full object-cover" style={{ objectPosition: '50% 10%', transform: 'scale(1.7)', transformOrigin: '50% 16%' }} />
+                  </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <span className="font-pixel text-3xl text-gray-700">{cr.name.charAt(0).toUpperCase()}</span>
