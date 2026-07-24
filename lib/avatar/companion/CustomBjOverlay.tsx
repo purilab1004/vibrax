@@ -7,14 +7,12 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { CompanionAvatar, type CameraSettings } from './CompanionAvatar'
-import { googleTTS, type SpeakPayload } from './tts'
+import { elevenTTS, type SpeakPayload } from './tts'
 import type { Gender } from './locales'
 import { SceneLights } from '../components/SceneLights'
 import { GradingEffects } from '../components/GradingEffects'
 import { applyConfig } from '../storage'
 import type { AvatarConfig } from '../config'
-
-const TTS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_TTS_API_KEY ?? ''
 
 function CameraRig({ settings }: { settings: CameraSettings }) {
   const { camera } = useThree()
@@ -55,9 +53,9 @@ export default function CustomBjOverlay({ config }: { config: AvatarConfig }) {
       setBubble(text)
       setSpeaking(true)
       const end = () => { setBubble(null); setSpeaking(false) }
-      if (TTS_API_KEY && speakRef.current) {
+      if (speakRef.current) {
         try {
-          const payload = await googleTTS({ text }, 'ko', gender, TTS_API_KEY)
+          const payload = await elevenTTS({ text }, 'ko', gender)
           speakRef.current(payload)
           endTimer = setTimeout(end, payload.audio.duration * 1000 + 500)
         } catch (err) {

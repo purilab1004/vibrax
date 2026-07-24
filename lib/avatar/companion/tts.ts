@@ -1,4 +1,4 @@
-// Google TTS 호출 + word timing 계산
+// TTS 호출 + word timing 계산 — ElevenLabs(/api/tts 프록시) 기반
 
 import { type Lang, type Gender, type Reaction, TTS_CONFIG } from './locales'
 
@@ -17,35 +17,22 @@ function getAudioContext(): AudioContext {
   return sharedAudioCtx
 }
 
-export async function googleTTS(
+export async function elevenTTS(
   reaction: Reaction,
   lang: Lang,
   gender: Gender,
-  apiKey: string,
 ): Promise<SpeakPayload> {
-  const voice = TTS_CONFIG[lang][gender]
-  const res = await fetch(
-    `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        input: { text: reaction.text },
-        voice,
-        audioConfig: { audioEncoding: 'MP3' },
-      }),
-    },
-  )
-  const json = await res.json()
-  if (json.error) throw new Error(`TTS error: ${json.error.message}`)
-  if (!json.audioContent) throw new Error('TTS: no audioContent')
-
-  const binary = atob(json.audioContent)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  void TTS_CONFIG // Google 보이스 설정은 미사용 — 보이스는 서버(/api/tts)의 ElevenLabs voice id로 결정
+  const res = await fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: reaction.text, gender }),
+  })
+  if (!res.ok) throw new Error(`TTS error: ${res.status}`)
+  const bytes = await res.arrayBuffer()
 
   const audioCtx = getAudioContext()
-  const audio = await audioCtx.decodeAudioData(bytes.buffer.slice(0))
+  const audio = await audioCtx.decodeAudioData(bytes.slice(0))
 
   // ko는 roman 발음, en은 text로 word timing 계산
   const wordSource = reaction.roman ?? reaction.text

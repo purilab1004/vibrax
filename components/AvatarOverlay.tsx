@@ -13,8 +13,6 @@ function pickRandomAvatar(): string {
   return AVATARS[Math.floor(Math.random() * AVATARS.length)]
 }
 
-const TTS_KEY = process.env.NEXT_PUBLIC_GOOGLE_TTS_API_KEY ?? ''
-
 let sharedAudioCtx: AudioContext | null = null
 function getAudioCtx(): AudioContext {
   if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
@@ -60,7 +58,8 @@ export default function AvatarOverlay() {
 
       console.log('[Avatar] Creating TalkingHead instance...')
       const head = new TalkingHead(containerRef.current, {
-        ttsEndpoint: `https://texttospeech.googleapis.com/v1/text:synthesize?key=${TTS_KEY}`,
+        // 실제 발화는 아래 avatar:speak 핸들러의 speakAudio 경로만 사용 — 내부 TTS는 미사용
+        ttsEndpoint: '/api/tts',
         lipsyncModules: ['en'],
         cameraView: 'upper',
         lightAmbientColor: 0xffffff,
@@ -153,33 +152,23 @@ export default function AvatarOverlay() {
   useEffect(() => {
     const handler = async (e: Event) => {
       const head = headRef.current
-      if (!head || !readyRef.current || !TTS_KEY) return
+      if (!head || !readyRef.current) return
       const text = (e as CustomEvent<{ text: string }>).detail?.text?.trim()
       if (!text) return
 
       try {
-        const res = await fetch(
-          `https://texttospeech.googleapis.com/v1/text:synthesize?key=${TTS_KEY}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              input: { text },
-              voice: { languageCode: 'en-US', name: 'en-US-Wavenet-F' },
-              audioConfig: { audioEncoding: 'MP3' },
-            }),
-          }
-        )
-        const json = await res.json()
-        if (!json.audioContent) { console.warn('[Avatar] TTS no audioContent:', json); return }
-
-        const binary = atob(json.audioContent)
-        const bytes = new Uint8Array(binary.length)
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+        // ElevenLabs 프록시 — AJ 기본 보이스는 여성(Jiyoung)
+        const res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, gender: 'female' }),
+        })
+        if (!res.ok) { console.warn('[Avatar] TTS failed:', res.status); return }
+        const bytes = await res.arrayBuffer()
 
         const ctx = getAudioCtx()
         if (ctx.state === 'suspended') await ctx.resume()
-        const audio = await ctx.decodeAudioData(bytes.buffer.slice(0))
+        const audio = await ctx.decodeAudioData(bytes.slice(0))
 
         // English word-timing lipsync
         const words = text.split(/\s+/).filter(Boolean)
