@@ -179,3 +179,33 @@ body {
   animation: glassSweep 3.8s ease-in-out infinite;
   pointer-events: none;
 }
+
+/* ─── 관리자 — Notion풍 일관 타이포그래피 ───
+   픽셀 폰트/제각각인 글자 크기를 Pretendard 단일 체계로 정규화한다.
+   기존 클래스를 페이지마다 고치는 대신 스코프 오버라이드로 한 번에 통일. */
+.admin-ui,
+.admin-ui .font-pixel {
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo',
+    'Noto Sans KR', 'Malgun Gothic', sans-serif;
+}
+.admin-ui .font-pixel {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+/* 픽셀 폰트 기준으로 잡혀 있던 극소 사이즈(10~11px)를 읽기 좋은 13px로 승격 */
+.admin-ui .text-\[10px\],
+.admin-ui .text-\[11px\] {
+  font-size: 13px;
+  line-height: 1.4;
+}
+/* 페이지 제목 — Notion 문서 제목처럼 크고 담백하게 */
+.admin-ui h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+/* 과도한 자간 완화 */
+.admin-ui .tracking-widest {
+  letter-spacing: 0.03em;
+}

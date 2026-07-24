@@ -90,6 +90,47 @@ export default function NavBar() {
     </button>
   )
 
+  // 관리자 — 큰 메뉴 없이 로고 + 관리자 홈 + 복귀/로그아웃만 있는 미니 헤더 (Notion풍)
+  if (pathname.startsWith('/admin')) {
+    return (
+      <header className="sticky top-0 z-50 border-b border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm">
+        <nav className="w-full px-5 h-14 flex items-center gap-5">
+          <Link href="/" className="group font-pixel text-[#00ff41] text-xs tracking-widest hover:text-white transition-colors shrink-0">
+            VIBREX<span className="text-[#ffd24d] group-hover:text-white transition-colors">CUP</span>
+          </Link>
+          <span className="text-[13px] font-semibold text-gray-500 border border-gray-800 rounded px-2 py-0.5">
+            ⚙ {T.nav.admin}
+          </span>
+          <div className="flex-1" />
+          <Link
+            href="/admin"
+            className={`text-[13px] font-medium transition-colors hover:text-[#00ff41] ${
+              pathname === '/admin' ? 'text-[#00ff41]' : 'text-gray-300'
+            }`}
+          >
+            {T.nav.adminHome}
+          </Link>
+          <Link href="/" className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors">
+            {T.nav.backToSite}
+          </Link>
+          {user && (
+            <button
+              onClick={handleSignOut}
+              className="text-[13px] font-medium text-gray-400 hover:text-[#00ff41] transition-colors"
+            >
+              {T.nav.logout}
+            </button>
+          )}
+          <div className="flex items-center gap-1 border-l border-gray-800 pl-4">
+            {langBtn('ko', 'KO')}
+            <span className="text-gray-700 text-[11px]">|</span>
+            {langBtn('en', 'EN')}
+          </div>
+        </nav>
+      </header>
+    )
+  }
+
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm">

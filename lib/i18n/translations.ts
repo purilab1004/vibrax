@@ -20,6 +20,8 @@ export const t = {
       partner: 'PARTNER',
       notices: '공지',
       admin: '관리자',
+      adminHome: '관리자 홈',
+      backToSite: '사이트로 돌아가기',
     },
     genres: { action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS' },
     hero: {
@@ -309,6 +311,8 @@ export const t = {
       partner: 'PARTNER',
       notices: 'NOTICES',
       admin: 'ADMIN',
+      adminHome: 'Admin Home',
+      backToSite: 'Back to site',
     },
     genres: { action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS' },
     hero: {

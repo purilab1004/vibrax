@@ -53,6 +53,8 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   const inStudio = pathname.startsWith('/studio')
   // 마이페이지에서는 프로필 섹션 메뉴만 보여준다
   const inProfile = pathname.startsWith('/profile')
+  // 관리자에서는 관리자 메뉴(대시보드/게임/블로그/공지/회원/신청/설정)를 보여준다
+  const inAdmin = pathname.startsWith('/admin')
   const [projects, setProjects] = useState<StudioProject[]>([])
 
   // 본문(main/footer) 여백을 사이드바 폭과 동기화
@@ -123,7 +125,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
             <svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 6h16M4 12h16M4 18h16" /></svg>
           )}
         </span>
-        <span className={label}>{T.nav.categories}</span>
+        <span className={label}>{inAdmin ? T.nav.admin : T.nav.categories}</span>
       </button>
 
       <div className="flex-1 overflow-y-auto scrollbar-hide">
@@ -188,7 +190,29 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
             </>
           )}
 
-          {!inStudio && !inProfile && GENRES.map(g => {
+          {inAdmin && (
+            <>
+              {([
+                ['/admin', T.admin.navDashboard, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="4" y="4" width="7" height="9" rx="1" /><rect x="13" y="4" width="7" height="5" rx="1" /><rect x="13" y="11" width="7" height="9" rx="1" /><rect x="4" y="15" width="7" height="5" rx="1" /></svg>],
+                ['/admin/games', T.admin.navGames, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
+                ['/admin/blog', T.admin.navBlog, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M5 4h11l3 3v13H5Z" /><path d="M9 9h6M9 13h6M9 17h4" /></svg>],
+                ['/admin/notices', T.admin.navNotices, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 10v4l10 4V6L4 10Z" /><path d="M14 8.5a3.5 3.5 0 0 1 0 7M6.5 14.5V19" /></svg>],
+                ['/admin/members', T.admin.navMembers, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="9" cy="8.5" r="3" /><path d="M3.5 19c1-3 3.2-4.5 5.5-4.5s4.5 1.5 5.5 4.5" /><circle cx="17" cy="9.5" r="2.3" /><path d="M16 14.7c2.5.2 4 1.6 4.5 4.3" /></svg>],
+                ['/admin/applications', T.admin.navApplications, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M8 4h8l2 2v14H6V6l2-2Z" /><path d="M9 4v3h6V4M9 12l2 2 4-4" /></svg>],
+                ['/admin/settings', T.admin.navSettings, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></svg>],
+              ] as [string, string, React.ReactNode][]).map(([href, label2, icon]) => {
+                const active = href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
+                return (
+                  <Link key={href} href={href} className={row(active)} title={label2}>
+                    <span className={iconCol}>{icon}</span>
+                    <span className={label}>{label2}</span>
+                  </Link>
+                )
+              })}
+            </>
+          )}
+
+          {!inStudio && !inProfile && !inAdmin && GENRES.map(g => {
             const isNew = newGenres.includes(g)
             return (
               <Link key={g} href={`/games?genre=${g}`} className={row(activeGenre === g)} title={isNew ? `${T.genres[g]} (NEW)` : T.genres[g]}>
@@ -205,7 +229,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           })}
         </nav>
 
-        {!inStudio && !inProfile && channels.length > 0 && (
+        {!inStudio && !inProfile && !inAdmin && channels.length > 0 && (
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (
@@ -241,7 +265,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           </>
         )}
 
-        {!inStudio && !inProfile && tournament.length > 0 && (
+        {!inStudio && !inProfile && !inAdmin && tournament.length > 0 && (
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (
