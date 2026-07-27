@@ -50,6 +50,16 @@ export default function NavBar() {
     router.push(q ? `/games?q=${encodeURIComponent(q)}` : '/games')
   }
 
+  // 해변 로고 마크 — 파란 바다 배지 + 햇살 + 겹치는 흰 파도
+  const LogoMark = () => (
+    <svg viewBox="0 0 32 32" className="w-7 h-7 shrink-0" aria-hidden>
+      <rect x="0" y="0" width="32" height="32" rx="8" fill="#2563eb" />
+      <circle cx="22.5" cy="9.5" r="4" fill="#ffd34d" />
+      <path d="M0 23c4-3.2 8-3.2 12 0s8 3.2 12 0 6-2.6 8-1v10H0Z" fill="#ffffff" opacity="0.85" />
+      <path d="M0 26.5c4-2.6 8-2.6 12 0s8 2.6 12 0 6-2.2 8-.9V32H0Z" fill="#fcfaf5" />
+    </svg>
+  )
+
   const SearchIcon = () => (
     <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
       <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
@@ -59,8 +69,8 @@ export default function NavBar() {
   const navLinkDesktop = (href: string, label: string) => (
     <Link
       href={href}
-      className={`text-[13px] font-medium tracking-wider transition-colors hover:text-[#0284c7] ${
-        pathname === href ? 'text-[#0284c7]' : 'text-[#6b6152]'
+      className={`text-[13px] font-medium tracking-wider transition-colors hover:text-[#2563eb] ${
+        pathname === href ? 'text-[#2563eb]' : 'text-[#6b6152]'
       }`}
     >
       {label}
@@ -72,7 +82,7 @@ export default function NavBar() {
       href={href}
       onClick={() => setMenuOpen(false)}
       className={`font-pixel text-2xl tracking-widest transition-colors py-3 ${
-        pathname === href ? 'text-[#0284c7]' : 'text-[#241f17] hover:text-[#0284c7]'
+        pathname === href ? 'text-[#2563eb]' : 'text-[#241f17] hover:text-[#2563eb]'
       }`}
     >
       {label}
@@ -83,7 +93,7 @@ export default function NavBar() {
     <button
       onClick={() => setLang(l)}
       className={`text-[11px] tracking-widest font-pixel transition-colors ${
-        lang === l ? 'text-[#0284c7]' : 'text-[#9d9280] hover:text-[#6b6152]'
+        lang === l ? 'text-[#2563eb]' : 'text-[#9d9280] hover:text-[#6b6152]'
       }`}
     >
       {label}
@@ -95,8 +105,9 @@ export default function NavBar() {
     return (
       <header className="sticky top-0 z-50 border-b border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm">
         <nav className="w-full px-5 h-14 flex items-center gap-5">
-          <Link href="/" className="group text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
-            vibrex<span className="text-[#0284c7]">cup</span>
+          <Link href="/" className="group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
+            <LogoMark />
+            <span>vibrex<span className="text-[#2563eb]">cup</span></span>
           </Link>
           <span className="text-[13px] font-semibold text-[#857a68] border border-[#ebe4d6] rounded px-2 py-0.5">
             ⚙ {T.nav.admin}
@@ -104,8 +115,8 @@ export default function NavBar() {
           <div className="flex-1" />
           <Link
             href="/admin"
-            className={`text-[13px] font-medium transition-colors hover:text-[#0284c7] ${
-              pathname === '/admin' ? 'text-[#0284c7]' : 'text-[#4a4337]'
+            className={`text-[13px] font-medium transition-colors hover:text-[#2563eb] ${
+              pathname === '/admin' ? 'text-[#2563eb]' : 'text-[#4a4337]'
             }`}
           >
             {T.nav.adminHome}
@@ -116,7 +127,7 @@ export default function NavBar() {
           {user && (
             <button
               onClick={handleSignOut}
-              className="text-[13px] font-medium text-[#6b6152] hover:text-[#0284c7] transition-colors"
+              className="text-[13px] font-medium text-[#6b6152] hover:text-[#2563eb] transition-colors"
             >
               {T.nav.logout}
             </button>
@@ -137,11 +148,14 @@ export default function NavBar() {
         <nav className="w-full px-5 h-14 flex items-center gap-4">
           <Link
             href="/"
-            className="group text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0"
+            className="group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0"
           >
-            vibrex<span className="text-[#0284c7]">cup</span>
-            <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
-              BETA
+            <LogoMark />
+            <span>
+              vibrex<span className="text-[#2563eb]">cup</span>
+              <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
+                BETA
+              </span>
             </span>
           </Link>
 
@@ -152,10 +166,10 @@ export default function NavBar() {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={T.nav.searchPlaceholder}
-                className="w-full bg-[#ffffff] border border-[#ebe4d6] focus:border-[#0284c7] rounded-none pl-9 pr-3 py-2 text-[13px] text-[#241f17] placeholder-[#a1957f] outline-none transition-colors"
+                className="w-full bg-[#ffffff] border border-[#ebe4d6] focus:border-[#2563eb] rounded-none pl-9 pr-3 py-2 text-[13px] text-[#241f17] placeholder-[#a1957f] outline-none transition-colors"
                 aria-label={T.nav.search}
               />
-              <button type="submit" aria-label={T.nav.search} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#857a68] hover:text-[#0284c7] transition-colors">
+              <button type="submit" aria-label={T.nav.search} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#857a68] hover:text-[#2563eb] transition-colors">
                 <SearchIcon />
               </button>
             </div>
@@ -183,7 +197,7 @@ export default function NavBar() {
                 {navLinkDesktop('/profile', T.nav.mypage)}
                 <button
                   onClick={handleSignOut}
-                  className="text-[13px] font-medium tracking-wider text-[#6b6152] hover:text-[#0284c7] transition-colors"
+                  className="text-[13px] font-medium tracking-wider text-[#6b6152] hover:text-[#2563eb] transition-colors"
                 >
                   {T.nav.logout}
                 </button>
@@ -192,7 +206,7 @@ export default function NavBar() {
             ) : (
               <Link
                 href="/login"
-                className="font-pixel text-[11px] tracking-widest bg-[#0284c7] text-white px-5 py-2 hover:bg-[#0369a1] transition-colors"
+                className="font-pixel text-[11px] tracking-widest bg-[#2563eb] text-white px-5 py-2 hover:bg-[#1d4ed8] transition-colors"
               >
                 {T.nav.login}
               </Link>
@@ -235,17 +249,20 @@ export default function NavBar() {
           <Link
             href="/"
             onClick={() => setMenuOpen(false)}
-            className="text-[#241f17] text-xl font-extrabold tracking-tight"
+            className="flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight"
           >
-            vibrex<span className="text-[#0284c7]">cup</span>
-            <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
-              BETA
+            <LogoMark />
+            <span>
+              vibrex<span className="text-[#2563eb]">cup</span>
+              <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
+                BETA
+              </span>
             </span>
           </Link>
           <button
             onClick={() => setMenuOpen(false)}
             aria-label="메뉴 닫기"
-            className="font-pixel text-[11px] text-[#6b6152] hover:text-[#0284c7] transition-colors border border-[#ddd3bf] px-3 py-1.5"
+            className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] transition-colors border border-[#ddd3bf] px-3 py-1.5"
           >
             ✕ CLOSE
           </button>
@@ -261,7 +278,7 @@ export default function NavBar() {
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder={T.nav.searchPlaceholder}
-                  className="w-full bg-[#ffffff] border border-[#ebe4d6] focus:border-[#0284c7] pl-10 pr-3 py-3 text-sm text-[#241f17] placeholder-[#a1957f] outline-none transition-colors"
+                  className="w-full bg-[#ffffff] border border-[#ebe4d6] focus:border-[#2563eb] pl-10 pr-3 py-3 text-sm text-[#241f17] placeholder-[#a1957f] outline-none transition-colors"
                   aria-label={T.nav.search}
                 />
                 <button type="submit" aria-label={T.nav.search} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#857a68]">
@@ -287,7 +304,7 @@ export default function NavBar() {
                 {navLinkMobile('/profile', T.nav.mypage)}
                 <button
                   onClick={handleSignOut}
-                  className="font-pixel text-2xl tracking-widest text-left text-[#6b6152] hover:text-[#0284c7] transition-colors py-3"
+                  className="font-pixel text-2xl tracking-widest text-left text-[#6b6152] hover:text-[#2563eb] transition-colors py-3"
                 >
                   {T.nav.logout}
                 </button>
@@ -297,7 +314,7 @@ export default function NavBar() {
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="mt-4 inline-block font-pixel text-sm tracking-widest bg-[#0284c7] text-white px-6 py-3 hover:bg-[#0369a1] transition-colors text-center"
+                className="mt-4 inline-block font-pixel text-sm tracking-widest bg-[#2563eb] text-white px-6 py-3 hover:bg-[#1d4ed8] transition-colors text-center"
               >
                 {T.nav.login}
               </Link>

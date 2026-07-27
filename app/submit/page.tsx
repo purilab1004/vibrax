@@ -37,7 +37,7 @@ export default function SubmitPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
-      <h1 className="font-pixel text-[#0284c7] text-sm tracking-widest mb-2">
+      <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest mb-2">
         {T.submit.heading}
       </h1>
       <p className="text-[#4a4337] text-sm mb-10">{T.submit.subtitle}</p>

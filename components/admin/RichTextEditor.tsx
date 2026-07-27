@@ -14,7 +14,7 @@ function Btn({ onClick, active, children }: {
       onMouseDown={e => e.preventDefault()}
       onClick={onClick}
       className={`px-2.5 py-1.5 text-sm border transition-colors ${
-        active ? 'border-[#0284c7] text-[#0284c7]' : 'border-[#ebe4d6] text-[#6b6152] hover:text-[#241f17]'
+        active ? 'border-[#2563eb] text-[#2563eb]' : 'border-[#ebe4d6] text-[#6b6152] hover:text-[#241f17]'
       }`}
     >
       {children}

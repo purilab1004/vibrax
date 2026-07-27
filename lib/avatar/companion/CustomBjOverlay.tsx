@@ -82,7 +82,7 @@ export default function CustomBjOverlay({ config }: { config: AvatarConfig }) {
       </Canvas>
       {!assembled && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
-          <div className="w-6 h-6 border-2 border-[#0284c7] border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#2563eb] border-t-transparent rounded-full animate-spin" />
           <span className="font-pixel text-[8px] text-[#857a68] tracking-widest">BJ 로딩 중…</span>
         </div>
       )}

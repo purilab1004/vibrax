@@ -55,7 +55,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
     <>
       <button
         onClick={handlePlay}
-        className="shrink-0 font-pixel text-[11px] bg-[#0284c7] text-white px-8 py-4 hover:bg-[#0369a1] transition-colors whitespace-nowrap tracking-widest"
+        className="shrink-0 font-pixel text-[11px] bg-[#2563eb] text-white px-8 py-4 hover:bg-[#1d4ed8] transition-colors whitespace-nowrap tracking-widest"
       >
         {T.games.playNow}
       </button>
@@ -72,7 +72,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
                 <>
                   <p className="text-[#241f17] text-sm font-semibold">로그인이 필요해요</p>
                   <p className="text-[#6b6152] text-xs leading-relaxed">게임에 참여하려면 로그인 후 나만의 AGENT를 만들어야 해요.</p>
-                  <button onClick={() => router.push('/login')} className="w-full font-pixel text-[11px] bg-[#0284c7] text-white py-3 hover:bg-[#0369a1] transition-colors tracking-widest">
+                  <button onClick={() => router.push('/login')} className="w-full font-pixel text-[11px] bg-[#2563eb] text-white py-3 hover:bg-[#1d4ed8] transition-colors tracking-widest">
                     → 로그인하기
                   </button>
                 </>
@@ -112,7 +112,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="shrink-0 ml-3 font-pixel text-[11px] text-[#6b6152] hover:text-[#0284c7] transition-colors px-3 py-1 border border-[#ddd3bf] hover:border-[#0284c7]"
+              className="shrink-0 ml-3 font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] transition-colors px-3 py-1 border border-[#ddd3bf] hover:border-[#2563eb]"
             >
               ✕ CLOSE
             </button>

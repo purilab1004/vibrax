@@ -58,9 +58,9 @@ export default function CategoryManager({ onChanged }: { onChanged?: () => void 
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder={a.categoryName}
-          className="flex-1 bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-3 py-2 text-sm outline-none text-[#241f17] placeholder-[#a1957f]"
+          className="flex-1 bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-3 py-2 text-sm outline-none text-[#241f17] placeholder-[#a1957f]"
         />
-        <button type="submit" className="font-pixel text-xs bg-[#0284c7] text-[#241f17] px-4 hover:bg-[#0369a1] transition-colors">
+        <button type="submit" className="font-pixel text-xs bg-[#2563eb] text-[#241f17] px-4 hover:bg-[#1d4ed8] transition-colors">
           {a.addCategory}
         </button>
       </form>

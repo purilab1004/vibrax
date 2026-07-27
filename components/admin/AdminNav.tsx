@@ -28,7 +28,7 @@ export default function AdminNav() {
             href={href}
             className={`font-pixel text-xs tracking-widest px-4 py-3 border transition-colors whitespace-nowrap ${
               active(href)
-                ? 'border-[#0284c7] text-[#0284c7] bg-[#0284c7]/5'
+                ? 'border-[#2563eb] text-[#2563eb] bg-[#2563eb]/5'
                 : 'border-[#ebe4d6] text-[#6b6152] hover:border-[#cfc4ab] hover:text-[#241f17]'
             }`}
           >

@@ -61,7 +61,7 @@ export default function StudioChat({
             <div
               className={`max-w-[85%] px-3 py-2 text-sm whitespace-pre-wrap ${
                 m.role === 'user'
-                  ? 'bg-[#0284c7]/10 border border-[#0284c7]/40 text-[#241f17]'
+                  ? 'bg-[#2563eb]/10 border border-[#2563eb]/40 text-[#241f17]'
                   : 'bg-[#161616] border border-[#ebe4d6] text-[#3a332a]'
               }`}
             >
@@ -76,7 +76,7 @@ export default function StudioChat({
               {/* 코드가 오기 전 단계 — 시스템 상태 로그 */}
               {streaming.htmlBytes === 0 && (
                 <p className="mt-2 flex items-center gap-2 text-xs text-[#857a68]">
-                  <span className="w-3 h-3 border-2 border-[#0284c7]/60 border-t-transparent rounded-full animate-spin" />
+                  <span className="w-3 h-3 border-2 border-[#2563eb]/60 border-t-transparent rounded-full animate-spin" />
                   {elapsed < 3 ? s.sysConnecting : elapsed < 8 ? s.sysPlanning : s.sysDesigning}
                   <span className="text-[#9d9280]">· {s.elapsed(elapsed)}</span>
                 </p>
@@ -84,23 +84,23 @@ export default function StudioChat({
               {streaming.htmlBytes > 0 && (
                 <>
                   {/* 실시간 코드 터미널 — 실제 생성 중인 코드의 꼬리를 흘려보여준다 */}
-                  <div className="mt-3 bg-black border border-[#0284c7]/25 rounded-md overflow-hidden">
-                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#0284c7]/15">
+                  <div className="mt-3 bg-black border border-[#2563eb]/25 rounded-md overflow-hidden">
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#2563eb]/15">
                       <span className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-red-500/80" />
                         <span className="w-2 h-2 rounded-full bg-yellow-500/80" />
-                        <span className="w-2 h-2 rounded-full bg-[#0284c7]/80" />
+                        <span className="w-2 h-2 rounded-full bg-[#2563eb]/80" />
                       </span>
                       <span className="flex items-center gap-2">
                         <span className="text-[10px] text-[#857a68]">{s.elapsed(elapsed)} · {s.tokensApprox(Math.round(streaming.htmlBytes / 4).toLocaleString())}</span>
-                        <span className="font-pixel text-[10px] text-[#0284c7] tracking-widest animate-pulse">
+                        <span className="font-pixel text-[10px] text-[#2563eb] tracking-widest animate-pulse">
                           {s.writingCode((streaming.htmlBytes / 1024).toFixed(1))}
                         </span>
                       </span>
                     </div>
-                    <pre className="px-3 py-2 h-28 overflow-hidden flex flex-col justify-end font-mono text-[11px] leading-relaxed text-[#0284c7]/70 whitespace-pre-wrap break-all">
+                    <pre className="px-3 py-2 h-28 overflow-hidden flex flex-col justify-end font-mono text-[11px] leading-relaxed text-[#2563eb]/70 whitespace-pre-wrap break-all">
                       {streaming.codeTail}
-                      <span className="inline-block w-2 h-3.5 bg-[#0284c7] animate-pulse align-text-bottom" />
+                      <span className="inline-block w-2 h-3.5 bg-[#2563eb] animate-pulse align-text-bottom" />
                     </pre>
                   </div>
                 </>
@@ -132,12 +132,12 @@ export default function StudioChat({
           }}
           rows={3}
           placeholder={s.chatPlaceholder}
-          className="w-full bg-[#ffffff] border border-[#ebe4d6] focus:border-[#0284c7] px-3.5 py-3 text-sm text-[#241f17] placeholder-[#a1957f] outline-none transition-colors resize-none rounded-lg"
+          className="w-full bg-[#ffffff] border border-[#ebe4d6] focus:border-[#2563eb] px-3.5 py-3 text-sm text-[#241f17] placeholder-[#a1957f] outline-none transition-colors resize-none rounded-lg"
         />
         <button
           type="submit"
           disabled={busy || !input.trim()}
-          className="w-full mt-2 bg-[#0284c7] text-white text-sm font-semibold py-3 rounded-lg hover:bg-[#0369a1] transition-colors disabled:opacity-40"
+          className="w-full mt-2 bg-[#2563eb] text-white text-sm font-semibold py-3 rounded-lg hover:bg-[#1d4ed8] transition-colors disabled:opacity-40"
         >
           {s.send}
         </button>

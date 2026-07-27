@@ -48,13 +48,13 @@ export default function AdminMembersPage() {
 
   return (
     <div>
-      <h1 className="font-pixel text-[#0284c7] text-base tracking-widest mb-6">{a.membersHeading}</h1>
+      <h1 className="font-pixel text-[#2563eb] text-base tracking-widest mb-6">{a.membersHeading}</h1>
       <form onSubmit={search} className="mb-6">
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={a.searchMembers}
-          className="w-full max-w-sm bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-2.5 text-base outline-none text-[#241f17] placeholder-[#a1957f]"
+          className="w-full max-w-sm bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-4 py-2.5 text-base outline-none text-[#241f17] placeholder-[#a1957f]"
         />
       </form>
       {error && <p className="text-red-400 text-sm border border-red-900 bg-red-900/20 px-3 py-2 mb-4">{a.actionFailed}</p>}
@@ -81,10 +81,10 @@ export default function AdminMembersPage() {
                     <p className="text-[#9d9280]">{m.email}</p>
                   </td>
                   <td className="px-4 py-3 text-[#857a68]">{new Date(m.created_at).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-right text-[#0284c7]">{m.balance.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right text-[#2563eb]">{m.balance.toLocaleString()}</td>
                   <td className="px-4 py-3 text-right text-[#6b6152]">{m.games_count}</td>
                   <td className="px-4 py-3">
-                    <span className={`font-pixel text-[10px] tracking-widest ${m.role === 'admin' ? 'text-[#0284c7]' : 'text-[#857a68]'}`}>
+                    <span className={`font-pixel text-[10px] tracking-widest ${m.role === 'admin' ? 'text-[#2563eb]' : 'text-[#857a68]'}`}>
                       {m.role === 'admin' ? a.roleAdmin : a.roleUser}
                     </span>
                     {m.banned_at && <span className="font-pixel text-[10px] text-red-400 ml-2">{a.bannedTag}</span>}
@@ -93,7 +93,7 @@ export default function AdminMembersPage() {
                     <div className="flex gap-2 justify-end flex-wrap">
                       <button
                         onClick={() => run('admin_set_role', { p_user_id: m.id, p_role: m.role === 'admin' ? 'user' : 'admin' })}
-                        className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] px-2 py-1 hover:border-[#0284c7] hover:text-[#0284c7] transition-colors"
+                        className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] px-2 py-1 hover:border-[#2563eb] hover:text-[#2563eb] transition-colors"
                       >
                         {m.role === 'admin' ? a.demote : a.promote}
                       </button>
@@ -107,7 +107,7 @@ export default function AdminMembersPage() {
                       )}
                       <button
                         onClick={() => setAdjusting(m)}
-                        className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] px-2 py-1 hover:border-[#0284c7] hover:text-[#0284c7] transition-colors"
+                        className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] px-2 py-1 hover:border-[#2563eb] hover:text-[#2563eb] transition-colors"
                       >
                         ±
                       </button>
@@ -123,22 +123,22 @@ export default function AdminMembersPage() {
       {adjusting && (
         <div className="fixed inset-0 z-[70] bg-black/70 flex items-center justify-center px-4" onClick={() => setAdjusting(null)}>
           <div className="bg-[#ffffff] border border-[#ebe4d6] p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-            <h2 className="font-pixel text-[#0284c7] text-sm tracking-widest mb-1">{a.adjustCredits}</h2>
+            <h2 className="font-pixel text-[#2563eb] text-sm tracking-widest mb-1">{a.adjustCredits}</h2>
             <p className="text-[#857a68] text-sm mb-4">{adjusting.email}</p>
             <input
               type="number"
               value={amount}
               onChange={e => setAmount(e.target.value)}
               placeholder={a.adjustAmount}
-              className="w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-base outline-none text-[#241f17] placeholder-[#a1957f] mb-3"
+              className="w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-4 py-3 text-base outline-none text-[#241f17] placeholder-[#a1957f] mb-3"
             />
             <input
               value={note}
               onChange={e => setNote(e.target.value)}
               placeholder={a.adjustNote}
-              className="w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-base outline-none text-[#241f17] placeholder-[#a1957f] mb-4"
+              className="w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-4 py-3 text-base outline-none text-[#241f17] placeholder-[#a1957f] mb-4"
             />
-            <button onClick={applyAdjust} className="w-full bg-[#0284c7] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#0369a1] transition-colors tracking-widest">
+            <button onClick={applyAdjust} className="w-full bg-[#2563eb] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#1d4ed8] transition-colors tracking-widest">
               {a.apply}
             </button>
           </div>

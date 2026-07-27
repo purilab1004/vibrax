@@ -109,7 +109,7 @@ export default function PublishModal({
   }
 
   const inputClass =
-    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
+    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
 
   return (
     <div
@@ -120,7 +120,7 @@ export default function PublishModal({
         className="bg-[#ffffff] border border-[#ebe4d6] p-6 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="font-pixel text-[#0284c7] text-xs tracking-widest mb-1">
+        <h2 className="font-pixel text-[#2563eb] text-xs tracking-widest mb-1">
           {s.publishHeading}
         </h2>
         <p className="text-[#6b6152] text-xs mb-5">{s.publishDesc}</p>
@@ -128,7 +128,7 @@ export default function PublishModal({
         {alreadyPublished ? (
           <p className="text-[#4a4337] text-sm mb-4">{s.alreadyPublished}</p>
         ) : done ? (
-          <p className="text-[#0284c7] text-sm mb-4">{s.publishDone}</p>
+          <p className="text-[#2563eb] text-sm mb-4">{s.publishDone}</p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -159,7 +159,7 @@ export default function PublishModal({
                 <button
                   type="button"
                   onClick={() => { pickFile(null); setSeed(x => x + 1) }}
-                  className="flex-1 border border-[#ddd3bf] text-[#4a4337] text-[13px] py-2.5 hover:border-[#0284c7] hover:text-[#0284c7] transition-colors rounded-lg"
+                  className="flex-1 border border-[#ddd3bf] text-[#4a4337] text-[13px] py-2.5 hover:border-[#2563eb] hover:text-[#2563eb] transition-colors rounded-lg"
                 >
                   {s.thumbAuto}
                 </button>
@@ -181,7 +181,7 @@ export default function PublishModal({
             <button
               type="submit"
               disabled={isPending}
-              className="w-full bg-[#0284c7] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#0369a1] transition-colors disabled:opacity-50 tracking-widest rounded-lg"
+              className="w-full bg-[#2563eb] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest rounded-lg"
             >
               {isPending ? s.publishing : s.publishBtn}
             </button>

@@ -45,7 +45,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ id: s
     return (
       <div className="max-w-3xl mx-auto px-6 py-20 text-center">
         <p className="text-[#6b6152] text-base mb-6">글을 찾을 수 없습니다.</p>
-        <Link href="/blog" className="font-pixel text-[11px] text-[#0284c7] tracking-widest">BACK TO LIST</Link>
+        <Link href="/blog" className="font-pixel text-[11px] text-[#2563eb] tracking-widest">BACK TO LIST</Link>
       </div>
     )
   }
@@ -76,10 +76,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ id: s
     <article className="max-w-3xl mx-auto px-6 py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <BlogViewPing postId={post.id} />
-      <Link href="/blog" className="font-pixel text-[11px] text-[#857a68] hover:text-[#0284c7] tracking-widest">← BACK</Link>
+      <Link href="/blog" className="font-pixel text-[11px] text-[#857a68] hover:text-[#2563eb] tracking-widest">← BACK</Link>
       <h1 className="text-[#241f17] text-2xl md:text-3xl font-bold mt-6 mb-3">{post.title}</h1>
       <p className="text-[13px] text-[#857a68] mb-8">
-        {cat && <span className="text-[#0284c7] mr-3">{cat.name}</span>}
+        {cat && <span className="text-[#2563eb] mr-3">{cat.name}</span>}
         {post.published_at ? new Date(post.published_at).toLocaleDateString('ko-KR') : ''}
       </p>
       {post.thumbnail_url && (

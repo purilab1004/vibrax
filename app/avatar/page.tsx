@@ -73,13 +73,13 @@ export default function AvatarEditorPage() {
         >
           ← 내정보
         </button>
-        <h1 className="font-pixel text-[#0284c7] text-[11px] tracking-widest">아바타 설정</h1>
+        <h1 className="font-pixel text-[#2563eb] text-[11px] tracking-widest">아바타 설정</h1>
         <div className="flex-1" />
-        {msg && <span className={`text-xs font-pixel tracking-widest ${msg.ok ? 'text-[#0284c7]' : 'text-red-400'}`}>{msg.text}</span>}
+        {msg && <span className={`text-xs font-pixel tracking-widest ${msg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{msg.text}</span>}
         <button
           onClick={handleSave}
           disabled={!ready || saving || !partsReady}
-          className="font-pixel text-[11px] bg-[#0284c7] text-[#241f17] px-7 py-2.5 hover:bg-[#0369a1] transition-colors disabled:opacity-40 tracking-widest shadow-[0_0_12px_rgba(2,132,199,0.35)]"
+          className="font-pixel text-[11px] bg-[#2563eb] text-[#241f17] px-7 py-2.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-40 tracking-widest shadow-[0_0_12px_rgba(37,99,235,0.35)]"
         >
           {saving ? '저장 중…' : !partsReady ? '아바타 로딩 중…' : '💾 저장하기'}
         </button>

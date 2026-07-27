@@ -3,7 +3,7 @@
 @theme inline {
   /* Press Start 2P는 한글 글리프가 없다 — 한글은 Pretendard로 폴백 (monospace 금지) */
   --font-pixel: 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif; /* 픽셀 폰트 제거 — 로고와 동일한 산세리프 */
-  --color-accent: #0284c7;
+  --color-accent: #2563eb;
   --color-bg: #fcfaf5;
 }
 
@@ -75,10 +75,10 @@ body {
 @layer utilities {
   .pixel-border {
     box-shadow:
-      4px 0 0 0 #0284c7,
-      -4px 0 0 0 #0284c7,
-      0 4px 0 0 #0284c7,
-      0 -4px 0 0 #0284c7;
+      4px 0 0 0 #2563eb,
+      -4px 0 0 0 #2563eb,
+      0 4px 0 0 #2563eb,
+      0 -4px 0 0 #2563eb;
   }
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -94,10 +94,10 @@ body {
 .rte-content h2 { color: #241f17; font-size: 1.35rem; font-weight: 700; margin: 1.6em 0 0.6em; }
 .rte-content h3 { color: #241f17; font-size: 1.1rem; font-weight: 700; margin: 1.4em 0 0.5em; }
 .rte-content p { margin: 0.6em 0; }
-.rte-content a { color: #0284c7; text-decoration: underline; }
+.rte-content a { color: #2563eb; text-decoration: underline; }
 .rte-content ul { list-style: disc; padding-left: 1.4em; margin: 0.6em 0; }
 .rte-content ol { list-style: decimal; padding-left: 1.4em; margin: 0.6em 0; }
-.rte-content blockquote { border-left: 3px solid #0284c7; padding-left: 1em; color: #6b6152; margin: 1em 0; }
+.rte-content blockquote { border-left: 3px solid #2563eb; padding-left: 1em; color: #6b6152; margin: 1em 0; }
 .rte-content pre { background: #f5efe3; border: 1px solid #ebe4d6; padding: 1em; overflow-x: auto; font-size: 0.85rem; margin: 1em 0; }
 .rte-content code { background: #f5efe3; padding: 0.15em 0.35em; font-size: 0.85em; }
 .rte-content pre code { background: none; padding: 0; }

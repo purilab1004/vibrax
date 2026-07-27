@@ -57,7 +57,7 @@ export default async function GamesPage({ searchParams }: Props) {
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-pixel text-[#0284c7] text-sm tracking-widest">GAMES</h1>
+        <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest">GAMES</h1>
         <span className="text-xs text-[#4a4337]">
           {term ? `🔍 "${term}"` : 'AI 바이브코딩 게임 모음'}
         </span>

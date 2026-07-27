@@ -93,12 +93,12 @@ export default function CreditsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10">
-      <h1 className="font-pixel text-[#0284c7] text-sm tracking-widest mb-2">{c.heading}</h1>
+      <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest mb-2">{c.heading}</h1>
       <p className="text-[#4a4337] text-sm mb-8">{c.subtitle}</p>
 
       <div className="border border-[#ebe4d6] bg-[#ffffff] px-5 py-4 mb-10 flex items-center justify-between">
         <span className="font-pixel text-[11px] text-[#6b6152] tracking-widest">{c.balance}</span>
-        <span className="font-pixel text-[#0284c7] text-lg tracking-widest">{balance ?? '—'}</span>
+        <span className="font-pixel text-[#2563eb] text-lg tracking-widest">{balance ?? '—'}</span>
       </div>
 
       {!paddleConfigured && (
@@ -107,23 +107,23 @@ export default function CreditsPage() {
         </p>
       )}
       {status === 'processing' && (
-        <p className="mb-6 text-[#0284c7] text-xs font-pixel tracking-widest animate-pulse">
+        <p className="mb-6 text-[#2563eb] text-xs font-pixel tracking-widest animate-pulse">
           {c.processing}
         </p>
       )}
       {status === 'done' && (
-        <p className="mb-6 text-[#0284c7] text-xs font-pixel tracking-widest">{c.done}</p>
+        <p className="mb-6 text-[#2563eb] text-xs font-pixel tracking-widest">{c.done}</p>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {CREDIT_PACKS.map(p => (
-          <div key={p.key} className="border border-[#ebe4d6] bg-[#ffffff] p-6 flex flex-col items-center gap-4 hover:border-[#0284c7] transition-colors">
+          <div key={p.key} className="border border-[#ebe4d6] bg-[#ffffff] p-6 flex flex-col items-center gap-4 hover:border-[#2563eb] transition-colors">
             <span className="font-pixel text-[#241f17] text-base tracking-widest">${p.usd}</span>
-            <span className="text-[#0284c7] text-sm">{c.packCredits(p.credits)}</span>
+            <span className="text-[#2563eb] text-sm">{c.packCredits(p.credits)}</span>
             <button
               onClick={() => buy(p.key)}
               disabled={!paddleConfigured}
-              className="w-full bg-[#0284c7] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#0369a1] transition-colors tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full bg-[#2563eb] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#1d4ed8] transition-colors tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {c.buy}
             </button>

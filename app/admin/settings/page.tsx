@@ -55,12 +55,12 @@ export default function AdminSettingsPage() {
   if (!loaded) return <p className="font-pixel text-xs text-[#6b6152] tracking-widest">{a.loading}</p>
 
   const inputClass =
-    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-base outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
+    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-4 py-3 text-base outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
   const labelClass = 'block font-pixel text-xs mb-2 text-[#6b6152] tracking-widest'
 
   return (
     <div className="max-w-lg">
-      <h1 className="font-pixel text-[#0284c7] text-base tracking-widest mb-8">{a.settingsHeading}</h1>
+      <h1 className="font-pixel text-[#2563eb] text-base tracking-widest mb-8">{a.settingsHeading}</h1>
       <div className="space-y-6">
         <div>
           <label className={labelClass}>{a.setSignupBonus}</label>
@@ -77,17 +77,17 @@ export default function AdminSettingsPage() {
         <div className="border border-[#ebe4d6] bg-[#ffffff] p-5 space-y-4">
           <p className="font-pixel text-xs text-[#6b6152] tracking-widest">{a.setBanner}</p>
           <label className="flex items-center gap-2 text-sm text-[#6b6152] cursor-pointer">
-            <input type="checkbox" checked={bannerEnabled} onChange={e => setBannerEnabled(e.target.checked)} className="accent-[#0284c7]" />
+            <input type="checkbox" checked={bannerEnabled} onChange={e => setBannerEnabled(e.target.checked)} className="accent-[#2563eb]" />
             {a.setBannerEnabled}
           </label>
           <input value={bannerText} onChange={e => setBannerText(e.target.value)} placeholder={a.setBannerText} className={inputClass} />
           <input value={bannerLink} onChange={e => setBannerLink(e.target.value)} placeholder={a.setBannerLink} className={inputClass} />
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#0284c7] text-[#241f17] px-6 py-3 hover:bg-[#0369a1] transition-colors disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#2563eb] text-[#241f17] px-6 py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50">
             {a.save}
           </button>
-          {msg === 'saved' && <span className="text-[#0284c7] text-sm">{a.saved}</span>}
+          {msg === 'saved' && <span className="text-[#2563eb] text-sm">{a.saved}</span>}
           {msg === 'failed' && <span className="text-red-400 text-sm">{a.saveFailed}</span>}
         </div>
       </div>

@@ -43,7 +43,7 @@ export default function GamePreview({
         <button
           onClick={() => setFrameKey(k => k + 1)}
           disabled={!html}
-          className="font-pixel text-[11px] text-[#6b6152] hover:text-[#0284c7] transition-colors disabled:opacity-40 tracking-widest"
+          className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] transition-colors disabled:opacity-40 tracking-widest"
         >
           {s.refresh}
         </button>
@@ -72,7 +72,7 @@ export default function GamePreview({
               title={v.toUpperCase()}
               className={`px-2.5 py-1.5 transition-colors disabled:opacity-40 ${
                 viewport === v
-                  ? 'bg-[#0284c7]/15 text-[#0284c7]'
+                  ? 'bg-[#2563eb]/15 text-[#2563eb]'
                   : 'text-[#857a68] hover:text-[#241f17]'
               }`}
             >
@@ -84,7 +84,7 @@ export default function GamePreview({
         <button
           onClick={onPublish}
           disabled={!html || busy}
-          className="bg-[#0284c7] text-[#241f17] font-pixel text-[11px] px-4 py-1.5 hover:bg-[#0369a1] transition-colors disabled:opacity-40 tracking-widest"
+          className="bg-[#2563eb] text-[#241f17] font-pixel text-[11px] px-4 py-1.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-40 tracking-widest"
         >
           {s.publish}
         </button>

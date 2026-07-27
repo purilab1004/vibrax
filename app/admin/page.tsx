@@ -32,7 +32,7 @@ export default function AdminDashboardPage() {
   const daily = stats.daily
   return (
     <div>
-      <h1 className="font-pixel text-[#0284c7] text-base tracking-widest mb-8">{a.dashHeading}</h1>
+      <h1 className="font-pixel text-[#2563eb] text-base tracking-widest mb-8">{a.dashHeading}</h1>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <StatCard label={a.statMembers} value={t.members} />
         <StatCard label={a.statGames} value={t.games} />

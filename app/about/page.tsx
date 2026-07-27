@@ -10,7 +10,7 @@ export default function AboutPage() {
   const phases = [a.p1, a.p2, a.p3]
 
   const phaseAccent = [
-    { border: 'border-[#0284c7]', text: 'text-[#0284c7]', bg: 'bg-[#0284c7]/5' },
+    { border: 'border-[#2563eb]', text: 'text-[#2563eb]', bg: 'bg-[#2563eb]/5' },
     { border: 'border-blue-500', text: 'text-blue-400', bg: 'bg-blue-500/5' },
     { border: 'border-purple-500', text: 'text-purple-400', bg: 'bg-purple-500/5' },
   ]
@@ -21,8 +21,8 @@ export default function AboutPage() {
         className="fixed inset-0 opacity-[0.02] pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(#0284c7 1px, transparent 1px),
-            linear-gradient(90deg, #0284c7 1px, transparent 1px)
+            linear-gradient(#2563eb 1px, transparent 1px),
+            linear-gradient(90deg, #2563eb 1px, transparent 1px)
           `,
           backgroundSize: '40px 40px',
         }}
@@ -30,10 +30,10 @@ export default function AboutPage() {
 
       {/* Hero */}
       <section className="relative max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
-        <p className="font-pixel text-[#0284c7] text-[11px] tracking-[0.4em] mb-6">{a.badge}</p>
+        <p className="font-pixel text-[#2563eb] text-[11px] tracking-[0.4em] mb-6">{a.badge}</p>
         <h1 className="font-pixel text-[#241f17] text-xl md:text-3xl leading-[2]">
           {h1}<br />
-          <span className="text-[#0284c7]">{h2}</span>
+          <span className="text-[#2563eb]">{h2}</span>
         </h1>
       </section>
 
@@ -73,16 +73,16 @@ export default function AboutPage() {
 
       {/* CTA */}
       <div className="max-w-3xl mx-auto px-6 pb-20">
-        <div className="border border-[#0284c7]/30 bg-[#0284c7]/5 p-8 md:p-12 text-center">
-          <p className="font-pixel text-[#0284c7] text-[11px] tracking-widest mb-6">{a.s5.label}</p>
+        <div className="border border-[#2563eb]/30 bg-[#2563eb]/5 p-8 md:p-12 text-center">
+          <p className="font-pixel text-[#2563eb] text-[11px] tracking-widest mb-6">{a.s5.label}</p>
           <p className="text-[#241f17] text-xl md:text-2xl font-semibold leading-relaxed mb-3">{a.s5.heading}</p>
-          <p className="text-2xl md:text-3xl font-bold text-[#0284c7] mb-8">{a.s5.cta}</p>
+          <p className="text-2xl md:text-3xl font-bold text-[#2563eb] mb-8">{a.s5.cta}</p>
           <p className="text-[#4a4337] text-sm leading-[2] mb-10 max-w-lg mx-auto">{a.s5.body}</p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Link href="/games" className="font-pixel text-[11px] bg-[#0284c7] text-[#241f17] px-8 py-4 hover:bg-[#0369a1] transition-colors tracking-widest">
+            <Link href="/games" className="font-pixel text-[11px] bg-[#2563eb] text-[#241f17] px-8 py-4 hover:bg-[#1d4ed8] transition-colors tracking-widest">
               {a.s5.btn1}
             </Link>
-            <Link href="/submit" className="font-pixel text-[11px] border border-[#0284c7] text-[#0284c7] px-8 py-4 hover:bg-[#0284c7] hover:text-white transition-colors tracking-widest">
+            <Link href="/submit" className="font-pixel text-[11px] border border-[#2563eb] text-[#2563eb] px-8 py-4 hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">
               {a.s5.btn2}
             </Link>
           </div>

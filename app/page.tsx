@@ -24,7 +24,7 @@ export default async function HomePage() {
           <HomeMosaic games={games ?? []} />
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center">
-            <p className="font-pixel text-[11px] text-[#0284c7] tracking-widest mb-4">
+            <p className="font-pixel text-[11px] text-[#2563eb] tracking-widest mb-4">
               GAME OVER?
             </p>
             <p className="text-[#6b6152] text-sm mb-8">
@@ -32,7 +32,7 @@ export default async function HomePage() {
             </p>
             <Link
               href="/submit"
-              className="font-pixel text-[11px] border border-[#0284c7] text-[#0284c7] px-6 py-3 hover:bg-[#0284c7] hover:text-white transition-colors"
+              className="font-pixel text-[11px] border border-[#2563eb] text-[#2563eb] px-6 py-3 hover:bg-[#2563eb] hover:text-white transition-colors"
             >
               + SUBMIT FIRST GAME
             </Link>

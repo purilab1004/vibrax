@@ -239,7 +239,7 @@ export default function ProfilePage() {
     })
   }
 
-  const inputClass = 'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-2.5 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
+  const inputClass = 'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-4 py-2.5 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
 
   if (loading) return (
     <div className="max-w-4xl mx-auto px-6 py-10">
@@ -249,7 +249,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10 space-y-12">
-      <h1 className="font-pixel text-[#0284c7] text-sm tracking-widest">MY PAGE</h1>
+      <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest">MY PAGE</h1>
 
       {/* ── Profile ── */}
       <section id="profile" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6 space-y-6">
@@ -267,13 +267,13 @@ export default function ProfilePage() {
           {editingUsername ? (
             <div className="flex items-center gap-3 flex-wrap">
               <input className={inputClass + ' max-w-xs'} value={newUsername} onChange={e => setNewUsername(e.target.value)} autoFocus />
-              <button onClick={handleSaveUsername} disabled={isPending} className="font-pixel text-[11px] bg-[#0284c7] text-[#241f17] px-4 py-2 hover:bg-[#0369a1] transition-colors disabled:opacity-50 tracking-widest">SAVE</button>
+              <button onClick={handleSaveUsername} disabled={isPending} className="font-pixel text-[11px] bg-[#2563eb] text-[#241f17] px-4 py-2 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest">SAVE</button>
               <button onClick={() => { setEditingUsername(false); setNewUsername('') }} className="font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] px-4 py-2 hover:border-gray-500 transition-colors tracking-widest">CANCEL</button>
             </div>
           ) : (
             <div className="flex items-center gap-4">
               <span className="text-sm text-[#241f17]">{username}</span>
-              <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="font-pixel text-[11px] text-[#857a68] hover:text-[#0284c7] transition-colors border border-[#ebe4d6] hover:border-[#0284c7] px-3 py-1 tracking-widest">EDIT</button>
+              <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="font-pixel text-[11px] text-[#857a68] hover:text-[#2563eb] transition-colors border border-[#ebe4d6] hover:border-[#2563eb] px-3 py-1 tracking-widest">EDIT</button>
             </div>
           )}
         </div>
@@ -294,7 +294,7 @@ export default function ProfilePage() {
           </select>
         </div>
 
-        {profileMsg && <p className={`text-xs font-pixel tracking-widest ${profileMsg.ok ? 'text-[#0284c7]' : 'text-red-400'}`}>{profileMsg.text}</p>}
+        {profileMsg && <p className={`text-xs font-pixel tracking-widest ${profileMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{profileMsg.text}</p>}
       </section>
 
       {/* ── Password ── */}
@@ -310,8 +310,8 @@ export default function ProfilePage() {
             <input type="password" className={inputClass} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="비밀번호 재입력" />
           </div>
         </div>
-        {pwMsg && <p className={`text-xs font-pixel tracking-widest ${pwMsg.ok ? 'text-[#0284c7]' : 'text-red-400'}`}>{pwMsg.text}</p>}
-        <button onClick={handleChangePassword} disabled={isPending || !newPassword || !confirmPassword} className="font-pixel text-[11px] bg-[#0284c7] text-[#241f17] px-6 py-2.5 hover:bg-[#0369a1] transition-colors disabled:opacity-50 tracking-widest">
+        {pwMsg && <p className={`text-xs font-pixel tracking-widest ${pwMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{pwMsg.text}</p>}
+        <button onClick={handleChangePassword} disabled={isPending || !newPassword || !confirmPassword} className="font-pixel text-[11px] bg-[#2563eb] text-[#241f17] px-6 py-2.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest">
           CHANGE PASSWORD
         </button>
       </section>
@@ -389,11 +389,11 @@ export default function ProfilePage() {
               />
               <p className="text-[11px] text-[#9d9280] mt-1">{agentPersona.length}/100</p>
             </div>
-            {agentMsg && <p className={`text-xs font-pixel tracking-widest ${agentMsg.ok ? 'text-[#0284c7]' : 'text-red-400'}`}>{agentMsg.text}</p>}
+            {agentMsg && <p className={`text-xs font-pixel tracking-widest ${agentMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{agentMsg.text}</p>}
             <button
               onClick={handleSaveAgent}
               disabled={isPending || (!agentName.trim() && !agentPersona.trim())}
-              className="font-pixel text-[11px] bg-[#0284c7] text-[#241f17] px-6 py-2.5 hover:bg-[#0369a1] transition-colors disabled:opacity-50 tracking-widest"
+              className="font-pixel text-[11px] bg-[#2563eb] text-[#241f17] px-6 py-2.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
             >
               {isPending ? 'SAVING...' : 'SAVE AGENT'}
             </button>
@@ -423,7 +423,7 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <a href="/avatar" className="inline-block font-pixel text-[11px] border border-[#0284c7] text-[#0284c7] px-6 py-2.5 hover:bg-[#0284c7] hover:text-white transition-colors tracking-widest">
+            <a href="/avatar" className="inline-block font-pixel text-[11px] border border-[#2563eb] text-[#2563eb] px-6 py-2.5 hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">
               🎨 아바타 설정
             </a>
             <p className="text-[11px] text-[#857a68] leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요. 게임 목록엔 아이디 대신 <span className="text-purple-400">에이전트 이름</span>이 표시됩니다.</p>
@@ -434,14 +434,14 @@ export default function ProfilePage() {
       {/* ── My Games ── */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">MY GAMES <span className="text-[#0284c7]">({games.length})</span></h2>
-          {gameMsg && <p className={`text-xs font-pixel tracking-widest ${gameMsg.ok ? 'text-[#0284c7]' : 'text-red-400'}`}>{gameMsg.text}</p>}
+          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">MY GAMES <span className="text-[#2563eb]">({games.length})</span></h2>
+          {gameMsg && <p className={`text-xs font-pixel tracking-widest ${gameMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{gameMsg.text}</p>}
         </div>
 
         {games.length === 0 ? (
           <div className="border border-[#ebe4d6] p-12 text-center">
             <p className="text-[#857a68] text-sm mb-4">아직 등록한 게임이 없습니다.</p>
-            <a href="/submit" className="font-pixel text-[11px] text-[#0284c7] hover:underline tracking-widest">+ 첫 게임 등록하기</a>
+            <a href="/submit" className="font-pixel text-[11px] text-[#2563eb] hover:underline tracking-widest">+ 첫 게임 등록하기</a>
           </div>
         ) : (
           <div className="space-y-3">
@@ -467,7 +467,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, newThumbnail: null, newManual: null })}
-                      className="font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#0284c7] hover:text-[#0284c7] px-3 py-1.5 transition-colors tracking-widest"
+                      className="font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] px-3 py-1.5 transition-colors tracking-widest"
                     >
                       EDIT
                     </button>
@@ -492,7 +492,7 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
           <div className="w-full max-w-md bg-[#fcfaf5] border border-[#ddd3bf]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#ebe4d6]">
-              <p className="font-pixel text-[11px] text-[#0284c7] tracking-widest">EDIT GAME</p>
+              <p className="font-pixel text-[11px] text-[#2563eb] tracking-widest">EDIT GAME</p>
               <button onClick={() => setEditingGame(null)} className="font-pixel text-[11px] text-[#857a68] hover:text-[#241f17] transition-colors">✕</button>
             </div>
             <div className="p-6 space-y-4">
@@ -513,8 +513,8 @@ export default function ProfilePage() {
                   onChange={e => setEditingGame(prev => prev ? { ...prev, newThumbnail: e.target.files?.[0] ?? null } : null)}
                   className="w-full bg-[#ffffff] border border-[#ddd3bf] px-4 py-2.5 text-sm text-[#6b6152]
                     file:mr-4 file:py-1 file:px-3 file:border-0
-                    file:bg-[#0284c7] file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
-                    file:hover:bg-[#0369a1] file:transition-colors"
+                    file:bg-[#2563eb] file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
+                    file:hover:bg-[#1d4ed8] file:transition-colors"
                 />
                 {editingGame.newThumbnail && <p className="text-xs text-[#6b6152] mt-1">선택됨: {editingGame.newThumbnail.name}</p>}
               </div>
@@ -545,7 +545,7 @@ export default function ProfilePage() {
                   게임 메뉴얼 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(.md 파일)</span>
                 </label>
                 {editingGame.game_manual && !editingGame.newManual && (
-                  <p className="text-[11px] text-[#0284c7] mb-2">✓ 메뉴얼 등록됨 — 새 파일 업로드 시 교체됩니다</p>
+                  <p className="text-[11px] text-[#2563eb] mb-2">✓ 메뉴얼 등록됨 — 새 파일 업로드 시 교체됩니다</p>
                 )}
                 <input
                   type="file"
@@ -569,7 +569,7 @@ export default function ProfilePage() {
                 <input className={inputClass} value={editingGame.play_url} onChange={e => setEditingGame(prev => prev ? { ...prev, play_url: e.target.value } : null)} />
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={handleSaveGame} disabled={isPending} className="flex-1 font-pixel text-[11px] bg-[#0284c7] text-[#241f17] py-3 hover:bg-[#0369a1] transition-colors disabled:opacity-50 tracking-widest">
+                <button onClick={handleSaveGame} disabled={isPending} className="flex-1 font-pixel text-[11px] bg-[#2563eb] text-[#241f17] py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest">
                   {isPending ? 'SAVING...' : 'SAVE'}
                 </button>
                 <button onClick={() => setEditingGame(null)} className="flex-1 font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] py-3 hover:border-gray-500 transition-colors tracking-widest">

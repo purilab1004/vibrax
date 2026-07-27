@@ -51,7 +51,7 @@ const ORG_TYPE_LABEL: Record<string, { ko: string; en: string }> = {
 }
 
 const DIVISION_COLOR: Record<string, string> = {
-  individual: 'border-[#0284c7]/60 text-[#0284c7]',
+  individual: 'border-[#2563eb]/60 text-[#2563eb]',
   school: 'border-sky-400/60 text-sky-400',
   world: 'border-[#c9940c]/60 text-[#c9940c]',
   company: 'border-fuchsia-400/60 text-fuchsia-400',
@@ -116,7 +116,7 @@ export default function AdminApplicationsPage() {
 
   return (
     <div>
-      <h1 className="font-pixel text-[#0284c7] text-base tracking-widest mb-6">{a.appsHeading}</h1>
+      <h1 className="font-pixel text-[#2563eb] text-base tracking-widest mb-6">{a.appsHeading}</h1>
 
       <div className="flex items-center gap-1 mb-6 flex-wrap">
         {(['tournament', 'partner'] as const).map(t => (
@@ -124,7 +124,7 @@ export default function AdminApplicationsPage() {
             key={t}
             onClick={() => setTab(t)}
             className={`font-pixel text-[11px] tracking-widest px-4 py-2.5 border transition-colors ${
-              tab === t ? 'border-[#0284c7] text-[#0284c7] bg-[#0284c7]/5' : 'border-[#ebe4d6] text-[#857a68] hover:text-[#241f17]'
+              tab === t ? 'border-[#2563eb] text-[#2563eb] bg-[#2563eb]/5' : 'border-[#ebe4d6] text-[#857a68] hover:text-[#241f17]'
             }`}
           >
             {t === 'tournament' ? `🏆 ${a.tabTournament}` : `🤝 ${a.tabPartner}`}
@@ -140,7 +140,7 @@ export default function AdminApplicationsPage() {
           <button
             onClick={exportCurrent}
             disabled={!current?.length}
-            className="font-pixel text-[10px] tracking-widest border border-[#ddd3bf] text-[#6b6152] px-3 py-2 hover:border-[#0284c7] hover:text-[#0284c7] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            className="font-pixel text-[10px] tracking-widest border border-[#ddd3bf] text-[#6b6152] px-3 py-2 hover:border-[#2563eb] hover:text-[#2563eb] transition-colors disabled:opacity-40 disabled:pointer-events-none"
           >
             ⬇ {a.exportCsv}
           </button>
@@ -174,7 +174,7 @@ export default function AdminApplicationsPage() {
                   </td>
                   <td className="px-4 py-3 text-[#241f17]">{t.name}</td>
                   <td className="px-4 py-3">
-                    <a href={`mailto:${t.email}`} className="text-[#6b6152] hover:text-[#0284c7] transition-colors">{t.email}</a>
+                    <a href={`mailto:${t.email}`} className="text-[#6b6152] hover:text-[#2563eb] transition-colors">{t.email}</a>
                   </td>
                   <td className="px-4 py-3 text-[#6b6152]">{affiliation(t)}</td>
                   <td className="px-4 py-3 text-[#857a68] max-w-[280px] truncate" title={t.note ?? ''}>{t.note || '-'}</td>
@@ -209,11 +209,11 @@ export default function AdminApplicationsPage() {
                   <td className="px-4 py-3 text-[#241f17]">{p.org_name}</td>
                   <td className="px-4 py-3 text-[#6b6152]">{p.contact_name}</td>
                   <td className="px-4 py-3">
-                    <a href={`mailto:${p.email}`} className="text-[#6b6152] hover:text-[#0284c7] transition-colors">{p.email}</a>
+                    <a href={`mailto:${p.email}`} className="text-[#6b6152] hover:text-[#2563eb] transition-colors">{p.email}</a>
                   </td>
                   <td className="px-4 py-3">
                     {p.website ? (
-                      <a href={p.website.startsWith('http') ? p.website : `https://${p.website}`} target="_blank" rel="noreferrer" className="text-[#6b6152] hover:text-[#0284c7] transition-colors max-w-[180px] truncate inline-block align-bottom">
+                      <a href={p.website.startsWith('http') ? p.website : `https://${p.website}`} target="_blank" rel="noreferrer" className="text-[#6b6152] hover:text-[#2563eb] transition-colors max-w-[180px] truncate inline-block align-bottom">
                         {p.website}
                       </a>
                     ) : '-'}

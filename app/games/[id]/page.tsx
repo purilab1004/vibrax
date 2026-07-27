@@ -77,7 +77,7 @@ export default async function GameDetailPage({ params }: Props) {
     <div className="max-w-5xl mx-auto px-6 py-10">
       <Link
         href="/games"
-        className="text-xs text-[#4a4337] hover:text-[#0284c7] transition-colors mb-6 inline-block tracking-wider"
+        className="text-xs text-[#4a4337] hover:text-[#2563eb] transition-colors mb-6 inline-block tracking-wider"
       >
         ← BACK TO GAMES
       </Link>

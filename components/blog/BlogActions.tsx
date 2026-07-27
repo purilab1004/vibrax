@@ -75,7 +75,7 @@ export default function BlogActions({ postId, size = 'sm' }: { postId: string; s
       </button>
       <button
         onClick={share}
-        className="flex items-center gap-1.5 text-[#857a68] hover:text-[#0284c7] transition-colors"
+        className="flex items-center gap-1.5 text-[#857a68] hover:text-[#2563eb] transition-colors"
       >
         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
           <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />

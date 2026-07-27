@@ -50,7 +50,7 @@ function Row({ heading, headerExtra, games, large }: {
     <button
       onClick={() => scrollByDir(dir)}
       aria-label={dir === 1 ? 'scroll right' : 'scroll left'}
-      className="w-8 h-8 flex items-center justify-center border border-[#ebe4d6] text-[#6b6152] hover:text-[#0284c7] hover:border-[#0284c7] transition-colors text-sm"
+      className="w-8 h-8 flex items-center justify-center border border-[#ebe4d6] text-[#6b6152] hover:text-[#2563eb] hover:border-[#2563eb] transition-colors text-sm"
     >
       {glyph}
     </button>
@@ -164,7 +164,7 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
                 )}
               </div>
               <div className="min-w-0">
-                <p className="flex items-center gap-1.5 text-sm font-bold text-[#241f17] group-hover/creator:text-[#0284c7] transition-colors">
+                <p className="flex items-center gap-1.5 text-sm font-bold text-[#241f17] group-hover/creator:text-[#2563eb] transition-colors">
                   {rank && (
                     <span className={`font-pixel text-[9px] px-1.5 py-0.5 rounded ${rank.badge}`}>#{i + 1}</span>
                   )}
@@ -209,12 +209,12 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
         <Row
           key={g}
           heading={
-            <h2 className="font-pixel text-sm text-[#0284c7] tracking-widest">{T.genres[g]}</h2>
+            <h2 className="font-pixel text-sm text-[#2563eb] tracking-widest">{T.genres[g]}</h2>
           }
           headerExtra={
             <Link
               href={`/games?genre=${g}`}
-              className="text-[13px] text-[#6b6152] hover:text-[#0284c7] transition-colors tracking-wider"
+              className="text-[13px] text-[#6b6152] hover:text-[#2563eb] transition-colors tracking-wider"
             >
               {T.games.viewAll}
             </Link>

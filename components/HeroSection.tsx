@@ -36,8 +36,8 @@ export default function HeroSection() {
         className="absolute inset-0 opacity-[0.025] pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(#0284c7 1px, transparent 1px),
-            linear-gradient(90deg, #0284c7 1px, transparent 1px)
+            linear-gradient(#2563eb 1px, transparent 1px),
+            linear-gradient(90deg, #2563eb 1px, transparent 1px)
           `,
           backgroundSize: '40px 40px',
         }}
@@ -45,7 +45,7 @@ export default function HeroSection() {
 
       {/* 컴팩트 히어로 — 프롬프트 입력이 핵심, 아래 kick식 라이브 그리드가 메인 */}
       <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-14 flex flex-col items-center text-center">
-        <p className="font-pixel text-[#0284c7] text-[11px] tracking-[0.3em] mb-6">
+        <p className="font-pixel text-[#2563eb] text-[11px] tracking-[0.3em] mb-6">
           {T.hero.tagline}
         </p>
         <HeroPromptInput />

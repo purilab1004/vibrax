@@ -10,7 +10,7 @@ type Division = 'individual' | 'school' | 'world' | 'company'
 type SchoolLevel = 'elementary' | 'middle' | 'high' | 'university'
 
 const DIVISION_COLOR: Record<Division, string> = {
-  individual: '#0284c7',
+  individual: '#2563eb',
   school: '#4da3ff',
   world: '#c9940c',
   company: '#ff2d95',
@@ -243,26 +243,26 @@ export default function TournamentPage() {
   }
 
   const inputClass =
-    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f] rounded-lg'
+    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f] rounded-lg'
   const labelClass = 'block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest'
 
   const divisions: Division[] = ['individual', 'school', 'world', 'company']
 
   const applyCard = (
         <div className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl p-8">
-          <h2 className="font-pixel text-sm text-[#0284c7] tracking-widest mb-2">{c.applyHeading}</h2>
+          <h2 className="font-pixel text-sm text-[#2563eb] tracking-widest mb-2">{c.applyHeading}</h2>
           <p className="text-[#6b6152] text-sm mb-8">{c.applyDesc}</p>
 
           {status === 'done' ? (
-            <p className="text-[#0284c7] text-base">{c.doneMsg}</p>
+            <p className="text-[#2563eb] text-base">{c.doneMsg}</p>
           ) : user === undefined ? null : user === null ? (
             <div className="text-center py-4">
               <p className="text-[#4a4337] text-sm mb-6">{c.needAccount}</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/signup?redirect=/tournament" className="bg-[#0284c7] text-[#241f17] font-pixel text-[12px] px-8 py-4 rounded-lg hover:bg-[#0369a1] transition-colors tracking-widest">
+                <Link href="/signup?redirect=/tournament" className="bg-[#2563eb] text-[#241f17] font-pixel text-[12px] px-8 py-4 rounded-lg hover:bg-[#1d4ed8] transition-colors tracking-widest">
                   {c.signupCta}
                 </Link>
-                <Link href="/login?redirect=/tournament" className="border border-[#ddd3bf] text-[#4a4337] text-[13px] px-8 py-4 rounded-lg hover:border-[#0284c7] hover:text-[#0284c7] transition-colors">
+                <Link href="/login?redirect=/tournament" className="border border-[#ddd3bf] text-[#4a4337] text-[13px] px-8 py-4 rounded-lg hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">
                   {c.loginCta}
                 </Link>
               </div>
@@ -292,7 +292,7 @@ export default function TournamentPage() {
                 <label className={labelClass}>{c.name}</label>
                 <input value={name} onChange={e => setName(e.target.value)} required className={inputClass} />
               </div>
-              <p className="text-[13px] text-[#0284c7] border border-[#0284c7]/30 bg-[#0284c7]/5 px-4 py-3 rounded-lg">
+              <p className="text-[13px] text-[#2563eb] border border-[#2563eb]/30 bg-[#2563eb]/5 px-4 py-3 rounded-lg">
                 ✓ {c.applyAs(user.email ?? '')}
               </p>
               <div>
@@ -339,7 +339,7 @@ export default function TournamentPage() {
               <button
                 type="submit"
                 disabled={status === 'busy'}
-                className="w-full bg-[#0284c7] text-[#241f17] font-pixel text-[12px] py-4 rounded-lg hover:bg-[#0369a1] transition-colors disabled:opacity-50 tracking-widest"
+                className="w-full bg-[#2563eb] text-[#241f17] font-pixel text-[12px] py-4 rounded-lg hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
               >
                 {status === 'busy' ? c.submitting : c.submit}
               </button>
@@ -355,7 +355,7 @@ export default function TournamentPage() {
         <div
           className="absolute inset-0 opacity-[0.04] pointer-events-none"
           style={{
-            backgroundImage: 'linear-gradient(#0284c7 1px, transparent 1px), linear-gradient(90deg, #0284c7 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(#2563eb 1px, transparent 1px), linear-gradient(90deg, #2563eb 1px, transparent 1px)',
             backgroundSize: '40px 40px',
           }}
         />
@@ -367,7 +367,7 @@ export default function TournamentPage() {
               {c.openingSoon}
             </span>
             <h1 className="font-pixel text-2xl md:text-4xl text-[#241f17] tracking-widest leading-relaxed mb-4">
-              🏆 <span className="text-[#0284c7]">VIBREX</span><span className="text-[#c9940c]">CUP</span>
+              🏆 <span className="text-[#2563eb]">VIBREX</span><span className="text-[#c9940c]">CUP</span>
               <br />TOURNAMENT
             </h1>
             <p className="text-[#4a4337] text-base md:text-lg mb-10">{c.tagline}</p>
@@ -431,7 +431,7 @@ export default function TournamentPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {c.how.map(([h, p]) => (
             <div key={h} className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl p-6">
-              <h3 className="text-[#0284c7] text-base font-bold mb-2">{h}</h3>
+              <h3 className="text-[#2563eb] text-base font-bold mb-2">{h}</h3>
               <p className="text-[#6b6152] text-sm leading-relaxed">{p}</p>
             </div>
           ))}

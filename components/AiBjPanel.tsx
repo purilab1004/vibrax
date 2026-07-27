@@ -247,7 +247,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             msg.role === 'user'
               ? msg.source === 'agent'
                 ? 'bg-purple-900/40 text-purple-300 border border-purple-700/40'
-                : 'bg-[#0284c7]/10 text-[#0284c7] border border-[#0284c7]/20'
+                : 'bg-[#2563eb]/10 text-[#2563eb] border border-[#2563eb]/20'
               : 'bg-gray-800 text-[#3a332a]'
           }`}>
             {msg.source === 'agent' && (
@@ -255,7 +255,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             )}
             {msg.content}
             {msg.role === 'assistant' && isStreaming && i === messages.length - 1 && (
-              <span className="inline-block w-1.5 h-3 bg-[#0284c7] ml-0.5 animate-pulse" />
+              <span className="inline-block w-1.5 h-3 bg-[#2563eb] ml-0.5 animate-pulse" />
             )}
           </div>
         </div>
@@ -274,12 +274,12 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
           onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
           placeholder="AJ에게 말걸기..."
           disabled={isStreaming}
-          className="flex-1 bg-gray-900 border border-[#ddd3bf] text-[#241f17] text-xs px-2.5 py-2 placeholder-[#a1957f] focus:outline-none focus:border-[#0284c7] disabled:opacity-50"
+          className="flex-1 bg-gray-900 border border-[#ddd3bf] text-[#241f17] text-xs px-2.5 py-2 placeholder-[#a1957f] focus:outline-none focus:border-[#2563eb] disabled:opacity-50"
         />
         <button
           onClick={() => sendMessage(input)}
           disabled={isStreaming || !input.trim()}
-          className="font-pixel text-[11px] px-3 py-2 bg-[#0284c7] text-white hover:bg-[#0369a1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+          className="font-pixel text-[11px] px-3 py-2 bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
         >▶</button>
       </div>
     </div>
@@ -288,7 +288,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
   const streamingDots = isStreaming && (
     <span className="flex gap-0.5 ml-auto">
       {[0,1,2].map(i => (
-        <span key={i} className="w-1 h-1 rounded-full bg-[#0284c7] animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+        <span key={i} className="w-1 h-1 rounded-full bg-[#2563eb] animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
       ))}
     </span>
   )
@@ -298,7 +298,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
       {/* ─── Desktop: side panel ─── */}
       <div className="hidden md:flex w-72 shrink-0 flex-col border-l border-[#ebe4d6] bg-[#fcfaf5] h-full">
         <div className="px-3 py-2 border-b border-[#ebe4d6] shrink-0 flex items-center gap-2">
-          <span className="font-pixel text-[11px] text-[#0284c7] tracking-widest">💬 LIVE CHAT</span>
+          <span className="font-pixel text-[11px] text-[#2563eb] tracking-widest">💬 LIVE CHAT</span>
           {streamingDots}
         </div>
         {messageList}
@@ -346,7 +346,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
               WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)',
             }}
           >
-            <span className="font-pixel text-[11px] text-[#0284c7]">{persona.name}</span>
+            <span className="font-pixel text-[11px] text-[#2563eb]">{persona.name}</span>
             <p className="mt-0.5 leading-relaxed line-clamp-2">{floatingMsg.text}</p>
           </div>
         </div>
@@ -376,7 +376,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             </div>
             <div className="flex items-center justify-between px-4 py-1.5 border-b border-[#ebe4d6] shrink-0">
               <div className="flex items-center gap-2">
-                <span className="font-pixel text-[11px] text-[#0284c7] tracking-widest">💬 LIVE CHAT</span>
+                <span className="font-pixel text-[11px] text-[#2563eb] tracking-widest">💬 LIVE CHAT</span>
                 {streamingDots}
               </div>
               <button onClick={() => setMobileOpen(false)} className="text-[#857a68] text-lg leading-none px-1">✕</button>
@@ -406,7 +406,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
               </span>
             </div>
             <div className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 border font-pixel text-[11px] ${
-              mobileOpen ? 'border-[#cfc4ab] text-[#6b6152]' : 'border-[#0284c7] text-[#0284c7] bg-[#0284c7]/10'
+              mobileOpen ? 'border-[#cfc4ab] text-[#6b6152]' : 'border-[#2563eb] text-[#2563eb] bg-[#2563eb]/10'
             }`}>
               {mobileOpen ? '▼ 닫기' : '💬 채팅하기'}
             </div>

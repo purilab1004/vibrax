@@ -5,7 +5,7 @@ import { linePoints } from '@/lib/admin/chart'
 const W = 300
 const H = 80
 
-export default function TrendChart({ label, sub, values, color = '#0284c7' }: {
+export default function TrendChart({ label, sub, values, color = '#2563eb' }: {
   label: string
   sub: string
   values: number[]

@@ -100,14 +100,14 @@ export default function StudioPage() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
       <div className="flex items-end justify-between mb-2 flex-wrap gap-3">
-        <h1 className="font-pixel text-[#0284c7] text-sm tracking-widest">{s.heading}</h1>
+        <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest">{s.heading}</h1>
         <div className="flex items-center gap-4">
           <span className="font-pixel text-[11px] text-[#6b6152] tracking-widest">
             {balance === null ? '—' : s.balance(balance)}
           </span>
           <Link
             href="/credits"
-            className="font-pixel text-[11px] tracking-widest text-[#0284c7] border border-[#0284c7] px-3 py-1.5 hover:bg-[#0284c7] hover:text-white transition-colors"
+            className="font-pixel text-[11px] tracking-widest text-[#2563eb] border border-[#2563eb] px-3 py-1.5 hover:bg-[#2563eb] hover:text-white transition-colors"
           >
             {T.credits.heading}
           </Link>
@@ -119,7 +119,7 @@ export default function StudioPage() {
         <button
           onClick={createProject}
           disabled={creating}
-          className="bg-[#0284c7] text-[#241f17] font-pixel text-[11px] px-6 py-4 hover:bg-[#0369a1] transition-colors disabled:opacity-50 tracking-widest"
+          className="bg-[#2563eb] text-[#241f17] font-pixel text-[11px] px-6 py-4 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
         >
           {s.newProject}
         </button>
@@ -142,14 +142,14 @@ export default function StudioPage() {
             <Link
               key={p.id}
               href={`/studio/${p.id}`}
-              className="border border-[#ebe4d6] bg-[#ffffff] p-5 hover:border-[#0284c7] transition-colors group"
+              className="border border-[#ebe4d6] bg-[#ffffff] p-5 hover:border-[#2563eb] transition-colors group"
             >
               <h2 className="text-[#241f17] text-sm mb-2 truncate">{p.title || s.untitled}</h2>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-[#9d9280]">
                   {new Date(p.created_at).toLocaleDateString()}
                 </span>
-                <span className="font-pixel text-[11px] text-[#857a68] group-hover:text-[#0284c7] tracking-widest transition-colors">
+                <span className="font-pixel text-[11px] text-[#857a68] group-hover:text-[#2563eb] tracking-widest transition-colors">
                   {s.openProject}
                 </span>
               </div>
