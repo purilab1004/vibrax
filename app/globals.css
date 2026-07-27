@@ -2,7 +2,7 @@
 
 @theme inline {
   /* Press Start 2P는 한글 글리프가 없다 — 한글은 Pretendard로 폴백 (monospace 금지) */
-  --font-pixel: var(--font-press-start), 'Pretendard Variable', Pretendard, sans-serif;
+  --font-pixel: 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif; /* 픽셀 폰트 제거 — 로고와 동일한 산세리프 */
   --color-accent: #0284c7;
   --color-bg: #fcfaf5;
 }
@@ -208,4 +208,9 @@ body {
 /* 과도한 자간 완화 */
 .admin-ui .tracking-widest {
   letter-spacing: 0.03em;
+}
+
+/* 구 픽셀 폰트 라벨 — 로고와 같은 굵은 산세리프로 통일 */
+.font-pixel {
+  font-weight: 700;
 }
