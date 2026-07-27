@@ -43,11 +43,11 @@ export default function CategoryManager({ onChanged }: { onChanged?: () => void 
   }
 
   return (
-    <div className="border border-[#e8dfcf] bg-[#fffdf8] p-5">
+    <div className="border border-[#ebe4d6] bg-[#ffffff] p-5">
       <h2 className="font-pixel text-xs text-[#6b6152] tracking-widest mb-4">{a.categories}</h2>
       <div className="flex flex-wrap gap-2 mb-4">
         {cats.map(c => (
-          <span key={c.id} className="flex items-center gap-2 border border-[#d9cdb4] px-3 py-1.5 text-sm text-[#4a4337]">
+          <span key={c.id} className="flex items-center gap-2 border border-[#ddd3bf] px-3 py-1.5 text-sm text-[#4a4337]">
             {c.name}
             <button onClick={() => remove(c.id)} className="text-[#9d9280] hover:text-red-400">✕</button>
           </span>
@@ -58,9 +58,9 @@ export default function CategoryManager({ onChanged }: { onChanged?: () => void 
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder={a.categoryName}
-          className="flex-1 bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-3 py-2 text-sm outline-none text-[#241f17] placeholder-[#a1957f]"
+          className="flex-1 bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-3 py-2 text-sm outline-none text-[#241f17] placeholder-[#a1957f]"
         />
-        <button type="submit" className="font-pixel text-xs bg-[#0e7573] text-[#241f17] px-4 hover:bg-[#0a5d5b] transition-colors">
+        <button type="submit" className="font-pixel text-xs bg-[#0284c7] text-[#241f17] px-4 hover:bg-[#0369a1] transition-colors">
           {a.addCategory}
         </button>
       </form>

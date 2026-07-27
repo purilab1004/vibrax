@@ -89,17 +89,17 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
   if (!loaded) return <p className="font-pixel text-xs text-[#6b6152] tracking-widest">{a.loading}</p>
 
   const inputClass =
-    'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-3 text-base outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
+    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-base outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <span className={`font-pixel text-[11px] tracking-widest px-2 py-1 border ${
-          published ? 'border-[#0e7573] text-[#0e7573]' : 'border-[#d9cdb4] text-[#857a68]'
+          published ? 'border-[#0284c7] text-[#0284c7]' : 'border-[#ddd3bf] text-[#857a68]'
         }`}>
           {published ? a.published : a.draft}
         </span>
-        {msg === 'saved' && <span className="text-[#0e7573] text-sm">{a.saved}</span>}
+        {msg === 'saved' && <span className="text-[#0284c7] text-sm">{a.saved}</span>}
         {msg === 'failed' && <span className="text-red-400 text-sm">{a.saveFailed}</span>}
       </div>
       <input value={title} onChange={e => setTitle(e.target.value)} placeholder={a.postTitle} className={inputClass} />
@@ -108,12 +108,12 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
           <option value="">{a.noCategory}</option>
           {cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <label className="flex items-center gap-3 cursor-pointer border border-[#d9cdb4] px-4 text-sm text-[#6b6152] hover:border-gray-500">
+        <label className="flex items-center gap-3 cursor-pointer border border-[#ddd3bf] px-4 text-sm text-[#6b6152] hover:border-gray-500">
           {a.postThumb}
           <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={uploadThumb} className="hidden" />
           {thumbnailUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={thumbnailUrl} alt="" className="h-10 w-16 object-cover border border-[#e8dfcf]" />
+            <img src={thumbnailUrl} alt="" className="h-10 w-16 object-cover border border-[#ebe4d6]" />
           )}
         </label>
       </div>
@@ -122,14 +122,14 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
         <button
           onClick={() => save(published)}
           disabled={saving}
-          className="font-pixel text-xs tracking-widest border border-[#cfc2a6] text-[#4a4337] px-6 py-3 hover:border-[#0e7573] hover:text-[#0e7573] transition-colors disabled:opacity-50"
+          className="font-pixel text-xs tracking-widest border border-[#cfc4ab] text-[#4a4337] px-6 py-3 hover:border-[#0284c7] hover:text-[#0284c7] transition-colors disabled:opacity-50"
         >
           {a.save}
         </button>
         <button
           onClick={() => save(!published)}
           disabled={saving}
-          className="font-pixel text-xs tracking-widest bg-[#0e7573] text-[#241f17] px-6 py-3 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50"
+          className="font-pixel text-xs tracking-widest bg-[#0284c7] text-[#241f17] px-6 py-3 hover:bg-[#0369a1] transition-colors disabled:opacity-50"
         >
           {published ? a.unpublishToggle : a.publishToggle}
         </button>

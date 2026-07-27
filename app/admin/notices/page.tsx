@@ -56,29 +56,29 @@ export default function AdminNoticesPage() {
   }
 
   const inputClass =
-    'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-3 text-base outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
+    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-base outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
 
   if (editing !== null) {
     return (
       <div className="space-y-5">
-        <h1 className="font-pixel text-[#0e7573] text-base tracking-widest">{editing === 'new' ? a.newNotice : a.edit}</h1>
+        <h1 className="font-pixel text-[#0284c7] text-base tracking-widest">{editing === 'new' ? a.newNotice : a.edit}</h1>
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder={a.noticeTitle} className={inputClass} />
         <RichTextEditor value={content} onChange={setContent} onUploadImage={f => uploadBlogImage(supabase, f)} />
         <div className="flex gap-6">
           <label className="flex items-center gap-2 text-sm text-[#6b6152] cursor-pointer">
-            <input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} className="accent-[#0e7573]" />
+            <input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} className="accent-[#0284c7]" />
             {a.pinnedLabel}
           </label>
           <label className="flex items-center gap-2 text-sm text-[#6b6152] cursor-pointer">
-            <input type="checkbox" checked={published} onChange={e => setPublished(e.target.checked)} className="accent-[#0e7573]" />
+            <input type="checkbox" checked={published} onChange={e => setPublished(e.target.checked)} className="accent-[#0284c7]" />
             {a.publishedLabel}
           </label>
         </div>
         <div className="flex gap-3">
-          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#0e7573] text-[#241f17] px-6 py-3 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#0284c7] text-[#241f17] px-6 py-3 hover:bg-[#0369a1] transition-colors disabled:opacity-50">
             {a.save}
           </button>
-          <button onClick={() => setEditing(null)} className="font-pixel text-xs tracking-widest border border-[#d9cdb4] text-[#6b6152] px-6 py-3 hover:border-gray-500 transition-colors">
+          <button onClick={() => setEditing(null)} className="font-pixel text-xs tracking-widest border border-[#ddd3bf] text-[#6b6152] px-6 py-3 hover:border-gray-500 transition-colors">
             {a.cancel}
           </button>
         </div>
@@ -89,20 +89,20 @@ export default function AdminNoticesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="font-pixel text-[#0e7573] text-base tracking-widest">{a.noticesHeading}</h1>
-        <button onClick={() => open('new')} className="font-pixel text-xs bg-[#0e7573] text-[#241f17] px-4 py-2.5 hover:bg-[#0a5d5b] transition-colors tracking-widest">
+        <h1 className="font-pixel text-[#0284c7] text-base tracking-widest">{a.noticesHeading}</h1>
+        <button onClick={() => open('new')} className="font-pixel text-xs bg-[#0284c7] text-[#241f17] px-4 py-2.5 hover:bg-[#0369a1] transition-colors tracking-widest">
           {a.newNotice}
         </button>
       </div>
-      <div className="border border-[#e8dfcf] divide-y divide-[#e8dfcf]">
+      <div className="border border-[#ebe4d6] divide-y divide-[#ebe4d6]">
         {notices.map(n => (
-          <div key={n.id} className="flex items-center gap-4 px-4 py-3 bg-[#fffdf8]">
-            {n.pinned && <span className="font-pixel text-[10px] text-[#0e7573] border border-[#0e7573] px-1.5 py-0.5 shrink-0">📌</span>}
+          <div key={n.id} className="flex items-center gap-4 px-4 py-3 bg-[#ffffff]">
+            {n.pinned && <span className="font-pixel text-[10px] text-[#0284c7] border border-[#0284c7] px-1.5 py-0.5 shrink-0">📌</span>}
             <div className="min-w-0 flex-1">
               <p className={`text-base truncate ${n.published ? 'text-[#241f17]' : 'text-[#9d9280]'}`}>{n.title || '—'}</p>
               <p className="text-xs text-[#9d9280]">{new Date(n.created_at).toLocaleDateString()}</p>
             </div>
-            <button onClick={() => open(n)} className="font-pixel text-[11px] text-[#6b6152] hover:text-[#0e7573] tracking-widest shrink-0">{a.edit}</button>
+            <button onClick={() => open(n)} className="font-pixel text-[11px] text-[#6b6152] hover:text-[#0284c7] tracking-widest shrink-0">{a.edit}</button>
             <button onClick={() => remove(n.id)} className="font-pixel text-[11px] text-[#9d9280] hover:text-red-400 tracking-widest shrink-0">{a.delete}</button>
           </div>
         ))}

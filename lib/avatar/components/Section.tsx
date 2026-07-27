@@ -11,7 +11,7 @@ interface SectionProps {
 // 한 번에 하나만 펼치는 단일 오픈 동작. 본문은 부모가 스크롤.
 export function Section({ title, open, onToggle, children }: SectionProps) {
   return (
-    <div className="border-t border-[#e8dfcf]">
+    <div className="border-t border-[#ebe4d6]">
       <button
         onClick={onToggle}
         className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-[#4a4337] hover:bg-gray-800/50 transition-colors"

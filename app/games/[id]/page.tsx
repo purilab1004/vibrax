@@ -77,12 +77,12 @@ export default async function GameDetailPage({ params }: Props) {
     <div className="max-w-5xl mx-auto px-6 py-10">
       <Link
         href="/games"
-        className="text-xs text-[#4a4337] hover:text-[#0e7573] transition-colors mb-6 inline-block tracking-wider"
+        className="text-xs text-[#4a4337] hover:text-[#0284c7] transition-colors mb-6 inline-block tracking-wider"
       >
         ← BACK TO GAMES
       </Link>
 
-      <div className="relative aspect-video w-full mb-8 overflow-hidden bg-gray-900 border border-[#e8dfcf]">
+      <div className="relative aspect-video w-full mb-8 overflow-hidden bg-gray-900 border border-[#ebe4d6]">
         <Image
           src={game.thumbnail_url}
           alt={game.title}
@@ -101,7 +101,7 @@ export default async function GameDetailPage({ params }: Props) {
               {genreLabel}
             </span>
             {game.language && (
-              <span className="inline-block font-pixel text-[11px] px-2 py-1 border border-[#d9cdb4] text-[#6b6152]">
+              <span className="inline-block font-pixel text-[11px] px-2 py-1 border border-[#ddd3bf] text-[#6b6152]">
                 {game.language === 'ko' ? '한국어' : 'English'}
               </span>
             )}

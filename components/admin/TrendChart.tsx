@@ -5,7 +5,7 @@ import { linePoints } from '@/lib/admin/chart'
 const W = 300
 const H = 80
 
-export default function TrendChart({ label, sub, values, color = '#0e7573' }: {
+export default function TrendChart({ label, sub, values, color = '#0284c7' }: {
   label: string
   sub: string
   values: number[]
@@ -14,7 +14,7 @@ export default function TrendChart({ label, sub, values, color = '#0e7573' }: {
   const points = linePoints(values, W, H, 4)
   const total = values.reduce((a, b) => a + b, 0)
   return (
-    <div className="border border-[#e8dfcf] bg-[#fffdf8] p-5">
+    <div className="border border-[#ebe4d6] bg-[#ffffff] p-5">
       <div className="flex items-baseline justify-between mb-3">
         <p className="font-pixel text-[11px] text-[#857a68] tracking-widest">{label}</p>
         <p className="font-pixel text-[11px] text-[#9d9280]">{sub} · {total.toLocaleString()}</p>

@@ -109,7 +109,7 @@ export default function PublishModal({
   }
 
   const inputClass =
-    'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
+    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
 
   return (
     <div
@@ -117,10 +117,10 @@ export default function PublishModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#fffdf8] border border-[#e8dfcf] p-6 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl"
+        className="bg-[#ffffff] border border-[#ebe4d6] p-6 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="font-pixel text-[#0e7573] text-xs tracking-widest mb-1">
+        <h2 className="font-pixel text-[#0284c7] text-xs tracking-widest mb-1">
           {s.publishHeading}
         </h2>
         <p className="text-[#6b6152] text-xs mb-5">{s.publishDesc}</p>
@@ -128,7 +128,7 @@ export default function PublishModal({
         {alreadyPublished ? (
           <p className="text-[#4a4337] text-sm mb-4">{s.alreadyPublished}</p>
         ) : done ? (
-          <p className="text-[#0e7573] text-sm mb-4">{s.publishDone}</p>
+          <p className="text-[#0284c7] text-sm mb-4">{s.publishDone}</p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -153,17 +153,17 @@ export default function PublishModal({
               </label>
               {previewUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={previewUrl} alt="thumbnail preview" className="w-full aspect-video object-cover rounded-lg border border-[#e8dfcf] mb-2" />
+                <img src={previewUrl} alt="thumbnail preview" className="w-full aspect-video object-cover rounded-lg border border-[#ebe4d6] mb-2" />
               )}
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => { pickFile(null); setSeed(x => x + 1) }}
-                  className="flex-1 border border-[#d9cdb4] text-[#4a4337] text-[13px] py-2.5 hover:border-[#0e7573] hover:text-[#0e7573] transition-colors rounded-lg"
+                  className="flex-1 border border-[#ddd3bf] text-[#4a4337] text-[13px] py-2.5 hover:border-[#0284c7] hover:text-[#0284c7] transition-colors rounded-lg"
                 >
                   {s.thumbAuto}
                 </button>
-                <label className="flex-1 border border-[#d9cdb4] text-[#4a4337] text-[13px] py-2.5 hover:border-gray-500 transition-colors rounded-lg text-center cursor-pointer">
+                <label className="flex-1 border border-[#ddd3bf] text-[#4a4337] text-[13px] py-2.5 hover:border-gray-500 transition-colors rounded-lg text-center cursor-pointer">
                   {s.thumbUpload}
                   <input
                     type="file"
@@ -181,7 +181,7 @@ export default function PublishModal({
             <button
               type="submit"
               disabled={isPending}
-              className="w-full bg-[#0e7573] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 tracking-widest rounded-lg"
+              className="w-full bg-[#0284c7] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#0369a1] transition-colors disabled:opacity-50 tracking-widest rounded-lg"
             >
               {isPending ? s.publishing : s.publishBtn}
             </button>
@@ -190,7 +190,7 @@ export default function PublishModal({
 
         <button
           onClick={onClose}
-          className="w-full mt-3 border border-[#d9cdb4] text-[#6b6152] font-pixel text-[11px] py-2.5 hover:border-gray-500 transition-colors tracking-widest rounded-lg"
+          className="w-full mt-3 border border-[#ddd3bf] text-[#6b6152] font-pixel text-[11px] py-2.5 hover:border-gray-500 transition-colors tracking-widest rounded-lg"
         >
           {s.cancel}
         </button>

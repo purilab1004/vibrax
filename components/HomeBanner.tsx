@@ -24,6 +24,6 @@ export default function HomeBanner() {
     </p>
   )
   return banner.link
-    ? <Link href={banner.link} className="block bg-[#0e7573] hover:bg-[#0a5d5b] transition-colors">{inner}</Link>
-    : <div className="bg-[#0e7573]">{inner}</div>
+    ? <Link href={banner.link} className="block bg-[#0284c7] hover:bg-[#0369a1] transition-colors">{inner}</Link>
+    : <div className="bg-[#0284c7]">{inner}</div>
 }

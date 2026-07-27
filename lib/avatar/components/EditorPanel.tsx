@@ -21,7 +21,7 @@ export function EditorPanel() {
   return (
     <div className="flex flex-col h-full bg-gray-900 text-gray-100 overflow-hidden">
       {/* 상단 고정 헤더 — 조립(authored base+parts). 파츠 선택은 좌측 카탈로그 피커. */}
-      <div className="p-4 border-b border-[#e8dfcf]">
+      <div className="p-4 border-b border-[#ebe4d6]">
         <h2 className="text-lg font-semibold text-indigo-400">Avatar Editor</h2>
         <p className="mt-1 text-xs text-[#857a68]">파츠는 좌측 카탈로그에서 선택 · 여기선 색/셰이더/조명/톤 조정</p>
       </div>
@@ -32,7 +32,7 @@ export function EditorPanel() {
         <Section title="파츠 / 색상" open={openSection === '파츠 / 색상'} onToggle={() => toggle('파츠 / 색상')}>
           <div className="flex h-64 overflow-hidden">
             {/* 메시 리스트 */}
-            <div className="w-1/2 border-r border-[#e8dfcf] overflow-y-auto">
+            <div className="w-1/2 border-r border-[#ebe4d6] overflow-y-auto">
               {meshInfos.length === 0 && (
                 <p className="px-3 py-2 text-xs text-[#9d9280]">로딩 중...</p>
               )}
@@ -48,7 +48,7 @@ export function EditorPanel() {
                   <button
                     onClick={(e) => { e.stopPropagation(); setMeshVisible(m.name, !m.visible) }}
                     className={`w-4 h-4 rounded border text-center leading-none ${
-                      m.visible ? 'border-indigo-400 text-indigo-400' : 'border-[#cfc2a6] text-[#9d9280]'
+                      m.visible ? 'border-indigo-400 text-indigo-400' : 'border-[#cfc4ab] text-[#9d9280]'
                     }`}
                     title={m.visible ? '숨기기' : '보이기'}
                   >
@@ -71,7 +71,7 @@ export function EditorPanel() {
                       type="color"
                       value={selected.litColor}
                       onChange={(e) => setMeshLitColor(selected.name, e.target.value)}
-                      className="w-full h-8 rounded cursor-pointer bg-transparent border border-[#d9cdb4]"
+                      className="w-full h-8 rounded cursor-pointer bg-transparent border border-[#ddd3bf]"
                     />
                   </label>
 
@@ -81,7 +81,7 @@ export function EditorPanel() {
                       type="color"
                       value={selected.shadeColor}
                       onChange={(e) => setMeshShadeColor(selected.name, e.target.value)}
-                      className="w-full h-8 rounded cursor-pointer bg-transparent border border-[#d9cdb4]"
+                      className="w-full h-8 rounded cursor-pointer bg-transparent border border-[#ddd3bf]"
                     />
                   </label>
                 </div>

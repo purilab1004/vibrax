@@ -10,7 +10,7 @@ export default function AiBjProfileStrip({ genre }: Props) {
   const persona = AJ_PERSONAS[genre]
 
   return (
-    <div className={`flex items-center gap-3 mb-5 px-3 py-2.5 border border-[#e8dfcf] border-l-2 ${persona.borderColor} bg-[#fffdf8]`}>
+    <div className={`flex items-center gap-3 mb-5 px-3 py-2.5 border border-[#ebe4d6] border-l-2 ${persona.borderColor} bg-[#ffffff]`}>
       <div className={`w-9 h-9 shrink-0 rounded-full border-2 ${persona.borderColor} overflow-hidden`}>
         <Image
           src="/aibot.png"

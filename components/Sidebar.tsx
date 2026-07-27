@@ -37,7 +37,7 @@ const GENRE_ICON: Record<Genre, React.ReactNode> = {
 const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 
 // 순위(1~3위) 강조색 — 금·은·동
-const RANK_COLOR = ['text-[#b98a1f]', 'text-[#4a4337]', 'text-amber-600']
+const RANK_COLOR = ['text-[#c9940c]', 'text-[#4a4337]', 'text-amber-600']
 
 export default function Sidebar({ newGenres = [], channels = [], tournament = [] }: {
   newGenres?: string[]
@@ -102,7 +102,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
 
   const row = (active: boolean) =>
     `flex items-center h-11 transition-colors ${
-      active ? 'text-[#0e7573] bg-[#0e7573]/10' : 'text-[#4a4337] hover:text-[#0e7573] hover:bg-[#241f17]/5'
+      active ? 'text-[#0284c7] bg-[#0284c7]/10' : 'text-[#4a4337] hover:text-[#0284c7] hover:bg-[#241f17]/5'
     }`
   // 아이콘은 접힌 폭(w-14)과 같은 고정 컬럼에 가운데 정렬 → 접힌 상태에서 중앙에 보임
   const iconCol = 'w-14 shrink-0 flex items-center justify-center'
@@ -110,13 +110,13 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
 
   return (
     <aside
-      className={`hidden md:flex fixed top-14 left-0 bottom-0 z-40 flex-col overflow-hidden border-r border-[#e8dfcf] bg-[#f7f2e9]/95 backdrop-blur-sm transition-[width] duration-200 ${open ? 'w-56' : 'w-14'}`}
+      className={`hidden md:flex fixed top-14 left-0 bottom-0 z-40 flex-col overflow-hidden border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm transition-[width] duration-200 ${open ? 'w-56' : 'w-14'}`}
       aria-label="sidebar"
     >
       <button
         onClick={() => setOpen(o => !o)}
         aria-label={open ? 'collapse' : 'expand'}
-        className="flex items-center h-12 shrink-0 border-b border-[#e8dfcf] text-[#6b6152] hover:text-[#0e7573] transition-colors"
+        className="flex items-center h-12 shrink-0 border-b border-[#ebe4d6] text-[#6b6152] hover:text-[#0284c7] transition-colors"
       >
         <span className={iconCol}>
           {open ? (
@@ -135,7 +135,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
             <span className={label}>{T.nav.home}</span>
           </Link>
 
-          <div className="my-1 mx-3 border-t border-[#e8dfcf]/70" />
+          <div className="my-1 mx-3 border-t border-[#ebe4d6]/70" />
 
           {inStudio && (
             <>
@@ -149,7 +149,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
                 {open ? (
                   <span className="font-pixel text-[10px] text-[#857a68] tracking-widest whitespace-nowrap">MY GAMES</span>
                 ) : (
-                  <span className="w-full border-t border-[#e8dfcf]/70" />
+                  <span className="w-full border-t border-[#ebe4d6]/70" />
                 )}
               </div>
               {projects.map(p => {
@@ -159,7 +159,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
                     <span className={iconCol}>
                       <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" {...stroke}><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01" /></svg>
                     </span>
-                    <span className={`flex-1 min-w-0 text-[13px] truncate transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'} ${active ? 'text-[#0e7573]' : 'text-[#4a4337]'}`}>
+                    <span className={`flex-1 min-w-0 text-[13px] truncate transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'} ${active ? 'text-[#0284c7]' : 'text-[#4a4337]'}`}>
                       {p.title || T.studio.untitled}
                     </span>
                     <button
@@ -218,11 +218,11 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
               <Link key={g} href={`/games?genre=${g}`} className={row(activeGenre === g)} title={isNew ? `${T.genres[g]} (NEW)` : T.genres[g]}>
                 <span className={`${iconCol} relative`}>
                   {GENRE_ICON[g]}
-                  {isNew && <span className="absolute top-2 right-3.5 w-1.5 h-1.5 rounded-full bg-[#0e7573] ring-2 ring-[#f7f2e9]" />}
+                  {isNew && <span className="absolute top-2 right-3.5 w-1.5 h-1.5 rounded-full bg-[#0284c7] ring-2 ring-[#fcfaf5]" />}
                 </span>
                 <span className={label}>{T.genres[g]}</span>
                 {isNew && open && (
-                  <span className="font-pixel text-[10px] text-white bg-[#0e7573] px-1 py-px tracking-widest shrink-0">NEW</span>
+                  <span className="font-pixel text-[10px] text-white bg-[#0284c7] px-1 py-px tracking-widest shrink-0">NEW</span>
                 )}
               </Link>
             )
@@ -235,7 +235,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
               {open ? (
                 <span className="font-pixel text-[10px] text-[#857a68] tracking-widest whitespace-nowrap">{T.nav.liveChannels}</span>
               ) : (
-                <span className="w-full border-t border-[#e8dfcf]/70" />
+                <span className="w-full border-t border-[#ebe4d6]/70" />
               )}
             </div>
             <nav className="flex flex-col pb-3">
@@ -247,12 +247,12 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
                   title={ch.title}
                 >
                   <span className={iconCol}>
-                    <span className="relative w-7 h-7 rounded-full overflow-hidden border border-[#d9cdb4] group-hover:border-[#0e7573] transition-colors">
+                    <span className="relative w-7 h-7 rounded-full overflow-hidden border border-[#ddd3bf] group-hover:border-[#0284c7] transition-colors">
                       <Image src={ch.thumbnail_url} alt={ch.title} fill className="object-cover" sizes="28px" />
                     </span>
                   </span>
                   <span className={`flex-1 min-w-0 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
-                    <span className="block text-[13px] text-[#3a332a] truncate leading-tight group-hover:text-[#0e7573] transition-colors">{ch.title}</span>
+                    <span className="block text-[13px] text-[#3a332a] truncate leading-tight group-hover:text-[#0284c7] transition-colors">{ch.title}</span>
                     <span className="block font-pixel text-[10px] text-[#9d9280] tracking-widest">{T.genres[ch.genre]}</span>
                   </span>
                   <span className={`flex items-center gap-1 pr-3 shrink-0 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
@@ -269,9 +269,9 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (
-                <Link href="/tournament" className="font-pixel text-[10px] text-[#857a68] hover:text-[#b98a1f] tracking-widest whitespace-nowrap transition-colors">🏆 {T.nav.tournament} →</Link>
+                <Link href="/tournament" className="font-pixel text-[10px] text-[#857a68] hover:text-[#c9940c] tracking-widest whitespace-nowrap transition-colors">🏆 {T.nav.tournament} →</Link>
               ) : (
-                <span className="w-full border-t border-[#e8dfcf]/70" />
+                <span className="w-full border-t border-[#ebe4d6]/70" />
               )}
             </div>
             <nav className="flex flex-col pb-3">
@@ -283,12 +283,12 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
                   title={`#${i + 1} ${ch.title}`}
                 >
                   <span className={iconCol}>
-                    <span className="relative w-7 h-7 rounded-full overflow-hidden border border-[#d9cdb4] group-hover:border-[#0e7573] transition-colors">
+                    <span className="relative w-7 h-7 rounded-full overflow-hidden border border-[#ddd3bf] group-hover:border-[#0284c7] transition-colors">
                       <Image src={ch.thumbnail_url} alt={ch.title} fill className="object-cover" sizes="28px" />
                     </span>
                   </span>
                   <span className={`flex-1 min-w-0 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
-                    <span className="block text-[13px] text-[#3a332a] truncate leading-tight group-hover:text-[#0e7573] transition-colors">{ch.title}</span>
+                    <span className="block text-[13px] text-[#3a332a] truncate leading-tight group-hover:text-[#0284c7] transition-colors">{ch.title}</span>
                     <span className="flex items-center gap-1 text-xs text-[#857a68]">
                       <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor" aria-hidden><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" /></svg>
                       {formatViewers(ch.view_count)}

@@ -86,7 +86,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
   }
 
   const inputClass =
-    'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
+    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
@@ -142,7 +142,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           type="file"
           accept=".md,text/markdown,text/plain"
           onChange={e => setManualFile(e.target.files?.[0] ?? null)}
-          className="w-full bg-[#fffdf8] border border-[#d9cdb4] px-4 py-3 text-sm text-[#6b6152]
+          className="w-full bg-[#ffffff] border border-[#ddd3bf] px-4 py-3 text-sm text-[#6b6152]
             file:mr-4 file:py-1 file:px-3 file:border-0
             file:bg-gray-700 file:text-[#241f17] file:text-[11px] file:font-pixel file:cursor-pointer
             file:hover:bg-gray-600 file:transition-colors"
@@ -194,10 +194,10 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           accept="image/png,image/jpeg,image/gif,image/webp"
           onChange={e => setThumbnailFile(e.target.files?.[0] ?? null)}
           required
-          className="w-full bg-[#fffdf8] border border-[#d9cdb4] px-4 py-3 text-sm text-[#6b6152]
+          className="w-full bg-[#ffffff] border border-[#ddd3bf] px-4 py-3 text-sm text-[#6b6152]
             file:mr-4 file:py-1 file:px-3 file:border-0
-            file:bg-[#0e7573] file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
-            file:hover:bg-[#0a5d5b] file:transition-colors"
+            file:bg-[#0284c7] file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
+            file:hover:bg-[#0369a1] file:transition-colors"
         />
         {thumbnailFile && (
           <p className="text-xs text-[#6b6152] mt-1">선택됨: {thumbnailFile.name}</p>
@@ -214,7 +214,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-[#0e7573] text-white font-pixel text-[11px] py-4 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed tracking-widest"
+        className="w-full bg-[#0284c7] text-white font-pixel text-[11px] py-4 hover:bg-[#0369a1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed tracking-widest"
       >
         {isPending ? s.uploading : s.submit}
       </button>

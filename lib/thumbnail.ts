@@ -4,10 +4,10 @@ import type { Genre } from '@/lib/supabase/types'
 // 같은 타이틀+시드는 항상 같은 결과(결정적). 시드를 바꾸면 다른 배색/배치가 나온다.
 
 const PALETTES: [string, string][] = [
-  ['#0e7573', '#b98a1f'],
+  ['#0284c7', '#c9940c'],
   ['#00e5ff', '#ff2d95'],
-  ['#ff6b35', '#b98a1f'],
-  ['#a78bfa', '#0e7573'],
+  ['#ff6b35', '#c9940c'],
+  ['#a78bfa', '#0284c7'],
   ['#ff2d95', '#00e5ff'],
   ['#4ade80', '#60a5fa'],
   ['#f97316', '#22d3ee'],

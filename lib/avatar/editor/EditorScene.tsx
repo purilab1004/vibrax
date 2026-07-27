@@ -35,8 +35,8 @@ export function EditorScene() {
   return (
     <div className="flex w-full h-full bg-gray-950 text-gray-100">
       {/* 좌측: 캐릭터 셀렉터 + 카탈로그 피커 */}
-      <div className="w-72 shrink-0 border-r border-[#e8dfcf] bg-gray-900 flex flex-col">
-        <div className="flex items-center gap-1 p-2 border-b border-[#e8dfcf]">
+      <div className="w-72 shrink-0 border-r border-[#ebe4d6] bg-gray-900 flex flex-col">
+        <div className="flex items-center gap-1 p-2 border-b border-[#ebe4d6]">
           {CHARACTERS.map((ch) => (
             <button
               key={ch.id}
@@ -76,7 +76,7 @@ export function EditorScene() {
       </div>
 
       {/* 우측: 공유 설정 패널 (색상/셰이더/조명/톤/애니) */}
-      <div className="w-72 shrink-0 border-l border-[#e8dfcf]">
+      <div className="w-72 shrink-0 border-l border-[#ebe4d6]">
         <EditorPanel />
       </div>
     </div>

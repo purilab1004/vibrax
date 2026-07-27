@@ -28,8 +28,8 @@ export default function AdminNav() {
             href={href}
             className={`font-pixel text-xs tracking-widest px-4 py-3 border transition-colors whitespace-nowrap ${
               active(href)
-                ? 'border-[#0e7573] text-[#0e7573] bg-[#0e7573]/5'
-                : 'border-[#e8dfcf] text-[#6b6152] hover:border-[#cfc2a6] hover:text-[#241f17]'
+                ? 'border-[#0284c7] text-[#0284c7] bg-[#0284c7]/5'
+                : 'border-[#ebe4d6] text-[#6b6152] hover:border-[#cfc4ab] hover:text-[#241f17]'
             }`}
           >
             {label}

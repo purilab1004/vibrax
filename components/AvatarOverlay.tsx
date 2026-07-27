@@ -197,7 +197,7 @@ export default function AvatarOverlay() {
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {status === 'loading' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
-          <div className="w-6 h-6 border-2 border-[#0e7573] border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#0284c7] border-t-transparent rounded-full animate-spin" />
           <span className="font-pixel text-[10px] text-[#857a68]">LOADING AJ...</span>
         </div>
       )}

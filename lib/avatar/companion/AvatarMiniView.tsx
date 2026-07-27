@@ -38,7 +38,7 @@ export default function AvatarMiniView({ config }: { config: AvatarConfig }) {
       </Canvas>
       {!assembled && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-6 h-6 border-2 border-[#0e7573] border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#0284c7] border-t-transparent rounded-full animate-spin" />
         </div>
       )}
     </div>

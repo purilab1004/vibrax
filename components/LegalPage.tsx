@@ -10,7 +10,7 @@ export default function LegalPage({ ko, en }: { ko: LegalDoc; en: LegalDoc }) {
   const d = lang === 'ko' ? ko : en
   return (
     <div className="max-w-3xl mx-auto px-6 py-12">
-      <h1 className="font-pixel text-[#0e7573] text-base tracking-widest mb-2">{d.title}</h1>
+      <h1 className="font-pixel text-[#0284c7] text-base tracking-widest mb-2">{d.title}</h1>
       <p className="text-xs text-[#9d9280] mb-10">{d.updated}</p>
       <div className="space-y-8">
         {d.sections.map((s, i) => (

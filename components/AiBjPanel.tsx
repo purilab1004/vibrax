@@ -247,7 +247,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             msg.role === 'user'
               ? msg.source === 'agent'
                 ? 'bg-purple-900/40 text-purple-300 border border-purple-700/40'
-                : 'bg-[#0e7573]/10 text-[#0e7573] border border-[#0e7573]/20'
+                : 'bg-[#0284c7]/10 text-[#0284c7] border border-[#0284c7]/20'
               : 'bg-gray-800 text-[#3a332a]'
           }`}>
             {msg.source === 'agent' && (
@@ -255,7 +255,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             )}
             {msg.content}
             {msg.role === 'assistant' && isStreaming && i === messages.length - 1 && (
-              <span className="inline-block w-1.5 h-3 bg-[#0e7573] ml-0.5 animate-pulse" />
+              <span className="inline-block w-1.5 h-3 bg-[#0284c7] ml-0.5 animate-pulse" />
             )}
           </div>
         </div>
@@ -265,7 +265,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
   )
 
   const inputBar = (
-    <div className="px-3 py-2 border-t border-[#e8dfcf] shrink-0">
+    <div className="px-3 py-2 border-t border-[#ebe4d6] shrink-0">
       <div className="flex gap-2">
         <input
           type="text"
@@ -274,12 +274,12 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
           onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
           placeholder="AJ에게 말걸기..."
           disabled={isStreaming}
-          className="flex-1 bg-gray-900 border border-[#d9cdb4] text-[#241f17] text-xs px-2.5 py-2 placeholder-[#a1957f] focus:outline-none focus:border-[#0e7573] disabled:opacity-50"
+          className="flex-1 bg-gray-900 border border-[#ddd3bf] text-[#241f17] text-xs px-2.5 py-2 placeholder-[#a1957f] focus:outline-none focus:border-[#0284c7] disabled:opacity-50"
         />
         <button
           onClick={() => sendMessage(input)}
           disabled={isStreaming || !input.trim()}
-          className="font-pixel text-[11px] px-3 py-2 bg-[#0e7573] text-white hover:bg-[#0a5d5b] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+          className="font-pixel text-[11px] px-3 py-2 bg-[#0284c7] text-white hover:bg-[#0369a1] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
         >▶</button>
       </div>
     </div>
@@ -288,7 +288,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
   const streamingDots = isStreaming && (
     <span className="flex gap-0.5 ml-auto">
       {[0,1,2].map(i => (
-        <span key={i} className="w-1 h-1 rounded-full bg-[#0e7573] animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+        <span key={i} className="w-1 h-1 rounded-full bg-[#0284c7] animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
       ))}
     </span>
   )
@@ -296,20 +296,20 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
   return (
     <>
       {/* ─── Desktop: side panel ─── */}
-      <div className="hidden md:flex w-72 shrink-0 flex-col border-l border-[#e8dfcf] bg-[#f7f2e9] h-full">
-        <div className="px-3 py-2 border-b border-[#e8dfcf] shrink-0 flex items-center gap-2">
-          <span className="font-pixel text-[11px] text-[#0e7573] tracking-widest">💬 LIVE CHAT</span>
+      <div className="hidden md:flex w-72 shrink-0 flex-col border-l border-[#ebe4d6] bg-[#fcfaf5] h-full">
+        <div className="px-3 py-2 border-b border-[#ebe4d6] shrink-0 flex items-center gap-2">
+          <span className="font-pixel text-[11px] text-[#0284c7] tracking-widest">💬 LIVE CHAT</span>
           {streamingDots}
         </div>
         {messageList}
         {inputBar}
 
         {/* ─── Desktop: 3D AJ avatar ─── */}
-        <div className="shrink-0 border-t border-[#e8dfcf]/40 bg-[#050508]" style={{ height: '220px' }}>
+        <div className="shrink-0 border-t border-[#ebe4d6]/40 bg-[#050508]" style={{ height: '220px' }}>
           {!isMobile && bjAvatar}
         </div>
 
-        <div className={`px-3 py-3 border-t border-[#e8dfcf] shrink-0 border-l-2 ${persona.borderColor}`}>
+        <div className={`px-3 py-3 border-t border-[#ebe4d6] shrink-0 border-l-2 ${persona.borderColor}`}>
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full border-2 ${persona.borderColor} overflow-hidden shrink-0`}>
               <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={40} height={40} className={`w-full h-full object-cover ${bjPic ? 'object-top' : ''}`} unoptimized />
@@ -340,13 +340,13 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
           onAnimationEnd={() => setFloatingMsg(null)}
         >
           <div
-            className="bg-black/75 backdrop-blur-sm border border-[#d9cdb4] rounded px-3 py-2 text-xs text-[#3a332a] overflow-hidden"
+            className="bg-black/75 backdrop-blur-sm border border-[#ddd3bf] rounded px-3 py-2 text-xs text-[#3a332a] overflow-hidden"
             style={{
               maskImage: 'linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)',
               WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)',
             }}
           >
-            <span className="font-pixel text-[11px] text-[#0e7573]">{persona.name}</span>
+            <span className="font-pixel text-[11px] text-[#0284c7]">{persona.name}</span>
             <p className="mt-0.5 leading-relaxed line-clamp-2">{floatingMsg.text}</p>
           </div>
         </div>
@@ -357,7 +357,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         {/* Mobile: 3D AJ avatar, bottom-right */}
         {isMobile && (
           <div
-            className="absolute right-2 z-10 overflow-hidden rounded-lg border border-[#e8dfcf] bg-[#050508] pointer-events-none"
+            className="absolute right-2 z-10 overflow-hidden rounded-lg border border-[#ebe4d6] bg-[#050508] pointer-events-none"
             style={{ bottom: '72px', width: 116, height: 150 }}
           >
             {isMobile && bjAvatar}
@@ -368,15 +368,15 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         )}
         <div className="absolute left-0 right-0 bottom-0 z-20 flex flex-col pointer-events-auto" style={{ transform: 'translateZ(0)' }}>
           <div
-            className="flex flex-col bg-[#f7f2e9] border-t border-[#e8dfcf] overflow-hidden transition-all duration-300 ease-out"
+            className="flex flex-col bg-[#fcfaf5] border-t border-[#ebe4d6] overflow-hidden transition-all duration-300 ease-out"
             style={{ height: mobileOpen ? '52vh' : '0px' }}
           >
             <div className="flex justify-center pt-2 pb-1 shrink-0">
               <div className="w-10 h-1 rounded-full bg-gray-600" />
             </div>
-            <div className="flex items-center justify-between px-4 py-1.5 border-b border-[#e8dfcf] shrink-0">
+            <div className="flex items-center justify-between px-4 py-1.5 border-b border-[#ebe4d6] shrink-0">
               <div className="flex items-center gap-2">
-                <span className="font-pixel text-[11px] text-[#0e7573] tracking-widest">💬 LIVE CHAT</span>
+                <span className="font-pixel text-[11px] text-[#0284c7] tracking-widest">💬 LIVE CHAT</span>
                 {streamingDots}
               </div>
               <button onClick={() => setMobileOpen(false)} className="text-[#857a68] text-lg leading-none px-1">✕</button>
@@ -387,7 +387,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
 
           <button
             onClick={() => setMobileOpen(v => !v)}
-            className={`flex items-center gap-3 w-full px-4 py-3 bg-[#fffdf8] border-t-2 ${persona.borderColor} active:brightness-125 transition-all`}
+            className={`flex items-center gap-3 w-full px-4 py-3 bg-[#ffffff] border-t-2 ${persona.borderColor} active:brightness-125 transition-all`}
           >
             <div className={`w-8 h-8 rounded-full border-2 ${persona.borderColor} overflow-hidden shrink-0`}>
               <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={32} height={32} className={`w-full h-full object-cover ${bjPic ? 'object-top' : ''}`} unoptimized />
@@ -406,7 +406,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
               </span>
             </div>
             <div className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 border font-pixel text-[11px] ${
-              mobileOpen ? 'border-[#cfc2a6] text-[#6b6152]' : 'border-[#0e7573] text-[#0e7573] bg-[#0e7573]/10'
+              mobileOpen ? 'border-[#cfc4ab] text-[#6b6152]' : 'border-[#0284c7] text-[#0284c7] bg-[#0284c7]/10'
             }`}>
               {mobileOpen ? '▼ 닫기' : '💬 채팅하기'}
             </div>

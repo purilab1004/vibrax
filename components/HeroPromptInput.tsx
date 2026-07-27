@@ -22,7 +22,7 @@ export default function HeroPromptInput() {
 
   return (
     <form onSubmit={submit} className="w-full max-w-2xl">
-      <div className="flex items-stretch bg-[#fffdf8]/90 border-2 border-[#0e7573] focus-within:shadow-[0_0_24px_rgba(14,117,115,0.25)] transition-shadow">
+      <div className="flex items-stretch bg-[#ffffff]/90 border-2 border-[#0284c7] focus-within:shadow-[0_0_24px_rgba(2,132,199,0.25)] transition-shadow">
         <input
           value={value}
           onChange={e => setValue(e.target.value)}
@@ -32,7 +32,7 @@ export default function HeroPromptInput() {
         />
         <button
           type="submit"
-          className="font-pixel text-[11px] bg-[#0e7573] text-white px-6 hover:bg-[#0a5d5b] transition-colors shrink-0"
+          className="font-pixel text-[11px] bg-[#0284c7] text-white px-6 hover:bg-[#0369a1] transition-colors shrink-0"
         >
           {T.hero.promptCta}
         </button>

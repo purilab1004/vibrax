@@ -18,14 +18,14 @@ export default function FooterLinks() {
           <Link
             key={href}
             href={href}
-            className="text-[11px] text-[#857a68] hover:text-[#0e7573] transition-colors"
+            className="text-[11px] text-[#857a68] hover:text-[#0284c7] transition-colors"
           >
             {label}
           </Link>
         ))}
         <a
           href="mailto:dev@puritechlab.com"
-          className="text-[11px] text-[#857a68] hover:text-[#0e7573] transition-colors"
+          className="text-[11px] text-[#857a68] hover:text-[#0284c7] transition-colors"
         >
           dev@puritechlab.com
         </a>

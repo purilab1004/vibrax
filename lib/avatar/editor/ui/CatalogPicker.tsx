@@ -24,7 +24,7 @@ export function CatalogPicker({ catalog, selection, status, onSelect, eyeColor, 
   return (
     <div className="flex flex-col h-full">
       {/* 상단 탭 바 */}
-      <div className="flex items-center gap-1 px-2 border-b border-[#e8dfcf] bg-gray-900/95 backdrop-blur">
+      <div className="flex items-center gap-1 px-2 border-b border-[#ebe4d6] bg-gray-900/95 backdrop-blur">
         {catalog.map((c) => (
           <button
             key={c.id}
@@ -63,7 +63,7 @@ export function CatalogPicker({ catalog, selection, status, onSelect, eyeColor, 
 
         {/* 텍스처 축: 눈색 (Face 탭에서만) */}
         {cat.id === 'face' && (
-          <div className="mt-3 border-t border-[#e8dfcf] pt-3">
+          <div className="mt-3 border-t border-[#ebe4d6] pt-3">
             <span className="text-[11px] text-[#6b6152]">눈색 (텍스처 축)</span>
             <div className="flex gap-1.5 items-center mt-1.5">
               <button

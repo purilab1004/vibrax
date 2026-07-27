@@ -45,7 +45,7 @@ export function GradingPanel() {
 
       <button
         onClick={() => setGrading(GRADING_DEFAULTS)}
-        className="mt-1 py-1 rounded text-xs text-[#857a68] hover:text-[#4a4337] border border-[#d9cdb4] hover:border-gray-500 transition-colors"
+        className="mt-1 py-1 rounded text-xs text-[#857a68] hover:text-[#4a4337] border border-[#ddd3bf] hover:border-gray-500 transition-colors"
       >
         초기화
       </button>

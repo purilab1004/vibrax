@@ -10,9 +10,9 @@ type Division = 'individual' | 'school' | 'world' | 'company'
 type SchoolLevel = 'elementary' | 'middle' | 'high' | 'university'
 
 const DIVISION_COLOR: Record<Division, string> = {
-  individual: '#0e7573',
+  individual: '#0284c7',
   school: '#4da3ff',
-  world: '#b98a1f',
+  world: '#c9940c',
   company: '#ff2d95',
 }
 
@@ -243,26 +243,26 @@ export default function TournamentPage() {
   }
 
   const inputClass =
-    'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f] rounded-lg'
+    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f] rounded-lg'
   const labelClass = 'block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest'
 
   const divisions: Division[] = ['individual', 'school', 'world', 'company']
 
   const applyCard = (
-        <div className="border border-[#e8dfcf] bg-[#fffdf8] rounded-2xl p-8">
-          <h2 className="font-pixel text-sm text-[#0e7573] tracking-widest mb-2">{c.applyHeading}</h2>
+        <div className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl p-8">
+          <h2 className="font-pixel text-sm text-[#0284c7] tracking-widest mb-2">{c.applyHeading}</h2>
           <p className="text-[#6b6152] text-sm mb-8">{c.applyDesc}</p>
 
           {status === 'done' ? (
-            <p className="text-[#0e7573] text-base">{c.doneMsg}</p>
+            <p className="text-[#0284c7] text-base">{c.doneMsg}</p>
           ) : user === undefined ? null : user === null ? (
             <div className="text-center py-4">
               <p className="text-[#4a4337] text-sm mb-6">{c.needAccount}</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/signup?redirect=/tournament" className="bg-[#0e7573] text-[#241f17] font-pixel text-[12px] px-8 py-4 rounded-lg hover:bg-[#0a5d5b] transition-colors tracking-widest">
+                <Link href="/signup?redirect=/tournament" className="bg-[#0284c7] text-[#241f17] font-pixel text-[12px] px-8 py-4 rounded-lg hover:bg-[#0369a1] transition-colors tracking-widest">
                   {c.signupCta}
                 </Link>
-                <Link href="/login?redirect=/tournament" className="border border-[#d9cdb4] text-[#4a4337] text-[13px] px-8 py-4 rounded-lg hover:border-[#0e7573] hover:text-[#0e7573] transition-colors">
+                <Link href="/login?redirect=/tournament" className="border border-[#ddd3bf] text-[#4a4337] text-[13px] px-8 py-4 rounded-lg hover:border-[#0284c7] hover:text-[#0284c7] transition-colors">
                   {c.loginCta}
                 </Link>
               </div>
@@ -292,7 +292,7 @@ export default function TournamentPage() {
                 <label className={labelClass}>{c.name}</label>
                 <input value={name} onChange={e => setName(e.target.value)} required className={inputClass} />
               </div>
-              <p className="text-[13px] text-[#0e7573] border border-[#0e7573]/30 bg-[#0e7573]/5 px-4 py-3 rounded-lg">
+              <p className="text-[13px] text-[#0284c7] border border-[#0284c7]/30 bg-[#0284c7]/5 px-4 py-3 rounded-lg">
                 ✓ {c.applyAs(user.email ?? '')}
               </p>
               <div>
@@ -339,7 +339,7 @@ export default function TournamentPage() {
               <button
                 type="submit"
                 disabled={status === 'busy'}
-                className="w-full bg-[#0e7573] text-[#241f17] font-pixel text-[12px] py-4 rounded-lg hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 tracking-widest"
+                className="w-full bg-[#0284c7] text-[#241f17] font-pixel text-[12px] py-4 rounded-lg hover:bg-[#0369a1] transition-colors disabled:opacity-50 tracking-widest"
               >
                 {status === 'busy' ? c.submitting : c.submit}
               </button>
@@ -351,11 +351,11 @@ export default function TournamentPage() {
   return (
     <div>
       {/* ── 히어로 ── */}
-      <section className="relative overflow-hidden border-b border-[#e8dfcf]">
+      <section className="relative overflow-hidden border-b border-[#ebe4d6]">
         <div
           className="absolute inset-0 opacity-[0.04] pointer-events-none"
           style={{
-            backgroundImage: 'linear-gradient(#0e7573 1px, transparent 1px), linear-gradient(90deg, #0e7573 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(#0284c7 1px, transparent 1px), linear-gradient(90deg, #0284c7 1px, transparent 1px)',
             backgroundSize: '40px 40px',
           }}
         />
@@ -367,13 +367,13 @@ export default function TournamentPage() {
               {c.openingSoon}
             </span>
             <h1 className="font-pixel text-2xl md:text-4xl text-[#241f17] tracking-widest leading-relaxed mb-4">
-              🏆 <span className="text-[#0e7573]">VIBREX</span><span className="text-[#b98a1f]">CUP</span>
+              🏆 <span className="text-[#0284c7]">VIBREX</span><span className="text-[#c9940c]">CUP</span>
               <br />TOURNAMENT
             </h1>
             <p className="text-[#4a4337] text-base md:text-lg mb-10">{c.tagline}</p>
-            <div className="inline-block border border-[#b98a1f]/40 bg-[#b98a1f]/5 rounded-2xl px-10 py-6">
+            <div className="inline-block border border-[#c9940c]/40 bg-[#c9940c]/5 rounded-2xl px-10 py-6">
               <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-2">{c.totalPrize}</p>
-              <p className="font-pixel text-2xl md:text-3xl text-[#b98a1f] tabular-nums">₩{prizeCount.toLocaleString()}+</p>
+              <p className="font-pixel text-2xl md:text-3xl text-[#c9940c] tabular-nums">₩{prizeCount.toLocaleString()}+</p>
             </div>
             <p className="glow-gold mt-7 text-lg md:text-2xl font-extrabold leading-snug">
               💰 {c.sponsorNote}
@@ -383,7 +383,7 @@ export default function TournamentPage() {
             </p>
             <a
               href={`mailto:dev@puritechlab.com?subject=${encodeURIComponent(c.sponsorMailSubject)}`}
-              className="inline-block mt-5 bg-[#b98a1f] text-black font-pixel text-[12px] px-10 py-4 rounded-lg hover:bg-[#8a6a14] transition-colors tracking-widest"
+              className="inline-block mt-5 bg-[#c9940c] text-black font-pixel text-[12px] px-10 py-4 rounded-lg hover:bg-[#a1780a] transition-colors tracking-widest"
             >
               {c.sponsorCta}
             </a>
@@ -404,16 +404,16 @@ export default function TournamentPage() {
             const info = c.divisions[d]
             const color = DIVISION_COLOR[d]
             return (
-              <div key={d} className="border border-[#e8dfcf] bg-[#fffdf8] rounded-2xl p-6 flex flex-col hover:border-[#cfc2a6] transition-colors">
+              <div key={d} className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl p-6 flex flex-col hover:border-[#cfc4ab] transition-colors">
                 <span className="font-pixel text-[10px] tracking-widest px-2 py-1 rounded self-start mb-4" style={{ color, border: `1px solid ${color}55`, background: `${color}11` }}>
                   {info.sub}
                 </span>
                 <h3 className="text-[#241f17] text-xl font-bold mb-2">{info.name}</h3>
                 <p className="text-[#6b6152] text-sm leading-relaxed mb-5 flex-1">{info.desc}</p>
-                <div className="border-t border-[#e8dfcf] pt-4 space-y-1.5">
+                <div className="border-t border-[#ebe4d6] pt-4 space-y-1.5">
                   {[c.winner, c.second, c.third].map((rank, i) => (
                     <div key={rank} className="flex justify-between text-sm">
-                      <span className={i === 0 ? 'text-[#b98a1f] font-pixel text-[11px]' : 'text-[#857a68] font-pixel text-[11px]'}>{rank}</span>
+                      <span className={i === 0 ? 'text-[#c9940c] font-pixel text-[11px]' : 'text-[#857a68] font-pixel text-[11px]'}>{rank}</span>
                       <span className={i === 0 ? 'text-[#241f17] font-semibold' : 'text-[#4a4337]'}>{info.prizes[i]}</span>
                     </div>
                   ))}
@@ -430,8 +430,8 @@ export default function TournamentPage() {
         <h2 className="font-pixel text-sm text-[#241f17] tracking-widest mb-8">{c.howHeading}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {c.how.map(([h, p]) => (
-            <div key={h} className="border border-[#e8dfcf] bg-[#fffdf8] rounded-2xl p-6">
-              <h3 className="text-[#0e7573] text-base font-bold mb-2">{h}</h3>
+            <div key={h} className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl p-6">
+              <h3 className="text-[#0284c7] text-base font-bold mb-2">{h}</h3>
               <p className="text-[#6b6152] text-sm leading-relaxed">{p}</p>
             </div>
           ))}

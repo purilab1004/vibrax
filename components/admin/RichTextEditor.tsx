@@ -14,7 +14,7 @@ function Btn({ onClick, active, children }: {
       onMouseDown={e => e.preventDefault()}
       onClick={onClick}
       className={`px-2.5 py-1.5 text-sm border transition-colors ${
-        active ? 'border-[#0e7573] text-[#0e7573]' : 'border-[#e8dfcf] text-[#6b6152] hover:text-[#241f17]'
+        active ? 'border-[#0284c7] text-[#0284c7]' : 'border-[#ebe4d6] text-[#6b6152] hover:text-[#241f17]'
       }`}
     >
       {children}
@@ -58,8 +58,8 @@ export default function RichTextEditor({ value, onChange, onUploadImage }: {
   const c = () => editor.chain().focus()
 
   return (
-    <div className="border border-[#d9cdb4] bg-[#fffdf8]">
-      <div className="flex flex-wrap gap-1 p-2 border-b border-[#e8dfcf]">
+    <div className="border border-[#ddd3bf] bg-[#ffffff]">
+      <div className="flex flex-wrap gap-1 p-2 border-b border-[#ebe4d6]">
         <Btn onClick={() => c().toggleBold().run()} active={editor.isActive('bold')}><b>B</b></Btn>
         <Btn onClick={() => c().toggleItalic().run()} active={editor.isActive('italic')}><i>I</i></Btn>
         <Btn onClick={() => c().toggleStrike().run()} active={editor.isActive('strike')}><s>S</s></Btn>

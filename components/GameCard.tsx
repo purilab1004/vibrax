@@ -151,7 +151,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
               </div>
             )}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <span className="font-pixel text-[11px] bg-[#0e7573]/90 text-white px-3 py-2 rounded">
+              <span className="font-pixel text-[11px] bg-[#0284c7]/90 text-white px-3 py-2 rounded">
                 ▶ PLAY
               </span>
             </div>
@@ -159,7 +159,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
           {/* 정보 블록 — 아바타 + 2줄 제목 + 채널명 + 조회수·장르 (card 변형 전용) */}
           {variant === 'card' && (
           <div className="mt-4 flex items-start gap-3 px-0.5">
-            <div className="w-9 h-9 shrink-0 rounded-full border border-[#e8dfcf] overflow-hidden bg-gray-900 flex items-center justify-center">
+            <div className="w-9 h-9 shrink-0 rounded-full border border-[#ebe4d6] overflow-hidden bg-gray-900 flex items-center justify-center">
               {creatorAvatarUrl ? (
                 <Image
                   src={creatorAvatarUrl}
@@ -196,8 +196,8 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
 
       {agentGate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4" onClick={() => setAgentGate(null)}>
-          <div className="w-full max-w-sm bg-[#f7f2e9] border border-purple-700/60" onClick={e => e.stopPropagation()}>
-            <div className="px-6 py-4 border-b border-[#e8dfcf] flex items-center justify-between">
+          <div className="w-full max-w-sm bg-[#fcfaf5] border border-purple-700/60" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-[#ebe4d6] flex items-center justify-between">
               <span className="font-pixel text-[11px] text-purple-400 tracking-widest">AGENT REQUIRED</span>
               <button onClick={() => setAgentGate(null)} className="text-[#9d9280] hover:text-[#241f17] text-lg">✕</button>
             </div>
@@ -206,7 +206,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 <>
                   <p className="text-[#241f17] text-sm font-semibold">로그인이 필요해요</p>
                   <p className="text-[#6b6152] text-xs leading-relaxed">게임에 참여하려면 로그인 후 나만의 AGENT를 만들어야 해요.</p>
-                  <button onClick={() => router.push('/login')} className="w-full font-pixel text-[11px] bg-[#0e7573] text-white py-3 hover:bg-[#0a5d5b] transition-colors tracking-widest">
+                  <button onClick={() => router.push('/login')} className="w-full font-pixel text-[11px] bg-[#0284c7] text-white py-3 hover:bg-[#0369a1] transition-colors tracking-widest">
                     → 로그인하기
                   </button>
                 </>
@@ -238,7 +238,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
           {/* Header bar */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#e8dfcf] bg-[#f7f2e9] shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#ebe4d6] bg-[#fcfaf5] shrink-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <span
                 className={`font-pixel text-[11px] px-2 py-1 text-[#241f17] shrink-0 ${GENRE_COLORS[game.genre]}`}
@@ -249,7 +249,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="shrink-0 ml-3 font-pixel text-[11px] text-[#6b6152] hover:text-[#0e7573] transition-colors px-3 py-1 border border-[#d9cdb4] hover:border-[#0e7573]"
+              className="shrink-0 ml-3 font-pixel text-[11px] text-[#6b6152] hover:text-[#0284c7] transition-colors px-3 py-1 border border-[#ddd3bf] hover:border-[#0284c7]"
             >
               ✕ CLOSE
             </button>

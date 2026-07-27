@@ -35,8 +35,8 @@ export default function AdminBlogPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="font-pixel text-[#0e7573] text-base tracking-widest">{a.blogHeading}</h1>
-        <Link href="/admin/blog/new" className="font-pixel text-xs bg-[#0e7573] text-[#241f17] px-4 py-2.5 hover:bg-[#0a5d5b] transition-colors tracking-widest">
+        <h1 className="font-pixel text-[#0284c7] text-base tracking-widest">{a.blogHeading}</h1>
+        <Link href="/admin/blog/new" className="font-pixel text-xs bg-[#0284c7] text-[#241f17] px-4 py-2.5 hover:bg-[#0369a1] transition-colors tracking-widest">
           {a.newPost}
         </Link>
       </div>
@@ -44,11 +44,11 @@ export default function AdminBlogPage() {
       {posts.length === 0 ? (
         <p className="text-[#857a68] text-base">{a.noPosts}</p>
       ) : (
-        <div className="border border-[#e8dfcf] divide-y divide-[#e8dfcf]">
+        <div className="border border-[#ebe4d6] divide-y divide-[#ebe4d6]">
           {posts.map(p => (
-            <div key={p.id} className="flex items-center gap-4 px-4 py-3 bg-[#fffdf8]">
+            <div key={p.id} className="flex items-center gap-4 px-4 py-3 bg-[#ffffff]">
               <span className={`font-pixel text-[10px] tracking-widest px-1.5 py-0.5 border shrink-0 ${
-                p.published ? 'border-[#0e7573] text-[#0e7573]' : 'border-[#d9cdb4] text-[#857a68]'
+                p.published ? 'border-[#0284c7] text-[#0284c7]' : 'border-[#ddd3bf] text-[#857a68]'
               }`}>
                 {p.published ? a.published : a.draft}
               </span>
@@ -58,7 +58,7 @@ export default function AdminBlogPage() {
                   {catName(p.category_id)} · {new Date(p.created_at).toLocaleDateString()} · <ViewerIcon className="w-3 h-3 inline align-[-2px]" /> {p.view_count}
                 </p>
               </div>
-              <Link href={`/admin/blog/${p.id}`} className="font-pixel text-[11px] text-[#6b6152] hover:text-[#0e7573] tracking-widest shrink-0">
+              <Link href={`/admin/blog/${p.id}`} className="font-pixel text-[11px] text-[#6b6152] hover:text-[#0284c7] tracking-widest shrink-0">
                 {a.edit}
               </Link>
               <button onClick={() => remove(p.id)} className="font-pixel text-[11px] text-[#9d9280] hover:text-red-400 tracking-widest shrink-0">

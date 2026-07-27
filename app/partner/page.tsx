@@ -160,17 +160,17 @@ export default function PartnerPage() {
   }
 
   const inputClass =
-    'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f] rounded-lg'
+    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#0284c7] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f] rounded-lg'
   const labelClass = 'block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest'
   const orgTypes: OrgType[] = ['school', 'company', 'organization', 'institution', 'other']
 
   const applyCard = (
-        <div className="border border-[#e8dfcf] bg-[#fffdf8] rounded-2xl p-8">
-          <h2 className="font-pixel text-sm text-[#0e7573] tracking-widest mb-2">{c.formHeading}</h2>
+        <div className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl p-8">
+          <h2 className="font-pixel text-sm text-[#0284c7] tracking-widest mb-2">{c.formHeading}</h2>
           <p className="text-[#6b6152] text-sm mb-8">{c.formDesc}</p>
 
           {status === 'done' ? (
-            <p className="text-[#0e7573] text-base">{c.doneMsg}</p>
+            <p className="text-[#0284c7] text-base">{c.doneMsg}</p>
           ) : (
             <form onSubmit={submit} className="space-y-5">
               <div>
@@ -183,8 +183,8 @@ export default function PartnerPage() {
                       onClick={() => setOrgType(t)}
                       className={`py-2.5 text-[13px] font-medium rounded-lg border transition-colors ${
                         orgType === t
-                          ? 'bg-[#0e7573] text-[#241f17] border-[#0e7573]'
-                          : 'text-[#6b6152] border-[#e8dfcf] hover:border-[#cfc2a6]'
+                          ? 'bg-[#0284c7] text-[#241f17] border-[#0284c7]'
+                          : 'text-[#6b6152] border-[#ebe4d6] hover:border-[#cfc4ab]'
                       }`}
                     >
                       {c.orgTypes[t]}
@@ -220,7 +220,7 @@ export default function PartnerPage() {
               <button
                 type="submit"
                 disabled={status === 'busy'}
-                className="w-full bg-[#0e7573] text-[#241f17] font-pixel text-[12px] py-4 rounded-lg hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 tracking-widest"
+                className="w-full bg-[#0284c7] text-[#241f17] font-pixel text-[12px] py-4 rounded-lg hover:bg-[#0369a1] transition-colors disabled:opacity-50 tracking-widest"
               >
                 {status === 'busy' ? c.submitting : c.submit}
               </button>
@@ -232,23 +232,23 @@ export default function PartnerPage() {
   return (
     <div>
       {/* ── 히어로 ── */}
-      <section className="relative overflow-hidden border-b border-[#e8dfcf]">
+      <section className="relative overflow-hidden border-b border-[#ebe4d6]">
         <div
           className="absolute inset-0 opacity-[0.04] pointer-events-none"
           style={{
-            backgroundImage: 'linear-gradient(#0e7573 1px, transparent 1px), linear-gradient(90deg, #0e7573 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(#0284c7 1px, transparent 1px), linear-gradient(90deg, #0284c7 1px, transparent 1px)',
             backgroundSize: '40px 40px',
           }}
         />
         <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           {/* 좌측: 모집 문구 */}
           <div className="order-1 lg:sticky lg:top-24 text-center lg:text-left">
-            <p className="font-pixel text-[11px] text-[#0e7573] tracking-[0.3em] mb-6">{c.badge}</p>
+            <p className="font-pixel text-[11px] text-[#0284c7] tracking-[0.3em] mb-6">{c.badge}</p>
             <h1 className="text-3xl md:text-5xl font-extrabold text-[#241f17] mb-6 leading-tight">{c.heading}</h1>
             <p className="text-[#4a4337] text-base md:text-lg leading-relaxed whitespace-pre-line mb-10">{c.tagline}</p>
             <div className="hidden lg:grid grid-cols-2 gap-4">
               {c.benefits.map(([h]) => (
-                <div key={h} className="border border-[#e8dfcf] bg-[#fffdf8] rounded-xl px-4 py-3 text-sm text-[#4a4337]">
+                <div key={h} className="border border-[#ebe4d6] bg-[#ffffff] rounded-xl px-4 py-3 text-sm text-[#4a4337]">
                   {h}
                 </div>
               ))}
@@ -268,7 +268,7 @@ export default function PartnerPage() {
           {DEFAULT_PARTNERS.map(p => (
             <div
               key={p.name}
-              className="border border-[#e8dfcf] bg-[#fffdf8] rounded-2xl h-28 flex items-center justify-center hover:border-[#cfc2a6] transition-colors grayscale-[0.15] hover:grayscale-0"
+              className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl h-28 flex items-center justify-center hover:border-[#cfc4ab] transition-colors grayscale-[0.15] hover:grayscale-0"
             >
               {p.logo}
             </div>
@@ -281,7 +281,7 @@ export default function PartnerPage() {
         <h2 className="font-pixel text-sm text-[#241f17] tracking-widest mb-8">{c.benefitsHeading}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {c.benefits.map(([h, p]) => (
-            <div key={h} className="border border-[#e8dfcf] bg-[#fffdf8] rounded-2xl p-6">
+            <div key={h} className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl p-6">
               <h3 className="text-[#241f17] text-base font-bold mb-2">{h}</h3>
               <p className="text-[#6b6152] text-sm leading-relaxed">{p}</p>
             </div>

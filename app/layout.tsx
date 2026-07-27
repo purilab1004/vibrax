@@ -182,7 +182,7 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} className={`${pressStart.variable} h-full`}>
-<body className="bg-[#f7f2e9] text-[#241f17] min-h-full flex flex-col">
+<body className="bg-[#fcfaf5] text-[#241f17] min-h-full flex flex-col">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(navJsonLd) }} />
         <LangProvider initialLang={lang}>
@@ -191,7 +191,7 @@ export default async function RootLayout({
             <Sidebar newGenres={newGenres} channels={channels} tournament={tournament} />
           </Suspense>
           <main className="flex-1 md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">{children}</main>
-          <footer className="border-t border-[#e8dfcf] py-6 px-6 mt-auto md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">
+          <footer className="border-t border-[#ebe4d6] py-6 px-6 mt-auto md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">
             <FooterLinks />
           </footer>
         </LangProvider>

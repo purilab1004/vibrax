@@ -19,7 +19,7 @@ export function VariantCard({ variant, label, selected, status, onClick }: Props
       onClick={onClick}
       title={label}
       className={`relative aspect-square rounded-lg border-2 overflow-hidden bg-gray-800 transition-colors ${
-        selected ? 'border-sky-400' : 'border-transparent hover:border-[#cfc2a6]'
+        selected ? 'border-sky-400' : 'border-transparent hover:border-[#cfc4ab]'
       }`}
     >
       {variant == null ? (

@@ -32,7 +32,7 @@ export default function AdminDashboardPage() {
   const daily = stats.daily
   return (
     <div>
-      <h1 className="font-pixel text-[#0e7573] text-base tracking-widest mb-8">{a.dashHeading}</h1>
+      <h1 className="font-pixel text-[#0284c7] text-base tracking-widest mb-8">{a.dashHeading}</h1>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <StatCard label={a.statMembers} value={t.members} />
         <StatCard label={a.statGames} value={t.games} />
@@ -45,7 +45,7 @@ export default function AdminDashboardPage() {
         <TrendChart label={a.chartSignups} sub={a.last30} values={daily.map(d => d.signups)} />
         <TrendChart label={a.chartGames} sub={a.last30} values={daily.map(d => d.games)} />
         <TrendChart label={a.chartGenerations} sub={a.last30} values={daily.map(d => d.generations)} color="#4da3ff" />
-        <TrendChart label={a.chartPurchases} sub={a.last30} values={daily.map(d => d.purchases)} color="#b98a1f" />
+        <TrendChart label={a.chartPurchases} sub={a.last30} values={daily.map(d => d.purchases)} color="#c9940c" />
       </div>
     </div>
   )
