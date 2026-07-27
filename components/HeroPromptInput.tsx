@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useLang } from '@/lib/i18n/context'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 
-export default function HeroPromptInput() {
+export default function HeroPromptInput({ onBlue = false }: { onBlue?: boolean }) {
   const [value, setValue] = useState('')
   const router = useRouter()
   const { T } = useLang()
@@ -22,7 +22,11 @@ export default function HeroPromptInput() {
 
   return (
     <form onSubmit={submit} className="w-full max-w-2xl">
-      <div className="flex items-stretch bg-white rounded-2xl border-2 border-[#2563eb] shadow-[0_10px_36px_rgba(37,99,235,0.18)] focus-within:shadow-[0_10px_44px_rgba(37,99,235,0.32)] focus-within:-translate-y-0.5 transition-all overflow-hidden">
+      <div className={`flex items-stretch bg-white rounded-2xl border-2 transition-all overflow-hidden ${
+        onBlue
+          ? 'border-white/60 shadow-[0_14px_44px_rgba(23,37,84,0.35)] focus-within:shadow-[0_16px_56px_rgba(23,37,84,0.5)] focus-within:-translate-y-0.5'
+          : 'border-[#2563eb] shadow-[0_10px_36px_rgba(37,99,235,0.18)] focus-within:shadow-[0_10px_44px_rgba(37,99,235,0.32)] focus-within:-translate-y-0.5'
+      }`}>
         <span className="hidden sm:flex items-center pl-5 text-lg" aria-hidden>✨</span>
         <input
           value={value}
@@ -38,7 +42,7 @@ export default function HeroPromptInput() {
           ▶ {T.hero.promptCta}
         </button>
       </div>
-      <p className="text-[13px] text-[#6b6152] mt-3.5">{T.hero.promptHint}</p>
+      <p className={`text-[13px] mt-3.5 ${onBlue ? 'text-white/85' : 'text-[#6b6152]'}`}>{T.hero.promptHint}</p>
     </form>
   )
 }
