@@ -9,7 +9,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/submit', '/login', '/signup', '/admin', '/studio', '/profile', '/credits'],
+        // 로그인/개인 페이지만 색인 제외 — /studio는 메뉴 노출 대상이라 색인 허용
+        disallow: ['/submit', '/login', '/signup', '/admin', '/profile', '/credits'],
       },
       // ── 허용: 검색 인덱서 (검색 결과에 출처로 노출 → 트래픽 유입) ──
       { userAgent: 'Googlebot', allow: '/' },
