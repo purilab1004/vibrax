@@ -1,6 +1,21 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  // 보안 헤더 — 클릭재킹/스니핑/레퍼러 유출/불필요 권한 차단
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(self)' },
+        ],
+      },
+    ]
+  },
   // 구 도메인(vibrax-rho.vercel.app) → vibrexcup.com 영구 리다이렉트
   async redirects() {
     return [
