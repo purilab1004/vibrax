@@ -138,7 +138,7 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
   if (creators.length === 0) return null
   return (
     <section className="mb-14">
-      <h2 className="font-pixel text-sm text-[#c9940c] tracking-widest mb-5">🏆 {heading}</h2>
+      <h2 className="font-pixel text-xl text-[#c9940c] tracking-wide mb-5">🏆 {heading}</h2>
       <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-6 px-6 pt-1 pb-2">
         {creators.map((cr, i) => {
           const rank = RANK_STYLE[i]
@@ -197,7 +197,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
       <Row
         large
         heading={
-          <h2 className="font-pixel text-sm text-[#241f17] tracking-widest flex items-center gap-2.5">
+          <h2 className="font-pixel text-xl text-[#241f17] tracking-wide flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             {T.games.liveNow}
           </h2>
@@ -209,7 +209,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
         <Row
           key={g}
           heading={
-            <h2 className="font-pixel text-sm text-[#2563eb] tracking-widest">{T.genres[g]}</h2>
+            <h2 className="font-pixel text-xl text-[#2563eb] tracking-wide">{T.genres[g]}</h2>
           }
           headerExtra={
             <Link
