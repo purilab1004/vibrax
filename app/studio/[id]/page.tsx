@@ -195,25 +195,25 @@ export default function StudioComposerPage() {
   if (!project) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <p className="font-pixel text-[11px] text-gray-400 tracking-widest">{s.loading}</p>
+        <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest">{s.loading}</p>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 3.5rem)' }}>
-      <div className="flex items-center gap-4 border-b border-gray-800 px-4 py-2 shrink-0">
+      <div className="flex items-center gap-4 border-b border-[#e8dfcf] px-4 py-2 shrink-0">
         <Link
           href="/studio"
-          className="font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] tracking-widest transition-colors shrink-0"
+          className="font-pixel text-[11px] text-[#6b6152] hover:text-[#0e7573] tracking-widest transition-colors shrink-0"
         >
           {s.backToStudio}
         </Link>
-        <h1 className="text-white text-sm truncate">{project.title}</h1>
+        <h1 className="text-[#241f17] text-sm truncate">{project.title}</h1>
         <div className="flex-1" />
         <Link
           href="/credits"
-          className="font-pixel text-[11px] text-[#00ff41] tracking-widest shrink-0 hover:underline"
+          className="font-pixel text-[11px] text-[#0e7573] tracking-widest shrink-0 hover:underline"
         >
           {s.balance(balance ?? 0)}
         </Link>
@@ -230,7 +230,7 @@ export default function StudioComposerPage() {
             busy={streaming !== null}
           />
         </div>
-        <div className="order-1 md:order-2 min-h-0 h-full border-b md:border-b-0 border-gray-800">
+        <div className="order-1 md:order-2 min-h-0 h-full border-b md:border-b-0 border-[#e8dfcf]">
           <GamePreview
             html={html}
             versions={versions}

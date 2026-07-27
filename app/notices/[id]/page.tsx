@@ -22,17 +22,17 @@ export default function NoticePage({ params }: { params: Promise<{ id: string }>
   if (notice === null) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-20 text-center">
-        <p className="text-gray-400 text-sm mb-6">{n.notFound}</p>
-        <Link href="/notices" className="font-pixel text-[11px] text-[#00ff41] tracking-widest">{n.back}</Link>
+        <p className="text-[#6b6152] text-sm mb-6">{n.notFound}</p>
+        <Link href="/notices" className="font-pixel text-[11px] text-[#0e7573] tracking-widest">{n.back}</Link>
       </div>
     )
   }
 
   return (
     <article className="max-w-3xl mx-auto px-6 py-10">
-      <Link href="/notices" className="font-pixel text-[11px] text-gray-500 hover:text-[#00ff41] tracking-widest">← {n.back}</Link>
-      <h1 className="text-white text-2xl font-bold mt-6 mb-3">{notice.title}</h1>
-      <p className="text-[11px] text-gray-500 mb-8">{new Date(notice.created_at).toLocaleDateString()}</p>
+      <Link href="/notices" className="font-pixel text-[11px] text-[#857a68] hover:text-[#0e7573] tracking-widest">← {n.back}</Link>
+      <h1 className="text-[#241f17] text-2xl font-bold mt-6 mb-3">{notice.title}</h1>
+      <p className="text-[11px] text-[#857a68] mb-8">{new Date(notice.created_at).toLocaleDateString()}</p>
       {/* content는 RLS로 admin만 작성 가능 — 신뢰 경계 내 HTML */}
       <div className="rte-content" dangerouslySetInnerHTML={{ __html: notice.content }} />
     </article>

@@ -9,8 +9,8 @@ type Viewport = 'pc' | 'tablet' | 'mobile'
 // 디바이스별 프리뷰 사이즈 — 높이는 화면에 맞게 줄어들되 폭은 실제 기기 폭 유지
 const VIEWPORT_STYLE: Record<Viewport, string> = {
   pc: 'w-full h-full',
-  tablet: 'w-[768px] max-w-full h-full max-h-[1024px] rounded-2xl border border-gray-700 overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)]',
-  mobile: 'w-[390px] max-w-full h-full max-h-[844px] rounded-3xl border border-gray-700 overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)]',
+  tablet: 'w-[768px] max-w-full h-full max-h-[1024px] rounded-2xl border border-[#d9cdb4] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)]',
+  mobile: 'w-[390px] max-w-full h-full max-h-[844px] rounded-3xl border border-[#d9cdb4] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)]',
 }
 
 const ICON = 'w-4 h-4'
@@ -39,11 +39,11 @@ export default function GamePreview({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 border-b border-gray-800 px-3 py-2 flex-wrap">
+      <div className="flex items-center gap-2 border-b border-[#e8dfcf] px-3 py-2 flex-wrap">
         <button
           onClick={() => setFrameKey(k => k + 1)}
           disabled={!html}
-          className="font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] transition-colors disabled:opacity-40 tracking-widest"
+          className="font-pixel text-[11px] text-[#6b6152] hover:text-[#0e7573] transition-colors disabled:opacity-40 tracking-widest"
         >
           {s.refresh}
         </button>
@@ -51,7 +51,7 @@ export default function GamePreview({
           <select
             value={currentVersionId ?? ''}
             onChange={e => onSelectVersion(e.target.value)}
-            className="bg-[#111] border border-gray-800 text-gray-300 text-[11px] px-2 py-1 outline-none"
+            className="bg-[#fffdf8] border border-[#e8dfcf] text-[#4a4337] text-[11px] px-2 py-1 outline-none"
             aria-label={s.versions}
           >
             {versions.map(v => (
@@ -62,7 +62,7 @@ export default function GamePreview({
           </select>
         )}
         {/* 디바이스 뷰포트 전환 — PC / 태블릿 / 모바일 */}
-        <div className="flex items-center border border-gray-800 rounded-md overflow-hidden">
+        <div className="flex items-center border border-[#e8dfcf] rounded-md overflow-hidden">
           {(['pc', 'tablet', 'mobile'] as Viewport[]).map(v => (
             <button
               key={v}
@@ -72,8 +72,8 @@ export default function GamePreview({
               title={v.toUpperCase()}
               className={`px-2.5 py-1.5 transition-colors disabled:opacity-40 ${
                 viewport === v
-                  ? 'bg-[#00ff41]/15 text-[#00ff41]'
-                  : 'text-gray-500 hover:text-white'
+                  ? 'bg-[#0e7573]/15 text-[#0e7573]'
+                  : 'text-[#857a68] hover:text-[#241f17]'
               }`}
             >
               {VIEWPORT_ICON[v]}
@@ -84,7 +84,7 @@ export default function GamePreview({
         <button
           onClick={onPublish}
           disabled={!html || busy}
-          className="bg-[#00ff41] text-black font-pixel text-[11px] px-4 py-1.5 hover:bg-[#00cc33] transition-colors disabled:opacity-40 tracking-widest"
+          className="bg-[#0e7573] text-[#241f17] font-pixel text-[11px] px-4 py-1.5 hover:bg-[#0a5d5b] transition-colors disabled:opacity-40 tracking-widest"
         >
           {s.publish}
         </button>
@@ -104,7 +104,7 @@ export default function GamePreview({
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <p className="font-pixel text-[11px] text-gray-700 tracking-widest">{s.emptyPreview}</p>
+            <p className="font-pixel text-[11px] text-[#b3a78f] tracking-widest">{s.emptyPreview}</p>
           </div>
         )}
       </div>

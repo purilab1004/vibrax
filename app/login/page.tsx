@@ -33,18 +33,18 @@ function LoginForm() {
   }
 
   const inputClass =
-    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-500'
+    'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
 
   return (
     <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="font-pixel text-[#00ff41] text-base mb-2 text-center tracking-widest">
+        <h1 className="font-pixel text-[#0e7573] text-base mb-2 text-center tracking-widest">
           {a.loginHeading}
         </h1>
-        <p className="text-gray-300 text-xs text-center mb-8">{a.loginSubtitle}</p>
+        <p className="text-[#4a4337] text-xs text-center mb-8">{a.loginSubtitle}</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
+            <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
               {a.email}
             </label>
             <input
@@ -57,7 +57,7 @@ function LoginForm() {
             />
           </div>
           <div>
-            <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
+            <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
               {a.password}
             </label>
             <input
@@ -77,14 +77,14 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full bg-[#00ff41] text-black font-pixel text-[11px] py-3 hover:bg-[#00cc33] transition-colors disabled:opacity-50 mt-2 tracking-widest"
+            className="w-full bg-[#0e7573] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 mt-2 tracking-widest"
           >
             {isPending ? a.loading : a.login}
           </button>
         </form>
-        <p className="text-center text-xs text-gray-300 mt-6">
+        <p className="text-center text-xs text-[#4a4337] mt-6">
           {a.noAccount}{' '}
-          <Link href="/signup" className="text-[#00ff41] hover:underline">
+          <Link href="/signup" className="text-[#0e7573] hover:underline">
             SIGNUP
           </Link>
         </p>

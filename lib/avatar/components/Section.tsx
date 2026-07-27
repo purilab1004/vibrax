@@ -11,13 +11,13 @@ interface SectionProps {
 // 한 번에 하나만 펼치는 단일 오픈 동작. 본문은 부모가 스크롤.
 export function Section({ title, open, onToggle, children }: SectionProps) {
   return (
-    <div className="border-t border-gray-800">
+    <div className="border-t border-[#e8dfcf]">
       <button
         onClick={onToggle}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-gray-300 hover:bg-gray-800/50 transition-colors"
+        className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-[#4a4337] hover:bg-gray-800/50 transition-colors"
       >
         <span>{title}</span>
-        <span className={`text-gray-500 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}>▶</span>
+        <span className={`text-[#857a68] transition-transform duration-200 ${open ? 'rotate-90' : ''}`}>▶</span>
       </button>
       {/* grid 0fr↔1fr: 동적 높이도 부드럽게 ease (display 토글은 애니메이션 불가) */}
       <div

@@ -28,7 +28,7 @@ export default function SubmitPage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <p className="font-pixel text-[11px] text-gray-400 tracking-widest">{T.submit.loading}</p>
+        <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest">{T.submit.loading}</p>
       </div>
     )
   }
@@ -37,10 +37,10 @@ export default function SubmitPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
-      <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest mb-2">
+      <h1 className="font-pixel text-[#0e7573] text-sm tracking-widest mb-2">
         {T.submit.heading}
       </h1>
-      <p className="text-gray-300 text-sm mb-10">{T.submit.subtitle}</p>
+      <p className="text-[#4a4337] text-sm mb-10">{T.submit.subtitle}</p>
       <GameSubmitForm userId={user.id} />
     </div>
   )

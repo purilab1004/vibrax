@@ -34,7 +34,7 @@ export function LightPanel() {
 
       <button
         onClick={() => setLighting(LIGHTING_DEFAULTS)}
-        className="mt-1 py-1 rounded text-xs text-gray-500 hover:text-gray-300 border border-gray-700 hover:border-gray-500 transition-colors"
+        className="mt-1 py-1 rounded text-xs text-[#857a68] hover:text-[#4a4337] border border-[#d9cdb4] hover:border-gray-500 transition-colors"
       >
         초기화
       </button>

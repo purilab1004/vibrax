@@ -239,48 +239,48 @@ export default function ProfilePage() {
     })
   }
 
-  const inputClass = 'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-2.5 text-sm outline-none transition-colors text-white placeholder-gray-500'
+  const inputClass = 'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-2.5 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
 
   if (loading) return (
     <div className="max-w-4xl mx-auto px-6 py-10">
-      <p className="font-pixel text-[11px] text-gray-400 tracking-widest">LOADING...</p>
+      <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest">LOADING...</p>
     </div>
   )
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10 space-y-12">
-      <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest">MY PAGE</h1>
+      <h1 className="font-pixel text-[#0e7573] text-sm tracking-widest">MY PAGE</h1>
 
       {/* ── Profile ── */}
-      <section id="profile" className="scroll-mt-20 border border-gray-800 bg-[#0d0d0d] p-6 space-y-6">
-        <h2 className="font-pixel text-[11px] text-gray-400 tracking-widest">PROFILE</h2>
+      <section id="profile" className="scroll-mt-20 border border-[#e8dfcf] bg-[#fffdf8] p-6 space-y-6">
+        <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">PROFILE</h2>
 
         {/* Email */}
         <div>
-          <p className="font-pixel text-[11px] text-gray-600 tracking-widest mb-1">EMAIL</p>
-          <p className="text-sm text-gray-300">{user?.email}</p>
+          <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest mb-1">EMAIL</p>
+          <p className="text-sm text-[#4a4337]">{user?.email}</p>
         </div>
 
         {/* Username */}
         <div>
-          <p className="font-pixel text-[11px] text-gray-600 tracking-widest mb-2">USERNAME</p>
+          <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest mb-2">USERNAME</p>
           {editingUsername ? (
             <div className="flex items-center gap-3 flex-wrap">
               <input className={inputClass + ' max-w-xs'} value={newUsername} onChange={e => setNewUsername(e.target.value)} autoFocus />
-              <button onClick={handleSaveUsername} disabled={isPending} className="font-pixel text-[11px] bg-[#00ff41] text-black px-4 py-2 hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest">SAVE</button>
-              <button onClick={() => { setEditingUsername(false); setNewUsername('') }} className="font-pixel text-[11px] border border-gray-700 text-gray-400 px-4 py-2 hover:border-gray-500 transition-colors tracking-widest">CANCEL</button>
+              <button onClick={handleSaveUsername} disabled={isPending} className="font-pixel text-[11px] bg-[#0e7573] text-[#241f17] px-4 py-2 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 tracking-widest">SAVE</button>
+              <button onClick={() => { setEditingUsername(false); setNewUsername('') }} className="font-pixel text-[11px] border border-[#d9cdb4] text-[#6b6152] px-4 py-2 hover:border-gray-500 transition-colors tracking-widest">CANCEL</button>
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              <span className="text-sm text-white">{username}</span>
-              <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="font-pixel text-[11px] text-gray-500 hover:text-[#00ff41] transition-colors border border-gray-800 hover:border-[#00ff41] px-3 py-1 tracking-widest">EDIT</button>
+              <span className="text-sm text-[#241f17]">{username}</span>
+              <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="font-pixel text-[11px] text-[#857a68] hover:text-[#0e7573] transition-colors border border-[#e8dfcf] hover:border-[#0e7573] px-3 py-1 tracking-widest">EDIT</button>
             </div>
           )}
         </div>
 
         {/* Country */}
         <div>
-          <p className="font-pixel text-[11px] text-gray-600 tracking-widest mb-2">COUNTRY</p>
+          <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest mb-2">COUNTRY</p>
           <select
             value={country}
             onChange={e => handleChangeCountry(e.target.value)}
@@ -294,41 +294,41 @@ export default function ProfilePage() {
           </select>
         </div>
 
-        {profileMsg && <p className={`text-xs font-pixel tracking-widest ${profileMsg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{profileMsg.text}</p>}
+        {profileMsg && <p className={`text-xs font-pixel tracking-widest ${profileMsg.ok ? 'text-[#0e7573]' : 'text-red-400'}`}>{profileMsg.text}</p>}
       </section>
 
       {/* ── Password ── */}
-      <section id="password" className="scroll-mt-20 border border-gray-800 bg-[#0d0d0d] p-6 space-y-4">
-        <h2 className="font-pixel text-[11px] text-gray-400 tracking-widest">CHANGE PASSWORD</h2>
+      <section id="password" className="scroll-mt-20 border border-[#e8dfcf] bg-[#fffdf8] p-6 space-y-4">
+        <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">CHANGE PASSWORD</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
           <div>
-            <p className="font-pixel text-[11px] text-gray-600 tracking-widest mb-2">NEW PASSWORD</p>
+            <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest mb-2">NEW PASSWORD</p>
             <input type="password" className={inputClass} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="최소 6자리" />
           </div>
           <div>
-            <p className="font-pixel text-[11px] text-gray-600 tracking-widest mb-2">CONFIRM PASSWORD</p>
+            <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest mb-2">CONFIRM PASSWORD</p>
             <input type="password" className={inputClass} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="비밀번호 재입력" />
           </div>
         </div>
-        {pwMsg && <p className={`text-xs font-pixel tracking-widest ${pwMsg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{pwMsg.text}</p>}
-        <button onClick={handleChangePassword} disabled={isPending || !newPassword || !confirmPassword} className="font-pixel text-[11px] bg-[#00ff41] text-black px-6 py-2.5 hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest">
+        {pwMsg && <p className={`text-xs font-pixel tracking-widest ${pwMsg.ok ? 'text-[#0e7573]' : 'text-red-400'}`}>{pwMsg.text}</p>}
+        <button onClick={handleChangePassword} disabled={isPending || !newPassword || !confirmPassword} className="font-pixel text-[11px] bg-[#0e7573] text-[#241f17] px-6 py-2.5 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 tracking-widest">
           CHANGE PASSWORD
         </button>
       </section>
 
       {/* ── My Agent ── */}
-      <section id="agent" className="scroll-mt-20 border border-gray-800 bg-[#0d0d0d] p-6 space-y-5">
+      <section id="agent" className="scroll-mt-20 border border-[#e8dfcf] bg-[#fffdf8] p-6 space-y-5">
         <div>
-          <h2 className="font-pixel text-[11px] text-gray-400 tracking-widest">MY AGENT</h2>
-          <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">MY AGENT</h2>
+          <p className="text-xs text-[#857a68] mt-1.5 leading-relaxed">
             게임을 플레이하는 동안 <span className="text-purple-400">나 대신 AI 스트리머 AJ와 실시간으로 대화</span>해주는 나만의 AI 에이전트예요.<br />
             당신이 게임에 집중하는 사이, 에이전트가 AJ와 채팅하며 방송의 흥을 이어가줍니다.
           </p>
           <div className="mt-3 border border-purple-900/40 bg-purple-900/10 px-4 py-3 space-y-1">
             <p className="font-pixel text-[10px] text-purple-400 tracking-widest">AGENT란?</p>
-            <p className="text-[11px] text-gray-400 leading-relaxed">• 이름과 성격을 부여하면 그대로 행동하는 AI</p>
-            <p className="text-[11px] text-gray-400 leading-relaxed">• 게임 방송 중 18초마다 AJ에게 말을 걸어줌</p>
-            <p className="text-[11px] text-gray-400 leading-relaxed">• 게임 진입 시 AGENT 설정이 필요해요</p>
+            <p className="text-[11px] text-[#6b6152] leading-relaxed">• 이름과 성격을 부여하면 그대로 행동하는 AI</p>
+            <p className="text-[11px] text-[#6b6152] leading-relaxed">• 게임 방송 중 18초마다 AJ에게 말을 걸어줌</p>
+            <p className="text-[11px] text-[#6b6152] leading-relaxed">• 게임 진입 시 AGENT 설정이 필요해요</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
@@ -336,9 +336,9 @@ export default function ProfilePage() {
           <div className="space-y-5">
             {/* Avatar */}
             <div>
-              <p className="font-pixel text-[11px] text-gray-600 tracking-widest mb-2">에이전트 프로필 사진</p>
+              <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest mb-2">에이전트 프로필 사진</p>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full border border-dashed border-gray-700 overflow-hidden bg-gray-900/50 shrink-0 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full border border-dashed border-[#d9cdb4] overflow-hidden bg-gray-900/50 shrink-0 flex items-center justify-center">
                   {(agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl) ? (
                     <Image
                       src={agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl}
@@ -349,7 +349,7 @@ export default function ProfilePage() {
                       unoptimized
                     />
                   ) : (
-                    <span className="font-pixel text-[10px] text-gray-600 tracking-widest">사진</span>
+                    <span className="font-pixel text-[10px] text-[#9d9280] tracking-widest">사진</span>
                   )}
                 </div>
                 <div className="flex-1">
@@ -357,18 +357,18 @@ export default function ProfilePage() {
                     type="file"
                     accept="image/png,image/jpeg,image/gif,image/webp"
                     onChange={e => setAgentAvatarFile(e.target.files?.[0] ?? null)}
-                    className="w-full bg-[#0d0d0d] border border-gray-700 px-3 py-2 text-xs text-gray-400
+                    className="w-full bg-[#fffdf8] border border-[#d9cdb4] px-3 py-2 text-xs text-[#6b6152]
                       file:mr-3 file:py-1 file:px-3 file:border-0
-                      file:bg-purple-800 file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
+                      file:bg-purple-800 file:text-[#241f17] file:text-[11px] file:font-pixel file:cursor-pointer
                       file:hover:bg-purple-700 file:transition-colors"
                   />
-                  {agentAvatarFile && <p className="text-[11px] text-gray-500 mt-1">{agentAvatarFile.name}</p>}
+                  {agentAvatarFile && <p className="text-[11px] text-[#857a68] mt-1">{agentAvatarFile.name}</p>}
                 </div>
               </div>
             </div>
 
             <div>
-              <p className="font-pixel text-[11px] text-gray-600 tracking-widest mb-2">에이전트 이름</p>
+              <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest mb-2">에이전트 이름</p>
               <input
                 className={inputClass}
                 value={agentName}
@@ -378,7 +378,7 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <p className="font-pixel text-[11px] text-gray-600 tracking-widest mb-2">성격 / 말투</p>
+              <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest mb-2">성격 / 말투</p>
               <textarea
                 className={inputClass + ' resize-none'}
                 rows={3}
@@ -387,13 +387,13 @@ export default function ProfilePage() {
                 placeholder="예: 항상 긍정적이고 열정적인 게이머. 재밌으면 크게 리액션함."
                 maxLength={100}
               />
-              <p className="text-[11px] text-gray-600 mt-1">{agentPersona.length}/100</p>
+              <p className="text-[11px] text-[#9d9280] mt-1">{agentPersona.length}/100</p>
             </div>
-            {agentMsg && <p className={`text-xs font-pixel tracking-widest ${agentMsg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{agentMsg.text}</p>}
+            {agentMsg && <p className={`text-xs font-pixel tracking-widest ${agentMsg.ok ? 'text-[#0e7573]' : 'text-red-400'}`}>{agentMsg.text}</p>}
             <button
               onClick={handleSaveAgent}
               disabled={isPending || (!agentName.trim() && !agentPersona.trim())}
-              className="font-pixel text-[11px] bg-[#00ff41] text-black px-6 py-2.5 hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest"
+              className="font-pixel text-[11px] bg-[#0e7573] text-[#241f17] px-6 py-2.5 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 tracking-widest"
             >
               {isPending ? 'SAVING...' : 'SAVE AGENT'}
             </button>
@@ -405,28 +405,28 @@ export default function ProfilePage() {
                   </div>
                 )}
                 <span className="font-pixel text-[11px] text-purple-400 shrink-0">{agentName}</span>
-                {agentPersona && <span className="text-xs text-gray-500 truncate">{agentPersona}</span>}
+                {agentPersona && <span className="text-xs text-[#857a68] truncate">{agentPersona}</span>}
               </div>
             )}
           </div>
 
           {/* ── Col 2: 내 아바타 (게임 방송 BJ) ── */}
           <div className="space-y-3">
-            <p className="font-pixel text-[11px] text-gray-600 tracking-widest">MY CHARACTER · 게임 방송 BJ</p>
-            <div className="relative w-full max-w-[260px] aspect-[3/4] border border-gray-800 bg-[#050508] overflow-hidden">
+            <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest">MY CHARACTER · 게임 방송 BJ</p>
+            <div className="relative w-full max-w-[260px] aspect-[3/4] border border-[#e8dfcf] bg-[#050508] overflow-hidden">
               {myAvatarConfig ? (
                 <AvatarMiniView config={myAvatarConfig} />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
                   <span className="text-3xl">🧍</span>
-                  <p className="text-[11px] text-gray-500">아직 저장한 아바타가 없어요</p>
+                  <p className="text-[11px] text-[#857a68]">아직 저장한 아바타가 없어요</p>
                 </div>
               )}
             </div>
-            <a href="/avatar" className="inline-block font-pixel text-[11px] border border-[#00ff41] text-[#00ff41] px-6 py-2.5 hover:bg-[#00ff41] hover:text-black transition-colors tracking-widest">
+            <a href="/avatar" className="inline-block font-pixel text-[11px] border border-[#0e7573] text-[#0e7573] px-6 py-2.5 hover:bg-[#0e7573] hover:text-white transition-colors tracking-widest">
               🎨 아바타 설정
             </a>
-            <p className="text-[11px] text-gray-500 leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요. 게임 목록엔 아이디 대신 <span className="text-purple-400">에이전트 이름</span>이 표시됩니다.</p>
+            <p className="text-[11px] text-[#857a68] leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요. 게임 목록엔 아이디 대신 <span className="text-purple-400">에이전트 이름</span>이 표시됩니다.</p>
           </div>
         </div>
       </section>
@@ -434,50 +434,50 @@ export default function ProfilePage() {
       {/* ── My Games ── */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-pixel text-[11px] text-gray-400 tracking-widest">MY GAMES <span className="text-[#00ff41]">({games.length})</span></h2>
-          {gameMsg && <p className={`text-xs font-pixel tracking-widest ${gameMsg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{gameMsg.text}</p>}
+          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">MY GAMES <span className="text-[#0e7573]">({games.length})</span></h2>
+          {gameMsg && <p className={`text-xs font-pixel tracking-widest ${gameMsg.ok ? 'text-[#0e7573]' : 'text-red-400'}`}>{gameMsg.text}</p>}
         </div>
 
         {games.length === 0 ? (
-          <div className="border border-gray-800 p-12 text-center">
-            <p className="text-gray-500 text-sm mb-4">아직 등록한 게임이 없습니다.</p>
-            <a href="/submit" className="font-pixel text-[11px] text-[#00ff41] hover:underline tracking-widest">+ 첫 게임 등록하기</a>
+          <div className="border border-[#e8dfcf] p-12 text-center">
+            <p className="text-[#857a68] text-sm mb-4">아직 등록한 게임이 없습니다.</p>
+            <a href="/submit" className="font-pixel text-[11px] text-[#0e7573] hover:underline tracking-widest">+ 첫 게임 등록하기</a>
           </div>
         ) : (
           <div className="space-y-3">
             {games.map(game => (
-              <div key={game.id} className="border border-gray-800 bg-[#0d0d0d] hover:border-gray-700 transition-colors">
+              <div key={game.id} className="border border-[#e8dfcf] bg-[#fffdf8] hover:border-[#d9cdb4] transition-colors">
                 <div className="flex items-center gap-4 p-4">
                   <div className="relative w-20 h-12 shrink-0 overflow-hidden bg-gray-900">
                     <Image src={game.thumbnail_url} alt={game.title} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`font-pixel text-[10px] px-1.5 py-0.5 text-white ${GENRE_COLORS[game.genre]}`}>{game.genre.toUpperCase()}</span>
+                      <span className={`font-pixel text-[10px] px-1.5 py-0.5 text-[#241f17] ${GENRE_COLORS[game.genre]}`}>{game.genre.toUpperCase()}</span>
                       {game.language && (
-                        <span className="font-pixel text-[10px] px-1.5 py-0.5 text-gray-300 border border-gray-700">{game.language === 'ko' ? '한국어' : 'EN'}</span>
+                        <span className="font-pixel text-[10px] px-1.5 py-0.5 text-[#4a4337] border border-[#d9cdb4]">{game.language === 'ko' ? '한국어' : 'EN'}</span>
                       )}
                       {game.game_manual && (
-                        <span className="font-pixel text-[10px] px-1.5 py-0.5 text-gray-400 border border-gray-800">📄 MD</span>
+                        <span className="font-pixel text-[10px] px-1.5 py-0.5 text-[#6b6152] border border-[#e8dfcf]">📄 MD</span>
                       )}
                     </div>
-                    <p className="text-sm text-white truncate font-medium">{game.title}</p>
-                    <p className="text-xs text-gray-500 truncate mt-0.5">{game.play_url}</p>
+                    <p className="text-sm text-[#241f17] truncate font-medium">{game.title}</p>
+                    <p className="text-xs text-[#857a68] truncate mt-0.5">{game.play_url}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, newThumbnail: null, newManual: null })}
-                      className="font-pixel text-[11px] border border-gray-700 text-gray-400 hover:border-[#00ff41] hover:text-[#00ff41] px-3 py-1.5 transition-colors tracking-widest"
+                      className="font-pixel text-[11px] border border-[#d9cdb4] text-[#6b6152] hover:border-[#0e7573] hover:text-[#0e7573] px-3 py-1.5 transition-colors tracking-widest"
                     >
                       EDIT
                     </button>
                     {deleteConfirm === game.id ? (
                       <div className="flex items-center gap-1">
-                        <button onClick={() => handleDeleteGame(game.id)} disabled={isPending} className="font-pixel text-[11px] bg-red-700 text-white px-3 py-1.5 hover:bg-red-600 transition-colors disabled:opacity-50 tracking-widest">확인</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="font-pixel text-[11px] border border-gray-700 text-gray-400 px-3 py-1.5 tracking-widest">취소</button>
+                        <button onClick={() => handleDeleteGame(game.id)} disabled={isPending} className="font-pixel text-[11px] bg-red-700 text-[#241f17] px-3 py-1.5 hover:bg-red-600 transition-colors disabled:opacity-50 tracking-widest">확인</button>
+                        <button onClick={() => setDeleteConfirm(null)} className="font-pixel text-[11px] border border-[#d9cdb4] text-[#6b6152] px-3 py-1.5 tracking-widest">취소</button>
                       </div>
                     ) : (
-                      <button onClick={() => setDeleteConfirm(game.id)} className="font-pixel text-[11px] border border-gray-800 text-gray-600 hover:border-red-700 hover:text-red-400 px-3 py-1.5 transition-colors tracking-widest">DEL</button>
+                      <button onClick={() => setDeleteConfirm(game.id)} className="font-pixel text-[11px] border border-[#e8dfcf] text-[#9d9280] hover:border-red-700 hover:text-red-400 px-3 py-1.5 transition-colors tracking-widest">DEL</button>
                     )}
                   </div>
                 </div>
@@ -490,16 +490,16 @@ export default function ProfilePage() {
       {/* ── Edit Game Modal ── */}
       {editingGame && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
-          <div className="w-full max-w-md bg-[#0a0a0a] border border-gray-700">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
-              <p className="font-pixel text-[11px] text-[#00ff41] tracking-widest">EDIT GAME</p>
-              <button onClick={() => setEditingGame(null)} className="font-pixel text-[11px] text-gray-500 hover:text-white transition-colors">✕</button>
+          <div className="w-full max-w-md bg-[#f7f2e9] border border-[#d9cdb4]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8dfcf]">
+              <p className="font-pixel text-[11px] text-[#0e7573] tracking-widest">EDIT GAME</p>
+              <button onClick={() => setEditingGame(null)} className="font-pixel text-[11px] text-[#857a68] hover:text-[#241f17] transition-colors">✕</button>
             </div>
             <div className="p-6 space-y-4">
               {/* Thumbnail preview + upload */}
               <div>
-                <label className="block font-pixel text-[11px] text-gray-500 tracking-widest mb-2">THUMBNAIL</label>
-                <div className="relative w-full aspect-video mb-3 overflow-hidden bg-gray-900 border border-gray-800">
+                <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">THUMBNAIL</label>
+                <div className="relative w-full aspect-video mb-3 overflow-hidden bg-gray-900 border border-[#e8dfcf]">
                   <Image
                     src={editingGame.newThumbnail ? URL.createObjectURL(editingGame.newThumbnail) : editingGame.thumbnail_url}
                     alt="thumbnail"
@@ -511,26 +511,26 @@ export default function ProfilePage() {
                   type="file"
                   accept="image/png,image/jpeg,image/gif,image/webp"
                   onChange={e => setEditingGame(prev => prev ? { ...prev, newThumbnail: e.target.files?.[0] ?? null } : null)}
-                  className="w-full bg-[#0d0d0d] border border-gray-700 px-4 py-2.5 text-sm text-gray-400
+                  className="w-full bg-[#fffdf8] border border-[#d9cdb4] px-4 py-2.5 text-sm text-[#6b6152]
                     file:mr-4 file:py-1 file:px-3 file:border-0
-                    file:bg-[#00ff41] file:text-black file:text-[11px] file:font-pixel file:cursor-pointer
-                    file:hover:bg-[#00cc33] file:transition-colors"
+                    file:bg-[#0e7573] file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
+                    file:hover:bg-[#0a5d5b] file:transition-colors"
                 />
-                {editingGame.newThumbnail && <p className="text-xs text-gray-400 mt-1">선택됨: {editingGame.newThumbnail.name}</p>}
+                {editingGame.newThumbnail && <p className="text-xs text-[#6b6152] mt-1">선택됨: {editingGame.newThumbnail.name}</p>}
               </div>
 
               <div>
-                <label className="block font-pixel text-[11px] text-gray-500 tracking-widest mb-2">TITLE</label>
+                <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">TITLE</label>
                 <input className={inputClass} value={editingGame.title} onChange={e => setEditingGame(prev => prev ? { ...prev, title: e.target.value } : null)} />
               </div>
               <div>
-                <label className="block font-pixel text-[11px] text-gray-500 tracking-widest mb-2">게임 언어</label>
+                <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">게임 언어</label>
                 <select className={inputClass} value={editingGame.language} onChange={e => setEditingGame(prev => prev ? { ...prev, language: e.target.value } : null)}>
                   {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block font-pixel text-[11px] text-gray-500 tracking-widest mb-2">AI AJ 게임 설명</label>
+                <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">AI AJ 게임 설명</label>
                 <textarea
                   rows={3}
                   maxLength={500}
@@ -541,38 +541,38 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="block font-pixel text-[11px] text-gray-500 tracking-widest mb-2">
-                  게임 메뉴얼 <span className="text-gray-600 normal-case font-sans text-[11px]">(.md 파일)</span>
+                <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">
+                  게임 메뉴얼 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(.md 파일)</span>
                 </label>
                 {editingGame.game_manual && !editingGame.newManual && (
-                  <p className="text-[11px] text-[#00ff41] mb-2">✓ 메뉴얼 등록됨 — 새 파일 업로드 시 교체됩니다</p>
+                  <p className="text-[11px] text-[#0e7573] mb-2">✓ 메뉴얼 등록됨 — 새 파일 업로드 시 교체됩니다</p>
                 )}
                 <input
                   type="file"
                   accept=".md,text/markdown,text/plain"
                   onChange={e => setEditingGame(prev => prev ? { ...prev, newManual: e.target.files?.[0] ?? null } : null)}
-                  className="w-full bg-[#0d0d0d] border border-gray-700 px-4 py-2.5 text-sm text-gray-400
+                  className="w-full bg-[#fffdf8] border border-[#d9cdb4] px-4 py-2.5 text-sm text-[#6b6152]
                     file:mr-4 file:py-1 file:px-3 file:border-0
-                    file:bg-gray-700 file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
+                    file:bg-gray-700 file:text-[#241f17] file:text-[11px] file:font-pixel file:cursor-pointer
                     file:hover:bg-gray-600 file:transition-colors"
                 />
-                {editingGame.newManual && <p className="text-xs text-gray-400 mt-1">선택됨: {editingGame.newManual.name}</p>}
+                {editingGame.newManual && <p className="text-xs text-[#6b6152] mt-1">선택됨: {editingGame.newManual.name}</p>}
               </div>
               <div>
-                <label className="block font-pixel text-[11px] text-gray-500 tracking-widest mb-2">GENRE</label>
+                <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">GENRE</label>
                 <select className={inputClass} value={editingGame.genre} onChange={e => setEditingGame(prev => prev ? { ...prev, genre: e.target.value as Genre } : null)}>
                   {GENRES.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block font-pixel text-[11px] text-gray-500 tracking-widest mb-2">PLAY URL</label>
+                <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">PLAY URL</label>
                 <input className={inputClass} value={editingGame.play_url} onChange={e => setEditingGame(prev => prev ? { ...prev, play_url: e.target.value } : null)} />
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={handleSaveGame} disabled={isPending} className="flex-1 font-pixel text-[11px] bg-[#00ff41] text-black py-3 hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest">
+                <button onClick={handleSaveGame} disabled={isPending} className="flex-1 font-pixel text-[11px] bg-[#0e7573] text-[#241f17] py-3 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 tracking-widest">
                   {isPending ? 'SAVING...' : 'SAVE'}
                 </button>
-                <button onClick={() => setEditingGame(null)} className="flex-1 font-pixel text-[11px] border border-gray-700 text-gray-400 py-3 hover:border-gray-500 transition-colors tracking-widest">
+                <button onClick={() => setEditingGame(null)} className="flex-1 font-pixel text-[11px] border border-[#d9cdb4] text-[#6b6152] py-3 hover:border-gray-500 transition-colors tracking-widest">
                   CANCEL
                 </button>
               </div>

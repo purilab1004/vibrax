@@ -26,7 +26,7 @@ async function GameGrid({ genre, q, creator }: { genre?: string; q?: string; cre
 
   if (!games || games.length === 0) {
     return (
-      <p className="text-center text-gray-300 text-sm py-24">
+      <p className="text-center text-[#4a4337] text-sm py-24">
         {term
           ? `"${term}" 검색 결과가 없습니다.`
           : validGenre ? `${validGenre.toUpperCase()} 장르의 게임이 없습니다.` : '아직 등록된 게임이 없습니다.'}
@@ -57,8 +57,8 @@ export default async function GamesPage({ searchParams }: Props) {
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest">GAMES</h1>
-        <span className="text-xs text-gray-300">
+        <h1 className="font-pixel text-[#0e7573] text-sm tracking-widest">GAMES</h1>
+        <span className="text-xs text-[#4a4337]">
           {term ? `🔍 "${term}"` : 'AI 바이브코딩 게임 모음'}
         </span>
       </div>
@@ -70,7 +70,7 @@ export default async function GamesPage({ searchParams }: Props) {
       <Suspense
         key={`${genre ?? ''}-${term ?? ''}-${creator ?? ''}`}
         fallback={
-          <div className="text-center text-gray-300 text-xs py-24 font-pixel tracking-widest">
+          <div className="text-center text-[#4a4337] text-xs py-24 font-pixel tracking-widest">
             LOADING...
           </div>
         }

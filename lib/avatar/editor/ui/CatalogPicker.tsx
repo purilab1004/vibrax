@@ -24,13 +24,13 @@ export function CatalogPicker({ catalog, selection, status, onSelect, eyeColor, 
   return (
     <div className="flex flex-col h-full">
       {/* 상단 탭 바 */}
-      <div className="flex items-center gap-1 px-2 border-b border-gray-800 bg-gray-900/95 backdrop-blur">
+      <div className="flex items-center gap-1 px-2 border-b border-[#e8dfcf] bg-gray-900/95 backdrop-blur">
         {catalog.map((c) => (
           <button
             key={c.id}
             onClick={() => setActive(c.id)}
             className={`px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              cat.id === c.id ? 'border-sky-400 text-sky-300' : 'border-transparent text-gray-400 hover:text-gray-200'
+              cat.id === c.id ? 'border-sky-400 text-sky-300' : 'border-transparent text-[#6b6152] hover:text-[#3a332a]'
             }`}
           >
             {c.label}
@@ -63,12 +63,12 @@ export function CatalogPicker({ catalog, selection, status, onSelect, eyeColor, 
 
         {/* 텍스처 축: 눈색 (Face 탭에서만) */}
         {cat.id === 'face' && (
-          <div className="mt-3 border-t border-gray-800 pt-3">
-            <span className="text-[11px] text-gray-400">눈색 (텍스처 축)</span>
+          <div className="mt-3 border-t border-[#e8dfcf] pt-3">
+            <span className="text-[11px] text-[#6b6152]">눈색 (텍스처 축)</span>
             <div className="flex gap-1.5 items-center mt-1.5">
               <button
                 onClick={() => onEyeColor(null)}
-                className={`text-[11px] px-2 py-1 rounded ${eyeColor === null ? 'bg-sky-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+                className={`text-[11px] px-2 py-1 rounded ${eyeColor === null ? 'bg-sky-600 text-[#241f17]' : 'bg-gray-800 text-[#4a4337] hover:bg-gray-700'}`}
               >
                 원본
               </button>

@@ -7,7 +7,7 @@ export default function Icon() {
   return new ImageResponse(
     <div
       style={{
-        background: '#0a0a0a',
+        background: '#f7f2e9',
         width: '100%',
         height: '100%',
         display: 'flex',
@@ -21,7 +21,7 @@ export default function Icon() {
         style={{
           position: 'absolute',
           inset: 2,
-          border: '1.5px solid #00ff41',
+          border: '1.5px solid #0e7573',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -29,7 +29,7 @@ export default function Icon() {
       >
         <span
           style={{
-            color: '#00ff41',
+            color: '#0e7573',
             fontSize: 18,
             fontWeight: 700,
             fontFamily: 'monospace',

@@ -44,8 +44,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ id: s
   if (!post) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-20 text-center">
-        <p className="text-gray-400 text-base mb-6">글을 찾을 수 없습니다.</p>
-        <Link href="/blog" className="font-pixel text-[11px] text-[#00ff41] tracking-widest">BACK TO LIST</Link>
+        <p className="text-[#6b6152] text-base mb-6">글을 찾을 수 없습니다.</p>
+        <Link href="/blog" className="font-pixel text-[11px] text-[#0e7573] tracking-widest">BACK TO LIST</Link>
       </div>
     )
   }
@@ -76,19 +76,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ id: s
     <article className="max-w-3xl mx-auto px-6 py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <BlogViewPing postId={post.id} />
-      <Link href="/blog" className="font-pixel text-[11px] text-gray-500 hover:text-[#00ff41] tracking-widest">← BACK</Link>
-      <h1 className="text-white text-2xl md:text-3xl font-bold mt-6 mb-3">{post.title}</h1>
-      <p className="text-[13px] text-gray-500 mb-8">
-        {cat && <span className="text-[#00ff41] mr-3">{cat.name}</span>}
+      <Link href="/blog" className="font-pixel text-[11px] text-[#857a68] hover:text-[#0e7573] tracking-widest">← BACK</Link>
+      <h1 className="text-[#241f17] text-2xl md:text-3xl font-bold mt-6 mb-3">{post.title}</h1>
+      <p className="text-[13px] text-[#857a68] mb-8">
+        {cat && <span className="text-[#0e7573] mr-3">{cat.name}</span>}
         {post.published_at ? new Date(post.published_at).toLocaleDateString('ko-KR') : ''}
       </p>
       {post.thumbnail_url && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={post.thumbnail_url} alt={post.title} className="w-full mb-8 border border-gray-800 rounded-xl" />
+        <img src={post.thumbnail_url} alt={post.title} className="w-full mb-8 border border-[#e8dfcf] rounded-xl" />
       )}
       {/* content는 RLS로 admin만 작성 가능 — 신뢰 경계 내 HTML */}
       <div className="rte-content" dangerouslySetInnerHTML={{ __html: post.content }} />
-      <div className="mt-10 pt-6 border-t border-gray-800">
+      <div className="mt-10 pt-6 border-t border-[#e8dfcf]">
         <BlogActions postId={post.id} size="md" />
       </div>
     </article>

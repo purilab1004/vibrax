@@ -8,7 +8,7 @@ export default function HeroSection() {
   const { T } = useLang()
 
   return (
-    <section className="relative overflow-hidden border-b border-gray-800">
+    <section className="relative overflow-hidden border-b border-[#e8dfcf]">
       {/* Background image — right side visible, fades left */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -19,7 +19,7 @@ export default function HeroSection() {
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(to right, rgba(10,10,10,0.97) 0%, rgba(10,10,10,0.92) 40%, rgba(10,10,10,0.88) 70%, rgba(10,10,10,0.92) 100%)',
+          background: 'linear-gradient(to right, rgba(247,242,233,0.97) 0%, rgba(247,242,233,0.92) 40%, rgba(247,242,233,0.88) 70%, rgba(247,242,233,0.92) 100%)',
         }}
       />
 
@@ -27,7 +27,7 @@ export default function HeroSection() {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'linear-gradient(to bottom, transparent 60%, #0a0a0a 100%)',
+          background: 'linear-gradient(to bottom, transparent 60%, #f7f2e9 100%)',
         }}
       />
 
@@ -36,8 +36,8 @@ export default function HeroSection() {
         className="absolute inset-0 opacity-[0.025] pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(#00ff41 1px, transparent 1px),
-            linear-gradient(90deg, #00ff41 1px, transparent 1px)
+            linear-gradient(#0e7573 1px, transparent 1px),
+            linear-gradient(90deg, #0e7573 1px, transparent 1px)
           `,
           backgroundSize: '40px 40px',
         }}
@@ -45,7 +45,7 @@ export default function HeroSection() {
 
       {/* 컴팩트 히어로 — 프롬프트 입력이 핵심, 아래 kick식 라이브 그리드가 메인 */}
       <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-14 flex flex-col items-center text-center">
-        <p className="font-pixel text-[#00ff41] text-[11px] tracking-[0.3em] mb-6">
+        <p className="font-pixel text-[#0e7573] text-[11px] tracking-[0.3em] mb-6">
           {T.hero.tagline}
         </p>
         <HeroPromptInput />

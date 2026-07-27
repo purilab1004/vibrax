@@ -93,12 +93,12 @@ export default function CreditsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10">
-      <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest mb-2">{c.heading}</h1>
-      <p className="text-gray-300 text-sm mb-8">{c.subtitle}</p>
+      <h1 className="font-pixel text-[#0e7573] text-sm tracking-widest mb-2">{c.heading}</h1>
+      <p className="text-[#4a4337] text-sm mb-8">{c.subtitle}</p>
 
-      <div className="border border-gray-800 bg-[#111] px-5 py-4 mb-10 flex items-center justify-between">
-        <span className="font-pixel text-[11px] text-gray-400 tracking-widest">{c.balance}</span>
-        <span className="font-pixel text-[#00ff41] text-lg tracking-widest">{balance ?? '—'}</span>
+      <div className="border border-[#e8dfcf] bg-[#fffdf8] px-5 py-4 mb-10 flex items-center justify-between">
+        <span className="font-pixel text-[11px] text-[#6b6152] tracking-widest">{c.balance}</span>
+        <span className="font-pixel text-[#0e7573] text-lg tracking-widest">{balance ?? '—'}</span>
       </div>
 
       {!paddleConfigured && (
@@ -107,23 +107,23 @@ export default function CreditsPage() {
         </p>
       )}
       {status === 'processing' && (
-        <p className="mb-6 text-[#00ff41] text-xs font-pixel tracking-widest animate-pulse">
+        <p className="mb-6 text-[#0e7573] text-xs font-pixel tracking-widest animate-pulse">
           {c.processing}
         </p>
       )}
       {status === 'done' && (
-        <p className="mb-6 text-[#00ff41] text-xs font-pixel tracking-widest">{c.done}</p>
+        <p className="mb-6 text-[#0e7573] text-xs font-pixel tracking-widest">{c.done}</p>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {CREDIT_PACKS.map(p => (
-          <div key={p.key} className="border border-gray-800 bg-[#111] p-6 flex flex-col items-center gap-4 hover:border-[#00ff41] transition-colors">
-            <span className="font-pixel text-white text-base tracking-widest">${p.usd}</span>
-            <span className="text-[#00ff41] text-sm">{c.packCredits(p.credits)}</span>
+          <div key={p.key} className="border border-[#e8dfcf] bg-[#fffdf8] p-6 flex flex-col items-center gap-4 hover:border-[#0e7573] transition-colors">
+            <span className="font-pixel text-[#241f17] text-base tracking-widest">${p.usd}</span>
+            <span className="text-[#0e7573] text-sm">{c.packCredits(p.credits)}</span>
             <button
               onClick={() => buy(p.key)}
               disabled={!paddleConfigured}
-              className="w-full bg-[#00ff41] text-black font-pixel text-[11px] py-3 hover:bg-[#00cc33] transition-colors tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full bg-[#0e7573] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#0a5d5b] transition-colors tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {c.buy}
             </button>
@@ -131,7 +131,7 @@ export default function CreditsPage() {
         ))}
       </div>
 
-      <p className="text-[11px] text-gray-500">{c.note}</p>
+      <p className="text-[11px] text-[#857a68]">{c.note}</p>
     </div>
   )
 }

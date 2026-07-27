@@ -19,7 +19,7 @@ export function VariantCard({ variant, label, selected, status, onClick }: Props
       onClick={onClick}
       title={label}
       className={`relative aspect-square rounded-lg border-2 overflow-hidden bg-gray-800 transition-colors ${
-        selected ? 'border-sky-400' : 'border-transparent hover:border-gray-600'
+        selected ? 'border-sky-400' : 'border-transparent hover:border-[#cfc2a6]'
       }`}
     >
       {variant == null ? (
@@ -36,7 +36,7 @@ export function VariantCard({ variant, label, selected, status, onClick }: Props
         />
       ) : (
         // 썸네일 폴백: 라벨 카드
-        <span className="flex items-center justify-center w-full h-full px-1 text-[10px] leading-tight text-gray-300 text-center">
+        <span className="flex items-center justify-center w-full h-full px-1 text-[10px] leading-tight text-[#4a4337] text-center">
           {label}
         </span>
       )}
@@ -48,12 +48,12 @@ export function VariantCard({ variant, label, selected, status, onClick }: Props
         </span>
       )}
       {variant == null && (
-        <span className="absolute inset-x-0 bottom-0 text-[9px] text-gray-300 py-0.5">원본</span>
+        <span className="absolute inset-x-0 bottom-0 text-[9px] text-[#4a4337] py-0.5">원본</span>
       )}
 
       {/* 선택 체크 */}
       {selected && (
-        <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] flex items-center justify-center">✓</span>
+        <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-sky-500 text-[#241f17] text-[10px] flex items-center justify-center">✓</span>
       )}
       {/* 로드 상태 */}
       {status === 'loading' && (

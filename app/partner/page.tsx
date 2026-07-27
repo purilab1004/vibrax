@@ -102,7 +102,7 @@ function MicrosoftLogo() {
         <rect x="1" y="12.5" width="10.5" height="10.5" fill="#00A4EF" />
         <rect x="12.5" y="12.5" width="10.5" height="10.5" fill="#FFB900" />
       </svg>
-      <span className="text-xl font-semibold text-gray-200">Microsoft</span>
+      <span className="text-xl font-semibold text-[#3a332a]">Microsoft</span>
     </span>
   )
 }
@@ -160,17 +160,17 @@ export default function PartnerPage() {
   }
 
   const inputClass =
-    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-500 rounded-lg'
-  const labelClass = 'block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest'
+    'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f] rounded-lg'
+  const labelClass = 'block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest'
   const orgTypes: OrgType[] = ['school', 'company', 'organization', 'institution', 'other']
 
   const applyCard = (
-        <div className="border border-gray-800 bg-[#111] rounded-2xl p-8">
-          <h2 className="font-pixel text-sm text-[#00ff41] tracking-widest mb-2">{c.formHeading}</h2>
-          <p className="text-gray-400 text-sm mb-8">{c.formDesc}</p>
+        <div className="border border-[#e8dfcf] bg-[#fffdf8] rounded-2xl p-8">
+          <h2 className="font-pixel text-sm text-[#0e7573] tracking-widest mb-2">{c.formHeading}</h2>
+          <p className="text-[#6b6152] text-sm mb-8">{c.formDesc}</p>
 
           {status === 'done' ? (
-            <p className="text-[#00ff41] text-base">{c.doneMsg}</p>
+            <p className="text-[#0e7573] text-base">{c.doneMsg}</p>
           ) : (
             <form onSubmit={submit} className="space-y-5">
               <div>
@@ -183,8 +183,8 @@ export default function PartnerPage() {
                       onClick={() => setOrgType(t)}
                       className={`py-2.5 text-[13px] font-medium rounded-lg border transition-colors ${
                         orgType === t
-                          ? 'bg-[#00ff41] text-black border-[#00ff41]'
-                          : 'text-gray-400 border-gray-800 hover:border-gray-600'
+                          ? 'bg-[#0e7573] text-[#241f17] border-[#0e7573]'
+                          : 'text-[#6b6152] border-[#e8dfcf] hover:border-[#cfc2a6]'
                       }`}
                     >
                       {c.orgTypes[t]}
@@ -220,7 +220,7 @@ export default function PartnerPage() {
               <button
                 type="submit"
                 disabled={status === 'busy'}
-                className="w-full bg-[#00ff41] text-black font-pixel text-[12px] py-4 rounded-lg hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest"
+                className="w-full bg-[#0e7573] text-[#241f17] font-pixel text-[12px] py-4 rounded-lg hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 tracking-widest"
               >
                 {status === 'busy' ? c.submitting : c.submit}
               </button>
@@ -232,23 +232,23 @@ export default function PartnerPage() {
   return (
     <div>
       {/* ── 히어로 ── */}
-      <section className="relative overflow-hidden border-b border-gray-800">
+      <section className="relative overflow-hidden border-b border-[#e8dfcf]">
         <div
           className="absolute inset-0 opacity-[0.04] pointer-events-none"
           style={{
-            backgroundImage: 'linear-gradient(#00ff41 1px, transparent 1px), linear-gradient(90deg, #00ff41 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(#0e7573 1px, transparent 1px), linear-gradient(90deg, #0e7573 1px, transparent 1px)',
             backgroundSize: '40px 40px',
           }}
         />
         <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           {/* 좌측: 모집 문구 */}
           <div className="order-1 lg:sticky lg:top-24 text-center lg:text-left">
-            <p className="font-pixel text-[11px] text-[#00ff41] tracking-[0.3em] mb-6">{c.badge}</p>
-            <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">{c.heading}</h1>
-            <p className="text-gray-300 text-base md:text-lg leading-relaxed whitespace-pre-line mb-10">{c.tagline}</p>
+            <p className="font-pixel text-[11px] text-[#0e7573] tracking-[0.3em] mb-6">{c.badge}</p>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-[#241f17] mb-6 leading-tight">{c.heading}</h1>
+            <p className="text-[#4a4337] text-base md:text-lg leading-relaxed whitespace-pre-line mb-10">{c.tagline}</p>
             <div className="hidden lg:grid grid-cols-2 gap-4">
               {c.benefits.map(([h]) => (
-                <div key={h} className="border border-gray-800 bg-[#111] rounded-xl px-4 py-3 text-sm text-gray-300">
+                <div key={h} className="border border-[#e8dfcf] bg-[#fffdf8] rounded-xl px-4 py-3 text-sm text-[#4a4337]">
                   {h}
                 </div>
               ))}
@@ -263,12 +263,12 @@ export default function PartnerPage() {
 
       {/* ── 파트너 로고 ── */}
       <section className="max-w-6xl mx-auto px-6 py-14">
-        <h2 className="font-pixel text-sm text-white tracking-widest mb-8 text-center">{c.partnersHeading}</h2>
+        <h2 className="font-pixel text-sm text-[#241f17] tracking-widest mb-8 text-center">{c.partnersHeading}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {DEFAULT_PARTNERS.map(p => (
             <div
               key={p.name}
-              className="border border-gray-800 bg-[#111] rounded-2xl h-28 flex items-center justify-center hover:border-gray-600 transition-colors grayscale-[0.15] hover:grayscale-0"
+              className="border border-[#e8dfcf] bg-[#fffdf8] rounded-2xl h-28 flex items-center justify-center hover:border-[#cfc2a6] transition-colors grayscale-[0.15] hover:grayscale-0"
             >
               {p.logo}
             </div>
@@ -278,12 +278,12 @@ export default function PartnerPage() {
 
       {/* ── 혜택 ── */}
       <section className="max-w-6xl mx-auto px-6 pb-14">
-        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.benefitsHeading}</h2>
+        <h2 className="font-pixel text-sm text-[#241f17] tracking-widest mb-8">{c.benefitsHeading}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {c.benefits.map(([h, p]) => (
-            <div key={h} className="border border-gray-800 bg-[#111] rounded-2xl p-6">
-              <h3 className="text-white text-base font-bold mb-2">{h}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">{p}</p>
+            <div key={h} className="border border-[#e8dfcf] bg-[#fffdf8] rounded-2xl p-6">
+              <h3 className="text-[#241f17] text-base font-bold mb-2">{h}</h3>
+              <p className="text-[#6b6152] text-sm leading-relaxed">{p}</p>
             </div>
           ))}
         </div>

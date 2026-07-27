@@ -77,12 +77,12 @@ export default async function GameDetailPage({ params }: Props) {
     <div className="max-w-5xl mx-auto px-6 py-10">
       <Link
         href="/games"
-        className="text-xs text-gray-300 hover:text-[#00ff41] transition-colors mb-6 inline-block tracking-wider"
+        className="text-xs text-[#4a4337] hover:text-[#0e7573] transition-colors mb-6 inline-block tracking-wider"
       >
         ← BACK TO GAMES
       </Link>
 
-      <div className="relative aspect-video w-full mb-8 overflow-hidden bg-gray-900 border border-gray-800">
+      <div className="relative aspect-video w-full mb-8 overflow-hidden bg-gray-900 border border-[#e8dfcf]">
         <Image
           src={game.thumbnail_url}
           alt={game.title}
@@ -96,22 +96,22 @@ export default async function GameDetailPage({ params }: Props) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-3">
             <span
-              className={`inline-block font-pixel text-[11px] px-2 py-1 text-white ${genreColor}`}
+              className={`inline-block font-pixel text-[11px] px-2 py-1 text-[#241f17] ${genreColor}`}
             >
               {genreLabel}
             </span>
             {game.language && (
-              <span className="inline-block font-pixel text-[11px] px-2 py-1 border border-gray-700 text-gray-400">
+              <span className="inline-block font-pixel text-[11px] px-2 py-1 border border-[#d9cdb4] text-[#6b6152]">
                 {game.language === 'ko' ? '한국어' : 'English'}
               </span>
             )}
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2 leading-tight">
+          <h1 className="text-2xl font-semibold text-[#241f17] mb-2 leading-tight">
             {game.title}
           </h1>
-          <p className="text-gray-300 text-xs tracking-wider mb-3">by {author}</p>
+          <p className="text-[#4a4337] text-xs tracking-wider mb-3">by {author}</p>
           <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-xs text-gray-500 font-pixel">
+            <span className="flex items-center gap-1.5 text-xs text-[#857a68] font-pixel">
               <ViewerIcon className="w-3.5 h-3.5" />{game.view_count ?? 0}
             </span>
             <LikeButton gameId={game.id} size="md" />

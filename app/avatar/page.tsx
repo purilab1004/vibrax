@@ -11,7 +11,7 @@ import { getCharacter } from '@/lib/avatar/editor/constants'
 
 const EditorScene = dynamic(() => import('@/lib/avatar/editor/EditorScene').then((m) => m.EditorScene), {
   ssr: false,
-  loading: () => <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">3D 에디터 로딩 중…</div>,
+  loading: () => <div className="flex-1 flex items-center justify-center text-[#857a68] text-sm">3D 에디터 로딩 중…</div>,
 })
 
 async function snapshotCanvas(): Promise<Blob | null> {
@@ -66,26 +66,26 @@ export default function AvatarEditorPage() {
 
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-gray-950">
-      <div className="flex items-center gap-4 px-4 h-12 shrink-0 border-b border-gray-800 bg-gray-900">
+      <div className="flex items-center gap-4 px-4 h-12 shrink-0 border-b border-[#e8dfcf] bg-gray-900">
         <button
           onClick={() => router.push('/profile')}
-          className="font-pixel text-[11px] text-gray-400 hover:text-white tracking-widest"
+          className="font-pixel text-[11px] text-[#6b6152] hover:text-[#241f17] tracking-widest"
         >
           ← 내정보
         </button>
-        <h1 className="font-pixel text-[#00ff41] text-[11px] tracking-widest">아바타 설정</h1>
+        <h1 className="font-pixel text-[#0e7573] text-[11px] tracking-widest">아바타 설정</h1>
         <div className="flex-1" />
-        {msg && <span className={`text-xs font-pixel tracking-widest ${msg.ok ? 'text-[#00ff41]' : 'text-red-400'}`}>{msg.text}</span>}
+        {msg && <span className={`text-xs font-pixel tracking-widest ${msg.ok ? 'text-[#0e7573]' : 'text-red-400'}`}>{msg.text}</span>}
         <button
           onClick={handleSave}
           disabled={!ready || saving || !partsReady}
-          className="font-pixel text-[11px] bg-[#00ff41] text-black px-7 py-2.5 hover:bg-[#00cc33] transition-colors disabled:opacity-40 tracking-widest shadow-[0_0_12px_rgba(0,255,65,0.35)]"
+          className="font-pixel text-[11px] bg-[#0e7573] text-[#241f17] px-7 py-2.5 hover:bg-[#0a5d5b] transition-colors disabled:opacity-40 tracking-widest shadow-[0_0_12px_rgba(14,117,115,0.35)]"
         >
           {saving ? '저장 중…' : !partsReady ? '아바타 로딩 중…' : '💾 저장하기'}
         </button>
       </div>
       <div className="flex-1 min-h-0">
-        {ready ? <EditorScene /> : <div className="flex-1 h-full flex items-center justify-center text-gray-500 text-sm">불러오는 중…</div>}
+        {ready ? <EditorScene /> : <div className="flex-1 h-full flex items-center justify-center text-[#857a68] text-sm">불러오는 중…</div>}
       </div>
     </div>
   )

@@ -52,14 +52,14 @@ export default function AdminGamesPage() {
 
   return (
     <div>
-      <h1 className="font-pixel text-[#00ff41] text-base tracking-widest mb-6">{a.gamesHeading}</h1>
+      <h1 className="font-pixel text-[#0e7573] text-base tracking-widest mb-6">{a.gamesHeading}</h1>
       <div className="flex gap-3 mb-6 flex-wrap">
         <form onSubmit={e => { e.preventDefault(); load() }} className="flex-1 min-w-[200px] max-w-sm">
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder={a.searchGames}
-            className="w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-2.5 text-base outline-none text-white placeholder-gray-600"
+            className="w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-2.5 text-base outline-none text-[#241f17] placeholder-[#a1957f]"
           />
         </form>
         <div className="flex gap-1">
@@ -68,7 +68,7 @@ export default function AdminGamesPage() {
               key={s}
               onClick={() => setSort(s)}
               className={`font-pixel text-[11px] tracking-widest px-3 py-2 border transition-colors ${
-                sort === s ? 'border-[#00ff41] text-[#00ff41]' : 'border-gray-800 text-gray-500 hover:text-white'
+                sort === s ? 'border-[#0e7573] text-[#0e7573]' : 'border-[#e8dfcf] text-[#857a68] hover:text-[#241f17]'
               }`}
             >
               {s === 'newest' ? a.sortNewest : a.sortViews}
@@ -77,12 +77,12 @@ export default function AdminGamesPage() {
         </div>
       </div>
       {games === null ? (
-        <p className="font-pixel text-xs text-gray-400 tracking-widest">{a.loading}</p>
+        <p className="font-pixel text-xs text-[#6b6152] tracking-widest">{a.loading}</p>
       ) : (
-        <div className="overflow-x-auto border border-gray-800">
+        <div className="overflow-x-auto border border-[#e8dfcf]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#111] text-gray-500 font-pixel text-[11px] tracking-widest">
+              <tr className="bg-[#fffdf8] text-[#857a68] font-pixel text-[11px] tracking-widest">
                 <th className="text-left px-4 py-3">{a.colGame}</th>
                 <th className="text-left px-4 py-3">{a.colGenre}</th>
                 <th className="text-right px-4 py-3">{a.colViews}</th>
@@ -90,7 +90,7 @@ export default function AdminGamesPage() {
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
+            <tbody className="divide-y divide-[#e8dfcf]">
               {games.map(g => (
                 <tr key={g.id}>
                   <td className="px-4 py-3">
@@ -98,10 +98,10 @@ export default function AdminGamesPage() {
                       <input
                         value={editTitle}
                         onChange={e => setEditTitle(e.target.value)}
-                        className="w-full bg-[#0d0d0d] border border-[#00ff41] px-2 py-1 text-sm outline-none text-white"
+                        className="w-full bg-[#fffdf8] border border-[#0e7573] px-2 py-1 text-sm outline-none text-[#241f17]"
                       />
                     ) : (
-                      <a href={g.play_url} target="_blank" rel="noreferrer" className="text-white hover:text-[#00ff41] transition-colors">
+                      <a href={g.play_url} target="_blank" rel="noreferrer" className="text-[#241f17] hover:text-[#0e7573] transition-colors">
                         {g.title}
                       </a>
                     )}
@@ -111,27 +111,27 @@ export default function AdminGamesPage() {
                       <select
                         value={editGenre}
                         onChange={e => setEditGenre(e.target.value as Genre)}
-                        className="bg-[#0d0d0d] border border-[#00ff41] px-2 py-1 text-sm outline-none text-white"
+                        className="bg-[#fffdf8] border border-[#0e7573] px-2 py-1 text-sm outline-none text-[#241f17]"
                       >
                         {GENRES.map(x => <option key={x} value={x}>{T.genres[x]}</option>)}
                       </select>
                     ) : (
-                      <span className="text-gray-400">{T.genres[g.genre]}</span>
+                      <span className="text-[#6b6152]">{T.genres[g.genre]}</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-400">{(g.view_count ?? 0).toLocaleString()}</td>
-                  <td className="px-4 py-3 text-gray-500">{new Date(g.created_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-right text-[#6b6152]">{(g.view_count ?? 0).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-[#857a68]">{new Date(g.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2 justify-end">
                       {editingId === g.id ? (
                         <>
-                          <button onClick={saveEdit} className="font-pixel text-[10px] bg-[#00ff41] text-black px-2 py-1">{a.save}</button>
-                          <button onClick={() => setEditingId(null)} className="font-pixel text-[10px] border border-gray-700 text-gray-400 px-2 py-1">{a.cancel}</button>
+                          <button onClick={saveEdit} className="font-pixel text-[10px] bg-[#0e7573] text-[#241f17] px-2 py-1">{a.save}</button>
+                          <button onClick={() => setEditingId(null)} className="font-pixel text-[10px] border border-[#d9cdb4] text-[#6b6152] px-2 py-1">{a.cancel}</button>
                         </>
                       ) : (
                         <>
-                          <button onClick={() => startEdit(g)} className="font-pixel text-[10px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-[#00ff41] hover:text-[#00ff41] transition-colors">{a.edit}</button>
-                          <button onClick={() => remove(g.id)} className="font-pixel text-[10px] border border-gray-700 text-gray-400 px-2 py-1 hover:border-red-400 hover:text-red-400 transition-colors">{a.delete}</button>
+                          <button onClick={() => startEdit(g)} className="font-pixel text-[10px] border border-[#d9cdb4] text-[#6b6152] px-2 py-1 hover:border-[#0e7573] hover:text-[#0e7573] transition-colors">{a.edit}</button>
+                          <button onClick={() => remove(g.id)} className="font-pixel text-[10px] border border-[#d9cdb4] text-[#6b6152] px-2 py-1 hover:border-red-400 hover:text-red-400 transition-colors">{a.delete}</button>
                         </>
                       )}
                     </div>

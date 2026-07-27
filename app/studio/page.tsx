@@ -92,7 +92,7 @@ export default function StudioPage() {
   if (projects === null) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <p className="font-pixel text-[11px] text-gray-400 tracking-widest">{s.loading}</p>
+        <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest">{s.loading}</p>
       </div>
     )
   }
@@ -100,26 +100,26 @@ export default function StudioPage() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
       <div className="flex items-end justify-between mb-2 flex-wrap gap-3">
-        <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest">{s.heading}</h1>
+        <h1 className="font-pixel text-[#0e7573] text-sm tracking-widest">{s.heading}</h1>
         <div className="flex items-center gap-4">
-          <span className="font-pixel text-[11px] text-gray-400 tracking-widest">
+          <span className="font-pixel text-[11px] text-[#6b6152] tracking-widest">
             {balance === null ? '—' : s.balance(balance)}
           </span>
           <Link
             href="/credits"
-            className="font-pixel text-[11px] tracking-widest text-[#00ff41] border border-[#00ff41] px-3 py-1.5 hover:bg-[#00ff41] hover:text-black transition-colors"
+            className="font-pixel text-[11px] tracking-widest text-[#0e7573] border border-[#0e7573] px-3 py-1.5 hover:bg-[#0e7573] hover:text-white transition-colors"
           >
             {T.credits.heading}
           </Link>
         </div>
       </div>
-      <p className="text-gray-300 text-sm mb-8">{s.subtitle}</p>
+      <p className="text-[#4a4337] text-sm mb-8">{s.subtitle}</p>
 
       <div className="mb-10">
         <button
           onClick={createProject}
           disabled={creating}
-          className="bg-[#00ff41] text-black font-pixel text-[11px] px-6 py-4 hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest"
+          className="bg-[#0e7573] text-[#241f17] font-pixel text-[11px] px-6 py-4 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 tracking-widest"
         >
           {s.newProject}
         </button>
@@ -135,21 +135,21 @@ export default function StudioPage() {
           {s.listError}
         </p>
       ) : projects.length === 0 ? (
-        <p className="text-gray-500 text-sm">{s.empty}</p>
+        <p className="text-[#857a68] text-sm">{s.empty}</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.map(p => (
             <Link
               key={p.id}
               href={`/studio/${p.id}`}
-              className="border border-gray-800 bg-[#111] p-5 hover:border-[#00ff41] transition-colors group"
+              className="border border-[#e8dfcf] bg-[#fffdf8] p-5 hover:border-[#0e7573] transition-colors group"
             >
-              <h2 className="text-white text-sm mb-2 truncate">{p.title || s.untitled}</h2>
+              <h2 className="text-[#241f17] text-sm mb-2 truncate">{p.title || s.untitled}</h2>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-gray-600">
+                <span className="text-[11px] text-[#9d9280]">
                   {new Date(p.created_at).toLocaleDateString()}
                 </span>
-                <span className="font-pixel text-[11px] text-gray-500 group-hover:text-[#00ff41] tracking-widest transition-colors">
+                <span className="font-pixel text-[11px] text-[#857a68] group-hover:text-[#0e7573] tracking-widest transition-colors">
                   {s.openProject}
                 </span>
               </div>

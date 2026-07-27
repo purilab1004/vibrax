@@ -59,8 +59,8 @@ export default function NavBar() {
   const navLinkDesktop = (href: string, label: string) => (
     <Link
       href={href}
-      className={`text-[13px] font-medium tracking-wider transition-colors hover:text-[#00ff41] ${
-        pathname === href ? 'text-[#00ff41]' : 'text-gray-400'
+      className={`text-[13px] font-medium tracking-wider transition-colors hover:text-[#0e7573] ${
+        pathname === href ? 'text-[#0e7573]' : 'text-[#6b6152]'
       }`}
     >
       {label}
@@ -72,7 +72,7 @@ export default function NavBar() {
       href={href}
       onClick={() => setMenuOpen(false)}
       className={`font-pixel text-2xl tracking-widest transition-colors py-3 ${
-        pathname === href ? 'text-[#00ff41]' : 'text-white hover:text-[#00ff41]'
+        pathname === href ? 'text-[#0e7573]' : 'text-[#241f17] hover:text-[#0e7573]'
       }`}
     >
       {label}
@@ -83,7 +83,7 @@ export default function NavBar() {
     <button
       onClick={() => setLang(l)}
       className={`text-[11px] tracking-widest font-pixel transition-colors ${
-        lang === l ? 'text-[#00ff41]' : 'text-gray-600 hover:text-gray-400'
+        lang === l ? 'text-[#0e7573]' : 'text-[#9d9280] hover:text-[#6b6152]'
       }`}
     >
       {label}
@@ -93,37 +93,37 @@ export default function NavBar() {
   // 관리자 — 큰 메뉴 없이 로고 + 관리자 홈 + 복귀/로그아웃만 있는 미니 헤더 (Notion풍)
   if (pathname.startsWith('/admin')) {
     return (
-      <header className="sticky top-0 z-50 border-b border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-[#e8dfcf] bg-[#f7f2e9]/95 backdrop-blur-sm">
         <nav className="w-full px-5 h-14 flex items-center gap-5">
-          <Link href="/" className="group font-pixel text-[#00ff41] text-xs tracking-widest hover:text-white transition-colors shrink-0">
-            VIBREX<span className="text-[#ffd24d] group-hover:text-white transition-colors">CUP</span>
+          <Link href="/" className="group text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
+            vibrex<span className="text-[#0e7573]">cup</span>
           </Link>
-          <span className="text-[13px] font-semibold text-gray-500 border border-gray-800 rounded px-2 py-0.5">
+          <span className="text-[13px] font-semibold text-[#857a68] border border-[#e8dfcf] rounded px-2 py-0.5">
             ⚙ {T.nav.admin}
           </span>
           <div className="flex-1" />
           <Link
             href="/admin"
-            className={`text-[13px] font-medium transition-colors hover:text-[#00ff41] ${
-              pathname === '/admin' ? 'text-[#00ff41]' : 'text-gray-300'
+            className={`text-[13px] font-medium transition-colors hover:text-[#0e7573] ${
+              pathname === '/admin' ? 'text-[#0e7573]' : 'text-[#4a4337]'
             }`}
           >
             {T.nav.adminHome}
           </Link>
-          <Link href="/" className="text-[13px] font-medium text-gray-400 hover:text-white transition-colors">
+          <Link href="/" className="text-[13px] font-medium text-[#6b6152] hover:text-[#241f17] transition-colors">
             {T.nav.backToSite}
           </Link>
           {user && (
             <button
               onClick={handleSignOut}
-              className="text-[13px] font-medium text-gray-400 hover:text-[#00ff41] transition-colors"
+              className="text-[13px] font-medium text-[#6b6152] hover:text-[#0e7573] transition-colors"
             >
               {T.nav.logout}
             </button>
           )}
-          <div className="flex items-center gap-1 border-l border-gray-800 pl-4">
+          <div className="flex items-center gap-1 border-l border-[#e8dfcf] pl-4">
             {langBtn('ko', 'KO')}
-            <span className="text-gray-700 text-[11px]">|</span>
+            <span className="text-[#b3a78f] text-[11px]">|</span>
             {langBtn('en', 'EN')}
           </div>
         </nav>
@@ -133,14 +133,14 @@ export default function NavBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-gray-800 bg-[#0a0a0a]/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-[#e8dfcf] bg-[#f7f2e9]/95 backdrop-blur-sm">
         <nav className="w-full px-5 h-14 flex items-center gap-4">
           <Link
             href="/"
-            className="group font-pixel text-[#00ff41] text-xs tracking-widest hover:text-white transition-colors shrink-0"
+            className="group text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0"
           >
-            VIBREX<span className="text-[#ffd24d] group-hover:text-white transition-colors">CUP</span>
-            <span className="ml-1 align-top font-pixel text-[6px] px-1 py-px border border-red-500/70 text-red-500 rounded">
+            vibrex<span className="text-[#0e7573]">cup</span>
+            <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
               BETA
             </span>
           </Link>
@@ -152,10 +152,10 @@ export default function NavBar() {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={T.nav.searchPlaceholder}
-                className="w-full bg-[#111] border border-gray-800 focus:border-[#00ff41] rounded-none pl-9 pr-3 py-2 text-[13px] text-white placeholder-gray-600 outline-none transition-colors"
+                className="w-full bg-[#fffdf8] border border-[#e8dfcf] focus:border-[#0e7573] rounded-none pl-9 pr-3 py-2 text-[13px] text-[#241f17] placeholder-[#a1957f] outline-none transition-colors"
                 aria-label={T.nav.search}
               />
-              <button type="submit" aria-label={T.nav.search} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#00ff41] transition-colors">
+              <button type="submit" aria-label={T.nav.search} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#857a68] hover:text-[#0e7573] transition-colors">
                 <SearchIcon />
               </button>
             </div>
@@ -170,7 +170,7 @@ export default function NavBar() {
             {navLinkDesktop('/studio', T.nav.studio)}
             <Link
               href="/tournament"
-              className="glow-gold glass-shine px-1.5 py-1 rounded text-[13px] font-semibold tracking-wider transition-colors hover:text-[#ffe9a8]"
+              className="glow-gold glass-shine px-1.5 py-1 rounded text-[13px] font-semibold tracking-wider transition-colors hover:text-[#8a6a14]"
             >
               🏆 {T.nav.tournament}
             </Link>
@@ -183,7 +183,7 @@ export default function NavBar() {
                 {navLinkDesktop('/profile', T.nav.mypage)}
                 <button
                   onClick={handleSignOut}
-                  className="text-[13px] font-medium tracking-wider text-gray-400 hover:text-[#00ff41] transition-colors"
+                  className="text-[13px] font-medium tracking-wider text-[#6b6152] hover:text-[#0e7573] transition-colors"
                 >
                   {T.nav.logout}
                 </button>
@@ -192,14 +192,14 @@ export default function NavBar() {
             ) : (
               <Link
                 href="/login"
-                className="font-pixel text-[11px] tracking-widest bg-[#00ff41] text-black px-5 py-2 hover:bg-[#00cc33] transition-colors"
+                className="font-pixel text-[11px] tracking-widest bg-[#0e7573] text-white px-5 py-2 hover:bg-[#0a5d5b] transition-colors"
               >
                 {T.nav.login}
               </Link>
             )}
-            <div className="flex items-center gap-1 border-l border-gray-800 pl-5">
+            <div className="flex items-center gap-1 border-l border-[#e8dfcf] pl-5">
               {langBtn('ko', 'KO')}
-              <span className="text-gray-700 text-[11px]">|</span>
+              <span className="text-[#b3a78f] text-[11px]">|</span>
               {langBtn('en', 'EN')}
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function NavBar() {
           <div className="flex md:hidden items-center gap-3 ml-auto">
             <div className="flex items-center gap-1">
               {langBtn('ko', 'KO')}
-              <span className="text-gray-700 text-[11px]">|</span>
+              <span className="text-[#b3a78f] text-[11px]">|</span>
               {langBtn('en', 'EN')}
             </div>
             <button
@@ -226,26 +226,26 @@ export default function NavBar() {
 
       {/* ── Mobile full-screen menu overlay ── */}
       <div
-        className={`fixed inset-0 z-[60] bg-[#0a0a0a] flex flex-col transition-all duration-300 md:hidden ${
+        className={`fixed inset-0 z-[60] bg-[#f7f2e9] flex flex-col transition-all duration-300 md:hidden ${
           menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         {/* Top bar */}
-        <div className="flex items-center justify-between px-6 h-14 border-b border-gray-800 shrink-0">
+        <div className="flex items-center justify-between px-6 h-14 border-b border-[#e8dfcf] shrink-0">
           <Link
             href="/"
             onClick={() => setMenuOpen(false)}
-            className="font-pixel text-[#00ff41] text-xs tracking-widest"
+            className="text-[#241f17] text-xl font-extrabold tracking-tight"
           >
-            VIBREX<span className="text-[#ffd24d]">CUP</span>
-            <span className="ml-1 align-top font-pixel text-[6px] px-1 py-px border border-red-500/70 text-red-500 rounded">
+            vibrex<span className="text-[#0e7573]">cup</span>
+            <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
               BETA
             </span>
           </Link>
           <button
             onClick={() => setMenuOpen(false)}
             aria-label="메뉴 닫기"
-            className="font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] transition-colors border border-gray-700 px-3 py-1.5"
+            className="font-pixel text-[11px] text-[#6b6152] hover:text-[#0e7573] transition-colors border border-[#d9cdb4] px-3 py-1.5"
           >
             ✕ CLOSE
           </button>
@@ -261,10 +261,10 @@ export default function NavBar() {
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder={T.nav.searchPlaceholder}
-                  className="w-full bg-[#111] border border-gray-800 focus:border-[#00ff41] pl-10 pr-3 py-3 text-sm text-white placeholder-gray-600 outline-none transition-colors"
+                  className="w-full bg-[#fffdf8] border border-[#e8dfcf] focus:border-[#0e7573] pl-10 pr-3 py-3 text-sm text-[#241f17] placeholder-[#a1957f] outline-none transition-colors"
                   aria-label={T.nav.search}
                 />
-                <button type="submit" aria-label={T.nav.search} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <button type="submit" aria-label={T.nav.search} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#857a68]">
                   <SearchIcon />
                 </button>
               </div>
@@ -287,7 +287,7 @@ export default function NavBar() {
                 {navLinkMobile('/profile', T.nav.mypage)}
                 <button
                   onClick={handleSignOut}
-                  className="font-pixel text-2xl tracking-widest text-left text-gray-400 hover:text-[#00ff41] transition-colors py-3"
+                  className="font-pixel text-2xl tracking-widest text-left text-[#6b6152] hover:text-[#0e7573] transition-colors py-3"
                 >
                   {T.nav.logout}
                 </button>
@@ -297,7 +297,7 @@ export default function NavBar() {
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="mt-4 inline-block font-pixel text-sm tracking-widest bg-[#00ff41] text-black px-6 py-3 hover:bg-[#00cc33] transition-colors text-center"
+                className="mt-4 inline-block font-pixel text-sm tracking-widest bg-[#0e7573] text-white px-6 py-3 hover:bg-[#0a5d5b] transition-colors text-center"
               >
                 {T.nav.login}
               </Link>
@@ -305,13 +305,13 @@ export default function NavBar() {
           </nav>
 
           {/* Footer lang + copyright */}
-          <div className="flex items-center gap-4 border-t border-gray-800 pt-6">
+          <div className="flex items-center gap-4 border-t border-[#e8dfcf] pt-6">
             <div className="flex items-center gap-2">
               {langBtn('ko', 'KO')}
-              <span className="text-gray-700 text-[11px]">|</span>
+              <span className="text-[#b3a78f] text-[11px]">|</span>
               {langBtn('en', 'EN')}
             </div>
-            <span className="text-[11px] text-gray-700 font-pixel ml-auto">© VIBREXCUP 2026</span>
+            <span className="text-[11px] text-[#b3a78f] font-pixel ml-auto">© VIBREXCUP 2026</span>
           </div>
         </div>
       </div>

@@ -52,15 +52,15 @@ export default function AdminSettingsPage() {
     setSaving(false)
   }
 
-  if (!loaded) return <p className="font-pixel text-xs text-gray-400 tracking-widest">{a.loading}</p>
+  if (!loaded) return <p className="font-pixel text-xs text-[#6b6152] tracking-widest">{a.loading}</p>
 
   const inputClass =
-    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-base outline-none transition-colors text-white placeholder-gray-500'
-  const labelClass = 'block font-pixel text-xs mb-2 text-gray-400 tracking-widest'
+    'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-3 text-base outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
+  const labelClass = 'block font-pixel text-xs mb-2 text-[#6b6152] tracking-widest'
 
   return (
     <div className="max-w-lg">
-      <h1 className="font-pixel text-[#00ff41] text-base tracking-widest mb-8">{a.settingsHeading}</h1>
+      <h1 className="font-pixel text-[#0e7573] text-base tracking-widest mb-8">{a.settingsHeading}</h1>
       <div className="space-y-6">
         <div>
           <label className={labelClass}>{a.setSignupBonus}</label>
@@ -74,20 +74,20 @@ export default function AdminSettingsPage() {
           <label className={labelClass}>{a.setTournamentPrize}</label>
           <input type="number" min={0} step={50000} value={tournamentPrize} onChange={e => setTournamentPrize(e.target.value)} className={inputClass} />
         </div>
-        <div className="border border-gray-800 bg-[#111] p-5 space-y-4">
-          <p className="font-pixel text-xs text-gray-400 tracking-widest">{a.setBanner}</p>
-          <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-            <input type="checkbox" checked={bannerEnabled} onChange={e => setBannerEnabled(e.target.checked)} className="accent-[#00ff41]" />
+        <div className="border border-[#e8dfcf] bg-[#fffdf8] p-5 space-y-4">
+          <p className="font-pixel text-xs text-[#6b6152] tracking-widest">{a.setBanner}</p>
+          <label className="flex items-center gap-2 text-sm text-[#6b6152] cursor-pointer">
+            <input type="checkbox" checked={bannerEnabled} onChange={e => setBannerEnabled(e.target.checked)} className="accent-[#0e7573]" />
             {a.setBannerEnabled}
           </label>
           <input value={bannerText} onChange={e => setBannerText(e.target.value)} placeholder={a.setBannerText} className={inputClass} />
           <input value={bannerLink} onChange={e => setBannerLink(e.target.value)} placeholder={a.setBannerLink} className={inputClass} />
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#00ff41] text-black px-6 py-3 hover:bg-[#00cc33] transition-colors disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#0e7573] text-[#241f17] px-6 py-3 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50">
             {a.save}
           </button>
-          {msg === 'saved' && <span className="text-[#00ff41] text-sm">{a.saved}</span>}
+          {msg === 'saved' && <span className="text-[#0e7573] text-sm">{a.saved}</span>}
           {msg === 'failed' && <span className="text-red-400 text-sm">{a.saveFailed}</span>}
         </div>
       </div>

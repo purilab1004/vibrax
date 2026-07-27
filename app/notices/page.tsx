@@ -21,18 +21,18 @@ export default function NoticesPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
-      <h1 className="font-pixel text-[#00ff41] text-sm tracking-widest mb-8">{n.heading}</h1>
+      <h1 className="font-pixel text-[#0e7573] text-sm tracking-widest mb-8">{n.heading}</h1>
       {notices === null ? null : notices.length === 0 ? (
-        <p className="text-gray-500 text-sm">{n.empty}</p>
+        <p className="text-[#857a68] text-sm">{n.empty}</p>
       ) : (
-        <div className="border border-gray-800 divide-y divide-gray-800">
+        <div className="border border-[#e8dfcf] divide-y divide-[#e8dfcf]">
           {notices.map(item => (
-            <Link key={item.id} href={`/notices/${item.id}`} className="flex items-center gap-3 px-5 py-4 bg-[#111] hover:bg-[#161616] transition-colors group">
+            <Link key={item.id} href={`/notices/${item.id}`} className="flex items-center gap-3 px-5 py-4 bg-[#fffdf8] hover:bg-[#161616] transition-colors group">
               {item.pinned && (
-                <span className="font-pixel text-[10px] text-[#00ff41] border border-[#00ff41] px-1.5 py-0.5 shrink-0">{n.pinned}</span>
+                <span className="font-pixel text-[10px] text-[#0e7573] border border-[#0e7573] px-1.5 py-0.5 shrink-0">{n.pinned}</span>
               )}
-              <span className="text-sm text-white group-hover:text-[#00ff41] transition-colors truncate flex-1">{item.title}</span>
-              <span className="text-[11px] text-gray-600 shrink-0">{new Date(item.created_at).toLocaleDateString()}</span>
+              <span className="text-sm text-[#241f17] group-hover:text-[#0e7573] transition-colors truncate flex-1">{item.title}</span>
+              <span className="text-[11px] text-[#9d9280] shrink-0">{new Date(item.created_at).toLocaleDateString()}</span>
             </Link>
           ))}
         </div>

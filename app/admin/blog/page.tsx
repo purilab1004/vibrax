@@ -35,33 +35,33 @@ export default function AdminBlogPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="font-pixel text-[#00ff41] text-base tracking-widest">{a.blogHeading}</h1>
-        <Link href="/admin/blog/new" className="font-pixel text-xs bg-[#00ff41] text-black px-4 py-2.5 hover:bg-[#00cc33] transition-colors tracking-widest">
+        <h1 className="font-pixel text-[#0e7573] text-base tracking-widest">{a.blogHeading}</h1>
+        <Link href="/admin/blog/new" className="font-pixel text-xs bg-[#0e7573] text-[#241f17] px-4 py-2.5 hover:bg-[#0a5d5b] transition-colors tracking-widest">
           {a.newPost}
         </Link>
       </div>
       <div className="mb-8"><CategoryManager onChanged={load} /></div>
       {posts.length === 0 ? (
-        <p className="text-gray-500 text-base">{a.noPosts}</p>
+        <p className="text-[#857a68] text-base">{a.noPosts}</p>
       ) : (
-        <div className="border border-gray-800 divide-y divide-gray-800">
+        <div className="border border-[#e8dfcf] divide-y divide-[#e8dfcf]">
           {posts.map(p => (
-            <div key={p.id} className="flex items-center gap-4 px-4 py-3 bg-[#111]">
+            <div key={p.id} className="flex items-center gap-4 px-4 py-3 bg-[#fffdf8]">
               <span className={`font-pixel text-[10px] tracking-widest px-1.5 py-0.5 border shrink-0 ${
-                p.published ? 'border-[#00ff41] text-[#00ff41]' : 'border-gray-700 text-gray-500'
+                p.published ? 'border-[#0e7573] text-[#0e7573]' : 'border-[#d9cdb4] text-[#857a68]'
               }`}>
                 {p.published ? a.published : a.draft}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-white text-base truncate">{p.title || '—'}</p>
-                <p className="text-xs text-gray-600">
+                <p className="text-[#241f17] text-base truncate">{p.title || '—'}</p>
+                <p className="text-xs text-[#9d9280]">
                   {catName(p.category_id)} · {new Date(p.created_at).toLocaleDateString()} · <ViewerIcon className="w-3 h-3 inline align-[-2px]" /> {p.view_count}
                 </p>
               </div>
-              <Link href={`/admin/blog/${p.id}`} className="font-pixel text-[11px] text-gray-400 hover:text-[#00ff41] tracking-widest shrink-0">
+              <Link href={`/admin/blog/${p.id}`} className="font-pixel text-[11px] text-[#6b6152] hover:text-[#0e7573] tracking-widest shrink-0">
                 {a.edit}
               </Link>
-              <button onClick={() => remove(p.id)} className="font-pixel text-[11px] text-gray-600 hover:text-red-400 tracking-widest shrink-0">
+              <button onClick={() => remove(p.id)} className="font-pixel text-[11px] text-[#9d9280] hover:text-red-400 tracking-widest shrink-0">
                 {a.delete}
               </button>
             </div>

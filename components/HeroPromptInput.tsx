@@ -22,22 +22,22 @@ export default function HeroPromptInput() {
 
   return (
     <form onSubmit={submit} className="w-full max-w-2xl">
-      <div className="flex items-stretch bg-[#0d0d0d]/90 border-2 border-[#00ff41] focus-within:shadow-[0_0_24px_rgba(0,255,65,0.25)] transition-shadow">
+      <div className="flex items-stretch bg-[#fffdf8]/90 border-2 border-[#0e7573] focus-within:shadow-[0_0_24px_rgba(14,117,115,0.25)] transition-shadow">
         <input
           value={value}
           onChange={e => setValue(e.target.value)}
           placeholder={T.hero.promptPlaceholder}
           aria-label={T.hero.promptPlaceholder}
-          className="flex-1 min-w-0 bg-transparent px-5 py-4 text-sm md:text-base text-white placeholder-gray-500 outline-none"
+          className="flex-1 min-w-0 bg-transparent px-5 py-4 text-sm md:text-base text-[#241f17] placeholder-[#a1957f] outline-none"
         />
         <button
           type="submit"
-          className="font-pixel text-[11px] bg-[#00ff41] text-black px-6 hover:bg-[#00cc33] transition-colors shrink-0"
+          className="font-pixel text-[11px] bg-[#0e7573] text-white px-6 hover:bg-[#0a5d5b] transition-colors shrink-0"
         >
           {T.hero.promptCta}
         </button>
       </div>
-      <p className="text-xs text-gray-400 mt-3">{T.hero.promptHint}</p>
+      <p className="text-xs text-[#6b6152] mt-3">{T.hero.promptHint}</p>
     </form>
   )
 }

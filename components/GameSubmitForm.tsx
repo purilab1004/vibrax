@@ -86,12 +86,12 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
   }
 
   const inputClass =
-    'w-full bg-[#0d0d0d] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-500'
+    'w-full bg-[#fffdf8] border border-[#d9cdb4] focus:border-[#0e7573] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
       <div>
-        <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
+        <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
           {s.titleLabel}
         </label>
         <input
@@ -105,7 +105,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
       </div>
 
       <div>
-        <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
+        <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
           게임 언어
         </label>
         <select
@@ -120,8 +120,8 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
       </div>
 
       <div>
-        <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
-          AI AJ 게임 설명 <span className="text-gray-600 normal-case font-sans text-[11px]">(선택 — AJ가 게임 방식을 이해하는 데 사용)</span>
+        <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
+          AI AJ 게임 설명 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(선택 — AJ가 게임 방식을 이해하는 데 사용)</span>
         </label>
         <textarea
           value={description}
@@ -131,30 +131,30 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           placeholder="예: 위아래 화살표로 캐릭터가 점프해서 장애물을 피하는 게임. 별을 먹으면 무적, 적에게 닿으면 죽음. 스테이지가 올라갈수록 속도가 빨라짐."
           className={inputClass + ' resize-none'}
         />
-        <p className="text-[11px] text-gray-600 mt-1">{description.length}/500 — 자세할수록 AJ가 더 정확하게 중계해요</p>
+        <p className="text-[11px] text-[#9d9280] mt-1">{description.length}/500 — 자세할수록 AJ가 더 정확하게 중계해요</p>
       </div>
 
       <div>
-        <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
-          게임 메뉴얼 <span className="text-gray-600 normal-case font-sans text-[11px]">(선택 — .md 파일 / 실행 방식·진행 방식 설명)</span>
+        <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
+          게임 메뉴얼 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(선택 — .md 파일 / 실행 방식·진행 방식 설명)</span>
         </label>
         <input
           type="file"
           accept=".md,text/markdown,text/plain"
           onChange={e => setManualFile(e.target.files?.[0] ?? null)}
-          className="w-full bg-[#0d0d0d] border border-gray-700 px-4 py-3 text-sm text-gray-400
+          className="w-full bg-[#fffdf8] border border-[#d9cdb4] px-4 py-3 text-sm text-[#6b6152]
             file:mr-4 file:py-1 file:px-3 file:border-0
-            file:bg-gray-700 file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
+            file:bg-gray-700 file:text-[#241f17] file:text-[11px] file:font-pixel file:cursor-pointer
             file:hover:bg-gray-600 file:transition-colors"
         />
         {manualFile && (
-          <p className="text-xs text-gray-400 mt-1">선택됨: {manualFile.name}</p>
+          <p className="text-xs text-[#6b6152] mt-1">선택됨: {manualFile.name}</p>
         )}
-        <p className="text-[11px] text-gray-600 mt-1">AJ가 이 파일을 읽고 게임 진행 방식을 이해해 더 정확하게 방송합니다</p>
+        <p className="text-[11px] text-[#9d9280] mt-1">AJ가 이 파일을 읽고 게임 진행 방식을 이해해 더 정확하게 방송합니다</p>
       </div>
 
       <div>
-        <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
+        <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
           {s.genreLabel}
         </label>
         <select
@@ -171,7 +171,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
       </div>
 
       <div>
-        <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
+        <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
           {s.urlLabel}
         </label>
         <input
@@ -182,11 +182,11 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           placeholder={s.urlPlaceholder}
           className={inputClass}
         />
-        <p className="text-xs text-gray-300 mt-1">{s.urlHint}</p>
+        <p className="text-xs text-[#4a4337] mt-1">{s.urlHint}</p>
       </div>
 
       <div>
-        <label className="block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest">
+        <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
           {s.thumbnailLabel}
         </label>
         <input
@@ -194,15 +194,15 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           accept="image/png,image/jpeg,image/gif,image/webp"
           onChange={e => setThumbnailFile(e.target.files?.[0] ?? null)}
           required
-          className="w-full bg-[#0d0d0d] border border-gray-700 px-4 py-3 text-sm text-gray-400
+          className="w-full bg-[#fffdf8] border border-[#d9cdb4] px-4 py-3 text-sm text-[#6b6152]
             file:mr-4 file:py-1 file:px-3 file:border-0
-            file:bg-[#00ff41] file:text-black file:text-[11px] file:font-pixel file:cursor-pointer
-            file:hover:bg-[#00cc33] file:transition-colors"
+            file:bg-[#0e7573] file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
+            file:hover:bg-[#0a5d5b] file:transition-colors"
         />
         {thumbnailFile && (
-          <p className="text-xs text-gray-400 mt-1">선택됨: {thumbnailFile.name}</p>
+          <p className="text-xs text-[#6b6152] mt-1">선택됨: {thumbnailFile.name}</p>
         )}
-        <p className="text-xs text-gray-300 mt-1">{s.thumbnailHint}</p>
+        <p className="text-xs text-[#4a4337] mt-1">{s.thumbnailHint}</p>
       </div>
 
       {error && (
@@ -214,7 +214,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-[#00ff41] text-black font-pixel text-[11px] py-4 hover:bg-[#00cc33] transition-colors disabled:opacity-50 disabled:cursor-not-allowed tracking-widest"
+        className="w-full bg-[#0e7573] text-white font-pixel text-[11px] py-4 hover:bg-[#0a5d5b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed tracking-widest"
       >
         {isPending ? s.uploading : s.submit}
       </button>

@@ -37,8 +37,8 @@ export default function GenreFilter() {
           onClick={() => handleSelect(key)}
           className={`font-pixel text-[11px] px-4 py-2 border transition-colors ${
             current === key
-              ? 'bg-[#00ff41] text-black border-[#00ff41]'
-              : 'text-gray-400 border-gray-700 hover:border-[#00ff41] hover:text-[#00ff41]'
+              ? 'bg-[#0e7573] text-white border-[#0e7573]'
+              : 'text-[#6b6152] border-[#d9cdb4] hover:border-[#0e7573] hover:text-[#0e7573]'
           }`}
         >
           {label}

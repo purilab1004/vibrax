@@ -58,10 +58,10 @@ export function AnimationPanel() {
   return (
     <div className="p-4 flex flex-col gap-3">
       {clips.length === 0 ? (
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-[#9d9280]">
           이 VRM에 내장 애니메이션 없음
           <br />
-          <span className="text-gray-700">(외부 .bvh / .fbx 적용은 Phase 4+ 예정)</span>
+          <span className="text-[#b3a78f]">(외부 .bvh / .fbx 적용은 Phase 4+ 예정)</span>
         </p>
       ) : (
         <div className="flex flex-col gap-1">
@@ -71,8 +71,8 @@ export function AnimationPanel() {
               onClick={() => (playing === name ? stop() : play(name))}
               className={`py-1.5 px-3 rounded text-xs text-left transition-colors ${
                 playing === name
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  ? 'bg-indigo-600 text-[#241f17]'
+                  : 'bg-gray-800 text-[#4a4337] hover:bg-gray-700'
               }`}
             >
               {playing === name ? '⏹ ' : '▶ '}{name}

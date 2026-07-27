@@ -64,7 +64,7 @@ export default function LikeButton({ gameId, size = 'sm' }: Props) {
       className={`flex items-center gap-1 transition-colors disabled:cursor-default ${
         liked
           ? 'text-red-400'
-          : 'text-gray-500 hover:text-red-400'
+          : 'text-[#857a68] hover:text-red-400'
       } ${!userId ? 'opacity-60' : ''}`}
     >
       <span className={iconSize}>{liked ? '♥' : '♡'}</span>

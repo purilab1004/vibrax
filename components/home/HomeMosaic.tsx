@@ -50,7 +50,7 @@ function Row({ heading, headerExtra, games, large }: {
     <button
       onClick={() => scrollByDir(dir)}
       aria-label={dir === 1 ? 'scroll right' : 'scroll left'}
-      className="w-8 h-8 flex items-center justify-center border border-gray-800 text-gray-400 hover:text-[#00ff41] hover:border-[#00ff41] transition-colors text-sm"
+      className="w-8 h-8 flex items-center justify-center border border-[#e8dfcf] text-[#6b6152] hover:text-[#0e7573] hover:border-[#0e7573] transition-colors text-sm"
     >
       {glyph}
     </button>
@@ -99,7 +99,7 @@ function Row({ heading, headerExtra, games, large }: {
 
 // 순위 강조 — 금/은/동 링과 배지
 const RANK_STYLE = [
-  { ring: 'ring-2 ring-[#ffd24d] shadow-[0_0_24px_rgba(255,210,77,0.35)]', badge: 'bg-[#ffd24d] text-black' },
+  { ring: 'ring-2 ring-[#b98a1f] shadow-[0_0_24px_rgba(185,138,31,0.35)]', badge: 'bg-[#b98a1f] text-black' },
   { ring: 'ring-2 ring-gray-300', badge: 'bg-gray-300 text-black' },
   { ring: 'ring-2 ring-amber-600', badge: 'bg-amber-600 text-black' },
 ] as const
@@ -138,7 +138,7 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
   if (creators.length === 0) return null
   return (
     <section className="mb-14">
-      <h2 className="font-pixel text-sm text-[#ffd24d] tracking-widest mb-5">🏆 {heading}</h2>
+      <h2 className="font-pixel text-sm text-[#b98a1f] tracking-widest mb-5">🏆 {heading}</h2>
       <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-6 px-6 pt-1 pb-2">
         {creators.map((cr, i) => {
           const rank = RANK_STYLE[i]
@@ -146,10 +146,10 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
             <Link
               key={cr.id}
               href={`/games?creator=${cr.id}`}
-              className="shrink-0 flex items-center gap-3 bg-[#111] border border-gray-800 hover:border-gray-600 rounded-full pl-2 pr-5 py-2 transition-colors group/creator"
+              className="shrink-0 flex items-center gap-3 bg-[#fffdf8] border border-[#e8dfcf] hover:border-[#cfc2a6] rounded-full pl-2 pr-5 py-2 transition-colors group/creator"
             >
               {/* 원형 아바타 — 상위 3위는 금/은/동 링, 광택 스윕 */}
-              <div className={`relative w-14 h-14 rounded-full overflow-hidden bg-[#0d0d0d] shrink-0 ${rank ? rank.ring : 'border border-gray-700'}`}>
+              <div className={`relative w-14 h-14 rounded-full overflow-hidden bg-[#fffdf8] shrink-0 ${rank ? rank.ring : 'border border-[#d9cdb4]'}`}>
                 {cr.avatarUrl ? (
                   <div className="avatar-idle w-full h-full" style={{ animationDelay: `${i * 0.6}s` }}>
                     {/* 얼굴 중심 줌 */}
@@ -159,20 +159,20 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="font-pixel text-lg text-gray-700">{cr.name.charAt(0).toUpperCase()}</span>
+                    <span className="font-pixel text-lg text-[#b3a78f]">{cr.name.charAt(0).toUpperCase()}</span>
                   </div>
                 )}
               </div>
               <div className="min-w-0">
-                <p className="flex items-center gap-1.5 text-sm font-bold text-white group-hover/creator:text-[#00ff41] transition-colors">
+                <p className="flex items-center gap-1.5 text-sm font-bold text-[#241f17] group-hover/creator:text-[#0e7573] transition-colors">
                   {rank && (
                     <span className={`font-pixel text-[9px] px-1.5 py-0.5 rounded ${rank.badge}`}>#{i + 1}</span>
                   )}
                   <span className="truncate max-w-[140px]">{cr.name}</span>
                 </p>
-                <p className="mt-0.5 text-[13px] text-gray-500 flex items-center gap-1.5 whitespace-nowrap">
+                <p className="mt-0.5 text-[13px] text-[#857a68] flex items-center gap-1.5 whitespace-nowrap">
                   {T.games.gamesCount(cr.games)}
-                  <span className="text-gray-700">·</span>
+                  <span className="text-[#b3a78f]">·</span>
                   <ViewerIcon className="w-3.5 h-3.5" />
                   {formatViewers(cr.views)}
                 </p>
@@ -197,7 +197,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
       <Row
         large
         heading={
-          <h2 className="font-pixel text-sm text-white tracking-widest flex items-center gap-2.5">
+          <h2 className="font-pixel text-sm text-[#241f17] tracking-widest flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             {T.games.liveNow}
           </h2>
@@ -209,12 +209,12 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
         <Row
           key={g}
           heading={
-            <h2 className="font-pixel text-sm text-[#00ff41] tracking-widest">{T.genres[g]}</h2>
+            <h2 className="font-pixel text-sm text-[#0e7573] tracking-widest">{T.genres[g]}</h2>
           }
           headerExtra={
             <Link
               href={`/games?genre=${g}`}
-              className="text-[13px] text-gray-400 hover:text-[#00ff41] transition-colors tracking-wider"
+              className="text-[13px] text-[#6b6152] hover:text-[#0e7573] transition-colors tracking-wider"
             >
               {T.games.viewAll}
             </Link>

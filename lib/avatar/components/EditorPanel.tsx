@@ -21,9 +21,9 @@ export function EditorPanel() {
   return (
     <div className="flex flex-col h-full bg-gray-900 text-gray-100 overflow-hidden">
       {/* 상단 고정 헤더 — 조립(authored base+parts). 파츠 선택은 좌측 카탈로그 피커. */}
-      <div className="p-4 border-b border-gray-800">
+      <div className="p-4 border-b border-[#e8dfcf]">
         <h2 className="text-lg font-semibold text-indigo-400">Avatar Editor</h2>
-        <p className="mt-1 text-xs text-gray-500">파츠는 좌측 카탈로그에서 선택 · 여기선 색/셰이더/조명/톤 조정</p>
+        <p className="mt-1 text-xs text-[#857a68]">파츠는 좌측 카탈로그에서 선택 · 여기선 색/셰이더/조명/톤 조정</p>
       </div>
 
       {/* 본문 — 전체 스크롤(안전망) + 접이식 섹션(공간 관리) */}
@@ -32,23 +32,23 @@ export function EditorPanel() {
         <Section title="파츠 / 색상" open={openSection === '파츠 / 색상'} onToggle={() => toggle('파츠 / 색상')}>
           <div className="flex h-64 overflow-hidden">
             {/* 메시 리스트 */}
-            <div className="w-1/2 border-r border-gray-800 overflow-y-auto">
+            <div className="w-1/2 border-r border-[#e8dfcf] overflow-y-auto">
               {meshInfos.length === 0 && (
-                <p className="px-3 py-2 text-xs text-gray-600">로딩 중...</p>
+                <p className="px-3 py-2 text-xs text-[#9d9280]">로딩 중...</p>
               )}
               {meshInfos.map((m) => (
                 <div
                   key={m.name}
                   onClick={() => setSelectedMesh(m.name)}
                   className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer text-xs hover:bg-gray-800 ${
-                    selectedMesh === m.name ? 'bg-gray-800 text-indigo-300' : 'text-gray-300'
+                    selectedMesh === m.name ? 'bg-gray-800 text-indigo-300' : 'text-[#4a4337]'
                   }`}
                 >
                   {/* 가시성 토글 */}
                   <button
                     onClick={(e) => { e.stopPropagation(); setMeshVisible(m.name, !m.visible) }}
                     className={`w-4 h-4 rounded border text-center leading-none ${
-                      m.visible ? 'border-indigo-400 text-indigo-400' : 'border-gray-600 text-gray-600'
+                      m.visible ? 'border-indigo-400 text-indigo-400' : 'border-[#cfc2a6] text-[#9d9280]'
                     }`}
                     title={m.visible ? '숨기기' : '보이기'}
                   >
@@ -66,27 +66,27 @@ export function EditorPanel() {
                   <p className="text-xs text-indigo-300 truncate" title={selected.name}>{selected.label || selected.name}</p>
 
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs text-gray-400">Lit (밝은 면)</span>
+                    <span className="text-xs text-[#6b6152]">Lit (밝은 면)</span>
                     <input
                       type="color"
                       value={selected.litColor}
                       onChange={(e) => setMeshLitColor(selected.name, e.target.value)}
-                      className="w-full h-8 rounded cursor-pointer bg-transparent border border-gray-700"
+                      className="w-full h-8 rounded cursor-pointer bg-transparent border border-[#d9cdb4]"
                     />
                   </label>
 
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs text-gray-400">Shade (그림자 면)</span>
+                    <span className="text-xs text-[#6b6152]">Shade (그림자 면)</span>
                     <input
                       type="color"
                       value={selected.shadeColor}
                       onChange={(e) => setMeshShadeColor(selected.name, e.target.value)}
-                      className="w-full h-8 rounded cursor-pointer bg-transparent border border-gray-700"
+                      className="w-full h-8 rounded cursor-pointer bg-transparent border border-[#d9cdb4]"
                     />
                   </label>
                 </div>
               ) : (
-                <p className="text-xs text-gray-600">파츠를 선택하세요</p>
+                <p className="text-xs text-[#9d9280]">파츠를 선택하세요</p>
               )}
             </div>
           </div>

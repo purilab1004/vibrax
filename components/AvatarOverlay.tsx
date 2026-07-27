@@ -197,14 +197,14 @@ export default function AvatarOverlay() {
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       {status === 'loading' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
-          <div className="w-6 h-6 border-2 border-[#00ff41] border-t-transparent rounded-full animate-spin" />
-          <span className="font-pixel text-[10px] text-gray-500">LOADING AJ...</span>
+          <div className="w-6 h-6 border-2 border-[#0e7573] border-t-transparent rounded-full animate-spin" />
+          <span className="font-pixel text-[10px] text-[#857a68]">LOADING AJ...</span>
         </div>
       )}
       {status === 'error' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-3 pointer-events-none">
           <span className="font-pixel text-[10px] text-red-500">AVATAR ERROR</span>
-          <span className="text-[10px] text-gray-600 text-center break-all">{errorMsg.slice(0, 80)}</span>
+          <span className="text-[10px] text-[#9d9280] text-center break-all">{errorMsg.slice(0, 80)}</span>
         </div>
       )}
     </div>

@@ -30,13 +30,13 @@ export default function LiveTitleTicker({ title }: { title: string }) {
       {line ? (
         <div
           key={key}
-          className="absolute inset-x-0 bottom-0 text-sm font-medium text-[#00ff41] truncate leading-5"
+          className="absolute inset-x-0 bottom-0 text-sm font-medium text-[#0e7573] truncate leading-5"
           style={{ animation: 'titleRise 0.4s ease-out' }}
         >
           {line}
         </div>
       ) : (
-        <div className="absolute inset-x-0 bottom-0 text-sm font-medium text-white truncate leading-5">
+        <div className="absolute inset-x-0 bottom-0 text-sm font-medium text-[#241f17] truncate leading-5">
           {title}
         </div>
       )}
