@@ -20,14 +20,19 @@ const pressStart = Press_Start_2P({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Vibrexcup (Beta) — AI 바이브코딩 게임 플랫폼',
-    template: '%s | Vibrexcup',
+    default: 'Vibrexcup 비브렉스컵 (Beta) — AI 바이브코딩 게임 플랫폼',
+    template: '%s | Vibrexcup 비브렉스컵',
   },
   description:
     'Vibrexcup — 나만의 바이브 코딩으로 게임을 제작하고 공유하는 AI 게임 플랫폼. 자체 프롬프트 빌드로 프롬프트 한 줄이면 게임이 완성되고, AI DJ 스트리머 AJ가 게임을 재밌게 실시간 중계합니다. 광고주가 붙으면 AJ가 대신 광고까지 해주는 신개념 AI 서비스.',
   keywords: [
     'vibrexcup',
+    '비브렉스컵',
+    '비브렉스',
+    '비브랙스',
+    '비브랙스컵',
     '바이브렉스컵',
+    '바이브렉스',
     'vibe coding',
     '바이브 코딩',
     '바이브코딩 게임',
@@ -92,6 +97,7 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://vibrexcup.com',
+    types: { 'application/rss+xml': 'https://vibrexcup.com/rss.xml' },
   },
   robots: {
     index: true,
@@ -144,7 +150,7 @@ export default async function RootLayout({
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Vibrexcup',
-    alternateName: ['바이브렉스컵', 'VIBREXCUP'],
+    alternateName: ['비브렉스컵', '비브렉스', '비브랙스', '비브랙스컵', '바이브렉스컵', 'VIBREXCUP'],
     url: 'https://vibrexcup.com',
     description:
       'Vibrexcup is an AI game platform: build and share your own games with vibe coding and the built-in prompt builder, while AJ — the AI DJ streamer — hosts gameplay live and can even run sponsored segments for advertisers.',
@@ -156,10 +162,29 @@ export default async function RootLayout({
     },
   }
 
+  // 주요 메뉴 구조화 데이터 — 검색엔진이 섹션별 사이트링크를 뽑아가도록
+  const navJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: [
+      { name: 'Games', description: 'AI 바이브코딩 게임 모음 — 바로 플레이', url: 'https://vibrexcup.com/games' },
+      { name: 'Studio', description: '프롬프트 한 줄로 게임 만들기', url: 'https://vibrexcup.com/studio' },
+      { name: 'Tournament', description: '개인·학교·세계·회사 4개 부문 게임 제작 토너먼트', url: 'https://vibrexcup.com/tournament' },
+      { name: 'Blog', description: '바이브코딩 가이드·프롬프트 팁·플랫폼 소식', url: 'https://vibrexcup.com/blog' },
+      { name: 'Partner', description: '학교·기업·단체·기관 파트너 모집', url: 'https://vibrexcup.com/partner' },
+      { name: 'About', description: 'Vibrexcup 소개', url: 'https://vibrexcup.com/about' },
+    ].map((x, i) => ({
+      '@type': 'SiteNavigationElement',
+      position: i + 1,
+      ...x,
+    })),
+  }
+
   return (
     <html lang={lang} className={`${pressStart.variable} h-full`}>
 <body className="bg-[#0a0a0a] text-white min-h-full flex flex-col">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(navJsonLd) }} />
         <LangProvider initialLang={lang}>
           <NavBar />
           <Suspense fallback={null}>
