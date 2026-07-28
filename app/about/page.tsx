@@ -9,10 +9,11 @@ export default function AboutPage() {
   const [h1, h2] = a.heading.split('\n')
   const phases = [a.p1, a.p2, a.p3]
 
+  // 번호 원은 불투명 배경 — 반투명이면 왼쪽 타임라인 선이 숫자를 관통해 보인다
   const phaseAccent = [
-    { border: 'border-[#2563eb]', text: 'text-[#2563eb]', bg: 'bg-[#2563eb]/5' },
-    { border: 'border-blue-500', text: 'text-blue-400', bg: 'bg-blue-500/5' },
-    { border: 'border-purple-500', text: 'text-purple-400', bg: 'bg-purple-500/5' },
+    { border: 'border-[#2563eb]', text: 'text-[#2563eb]', bg: 'bg-[#2563eb]', num: 'text-white' },
+    { border: 'border-blue-500', text: 'text-blue-500', bg: 'bg-blue-500', num: 'text-white' },
+    { border: 'border-purple-500', text: 'text-purple-500', bg: 'bg-purple-500', num: 'text-white' },
   ]
 
   return (
@@ -48,8 +49,8 @@ export default function AboutPage() {
           return (
             <div key={i} className={`border-l-2 ${accent.border} pl-8 py-12 relative`}>
               {/* Phase number bubble */}
-              <div className={`absolute -left-[13px] top-12 w-6 h-6 rounded-full ${accent.bg} border ${accent.border} flex items-center justify-center`}>
-                <span className={`font-pixel text-[10px] ${accent.text}`}>{i + 1}</span>
+              <div className={`absolute -left-[13px] top-12 w-6 h-6 rounded-full ${accent.bg} border ${accent.border} ring-4 ring-[#fcfaf5] flex items-center justify-center z-10`}>
+                <span className={`font-pixel text-[10px] ${accent.num}`}>{i + 1}</span>
               </div>
 
               <p className={`font-pixel text-[11px] ${accent.text} tracking-widest mb-2`}>{p.phase}</p>
