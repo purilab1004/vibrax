@@ -119,7 +119,7 @@ export default function StudioPage() {
         <button
           onClick={createProject}
           disabled={creating}
-          className="bg-[#2563eb] text-[#241f17] font-pixel text-[11px] px-6 py-4 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
+          className="bg-[#2563eb] text-white font-pixel text-[11px] px-6 py-4 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
         >
           {s.newProject}
         </button>

@@ -125,7 +125,7 @@ export default function AdminGamesPage() {
                     <div className="flex gap-2 justify-end">
                       {editingId === g.id ? (
                         <>
-                          <button onClick={saveEdit} className="font-pixel text-[10px] bg-[#2563eb] text-[#241f17] px-2 py-1">{a.save}</button>
+                          <button onClick={saveEdit} className="font-pixel text-[10px] bg-[#2563eb] text-white px-2 py-1">{a.save}</button>
                           <button onClick={() => setEditingId(null)} className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] px-2 py-1">{a.cancel}</button>
                         </>
                       ) : (

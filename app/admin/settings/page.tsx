@@ -84,7 +84,7 @@ export default function AdminSettingsPage() {
           <input value={bannerLink} onChange={e => setBannerLink(e.target.value)} placeholder={a.setBannerLink} className={inputClass} />
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#2563eb] text-[#241f17] px-6 py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#2563eb] text-white px-6 py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50">
             {a.save}
           </button>
           {msg === 'saved' && <span className="text-[#2563eb] text-sm">{a.saved}</span>}

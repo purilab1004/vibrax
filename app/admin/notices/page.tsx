@@ -75,7 +75,7 @@ export default function AdminNoticesPage() {
           </label>
         </div>
         <div className="flex gap-3">
-          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#2563eb] text-[#241f17] px-6 py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="font-pixel text-xs tracking-widest bg-[#2563eb] text-white px-6 py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50">
             {a.save}
           </button>
           <button onClick={() => setEditing(null)} className="font-pixel text-xs tracking-widest border border-[#ddd3bf] text-[#6b6152] px-6 py-3 hover:border-gray-500 transition-colors">
@@ -90,7 +90,7 @@ export default function AdminNoticesPage() {
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="font-pixel text-[#2563eb] text-base tracking-widest">{a.noticesHeading}</h1>
-        <button onClick={() => open('new')} className="font-pixel text-xs bg-[#2563eb] text-[#241f17] px-4 py-2.5 hover:bg-[#1d4ed8] transition-colors tracking-widest">
+        <button onClick={() => open('new')} className="font-pixel text-xs bg-[#2563eb] text-white px-4 py-2.5 hover:bg-[#1d4ed8] transition-colors tracking-widest">
           {a.newNotice}
         </button>
       </div>

@@ -84,7 +84,7 @@ export default function GamePreview({
         <button
           onClick={onPublish}
           disabled={!html || busy}
-          className="bg-[#2563eb] text-[#241f17] font-pixel text-[11px] px-4 py-1.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-40 tracking-widest"
+          className="bg-[#2563eb] text-white font-pixel text-[11px] px-4 py-1.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-40 tracking-widest"
         >
           {s.publish}
         </button>

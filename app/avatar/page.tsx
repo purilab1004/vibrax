@@ -79,7 +79,7 @@ export default function AvatarEditorPage() {
         <button
           onClick={handleSave}
           disabled={!ready || saving || !partsReady}
-          className="font-pixel text-[11px] bg-[#2563eb] text-[#241f17] px-7 py-2.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-40 tracking-widest shadow-[0_0_12px_rgba(37,99,235,0.35)]"
+          className="font-pixel text-[11px] bg-[#2563eb] text-white px-7 py-2.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-40 tracking-widest shadow-[0_0_12px_rgba(37,99,235,0.35)]"
         >
           {saving ? '저장 중…' : !partsReady ? '아바타 로딩 중…' : '💾 저장하기'}
         </button>

@@ -259,7 +259,7 @@ export default function TournamentPage() {
             <div className="text-center py-4">
               <p className="text-[#4a4337] text-sm mb-6">{c.needAccount}</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/signup?redirect=/tournament" className="bg-[#2563eb] text-[#241f17] font-pixel text-[12px] px-8 py-4 rounded-lg hover:bg-[#1d4ed8] transition-colors tracking-widest">
+                <Link href="/signup?redirect=/tournament" className="bg-[#2563eb] text-white font-pixel text-[12px] px-8 py-4 rounded-lg hover:bg-[#1d4ed8] transition-colors tracking-widest">
                   {c.signupCta}
                 </Link>
                 <Link href="/login?redirect=/tournament" className="border border-[#ddd3bf] text-[#4a4337] text-[13px] px-8 py-4 rounded-lg hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">
@@ -339,7 +339,7 @@ export default function TournamentPage() {
               <button
                 type="submit"
                 disabled={status === 'busy'}
-                className="w-full bg-[#2563eb] text-[#241f17] font-pixel text-[12px] py-4 rounded-lg hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
+                className="w-full bg-[#2563eb] text-white font-pixel text-[12px] py-4 rounded-lg hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
               >
                 {status === 'busy' ? c.submitting : c.submit}
               </button>
@@ -375,7 +375,7 @@ export default function TournamentPage() {
               <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-2">{c.totalPrize}</p>
               <p className="font-pixel text-2xl md:text-3xl text-[#c9940c] tabular-nums">₩{prizeCount.toLocaleString()}+</p>
             </div>
-            <p className="glow-gold mt-7 text-lg md:text-2xl font-extrabold leading-snug">
+            <p className="text-[#c9940c] mt-7 text-lg md:text-2xl font-extrabold leading-snug">
               💰 {c.sponsorNote}
             </p>
             <p className="mt-3 text-base md:text-xl font-extrabold text-[#241f17]">
@@ -383,7 +383,7 @@ export default function TournamentPage() {
             </p>
             <a
               href={`mailto:dev@puritechlab.com?subject=${encodeURIComponent(c.sponsorMailSubject)}`}
-              className="inline-block mt-5 bg-[#c9940c] text-black font-pixel text-[12px] px-10 py-4 rounded-lg hover:bg-[#a1780a] transition-colors tracking-widest"
+              className="inline-block mt-5 bg-[#c9940c] text-white font-pixel text-[12px] px-10 py-4 rounded-lg hover:bg-[#a1780a] transition-colors tracking-widest"
             >
               {c.sponsorCta}
             </a>

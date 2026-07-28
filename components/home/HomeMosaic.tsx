@@ -75,7 +75,7 @@ function Row({ heading, headerExtra, games, large }: {
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
         onClickCapture={onClickCapture}
-        className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-proximity -mx-6 px-6 pb-2 cursor-grab active:cursor-grabbing select-none"
+        className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-proximity pb-2 cursor-grab active:cursor-grabbing select-none"
       >
         {games.map(game => (
           <div
@@ -99,9 +99,9 @@ function Row({ heading, headerExtra, games, large }: {
 
 // 순위 강조 — 금/은/동 링과 배지
 const RANK_STYLE = [
-  { ring: 'ring-2 ring-[#c9940c] shadow-[0_0_24px_rgba(201,148,12,0.35)]', badge: 'bg-[#c9940c] text-black' },
+  { ring: 'ring-2 ring-[#c9940c] shadow-[0_0_24px_rgba(201,148,12,0.35)]', badge: 'bg-[#c9940c] text-white' },
   { ring: 'ring-2 ring-gray-300', badge: 'bg-gray-300 text-black' },
-  { ring: 'ring-2 ring-amber-600', badge: 'bg-amber-600 text-black' },
+  { ring: 'ring-2 ring-amber-600', badge: 'bg-amber-600 text-white' },
 ] as const
 
 interface Creator {
@@ -139,7 +139,7 @@ function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: st
   return (
     <section className="mb-14">
       <h2 className="font-pixel text-xl text-[#c9940c] tracking-wide mb-5">🏆 {heading}</h2>
-      <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-6 px-6 pt-1 pb-2">
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide pt-1 pb-2">
         {creators.map((cr, i) => {
           const rank = RANK_STYLE[i]
           return (

@@ -88,7 +88,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
                     <p className="text-[11px] text-[#6b6152]">• 내가 게임할 동안 AJ와 채팅 대신</p>
                     <p className="text-[11px] text-[#6b6152]">• 프로필 → MY AGENT에서 1분이면 완료</p>
                   </div>
-                  <Link href="/profile" className="block w-full font-pixel text-[11px] bg-purple-700 text-[#241f17] py-3 hover:bg-purple-600 transition-colors tracking-widest text-center">
+                  <Link href="/profile" className="block w-full font-pixel text-[11px] bg-purple-700 text-white py-3 hover:bg-purple-600 transition-colors tracking-widest text-center">
                     🤖 AGENT 만들러 가기
                   </Link>
                 </>

@@ -267,7 +267,7 @@ export default function ProfilePage() {
           {editingUsername ? (
             <div className="flex items-center gap-3 flex-wrap">
               <input className={inputClass + ' max-w-xs'} value={newUsername} onChange={e => setNewUsername(e.target.value)} autoFocus />
-              <button onClick={handleSaveUsername} disabled={isPending} className="font-pixel text-[11px] bg-[#2563eb] text-[#241f17] px-4 py-2 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest">SAVE</button>
+              <button onClick={handleSaveUsername} disabled={isPending} className="font-pixel text-[11px] bg-[#2563eb] text-white px-4 py-2 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest">SAVE</button>
               <button onClick={() => { setEditingUsername(false); setNewUsername('') }} className="font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] px-4 py-2 hover:border-gray-500 transition-colors tracking-widest">CANCEL</button>
             </div>
           ) : (
@@ -311,7 +311,7 @@ export default function ProfilePage() {
           </div>
         </div>
         {pwMsg && <p className={`text-xs font-pixel tracking-widest ${pwMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{pwMsg.text}</p>}
-        <button onClick={handleChangePassword} disabled={isPending || !newPassword || !confirmPassword} className="font-pixel text-[11px] bg-[#2563eb] text-[#241f17] px-6 py-2.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest">
+        <button onClick={handleChangePassword} disabled={isPending || !newPassword || !confirmPassword} className="font-pixel text-[11px] bg-[#2563eb] text-white px-6 py-2.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest">
           CHANGE PASSWORD
         </button>
       </section>
@@ -359,7 +359,7 @@ export default function ProfilePage() {
                     onChange={e => setAgentAvatarFile(e.target.files?.[0] ?? null)}
                     className="w-full bg-[#ffffff] border border-[#ddd3bf] px-3 py-2 text-xs text-[#6b6152]
                       file:mr-3 file:py-1 file:px-3 file:border-0
-                      file:bg-purple-800 file:text-[#241f17] file:text-[11px] file:font-pixel file:cursor-pointer
+                      file:bg-purple-800 file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
                       file:hover:bg-purple-700 file:transition-colors"
                   />
                   {agentAvatarFile && <p className="text-[11px] text-[#857a68] mt-1">{agentAvatarFile.name}</p>}
@@ -393,7 +393,7 @@ export default function ProfilePage() {
             <button
               onClick={handleSaveAgent}
               disabled={isPending || (!agentName.trim() && !agentPersona.trim())}
-              className="font-pixel text-[11px] bg-[#2563eb] text-[#241f17] px-6 py-2.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
+              className="font-pixel text-[11px] bg-[#2563eb] text-white px-6 py-2.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
             >
               {isPending ? 'SAVING...' : 'SAVE AGENT'}
             </button>
@@ -473,7 +473,7 @@ export default function ProfilePage() {
                     </button>
                     {deleteConfirm === game.id ? (
                       <div className="flex items-center gap-1">
-                        <button onClick={() => handleDeleteGame(game.id)} disabled={isPending} className="font-pixel text-[11px] bg-red-700 text-[#241f17] px-3 py-1.5 hover:bg-red-600 transition-colors disabled:opacity-50 tracking-widest">확인</button>
+                        <button onClick={() => handleDeleteGame(game.id)} disabled={isPending} className="font-pixel text-[11px] bg-red-700 text-white px-3 py-1.5 hover:bg-red-600 transition-colors disabled:opacity-50 tracking-widest">확인</button>
                         <button onClick={() => setDeleteConfirm(null)} className="font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] px-3 py-1.5 tracking-widest">취소</button>
                       </div>
                     ) : (
@@ -569,7 +569,7 @@ export default function ProfilePage() {
                 <input className={inputClass} value={editingGame.play_url} onChange={e => setEditingGame(prev => prev ? { ...prev, play_url: e.target.value } : null)} />
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={handleSaveGame} disabled={isPending} className="flex-1 font-pixel text-[11px] bg-[#2563eb] text-[#241f17] py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest">
+                <button onClick={handleSaveGame} disabled={isPending} className="flex-1 font-pixel text-[11px] bg-[#2563eb] text-white py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest">
                   {isPending ? 'SAVING...' : 'SAVE'}
                 </button>
                 <button onClick={() => setEditingGame(null)} className="flex-1 font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] py-3 hover:border-gray-500 transition-colors tracking-widest">

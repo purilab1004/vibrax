@@ -138,7 +138,7 @@ export default function AdminMembersPage() {
               placeholder={a.adjustNote}
               className="w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-4 py-3 text-base outline-none text-[#241f17] placeholder-[#a1957f] mb-4"
             />
-            <button onClick={applyAdjust} className="w-full bg-[#2563eb] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#1d4ed8] transition-colors tracking-widest">
+            <button onClick={applyAdjust} className="w-full bg-[#2563eb] text-white font-pixel text-[11px] py-3 hover:bg-[#1d4ed8] transition-colors tracking-widest">
               {a.apply}
             </button>
           </div>

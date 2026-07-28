@@ -183,7 +183,7 @@ export default function PartnerPage() {
                       onClick={() => setOrgType(t)}
                       className={`py-2.5 text-[13px] font-medium rounded-lg border transition-colors ${
                         orgType === t
-                          ? 'bg-[#2563eb] text-[#241f17] border-[#2563eb]'
+                          ? 'bg-[#2563eb] text-white border-[#2563eb]'
                           : 'text-[#6b6152] border-[#ebe4d6] hover:border-[#cfc4ab]'
                       }`}
                     >
@@ -220,7 +220,7 @@ export default function PartnerPage() {
               <button
                 type="submit"
                 disabled={status === 'busy'}
-                className="w-full bg-[#2563eb] text-[#241f17] font-pixel text-[12px] py-4 rounded-lg hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
+                className="w-full bg-[#2563eb] text-white font-pixel text-[12px] py-4 rounded-lg hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
               >
                 {status === 'busy' ? c.submitting : c.submit}
               </button>

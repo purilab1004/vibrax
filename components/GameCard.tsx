@@ -241,7 +241,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#ebe4d6] bg-[#fcfaf5] shrink-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <span
-                className={`font-pixel text-[11px] px-2 py-1 text-[#241f17] shrink-0 ${GENRE_COLORS[game.genre]}`}
+                className={`font-pixel text-[11px] px-2 py-1 text-white shrink-0 ${GENRE_COLORS[game.genre]}`}
               >
                 {GENRE_LABELS[game.genre]}
               </span>

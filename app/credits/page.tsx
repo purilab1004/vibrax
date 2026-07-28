@@ -123,7 +123,7 @@ export default function CreditsPage() {
             <button
               onClick={() => buy(p.key)}
               disabled={!paddleConfigured}
-              className="w-full bg-[#2563eb] text-[#241f17] font-pixel text-[11px] py-3 hover:bg-[#1d4ed8] transition-colors tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full bg-[#2563eb] text-white font-pixel text-[11px] py-3 hover:bg-[#1d4ed8] transition-colors tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {c.buy}
             </button>

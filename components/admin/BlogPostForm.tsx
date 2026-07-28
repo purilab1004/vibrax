@@ -129,7 +129,7 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
         <button
           onClick={() => save(!published)}
           disabled={saving}
-          className="font-pixel text-xs tracking-widest bg-[#2563eb] text-[#241f17] px-6 py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50"
+          className="font-pixel text-xs tracking-widest bg-[#2563eb] text-white px-6 py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50"
         >
           {published ? a.unpublishToggle : a.publishToggle}
         </button>

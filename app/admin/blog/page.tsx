@@ -36,7 +36,7 @@ export default function AdminBlogPage() {
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="font-pixel text-[#2563eb] text-base tracking-widest">{a.blogHeading}</h1>
-        <Link href="/admin/blog/new" className="font-pixel text-xs bg-[#2563eb] text-[#241f17] px-4 py-2.5 hover:bg-[#1d4ed8] transition-colors tracking-widest">
+        <Link href="/admin/blog/new" className="font-pixel text-xs bg-[#2563eb] text-white px-4 py-2.5 hover:bg-[#1d4ed8] transition-colors tracking-widest">
           {a.newPost}
         </Link>
       </div>

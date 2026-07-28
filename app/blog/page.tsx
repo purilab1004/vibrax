@@ -39,7 +39,7 @@ export default function BlogPage() {
       key={id || 'all'}
       onClick={() => setActiveCat(id)}
       className={`text-[13px] font-medium px-4 py-2 rounded-full border transition-colors ${
-        activeCat === id ? 'border-[#2563eb] text-[#241f17] bg-[#2563eb]' : 'border-[#ebe4d6] text-[#6b6152] hover:text-[#241f17] hover:border-[#cfc4ab]'
+        activeCat === id ? 'border-[#2563eb] text-white bg-[#2563eb]' : 'border-[#ebe4d6] text-[#6b6152] hover:text-[#241f17] hover:border-[#cfc4ab]'
       }`}
     >
       {label}

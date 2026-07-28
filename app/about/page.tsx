@@ -79,7 +79,7 @@ export default function AboutPage() {
           <p className="text-2xl md:text-3xl font-bold text-[#2563eb] mb-8">{a.s5.cta}</p>
           <p className="text-[#4a4337] text-sm leading-[2] mb-10 max-w-lg mx-auto">{a.s5.body}</p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Link href="/games" className="font-pixel text-[11px] bg-[#2563eb] text-[#241f17] px-8 py-4 hover:bg-[#1d4ed8] transition-colors tracking-widest">
+            <Link href="/games" className="font-pixel text-[11px] bg-[#2563eb] text-white px-8 py-4 hover:bg-[#1d4ed8] transition-colors tracking-widest">
               {a.s5.btn1}
             </Link>
             <Link href="/submit" className="font-pixel text-[11px] border border-[#2563eb] text-[#2563eb] px-8 py-4 hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">
