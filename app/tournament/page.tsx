@@ -10,9 +10,9 @@ type Division = 'individual' | 'school' | 'world' | 'company'
 type SchoolLevel = 'elementary' | 'middle' | 'high' | 'university'
 
 const DIVISION_COLOR: Record<Division, string> = {
-  individual: '#2563eb',
+  individual: '#00ff41',
   school: '#4da3ff',
-  world: '#c9940c',
+  world: '#ffd24d',
   company: '#ff2d95',
 }
 
@@ -243,26 +243,26 @@ export default function TournamentPage() {
   }
 
   const inputClass =
-    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f] rounded-lg'
-  const labelClass = 'block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest'
+    'w-full bg-[#111] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-600 rounded-lg'
+  const labelClass = 'block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest'
 
   const divisions: Division[] = ['individual', 'school', 'world', 'company']
 
   const applyCard = (
-        <div className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl p-8">
-          <h2 className="font-pixel text-sm text-[#2563eb] tracking-widest mb-2">{c.applyHeading}</h2>
-          <p className="text-[#6b6152] text-sm mb-8">{c.applyDesc}</p>
+        <div className="border border-gray-800 bg-[#111] rounded-2xl p-8">
+          <h2 className="font-pixel text-sm text-[#00ff41] tracking-widest mb-2">{c.applyHeading}</h2>
+          <p className="text-gray-400 text-sm mb-8">{c.applyDesc}</p>
 
           {status === 'done' ? (
-            <p className="text-[#2563eb] text-base">{c.doneMsg}</p>
+            <p className="text-[#00ff41] text-base">{c.doneMsg}</p>
           ) : user === undefined ? null : user === null ? (
             <div className="text-center py-4">
-              <p className="text-[#4a4337] text-sm mb-6">{c.needAccount}</p>
+              <p className="text-gray-300 text-sm mb-6">{c.needAccount}</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/signup?redirect=/tournament" className="bg-[#2563eb] text-white font-pixel text-[12px] px-8 py-4 rounded-lg hover:bg-[#1d4ed8] transition-colors tracking-widest">
+                <Link href="/signup?redirect=/tournament" className="bg-[#00ff41] text-black font-pixel text-[12px] px-8 py-4 rounded-lg hover:bg-[#00cc33] transition-colors tracking-widest">
                   {c.signupCta}
                 </Link>
-                <Link href="/login?redirect=/tournament" className="border border-[#ddd3bf] text-[#4a4337] text-[13px] px-8 py-4 rounded-lg hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">
+                <Link href="/login?redirect=/tournament" className="border border-gray-700 text-gray-300 text-[13px] px-8 py-4 rounded-lg hover:border-[#00ff41] hover:text-[#00ff41] transition-colors">
                   {c.loginCta}
                 </Link>
               </div>
@@ -292,7 +292,7 @@ export default function TournamentPage() {
                 <label className={labelClass}>{c.name}</label>
                 <input value={name} onChange={e => setName(e.target.value)} required className={inputClass} />
               </div>
-              <p className="text-[13px] text-[#2563eb] border border-[#2563eb]/30 bg-[#2563eb]/5 px-4 py-3 rounded-lg">
+              <p className="text-[13px] text-[#00ff41] border border-[#00ff41]/30 bg-[#00ff41]/5 px-4 py-3 rounded-lg">
                 ✓ {c.applyAs(user.email ?? '')}
               </p>
               <div>
@@ -339,7 +339,7 @@ export default function TournamentPage() {
               <button
                 type="submit"
                 disabled={status === 'busy'}
-                className="w-full bg-[#2563eb] text-white font-pixel text-[12px] py-4 rounded-lg hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest"
+                className="w-full bg-[#00ff41] text-black font-pixel text-[12px] py-4 rounded-lg hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest"
               >
                 {status === 'busy' ? c.submitting : c.submit}
               </button>
@@ -349,13 +349,13 @@ export default function TournamentPage() {
   )
 
   return (
-    <div>
+    <div className="bg-[#0a0a0a] min-h-screen">
       {/* ── 히어로 ── */}
-      <section className="relative overflow-hidden border-b border-[#ebe4d6]">
+      <section className="relative overflow-hidden border-b border-gray-800">
         <div
           className="absolute inset-0 opacity-[0.04] pointer-events-none"
           style={{
-            backgroundImage: 'linear-gradient(#2563eb 1px, transparent 1px), linear-gradient(90deg, #2563eb 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(#00ff41 1px, transparent 1px), linear-gradient(90deg, #00ff41 1px, transparent 1px)',
             backgroundSize: '40px 40px',
           }}
         />
@@ -366,28 +366,28 @@ export default function TournamentPage() {
               <span className="w-2 h-2 rounded-full bg-red-500" />
               {c.openingSoon}
             </span>
-            <h1 className="font-pixel text-2xl md:text-4xl text-[#241f17] tracking-widest leading-relaxed mb-4">
-              🏆 <span className="text-[#2563eb]">VIBREX</span><span className="text-[#c9940c]">CUP</span>
+            <h1 className="font-pixel text-2xl md:text-4xl text-white tracking-widest leading-relaxed mb-4">
+              🏆 <span className="text-[#00ff41]">VIBREX</span><span className="text-[#ffd24d]">CUP</span>
               <br />TOURNAMENT
             </h1>
-            <p className="text-[#4a4337] text-base md:text-lg mb-10">{c.tagline}</p>
-            <div className="inline-block border border-[#c9940c]/40 bg-[#c9940c]/5 rounded-2xl px-10 py-6">
-              <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-2">{c.totalPrize}</p>
-              <p className="font-pixel text-2xl md:text-3xl text-[#c9940c] tabular-nums">₩{prizeCount.toLocaleString()}+</p>
+            <p className="text-gray-300 text-base md:text-lg mb-10">{c.tagline}</p>
+            <div className="inline-block border border-[#ffd24d]/40 bg-[#ffd24d]/5 rounded-2xl px-10 py-6">
+              <p className="font-pixel text-[11px] text-gray-400 tracking-widest mb-2">{c.totalPrize}</p>
+              <p className="font-pixel text-2xl md:text-3xl text-[#ffd24d] tabular-nums">₩{prizeCount.toLocaleString()}+</p>
             </div>
-            <p className="text-[#c9940c] mt-7 text-lg md:text-2xl font-extrabold leading-snug">
+            <p className="text-[#ffd24d] mt-7 text-lg md:text-2xl font-extrabold leading-snug">
               💰 {c.sponsorNote}
             </p>
-            <p className="mt-3 text-base md:text-xl font-extrabold text-[#241f17]">
+            <p className="mt-3 text-base md:text-xl font-extrabold text-white">
               {c.sponsorPledge}
             </p>
             <a
               href={`mailto:dev@puritechlab.com?subject=${encodeURIComponent(c.sponsorMailSubject)}`}
-              className="inline-block mt-5 bg-[#c9940c] text-white font-pixel text-[12px] px-10 py-4 rounded-lg hover:bg-[#a1780a] transition-colors tracking-widest"
+              className="inline-block mt-5 bg-[#ffd24d] text-white font-pixel text-[12px] px-10 py-4 rounded-lg hover:bg-[#ffe9a8] transition-colors tracking-widest"
             >
               {c.sponsorCta}
             </a>
-            <p className="text-[13px] text-[#857a68] mt-7">{c.schedule}</p>
+            <p className="text-[13px] text-gray-500 mt-7">{c.schedule}</p>
           </div>
           {/* 좌측: 참가 신청 폼 */}
           <div className="order-2 lg:order-1">
@@ -398,26 +398,26 @@ export default function TournamentPage() {
 
       {/* ── 부문 카드 ── */}
       <section className="max-w-6xl mx-auto px-6 py-14">
-        <h2 className="font-pixel text-sm text-[#241f17] tracking-widest mb-8">{c.divisionsHeading}</h2>
+        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.divisionsHeading}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {divisions.map(d => {
             const info = c.divisions[d]
             const color = DIVISION_COLOR[d]
             return (
-              <div key={d} className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl p-6 flex flex-col hover:border-[#cfc4ab] transition-colors">
+              <div key={d} className="border border-gray-800 bg-[#111] rounded-2xl p-6 flex flex-col hover:border-gray-600 transition-colors">
                 <span className="font-pixel text-[10px] tracking-widest px-2 py-1 rounded self-start mb-4" style={{ color, border: `1px solid ${color}55`, background: `${color}11` }}>
                   {info.sub}
                 </span>
-                <h3 className="text-[#241f17] text-xl font-bold mb-2">{info.name}</h3>
-                <p className="text-[#6b6152] text-sm leading-relaxed mb-5 flex-1">{info.desc}</p>
-                <div className="border-t border-[#ebe4d6] pt-4 space-y-1.5">
+                <h3 className="text-white text-xl font-bold mb-2">{info.name}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed mb-5 flex-1">{info.desc}</p>
+                <div className="border-t border-gray-800 pt-4 space-y-1.5">
                   {[c.winner, c.second, c.third].map((rank, i) => (
                     <div key={rank} className="flex justify-between text-sm">
-                      <span className={i === 0 ? 'text-[#c9940c] font-pixel text-[11px]' : 'text-[#857a68] font-pixel text-[11px]'}>{rank}</span>
-                      <span className={i === 0 ? 'text-[#241f17] font-semibold' : 'text-[#4a4337]'}>{info.prizes[i]}</span>
+                      <span className={i === 0 ? 'text-[#ffd24d] font-pixel text-[11px]' : 'text-gray-500 font-pixel text-[11px]'}>{rank}</span>
+                      <span className={i === 0 ? 'text-white font-semibold' : 'text-gray-300'}>{info.prizes[i]}</span>
                     </div>
                   ))}
-                  <p className="text-[11px] text-[#9d9280] pt-2">{info.extra}</p>
+                  <p className="text-[11px] text-gray-500 pt-2">{info.extra}</p>
                 </div>
               </div>
             )
@@ -427,12 +427,12 @@ export default function TournamentPage() {
 
       {/* ── 진행 방식 ── */}
       <section className="max-w-6xl mx-auto px-6 pb-14">
-        <h2 className="font-pixel text-sm text-[#241f17] tracking-widest mb-8">{c.howHeading}</h2>
+        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.howHeading}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {c.how.map(([h, p]) => (
-            <div key={h} className="border border-[#ebe4d6] bg-[#ffffff] rounded-2xl p-6">
-              <h3 className="text-[#2563eb] text-base font-bold mb-2">{h}</h3>
-              <p className="text-[#6b6152] text-sm leading-relaxed">{p}</p>
+            <div key={h} className="border border-gray-800 bg-[#111] rounded-2xl p-6">
+              <h3 className="text-[#00ff41] text-base font-bold mb-2">{h}</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">{p}</p>
             </div>
           ))}
         </div>
