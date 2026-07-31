@@ -2,6 +2,12 @@
 // 클라이언트는 누적 텍스트를 매 청크마다 통째로 다시 파싱한다(상태 없는 파서).
 
 export const GEN_ERROR_MARKER = '\n[[GEN_ERROR]]'
+// 게임과 무관한 요청 — 모델이 <offtopic/>을 출력하면 서버가 이 마커로 변환해 내려준다
+export const OFF_TOPIC_MARKER = '\n[[OFF_TOPIC]]'
+
+export function hasOffTopic(text: string): boolean {
+  return text.includes(OFF_TOPIC_MARKER) || text.includes('<offtopic')
+}
 
 export interface ParsedGeneration {
   description: string
@@ -11,7 +17,7 @@ export interface ParsedGeneration {
 }
 
 export function parseGeneration(text: string): ParsedGeneration {
-  const clean = text.split(GEN_ERROR_MARKER).join('')
+  const clean = text.split(GEN_ERROR_MARKER).join('').split(OFF_TOPIC_MARKER).join('').replace(/<offtopic\/?>/g, '')
   const open = clean.indexOf('<game>')
   if (open === -1) {
     return { description: clean.trim(), html: null, htmlBytes: 0, generating: false }

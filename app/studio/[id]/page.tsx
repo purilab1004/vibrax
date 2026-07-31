@@ -8,7 +8,7 @@ import { useLang } from '@/lib/i18n/context'
 import StudioChat, { type ChatMsg } from '@/components/studio/StudioChat'
 import GamePreview from '@/components/studio/GamePreview'
 import PublishModal from '@/components/studio/PublishModal'
-import { parseGeneration, hasGenError } from '@/lib/studio/parse'
+import { parseGeneration, hasGenError, hasOffTopic } from '@/lib/studio/parse'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import type { StudioProject, StudioVersionMeta } from '@/lib/supabase/types'
 
@@ -106,6 +106,13 @@ export default function StudioComposerPage() {
       const um = full.match(/\[\[USAGE:(\d+):(\d+)\]\]/)
       if (um) setUsage({ input: Number(um[1]), output: Number(um[2]) })
       setStreaming(null)
+
+      if (hasOffTopic(full)) {
+        setMessages(m => m.slice(0, -1))
+        optimisticPending = false
+        setError(s.offTopic)
+        return
+      }
 
       if (hasGenError(full)) {
         setMessages(m => m.slice(0, -1))

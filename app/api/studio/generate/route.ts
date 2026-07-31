@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { GENERATION_COST } from '@/lib/studio/constants'
 import { SYSTEM_PROMPT, buildMessages, type ChatTurn } from '@/lib/studio/prompt'
-import { parseGeneration, extractTitle, GEN_ERROR_MARKER } from '@/lib/studio/parse'
+import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER } from '@/lib/studio/parse'
 
 export const maxDuration = 300
 
@@ -124,7 +124,10 @@ export async function POST(req: Request) {
         const parsed = parseGeneration(full)
         if (!parsed.html) {
           await refund()
-          controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
+          // 게임과 무관한 요청 — 실패가 아니라 안내로 처리 (크레딧은 위에서 환불됨)
+          controller.enqueue(encoder.encode(
+            full.includes('<offtopic') ? OFF_TOPIC_MARKER : GEN_ERROR_MARKER,
+          ))
         } else {
           const nextVersion = (latest?.version ?? 0) + 1
           const { error: vErr } = await supabase.from('studio_versions').insert([
