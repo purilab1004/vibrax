@@ -14,6 +14,7 @@ export default function NavBar() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [scrolled, setScrolled] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -29,6 +30,14 @@ export default function NavBar() {
 
   // Close menu on route change
   useEffect(() => { setMenuOpen(false) }, [pathname])
+
+  // 상단에서는 투명, 스크롤하면 유리(글래스) 배경
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // 관리자 링크는 user 블록 안에서만 렌더되므로 로그아웃 시 초기화가 필요 없다
   useEffect(() => {
@@ -136,8 +145,12 @@ export default function NavBar() {
 
   return (
     <>
-      {/* 배경 없는 투명 헤더 — 첫 섹션 배경(글로우)이 뒤로 지나간다 */}
-      <header className="sticky top-0 z-50 md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">
+      {/* 상단: 투명(첫 섹션 배경이 뒤로 지나감) → 스크롤: 유리 배경 */}
+      <header
+        className={`sticky top-0 z-50 md:pl-[var(--rail-w,14rem)] transition-[padding,background-color,box-shadow,backdrop-filter] duration-200 ${
+          scrolled ? 'bg-white/55 backdrop-blur-xl shadow-[0_1px_0_rgba(36,31,23,0.06)]' : ''
+        }`}
+      >
         <nav className="w-full px-5 h-14 flex items-center gap-4">
           {/* 데스크톱은 사이드바 상단에 로고가 있으므로 모바일에서만 표시 */}
           <Link
