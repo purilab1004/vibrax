@@ -3,38 +3,46 @@
 import { useLang } from '@/lib/i18n/context'
 import HeroPromptInput from '@/components/HeroPromptInput'
 
-// 히어로 = 로고를 실물 크기로 — 강렬한 파란 하늘, 모래 언덕, 야자수 (로고와 동일한 색·모양)
+// 히어로 — 밝은 배경 중앙 정렬: 헤드라인(그라디언트 강조) + 대시 서브라벨 + 프롬프트 카드
 export default function HeroSection() {
   const { T } = useLang()
+  const [line1, line2] = T.hero.promptHeading.split('\n')
 
   return (
     <section className="relative overflow-hidden">
-      {/* 로고의 파란 배지 = 하늘 */}
+      {/* 은은한 오션 그라디언트 틴트 — 밝은 모래 배경 위 */}
       <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(180deg, #3b82f6 0%, #2563eb 70%)' }}
-      />
-
-      {/* 은은한 하이라이트 — 중앙 상단에서 퍼지는 빛 */}
-      <div
-        className="absolute -top-24 left-1/2 -translate-x-1/2 w-[640px] h-72 rounded-full pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 45%, transparent 70%)',
+          background:
+            'radial-gradient(640px 300px at 32% -10%, rgba(37,99,235,0.10), transparent 70%), radial-gradient(640px 300px at 68% 0%, rgba(6,182,212,0.09), transparent 70%)',
         }}
       />
 
       <div className="relative max-w-7xl mx-auto px-6 py-14 md:py-20 flex flex-col items-center text-center">
-        {/* 태그라인 배지 — 파란 하늘 위 반투명 유리 */}
-        <span className="inline-flex items-center gap-2 bg-white/15 border border-white/30 text-white text-[12px] font-bold tracking-[0.22em] rounded-full px-4 py-1.5 mb-6 backdrop-blur-sm">
-          🌊 {T.hero.tagline}
-        </span>
-
-        {/* 헤드라인 — 하늘 위 흰 글씨 */}
-        <h1 className="text-3xl md:text-[2.6rem] leading-tight font-extrabold text-white whitespace-pre-line mb-8 drop-shadow-[0_2px_10px_rgba(30,58,138,0.35)]">
-          {T.hero.promptHeading}
+        {/* 헤드라인 — 마지막 줄은 오션 그라디언트 강조 */}
+        <h1 className="text-3xl md:text-[2.6rem] leading-tight font-extrabold text-[#241f17] mb-4">
+          {line1}
+          {line2 && (
+            <>
+              <br />
+              <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">
+                {line2}
+              </span>
+            </>
+          )}
         </h1>
 
-        <HeroPromptInput onBlue />
+        {/* 대시 서브라벨 — ─── 태그라인 ─── */}
+        <div className="flex items-center gap-3 mb-8 w-full max-w-md">
+          <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#cfc4ab]" />
+          <span className="text-[11px] font-semibold tracking-[0.22em] text-[#857a68] whitespace-nowrap">
+            {T.hero.tagline}
+          </span>
+          <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#cfc4ab]" />
+        </div>
+
+        <HeroPromptInput />
       </div>
     </section>
   )

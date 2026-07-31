@@ -12,6 +12,7 @@ export const t = {
       logout: '로그아웃',
       home: 'HOME',
       categories: '카테고리',
+      createGame: '프롬프트로 게임 시작',
       searchPlaceholder: '게임 검색...',
       search: '검색',
       liveChannels: 'LIVE CHANNELS',
@@ -34,6 +35,7 @@ export const t = {
       promptPlaceholder: '프롬프트 한 줄로 나만의 게임을 만드세요 · 예: 화살표로 조작하는 벽돌깨기',
       promptCta: 'BUILD',
       promptHint: 'AI가 게임을 만들어 바로 실행해줘요 · 생성 1회 = 10크레딧',
+      chips: ['🧱 화살표로 조작하는 벽돌깨기', '🦖 장애물 점프 공룡 러너', '🚀 운석 피하는 우주선 슈팅'],
     },
     games: {
       heading: 'GAMES',
@@ -304,6 +306,7 @@ export const t = {
       logout: 'LOGOUT',
       home: 'HOME',
       categories: 'CATEGORIES',
+      createGame: 'Create with Prompt',
       searchPlaceholder: 'Search games...',
       search: 'Search',
       liveChannels: 'LIVE CHANNELS',
@@ -326,6 +329,7 @@ export const t = {
       promptPlaceholder: 'Build your own game with one prompt · e.g. a brick-breaker',
       promptCta: 'BUILD',
       promptHint: 'AI builds and runs it instantly · 1 generation = 10 credits',
+      chips: ['🧱 Arrow-key brick breaker', '🦖 Jumping dino runner', '🚀 Asteroid-dodging space shooter'],
     },
     games: {
       heading: 'GAMES',

@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { useLang } from '@/lib/i18n/context'
 import type { Lang } from '@/lib/i18n/translations'
+import LogoMark from '@/components/LogoMark'
 
 export default function NavBar() {
   const [user, setUser] = useState<User | null>(null)
@@ -49,25 +50,6 @@ export default function NavBar() {
     setMenuOpen(false)
     router.push(q ? `/games?q=${encodeURIComponent(q)}` : '/games')
   }
-
-  // 해변 로고 마크 — 파란 하늘 배지 + 모래 언덕 + 야자수
-  const LogoMark = () => (
-    <svg viewBox="0 0 32 32" className="w-7 h-7 shrink-0" aria-hidden>
-      <rect x="0" y="0" width="32" height="32" rx="8" fill="#2563eb" />
-      {/* 모래 언덕 */}
-      <path d="M0 25c6-3.5 14-4.5 20-3.5s9 2 12 3.5v7H0Z" fill="#f3e3b8" />
-      {/* 야자수 줄기 */}
-      <path d="M15.5 24.5c.4-4.5 1.2-8.5 3.2-11.5" stroke="#8a5a2b" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-      {/* 야자잎 5장 */}
-      <g fill="none" stroke="#39b36b" strokeWidth="2.4" strokeLinecap="round">
-        <path d="M18.7 13c-3.2-2.2-6.4-2.4-9-1" />
-        <path d="M18.7 13c-1-3.4-3-5.6-5.6-6.6" />
-        <path d="M18.7 13c1.4-3.2 3.8-5 6.6-5.4" />
-        <path d="M18.7 13c3.4-1.4 6.6-.8 8.8 1" />
-        <path d="M18.7 13c2.6.6 4.6 2.4 5.6 5" />
-      </g>
-    </svg>
-  )
 
   const SearchIcon = () => (
     <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
@@ -112,9 +94,10 @@ export default function NavBar() {
   // 관리자 — 큰 메뉴 없이 로고 + 관리자 홈 + 복귀/로그아웃만 있는 미니 헤더 (Notion풍)
   if (pathname.startsWith('/admin')) {
     return (
-      <header className="sticky top-0 z-50 border-b border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">
         <nav className="w-full px-5 h-14 flex items-center gap-5">
-          <Link href="/" className="group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
+          {/* 데스크톱은 사이드바 상단에 로고가 있으므로 모바일에서만 표시 */}
+          <Link href="/" className="md:hidden group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
             <LogoMark />
             <span>vibrex<span className="text-[#2563eb]">cup</span></span>
           </Link>
@@ -153,11 +136,12 @@ export default function NavBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">
         <nav className="w-full px-5 h-14 flex items-center gap-4">
+          {/* 데스크톱은 사이드바 상단에 로고가 있으므로 모바일에서만 표시 */}
           <Link
             href="/"
-            className="group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0"
+            className="md:hidden group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0"
           >
             <LogoMark />
             <span>

@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
+import LogoMark from '@/components/LogoMark'
 import type { Genre, StudioProject } from '@/lib/supabase/types'
 import { formatViewers } from '@/lib/format'
 
@@ -110,23 +111,57 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
 
   return (
     <aside
-      className={`hidden md:flex fixed top-14 left-0 bottom-0 z-40 flex-col overflow-hidden border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm transition-[width] duration-200 ${open ? 'w-56' : 'w-14'}`}
+      className={`hidden md:flex fixed top-0 left-0 bottom-0 z-[60] flex-col overflow-hidden border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm transition-[width] duration-200 ${open ? 'w-56' : 'w-14'}`}
       aria-label="sidebar"
     >
-      <button
-        onClick={() => setOpen(o => !o)}
-        aria-label={open ? 'collapse' : 'expand'}
-        className="flex items-center h-12 shrink-0 border-b border-[#ebe4d6] text-[#6b6152] hover:text-[#2563eb] transition-colors"
-      >
-        <span className={iconCol}>
-          {open ? (
-            <svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="m11 6-5 6 5 6M18 6l-5 6 5 6" /></svg>
-          ) : (
-            <svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 6h16M4 12h16M4 18h16" /></svg>
-          )}
-        </span>
-        <span className={label}>{inAdmin ? T.nav.admin : T.nav.categories}</span>
-      </button>
+      {/* 로고 헤더 — 펼침: 로고+워드마크, 접힘: 로고 아이콘만 (deevid 스타일) */}
+      <div className="flex items-center h-14 shrink-0 border-b border-[#ebe4d6]">
+        <Link href="/" className="flex items-center min-w-0 hover:opacity-80 transition-opacity" title="Vibrexcup">
+          <span className={iconCol}><LogoMark /></span>
+          <span className={`text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
+            vibrex<span className="text-[#2563eb]">cup</span>
+            <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
+              BETA
+            </span>
+          </span>
+        </Link>
+        {open && (
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="collapse"
+            className="ml-auto pr-3 text-[#9d9280] hover:text-[#2563eb] transition-colors"
+          >
+            <svg viewBox="0 0 24 24" className="w-4 h-4" {...stroke}><path d="m11 6-5 6 5 6M18 6l-5 6 5 6" /></svg>
+          </button>
+        )}
+      </div>
+
+      {/* 접힌 상태 — 펼치기 버튼 */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="expand"
+          className="flex items-center justify-center h-9 shrink-0 text-[#9d9280] hover:text-[#2563eb] transition-colors"
+        >
+          <svg viewBox="0 0 24 24" className="w-4 h-4" {...stroke}><path d="m6 6 5 6-5 6M13 6l5 6-5 6" /></svg>
+        </button>
+      )}
+
+      {/* 그라디언트 CTA — 프롬프트로 게임 시작 (일반 페이지에서만) */}
+      {!inStudio && !inProfile && !inAdmin && (
+        <div className={`shrink-0 pt-3 pb-1 ${open ? 'px-3' : 'px-2'}`}>
+          <Link
+            href="/studio"
+            title={T.nav.createGame}
+            className="block rounded-xl p-[1.5px] bg-gradient-to-r from-[#2563eb] to-[#06b6d4] hover:shadow-[0_4px_18px_rgba(37,99,235,0.3)] transition-shadow"
+          >
+            <span className={`flex items-center justify-center gap-1.5 rounded-[10.5px] bg-white h-10 text-[13px] font-bold text-[#2563eb] whitespace-nowrap overflow-hidden ${open ? 'px-3' : 'px-0'}`}>
+              <span aria-hidden>✦</span>
+              {open && T.nav.createGame}
+            </span>
+          </Link>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         <nav className="flex flex-col py-1">
