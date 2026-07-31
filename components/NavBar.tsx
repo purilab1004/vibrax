@@ -136,7 +136,7 @@ export default function NavBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">
+      <header className="sticky top-0 z-50 bg-[#fcfaf5]/95 backdrop-blur-sm md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">
         <nav className="w-full px-5 h-14 flex items-center gap-4">
           {/* 데스크톱은 사이드바 상단에 로고가 있으므로 모바일에서만 표시 */}
           <Link

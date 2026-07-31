@@ -115,7 +115,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
       aria-label="sidebar"
     >
       {/* 로고 헤더 — 펼침: 로고+워드마크, 접힘: 로고 아이콘만 (deevid 스타일) */}
-      <div className="flex items-center h-14 shrink-0 border-b border-[#ebe4d6]">
+      <div className="flex items-center h-14 shrink-0">
         <Link href="/" className="flex items-center min-w-0 hover:opacity-80 transition-opacity" title="Vibrexcup">
           <span className={iconCol}><LogoMark /></span>
           <span className={`text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
