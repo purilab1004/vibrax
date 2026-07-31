@@ -9,7 +9,7 @@ export default function HeroSection() {
   const [line1, line2] = T.hero.promptHeading.split('\n')
 
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden -mt-14 pt-14">
       {/* 은은한 오션 글로우 — 서로 다른 속도로 천천히 떠다닌다 */}
       <div className="hero-glow hero-glow-blue" aria-hidden />
       <div className="hero-glow hero-glow-cyan" aria-hidden />
