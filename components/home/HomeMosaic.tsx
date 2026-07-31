@@ -194,6 +194,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
 
   return (
     <div>
+      <TopCreators games={games} heading={T.games.topCreators} />
       <Row
         large
         heading={
@@ -204,7 +205,6 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
         }
         games={topLive}
       />
-      <TopCreators games={games} heading={T.games.topCreators} />
       {GENRES.map(g => (
         <Row
           key={g}
