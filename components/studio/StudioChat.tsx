@@ -62,7 +62,7 @@ export default function StudioChat({
               className={`max-w-[85%] px-3 py-2 text-sm whitespace-pre-wrap ${
                 m.role === 'user'
                   ? 'bg-[#2563eb]/10 border border-[#2563eb]/40 text-[#241f17]'
-                  : 'bg-[#161616] border border-[#ebe4d6] text-[#3a332a]'
+                  : 'bg-[#ffffff] border border-[#ebe4d6] text-[#3a332a]'
               }`}
             >
               {m.content}
@@ -71,7 +71,7 @@ export default function StudioChat({
         ))}
         {streaming && (
           <div className="flex justify-start">
-            <div className="w-full max-w-[95%] px-3 py-2 text-sm bg-[#161616] border border-[#ebe4d6] text-[#3a332a] whitespace-pre-wrap rounded-lg">
+            <div className="w-full max-w-[95%] px-3 py-2 text-sm bg-[#ffffff] border border-[#ebe4d6] text-[#3a332a] whitespace-pre-wrap rounded-lg">
               {streaming.description || s.thinking}
               {/* 코드가 오기 전 단계 — 시스템 상태 로그 */}
               {streaming.htmlBytes === 0 && (
@@ -115,7 +115,7 @@ export default function StudioChat({
           </p>
         )}
         {error && (
-          <p className="text-red-400 text-xs border border-red-900 bg-red-900/20 px-3 py-2">
+          <p className="text-red-600 text-xs border border-red-200 bg-red-50 px-3 py-2 rounded-lg">
             {error}
           </p>
         )}
