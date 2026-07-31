@@ -10,14 +10,9 @@ export default function HeroSection() {
 
   return (
     <section className="relative overflow-hidden">
-      {/* 은은한 오션 그라디언트 틴트 — 밝은 모래 배경 위 */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(640px 300px at 32% -10%, rgba(37,99,235,0.10), transparent 70%), radial-gradient(640px 300px at 68% 0%, rgba(6,182,212,0.09), transparent 70%)',
-        }}
-      />
+      {/* 은은한 오션 글로우 — 서로 다른 속도로 천천히 떠다닌다 */}
+      <div className="hero-glow hero-glow-blue" aria-hidden />
+      <div className="hero-glow hero-glow-cyan" aria-hidden />
 
       <div className="relative max-w-7xl mx-auto px-6 py-14 md:py-20 flex flex-col items-center text-center">
         {/* 헤드라인 — 마지막 줄은 오션 그라디언트 강조 */}
