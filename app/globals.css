@@ -224,3 +224,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .hero-glow { animation: none; }
 }
+
+/* 히어로 쇼케이스 — 채팅 버블 순차 등장 */
+.hero-chat-in {
+  animation: heroChatIn 0.45s ease-out both;
+}
+@keyframes heroChatIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-chat-in { animation: none; }
+}

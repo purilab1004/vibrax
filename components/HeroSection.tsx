@@ -2,6 +2,7 @@
 
 import { useLang } from '@/lib/i18n/context'
 import HeroPromptInput from '@/components/HeroPromptInput'
+import HeroShowcase from '@/components/HeroShowcase'
 
 // 히어로 — 밝은 배경 중앙 정렬: 헤드라인(그라디언트 강조) + 대시 서브라벨 + 프롬프트 카드
 export default function HeroSection() {
@@ -38,6 +39,9 @@ export default function HeroSection() {
         </div>
 
         <HeroPromptInput />
+
+        {/* 스튜디오 대화 목업 — 프롬프트가 게임이 되는 장면을 보여준다 */}
+        <HeroShowcase />
       </div>
     </section>
   )

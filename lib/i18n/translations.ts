@@ -36,6 +36,13 @@ export const t = {
       promptCta: 'BUILD',
       promptHint: 'AI가 게임을 만들어 바로 실행해줘요 · 생성 1회 = 10크레딧',
       chips: ['🧱 화살표로 조작하는 벽돌깨기', '🦖 장애물 점프 공룡 러너', '🚀 운석 피하는 우주선 슈팅'],
+      showcase: [
+        { user: '화살표로 조작하는 벽돌깨기 게임 만들어줘', ai: '완성했어요! 방향키로 패들을 움직여 모든 벽돌을 깨보세요.', title: '네온 벽돌깨기' },
+        { user: '장애물을 점프로 피하는 공룡 러너 만들어줘', ai: '공룡 러너가 준비됐어요. 스페이스바로 점프!', title: '다이노 대시' },
+        { user: '운석을 피하는 우주선 슈팅 게임 만들어줘', ai: '우주선 발진 준비 완료! 운석을 피해 최고 기록에 도전하세요.', title: '코스믹 슈터' },
+      ],
+      showcasePlay: '지금 플레이',
+      showcaseBadge: 'VIBREX STUDIO',
     },
     games: {
       heading: 'GAMES',
@@ -331,6 +338,13 @@ export const t = {
       promptCta: 'BUILD',
       promptHint: 'AI builds and runs it instantly · 1 generation = 10 credits',
       chips: ['🧱 Arrow-key brick breaker', '🦖 Jumping dino runner', '🚀 Asteroid-dodging space shooter'],
+      showcase: [
+        { user: 'Make a brick breaker I control with arrow keys', ai: 'Done! Move the paddle with the arrow keys and clear every brick.', title: 'Neon Breaker' },
+        { user: 'Make a dino runner that jumps over obstacles', ai: 'Your dino runner is ready. Press space to jump!', title: 'Dino Dash' },
+        { user: 'Make a space shooter dodging asteroids', ai: 'Ship ready for launch! Dodge asteroids and chase the high score.', title: 'Cosmic Shooter' },
+      ],
+      showcasePlay: 'Play now',
+      showcaseBadge: 'VIBREX STUDIO',
     },
     games: {
       heading: 'GAMES',
