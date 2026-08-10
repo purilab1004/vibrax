@@ -201,10 +201,10 @@ export default function NavBar() {
                   {isAdmin && navLinkDesktop('/admin', `⚙ ${T.nav.admin}`)}
                 </>
               ) : (
-                /* 다크 필 + 모래 위에 떠 있는 효과 */
+                /* 파란 필 + 모래 위에 떠 있는 효과 */
                 <Link
                   href="/login"
-                  className="sand-float rounded-full text-[13px] font-bold text-white bg-[#241f17] px-5 py-2 hover:bg-[#3a332a] transition-colors"
+                  className="sand-float flex items-center h-9 rounded-full text-[13px] font-bold text-white bg-[#2563eb] px-5 hover:bg-[#1d4ed8] transition-colors"
                 >
                   {T.nav.login}
                 </Link>
