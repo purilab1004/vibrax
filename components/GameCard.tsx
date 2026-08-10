@@ -12,6 +12,7 @@ import LiveTitleTicker from './LiveTitleTicker'
 import type { AvatarConfig } from '@/lib/avatar/config'
 import { countryFlag } from '@/lib/country'
 import { formatViewers } from '@/lib/format'
+import { useLang } from '@/lib/i18n/context'
 
 const GENRE_LABELS: Record<Game['genre'], string> = {
   action: 'ACTION',
@@ -136,7 +137,10 @@ interface AgentConfig { name: string; persona: string; avatarUrl?: string }
 
 export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video' }: GameCardProps) {
   const flag = countryFlag(creatorCountry)
+  const { T } = useLang()
   const [open, setOpen] = useState(false)
+  // 호버 말풍선 — 구름처럼 튀어나오는 랜덤 멘트
+  const [bubble, setBubble] = useState<string | null>(null)
   // 호버 라이브 미리보기 — 잠깐 스친 마우스에 iframe이 뜨지 않게 지연 후 실행
   const [preview, setPreview] = useState(false)
   const [previewReady, setPreviewReady] = useState(false)
@@ -188,7 +192,17 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
       >
         {variant === 'tile' ? (
           /* 감성 플립 타일 — 앞면: 파스텔+캐릭터+제목+조회수, 호버: 3D 플립으로 실제 썸네일 */
-          <div className="[perspective:1200px]" onMouseEnter={startPreview} onMouseLeave={stopPreview}>
+          <div
+            className="[perspective:1200px]"
+            onMouseEnter={() => {
+              startPreview()
+              setBubble(T.games.hoverMsgs[Math.floor(Math.random() * T.games.hoverMsgs.length)])
+            }}
+            onMouseLeave={() => {
+              stopPreview()
+              setBubble(null)
+            }}
+          >
             <div className={`relative ${aspectClass} w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]`}>
               {/* 앞면 */}
               <div
@@ -225,6 +239,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
                   AJ LIVE
                 </span>
+                {/* 구름 말풍선 — 눌러보고 싶게 하는 랜덤 멘트 */}
+                {bubble && (
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+                    <div className="bubble-pop relative bg-white/95 text-[#241f17] text-[13px] font-bold px-4 py-2 rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.25)] whitespace-nowrap">
+                      {bubble}
+                      <span className="absolute -bottom-2 left-5 w-3 h-3 bg-white/95 rounded-full" />
+                      <span className="absolute -bottom-4 left-2.5 w-2 h-2 bg-white/90 rounded-full" />
+                    </div>
+                  </div>
+                )}
                 <div className="absolute inset-x-0 bottom-0 p-4 flex items-end justify-between gap-3 pointer-events-none">
                   <div className="min-w-0">
                     <h3 className="text-lg font-bold text-white truncate leading-tight">{game.title}</h3>
