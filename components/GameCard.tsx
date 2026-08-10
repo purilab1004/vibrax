@@ -191,7 +191,8 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         className="group block w-full text-left cursor-pointer"
       >
         {variant === 'tile' ? (
-          /* 감성 플립 타일 — 앞면: 파스텔+캐릭터+제목+조회수, 호버: 3D 플립으로 실제 썸네일 */
+        <div>
+          {/* 감성 플립 타일 — 앞면: 파스텔+캐릭터, 호버: 3D 플립으로 실제 썸네일 */}
           <div
             className="[perspective:1200px]"
             onMouseEnter={() => {
@@ -204,23 +205,12 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
             }}
           >
             <div className={`relative ${aspectClass} w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]`}>
-              {/* 앞면 */}
+              {/* 앞면 — 캐릭터만 중앙에 (정보는 카드 아래 행으로) */}
               <div
-                className="absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex flex-col"
+                className="absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex items-center justify-center"
                 style={{ backgroundColor: PASTELS[hashOf(game.id) % PASTELS.length] }}
               >
-                <div className="flex-1 flex items-center justify-center min-h-0">
-                  <Critter id={game.id} />
-                </div>
-                <div className="pb-5 px-3 text-center shrink-0">
-                  <h3 className="font-bold uppercase tracking-[0.18em] text-[#1d1a14] text-[13px] md:text-[15px] truncate">
-                    {game.title}
-                  </h3>
-                  <p className="mt-1.5 flex items-center justify-center gap-1.5 text-[11px] md:text-[12px] tracking-[0.14em] text-[#1d1a14]/60">
-                    <ViewerIcon className="w-3.5 h-3.5" />
-                    {formatViewers(game.view_count ?? 0)}
-                  </p>
-                </div>
+                <Critter id={game.id} />
               </div>
               {/* 뒷면 — 실제 썸네일 + 라이브 미리보기 */}
               <div className="absolute inset-0 rounded-xl overflow-hidden bg-gray-900 ring-1 ring-gray-800/60 [transform:rotateY(180deg)] [backface-visibility:hidden]">
@@ -263,6 +253,36 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
               </div>
             </div>
           </div>
+
+          {/* 카드 아래 정보 행 — 아바타 · 제목 · 좋아요 · 조회수 */}
+          <div className="mt-3 flex items-center gap-2.5 px-0.5">
+            <div className="w-8 h-8 shrink-0 rounded-full border border-[#ebe4d6] overflow-hidden bg-white flex items-center justify-center">
+              {creatorAvatarUrl ? (
+                <Image
+                  src={creatorAvatarUrl}
+                  alt={creatorName ?? 'creator'}
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover object-top"
+                  unoptimized
+                />
+              ) : (
+                <span className="font-pixel text-[11px] text-[#857a68]">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold text-[#241f17] truncate leading-tight">{game.title}</h3>
+              <p className="text-[12px] text-[#857a68] truncate">
+                {creatorName ?? 'unknown'}{flag && ` ${flag}`}
+              </p>
+            </div>
+            <LikeButton gameId={game.id} size="sm" />
+            <span className="shrink-0 flex items-center gap-1 text-[13px] text-[#857a68]">
+              <ViewerIcon className="w-4 h-4" />
+              {formatViewers(game.view_count ?? 0)}
+            </span>
+          </div>
+        </div>
         ) : (
         <div>
           <div
