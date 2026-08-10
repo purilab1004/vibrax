@@ -194,7 +194,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         <div>
           {/* 감성 플립 타일 — 앞면: 파스텔+캐릭터, 호버: 3D 플립으로 실제 썸네일 */}
           <div
-            className="[perspective:1200px]"
+            className="gacha-wrap relative [perspective:1200px]"
             onMouseEnter={() => {
               startPreview()
               setBubble(T.games.hoverMsgs[Math.floor(Math.random() * T.games.hoverMsgs.length)])
@@ -204,12 +204,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
               setBubble(null)
             }}
           >
-            <div className={`relative ${aspectClass} w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]`}>
+            <div className={`relative ${aspectClass} w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] group-hover:delay-[430ms]`}>
               {/* 앞면 — 캐릭터 + 하단 정보 행 (아바타 · 제목 · 좋아요 · 조회수) */}
               <div
                 className="absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex flex-col"
                 style={{ backgroundColor: PASTELS[hashOf(game.id) % PASTELS.length] }}
               >
+                {/* 좋아요 — 상단 우측에 크게 */}
+                <div className="absolute top-3 right-3 z-10 bg-white/85 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
+                  <LikeButton gameId={game.id} size="lg" />
+                </div>
                 <div className="flex-1 flex items-center justify-center min-h-0">
                   <Critter id={game.id} />
                 </div>
@@ -234,9 +238,8 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                       {creatorName ?? 'unknown'}{flag && ` ${flag}`}
                     </p>
                   </div>
-                  <LikeButton gameId={game.id} size="sm" />
-                  <span className="shrink-0 flex items-center gap-1 text-[13px] text-[#1d1a14]/60">
-                    <ViewerIcon className="w-4 h-4" />
+                  <span className="shrink-0 flex items-center gap-1.5 text-[15px] font-semibold text-[#1d1a14]/70">
+                    <ViewerIcon className="w-5 h-5" />
                     {formatViewers(game.view_count ?? 0)}
                   </span>
                 </div>
@@ -280,6 +283,23 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* 뽑기 버스트 — 공개 순간 사방으로 터지는 별 */}
+            <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center" aria-hidden>
+              {([
+                ['-90px', '-70px', '#f2b436'], ['90px', '-80px', '#2563eb'], ['-100px', '30px', '#06b6d4'],
+                ['104px', '40px', '#f472b6'], ['-50px', '-110px', '#4cc97e'], ['56px', '104px', '#f2b436'],
+                ['-70px', '90px', '#2563eb'], ['40px', '-104px', '#f472b6'],
+              ] as const).map(([dx, dy, c], i) => (
+                <span
+                  key={i}
+                  className="gacha-star absolute text-xl"
+                  style={{ '--dx': dx, '--dy': dy, color: c } as React.CSSProperties}
+                >
+                  ✦
+                </span>
+              ))}
             </div>
           </div>
 

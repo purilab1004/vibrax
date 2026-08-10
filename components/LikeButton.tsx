@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 
 interface Props {
   gameId: string
-  size?: 'sm' | 'md'
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export default function LikeButton({ gameId, size = 'sm' }: Props) {
@@ -53,8 +53,8 @@ export default function LikeButton({ gameId, size = 'sm' }: Props) {
     })
   }
 
-  const textSize = size === 'md' ? 'text-xs' : 'text-[11px]'
-  const iconSize = size === 'md' ? 'text-sm' : 'text-[11px]'
+  const textSize = size === 'lg' ? 'text-[14px]' : size === 'md' ? 'text-xs' : 'text-[11px]'
+  const iconSize = size === 'lg' ? 'text-[22px] leading-none' : size === 'md' ? 'text-sm' : 'text-[11px]'
 
   return (
     <button
