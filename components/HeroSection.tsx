@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useLang } from '@/lib/i18n/context'
 import HeroPromptInput from '@/components/HeroPromptInput'
-import HeroShowcase from '@/components/HeroShowcase'
 import HeroAvatarMarquee from '@/components/HeroAvatarMarquee'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
@@ -75,12 +74,6 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
         </div>
 
         <HeroPromptInput />
-
-        {/* 관심 있는 프롬프트 — 프롬프트가 게임이 되는 장면 데모 */}
-        <p className="hero-fade-pulse mt-10 mb-5 text-sm md:text-[15px] font-bold tracking-wide bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">
-          {T.hero.showcaseHeading}
-        </p>
-        <HeroShowcase />
       </div>
 
       {/* 하단 — TOP AI AVATAR 마퀴 + 스크롤 유도 */}

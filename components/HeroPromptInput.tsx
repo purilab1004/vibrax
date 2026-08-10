@@ -39,21 +39,7 @@ export default function HeroPromptInput() {
             aria-label={T.hero.promptPlaceholder}
             className="w-full resize-none bg-transparent px-5 pt-4 pb-1 text-sm md:text-base text-[#241f17] placeholder-[#a1957f] outline-none text-left"
           />
-          <div className="flex items-center gap-2 px-3 pb-3">
-            {/* 예시 칩 — 누르면 프롬프트에 채워짐 */}
-            <div className="hidden sm:flex items-center gap-2 min-w-0 overflow-hidden">
-              {T.hero.chips.map(chip => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => setValue(chip.replace(/^\S+\s/, ''))}
-                  className="shrink-0 rounded-full border border-[#ebe4d6] bg-[#fcfaf5] px-3 py-1.5 text-[12px] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors whitespace-nowrap"
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
-            <div className="flex-1" />
+          <div className="flex items-center justify-end px-3 pb-3">
             {/* linearity 스타일 필 버튼 — 흰 갭 + 헤일로 링 + 글로우 */}
             <button
               type="submit"
@@ -63,6 +49,20 @@ export default function HeroPromptInput() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* 예시 프롬프트 — 입력창 아래에 자연스럽게 이어지는 칩. 누르면 프롬프트에 채워짐 */}
+      <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2">
+        {T.hero.chips.map(chip => (
+          <button
+            key={chip}
+            type="button"
+            onClick={() => setValue(chip.replace(/^\S+\s/, ''))}
+            className="rounded-full border border-[#ddd3bf] bg-white/70 backdrop-blur-sm px-3.5 py-1.5 text-[12px] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] hover:bg-white transition-colors whitespace-nowrap"
+          >
+            {chip}
+          </button>
+        ))}
       </div>
     </form>
   )

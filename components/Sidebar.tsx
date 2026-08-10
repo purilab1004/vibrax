@@ -111,7 +111,11 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
 
   return (
     <aside
-      className={`hidden md:flex fixed top-0 left-0 bottom-0 z-[60] flex-col overflow-hidden border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm transition-[width,opacity] duration-200 ${open ? 'w-56' : 'w-14 opacity-45 hover:opacity-100'}`}
+      className={`hidden md:flex fixed top-0 left-0 bottom-0 z-[60] flex-col overflow-hidden transition-[width,opacity] duration-200 ${
+        open
+          ? 'w-56 border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm'
+          : 'w-14 opacity-45 hover:opacity-100'
+      }`}
       aria-label="sidebar"
     >
       {/* 로고 헤더 — 로고 옆에 접기/펼치기 화살표. 접힘: 로고 아이콘 + 화살표만 */}
