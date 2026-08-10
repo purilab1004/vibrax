@@ -225,9 +225,9 @@ export default function NavBar() {
               aria-label="메뉴 열기"
               className="flex flex-col justify-center gap-1.5 w-8 h-8 items-center"
             >
-              <span className="block w-5 h-px bg-gray-300" />
-              <span className="block w-5 h-px bg-gray-300" />
-              <span className="block w-5 h-px bg-gray-300" />
+              <span className="block w-5 h-[1.5px] bg-[#241f17]" />
+              <span className="block w-5 h-[1.5px] bg-[#241f17]" />
+              <span className="block w-5 h-[1.5px] bg-[#241f17]" />
             </button>
           </div>
         </nav>
