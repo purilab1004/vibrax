@@ -82,12 +82,17 @@ function Critter({ id }: { id: string }) {
   }, [])
 
   return (
-    <svg ref={svgRef} viewBox="0 0 200 200" className="w-[58%] max-w-[180px] critter-bob" style={{ animationDelay: delay }} aria-hidden>
-      {/* 머리 위 새싹 — 로고 야자수와 같은 초록 */}
-      <g className="critter-sprout" style={{ transformOrigin: '100px 52px' }}>
-        <path d="M100 52c0-8 0-14 0-18" stroke="#2e7d4f" strokeWidth="4" strokeLinecap="round" fill="none" />
-        <path d="M100 34c-2-10-10-14-19-13 2 10 10 14 19 13Z" fill="#39b36b" />
-        <path d="M100 34c2-10 10-14 19-13-2 10-10 14-19 13Z" fill="#4cc97e" />
+    <svg ref={svgRef} viewBox="0 0 200 200" className="w-[50%] max-w-[160px] critter-bob" style={{ animationDelay: delay }} aria-hidden>
+      {/* 머리 위 야자수 — 로고와 같은 줄기/잎 5장 */}
+      <g className="critter-sprout" style={{ transformOrigin: '100px 55px' }}>
+        <path d="M97 55c.9-9 2.6-16 6.9-22" stroke="#8a5a2b" strokeWidth="4.5" strokeLinecap="round" fill="none" />
+        <g fill="none" stroke="#39b36b" strokeWidth="4.8" strokeLinecap="round">
+          <path d="M104 33c-7-4.8-14-5.2-19.8-2.2" />
+          <path d="M104 33c-2.2-7.4-6.6-12.3-12.3-14.5" />
+          <path d="M104 33c3-7 8.3-11 14.5-11.8" />
+          <path d="M104 33c7.4-3 14.5-1.7 19.3 2.2" />
+          <path d="M104 33c5.7 1.3 10 5.2 12.3 11" />
+        </g>
       </g>
       {/* 말랑한 젤리 몸통 — 바닥 기준으로 살짝 눌렸다 펴진다 */}
       <g className="critter-body" style={{ transformOrigin: '100px 158px' }}>

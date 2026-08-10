@@ -6,8 +6,8 @@ import Reveal from '@/components/Reveal'
 import { useLang } from '@/lib/i18n/context'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
-// 핀터레스트 매소너리 — 카드마다 비율을 달리해 벽돌처럼 쌓인다 (id 기반으로 고정)
-const ASPECTS = ['aspect-video', 'aspect-[3/4]', 'aspect-square', 'aspect-[4/5]', 'aspect-[4/3]', 'aspect-video', 'aspect-[3/4]'] as const
+// 핀터레스트 매소너리 — 정사각 이상(세로형)만 사용해 캐릭터가 답답하지 않게 (id 기반으로 고정)
+const ASPECTS = ['aspect-square', 'aspect-[4/5]', 'aspect-[3/4]', 'aspect-[5/6]', 'aspect-[4/5]', 'aspect-square', 'aspect-[3/4]'] as const
 
 function aspectOf(id: string, i: number): string {
   let h = 0
