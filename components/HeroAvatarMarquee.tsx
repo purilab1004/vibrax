@@ -24,18 +24,18 @@ export default function HeroAvatarMarquee({ games }: { games: GameWithCreator[] 
         {/* 동일한 리스트 두 벌 — 각 벌의 폭이 같아야 -50% 이동이 끊김 없이 이어진다 */}
         <div className="hero-marquee-track flex w-max will-change-transform">
           {[0, 1].map(copy => (
-            <div key={copy} className="flex items-center gap-10 pr-10" aria-hidden={copy === 1}>
+            <div key={copy} className="flex items-center gap-3 pr-3" aria-hidden={copy === 1}>
               {creators.map((cr, i) => (
                 <Link
                   key={`${cr.id}-${copy}`}
                   href={`/games?creator=${cr.id}`}
                   tabIndex={copy === 1 ? -1 : undefined}
-                  className="shrink-0 flex items-baseline gap-1.5 whitespace-nowrap group/creator"
+                  className="shrink-0 flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#cfc4ab] bg-white/60 px-4 py-2 hover:border-[#2563eb] hover:bg-white transition-colors group/creator"
                 >
                   {i < 3 && (
                     <span className={`font-pixel text-[9px] ${RANK_COLOR[i]}`}>#{i + 1}</span>
                   )}
-                  <span className="text-[15px] md:text-base font-bold text-[#9d9280] group-hover/creator:text-[#2563eb] transition-colors">
+                  <span className="text-[13px] font-semibold text-[#4a4337] group-hover/creator:text-[#2563eb] transition-colors">
                     {cr.name}
                   </span>
                 </Link>

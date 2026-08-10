@@ -27,7 +27,7 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
       {VIDEOS.map((src, i) => (
         <video
           key={src}
-          className={`absolute inset-x-0 bottom-0 top-[10%] w-full object-cover transition-opacity duration-[1500ms] ${
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1500ms] ${
             vid === i ? 'opacity-55' : 'opacity-0'
           }`}
           autoPlay
@@ -76,11 +76,9 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
         <HeroPromptInput />
       </div>
 
-      {/* 하단 — 흰 띠 위 TOP AI AVATAR 마퀴 + 스크롤 유도 */}
+      {/* 하단 — TOP AI AVATAR 마퀴 + 스크롤 유도 */}
       <div className="relative w-full pb-5 space-y-4">
-        <div className="bg-white/85 backdrop-blur-sm py-4">
-          <HeroAvatarMarquee games={games} />
-        </div>
+        <HeroAvatarMarquee games={games} />
         <div className="flex flex-col items-center gap-1 text-[#b3a78f]" aria-hidden>
           <span className="text-[9px] font-semibold tracking-[0.3em]">SCROLL</span>
           <svg viewBox="0 0 24 24" className="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
