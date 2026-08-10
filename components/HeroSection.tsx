@@ -6,7 +6,8 @@ import HeroPromptInput from '@/components/HeroPromptInput'
 import HeroAvatarMarquee from '@/components/HeroAvatarMarquee'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
-const VIDEOS = ['/hero-bg.mp4', '/hero-bg-2.mp4']
+// tropica가 먼저, vecto가 다음
+const VIDEOS = ['/hero-bg-2.mp4', '/hero-bg.mp4']
 const ROTATE_MS = 14000
 
 // 히어로 — linearity.io 컨셉: 풀 뷰포트 첫 화면, 배경 영상 로테이션, 하단 TOP AI AVATAR 마퀴
