@@ -190,8 +190,8 @@ export default async function RootLayout({
           <Suspense fallback={null}>
             <Sidebar newGenres={newGenres} channels={channels} tournament={tournament} />
           </Suspense>
-          <main className="flex-1 md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">{children}</main>
-          <footer className="border-t border-[#ebe4d6] py-6 px-6 mt-auto md:pl-[var(--rail-w,14rem)] transition-[padding] duration-200">
+          <main className="flex-1 md:pl-[var(--rail-w,3.5rem)] transition-[padding] duration-200">{children}</main>
+          <footer className="border-t border-[#ebe4d6] py-6 px-6 mt-auto md:pl-[var(--rail-w,3.5rem)] transition-[padding] duration-200">
             <FooterLinks />
           </footer>
         </LangProvider>

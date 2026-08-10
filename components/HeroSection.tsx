@@ -2,22 +2,23 @@
 
 import { useLang } from '@/lib/i18n/context'
 import HeroPromptInput from '@/components/HeroPromptInput'
-import HeroShowcase from '@/components/HeroShowcase'
+import HeroAvatarMarquee from '@/components/HeroAvatarMarquee'
+import type { GameWithCreator } from '@/lib/supabase/types'
 
-// 히어로 — 밝은 배경 중앙 정렬: 헤드라인(그라디언트 강조) + 대시 서브라벨 + 프롬프트 카드
-export default function HeroSection() {
+// 히어로 — linearity.io 컨셉: 풀 뷰포트 첫 화면, 하단 TOP AI AVATAR 마퀴 + 스크롤 유도
+export default function HeroSection({ games }: { games: GameWithCreator[] }) {
   const { T } = useLang()
   const [line1, line2] = T.hero.promptHeading.split('\n')
 
   return (
-    <section className="relative overflow-hidden -mt-14 pt-14">
+    <section className="relative overflow-hidden -mt-14 pt-14 min-h-[100svh] flex flex-col">
       {/* 은은한 오션 글로우 — 서로 다른 속도로 천천히 떠다닌다 */}
       <div className="hero-glow hero-glow-blue" aria-hidden />
       <div className="hero-glow hero-glow-cyan" aria-hidden />
 
-      <div className="relative max-w-7xl mx-auto px-6 py-14 md:py-20 flex flex-col items-center text-center">
-        {/* 헤드라인 — 마지막 줄은 오션 그라디언트 강조 */}
-        <h1 className="text-3xl md:text-[2.6rem] leading-tight font-extrabold text-[#241f17] mb-4">
+      {/* 중앙 블록 — 큼직한 헤드라인 + 프롬프트 카드 */}
+      <div className="relative flex-1 w-full max-w-7xl mx-auto px-6 flex flex-col items-center justify-center text-center py-10">
+        <h1 className="text-4xl md:text-[3.4rem] leading-[1.12] tracking-tight font-extrabold text-[#241f17] mb-5">
           {line1}
           {line2 && (
             <>
@@ -30,7 +31,7 @@ export default function HeroSection() {
         </h1>
 
         {/* 대시 서브라벨 — ─── 태그라인 ─── */}
-        <div className="flex items-center gap-3 mb-8 w-full max-w-md">
+        <div className="flex items-center gap-3 mb-9 w-full max-w-md">
           <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#cfc4ab]" />
           <span className="text-[11px] font-semibold tracking-[0.22em] text-[#857a68] whitespace-nowrap">
             {T.hero.tagline}
@@ -39,9 +40,17 @@ export default function HeroSection() {
         </div>
 
         <HeroPromptInput />
+      </div>
 
-        {/* 스튜디오 대화 목업 — 프롬프트가 게임이 되는 장면을 보여준다 */}
-        <HeroShowcase />
+      {/* 하단 — TOP AI AVATAR 마퀴 + 스크롤 유도 */}
+      <div className="relative w-full pb-5 space-y-5">
+        <HeroAvatarMarquee games={games} />
+        <div className="flex flex-col items-center gap-1 text-[#b3a78f]" aria-hidden>
+          <span className="text-[9px] font-semibold tracking-[0.3em]">SCROLL</span>
+          <svg viewBox="0 0 24 24" className="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
       </div>
     </section>
   )

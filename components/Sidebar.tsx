@@ -11,7 +11,7 @@ import type { Genre, StudioProject } from '@/lib/supabase/types'
 import { formatViewers } from '@/lib/format'
 
 // kick 스타일 좌측 사이드바 — 홈/장르 메뉴 + 라이브 게임 채널 목록.
-// 기본 펼침(w-56), 토글로 아이콘 레일(w-14). 본문 여백은 --rail-w CSS 변수로 동기화.
+// 기본 접힘(아이콘 레일 w-14), 토글로 펼침(w-56). 본문 여백은 --rail-w CSS 변수로 동기화.
 // 데스크탑(md+) 전용. 모바일은 헤더 햄버거 메뉴가 내비를 담당.
 
 export interface SidebarChannel {
@@ -49,7 +49,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   const params = useSearchParams()
   const router = useRouter()
   const { T } = useLang()
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   // 스튜디오에서는 장르/채널 대신 내 프로젝트 목록을 보여준다
   const inStudio = pathname.startsWith('/studio')
   // 마이페이지에서는 프로필 섹션 메뉴만 보여준다

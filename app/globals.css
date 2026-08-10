@@ -236,3 +236,17 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .hero-chat-in { animation: none; }
 }
+
+/* 히어로 아바타 마퀴 — 무한 루프, 호버 시 일시정지 */
+.hero-marquee-track {
+  animation: heroMarquee 32s linear infinite;
+}
+.hero-marquee:hover .hero-marquee-track {
+  animation-play-state: paused;
+}
+@keyframes heroMarquee {
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-marquee-track { animation: none; }
+}

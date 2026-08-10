@@ -3,8 +3,6 @@
 import { useRef } from 'react'
 import Link from 'next/link'
 import GameCard from '@/components/GameCard'
-import ViewerIcon from '@/components/ViewerIcon'
-import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import type { GameWithCreator, Genre } from '@/lib/supabase/types'
 
@@ -103,94 +101,6 @@ function Row({ heading, headerExtra, games, large, leading }: {
   )
 }
 
-// 순위 강조 — 금/은/동 링과 배지
-const RANK_STYLE = [
-  { ring: 'ring-2 ring-[#c9940c] shadow-[0_0_24px_rgba(201,148,12,0.35)]', badge: 'bg-[#c9940c] text-white' },
-  { ring: 'ring-2 ring-gray-300', badge: 'bg-gray-300 text-black' },
-  { ring: 'ring-2 ring-amber-600', badge: 'bg-amber-600 text-white' },
-] as const
-
-interface Creator {
-  id: string
-  name: string
-  avatarUrl: string | null
-  games: number
-  views: number
-}
-
-// 제작자 랭킹 — 게임 개수 우선, 동률이면 총 조회수
-function topCreatorsOf(games: GameWithCreator[]): Creator[] {
-  const map = new Map<string, Creator>()
-  for (const g of games) {
-    const cur = map.get(g.user_id) ?? {
-      id: g.user_id,
-      name: g.profiles?.agent_name ?? g.profiles?.username ?? 'unknown',
-      avatarUrl: g.profiles?.avatar_config?.previewUrl ?? null,
-      games: 0,
-      views: 0,
-    }
-    cur.games += 1
-    cur.views += g.view_count ?? 0
-    map.set(g.user_id, cur)
-  }
-  return [...map.values()]
-    .sort((a, b) => b.games - a.games || b.views - a.views)
-    .slice(0, 10)
-}
-
-function TopCreators({ games, heading }: { games: GameWithCreator[]; heading: string }) {
-  const { T } = useLang()
-  const creators = topCreatorsOf(games)
-  if (creators.length === 0) return null
-  return (
-    <section className="mb-14">
-      <h2 className="font-pixel text-xl text-[#c9940c] tracking-wide mb-5">🏆 {heading}</h2>
-      <div className="flex gap-3 overflow-x-auto scrollbar-hide pt-1 pb-2">
-        {creators.map((cr, i) => {
-          const rank = RANK_STYLE[i]
-          return (
-            <Link
-              key={cr.id}
-              href={`/games?creator=${cr.id}`}
-              className="shrink-0 flex items-center gap-3 bg-[#ffffff] border border-[#ebe4d6] hover:border-[#cfc4ab] rounded-full pl-2 pr-5 py-2 transition-colors group/creator"
-            >
-              {/* 원형 아바타 — 상위 3위는 금/은/동 링, 광택 스윕 */}
-              <div className={`relative w-14 h-14 rounded-full overflow-hidden bg-[#ffffff] shrink-0 ${rank ? rank.ring : 'border border-[#ddd3bf]'}`}>
-                {cr.avatarUrl ? (
-                  <div className="avatar-idle w-full h-full" style={{ animationDelay: `${i * 0.6}s` }}>
-                    {/* 얼굴 중심 줌 */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={cr.avatarUrl} alt={cr.name} className="w-full h-full object-cover" style={{ objectPosition: '50% 8%', transform: 'scale(2.1)', transformOrigin: '50% 14%' }} />
-                    <span className="avatar-shine" style={{ animationDelay: `${i * 0.9 + 0.4}s` }} />
-                  </div>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="font-pixel text-lg text-[#b3a78f]">{cr.name.charAt(0).toUpperCase()}</span>
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="flex items-center gap-1.5 text-sm font-bold text-[#241f17] group-hover/creator:text-[#2563eb] transition-colors">
-                  {rank && (
-                    <span className={`font-pixel text-[9px] px-1.5 py-0.5 rounded ${rank.badge}`}>#{i + 1}</span>
-                  )}
-                  <span className="truncate max-w-[140px]">{cr.name}</span>
-                </p>
-                <p className="mt-0.5 text-[13px] text-[#857a68] flex items-center gap-1.5 whitespace-nowrap">
-                  {T.games.gamesCount(cr.games)}
-                  <span className="text-[#b3a78f]">·</span>
-                  <ViewerIcon className="w-3.5 h-3.5" />
-                  {formatViewers(cr.views)}
-                </p>
-              </div>
-            </Link>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
 export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
   const { T } = useLang()
 
@@ -226,7 +136,6 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
           </Link>
         }
       />
-      <TopCreators games={games} heading={T.games.topCreators} />
       {GENRES.map(g => (
         <Row
           key={g}
