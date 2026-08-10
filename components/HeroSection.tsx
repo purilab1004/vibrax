@@ -11,10 +11,10 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
   const [line1, line2] = T.hero.promptHeading.split('\n')
 
   return (
-    <section className="relative overflow-hidden -mt-14 pt-14 min-h-[100svh] flex flex-col">
-      {/* 배경 영상 — 밝은 오버레이 아래에서 은은하게 재생 */}
+    <section className="relative overflow-hidden -mt-14 pt-14 min-h-[100svh] flex flex-col bg-white">
+      {/* 배경 영상 — 흰 바탕 위 40% 투명도로 은은한 질감처럼 재생 */}
       <video
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover opacity-40"
         autoPlay
         muted
         loop
@@ -24,8 +24,13 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
       >
         <source src="/hero-bg.mp4" type="video/mp4" />
       </video>
-      {/* 라이트 오버레이 — 흰 배경 유지 + 텍스트 가독성, 아래로 갈수록 본문 배경색으로 녹아든다 */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#fcfaf5]/80 via-[#fcfaf5]/55 to-[#fcfaf5]" aria-hidden />
+      {/* 센터 보호 오버레이 — 타이틀·프롬프트 자리는 흰색으로 또렷하게, 가장자리는 영상이 살아난다 */}
+      <div
+        className="absolute inset-0 bg-[radial-gradient(ellipse_58%_48%_at_50%_40%,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.55)_58%,rgba(255,255,255,0)_100%)]"
+        aria-hidden
+      />
+      {/* 하단 페이드 — 본문 배경색으로 자연스럽게 연결 */}
+      <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-[#fcfaf5]" aria-hidden />
 
       {/* 파랑·초록·노랑 글로우 — 서로 다른 궤적과 속도로 떠다닌다 */}
       <div className="hero-glow hero-glow-blue" aria-hidden />
