@@ -166,62 +166,49 @@ export default function NavBar() {
             </span>
           </Link>
 
-          {/* ── Left: search ── */}
-          <form onSubmit={handleSearch} className="hidden md:flex w-full max-w-xs">
-            <div className="relative w-full">
-              <input
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder={T.nav.searchPlaceholder}
-                className="w-full bg-[#ffffff] border border-[#ebe4d6] focus:border-[#2563eb] rounded-none pl-9 pr-3 py-2 text-[13px] text-[#241f17] placeholder-[#a1957f] outline-none transition-colors"
-                aria-label={T.nav.search}
-              />
-              <button type="submit" aria-label={T.nav.search} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#857a68] hover:text-[#2563eb] transition-colors">
-                <SearchIcon />
-              </button>
-            </div>
-          </form>
-
-          {/* spacer — push the rest to the right */}
-          <div className="hidden md:block flex-1" />
-
-          {/* ── Desktop nav (right) ── */}
-          <div className="hidden md:flex items-center gap-6 shrink-0">
-            {navLinkDesktop('/games', T.nav.games)}
-            {navLinkDesktop('/studio', T.nav.studio)}
-            <Link
-              href="/tournament"
-              className="text-[#c9940c] px-1.5 py-1 rounded text-[13px] font-semibold tracking-wider transition-colors hover:text-[#a1780a]"
-            >
-              🏆 {T.nav.tournament}
-            </Link>
-            {navLinkDesktop('/blog', T.nav.blog)}
-            {navLinkDesktop('/partner', T.nav.partner)}
-            {navLinkDesktop('/about', T.nav.about)}
-            {user ? (
-              <>
-                {navLinkDesktop('/submit', T.nav.submit)}
-                {navLinkDesktop('/profile', T.nav.mypage)}
-                <button
-                  onClick={handleSignOut}
-                  className="text-[13px] font-medium tracking-wider text-[#6b6152] hover:text-[#2563eb] transition-colors"
-                >
-                  {T.nav.logout}
-                </button>
-                {isAdmin && navLinkDesktop('/admin', `⚙ ${T.nav.admin}`)}
-              </>
-            ) : (
+          {/* ── Desktop: 3분할 그리드 — 메뉴는 중앙, 로그인/언어는 우측 ── */}
+          <div className="hidden md:grid flex-1 grid-cols-[1fr_auto_1fr] items-center">
+            <div />
+            <div className="flex items-center gap-6">
+              {navLinkDesktop('/games', T.nav.games)}
+              {navLinkDesktop('/studio', T.nav.studio)}
               <Link
-                href="/login"
-                className="font-pixel text-[11px] tracking-widest bg-[#2563eb] text-white px-5 py-2 hover:bg-[#1d4ed8] transition-colors"
+                href="/tournament"
+                className="text-[#c9940c] px-1.5 py-1 rounded text-[13px] font-semibold tracking-wider transition-colors hover:text-[#a1780a]"
               >
-                {T.nav.login}
+                🏆 {T.nav.tournament}
               </Link>
-            )}
-            <div className="flex items-center gap-1 border-l border-[#ebe4d6] pl-5">
-              {langBtn('ko', 'KO')}
-              <span className="text-[#b3a78f] text-[11px]">|</span>
-              {langBtn('en', 'EN')}
+              {navLinkDesktop('/blog', T.nav.blog)}
+              {navLinkDesktop('/partner', T.nav.partner)}
+              {navLinkDesktop('/about', T.nav.about)}
+            </div>
+            <div className="flex items-center justify-end gap-5">
+              {user ? (
+                <>
+                  {navLinkDesktop('/submit', T.nav.submit)}
+                  {navLinkDesktop('/profile', T.nav.mypage)}
+                  <button
+                    onClick={handleSignOut}
+                    className="text-[13px] font-medium tracking-wider text-[#6b6152] hover:text-[#2563eb] transition-colors"
+                  >
+                    {T.nav.logout}
+                  </button>
+                  {isAdmin && navLinkDesktop('/admin', `⚙ ${T.nav.admin}`)}
+                </>
+              ) : (
+                /* linearity 'Join waitlist' 스타일 — 다크 필 + 헤일로 링 */
+                <Link
+                  href="/login"
+                  className="rounded-full text-[13px] font-bold text-white bg-[#241f17] px-5 py-2 shadow-[0_0_0_2px_#fcfaf5,0_0_0_3.5px_rgba(36,31,23,0.14)] hover:bg-[#3a332a] hover:shadow-[0_0_0_2px_#fcfaf5,0_0_0_3.5px_rgba(36,31,23,0.26)] transition-all"
+                >
+                  {T.nav.login}
+                </Link>
+              )}
+              <div className="flex items-center gap-1 border-l border-[#ebe4d6] pl-5">
+                {langBtn('ko', 'KO')}
+                <span className="text-[#b3a78f] text-[11px]">|</span>
+                {langBtn('en', 'EN')}
+              </div>
             </div>
           </div>
 

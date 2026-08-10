@@ -281,9 +281,13 @@ body {
   .hero-chat-in { animation: none; }
 }
 
-/* 히어로 아바타 마퀴 — GPU 가속 무한 루프, 호버 시 일시정지 */
+/* 히어로 아바타 마퀴 — GPU 가속 무한 루프, 호버 시 일시정지, 양끝 마스크 페이드 */
+.hero-marquee {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent);
+}
 .hero-marquee-track {
-  animation: heroMarquee 36s linear infinite;
+  animation: heroMarquee 28s linear infinite;
 }
 .hero-marquee:hover .hero-marquee-track {
   animation-play-state: paused;

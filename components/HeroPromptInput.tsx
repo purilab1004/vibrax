@@ -59,7 +59,7 @@ export default function HeroPromptInput() {
               type="submit"
               className="shrink-0 rounded-full text-[13px] font-bold text-white px-6 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#06b6d4] shadow-[0_0_0_2px_#ffffff,0_0_0_3.5px_rgba(37,99,235,0.22),0_6px_20px_rgba(37,99,235,0.35)] hover:shadow-[0_0_0_2px_#ffffff,0_0_0_3.5px_rgba(37,99,235,0.4),0_8px_26px_rgba(37,99,235,0.45)] active:scale-[0.98] transition-all"
             >
-              ▶ {T.hero.promptCta}
+              {T.hero.promptCta}
             </button>
           </div>
         </div>
