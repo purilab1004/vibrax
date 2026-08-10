@@ -23,7 +23,7 @@ export default function HeroPromptInput() {
 
   return (
     <form onSubmit={submit} className="w-full max-w-2xl">
-      <div className="rounded-2xl p-[1.5px] bg-gradient-to-r from-[#2563eb] via-[#0ea5e9] to-[#06b6d4] shadow-[0_12px_40px_rgba(37,99,235,0.16)] focus-within:shadow-[0_16px_52px_rgba(37,99,235,0.28)] transition-shadow">
+      <div className="prompt-ring rounded-2xl p-[1.5px] shadow-[0_12px_40px_rgba(37,99,235,0.16)] focus-within:shadow-[0_16px_52px_rgba(37,99,235,0.28)] transition-shadow">
         <div className="rounded-[14.5px] bg-white overflow-hidden">
           <textarea
             value={value}
@@ -54,9 +54,10 @@ export default function HeroPromptInput() {
               ))}
             </div>
             <div className="flex-1" />
+            {/* linearity 스타일 필 버튼 — 흰 갭 + 헤일로 링 + 글로우 */}
             <button
               type="submit"
-              className="shrink-0 rounded-xl text-[13px] font-bold text-white px-6 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#06b6d4] hover:opacity-90 active:scale-[0.98] transition-all"
+              className="shrink-0 rounded-full text-[13px] font-bold text-white px-6 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#06b6d4] shadow-[0_0_0_2px_#ffffff,0_0_0_3.5px_rgba(37,99,235,0.22),0_6px_20px_rgba(37,99,235,0.35)] hover:shadow-[0_0_0_2px_#ffffff,0_0_0_3.5px_rgba(37,99,235,0.4),0_8px_26px_rgba(37,99,235,0.45)] active:scale-[0.98] transition-all"
             >
               ▶ {T.hero.promptCta}
             </button>

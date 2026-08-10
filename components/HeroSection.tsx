@@ -12,9 +12,10 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
 
   return (
     <section className="relative overflow-hidden -mt-14 pt-14 min-h-[100svh] flex flex-col">
-      {/* 은은한 오션 글로우 — 서로 다른 속도로 천천히 떠다닌다 */}
+      {/* 파랑·초록·노랑 글로우 — 서로 다른 궤적과 속도로 떠다닌다 */}
       <div className="hero-glow hero-glow-blue" aria-hidden />
-      <div className="hero-glow hero-glow-cyan" aria-hidden />
+      <div className="hero-glow hero-glow-green" aria-hidden />
+      <div className="hero-glow hero-glow-yellow" aria-hidden />
 
       {/* 중앙 블록 — 큼직한 헤드라인 + 프롬프트 카드 */}
       <div className="relative flex-1 w-full max-w-7xl mx-auto px-6 flex flex-col items-center justify-center text-center py-10">
