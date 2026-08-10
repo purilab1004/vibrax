@@ -94,7 +94,7 @@ export default function NavBar() {
     <button
       onClick={() => setLang((lang === 'ko' ? 'en' : 'ko') as Lang)}
       aria-label="toggle language"
-      className="relative flex items-center h-7 w-[64px] shrink-0 rounded-full border border-[#ddd3bf] bg-white/70 backdrop-blur-sm text-[10px] font-bold tracking-wider hover:border-[#2563eb]/50 transition-colors"
+      className="sand-float flex items-center h-7 w-[64px] shrink-0 rounded-full border border-[#ddd3bf] bg-white text-[10px] font-bold tracking-wider hover:border-[#2563eb]/50 transition-colors"
     >
       <span
         aria-hidden
@@ -201,10 +201,10 @@ export default function NavBar() {
                   {isAdmin && navLinkDesktop('/admin', `⚙ ${T.nav.admin}`)}
                 </>
               ) : (
-                /* linearity 'Join waitlist' 스타일 — 다크 필 + 헤일로 링 */
+                /* 다크 필 + 모래 위에 떠 있는 효과 */
                 <Link
                   href="/login"
-                  className="rounded-full text-[13px] font-bold text-white bg-[#241f17] px-5 py-2 shadow-[0_0_0_2px_#fcfaf5,0_0_0_3.5px_rgba(36,31,23,0.14)] hover:bg-[#3a332a] hover:shadow-[0_0_0_2px_#fcfaf5,0_0_0_3.5px_rgba(36,31,23,0.26)] transition-all"
+                  className="sand-float rounded-full text-[13px] font-bold text-white bg-[#241f17] px-5 py-2 hover:bg-[#3a332a] transition-colors"
                 >
                   {T.nav.login}
                 </Link>

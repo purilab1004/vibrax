@@ -116,7 +116,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
         <button
           onClick={() => setOpen(true)}
           aria-label="open menu"
-          className="sand-button flex items-center gap-2.5 h-10 px-3 text-[#241f17]"
+          className="sand-float sand-button flex items-center gap-2.5 h-10 px-3 text-[#241f17]"
         >
           <LogoMark className="w-6 h-6 shrink-0" />
           <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
