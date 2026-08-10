@@ -114,41 +114,42 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
       className={`hidden md:flex fixed top-0 left-0 bottom-0 z-[60] flex-col overflow-hidden border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm transition-[width,opacity] duration-200 ${open ? 'w-56' : 'w-14 opacity-45 hover:opacity-100'}`}
       aria-label="sidebar"
     >
-      {/* 로고 헤더 — 펼침: 로고+워드마크, 접힘: 로고 아이콘만 (deevid 스타일) */}
+      {/* 로고 헤더 — 로고 옆에 접기/펼치기 화살표. 접힘: 로고 아이콘 + 화살표만 */}
       <div className="flex items-center h-14 shrink-0">
-        <Link href="/" className="flex items-center min-w-0 hover:opacity-80 transition-opacity" title="Vibrexcup">
-          <span className={iconCol}><LogoMark /></span>
-          <span className={`text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
-            vibrex<span className="text-[#2563eb]">cup</span>
-            <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
-              BETA
-            </span>
-          </span>
+        <Link
+          href="/"
+          className={`flex items-center min-w-0 hover:opacity-80 transition-opacity ${open ? '' : 'pl-1.5'}`}
+          title="Vibrexcup"
+        >
+          {open ? (
+            <>
+              <span className={iconCol}><LogoMark /></span>
+              <span className="text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap">
+                vibrex<span className="text-[#2563eb]">cup</span>
+                <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
+                  BETA
+                </span>
+              </span>
+            </>
+          ) : (
+            <LogoMark className="w-6 h-6 shrink-0" />
+          )}
         </Link>
-        {open && (
-          <button
-            onClick={() => setOpen(false)}
-            aria-label="collapse"
-            className="ml-auto pr-3 text-[#9d9280] hover:text-[#2563eb] transition-colors"
-          >
+        <button
+          onClick={() => setOpen(o => !o)}
+          aria-label={open ? 'collapse' : 'expand'}
+          className={`ml-auto text-[#9d9280] hover:text-[#2563eb] transition-colors ${open ? 'pr-3' : 'pr-1.5'}`}
+        >
+          {open ? (
             <svg viewBox="0 0 24 24" className="w-4 h-4" {...stroke}><path d="m11 6-5 6 5 6M18 6l-5 6 5 6" /></svg>
-          </button>
-        )}
+          ) : (
+            <svg viewBox="0 0 24 24" className="w-4 h-4" {...stroke}><path d="m6 6 5 6-5 6M13 6l5 6-5 6" /></svg>
+          )}
+        </button>
       </div>
 
-      {/* 접힌 상태 — 펼치기 버튼 */}
-      {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          aria-label="expand"
-          className="flex items-center justify-center h-9 shrink-0 text-[#9d9280] hover:text-[#2563eb] transition-colors"
-        >
-          <svg viewBox="0 0 24 24" className="w-4 h-4" {...stroke}><path d="m6 6 5 6-5 6M13 6l5 6-5 6" /></svg>
-        </button>
-      )}
-
-      {/* 그라디언트 CTA — 프롬프트로 게임 시작 (일반 페이지에서만) */}
-      {!inStudio && !inProfile && !inAdmin && (
+      {/* 그라디언트 CTA — 프롬프트로 게임 시작 (펼침 + 일반 페이지에서만) */}
+      {open && !inStudio && !inProfile && !inAdmin && (
         <div className={`shrink-0 pt-3 pb-1 ${open ? 'px-3' : 'px-2'}`}>
           <Link
             href="/studio"
@@ -163,7 +164,8 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
+      {/* 메뉴 본문 — 접힌 상태에서는 완전히 숨긴다 (로고 + 화살표만 남음) */}
+      <div className={`flex-1 overflow-y-auto scrollbar-hide ${open ? '' : 'hidden'}`}>
         <nav className="flex flex-col py-1">
           <Link href="/" className={row(isHome)} title={T.nav.home}>
             <span className={iconCol}><HomeIcon /></span>
