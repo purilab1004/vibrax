@@ -94,12 +94,12 @@ export default function NavBar() {
     <button
       onClick={() => setLang((lang === 'ko' ? 'en' : 'ko') as Lang)}
       aria-label="toggle language"
-      className="sand-float flex items-center h-7 w-[64px] shrink-0 rounded-full border border-[#ddd3bf] bg-white text-[10px] font-bold tracking-wider hover:border-[#2563eb]/50 transition-colors"
+      className="sand-float flex items-center h-9 w-[80px] shrink-0 rounded-full border border-[#ddd3bf] bg-white text-[11px] font-bold tracking-wider hover:border-[#2563eb]/50 transition-colors"
     >
       <span
         aria-hidden
-        className={`absolute top-[2px] bottom-[2px] w-[29px] rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] shadow-[0_1px_4px_rgba(37,99,235,0.35)] transition-transform duration-200 ${
-          lang === 'en' ? 'translate-x-[31px]' : 'translate-x-[2px]'
+        className={`absolute top-[3px] bottom-[3px] w-[37px] rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] shadow-[0_1px_4px_rgba(37,99,235,0.35)] transition-transform duration-200 ${
+          lang === 'en' ? 'translate-x-[40px]' : 'translate-x-[3px]'
         }`}
       />
       <span className={`relative flex-1 text-center transition-colors ${lang === 'ko' ? 'text-white' : 'text-[#857a68]'}`}>KO</span>
@@ -201,10 +201,10 @@ export default function NavBar() {
                   {isAdmin && navLinkDesktop('/admin', `⚙ ${T.nav.admin}`)}
                 </>
               ) : (
-                /* 파란 필 + 모래 위에 떠 있는 효과 */
+                /* 골드 필 — 모래·트로피 팔레트에서 딴 색 + 모래 위에 떠 있는 효과 */
                 <Link
                   href="/login"
-                  className="sand-float flex items-center h-9 rounded-full text-[13px] font-bold text-white bg-[#2563eb] px-5 hover:bg-[#1d4ed8] transition-colors"
+                  className="sand-float flex items-center h-9 rounded-full text-[13px] font-bold text-white bg-gradient-to-b from-[#d9a71b] to-[#c9940c] px-5 hover:from-[#c9940c] hover:to-[#b3830a] transition-colors"
                 >
                   {T.nav.login}
                 </Link>
