@@ -44,11 +44,13 @@ interface GameCardProps {
   bjAvatarConfig?: AvatarConfig | null // 제작자 저장 아바타 — 게임 내 BJ 로 사용
   // 'card' = 썸네일 아래 정보 블록(목록용), 'tile' = 정보를 썸네일 위 오버레이로(홈 모자이크용)
   variant?: 'card' | 'tile'
+  // 매소너리(핀터레스트) 배치용 — 타일 비율 오버라이드
+  aspectClass?: string
 }
 
 interface AgentConfig { name: string; persona: string; avatarUrl?: string }
 
-export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card' }: GameCardProps) {
+export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video' }: GameCardProps) {
   const flag = countryFlag(creatorCountry)
   const [open, setOpen] = useState(false)
   // 호버 라이브 미리보기 — 잠깐 스친 마우스에 iframe이 뜨지 않게 지연 후 실행
@@ -103,7 +105,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         {/* 유튜브 홈 문법 — 테두리 없는 카드: 둥근 썸네일이 화면에 뜨고, 아래는 차분한 정보 블록 */}
         <div>
           <div
-            className="relative aspect-video w-full overflow-hidden bg-gray-900 rounded-xl ring-1 ring-gray-800/60"
+            className={`relative ${aspectClass} w-full overflow-hidden bg-gray-900 rounded-xl ring-1 ring-gray-800/60`}
             onMouseEnter={startPreview}
             onMouseLeave={stopPreview}
           >
