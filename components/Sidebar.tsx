@@ -58,9 +58,9 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   const inAdmin = pathname.startsWith('/admin')
   const [projects, setProjects] = useState<StudioProject[]>([])
 
-  // 본문(main/footer) 여백을 사이드바 폭과 동기화
+  // 본문(main/footer) 여백을 사이드바 폭과 동기화 — 접힘: 플로팅 버튼만 남으므로 0
   useEffect(() => {
-    document.documentElement.style.setProperty('--rail-w', open ? '14rem' : '3.5rem')
+    document.documentElement.style.setProperty('--rail-w', open ? '14rem' : '0rem')
   }, [open])
 
   useEffect(() => {
@@ -109,46 +109,46 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   const iconCol = 'w-14 shrink-0 flex items-center justify-center'
   const label = `text-[13px] font-medium tracking-wider whitespace-nowrap pr-2 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`
 
+  // 접힘 — 좌상단 플로팅 'Menu' 버튼만
+  if (!open) {
+    return (
+      <div className="hidden md:block fixed top-2.5 left-3 z-[60]">
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="open menu"
+          className="flex items-center gap-2 h-9 px-3.5 rounded-lg bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-[13px] font-bold shadow-[0_4px_14px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_18px_rgba(37,99,235,0.42)] active:scale-[0.97] transition-all"
+        >
+          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          Menu
+        </button>
+      </div>
+    )
+  }
+
   return (
     <aside
-      className={`hidden md:flex fixed top-0 left-0 bottom-0 z-[60] flex-col overflow-hidden transition-[width,opacity] duration-200 ${
-        open
-          ? 'w-56 border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm'
-          : 'w-14 opacity-45 hover:opacity-100'
-      }`}
+      className="hidden md:flex fixed top-0 left-0 bottom-0 z-[60] w-56 flex-col overflow-hidden border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm"
       aria-label="sidebar"
     >
-      {/* 로고 헤더 — 로고 옆에 접기/펼치기 화살표. 접힘: 로고 아이콘 + 화살표만 */}
+      {/* 로고 헤더 — 로고 + ← 닫기 버튼 */}
       <div className="flex items-center h-14 shrink-0">
-        <Link
-          href="/"
-          className={`flex items-center min-w-0 hover:opacity-80 transition-opacity ${open ? '' : 'pl-1.5'}`}
-          title="Vibrexcup"
-        >
-          {open ? (
-            <>
-              <span className={iconCol}><LogoMark /></span>
-              <span className="text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap">
-                vibrex<span className="text-[#2563eb]">cup</span>
-                <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
-                  BETA
-                </span>
-              </span>
-            </>
-          ) : (
-            <LogoMark className="w-6 h-6 shrink-0" />
-          )}
+        <Link href="/" className="flex items-center min-w-0 hover:opacity-80 transition-opacity" title="Vibrexcup">
+          <span className={iconCol}><LogoMark /></span>
+          <span className="text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap">
+            vibrex<span className="text-[#2563eb]">cup</span>
+            <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
+              BETA
+            </span>
+          </span>
         </Link>
         <button
-          onClick={() => setOpen(o => !o)}
-          aria-label={open ? 'collapse' : 'expand'}
-          className={`ml-auto text-[#9d9280] hover:text-[#2563eb] transition-colors ${open ? 'pr-3' : 'pr-1.5'}`}
+          onClick={() => setOpen(false)}
+          aria-label="close menu"
+          className="ml-auto mr-3 w-7 h-7 flex items-center justify-center rounded-md bg-[#241f17]/5 hover:bg-[#241f17]/10 text-[#4a4337] hover:text-[#2563eb] transition-colors"
         >
-          {open ? (
-            <svg viewBox="0 0 24 24" className="w-4 h-4" {...stroke}><path d="m11 6-5 6 5 6M18 6l-5 6 5 6" /></svg>
-          ) : (
-            <svg viewBox="0 0 24 24" className="w-4 h-4" {...stroke}><path d="m6 6 5 6-5 6M13 6l5 6-5 6" /></svg>
-          )}
+          <svg viewBox="0 0 24 24" className="w-4 h-4" {...stroke}><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
         </button>
       </div>
 
