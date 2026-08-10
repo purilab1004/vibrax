@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import HeroSection from '@/components/HeroSection'
-import HeroShowcase from '@/components/HeroShowcase'
 import HomeBanner from '@/components/HomeBanner'
 import HomeMosaic from '@/components/home/HomeMosaic'
 import Link from 'next/link'
@@ -21,10 +20,6 @@ export default async function HomePage() {
       <HomeBanner />
       <HeroSection games={games ?? []} />
       <div className="max-w-7xl mx-auto px-6 py-14">
-        {/* 섹션 2 — 스크롤로 만나는 스튜디오 데모 */}
-        <section className="mb-20">
-          <HeroShowcase />
-        </section>
         {hasAnyGame ? (
           <HomeMosaic games={games ?? []} />
         ) : (

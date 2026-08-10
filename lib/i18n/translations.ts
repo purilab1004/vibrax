@@ -43,7 +43,7 @@ export const t = {
       ],
       showcasePlay: '지금 플레이',
       showcaseBadge: 'VIBREX STUDIO',
-      showcaseHeading: '프롬프트가 게임이 되는 순간',
+      showcaseHeading: '관심 있는 프롬프트',
     },
     games: {
       heading: 'GAMES',
@@ -346,7 +346,7 @@ export const t = {
       ],
       showcasePlay: 'Play now',
       showcaseBadge: 'VIBREX STUDIO',
-      showcaseHeading: 'Watch a prompt become a game',
+      showcaseHeading: 'Featured prompts',
     },
     games: {
       heading: 'GAMES',

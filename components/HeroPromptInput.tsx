@@ -64,10 +64,6 @@ export default function HeroPromptInput() {
           </div>
         </div>
       </div>
-      {/* 크레딧 힌트 대신 — 은은한 반투명 펄스 문구 */}
-      <p className="hero-fade-pulse mt-4 text-sm md:text-[15px] font-bold tracking-wide bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">
-        {T.hero.showcaseHeading}
-      </p>
     </form>
   )
 }
