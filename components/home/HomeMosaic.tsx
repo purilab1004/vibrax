@@ -3,6 +3,7 @@
 import { useRef } from 'react'
 import Link from 'next/link'
 import GameCard from '@/components/GameCard'
+import Reveal from '@/components/Reveal'
 import { useLang } from '@/lib/i18n/context'
 import type { GameWithCreator, Genre } from '@/lib/supabase/types'
 
@@ -57,7 +58,7 @@ function Row({ heading, headerExtra, games, large, leading }: {
 
   return (
     <section className="mb-14">
-      <div className="flex items-center justify-between mb-5 gap-3">
+      <Reveal className="flex items-center justify-between mb-5 gap-3">
         {heading}
         <div className="flex items-center gap-3">
           {headerExtra}
@@ -66,7 +67,7 @@ function Row({ heading, headerExtra, games, large, leading }: {
             {arrowBtn(1, '›')}
           </div>
         </div>
-      </div>
+      </Reveal>
       <div
         ref={track}
         onPointerDown={onPointerDown}
@@ -77,13 +78,17 @@ function Row({ heading, headerExtra, games, large, leading }: {
         className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-proximity pb-2 cursor-grab active:cursor-grabbing select-none"
       >
         {leading && (
-          <div className={`shrink-0 snap-start ${large ? 'w-[320px] sm:w-[440px] xl:w-[520px]' : 'w-[280px] sm:w-[360px] xl:w-[420px]'}`}>
+          <Reveal
+            delay={80}
+            className={`shrink-0 snap-start ${large ? 'w-[320px] sm:w-[440px] xl:w-[520px]' : 'w-[280px] sm:w-[360px] xl:w-[420px]'}`}
+          >
             {leading}
-          </div>
+          </Reveal>
         )}
-        {games.map(game => (
-          <div
+        {games.map((game, gi) => (
+          <Reveal
             key={game.id}
+            delay={Math.min((gi + (leading ? 2 : 1)) * 90, 540)}
             className={`shrink-0 snap-start ${large ? 'w-[320px] sm:w-[440px] xl:w-[520px]' : 'w-[280px] sm:w-[360px] xl:w-[420px]'}`}
           >
             <GameCard
@@ -94,7 +99,7 @@ function Row({ heading, headerExtra, games, large, leading }: {
               creatorCountry={game.profiles?.country ?? null}
               bjAvatarConfig={game.profiles?.avatar_config ?? null}
             />
-          </div>
+          </Reveal>
         ))}
       </div>
     </section>

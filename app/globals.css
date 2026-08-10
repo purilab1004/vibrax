@@ -323,3 +323,22 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .hero-fade-pulse { animation: none; opacity: 0.5; }
 }
+
+/* 스크롤 리빌 — 아래에서 위로 올라오며 쌓이는 등장 */
+.reveal-item {
+  opacity: 0;
+  transform: translateY(48px);
+  transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+.reveal-shown {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-item {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}

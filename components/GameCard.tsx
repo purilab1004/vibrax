@@ -107,12 +107,15 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
             onMouseEnter={startPreview}
             onMouseLeave={stopPreview}
           >
-            {/* 채도·밝기 한 단계 다운 → 격자 전체가 차분해지고, 호버 시 원본 색으로 살아남 */}
+            {/* 채도·밝기 한 단계 다운 → 격자 전체가 차분해지고, 호버 시 원본 색으로 살아남.
+                tile은 hamzatariq 스타일 — 기본 블러, 호버하면 선명해진다 */}
             <Image
               src={game.thumbnail_url}
               alt={game.title}
               fill
-              className="object-cover saturate-[.8] brightness-90 group-hover:saturate-100 group-hover:brightness-100 group-hover:scale-[1.03] transition-all duration-300"
+              className={`object-cover saturate-[.8] brightness-90 group-hover:saturate-100 group-hover:brightness-100 group-hover:scale-[1.03] transition-all duration-300 ${
+                variant === 'tile' ? 'blur-[7px] scale-[1.05] group-hover:blur-none' : ''
+              }`}
             />
             {/* 호버 라이브 미리보기 — 게임이 실제로 실행됨. 클릭은 카드로 통과(pointer-events-none) */}
             {preview && (
