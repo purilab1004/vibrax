@@ -342,3 +342,44 @@ body {
     transform: none;
   }
 }
+
+/* 모래 위에 얹힌 버튼 — 아래 모래 받침 + 퍼지는 모래 그림자, 호버 시 살짝 떠오른다 */
+.sand-button {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #ebe4d6;
+  border-radius: 12px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 6px 0 -2px #f3e3b8,
+    0 12px 20px -8px rgba(201, 148, 12, 0.38);
+}
+.sand-button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 9px 0 -2px #f3e3b8,
+    0 18px 26px -10px rgba(201, 148, 12, 0.45);
+}
+.sand-button:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 3px 0 -2px #f3e3b8,
+    0 8px 14px -6px rgba(201, 148, 12, 0.35);
+}
+/* 버튼 밑에 깔린 모래 언덕 */
+.sand-button::after {
+  content: '';
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: -9px;
+  height: 10px;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at center, rgba(222, 196, 138, 0.55), transparent 72%);
+  filter: blur(2px);
+  z-index: -1;
+  pointer-events: none;
+}
