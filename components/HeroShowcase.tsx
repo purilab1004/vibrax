@@ -29,10 +29,6 @@ export default function HeroShowcase() {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* 섹션 헤딩 — 스크롤로 진입하는 데모 섹션 */}
-      <h2 className="text-center text-2xl md:text-3xl font-extrabold text-[#241f17] mb-8">
-        {T.hero.showcaseHeading}
-      </h2>
       <Link
         href="/studio"
         aria-label={T.hero.showcaseBadge}

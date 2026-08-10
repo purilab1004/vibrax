@@ -1,45 +1,58 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useLang } from '@/lib/i18n/context'
 import HeroPromptInput from '@/components/HeroPromptInput'
 import HeroAvatarMarquee from '@/components/HeroAvatarMarquee'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
-// 히어로 — linearity.io 컨셉: 풀 뷰포트 첫 화면, 하단 TOP AI AVATAR 마퀴 + 스크롤 유도
+const VIDEOS = ['/hero-bg.mp4', '/hero-bg-2.mp4']
+const ROTATE_MS = 14000
+
+// 히어로 — linearity.io 컨셉: 풀 뷰포트 첫 화면, 배경 영상 로테이션, 하단 TOP AI AVATAR 마퀴
 export default function HeroSection({ games }: { games: GameWithCreator[] }) {
   const { T } = useLang()
   const [line1, line2] = T.hero.promptHeading.split('\n')
+  const [vid, setVid] = useState(0)
+
+  // 두 영상을 크로스페이드로 로테이션
+  useEffect(() => {
+    const t = setInterval(() => setVid(v => (v + 1) % VIDEOS.length), ROTATE_MS)
+    return () => clearInterval(t)
+  }, [])
 
   return (
     <section className="relative overflow-hidden -mt-14 pt-14 min-h-[100svh] flex flex-col bg-white">
-      {/* 배경 영상 — 흰 바탕 위 40% 투명도로 은은한 질감처럼 재생 */}
-      <video
-        className="absolute inset-0 w-full h-full object-cover opacity-55"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        aria-hidden
-      >
-        <source src="/hero-bg.mp4" type="video/mp4" />
-      </video>
-      {/* 상단 보호 오버레이 — 타이틀·프롬프트 구간은 흰색, 아래로 내려가며 영상이 드러난다 */}
-      <div
-        className="absolute inset-0 bg-[linear-gradient(to_bottom,#ffffff_0%,#ffffff_38%,rgba(255,255,255,0.75)_56%,rgba(255,255,255,0)_86%)]"
-        aria-hidden
-      />
+      {/* 배경 영상 — 상단 10% 아래에서 시작, 활성 영상만 보이고 1.5초 크로스페이드 */}
+      {VIDEOS.map((src, i) => (
+        <video
+          key={src}
+          className={`absolute inset-x-0 bottom-0 top-[10%] w-full object-cover transition-opacity duration-[1500ms] ${
+            vid === i ? 'opacity-55' : 'opacity-0'
+          }`}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload={i === 0 ? 'auto' : 'metadata'}
+          aria-hidden
+        >
+          <source src={src} type="video/mp4" />
+        </video>
+      ))}
+      {/* 보호 오버레이 — 위·중간(프롬프트까지) 흰색, 좌우 가장자리는 영상이 살짝 비친다 */}
+      <div className="hero-shield absolute inset-0" aria-hidden />
       {/* 하단 페이드 — 본문 배경색으로 자연스럽게 연결 */}
-      <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-[#fcfaf5]" aria-hidden />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#fcfaf5]" aria-hidden />
 
       {/* 파랑·초록·노랑 글로우 — 서로 다른 궤적과 속도로 떠다닌다 */}
       <div className="hero-glow hero-glow-blue" aria-hidden />
       <div className="hero-glow hero-glow-green" aria-hidden />
       <div className="hero-glow hero-glow-yellow" aria-hidden />
 
-      {/* 중앙 블록 — 큼직한 헤드라인 + 프롬프트 카드 */}
+      {/* 중앙 블록 — 헤드라인 + 프롬프트 카드 */}
       <div className="relative flex-1 w-full max-w-7xl mx-auto px-6 flex flex-col items-center justify-center text-center py-10">
-        <h1 className="text-4xl md:text-[3.4rem] leading-[1.12] tracking-tight font-extrabold text-[#241f17] mb-5">
+        <h1 className="text-3xl md:text-5xl leading-[1.15] tracking-tight font-extrabold text-[#241f17] mb-5">
           {line1}
           {line2 && (
             <>
@@ -63,9 +76,11 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
         <HeroPromptInput />
       </div>
 
-      {/* 하단 — TOP AI AVATAR 마퀴 + 스크롤 유도 */}
-      <div className="relative w-full pb-5 space-y-5">
-        <HeroAvatarMarquee games={games} />
+      {/* 하단 — 흰 띠 위 TOP AI AVATAR 마퀴 + 스크롤 유도 */}
+      <div className="relative w-full pb-5 space-y-4">
+        <div className="bg-white/85 backdrop-blur-sm py-4">
+          <HeroAvatarMarquee games={games} />
+        </div>
         <div className="flex flex-col items-center gap-1 text-[#b3a78f]" aria-hidden>
           <span className="text-[9px] font-semibold tracking-[0.3em]">SCROLL</span>
           <svg viewBox="0 0 24 24" className="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">

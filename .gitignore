@@ -40,3 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /vecto_video.mp4
+/tropica_video.mp4

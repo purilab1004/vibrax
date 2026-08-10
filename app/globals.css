@@ -299,3 +299,29 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .hero-marquee-track { animation: none; }
 }
+
+/* 히어로 보호 오버레이 — 위·중간(프롬프트까지)은 흰색, 아래로 갈수록 영상 노출.
+   좌우 가장자리는 마스크로 오버레이를 얇게 해 영상이 살짝 비친다 */
+.hero-shield {
+  background: linear-gradient(
+    to bottom,
+    #ffffff 0%,
+    #ffffff 52%,
+    rgba(255, 255, 255, 0.8) 68%,
+    rgba(255, 255, 255, 0) 92%
+  );
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35) 0%, #000 14%, #000 86%, rgba(0, 0, 0, 0.35) 100%);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35) 0%, #000 14%, #000 86%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+/* 프롬프트 아래 문구 — 은은하게 밝아졌다 어두워지는 반투명 텍스트 */
+.hero-fade-pulse {
+  animation: heroFadePulse 3.5s ease-in-out infinite alternate;
+}
+@keyframes heroFadePulse {
+  from { opacity: 0.3; }
+  to { opacity: 0.7; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-fade-pulse { animation: none; opacity: 0.5; }
+}
