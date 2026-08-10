@@ -116,11 +116,12 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
         <button
           onClick={() => setOpen(true)}
           aria-label="open menu"
-          className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white shadow-[0_4px_14px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_18px_rgba(37,99,235,0.42)] active:scale-[0.97] transition-all"
+          className="flex items-center gap-2 h-9 px-2.5 rounded-lg bg-white border border-[#ebe4d6] text-[#241f17] shadow-[0_2px_10px_rgba(36,31,23,0.08)] hover:border-[#2563eb] hover:shadow-[0_4px_14px_rgba(37,99,235,0.18)] active:scale-[0.97] transition-all"
         >
           <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
             <path d="M4 6h16M4 12h16M4 18h16" />
           </svg>
+          <LogoMark className="w-6 h-6 shrink-0" />
         </button>
       </div>
     )
