@@ -14,7 +14,7 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
     <section className="relative overflow-hidden -mt-14 pt-14 min-h-[100svh] flex flex-col bg-white">
       {/* 배경 영상 — 흰 바탕 위 40% 투명도로 은은한 질감처럼 재생 */}
       <video
-        className="absolute inset-0 w-full h-full object-cover opacity-40"
+        className="absolute inset-0 w-full h-full object-cover opacity-55"
         autoPlay
         muted
         loop
@@ -24,9 +24,9 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
       >
         <source src="/hero-bg.mp4" type="video/mp4" />
       </video>
-      {/* 센터 보호 오버레이 — 타이틀·프롬프트 자리는 흰색으로 또렷하게, 가장자리는 영상이 살아난다 */}
+      {/* 상단 보호 오버레이 — 타이틀·프롬프트 구간은 흰색, 아래로 내려가며 영상이 드러난다 */}
       <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_58%_48%_at_50%_40%,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.55)_58%,rgba(255,255,255,0)_100%)]"
+        className="absolute inset-0 bg-[linear-gradient(to_bottom,#ffffff_0%,#ffffff_38%,rgba(255,255,255,0.75)_56%,rgba(255,255,255,0)_86%)]"
         aria-hidden
       />
       {/* 하단 페이드 — 본문 배경색으로 자연스럽게 연결 */}
