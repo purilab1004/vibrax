@@ -36,6 +36,58 @@ const GENRE_COLORS: Record<Game['genre'], string> = {
   sports: 'bg-green-700',
 }
 
+// ── 감성 앞면 — 파스텔 배경 + 움직이는 눈알 캐릭터 (id로 색·패턴 고정) ──
+const PASTELS = ['#F6EE8D', '#9FA2F2', '#C9E8F5', '#79C7F2', '#A6E3AE', '#F6C4DC', '#F8D9A2', '#F5978A'] as const
+
+function hashOf(id: string): number {
+  let h = 0
+  for (let c = 0; c < id.length; c++) h = (h * 31 + id.charCodeAt(c)) | 0
+  return Math.abs(h)
+}
+
+// 시드 기반 의사난수 — SSR/CSR 동일 렌더 보장
+function mulberry32(seed: number) {
+  return () => {
+    seed |= 0; seed = (seed + 0x6d2b79f5) | 0
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function Critter({ id }: { id: string }) {
+  const rnd = mulberry32(hashOf(id))
+  const dots: { x: number; y: number; r: number; o: number }[] = []
+  for (let i = 0; i < 64; i++) {
+    const ang = rnd() * Math.PI * 2
+    const rad = 34 + rnd() * 52
+    dots.push({
+      x: 100 + Math.cos(ang) * rad,
+      y: 100 + Math.sin(ang) * rad * 0.92,
+      r: 1.2 + rnd() * 2.6,
+      o: 0.3 + rnd() * 0.5,
+    })
+  }
+  return (
+    <svg viewBox="0 0 200 200" className="w-[60%] max-w-[190px] critter-bob" aria-hidden>
+      {/* 점 구름 — 아주 천천히 돈다 */}
+      <g className="critter-cloud" style={{ transformOrigin: '100px 100px' }}>
+        {dots.map((d, i) => (
+          <circle key={i} cx={d.x} cy={d.y} r={d.r} fill="#1f1f1f" opacity={d.o} />
+        ))}
+      </g>
+      {/* 코 + 눈 — 눈동자가 두리번거린다 */}
+      <circle cx="100" cy="100" r="13" fill="#111" />
+      <circle cx="78" cy="97" r="15" fill="#fffdf5" />
+      <circle cx="122" cy="97" r="15" fill="#fffdf5" />
+      <g className="critter-eyes">
+        <circle cx="82" cy="98" r="7.5" fill="#111" />
+        <circle cx="118" cy="98" r="7.5" fill="#111" />
+      </g>
+    </svg>
+  )
+}
+
 interface GameCardProps {
   game: Game
   creatorName?: string | null
@@ -102,22 +154,72 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePlay() } }}
         className="group block w-full text-left cursor-pointer"
       >
-        {/* 유튜브 홈 문법 — 테두리 없는 카드: 둥근 썸네일이 화면에 뜨고, 아래는 차분한 정보 블록 */}
+        {variant === 'tile' ? (
+          /* 감성 플립 타일 — 앞면: 파스텔+캐릭터+제목+조회수, 호버: 3D 플립으로 실제 썸네일 */
+          <div className="[perspective:1200px]" onMouseEnter={startPreview} onMouseLeave={stopPreview}>
+            <div className={`relative ${aspectClass} w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]`}>
+              {/* 앞면 */}
+              <div
+                className="absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex flex-col"
+                style={{ backgroundColor: PASTELS[hashOf(game.id) % PASTELS.length] }}
+              >
+                <div className="flex-1 flex items-center justify-center min-h-0">
+                  <Critter id={game.id} />
+                </div>
+                <div className="pb-5 px-3 text-center shrink-0">
+                  <h3 className="font-bold uppercase tracking-[0.18em] text-[#1d1a14] text-[13px] md:text-[15px] truncate">
+                    {game.title}
+                  </h3>
+                  <p className="mt-1.5 flex items-center justify-center gap-1.5 text-[11px] md:text-[12px] tracking-[0.14em] text-[#1d1a14]/60">
+                    <ViewerIcon className="w-3.5 h-3.5" />
+                    {formatViewers(game.view_count ?? 0)}
+                  </p>
+                </div>
+              </div>
+              {/* 뒷면 — 실제 썸네일 + 라이브 미리보기 */}
+              <div className="absolute inset-0 rounded-xl overflow-hidden bg-gray-900 ring-1 ring-gray-800/60 [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                <Image src={game.thumbnail_url} alt={game.title} fill className="object-cover" />
+                {preview && (
+                  <iframe
+                    src={game.play_url}
+                    tabIndex={-1}
+                    title={`${game.title} preview`}
+                    onLoad={() => setPreviewReady(true)}
+                    className={`absolute inset-0 w-full h-full border-0 pointer-events-none transition-opacity duration-500 ${previewReady ? 'opacity-100' : 'opacity-0'}`}
+                  />
+                )}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 to-transparent pointer-events-none" />
+                <span className="absolute left-2 top-2 flex items-center gap-1 bg-red-600/80 text-white font-pixel text-[10px] px-1.5 py-0.5 rounded tracking-widest">
+                  <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                  AJ LIVE
+                </span>
+                <div className="absolute inset-x-0 bottom-0 p-4 flex items-end justify-between gap-3 pointer-events-none">
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-bold text-white truncate leading-tight">{game.title}</h3>
+                    <p className="mt-0.5 text-[13px] text-white/70 truncate">
+                      {creatorName ?? 'unknown'}{flag && ` ${flag}`}
+                    </p>
+                  </div>
+                  <span className="shrink-0 font-pixel text-[11px] bg-[#2563eb]/90 text-white px-3 py-2 rounded">
+                    ▶ PLAY
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
         <div>
           <div
             className={`relative ${aspectClass} w-full overflow-hidden bg-gray-900 rounded-xl ring-1 ring-gray-800/60`}
             onMouseEnter={startPreview}
             onMouseLeave={stopPreview}
           >
-            {/* 채도·밝기 한 단계 다운 → 격자 전체가 차분해지고, 호버 시 원본 색으로 살아남.
-                tile은 hamzatariq 스타일 — 기본 블러, 호버하면 선명해진다 */}
+            {/* 채도·밝기 한 단계 다운 → 격자 전체가 차분해지고, 호버 시 원본 색으로 살아남 */}
             <Image
               src={game.thumbnail_url}
               alt={game.title}
               fill
-              className={`object-cover saturate-[.8] brightness-90 group-hover:saturate-100 group-hover:brightness-100 group-hover:scale-[1.03] transition-all duration-300 ${
-                variant === 'tile' ? 'blur-[7px] scale-[1.05] group-hover:blur-none' : ''
-              }`}
+              className="object-cover saturate-[.8] brightness-90 group-hover:saturate-100 group-hover:brightness-100 group-hover:scale-[1.03] transition-all duration-300"
             />
             {/* 호버 라이브 미리보기 — 게임이 실제로 실행됨. 클릭은 카드로 통과(pointer-events-none) */}
             {preview && (
@@ -129,32 +231,13 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 className={`absolute inset-0 w-full h-full border-0 pointer-events-none transition-opacity duration-500 ${previewReady ? 'opacity-100' : 'opacity-0'}`}
               />
             )}
-            {/* 공통 하단 그라데이션 — 제각각인 썸네일에 통일감 (tile은 텍스트 가독을 위해 더 짙게) */}
-            <div className={`absolute inset-x-0 bottom-0 bg-gradient-to-t to-transparent pointer-events-none ${
-              variant === 'tile' ? 'h-1/2 from-black/75' : 'h-1/3 from-black/40'
-            }`} />
+            {/* 공통 하단 그라데이션 — 제각각인 썸네일에 통일감 */}
+            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
             {/* LIVE 배지 — 절제된 크기·투명도 */}
-            <span className={`absolute left-2 flex items-center gap-1 bg-red-600/80 text-white font-pixel text-[10px] px-1.5 py-0.5 rounded tracking-widest ${
-              variant === 'tile' ? 'top-2' : 'bottom-2'
-            }`}>
+            <span className="absolute left-2 bottom-2 flex items-center gap-1 bg-red-600/80 text-white font-pixel text-[10px] px-1.5 py-0.5 rounded tracking-widest">
               <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
               AJ LIVE
             </span>
-            {/* tile: 정보를 썸네일 위 오버레이로 — higgsfield식 콘텐츠 벽 */}
-            {variant === 'tile' && (
-              <div className="absolute inset-x-0 bottom-0 p-4 flex items-end justify-between gap-3 pointer-events-none">
-                <div className="min-w-0">
-                  <h3 className="text-lg font-bold text-white truncate leading-tight">{game.title}</h3>
-                  <p className="mt-0.5 text-[13px] text-[#4a4337] truncate">
-                    {creatorName ?? 'unknown'}{flag && ` ${flag}`}
-                  </p>
-                </div>
-                <span className="shrink-0 flex items-center gap-1.5 text-[15px] font-medium text-[#3a332a]">
-                  <ViewerIcon className="w-4 h-4" />
-                  {formatViewers(game.view_count ?? 0)}
-                </span>
-              </div>
-            )}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <span className="font-pixel text-[11px] bg-[#2563eb]/90 text-white px-3 py-2 rounded">
                 ▶ PLAY
@@ -197,6 +280,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
           </div>
           )}
         </div>
+        )}
       </div>
 
       {agentGate && (

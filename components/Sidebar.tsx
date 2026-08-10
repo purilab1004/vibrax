@@ -112,7 +112,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   // 접힘 — 좌상단 플로팅 'Menu' 버튼만
   if (!open) {
     return (
-      <div className="hidden md:block fixed top-2.5 left-3 z-[60]">
+      <div className="hidden md:block fixed top-2 left-3 z-[60]">
         <button
           onClick={() => setOpen(true)}
           aria-label="open menu"

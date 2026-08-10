@@ -94,7 +94,7 @@ export default function NavBar() {
     <button
       onClick={() => setLang((lang === 'ko' ? 'en' : 'ko') as Lang)}
       aria-label="toggle language"
-      className="sand-float flex items-center h-9 w-[80px] shrink-0 rounded-full border border-[#ddd3bf] bg-white text-[11px] font-bold tracking-wider hover:border-[#2563eb]/50 transition-colors"
+      className="sand-float -top-0.5 flex items-center h-9 w-[80px] shrink-0 rounded-full border border-[#ddd3bf] bg-white text-[11px] font-bold tracking-wider hover:border-[#2563eb]/50 transition-colors"
     >
       <span
         aria-hidden
@@ -204,7 +204,7 @@ export default function NavBar() {
                 /* 골드 필 — 모래·트로피 팔레트에서 딴 색 + 모래 위에 떠 있는 효과 */
                 <Link
                   href="/login"
-                  className="sand-float flex items-center h-9 rounded-full text-[13px] font-bold text-white bg-gradient-to-b from-[#d9a71b] to-[#c9940c] px-5 hover:from-[#c9940c] hover:to-[#b3830a] transition-colors"
+                  className="sand-float -top-0.5 flex items-center h-9 rounded-full text-[13px] font-bold text-white bg-gradient-to-b from-[#d9a71b] to-[#c9940c] px-5 hover:from-[#c9940c] hover:to-[#b3830a] transition-colors"
                 >
                   {T.nav.login}
                 </Link>
