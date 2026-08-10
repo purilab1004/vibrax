@@ -385,29 +385,28 @@ body {
   border-radius: 12px;
 }
 
-/* 감성 타일 캐릭터 — 둥실거림 + 점구름 회전 + 두리번거리는 눈동자 */
+/* 감성 타일 캐릭터 — 둥실거림 + 젤리 스퀴시 + 살랑이는 새싹 (눈동자는 JS로 마우스 추적) */
 .critter-bob {
   animation: critterBob 4.5s ease-in-out infinite;
 }
-.critter-cloud {
-  animation: critterSpin 42s linear infinite;
+.critter-body {
+  animation: critterSquish 3.6s ease-in-out infinite;
 }
-.critter-eyes {
-  animation: critterLook 5.5s ease-in-out infinite;
+.critter-sprout {
+  animation: critterSway 3.2s ease-in-out infinite;
 }
 @keyframes critterBob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-7px); }
 }
-@keyframes critterSpin {
-  to { transform: rotate(360deg); }
+@keyframes critterSquish {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.045, 0.955); }
 }
-@keyframes critterLook {
-  0%, 100% { transform: translate(0, 0); }
-  18% { transform: translate(3px, -1.5px); }
-  42% { transform: translate(-3px, 1px); }
-  68% { transform: translate(1.5px, 2.2px); }
+@keyframes critterSway {
+  0%, 100% { transform: rotate(-7deg); }
+  50% { transform: rotate(8deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .critter-bob, .critter-cloud, .critter-eyes { animation: none; }
+  .critter-bob, .critter-body, .critter-sprout { animation: none; }
 }

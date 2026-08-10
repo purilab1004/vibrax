@@ -45,44 +45,71 @@ function hashOf(id: string): number {
   return Math.abs(h)
 }
 
-// 시드 기반 의사난수 — SSR/CSR 동일 렌더 보장
-function mulberry32(seed: number) {
-  return () => {
-    seed |= 0; seed = (seed + 0x6d2b79f5) | 0
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
+// 몸통 색 — 파스텔 배경 위에서 도드라지는 진한 톤 (배경과 같은 해시로 짝지어진다)
+const CRITTER_BODIES = ['#5B5F97', '#3E8E7E', '#E2856E', '#4E86B8', '#4E937A', '#C4699B', '#C98A2E', '#B85B4E'] as const
 
 function Critter({ id }: { id: string }) {
-  const rnd = mulberry32(hashOf(id))
-  const dots: { x: number; y: number; r: number; o: number }[] = []
-  for (let i = 0; i < 64; i++) {
-    const ang = rnd() * Math.PI * 2
-    const rad = 34 + rnd() * 52
-    dots.push({
-      x: 100 + Math.cos(ang) * rad,
-      y: 100 + Math.sin(ang) * rad * 0.92,
-      r: 1.2 + rnd() * 2.6,
-      o: 0.3 + rnd() * 0.5,
-    })
-  }
+  const body = CRITTER_BODIES[hashOf(id) % CRITTER_BODIES.length]
+  const delay = `${(hashOf(id) % 30) / 10}s`
+  const svgRef = useRef<SVGSVGElement>(null)
+  const eyesRef = useRef<SVGGElement>(null)
+
+  // 눈동자가 마우스를 따라간다 — rAF로 스로틀
+  useEffect(() => {
+    let raf = 0
+    const onMove = (e: MouseEvent) => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const svg = svgRef.current
+        const eyes = eyesRef.current
+        if (!svg || !eyes) return
+        const r = svg.getBoundingClientRect()
+        if (r.width === 0) return
+        const cx = r.left + r.width / 2
+        const cy = r.top + r.height * 0.45
+        const dx = e.clientX - cx
+        const dy = e.clientY - cy
+        const d = Math.hypot(dx, dy) || 1
+        const m = Math.min(d / 60, 1) * 6
+        eyes.style.transform = `translate(${(dx / d) * m}px, ${(dy / d) * m}px)`
+      })
+    }
+    window.addEventListener('mousemove', onMove, { passive: true })
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
+
   return (
-    <svg viewBox="0 0 200 200" className="w-[60%] max-w-[190px] critter-bob" aria-hidden>
-      {/* 점 구름 — 아주 천천히 돈다 */}
-      <g className="critter-cloud" style={{ transformOrigin: '100px 100px' }}>
-        {dots.map((d, i) => (
-          <circle key={i} cx={d.x} cy={d.y} r={d.r} fill="#1f1f1f" opacity={d.o} />
-        ))}
+    <svg ref={svgRef} viewBox="0 0 200 200" className="w-[58%] max-w-[180px] critter-bob" style={{ animationDelay: delay }} aria-hidden>
+      {/* 머리 위 새싹 — 로고 야자수와 같은 초록 */}
+      <g className="critter-sprout" style={{ transformOrigin: '100px 52px' }}>
+        <path d="M100 52c0-8 0-14 0-18" stroke="#2e7d4f" strokeWidth="4" strokeLinecap="round" fill="none" />
+        <path d="M100 34c-2-10-10-14-19-13 2 10 10 14 19 13Z" fill="#39b36b" />
+        <path d="M100 34c2-10 10-14 19-13-2 10-10 14-19 13Z" fill="#4cc97e" />
       </g>
-      {/* 코 + 눈 — 눈동자가 두리번거린다 */}
-      <circle cx="100" cy="100" r="13" fill="#111" />
-      <circle cx="78" cy="97" r="15" fill="#fffdf5" />
-      <circle cx="122" cy="97" r="15" fill="#fffdf5" />
-      <g className="critter-eyes">
-        <circle cx="82" cy="98" r="7.5" fill="#111" />
-        <circle cx="118" cy="98" r="7.5" fill="#111" />
+      {/* 말랑한 젤리 몸통 — 바닥 기준으로 살짝 눌렸다 펴진다 */}
+      <g className="critter-body" style={{ transformOrigin: '100px 158px' }}>
+        <path
+          d="M100 50c34 0 58 24 59 54 1 32-25 54-59 54s-60-22-59-54c1-30 25-54 59-54Z"
+          fill={body}
+        />
+        {/* 정수리 하이라이트 */}
+        <ellipse cx="78" cy="72" rx="14" ry="8" fill="#ffffff" opacity="0.22" transform="rotate(-18 78 72)" />
+        {/* 눈 — 흰자 + 마우스를 따라가는 눈동자 */}
+        <circle cx="79" cy="96" r="14" fill="#fffdf5" />
+        <circle cx="121" cy="96" r="14" fill="#fffdf5" />
+        <g ref={eyesRef} className="transition-transform duration-75">
+          <circle cx="79" cy="96" r="6.5" fill="#161616" />
+          <circle cx="121" cy="96" r="6.5" fill="#161616" />
+          <circle cx="81.5" cy="93.5" r="2" fill="#ffffff" />
+          <circle cx="123.5" cy="93.5" r="2" fill="#ffffff" />
+        </g>
+        {/* 볼터치 + 미소 */}
+        <circle cx="66" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
+        <circle cx="134" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
+        <path d="M88 118q12 11 24 0" stroke="#161616" strokeWidth="4" strokeLinecap="round" fill="none" />
       </g>
     </svg>
   )
