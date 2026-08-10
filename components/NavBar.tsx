@@ -89,14 +89,21 @@ export default function NavBar() {
     </Link>
   )
 
-  const langBtn = (l: Lang, label: string) => (
+  // KO/EN 토글 스위치 — 그라디언트 노브가 슬라이드
+  const LangSwitch = () => (
     <button
-      onClick={() => setLang(l)}
-      className={`text-[11px] tracking-widest font-pixel transition-colors ${
-        lang === l ? 'text-[#2563eb]' : 'text-[#9d9280] hover:text-[#6b6152]'
-      }`}
+      onClick={() => setLang((lang === 'ko' ? 'en' : 'ko') as Lang)}
+      aria-label="toggle language"
+      className="relative flex items-center h-7 w-[64px] shrink-0 rounded-full border border-[#ddd3bf] bg-white/70 backdrop-blur-sm text-[10px] font-bold tracking-wider hover:border-[#2563eb]/50 transition-colors"
     >
-      {label}
+      <span
+        aria-hidden
+        className={`absolute top-[2px] bottom-[2px] w-[29px] rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] shadow-[0_1px_4px_rgba(37,99,235,0.35)] transition-transform duration-200 ${
+          lang === 'en' ? 'translate-x-[31px]' : 'translate-x-[2px]'
+        }`}
+      />
+      <span className={`relative flex-1 text-center transition-colors ${lang === 'ko' ? 'text-white' : 'text-[#857a68]'}`}>KO</span>
+      <span className={`relative flex-1 text-center transition-colors ${lang === 'en' ? 'text-white' : 'text-[#857a68]'}`}>EN</span>
     </button>
   )
 
@@ -134,9 +141,7 @@ export default function NavBar() {
             </button>
           )}
           <div className="flex items-center gap-1 border-l border-[#ebe4d6] pl-4">
-            {langBtn('ko', 'KO')}
-            <span className="text-[#b3a78f] text-[11px]">|</span>
-            {langBtn('en', 'EN')}
+            <LangSwitch />
           </div>
         </nav>
       </header>
@@ -205,9 +210,7 @@ export default function NavBar() {
                 </Link>
               )}
               <div className="flex items-center gap-1 border-l border-[#ebe4d6] pl-5">
-                {langBtn('ko', 'KO')}
-                <span className="text-[#b3a78f] text-[11px]">|</span>
-                {langBtn('en', 'EN')}
+                <LangSwitch />
               </div>
             </div>
           </div>
@@ -215,9 +218,7 @@ export default function NavBar() {
           {/* ── Mobile: lang switcher + hamburger ── */}
           <div className="flex md:hidden items-center gap-3 ml-auto">
             <div className="flex items-center gap-1">
-              {langBtn('ko', 'KO')}
-              <span className="text-[#b3a78f] text-[11px]">|</span>
-              {langBtn('en', 'EN')}
+              <LangSwitch />
             </div>
             <button
               onClick={() => setMenuOpen(true)}
@@ -318,9 +319,7 @@ export default function NavBar() {
           {/* Footer lang + copyright */}
           <div className="flex items-center gap-4 border-t border-[#ebe4d6] pt-6">
             <div className="flex items-center gap-2">
-              {langBtn('ko', 'KO')}
-              <span className="text-[#b3a78f] text-[11px]">|</span>
-              {langBtn('en', 'EN')}
+              <LangSwitch />
             </div>
             <span className="text-[11px] text-[#b3a78f] font-pixel ml-auto">© VIBREXCUP 2026</span>
           </div>
