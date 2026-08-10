@@ -12,6 +12,21 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
 
   return (
     <section className="relative overflow-hidden -mt-14 pt-14 min-h-[100svh] flex flex-col">
+      {/* 배경 영상 — 밝은 오버레이 아래에서 은은하게 재생 */}
+      <video
+        className="absolute inset-0 w-full h-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-hidden
+      >
+        <source src="/hero-bg.mp4" type="video/mp4" />
+      </video>
+      {/* 라이트 오버레이 — 흰 배경 유지 + 텍스트 가독성, 아래로 갈수록 본문 배경색으로 녹아든다 */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#fcfaf5]/80 via-[#fcfaf5]/55 to-[#fcfaf5]" aria-hidden />
+
       {/* 파랑·초록·노랑 글로우 — 서로 다른 궤적과 속도로 떠다닌다 */}
       <div className="hero-glow hero-glow-blue" aria-hidden />
       <div className="hero-glow hero-glow-green" aria-hidden />
