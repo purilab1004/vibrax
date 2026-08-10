@@ -19,7 +19,7 @@ export default async function HomePage() {
     <div>
       <HomeBanner />
       <HeroSection games={games ?? []} />
-      <div className="max-w-7xl mx-auto px-6 py-14">
+      <div className="w-full px-2 md:px-3 py-14">
         {hasAnyGame ? (
           <HomeMosaic games={games ?? []} />
         ) : (

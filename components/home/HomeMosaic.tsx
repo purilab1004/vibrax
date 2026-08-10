@@ -23,17 +23,17 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
   return (
     <div>
       {/* 헤딩 — LIVE NOW */}
-      <Reveal className="mb-6">
+      <Reveal className="mb-6 px-2">
         <h2 className="font-pixel text-xl text-[#241f17] tracking-wide flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
           {T.games.liveNow}
         </h2>
       </Reveal>
 
-      {/* 매소너리 그리드 — 열 단위로 벽돌처럼 쌓이고, 스크롤 진입 시 하나씩 올라오며 등장 */}
-      <div className="columns-2 md:columns-3 xl:columns-4 gap-4">
+      {/* 매소너리 그리드 — 풀블리드, 열 단위로 벽돌처럼 쌓이고 스크롤 진입 시 하나씩 등장 */}
+      <div className="columns-2 lg:columns-3 2xl:columns-4 gap-3">
         {/* 리딩 CTA — 다음 게임의 주인공 */}
-        <Reveal delay={80} className="mb-4 break-inside-avoid">
+        <Reveal delay={80} className="mb-3 break-inside-avoid">
           <Link
             href="/studio"
             className="group flex flex-col items-center justify-center gap-3 aspect-[4/5] w-full rounded-xl border-2 border-dashed border-[#cfc4ab] bg-white/60 hover:border-[#2563eb] hover:bg-white transition-colors"
@@ -50,7 +50,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
         </Reveal>
 
         {sorted.map((game, i) => (
-          <Reveal key={game.id} delay={(i % 4) * 80} className="mb-4 break-inside-avoid">
+          <Reveal key={game.id} delay={(i % 4) * 80} className="mb-3 break-inside-avoid">
             <GameCard
               variant="tile"
               aspectClass={aspectOf(game.id, i)}
