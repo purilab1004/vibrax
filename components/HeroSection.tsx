@@ -1,28 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Black_Han_Sans, Noto_Serif_KR, Gaegu, Do_Hyeon } from 'next/font/google'
 import { useLang } from '@/lib/i18n/context'
 import HeroPromptInput from '@/components/HeroPromptInput'
 import HeroAvatarMarquee from '@/components/HeroAvatarMarquee'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
-// 타이핑 사이클마다 바뀌는 폰트들 (한글 지원, unicode-range 서브셋이라 가벼움)
-const blackHan = Black_Han_Sans({ weight: '400', subsets: ['latin'] })
-const serifKr = Noto_Serif_KR({ weight: '900', subsets: ['latin'] })
-const gaegu = Gaegu({ weight: '700', subsets: ['latin'] })
-const doHyeon = Do_Hyeon({ weight: '400', subsets: ['latin'] })
-// 기본(Pretendard) → 블록 아케이드(Do Hyeon) → 굵은 디스플레이 → 기울임(현재 폰트) → 명조 → 손글씨
-const FONTS = [
-  '',
-  `${doHyeon.className} tracking-wide`,
-  blackHan.className,
-  'italic',
-  serifKr.className,
-  gaegu.className,
-]
-
-const TYPE_MS = 70        // 글자당 타이핑 속도
+const TYPE_MS = 85        // 글자당 타이핑 속도
 const CYCLE_MS = 10000    // 10초마다 폰트 바꿔서 재타이핑
 
 // tropica가 먼저, vecto가 다음
@@ -41,9 +25,8 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
     return () => clearInterval(t)
   }, [])
 
-  // 타이핑 헤드라인 — 10초 주기로 폰트를 바꿔가며 다시 타이핑
+  // 타이핑 헤드라인 — 10초 주기로 부드럽게 다시 타이핑
   const full = `${line1}\n${line2 ?? ''}`
-  const [fontIdx, setFontIdx] = useState(0)
   const [typedN, setTypedN] = useState(full.length)
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -65,10 +48,7 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
       }, TYPE_MS)
     }
     startTyping()
-    const cycle = setInterval(() => {
-      setFontIdx(i => (i + 1) % FONTS.length)
-      startTyping()
-    }, CYCLE_MS)
+    const cycle = setInterval(startTyping, CYCLE_MS)
     return () => {
       clearInterval(cycle)
       if (typeTimer) clearInterval(typeTimer)
@@ -110,18 +90,22 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
 
       {/* 중앙 블록 — 헤드라인 + 프롬프트 카드 */}
       <div className="relative flex-1 w-full max-w-7xl mx-auto px-6 flex flex-col items-center justify-center text-center py-10">
-        <h1 className={`relative text-3xl md:text-5xl leading-[1.15] tracking-tight font-extrabold text-[#241f17] mb-5 ${FONTS[fontIdx]}`}>
-          {/* 투명 원본 — 폰트별 높이/폭을 미리 확보해 레이아웃 흔들림 방지 */}
+        <h1 className="relative text-3xl md:text-5xl leading-[1.15] tracking-tight font-extrabold text-[#241f17] mb-5">
+          {/* 투명 원본 — 높이/폭을 미리 확보해 레이아웃 흔들림 방지 */}
           <span className="invisible" aria-hidden>
             {line1}
             {line2 && (<><br />{line2}</>)}
           </span>
-          {/* 타이핑 오버레이 */}
+          {/* 타이핑 오버레이 — 글자가 번지듯 부드럽게 떠오른다 */}
           <span className="absolute inset-0" aria-label={`${line1} ${line2 ?? ''}`}>
-            {typed1}
+            {typed1.split('').map((ch, i) => (
+              <span key={i} className="char-in inline-block whitespace-pre">{ch}</span>
+            ))}
             {typedN > line1.length && <br />}
             <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">
-              {typed2}
+              {typed2.split('').map((ch, i) => (
+                <span key={i} className="char-in inline-block whitespace-pre">{ch}</span>
+              ))}
             </span>
             {!typingDone && <span className="text-[#2563eb] animate-pulse">|</span>}
           </span>

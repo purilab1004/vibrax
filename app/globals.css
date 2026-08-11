@@ -457,3 +457,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .group:hover .gacha-wrap, .group:hover .gacha-star { animation: none; }
 }
+
+/* 타이핑 글자 — 블러가 걷히며 부드럽게 떠오른다 */
+.char-in {
+  animation: charIn 0.38s ease-out both;
+}
+@keyframes charIn {
+  from { opacity: 0; transform: translateY(7px); filter: blur(5px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .char-in { animation: none; }
+}
