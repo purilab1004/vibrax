@@ -236,31 +236,31 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 <div className="flex-1 flex items-center justify-center min-h-0">
                   <Critter id={game.id} />
                 </div>
-                <div className="shrink-0 flex items-center gap-2.5 px-3.5 pb-3.5">
-                  <div className="w-8 h-8 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 flex items-center justify-center">
-                    {creatorAvatarUrl ? (
-                      <Image
-                        src={creatorAvatarUrl}
-                        alt={creatorName ?? 'creator'}
-                        width={32}
-                        height={32}
-                        className="w-full h-full object-cover object-top"
-                        unoptimized
-                      />
-                    ) : (
-                      <span className="font-pixel text-[11px] text-[#857a68]">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-[#1d1a14] truncate leading-tight">{game.title}</h3>
-                    <p className="text-[12px] text-[#1d1a14]/55 truncate">
-                      {creatorName ?? 'unknown'}{flag && ` ${flag}`}
-                    </p>
-                  </div>
-                  <span className="shrink-0 flex items-center gap-1.5 text-[15px] font-semibold text-[#1d1a14]/70">
-                    <ViewerIcon className="w-5 h-5" />
+                {/* 포스터 타이틀 — 제목이 주인공 */}
+                <div className="shrink-0 px-4 pb-5 text-center">
+                  <h3 className="text-[19px] md:text-[22px] font-extrabold text-[#1d1a14] leading-snug line-clamp-2 tracking-tight">
+                    {game.title}
+                  </h3>
+                  <p className="mt-2 flex items-center justify-center gap-1.5 text-[12px] font-semibold tracking-[0.12em] text-[#1d1a14]/55">
+                    <span className="w-5 h-5 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 inline-flex items-center justify-center">
+                      {creatorAvatarUrl ? (
+                        <Image
+                          src={creatorAvatarUrl}
+                          alt={creatorName ?? 'creator'}
+                          width={20}
+                          height={20}
+                          className="w-full h-full object-cover object-top"
+                          unoptimized
+                        />
+                      ) : (
+                        <span className="font-pixel text-[9px] text-[#857a68]">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
+                      )}
+                    </span>
+                    <span className="truncate max-w-[45%]">{creatorName ?? 'unknown'}{flag && ` ${flag}`}</span>
+                    <span className="text-[#1d1a14]/30">·</span>
+                    <ViewerIcon className="w-4 h-4" />
                     {formatViewers(game.view_count ?? 0)}
-                  </span>
+                  </p>
                 </div>
               </div>
               {/* 뒷면 — 실제 썸네일 + 라이브 미리보기 */}
