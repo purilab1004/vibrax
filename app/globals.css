@@ -430,8 +430,8 @@ body {
 }
 
 /* 뽑기(가챠) 연출 — 호버: 캡슐이 부르르 떨리고, 별이 터지며, 카드가 뒤집혀 공개된다 */
-.group:hover .gacha-wrap,
-.gacha-wrap.gacha-flipped {
+.group:hover .gacha-shell,
+.gacha-flipped .gacha-shell {
   animation: gachaShake 0.2s ease-in-out;
 }
 @keyframes gachaShake {

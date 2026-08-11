@@ -49,12 +49,66 @@ function hashOf(id: string): number {
 // 몸통 색 — 파스텔 배경 위에서 도드라지는 진한 톤 (배경과 같은 해시로 짝지어진다)
 const CRITTER_BODIES = ['#5B5F97', '#3E8E7E', '#E2856E', '#4E86B8', '#4E937A', '#C4699B', '#C98A2E', '#B85B4E'] as const
 
-// 아이소메트릭 방 디오라마 — 벽 2면(포스터·선반·창) + 바닥(글로우 링·스툴) 안에 캐릭터가 서 있다
-function RoomScene({ id }: { id: string }) {
+// 캐릭터 한 마리 — 야자수 + 젤리 몸통 (eyesRef가 있으면 눈동자가 마우스를 따라간다)
+function CritterFigure({ body, delay, eyesRef }: {
+  body: string
+  delay: string
+  eyesRef?: React.Ref<SVGGElement>
+}) {
+  return (
+    <g className="critter-bob" style={{ animationDelay: delay }}>
+      {/* 머리 위 야자수 — 로고와 같은 줄기/잎 5장 */}
+      <g className="critter-sprout" style={{ transformOrigin: '100px 55px' }}>
+        <path d="M97 55c.9-9 2.6-16 6.9-22" stroke="#8a5a2b" strokeWidth="4.5" strokeLinecap="round" fill="none" />
+        <g fill="none" stroke="#39b36b" strokeWidth="4.8" strokeLinecap="round">
+          <path d="M104 33c-7-4.8-14-5.2-19.8-2.2" />
+          <path d="M104 33c-2.2-7.4-6.6-12.3-12.3-14.5" />
+          <path d="M104 33c3-7 8.3-11 14.5-11.8" />
+          <path d="M104 33c7.4-3 14.5-1.7 19.3 2.2" />
+          <path d="M104 33c5.7 1.3 10 5.2 12.3 11" />
+        </g>
+      </g>
+      {/* 말랑한 젤리 몸통 */}
+      <g className="critter-body" style={{ transformOrigin: '100px 158px' }}>
+        <path
+          d="M100 50c34 0 58 24 59 54 1 32-25 54-59 54s-60-22-59-54c1-30 25-54 59-54Z"
+          fill={body}
+        />
+        <ellipse cx="78" cy="72" rx="14" ry="8" fill="#ffffff" opacity="0.22" transform="rotate(-18 78 72)" />
+        <circle cx="79" cy="96" r="14" fill="#fffdf5" />
+        <circle cx="121" cy="96" r="14" fill="#fffdf5" />
+        <g ref={eyesRef} className="transition-transform duration-75">
+          <circle cx="79" cy="96" r="6.5" fill="#161616" />
+          <circle cx="121" cy="96" r="6.5" fill="#161616" />
+          <circle cx="81.5" cy="93.5" r="2" fill="#ffffff" />
+          <circle cx="123.5" cy="93.5" r="2" fill="#ffffff" />
+        </g>
+        <circle cx="66" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
+        <circle cx="134" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
+        <path d="M88 118q12 11 24 0" stroke="#161616" strokeWidth="4" strokeLinecap="round" fill="none" />
+      </g>
+    </g>
+  )
+}
+
+// 방 바닥 위 캐릭터 자리들 — main이 중앙, 나머지는 주변 (우선순위 순)
+const CRITTER_SPOTS = [
+  { x: 70, y: 76.5, s: 0.3, main: true },
+  { x: 36, y: 88, s: 0.22, main: false },
+  { x: 112, y: 90, s: 0.22, main: false },
+  { x: 58, y: 97, s: 0.18, main: false },
+  { x: 92, y: 99, s: 0.18, main: false },
+] as const
+
+// 아이소메트릭 방 디오라마 — 조회수 100당 캐릭터 1마리 (최대 5마리)
+function RoomScene({ id, views }: { id: string; views: number }) {
   const body = CRITTER_BODIES[hashOf(id) % CRITTER_BODIES.length]
-  const delay = `${(hashOf(id) % 30) / 10}s`
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
+
+  const count = Math.min(CRITTER_SPOTS.length, Math.max(1, Math.floor(views / 100)))
+  // 그리기 순서는 발 위치(깊이) 기준 — 뒤쪽 캐릭터부터
+  const spots = [...CRITTER_SPOTS.slice(0, count)].sort((a, b) => (a.y + 158 * a.s) - (b.y + 158 * b.s))
 
   // 눈동자가 마우스를 따라간다 — rAF로 스로틀 (스케일 보정 포함)
   useEffect(() => {
@@ -68,7 +122,7 @@ function RoomScene({ id }: { id: string }) {
         const r = svg.getBoundingClientRect()
         if (r.width === 0) return
         const cx = r.left + r.width / 2
-        const cy = r.top + r.height * 0.56
+        const cy = r.top + r.height * 0.6
         const dx = e.clientX - cx
         const dy = e.clientY - cy
         const d = Math.hypot(dx, dy) || 1
@@ -113,43 +167,18 @@ function RoomScene({ id }: { id: string }) {
       <ellipse cx="70" cy="123" rx="9" ry="3.4" fill={body} opacity="0.9" />
       <ellipse cx="70" cy="129" rx="7" ry="2.6" fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0.7" />
       {/* 캐릭터 자리 글로우 링 */}
-      <ellipse cx="104" cy="126" rx="18" ry="6.5" fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.75" />
-      <ellipse cx="104" cy="129" rx="25" ry="9" fill="none" stroke="#ffffff" strokeWidth="1.4" opacity="0.4" />
-      {/* 캐릭터 — 방 바닥 중앙에 배치 (translate + scale) */}
-      <g transform="translate(64, 56) scale(0.4)">
-        <g className="critter-bob" style={{ animationDelay: delay }}>
-          {/* 머리 위 야자수 — 로고와 같은 줄기/잎 5장 */}
-          <g className="critter-sprout" style={{ transformOrigin: '100px 55px' }}>
-            <path d="M97 55c.9-9 2.6-16 6.9-22" stroke="#8a5a2b" strokeWidth="4.5" strokeLinecap="round" fill="none" />
-            <g fill="none" stroke="#39b36b" strokeWidth="4.8" strokeLinecap="round">
-              <path d="M104 33c-7-4.8-14-5.2-19.8-2.2" />
-              <path d="M104 33c-2.2-7.4-6.6-12.3-12.3-14.5" />
-              <path d="M104 33c3-7 8.3-11 14.5-11.8" />
-              <path d="M104 33c7.4-3 14.5-1.7 19.3 2.2" />
-              <path d="M104 33c5.7 1.3 10 5.2 12.3 11" />
-            </g>
-          </g>
-          {/* 말랑한 젤리 몸통 */}
-          <g className="critter-body" style={{ transformOrigin: '100px 158px' }}>
-            <path
-              d="M100 50c34 0 58 24 59 54 1 32-25 54-59 54s-60-22-59-54c1-30 25-54 59-54Z"
-              fill={body}
-            />
-            <ellipse cx="78" cy="72" rx="14" ry="8" fill="#ffffff" opacity="0.22" transform="rotate(-18 78 72)" />
-            <circle cx="79" cy="96" r="14" fill="#fffdf5" />
-            <circle cx="121" cy="96" r="14" fill="#fffdf5" />
-            <g ref={eyesRef} className="transition-transform duration-75">
-              <circle cx="79" cy="96" r="6.5" fill="#161616" />
-              <circle cx="121" cy="96" r="6.5" fill="#161616" />
-              <circle cx="81.5" cy="93.5" r="2" fill="#ffffff" />
-              <circle cx="123.5" cy="93.5" r="2" fill="#ffffff" />
-            </g>
-            <circle cx="66" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
-            <circle cx="134" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
-            <path d="M88 118q12 11 24 0" stroke="#161616" strokeWidth="4" strokeLinecap="round" fill="none" />
-          </g>
+      <ellipse cx="100" cy="126" rx="18" ry="6.5" fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.75" />
+      <ellipse cx="100" cy="129" rx="25" ry="9" fill="none" stroke="#ffffff" strokeWidth="1.4" opacity="0.4" />
+      {/* 캐릭터들 — 조회수 100당 1마리, 깊이 순으로 그린다 */}
+      {spots.map((sp, i) => (
+        <g key={i} transform={`translate(${sp.x}, ${sp.y}) scale(${sp.s})`}>
+          <CritterFigure
+            body={sp.main ? body : CRITTER_BODIES[(hashOf(id) + i * 3 + 1) % CRITTER_BODIES.length]}
+            delay={`${((hashOf(id) + i * 7) % 30) / 10}s`}
+            eyesRef={sp.main ? eyesRef : undefined}
+          />
         </g>
-      </g>
+      ))}
     </svg>
   )
 }
@@ -230,31 +259,39 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         role="button"
         tabIndex={0}
         onClick={() => {
-          // 모바일: 첫 탭은 뽑기(플립)만 — 두 번째 탭(또는 PLAY 버튼)에 전체화면 플레이
-          if (variant === 'tile' && touchMode && !flipped) {
-            setFlipped(true)
-            setBubble(T.games.hoverMsgs[Math.floor(Math.random() * T.games.hoverMsgs.length)])
+          // 타일: 카드 안 실행 없음 — 게임 페이지로 이동 (모바일은 첫 탭에 뽑기 플립)
+          if (variant === 'tile') {
+            if (touchMode && !flipped) {
+              setFlipped(true)
+              setBubble(T.games.hoverMsgs[Math.floor(Math.random() * T.games.hoverMsgs.length)])
+              return
+            }
+            router.push(`/games/${game.id}`)
             return
           }
           handlePlay()
         }}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePlay() } }}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            if (variant === 'tile') router.push(`/games/${game.id}`)
+            else handlePlay()
+          }
+        }}
         className="group block w-full text-left cursor-pointer"
       >
         {variant === 'tile' ? (
         <div>
           {/* 감성 플립 타일 — 앞면: 파스텔+캐릭터, 호버: 3D 플립으로 실제 썸네일 */}
           <div
-            className={`gacha-wrap relative [perspective:1200px] ${flipped ? 'gacha-flipped' : ''}`}
+            className={`gacha-wrap relative ${flipped ? 'gacha-flipped' : ''}`}
             onMouseEnter={() => {
-              startPreview()
               setBubble(T.games.hoverMsgs[Math.floor(Math.random() * T.games.hoverMsgs.length)])
             }}
-            onMouseLeave={() => {
-              stopPreview()
-              setBubble(null)
-            }}
+            onMouseLeave={() => setBubble(null)}
           >
+            {/* 흔들림 셸 — 호버 판정은 바깥(고정), 흔들림·원근은 여기 */}
+            <div className="gacha-shell [perspective:1200px]">
             <div className={`relative ${aspectClass} w-full transition-transform duration-300 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] group-hover:delay-[140ms] ${flipped ? '[transform:rotateY(180deg)] delay-[140ms]' : ''}`}>
               {/* 앞면 — 캐릭터 + 하단 정보 행 (아바타 · 제목 · 좋아요 · 조회수) */}
               <div
@@ -266,7 +303,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   <LikeButton gameId={game.id} size="lg" />
                 </div>
                 <div className="flex-1 relative min-h-0 mx-2 mt-2">
-                  <RoomScene id={game.id} />
+                  <RoomScene id={game.id} views={game.view_count ?? 0} />
                 </div>
                 {/* 포스터 타이틀 — 제목이 주인공 */}
                 <div className="shrink-0 px-4 pb-5 text-center">
@@ -295,18 +332,9 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   </p>
                 </div>
               </div>
-              {/* 뒷면 — 실제 썸네일 + 라이브 미리보기 */}
+              {/* 뒷면 — 실제 썸네일 (카드 안 실행 없음, 클릭 시 게임 페이지로 이동) */}
               <div className="absolute inset-0 rounded-xl overflow-hidden bg-gray-900 ring-1 ring-gray-800/60 [transform:rotateY(180deg)] [backface-visibility:hidden]">
                 <Image src={game.thumbnail_url} alt={game.title} fill className="object-cover" />
-                {preview && (
-                  <iframe
-                    src={game.play_url}
-                    tabIndex={-1}
-                    title={`${game.title} preview`}
-                    onLoad={() => setPreviewReady(true)}
-                    className={`absolute inset-0 w-full h-full border-0 pointer-events-none transition-opacity duration-500 ${previewReady ? 'opacity-100' : 'opacity-0'}`}
-                  />
-                )}
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 to-transparent pointer-events-none" />
                 <span className="absolute left-2 top-2 flex items-center gap-1 bg-red-600/80 text-white font-pixel text-[10px] px-1.5 py-0.5 rounded tracking-widest">
                   <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
@@ -329,15 +357,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                       {creatorName ?? 'unknown'}{flag && ` ${flag}`}
                     </p>
                   </div>
-                  {/* 실제 버튼 — 탭/클릭 시 전체화면 플레이어로 진입 */}
+                  {/* 실제 버튼 — 탭/클릭 시 게임 페이지로 이동 */}
                   <button
-                    onClick={e => { e.stopPropagation(); handlePlay() }}
+                    onClick={e => { e.stopPropagation(); router.push(`/games/${game.id}`) }}
                     className="shrink-0 font-pixel text-[11px] bg-[#2563eb]/90 text-white px-4 py-2.5 rounded pointer-events-auto active:scale-95 transition-transform"
                   >
                     ▶ PLAY
                   </button>
                 </div>
               </div>
+            </div>
             </div>
 
             {/* 뽑기 버스트 — 공개 순간 사방으로 터지는 별 */}
