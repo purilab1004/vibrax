@@ -197,11 +197,10 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         role="button"
         tabIndex={0}
         onClick={() => {
-          // 모바일: 첫 탭은 뽑기(플립)만 — 두 번째 탭에 플레이
+          // 모바일: 첫 탭은 뽑기(플립)만 — 두 번째 탭(또는 PLAY 버튼)에 전체화면 플레이
           if (variant === 'tile' && touchMode && !flipped) {
             setFlipped(true)
             setBubble(T.games.hoverMsgs[Math.floor(Math.random() * T.games.hoverMsgs.length)])
-            startPreview()
             return
           }
           handlePlay()
@@ -297,9 +296,13 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                       {creatorName ?? 'unknown'}{flag && ` ${flag}`}
                     </p>
                   </div>
-                  <span className="shrink-0 font-pixel text-[11px] bg-[#2563eb]/90 text-white px-3 py-2 rounded">
+                  {/* 실제 버튼 — 탭/클릭 시 전체화면 플레이어로 진입 */}
+                  <button
+                    onClick={e => { e.stopPropagation(); handlePlay() }}
+                    className="shrink-0 font-pixel text-[11px] bg-[#2563eb]/90 text-white px-4 py-2.5 rounded pointer-events-auto active:scale-95 transition-transform"
+                  >
                     ▶ PLAY
-                  </span>
+                  </button>
                 </div>
               </div>
             </div>
