@@ -96,7 +96,7 @@ export default async function GameDetailPage({ params }: Props) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-3">
             <span
-              className={`inline-block font-pixel text-[11px] px-2 py-1 text-[#241f17] ${genreColor}`}
+              className={`inline-block font-pixel text-[11px] px-2 py-1 text-white rounded ${genreColor}`}
             >
               {genreLabel}
             </span>
@@ -106,7 +106,7 @@ export default async function GameDetailPage({ params }: Props) {
               </span>
             )}
           </div>
-          <h1 className="text-2xl font-semibold text-[#241f17] mb-2 leading-tight">
+          <h1 className="text-3xl font-extrabold text-[#241f17] mb-2 leading-tight">
             {game.title}
           </h1>
           <p className="text-[#4a4337] text-xs tracking-wider mb-3">by {author}</p>

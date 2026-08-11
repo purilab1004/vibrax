@@ -153,7 +153,7 @@ export default function NavBar() {
       {/* 상단: 투명(첫 섹션 배경이 뒤로 지나감) → 스크롤: 유리 배경 */}
       <header
         className={`sticky top-0 z-50 md:pl-[var(--rail-w,0rem)] transition-[padding,background-color,box-shadow,backdrop-filter] duration-200 ${
-          scrolled ? 'bg-white/55 backdrop-blur-xl' : ''
+          scrolled || pathname !== '/' ? 'bg-white/55 backdrop-blur-xl' : ''
         }`}
       >
         <nav className="w-full px-5 h-14 flex items-center gap-4">

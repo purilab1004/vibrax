@@ -61,7 +61,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
       </button>
 
       {agentGate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4" onClick={() => setAgentGate(null)}>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 px-4" onClick={() => setAgentGate(null)}>
           <div className="w-full max-w-sm bg-[#fcfaf5] border border-purple-700/60" onClick={e => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-[#ebe4d6] flex items-center justify-between">
               <span className="font-pixel text-[11px] text-purple-400 tracking-widest">AGENT REQUIRED</span>
@@ -100,12 +100,12 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex flex-col bg-black"
+          className="fixed inset-0 z-[70] flex flex-col bg-black"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#ebe4d6] bg-[#fcfaf5] shrink-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <span className={`font-pixel text-[11px] px-2 py-1 text-[#241f17] shrink-0 ${genreColor}`}>
+              <span className={`font-pixel text-[11px] px-2 py-1 text-white rounded shrink-0 ${genreColor}`}>
                 {genreLabel}
               </span>
               <LiveTitleTicker title={game.title} />

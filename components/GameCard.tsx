@@ -465,7 +465,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
       </div>
 
       {agentGate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4" onClick={() => setAgentGate(null)}>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 px-4" onClick={() => setAgentGate(null)}>
           <div className="w-full max-w-sm bg-[#fcfaf5] border border-purple-700/60" onClick={e => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-[#ebe4d6] flex items-center justify-between">
               <span className="font-pixel text-[11px] text-purple-400 tracking-widest">AGENT REQUIRED</span>
@@ -504,7 +504,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex flex-col bg-black"
+          className="fixed inset-0 z-[70] flex flex-col bg-black"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
           {/* Header bar */}
