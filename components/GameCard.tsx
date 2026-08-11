@@ -49,13 +49,14 @@ function hashOf(id: string): number {
 // 몸통 색 — 파스텔 배경 위에서 도드라지는 진한 톤 (배경과 같은 해시로 짝지어진다)
 const CRITTER_BODIES = ['#5B5F97', '#3E8E7E', '#E2856E', '#4E86B8', '#4E937A', '#C4699B', '#C98A2E', '#B85B4E'] as const
 
-function Critter({ id }: { id: string }) {
+// 아이소메트릭 방 디오라마 — 벽 2면(포스터·선반·창) + 바닥(글로우 링·스툴) 안에 캐릭터가 서 있다
+function RoomScene({ id }: { id: string }) {
   const body = CRITTER_BODIES[hashOf(id) % CRITTER_BODIES.length]
   const delay = `${(hashOf(id) % 30) / 10}s`
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
 
-  // 눈동자가 마우스를 따라간다 — rAF로 스로틀
+  // 눈동자가 마우스를 따라간다 — rAF로 스로틀 (스케일 보정 포함)
   useEffect(() => {
     let raf = 0
     const onMove = (e: MouseEvent) => {
@@ -67,11 +68,11 @@ function Critter({ id }: { id: string }) {
         const r = svg.getBoundingClientRect()
         if (r.width === 0) return
         const cx = r.left + r.width / 2
-        const cy = r.top + r.height * 0.45
+        const cy = r.top + r.height * 0.56
         const dx = e.clientX - cx
         const dy = e.clientY - cy
         const d = Math.hypot(dx, dy) || 1
-        const m = Math.min(d / 60, 1) * 6
+        const m = Math.min(d / 60, 1) * 11
         eyes.style.transform = `translate(${(dx / d) * m}px, ${(dy / d) * m}px)`
       })
     }
@@ -83,39 +84,71 @@ function Critter({ id }: { id: string }) {
   }, [])
 
   return (
-    <svg ref={svgRef} viewBox="0 0 200 200" className="w-[50%] max-w-[160px] critter-bob" style={{ animationDelay: delay }} aria-hidden>
-      {/* 머리 위 야자수 — 로고와 같은 줄기/잎 5장 */}
-      <g className="critter-sprout" style={{ transformOrigin: '100px 55px' }}>
-        <path d="M97 55c.9-9 2.6-16 6.9-22" stroke="#8a5a2b" strokeWidth="4.5" strokeLinecap="round" fill="none" />
-        <g fill="none" stroke="#39b36b" strokeWidth="4.8" strokeLinecap="round">
-          <path d="M104 33c-7-4.8-14-5.2-19.8-2.2" />
-          <path d="M104 33c-2.2-7.4-6.6-12.3-12.3-14.5" />
-          <path d="M104 33c3-7 8.3-11 14.5-11.8" />
-          <path d="M104 33c7.4-3 14.5-1.7 19.3 2.2" />
-          <path d="M104 33c5.7 1.3 10 5.2 12.3 11" />
+    <svg ref={svgRef} viewBox="0 0 200 176" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
+      {/* 바닥 받침(플린스) — 진한 트림 슬래브 */}
+      <polygon points="100,104 174,130 100,158 26,130" fill={body} opacity="0.92" />
+      {/* 바닥 */}
+      <polygon points="100,95 165,118 100,141 35,118" fill="#ffffff" opacity="0.6" />
+      {/* 왼쪽 벽 (밝음) */}
+      <polygon points="100,25 35,48 35,118 100,95" fill="#ffffff" opacity="0.75" />
+      {/* 오른쪽 벽 (한 톤 어둡게) */}
+      <polygon points="100,25 165,48 165,118 100,95" fill="#ffffff" opacity="0.5" />
+      {/* 지붕 트림 — 이미지처럼 두툼하게 */}
+      <polygon points="100,10 28,36 28,49 100,23" fill={body} />
+      <polygon points="100,10 172,36 172,49 100,23" fill={body} />
+      {/* 왼쪽 벽 — 밝은 창 */}
+      <polygon points="86,36 96,32.4 96,80 86,84" fill="#ffffff" opacity="0.95" />
+      {/* 왼쪽 벽 — 선반 + 아이템 + 스피커 */}
+      <polygon points="44,80 74,69.5 74,74 44,84.5" fill={body} opacity="0.9" />
+      <polygon points="52,72 62,68.5 62,75.5 52,79" fill={body} opacity="0.55" />
+      <circle cx="52" cy="99" r="8.5" fill="#ffffff" opacity="0.92" />
+      <circle cx="52" cy="99" r="3.2" fill={body} />
+      {/* 오른쪽 벽 — 포스터들 + 디스크 */}
+      <polygon points="112,54 126,59 126,70 112,65" fill="#ffffff" opacity="0.9" />
+      <polygon points="132,63 144,67.3 144,77 132,72.7" fill={body} opacity="0.65" />
+      <polygon points="116,75 128,79.3 128,88 116,83.7" fill="#ffffff" opacity="0.75" />
+      <circle cx="146" cy="56" r="7.5" fill="#ffffff" opacity="0.92" />
+      <circle cx="146" cy="56" r="2.8" fill={body} />
+      {/* 바닥 소품 — 스툴 + 글로우 링 */}
+      <ellipse cx="70" cy="123" rx="9" ry="3.4" fill={body} opacity="0.9" />
+      <ellipse cx="70" cy="129" rx="7" ry="2.6" fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0.7" />
+      {/* 캐릭터 자리 글로우 링 */}
+      <ellipse cx="104" cy="126" rx="18" ry="6.5" fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.75" />
+      <ellipse cx="104" cy="129" rx="25" ry="9" fill="none" stroke="#ffffff" strokeWidth="1.4" opacity="0.4" />
+      {/* 캐릭터 — 방 바닥 중앙에 배치 (translate + scale) */}
+      <g transform="translate(64, 56) scale(0.4)">
+        <g className="critter-bob" style={{ animationDelay: delay }}>
+          {/* 머리 위 야자수 — 로고와 같은 줄기/잎 5장 */}
+          <g className="critter-sprout" style={{ transformOrigin: '100px 55px' }}>
+            <path d="M97 55c.9-9 2.6-16 6.9-22" stroke="#8a5a2b" strokeWidth="4.5" strokeLinecap="round" fill="none" />
+            <g fill="none" stroke="#39b36b" strokeWidth="4.8" strokeLinecap="round">
+              <path d="M104 33c-7-4.8-14-5.2-19.8-2.2" />
+              <path d="M104 33c-2.2-7.4-6.6-12.3-12.3-14.5" />
+              <path d="M104 33c3-7 8.3-11 14.5-11.8" />
+              <path d="M104 33c7.4-3 14.5-1.7 19.3 2.2" />
+              <path d="M104 33c5.7 1.3 10 5.2 12.3 11" />
+            </g>
+          </g>
+          {/* 말랑한 젤리 몸통 */}
+          <g className="critter-body" style={{ transformOrigin: '100px 158px' }}>
+            <path
+              d="M100 50c34 0 58 24 59 54 1 32-25 54-59 54s-60-22-59-54c1-30 25-54 59-54Z"
+              fill={body}
+            />
+            <ellipse cx="78" cy="72" rx="14" ry="8" fill="#ffffff" opacity="0.22" transform="rotate(-18 78 72)" />
+            <circle cx="79" cy="96" r="14" fill="#fffdf5" />
+            <circle cx="121" cy="96" r="14" fill="#fffdf5" />
+            <g ref={eyesRef} className="transition-transform duration-75">
+              <circle cx="79" cy="96" r="6.5" fill="#161616" />
+              <circle cx="121" cy="96" r="6.5" fill="#161616" />
+              <circle cx="81.5" cy="93.5" r="2" fill="#ffffff" />
+              <circle cx="123.5" cy="93.5" r="2" fill="#ffffff" />
+            </g>
+            <circle cx="66" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
+            <circle cx="134" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
+            <path d="M88 118q12 11 24 0" stroke="#161616" strokeWidth="4" strokeLinecap="round" fill="none" />
+          </g>
         </g>
-      </g>
-      {/* 말랑한 젤리 몸통 — 바닥 기준으로 살짝 눌렸다 펴진다 */}
-      <g className="critter-body" style={{ transformOrigin: '100px 158px' }}>
-        <path
-          d="M100 50c34 0 58 24 59 54 1 32-25 54-59 54s-60-22-59-54c1-30 25-54 59-54Z"
-          fill={body}
-        />
-        {/* 정수리 하이라이트 */}
-        <ellipse cx="78" cy="72" rx="14" ry="8" fill="#ffffff" opacity="0.22" transform="rotate(-18 78 72)" />
-        {/* 눈 — 흰자 + 마우스를 따라가는 눈동자 */}
-        <circle cx="79" cy="96" r="14" fill="#fffdf5" />
-        <circle cx="121" cy="96" r="14" fill="#fffdf5" />
-        <g ref={eyesRef} className="transition-transform duration-75">
-          <circle cx="79" cy="96" r="6.5" fill="#161616" />
-          <circle cx="121" cy="96" r="6.5" fill="#161616" />
-          <circle cx="81.5" cy="93.5" r="2" fill="#ffffff" />
-          <circle cx="123.5" cy="93.5" r="2" fill="#ffffff" />
-        </g>
-        {/* 볼터치 + 미소 */}
-        <circle cx="66" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
-        <circle cx="134" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
-        <path d="M88 118q12 11 24 0" stroke="#161616" strokeWidth="4" strokeLinecap="round" fill="none" />
       </g>
     </svg>
   )
@@ -232,8 +265,8 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 <div className="absolute top-3 right-3 z-10 bg-white/85 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
                   <LikeButton gameId={game.id} size="lg" />
                 </div>
-                <div className="flex-1 flex items-center justify-center min-h-0">
-                  <Critter id={game.id} />
+                <div className="flex-1 relative min-h-0 mx-2 mt-2">
+                  <RoomScene id={game.id} />
                 </div>
                 {/* 포스터 타이틀 — 제목이 주인공 */}
                 <div className="shrink-0 px-4 pb-5 text-center">
