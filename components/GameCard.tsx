@@ -292,7 +292,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
           >
             {/* 흔들림 셸 — 호버 판정은 바깥(고정), 흔들림·원근은 여기 */}
             <div className="gacha-shell [perspective:1200px]">
-            <div className={`relative ${aspectClass} w-full transition-transform duration-300 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] group-hover:delay-[140ms] ${flipped ? '[transform:rotateY(180deg)] delay-[140ms]' : ''}`}>
+            <div className={`relative ${aspectClass} w-full transition-transform duration-300 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] ${flipped ? '[transform:rotateY(180deg)]' : ''}`}>
               {/* 앞면 — 캐릭터 + 하단 정보 행 (아바타 · 제목 · 좋아요 · 조회수) */}
               <div
                 className="absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex flex-col"
