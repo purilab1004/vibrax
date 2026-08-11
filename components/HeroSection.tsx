@@ -102,10 +102,24 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
               <span key={i} className="char-in inline-block whitespace-pre">{ch}</span>
             ))}
             {typedN > line1.length && <br />}
-            <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">
-              {typed2.split('').map((ch, i) => (
-                <span key={i} className="char-in inline-block whitespace-pre">{ch}</span>
-              ))}
+            <span>
+              {/* 그라디언트는 글자별로 자기 구간을 직접 칠한다 — 부모 bg-clip은 블러/이동 애니메이션과 충돌해 투명해짐 */}
+              {typed2.split('').map((ch, i) => {
+                const len = line2?.length ?? 1
+                return (
+                  <span
+                    key={i}
+                    className="char-in inline-block whitespace-pre bg-clip-text text-transparent"
+                    style={{
+                      backgroundImage: 'linear-gradient(90deg, #2563eb, #06b6d4)',
+                      backgroundSize: `${len * 100}% 100%`,
+                      backgroundPosition: `${len > 1 ? (i / (len - 1)) * 100 : 0}% 0`,
+                    }}
+                  >
+                    {ch}
+                  </span>
+                )
+              })}
             </span>
             {!typingDone && <span className="text-[#2563eb] animate-pulse">|</span>}
           </span>
