@@ -223,7 +223,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
               setBubble(null)
             }}
           >
-            <div className={`relative ${aspectClass} w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] group-hover:delay-[430ms] ${flipped ? '[transform:rotateY(180deg)] delay-[430ms]' : ''}`}>
+            <div className={`relative ${aspectClass} w-full transition-transform duration-[350ms] [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] group-hover:delay-[280ms] ${flipped ? '[transform:rotateY(180deg)] delay-[280ms]' : ''}`}>
               {/* 앞면 — 캐릭터 + 하단 정보 행 (아바타 · 제목 · 좋아요 · 조회수) */}
               <div
                 className="absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex flex-col"

@@ -414,8 +414,8 @@ body {
 /* 구름 말풍선 — 통통 튀며 등장 후 둥실거림 */
 .bubble-pop {
   animation:
-    bubblePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.62s both,
-    bubbleFloat 2.6s ease-in-out 0.97s infinite;
+    bubblePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.42s both,
+    bubbleFloat 2.6s ease-in-out 0.72s infinite;
 }
 @keyframes bubblePop {
   from { opacity: 0; transform: scale(0.5) translateY(8px); }
@@ -432,7 +432,7 @@ body {
 /* 뽑기(가챠) 연출 — 호버: 캡슐이 부르르 떨리고, 별이 터지며, 카드가 뒤집혀 공개된다 */
 .group:hover .gacha-wrap,
 .gacha-wrap.gacha-flipped {
-  animation: gachaShake 0.45s ease-in-out;
+  animation: gachaShake 0.3s ease-in-out;
 }
 @keyframes gachaShake {
   0% { transform: rotate(0deg) scale(1); }
@@ -447,7 +447,7 @@ body {
 }
 .group:hover .gacha-star,
 .gacha-flipped .gacha-star {
-  animation: gachaBurst 0.75s cubic-bezier(0.2, 0.8, 0.3, 1) 0.46s both;
+  animation: gachaBurst 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) 0.3s both;
 }
 @keyframes gachaBurst {
   0% { opacity: 1; transform: translate(0, 0) scale(0.3) rotate(0deg); }
