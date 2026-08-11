@@ -6,9 +6,6 @@ import HeroPromptInput from '@/components/HeroPromptInput'
 import HeroAvatarMarquee from '@/components/HeroAvatarMarquee'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
-const TYPE_MS = 85        // 글자당 타이핑 속도
-const CYCLE_MS = 10000    // 10초마다 폰트 바꿔서 재타이핑
-
 // tropica가 먼저, vecto가 다음
 const VIDEOS = ['/hero-bg-2.mp4', '/hero-bg.mp4']
 const ROTATE_MS = 14000
@@ -25,39 +22,6 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
     return () => clearInterval(t)
   }, [])
 
-  // 타이핑 헤드라인 — 10초 주기로 부드럽게 다시 타이핑
-  const full = `${line1}\n${line2 ?? ''}`
-  const [typedN, setTypedN] = useState(full.length)
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setTypedN(full.length)
-      return
-    }
-    let typeTimer: ReturnType<typeof setInterval> | null = null
-    const startTyping = () => {
-      if (typeTimer) clearInterval(typeTimer)
-      setTypedN(0)
-      typeTimer = setInterval(() => {
-        setTypedN(prev => {
-          if (prev >= full.length) {
-            if (typeTimer) clearInterval(typeTimer)
-            return prev
-          }
-          return prev + 1
-        })
-      }, TYPE_MS)
-    }
-    startTyping()
-    const cycle = setInterval(startTyping, CYCLE_MS)
-    return () => {
-      clearInterval(cycle)
-      if (typeTimer) clearInterval(typeTimer)
-    }
-  }, [full])
-
-  const typed = full.slice(0, typedN)
-  const [typed1, typed2 = ''] = typed.split('\n')
-  const typingDone = typedN >= full.length
 
   return (
     <section className="relative overflow-hidden -mt-14 pt-14 min-h-[100svh] flex flex-col bg-white">
@@ -90,39 +54,16 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
 
       {/* 중앙 블록 — 헤드라인 + 프롬프트 카드 */}
       <div className="relative flex-1 w-full max-w-7xl mx-auto px-6 flex flex-col items-center justify-center text-center py-10">
-        <h1 className="relative text-3xl md:text-5xl leading-[1.15] tracking-tight font-extrabold text-[#241f17] mb-5">
-          {/* 투명 원본 — 높이/폭을 미리 확보해 레이아웃 흔들림 방지 */}
-          <span className="invisible" aria-hidden>
-            {line1}
-            {line2 && (<><br />{line2}</>)}
-          </span>
-          {/* 타이핑 오버레이 — 글자가 번지듯 부드럽게 떠오른다 */}
-          <span className="absolute inset-0" aria-label={`${line1} ${line2 ?? ''}`}>
-            {typed1.split('').map((ch, i) => (
-              <span key={i} className="char-in inline-block whitespace-pre">{ch}</span>
-            ))}
-            {typedN > line1.length && <br />}
-            <span>
-              {/* 그라디언트는 글자별로 자기 구간을 직접 칠한다 — 부모 bg-clip은 블러/이동 애니메이션과 충돌해 투명해짐 */}
-              {typed2.split('').map((ch, i) => {
-                const len = line2?.length ?? 1
-                return (
-                  <span
-                    key={i}
-                    className="char-in inline-block whitespace-pre bg-clip-text text-transparent"
-                    style={{
-                      backgroundImage: 'linear-gradient(90deg, #2563eb, #06b6d4)',
-                      backgroundSize: `${len * 100}% 100%`,
-                      backgroundPosition: `${len > 1 ? (i / (len - 1)) * 100 : 0}% 0`,
-                    }}
-                  >
-                    {ch}
-                  </span>
-                )
-              })}
-            </span>
-            {!typingDone && <span className="text-[#2563eb] animate-pulse">|</span>}
-          </span>
+        <h1 className="hero-chat-in text-3xl md:text-5xl leading-[1.15] tracking-tight font-extrabold text-[#241f17] mb-5">
+          {line1}
+          {line2 && (
+            <>
+              <br />
+              <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">
+                {line2}
+              </span>
+            </>
+          )}
         </h1>
 
         {/* 대시 서브라벨 — ─── 태그라인 ─── */}
