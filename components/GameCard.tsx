@@ -141,6 +141,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
   const [open, setOpen] = useState(false)
   // 호버 말풍선 — 구름처럼 튀어나오는 랜덤 멘트
   const [bubble, setBubble] = useState<string | null>(null)
+  // 터치 기기(호버 없음): 첫 탭 = 뽑기 플립, 두 번째 탭 = 플레이
+  const [flipped, setFlipped] = useState(false)
+  const [touchMode, setTouchMode] = useState(false)
+  useEffect(() => {
+    setTouchMode(window.matchMedia('(hover: none)').matches)
+  }, [])
+  // 플레이어를 닫으면 카드도 앞면으로 복귀
+  useEffect(() => {
+    if (!open) setFlipped(false)
+  }, [open])
   // 호버 라이브 미리보기 — 잠깐 스친 마우스에 iframe이 뜨지 않게 지연 후 실행
   const [preview, setPreview] = useState(false)
   const [previewReady, setPreviewReady] = useState(false)
@@ -186,7 +196,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
       <div
         role="button"
         tabIndex={0}
-        onClick={handlePlay}
+        onClick={() => {
+          // 모바일: 첫 탭은 뽑기(플립)만 — 두 번째 탭에 플레이
+          if (variant === 'tile' && touchMode && !flipped) {
+            setFlipped(true)
+            setBubble(T.games.hoverMsgs[Math.floor(Math.random() * T.games.hoverMsgs.length)])
+            startPreview()
+            return
+          }
+          handlePlay()
+        }}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePlay() } }}
         className="group block w-full text-left cursor-pointer"
       >
@@ -194,7 +213,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         <div>
           {/* 감성 플립 타일 — 앞면: 파스텔+캐릭터, 호버: 3D 플립으로 실제 썸네일 */}
           <div
-            className="gacha-wrap relative [perspective:1200px]"
+            className={`gacha-wrap relative [perspective:1200px] ${flipped ? 'gacha-flipped' : ''}`}
             onMouseEnter={() => {
               startPreview()
               setBubble(T.games.hoverMsgs[Math.floor(Math.random() * T.games.hoverMsgs.length)])
@@ -204,7 +223,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
               setBubble(null)
             }}
           >
-            <div className={`relative ${aspectClass} w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] group-hover:delay-[430ms]`}>
+            <div className={`relative ${aspectClass} w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] group-hover:delay-[430ms] ${flipped ? '[transform:rotateY(180deg)] delay-[430ms]' : ''}`}>
               {/* 앞면 — 캐릭터 + 하단 정보 행 (아바타 · 제목 · 좋아요 · 조회수) */}
               <div
                 className="absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex flex-col"
