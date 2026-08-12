@@ -332,17 +332,18 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   </p>
                 </div>
               </div>
-              {/* 뒷면 — 실제 썸네일 (카드 안 실행 없음, 클릭 시 게임 페이지로 이동) */}
+              {/* 뒷면 — 어둡게 깔린 썸네일 + 중앙 큰 PLAY (클릭 시 게임 페이지로 이동) */}
               <div className="absolute inset-0 rounded-xl overflow-hidden bg-gray-900 ring-1 ring-gray-800/60 [transform:rotateY(180deg)] [backface-visibility:hidden]">
                 <Image src={game.thumbnail_url} alt={game.title} fill className="object-cover" />
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 to-transparent pointer-events-none" />
+                {/* 어두운 오버레이 — 버튼과 텍스트가 주인공 */}
+                <div className="absolute inset-0 bg-black/55 pointer-events-none" />
                 <span className="absolute left-2 top-2 flex items-center gap-1 bg-red-600/80 text-white font-pixel text-[10px] px-1.5 py-0.5 rounded tracking-widest">
                   <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
                   AJ LIVE
                 </span>
-                {/* 구름 말풍선 — 눌러보고 싶게 하는 랜덤 멘트 */}
+                {/* 구름 말풍선 — 위쪽에서 멘트 */}
                 {bubble && (
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+                  <div className="absolute top-[16%] left-1/2 -translate-x-1/2 pointer-events-none z-10">
                     <div className="bubble-pop relative bg-white/95 text-[#241f17] text-[13px] font-bold px-4 py-2 rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.25)] whitespace-nowrap">
                       {bubble}
                       <span className="absolute -bottom-2 left-5 w-3 h-3 bg-white/95 rounded-full" />
@@ -350,20 +351,21 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                     </div>
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 p-4 flex items-end justify-between gap-3 pointer-events-none">
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-white truncate leading-tight">{game.title}</h3>
-                    <p className="mt-0.5 text-[13px] text-white/70 truncate">
-                      {creatorName ?? 'unknown'}{flag && ` ${flag}`}
-                    </p>
-                  </div>
-                  {/* 실제 버튼 — 탭/클릭 시 게임 페이지로 이동 */}
+                {/* 중앙 큰 PLAY 버튼 */}
+                <div className="absolute inset-0 flex items-center justify-center">
                   <button
                     onClick={e => { e.stopPropagation(); router.push(`/games/${game.id}`) }}
-                    className="shrink-0 font-pixel text-[11px] bg-[#2563eb]/90 text-white px-4 py-2.5 rounded pointer-events-auto active:scale-95 transition-transform"
+                    className="flex items-center gap-2.5 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white font-bold text-base md:text-lg px-8 py-4 shadow-[0_0_0_3px_rgba(255,255,255,0.25),0_10px_30px_rgba(37,99,235,0.5)] hover:shadow-[0_0_0_4px_rgba(255,255,255,0.35),0_14px_36px_rgba(37,99,235,0.6)] hover:scale-105 active:scale-95 transition-all"
                   >
-                    ▶ PLAY
+                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden><path d="M8 5v14l11-7-11-7Z" /></svg>
+                    PLAY
                   </button>
+                </div>
+                <div className="absolute inset-x-0 bottom-0 p-4 pointer-events-none">
+                  <h3 className="text-lg font-bold text-white truncate leading-tight">{game.title}</h3>
+                  <p className="mt-0.5 text-[13px] text-white/70 truncate">
+                    {creatorName ?? 'unknown'}{flag && ` ${flag}`}
+                  </p>
                 </div>
               </div>
             </div>
