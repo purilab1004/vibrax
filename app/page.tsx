@@ -19,7 +19,8 @@ export default async function HomePage() {
     <div>
       <HomeBanner />
       <HeroSection games={games ?? []} />
-      <div className="w-full px-4 md:px-8 py-14">
+      {/* 모바일은 쇼츠 피드가 전체 화면을 쓰므로 여백 없음, 데스크톱은 매소너리 여백 */}
+      <div className="w-full md:px-8 md:py-14">
         {hasAnyGame ? (
           <HomeMosaic games={games ?? []} />
         ) : (

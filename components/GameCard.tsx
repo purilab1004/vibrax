@@ -38,9 +38,9 @@ const GENRE_COLORS: Record<Game['genre'], string> = {
 }
 
 // ── 감성 앞면 — 파스텔 배경 + 움직이는 눈알 캐릭터 (id로 색·패턴 고정) ──
-const PASTELS = ['#F6EE8D', '#9FA2F2', '#C9E8F5', '#79C7F2', '#A6E3AE', '#F6C4DC', '#F8D9A2', '#F5978A'] as const
+export const PASTELS = ['#F6EE8D', '#9FA2F2', '#C9E8F5', '#79C7F2', '#A6E3AE', '#F6C4DC', '#F8D9A2', '#F5978A'] as const
 
-function hashOf(id: string): number {
+export function hashOf(id: string): number {
   let h = 0
   for (let c = 0; c < id.length; c++) h = (h * 31 + id.charCodeAt(c)) | 0
   return Math.abs(h)
@@ -101,7 +101,7 @@ const CRITTER_SPOTS = [
 ] as const
 
 // 아이소메트릭 방 디오라마 — 조회수 100당 캐릭터 1마리 (최대 5마리)
-function RoomScene({ id, views }: { id: string; views: number }) {
+export function RoomScene({ id, views }: { id: string; views: number }) {
   const body = CRITTER_BODIES[hashOf(id) % CRITTER_BODIES.length]
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
