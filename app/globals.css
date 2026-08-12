@@ -465,3 +465,13 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .char-in { animation: none; }
 }
+
+/* 모바일 쇼츠 피드 — 페이지 스크롤이 섹션·게임 단위로 스냅 */
+@media (max-width: 767px) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+  .feed-snap {
+    scroll-snap-align: start;
+  }
+}

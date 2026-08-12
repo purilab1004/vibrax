@@ -22,6 +22,25 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
 
   return (
     <div>
+      {/* ── 모바일: 쇼츠형 세로 피드 — 한 화면 한 게임, 스와이프로 다음 게임 ── */}
+      <div className="md:hidden -mx-4">
+        {sorted.map(game => (
+          <div key={game.id} className="feed-snap h-[100svh] flex flex-col justify-center px-3 pb-10 pt-2">
+            <GameCard
+              variant="tile"
+              aspectClass="h-[76svh]"
+              game={game}
+              creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
+              creatorAvatarUrl={game.profiles?.avatar_config?.previewUrl ?? null}
+              creatorCountry={game.profiles?.country ?? null}
+              bjAvatarConfig={game.profiles?.avatar_config ?? null}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* ── 데스크톱: 핀터레스트 매소너리 ── */}
+      <div className="hidden md:block">
       {/* 헤딩 — LIVE NOW */}
       <Reveal className="mb-6">
         <h2 className="font-pixel text-xl text-[#241f17] tracking-wide flex items-center gap-2.5">
@@ -62,6 +81,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
             />
           </Reveal>
         ))}
+      </div>
       </div>
     </div>
   )

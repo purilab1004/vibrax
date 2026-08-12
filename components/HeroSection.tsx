@@ -24,7 +24,7 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
 
 
   return (
-    <section className="relative overflow-hidden -mt-14 pt-14 min-h-[100svh] flex flex-col bg-white">
+    <section className="feed-snap relative overflow-hidden -mt-14 pt-14 min-h-[100svh] flex flex-col bg-white">
       {/* 배경 영상 — 상단 10% 아래에서 시작, 활성 영상만 보이고 1.5초 크로스페이드 */}
       {VIDEOS.map((src, i) => (
         <video
