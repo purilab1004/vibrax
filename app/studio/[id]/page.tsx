@@ -31,6 +31,8 @@ export default function StudioComposerPage() {
   const [error, setError] = useState<string | null>(null)
   const [showPublish, setShowPublish] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  // 채팅 접기/펼치기 — 접으면 프리뷰가 전체를 쓴다
+  const [chatCollapsed, setChatCollapsed] = useState(false)
   // 홈 히어로에서 넘어온 첫 프롬프트 자동 전송은 1회만 (StrictMode 이중 실행 가드)
   const autoSentRef = useRef(false)
 
@@ -230,6 +232,15 @@ export default function StudioComposerPage() {
           </svg>
         </button>
         <div className="flex-1" />
+        {/* 채팅 접기/펼치기 — 게임이 있을 때만 */}
+        {(html || versions.length > 0) && (
+          <button
+            onClick={() => setChatCollapsed(v => !v)}
+            className="shrink-0 font-pixel text-[10px] text-[#6b6152] hover:text-[#2563eb] border border-[#ddd3bf] hover:border-[#2563eb] rounded px-2.5 py-1 tracking-widest transition-colors"
+          >
+            {chatCollapsed ? '💬 채팅 펼치기' : '◀ 채팅 접기'}
+          </button>
+        )}
         <Link
           href="/credits"
           className="font-pixel text-[11px] text-[#2563eb] tracking-widest shrink-0 hover:underline"
@@ -237,29 +248,47 @@ export default function StudioComposerPage() {
           {s.balance(balance ?? 0)}
         </Link>
       </div>
-      {/* 모바일: 상 45% 프리뷰 / 하 55% 채팅, 데스크톱: 좌 채팅 / 우 프리뷰 */}
-      <div className="flex-1 grid grid-cols-1 grid-rows-[45%_55%] md:grid-rows-1 md:grid-cols-[2fr_3fr] min-h-0">
-        <div className="order-2 md:order-1 min-h-0 h-full">
-          <StudioChat
-            messages={messages}
-            streaming={streaming}
-            usage={usage}
-            error={error}
-            onSend={send}
-            busy={streaming !== null}
-          />
+      {!html && versions.length === 0 ? (
+        /* 아직 게임이 없음 — 프롬프트 창이 헤더 아래 전체를 쓴다 */
+        <div className="flex-1 min-h-0 flex justify-center">
+          <div className="w-full max-w-3xl min-h-0 flex flex-col">
+            <StudioChat
+              messages={messages}
+              streaming={streaming}
+              usage={usage}
+              error={error}
+              onSend={send}
+              busy={streaming !== null}
+            />
+          </div>
         </div>
-        <div className="order-1 md:order-2 min-h-0 h-full border-b md:border-b-0 border-[#ebe4d6]">
-          <GamePreview
-            html={html}
-            versions={versions}
-            currentVersionId={currentVersionId}
-            onSelectVersion={loadVersionHtml}
-            onPublish={() => setShowPublish(true)}
-            busy={streaming !== null}
-          />
+      ) : (
+        /* 게임 생성 후 — 좌 채팅 / 우 프리뷰 (모바일: 상 프리뷰 / 하 채팅). 채팅은 접을 수 있다 */
+        <div className="flex-1 flex flex-col md:flex-row min-h-0">
+          {!chatCollapsed && (
+            <div className="order-2 md:order-1 h-[55%] md:h-full md:w-[40%] min-h-0 shrink-0">
+              <StudioChat
+                messages={messages}
+                streaming={streaming}
+                usage={usage}
+                error={error}
+                onSend={send}
+                busy={streaming !== null}
+              />
+            </div>
+          )}
+          <div className={`order-1 md:order-2 flex-1 min-h-0 border-b md:border-b-0 border-[#ebe4d6] ${chatCollapsed ? 'h-full' : 'h-[45%] md:h-full'}`}>
+            <GamePreview
+              html={html}
+              versions={versions}
+              currentVersionId={currentVersionId}
+              onSelectVersion={loadVersionHtml}
+              onPublish={() => setShowPublish(true)}
+              busy={streaming !== null}
+            />
+          </div>
         </div>
-      </div>
+      )}
       {showPublish && (
         <PublishModal
           projectId={id}
