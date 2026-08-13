@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { unstable_cache } from 'next/cache'
+import { createClient as createAnonClient } from '@supabase/supabase-js'
 import HeroSection from '@/components/HeroSection'
 import HomeBanner from '@/components/HomeBanner'
 import HomeMosaic from '@/components/home/HomeMosaic'
@@ -6,12 +7,25 @@ import Link from 'next/link'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
 
+// 홈 게임 목록 — 서버 캐시 60초. 공개 데이터라 쿠키 없는 anon 클라이언트로 조회해
+// 요청마다 DB를 때리지 않고 즉시 응답한다 (새 게임은 최대 1분 내 반영).
+const getHomeGames = unstable_cache(
+  async () => {
+    const supabase = createAnonClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    )
+    return selectGamesWithCreator<GameWithCreator[]>(
+      supabase,
+      q => q.order('created_at', { ascending: false }),
+    )
+  },
+  ['home-games'],
+  { revalidate: 60 },
+)
+
 export default async function HomePage() {
-  const supabase = await createClient()
-  const games = await selectGamesWithCreator<GameWithCreator[]>(
-    supabase,
-    q => q.order('created_at', { ascending: false }),
-  )
+  const games = await getHomeGames()
 
   const hasAnyGame = (games ?? []).length > 0
 
