@@ -221,7 +221,7 @@ function tone(ctx: AudioContext, type: OscillatorType, freq: number, start: numb
 }
 
 // 코인 투입 사운드 — 낙하 '톡' → 착지 '찰그랑'(금속성 2연타) → 클래식 코인 징글
-function playCoinSound() {
+export function playCoinSound() {
   try {
     const ctx = new AudioContext()
     const t = ctx.currentTime
@@ -240,7 +240,7 @@ function playCoinSound() {
 }
 
 // START 잉걸음 — 상승 아르페지오
-function playStartSound() {
+export function playStartSound() {
   try {
     const ctx = new AudioContext()
     const notes = [523, 659, 784, 1047]
