@@ -66,48 +66,45 @@ export function auroraOf(id: string): React.CSSProperties {
   }
 }
 
-// 몽실 태양 캐릭터 — 스캘럽 흰 몸통 + 작은 검정 점 눈 + 미소
+// 뭉게구름 캐릭터 — 비대칭 구름 몸통 + 작은 검정 점 눈 + 활짝 연 입(혀)
 function FluffFigure({ delay, eyesRef }: {
   delay: string
   eyesRef?: React.Ref<SVGGElement>
 }) {
-  const bumps = Array.from({ length: 10 }, (_, i) => {
-    const a = (i / 10) * Math.PI * 2
-    return { x: 100 + Math.cos(a) * 23, y: 96 + Math.sin(a) * 23 }
-  })
   return (
     <g className="critter-bob" style={{ animationDelay: delay }}>
+      {/* 구름 몸통 — 크고 작은 봉우리가 뭉친 비대칭 실루엣 */}
       <g fill="#ffffff">
-        {bumps.map((b, i) => (
-          <circle key={i} cx={b.x} cy={b.y} r="10.5" />
-        ))}
-        <circle cx="100" cy="96" r="25" />
+        <circle cx="100" cy="90" r="20" />
+        <circle cx="82" cy="97" r="15" />
+        <circle cx="119" cy="96" r="14" />
+        <circle cx="69" cy="104" r="10" />
+        <circle cx="131" cy="103" r="9" />
+        <ellipse cx="100" cy="104" rx="33" ry="12" />
       </g>
       {/* 작은 검정 눈 — 마우스를 따라 움직인다 */}
       <g ref={eyesRef} className="transition-transform duration-75">
-        <circle cx="92.5" cy="93" r="2.8" fill="#161616" />
-        <circle cx="107.5" cy="93" r="2.8" fill="#161616" />
+        <circle cx="93" cy="92" r="2.7" fill="#161616" />
+        <circle cx="107" cy="92" r="2.7" fill="#161616" />
       </g>
-      {/* 작은 미소 */}
-      <path d="M96 101.5q4 3.8 8 0" stroke="#161616" strokeWidth="2.3" strokeLinecap="round" fill="none" />
+      {/* 활짝 연 입 + 혀 */}
+      <path d="M94.5 99a5.5 5.5 0 0 0 11 0Z" fill="#161616" />
+      <path d="M97.3 102.8a3.2 3.2 0 0 0 5.4 0c-.8-1.6-4.6-1.6-5.4 0Z" fill="#ff8e8e" />
     </g>
   )
 }
 
-// 추가 캐릭터 자리 — 선버스트 주변 (조회수 100당 1마리 추가)
-const FLUFF_SPOTS = [
-  { x: 40, y: 42, s: 0.42 },
-  { x: 162, y: 54, s: 0.38 },
-  { x: 44, y: 152, s: 0.38 },
-  { x: 158, y: 148, s: 0.42 },
-] as const
-
-// 선버스트 장면 — 오로라 배경 위 방사 광선 + 몽실 태양 (조회수 100당 캐릭터 1마리, 최대 5)
+// 빛 장면 — 오로라 배경 위 하얀 광휘 속 구름 캐릭터.
+// 조회수가 많을수록 빛의 범위·세기가 커져 카드 자체가 밝아 보인다.
 export function RoomScene({ id, views }: { id: string; views: number }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
 
-  const count = Math.min(5, Math.max(1, Math.floor(views / 100)))
+  // 광량 — 0뷰: 은은, 800뷰+: 최대 (카드 색이 달라 보일 정도)
+  const t = Math.min(views / 800, 1)
+  const glowOpacity = 0.32 + t * 0.55
+  const glowR = 58 + t * 52
+  const gid = `halo-${hashOf(id).toString(36)}`
 
   // 눈동자가 마우스를 따라간다 — rAF로 스로틀
   useEffect(() => {
@@ -138,30 +135,19 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
 
   return (
     <svg ref={svgRef} viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
-      {/* 방사 광선 — 길고 짧은 흰 선이 번갈아, 아주 천천히 돈다 */}
-      <g className="sun-rays" style={{ transformOrigin: '100px 96px' }} stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.92">
-        {Array.from({ length: 24 }, (_, i) => {
-          const a = (i / 24) * Math.PI * 2
-          const r0 = 42
-          const r1 = i % 2 === 0 ? 94 : 74
-          return (
-            <line
-              key={i}
-              x1={100 + Math.cos(a) * r0}
-              y1={96 + Math.sin(a) * r0}
-              x2={100 + Math.cos(a) * r1}
-              y2={96 + Math.sin(a) * r1}
-            />
-          )
-        })}
-      </g>
-      {/* 추가 몽실이들 — 인기 게임일수록 주변에 늘어난다 */}
-      {FLUFF_SPOTS.slice(0, count - 1).map((sp, i) => (
-        <g key={i} transform={`translate(${sp.x - 100 * sp.s}, ${sp.y - 96 * sp.s}) scale(${sp.s})`} opacity="0.95">
-          <FluffFigure delay={`${((hashOf(id) + i * 7) % 30) / 10}s`} />
-        </g>
-      ))}
-      {/* 메인 몽실 태양 */}
+      <defs>
+        <radialGradient id={gid} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity={glowOpacity} />
+          <stop offset="45%" stopColor="#ffffff" stopOpacity={glowOpacity * 0.5} />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      {/* 광휘 — 숨쉬듯 맥동하는 빛. 인기 게임일수록 크고 밝다 */}
+      <circle className="light-halo" cx="100" cy="96" r={glowR} fill={`url(#${gid})`} />
+      {t > 0.4 && (
+        <circle className="light-halo" style={{ animationDelay: '1.6s' }} cx="100" cy="96" r={glowR * 1.5} fill={`url(#${gid})`} opacity="0.5" />
+      )}
+      {/* 구름 캐릭터 */}
       <FluffFigure delay={`${(hashOf(id) % 30) / 10}s`} eyesRef={eyesRef} />
     </svg>
   )

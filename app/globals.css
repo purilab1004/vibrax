@@ -549,3 +549,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .sun-rays { animation: none; }
 }
+
+/* 광휘 — 숨쉬듯 밝아졌다 어두워지는 빛 */
+.light-halo {
+  animation: haloPulse 4.5s ease-in-out infinite;
+}
+@keyframes haloPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .light-halo { animation: none; }
+}
