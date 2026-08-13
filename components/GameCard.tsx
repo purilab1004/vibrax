@@ -76,11 +76,11 @@ function FluffFigure({ delay, eyesRef }: {
 }) {
   return (
     <g className="critter-bob" style={{ animationDelay: delay }}>
-      {/* 몽실 흰 구름 몸통 — 봉우리 크기가 제각각인 스캘럽 */}
+      {/* 몽실 흰 구름 몸통 — 같은 크기 봉우리가 고르게 둘러싼 스캘럽 */}
       <g fill="#ffffff">
-        {[11.5, 8.5, 12.5, 9, 10.5, 8, 12, 9.5, 11, 8.5].map((r, i) => {
+        {Array.from({ length: 10 }, (_, i) => {
           const a = (i / 10) * Math.PI * 2
-          return <circle key={i} cx={100 + Math.cos(a) * 23} cy={96 + Math.sin(a) * 23} r={r} />
+          return <circle key={i} cx={100 + Math.cos(a) * 23} cy={96 + Math.sin(a) * 23} r="10.5" />
         })}
         <circle cx="100" cy="96" r="25" />
       </g>
