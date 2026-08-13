@@ -35,6 +35,44 @@ export default function StudioComposerPage() {
   const [chatCollapsed, setChatCollapsed] = useState(false)
   // 좌측 사이드바 — 최근 프로젝트 (클로드 스타일)
   const [myProjects, setMyProjects] = useState<StudioProject[]>([])
+  // 채팅/프리뷰 분할 — 드래그로 조절 (프리뷰 폭 %, 로컬 저장)
+  const [previewPct, setPreviewPct] = useState(52)
+  const [dragging, setDragging] = useState(false)
+  const splitRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('studio_preview_pct')
+      if (v) setPreviewPct(Math.min(75, Math.max(30, Number(v))))
+    } catch {}
+  }, [])
+
+  const startDrag = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const container = splitRef.current
+    if (!container) return
+    setDragging(true)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    const onMove = (ev: MouseEvent) => {
+      const r = container.getBoundingClientRect()
+      const pct = ((r.right - ev.clientX) / r.width) * 100
+      setPreviewPct(Math.min(75, Math.max(30, pct)))
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      setDragging(false)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      setPreviewPct(p => {
+        try { localStorage.setItem('studio_preview_pct', String(Math.round(p))) } catch {}
+        return p
+      })
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
 
   useEffect(() => {
     const sb = createClient()
@@ -313,8 +351,8 @@ export default function StudioComposerPage() {
             />
           </div>
         ) : (
-          /* 게임 생성 후 — 중앙 채팅 / 우측 프리뷰 (모바일: 상 프리뷰 / 하 채팅) */
-          <div className="flex-1 flex flex-col md:flex-row min-h-0">
+          /* 게임 생성 후 — 중앙 채팅 / 드래그 리사이저 / 우측 프리뷰 (모바일: 상 프리뷰 / 하 채팅) */
+          <div ref={splitRef} className="flex-1 flex flex-col md:flex-row min-h-0" style={{ ['--pw' as string]: `${previewPct}%` }}>
             {!chatCollapsed && (
               <div className="order-2 md:order-1 h-[55%] md:h-full md:flex-1 min-h-0 md:min-w-0">
                 <StudioChat
@@ -327,7 +365,19 @@ export default function StudioComposerPage() {
                 />
               </div>
             )}
-            <div className={`order-1 md:order-2 min-h-0 border-b md:border-b-0 md:border-l border-[#ebe4d6] ${chatCollapsed ? 'h-full flex-1' : 'h-[45%] md:h-full md:w-[52%] shrink-0'}`}>
+            {/* 드래그 리사이저 — 잡고 끌면 분할 폭이 바뀐다 */}
+            {!chatCollapsed && (
+              <div
+                onMouseDown={startDrag}
+                className={`hidden md:flex order-2 md:order-2 w-2 shrink-0 cursor-col-resize items-center justify-center group/rs ${dragging ? 'bg-[#2563eb]/20' : 'hover:bg-[#2563eb]/10'} transition-colors`}
+                role="separator"
+                aria-orientation="vertical"
+                title="드래그해서 크기 조절"
+              >
+                <span className={`w-[3px] h-10 rounded-full ${dragging ? 'bg-[#2563eb]' : 'bg-[#ddd3bf] group-hover/rs:bg-[#2563eb]/60'} transition-colors`} />
+              </div>
+            )}
+            <div className={`order-1 md:order-3 min-h-0 border-b md:border-b-0 border-[#ebe4d6] ${chatCollapsed ? 'h-full flex-1' : 'h-[45%] md:h-full md:w-[var(--pw)] shrink-0'} ${dragging ? 'pointer-events-none select-none' : ''}`}>
               <GamePreview
                 html={html}
                 versions={versions}
