@@ -26,6 +26,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
   const [bjAvatarConfig, setBjAvatarConfig] = useState<AvatarConfig | null>(null)
+  const [isGuest, setIsGuest] = useState(false)
   const { T } = useLang()
   const supabase = createClient()
   const router = useRouter()
@@ -40,7 +41,17 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
 
   const handlePlay = async () => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setAgentGate('login'); return }
+    if (!user) {
+      // 게스트 플레이 — 공유 링크로 온 방문자는 로그인 없이 게임만 바로 플레이.
+      // AJ 방송/채팅은 로그인 안내 패널로 대체 (코인 차감 없음)
+      setIsGuest(true)
+      setAgentConfig(null)
+      loadAvatarConfig(supabase, game.user_id).then(setBjAvatarConfig).catch(() => {})
+      setOpen(true)
+      supabase.rpc('increment_view_count', { game_id: game.id }).then(() => {})
+      return
+    }
+    setIsGuest(false)
     const name = user.user_metadata?.agent_name?.trim()
     if (!name) { setAgentGate('agent'); return }
     // 🪙 코인 투입 — 카드에서 이미 넣었다면(티켓) 이중 차감하지 않는다
@@ -141,7 +152,27 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
                 title={game.title}
               />
             </div>
-            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={bjName} />
+            {isGuest ? (
+              <>
+                {/* 게스트 — 데스크톱 사이드 안내 패널 */}
+                <div className="hidden md:flex w-72 shrink-0 flex-col items-center justify-center gap-4 border-l border-[#ebe4d6] bg-[#fcfaf5] h-full px-6 text-center">
+                  <span className="text-4xl" aria-hidden>🔒</span>
+                  <p className="text-sm text-[#4a4337] font-semibold leading-relaxed">
+                    AI 스트리머 AJ의 라이브 방송과<br />채팅은 로그인 후 볼 수 있어요
+                  </p>
+                  <Link href="/login" className="font-pixel text-[11px] bg-[#2563eb] text-white px-6 py-3 hover:bg-[#1d4ed8] transition-colors tracking-widest">
+                    → 로그인하기
+                  </Link>
+                </div>
+                {/* 게스트 — 모바일 하단 안내 바 */}
+                <div className="md:hidden absolute bottom-0 inset-x-0 bg-[#fcfaf5]/95 backdrop-blur-sm border-t border-[#ebe4d6] px-4 py-3 flex items-center justify-between gap-3">
+                  <span className="text-[12px] text-[#4a4337] font-medium">🔒 AJ 방송·채팅은 로그인 후 이용 가능</span>
+                  <Link href="/login" className="shrink-0 text-[13px] font-bold text-[#2563eb]">로그인</Link>
+                </div>
+              </>
+            ) : (
+              <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={bjName} />
+            )}
           </div>
         </div>
       )}

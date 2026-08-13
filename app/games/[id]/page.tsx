@@ -7,6 +7,7 @@ import type { Game } from '@/lib/supabase/types'
 import GamePlayButton from '@/components/GamePlayButton'
 import ViewerIcon from '@/components/ViewerIcon'
 import LikeButton from '@/components/LikeButton'
+import ShareButton from '@/components/ShareButton'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
 
 type GameWithProfile = Game & { profiles: { username: string; agent_name: string | null } | null }
@@ -115,6 +116,7 @@ export default async function GameDetailPage({ params }: Props) {
               <ViewerIcon className="w-3.5 h-3.5" />{game.view_count ?? 0}
             </span>
             <LikeButton gameId={game.id} size="md" />
+            <ShareButton title={game.title} />
           </div>
         </div>
         <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />

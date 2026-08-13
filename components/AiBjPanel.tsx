@@ -235,7 +235,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             </div>
           )}
           {msg.source === 'agent' && (
-            <div className="w-5 h-5 shrink-0 rounded-full border border-purple-700/50 overflow-hidden mt-0.5 bg-gray-900 flex items-center justify-center">
+            <div className="w-5 h-5 shrink-0 rounded-full border border-purple-300 overflow-hidden mt-0.5 bg-white flex items-center justify-center">
               {agentConfig?.avatarUrl ? (
                 <Image src={agentConfig.avatarUrl} alt={msg.agentName ?? ''} width={20} height={20} className="w-full h-full object-cover" unoptimized />
               ) : (
@@ -246,12 +246,12 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
           <div className={`max-w-[85%] text-xs px-2.5 py-1.5 rounded leading-relaxed ${
             msg.role === 'user'
               ? msg.source === 'agent'
-                ? 'bg-purple-900/40 text-purple-300 border border-purple-700/40'
+                ? 'bg-purple-50 text-purple-800 border border-purple-200'
                 : 'bg-[#2563eb]/10 text-[#2563eb] border border-[#2563eb]/20'
-              : 'bg-gray-800 text-[#3a332a]'
+              : 'bg-white text-[#3a332a] border border-[#ebe4d6]'
           }`}>
             {msg.source === 'agent' && (
-              <p className="font-pixel text-[10px] text-purple-400 mb-0.5">{msg.agentName}</p>
+              <p className="font-pixel text-[10px] text-purple-500 mb-0.5">{msg.agentName}</p>
             )}
             {msg.content}
             {msg.role === 'assistant' && isStreaming && i === messages.length - 1 && (
@@ -274,7 +274,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
           onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
           placeholder="AJ에게 말걸기..."
           disabled={isStreaming}
-          className="flex-1 bg-gray-900 border border-[#ddd3bf] text-[#241f17] text-xs px-2.5 py-2 placeholder-[#a1957f] focus:outline-none focus:border-[#2563eb] disabled:opacity-50"
+          className="flex-1 bg-white border border-[#ddd3bf] text-[#241f17] text-xs px-2.5 py-2 placeholder-[#a1957f] focus:outline-none focus:border-[#2563eb] disabled:opacity-50"
         />
         <button
           onClick={() => sendMessage(input)}
