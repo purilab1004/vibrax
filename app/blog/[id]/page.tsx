@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { unstable_cache } from 'next/cache'
+import { createClient as createAnonClient } from '@supabase/supabase-js'
 import type { BlogCategory, BlogPost } from '@/lib/supabase/types'
 import { stripHtml, makeExcerpt } from '@/lib/blog/excerpt'
 import BlogViewPing from '@/components/BlogViewPing'
@@ -9,12 +10,31 @@ import BlogActions from '@/components/blog/BlogActions'
 // 검색엔진·AI 크롤러가 본문과 메타를 읽을 수 있도록 서버 렌더링한다.
 export const revalidate = 300
 
-async function fetchPost(id: string) {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('blog_posts').select('*').eq('id', id).eq('published', true).maybeSingle()
-  return data as BlogPost | null
-}
+// 공개 데이터 — 쿠키 없는 익명 클라이언트 + 서버 캐시 (쿠키를 쓰면 동적 렌더링이 강제돼 캐시가 무효)
+const anon = () => createAnonClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+)
+
+const fetchPost = unstable_cache(
+  async (id: string) => {
+    const { data } = await anon()
+      .from('blog_posts').select('*').eq('id', id).eq('published', true).maybeSingle()
+    return data as BlogPost | null
+  },
+  ['blog-post'],
+  { revalidate: 300 },
+)
+
+const fetchCategory = unstable_cache(
+  async (id: string) => {
+    const { data } = await anon()
+      .from('blog_categories').select('*').eq('id', id).maybeSingle()
+    return data as BlogCategory | null
+  },
+  ['blog-category'],
+  { revalidate: 600 },
+)
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -50,13 +70,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ id: s
     )
   }
 
-  let cat: BlogCategory | null = null
-  if (post.category_id) {
-    const supabase = await createClient()
-    const { data } = await supabase
-      .from('blog_categories').select('*').eq('id', post.category_id).maybeSingle()
-    cat = data as BlogCategory | null
-  }
+  const cat: BlogCategory | null = post.category_id ? await fetchCategory(post.category_id) : null
 
   // Article 구조화 데이터 — 구글/네이버/AI 검색 노출용
   const jsonLd = {

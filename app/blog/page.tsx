@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import type { BlogCategory, BlogPost } from '@/lib/supabase/types'
 import { formatViewers } from '@/lib/format'
@@ -11,28 +10,26 @@ import BlogActions from '@/components/blog/BlogActions'
 const RANK_COLOR = ['text-[#c9940c]', 'text-[#4a4337]', 'text-amber-600']
 
 export default function BlogPage() {
-  const [posts, setPosts] = useState<BlogPost[] | null>(null)
+  const [allPosts, setAllPosts] = useState<BlogPost[] | null>(null)
   const [cats, setCats] = useState<BlogCategory[]>([])
   const [activeCat, setActiveCat] = useState<string>('')
-  const supabase = createClient()
   const { T } = useLang()
   const b = T.blog
 
+  // 캐시된 API 한 번 호출 — 카테고리 필터는 클라이언트에서 처리
   useEffect(() => {
-    supabase.from('blog_categories').select('*').order('sort_order')
-      .then(({ data }) => setCats((data as BlogCategory[] | null) ?? []))
+    fetch('/api/blog/list')
+      .then(r => r.json())
+      .then((d: { cats: BlogCategory[]; posts: BlogPost[] }) => {
+        setCats(d.cats ?? [])
+        setAllPosts(d.posts ?? [])
+      })
+      .catch(() => setAllPosts([]))
   }, [])
 
-  useEffect(() => {
-    let q = supabase.from('blog_posts').select('*')
-      .eq('published', true)
-      .order('published_at', { ascending: false })
-    if (activeCat) q = q.eq('category_id', activeCat)
-    q.then(({ data }) => setPosts((data as BlogPost[] | null) ?? []))
-  }, [activeCat])
-
+  const posts = allPosts === null ? null : activeCat ? allPosts.filter(p => p.category_id === activeCat) : allPosts
   const catName = (id: string | null) => cats.find(c => c.id === id)?.name ?? ''
-  const popular = [...(posts ?? [])].sort((a, z) => (z.view_count ?? 0) - (a.view_count ?? 0)).slice(0, 5)
+  const popular = [...(allPosts ?? [])].sort((a, z) => (z.view_count ?? 0) - (a.view_count ?? 0)).slice(0, 5)
 
   const catBtn = (id: string, label: string) => (
     <button
