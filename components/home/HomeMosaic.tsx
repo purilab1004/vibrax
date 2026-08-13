@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import GameCard, {
-  RoomScene, PASTELS, hashOf,
+  RoomScene, auroraOf, hashOf,
   hasCoinTicket, ticketKeyOf, playCoinSound, playStartSound,
 } from '@/components/GameCard'
 import LikeButton from '@/components/LikeButton'
@@ -54,8 +54,8 @@ function FeedScreen({ game }: { game: GameWithCreator }) {
 
   return (
     <div
-      className="feed-snap relative h-[100svh] overflow-hidden"
-      style={{ backgroundColor: PASTELS[hashOf(game.id) % PASTELS.length] }}
+      className="feed-snap grain relative h-[100svh] overflow-hidden"
+      style={auroraOf(game.id)}
       onClick={() => router.push(`/games/${game.id}`)}
     >
       {/* 방 디오라마 — 화면 상중단을 채운다 */}

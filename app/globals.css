@@ -527,3 +527,25 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .arcade-blink, .gold-coin, .slot-clink, .slot-spark { animation: none; }
 }
+
+/* 오로라 카드 — 필름 그레인 질감 오버레이 */
+.grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  opacity: 0.28;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* 선버스트 광선 — 아주 천천히 회전 */
+.sun-rays {
+  animation: sunSpin 70s linear infinite;
+}
+@keyframes sunSpin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sun-rays { animation: none; }
+}

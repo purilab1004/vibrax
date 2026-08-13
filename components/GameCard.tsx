@@ -37,7 +37,7 @@ const GENRE_COLORS: Record<Game['genre'], string> = {
   sports: 'bg-green-700',
 }
 
-// ── 감성 앞면 — 차콜 다크 + 코랄 배경 (id로 색·패턴 고정) ──
+// ── 감성 앞면 — 오로라 타이다이 그라디언트 (id로 색 배치 고정) ──
 export const PASTELS = ['#3B3B3B', '#E8593F', '#343434', '#3B3B3B', '#E8593F', '#2E2E2E', '#3F3F3F', '#E8593F'] as const
 
 export function hashOf(id: string): number {
@@ -46,71 +46,70 @@ export function hashOf(id: string): number {
   return Math.abs(h)
 }
 
-// 몸통 색 — 다크/코랄 배경 위에서 도드라지는 밝은 톤 (배경과 같은 해시로 짝지어진다)
-const CRITTER_BODIES = ['#F2B436', '#5AB0F2', '#F2E8DA', '#4CC97E', '#F2B436', '#C9E8F5', '#5AB0F2', '#F2E8DA'] as const
+// 오로라 배경 — 파랑·핑크·퍼플·시안이 번지는 타이다이 (게임마다 배치가 다르다)
+export function auroraOf(id: string): React.CSSProperties {
+  const h = hashOf(id)
+  const hue = (base: number, spread: number, salt: number) => (base + ((h >> salt) % spread) - spread / 2 + 360) % 360
+  const blue = hue(212, 30, 0)
+  const pink = hue(322, 36, 3)
+  const purple = hue(264, 30, 6)
+  const cyan = hue(188, 24, 9)
+  const p = (salt: number, min: number, span: number) => min + ((h >> salt) % span)
+  return {
+    background: [
+      `radial-gradient(at ${p(1, 12, 26)}% ${p(2, 8, 22)}%, hsl(${pink} 78% 72%), transparent 52%)`,
+      `radial-gradient(at ${p(3, 62, 26)}% ${p(4, 14, 26)}%, hsl(${cyan} 82% 68%), transparent 55%)`,
+      `radial-gradient(at ${p(5, 16, 26)}% ${p(6, 62, 26)}%, hsl(${purple} 70% 62%), transparent 58%)`,
+      `radial-gradient(at ${p(7, 60, 28)}% ${p(8, 66, 24)}%, hsl(${pink} 74% 70%), transparent 55%)`,
+      `hsl(${blue} 62% 56%)`,
+    ].join(', '),
+  }
+}
 
-// 캐릭터 한 마리 — 야자수 + 젤리 몸통 (eyesRef가 있으면 눈동자가 마우스를 따라간다)
-function CritterFigure({ body, delay, eyesRef }: {
-  body: string
+// 몽실 태양 캐릭터 — 스캘럽 흰 몸통 + 작은 검정 점 눈 + 미소
+function FluffFigure({ delay, eyesRef }: {
   delay: string
   eyesRef?: React.Ref<SVGGElement>
 }) {
+  const bumps = Array.from({ length: 10 }, (_, i) => {
+    const a = (i / 10) * Math.PI * 2
+    return { x: 100 + Math.cos(a) * 23, y: 96 + Math.sin(a) * 23 }
+  })
   return (
     <g className="critter-bob" style={{ animationDelay: delay }}>
-      {/* 머리 위 야자수 — 로고와 같은 줄기/잎 5장 */}
-      <g className="critter-sprout" style={{ transformOrigin: '100px 55px' }}>
-        <path d="M97 55c.9-9 2.6-16 6.9-22" stroke="#8a5a2b" strokeWidth="4.5" strokeLinecap="round" fill="none" />
-        <g fill="none" stroke="#39b36b" strokeWidth="4.8" strokeLinecap="round">
-          <path d="M104 33c-7-4.8-14-5.2-19.8-2.2" />
-          <path d="M104 33c-2.2-7.4-6.6-12.3-12.3-14.5" />
-          <path d="M104 33c3-7 8.3-11 14.5-11.8" />
-          <path d="M104 33c7.4-3 14.5-1.7 19.3 2.2" />
-          <path d="M104 33c5.7 1.3 10 5.2 12.3 11" />
-        </g>
+      <g fill="#ffffff">
+        {bumps.map((b, i) => (
+          <circle key={i} cx={b.x} cy={b.y} r="10.5" />
+        ))}
+        <circle cx="100" cy="96" r="25" />
       </g>
-      {/* 말랑한 젤리 몸통 */}
-      <g className="critter-body" style={{ transformOrigin: '100px 158px' }}>
-        <path
-          d="M100 50c34 0 58 24 59 54 1 32-25 54-59 54s-60-22-59-54c1-30 25-54 59-54Z"
-          fill={body}
-        />
-        <ellipse cx="78" cy="72" rx="14" ry="8" fill="#ffffff" opacity="0.22" transform="rotate(-18 78 72)" />
-        <circle cx="79" cy="96" r="14" fill="#fffdf5" />
-        <circle cx="121" cy="96" r="14" fill="#fffdf5" />
-        <g ref={eyesRef} className="transition-transform duration-75">
-          <circle cx="79" cy="96" r="6.5" fill="#161616" />
-          <circle cx="121" cy="96" r="6.5" fill="#161616" />
-          <circle cx="81.5" cy="93.5" r="2" fill="#ffffff" />
-          <circle cx="123.5" cy="93.5" r="2" fill="#ffffff" />
-        </g>
-        <circle cx="66" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
-        <circle cx="134" cy="114" r="7" fill="#ff9d9d" opacity="0.55" />
-        <path d="M88 118q12 11 24 0" stroke="#161616" strokeWidth="4" strokeLinecap="round" fill="none" />
+      {/* 작은 검정 눈 — 마우스를 따라 움직인다 */}
+      <g ref={eyesRef} className="transition-transform duration-75">
+        <circle cx="92.5" cy="93" r="2.8" fill="#161616" />
+        <circle cx="107.5" cy="93" r="2.8" fill="#161616" />
       </g>
+      {/* 작은 미소 */}
+      <path d="M96 101.5q4 3.8 8 0" stroke="#161616" strokeWidth="2.3" strokeLinecap="round" fill="none" />
     </g>
   )
 }
 
-// 방 바닥 위 캐릭터 자리들 — main이 중앙, 나머지는 주변 (우선순위 순)
-const CRITTER_SPOTS = [
-  { x: 70, y: 76.5, s: 0.3, main: true },
-  { x: 36, y: 88, s: 0.22, main: false },
-  { x: 112, y: 90, s: 0.22, main: false },
-  { x: 58, y: 97, s: 0.18, main: false },
-  { x: 92, y: 99, s: 0.18, main: false },
+// 추가 캐릭터 자리 — 선버스트 주변 (조회수 100당 1마리 추가)
+const FLUFF_SPOTS = [
+  { x: 40, y: 42, s: 0.42 },
+  { x: 162, y: 54, s: 0.38 },
+  { x: 44, y: 152, s: 0.38 },
+  { x: 158, y: 148, s: 0.42 },
 ] as const
 
-// 아이소메트릭 방 디오라마 — 조회수 100당 캐릭터 1마리 (최대 5마리)
+// 선버스트 장면 — 오로라 배경 위 방사 광선 + 몽실 태양 (조회수 100당 캐릭터 1마리, 최대 5)
 export function RoomScene({ id, views }: { id: string; views: number }) {
-  const body = CRITTER_BODIES[hashOf(id) % CRITTER_BODIES.length]
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
 
-  const count = Math.min(CRITTER_SPOTS.length, Math.max(1, Math.floor(views / 100)))
-  // 그리기 순서는 발 위치(깊이) 기준 — 뒤쪽 캐릭터부터
-  const spots = [...CRITTER_SPOTS.slice(0, count)].sort((a, b) => (a.y + 158 * a.s) - (b.y + 158 * b.s))
+  const count = Math.min(5, Math.max(1, Math.floor(views / 100)))
 
-  // 눈동자가 마우스를 따라간다 — rAF로 스로틀 (스케일 보정 포함)
+  // 눈동자가 마우스를 따라간다 — rAF로 스로틀
   useEffect(() => {
     let raf = 0
     const onMove = (e: MouseEvent) => {
@@ -122,11 +121,11 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
         const r = svg.getBoundingClientRect()
         if (r.width === 0) return
         const cx = r.left + r.width / 2
-        const cy = r.top + r.height * 0.6
+        const cy = r.top + r.height * 0.5
         const dx = e.clientX - cx
         const dy = e.clientY - cy
         const d = Math.hypot(dx, dy) || 1
-        const m = Math.min(d / 60, 1) * 11
+        const m = Math.min(d / 60, 1) * 4.5
         eyes.style.transform = `translate(${(dx / d) * m}px, ${(dy / d) * m}px)`
       })
     }
@@ -138,47 +137,32 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
   }, [])
 
   return (
-    <svg ref={svgRef} viewBox="0 0 200 176" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
-      {/* 바닥 받침(플린스) — 진한 트림 슬래브 */}
-      <polygon points="100,104 174,130 100,158 26,130" fill={body} opacity="0.92" />
-      {/* 바닥 */}
-      <polygon points="100,95 165,118 100,141 35,118" fill="#ffffff" opacity="0.6" />
-      {/* 왼쪽 벽 (밝음) */}
-      <polygon points="100,25 35,48 35,118 100,95" fill="#ffffff" opacity="0.75" />
-      {/* 오른쪽 벽 (한 톤 어둡게) */}
-      <polygon points="100,25 165,48 165,118 100,95" fill="#ffffff" opacity="0.5" />
-      {/* 지붕 트림 — 이미지처럼 두툼하게 */}
-      <polygon points="100,10 28,36 28,49 100,23" fill={body} />
-      <polygon points="100,10 172,36 172,49 100,23" fill={body} />
-      {/* 왼쪽 벽 — 밝은 창 */}
-      <polygon points="86,36 96,32.4 96,80 86,84" fill="#ffffff" opacity="0.95" />
-      {/* 왼쪽 벽 — 선반 + 아이템 + 스피커 */}
-      <polygon points="44,80 74,69.5 74,74 44,84.5" fill={body} opacity="0.9" />
-      <polygon points="52,72 62,68.5 62,75.5 52,79" fill={body} opacity="0.55" />
-      <circle cx="52" cy="99" r="8.5" fill="#ffffff" opacity="0.92" />
-      <circle cx="52" cy="99" r="3.2" fill={body} />
-      {/* 오른쪽 벽 — 포스터들 + 디스크 */}
-      <polygon points="112,54 126,59 126,70 112,65" fill="#ffffff" opacity="0.9" />
-      <polygon points="132,63 144,67.3 144,77 132,72.7" fill={body} opacity="0.65" />
-      <polygon points="116,75 128,79.3 128,88 116,83.7" fill="#ffffff" opacity="0.75" />
-      <circle cx="146" cy="56" r="7.5" fill="#ffffff" opacity="0.92" />
-      <circle cx="146" cy="56" r="2.8" fill={body} />
-      {/* 바닥 소품 — 스툴 + 글로우 링 */}
-      <ellipse cx="70" cy="123" rx="9" ry="3.4" fill={body} opacity="0.9" />
-      <ellipse cx="70" cy="129" rx="7" ry="2.6" fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0.7" />
-      {/* 캐릭터 자리 글로우 링 */}
-      <ellipse cx="100" cy="126" rx="18" ry="6.5" fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.75" />
-      <ellipse cx="100" cy="129" rx="25" ry="9" fill="none" stroke="#ffffff" strokeWidth="1.4" opacity="0.4" />
-      {/* 캐릭터들 — 조회수 100당 1마리, 깊이 순으로 그린다 */}
-      {spots.map((sp, i) => (
-        <g key={i} transform={`translate(${sp.x}, ${sp.y}) scale(${sp.s})`}>
-          <CritterFigure
-            body={sp.main ? body : CRITTER_BODIES[(hashOf(id) + i * 3 + 1) % CRITTER_BODIES.length]}
-            delay={`${((hashOf(id) + i * 7) % 30) / 10}s`}
-            eyesRef={sp.main ? eyesRef : undefined}
-          />
+    <svg ref={svgRef} viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
+      {/* 방사 광선 — 길고 짧은 흰 선이 번갈아, 아주 천천히 돈다 */}
+      <g className="sun-rays" style={{ transformOrigin: '100px 96px' }} stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.92">
+        {Array.from({ length: 24 }, (_, i) => {
+          const a = (i / 24) * Math.PI * 2
+          const r0 = 42
+          const r1 = i % 2 === 0 ? 94 : 74
+          return (
+            <line
+              key={i}
+              x1={100 + Math.cos(a) * r0}
+              y1={96 + Math.sin(a) * r0}
+              x2={100 + Math.cos(a) * r1}
+              y2={96 + Math.sin(a) * r1}
+            />
+          )
+        })}
+      </g>
+      {/* 추가 몽실이들 — 인기 게임일수록 주변에 늘어난다 */}
+      {FLUFF_SPOTS.slice(0, count - 1).map((sp, i) => (
+        <g key={i} transform={`translate(${sp.x - 100 * sp.s}, ${sp.y - 96 * sp.s}) scale(${sp.s})`} opacity="0.95">
+          <FluffFigure delay={`${((hashOf(id) + i * 7) % 30) / 10}s`} />
         </g>
       ))}
+      {/* 메인 몽실 태양 */}
+      <FluffFigure delay={`${(hashOf(id) % 30) / 10}s`} eyesRef={eyesRef} />
     </svg>
   )
 }
@@ -397,24 +381,33 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
             {/* 흔들림 셸 — 호버 판정은 바깥(고정), 흔들림·원근은 여기 */}
             <div className="gacha-shell [perspective:1200px]">
             <div className={`relative ${aspectClass} w-full transition-transform duration-300 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] ${flipped ? '[transform:rotateY(180deg)]' : ''}`}>
-              {/* 앞면 — 캐릭터 + 하단 정보 행 (아바타 · 제목 · 좋아요 · 조회수) */}
+              {/* 앞면 — 오로라 배경 + 몽실 태양 + 유혹 질문 (제목은 플립해야 공개) */}
               <div
-                className="absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex flex-col"
-                style={{ backgroundColor: PASTELS[hashOf(game.id) % PASTELS.length] }}
+                className="grain absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex flex-col"
+                style={auroraOf(game.id)}
               >
-                {/* 좋아요 — 상단 우측에 크게 */}
-                <div className="absolute top-3 right-3 z-10 bg-white/85 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
+                {/* 좋아요 — 상단 좌측 */}
+                <div className="absolute top-3 left-3 z-10 bg-white/85 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
                   <LikeButton gameId={game.id} size="lg" />
                 </div>
+                {/* 플립 힌트 아이콘 — 상단 우측 */}
+                <span className="absolute top-3 right-3 z-10 text-white/90 drop-shadow" aria-hidden>
+                  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12a9 9 0 0 1-15.3 6.4M3 12a9 9 0 0 1 15.3-6.4" />
+                    <path d="M21 4v5h-5M3 20v-5h5" />
+                  </svg>
+                </span>
                 <div className="flex-1 relative min-h-0 mx-2 mt-2">
                   <RoomScene id={game.id} views={game.view_count ?? 0} />
                 </div>
-                {/* 포스터 타이틀 — 제목이 주인공 */}
-                <div className="shrink-0 px-4 pb-5 text-center">
-                  <h3 className="text-[19px] md:text-[22px] font-extrabold text-white leading-snug line-clamp-2 tracking-tight">
-                    {game.title}
+                {/* 유혹 질문 — 플래시카드처럼, 답(제목)은 뒷면에 */}
+                <div className="shrink-0 px-5 pb-5">
+                  <h3 className="text-[20px] md:text-[23px] font-extrabold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
+                    <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">
+                      {T.games.teasers[hashOf(game.id) % T.games.teasers.length]}
+                    </span>
                   </h3>
-                  <p className="mt-2 flex items-center justify-center gap-1.5 text-[12px] font-semibold tracking-[0.12em] text-white/65">
+                  <p className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.1em] text-white/70">
                     <span className="w-5 h-5 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 inline-flex items-center justify-center">
                       {creatorAvatarUrl ? (
                         <Image
@@ -503,8 +496,9 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                     </>
                   )}
                 </div>
+                {/* 정답 공개 — 게임 제목 */}
                 <div className="absolute inset-x-0 bottom-0 p-4 pointer-events-none">
-                  <h3 className="text-lg font-bold text-white truncate leading-tight">{game.title}</h3>
+                  <h3 className="text-xl font-extrabold text-white truncate leading-tight">{game.title}</h3>
                   <p className="mt-0.5 text-[13px] text-white/70 truncate">
                     {creatorName ?? 'unknown'}{flag && ` ${flag}`}
                   </p>

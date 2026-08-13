@@ -51,6 +51,16 @@ export const t = {
       topCreators: 'TOP AI AVATAR',
       beNextHero: '다음 게임의 주인공이 되세요',
       insufficientCoin: '🪙 vcoin이 부족해요! 코인이 있어야 플레이할 수 있어요.',
+      teasers: [
+        '3판 안에 깰 수 있을까?',
+        '지금 1등, 이길 자신 있어?',
+        '10초만 해봐… 멈출 수 있을까?',
+        '네 반응속도, 여기서 통할까?',
+        '오늘의 주인공은 너일까?',
+        '이 방의 최고 기록을 깰 사람?',
+        '한 판이 한 시간이 되는 마법?',
+        '친구보다 잘할 자신 있어?',
+      ],
       hoverMsgs: [
         '여기를 클릭해봐 ㅎㅎ',
         '나랑 한 판 어때?',
@@ -365,6 +375,16 @@ export const t = {
       topCreators: 'TOP AI AVATAR',
       beNextHero: 'Be the hero of the next game',
       insufficientCoin: '🪙 Not enough vcoin! You need coins to play.',
+      teasers: [
+        'Can you beat it in 3 tries?',
+        'Think you can top #1?',
+        'Just 10 seconds… can you stop?',
+        'Will your reflexes survive this?',
+        'Are you today’s hero?',
+        'Who breaks this room’s record?',
+        'One round becomes an hour?',
+        'Better than your friends?',
+      ],
       hoverMsgs: [
         'Click me hehe',
         'Up for a round?',
