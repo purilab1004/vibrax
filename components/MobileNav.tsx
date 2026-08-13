@@ -41,7 +41,7 @@ export default function MobileNav() {
         ), pathname.startsWith('/games'))}
         {/* 중앙 만들기 — 그라디언트 원형 강조 */}
         <Link href="/studio" className="flex flex-col items-center justify-center flex-1" aria-label={T.nav.studio}>
-          <span className="w-11 h-11 -mt-4 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] flex items-center justify-center text-white shadow-[0_6px_16px_rgba(37,99,235,0.45)] active:scale-95 transition-transform">
+          <span className="w-11 h-11 -mt-1 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] flex items-center justify-center text-white shadow-[0_6px_16px_rgba(37,99,235,0.45)] active:scale-95 transition-transform">
 {/* 야자수 — 로고와 같은 형태를 흰 선으로 */}
             <svg viewBox="0 0 32 32" className="w-7 h-7" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={2.4}>
               <path d="M14.5 26c.4-5 1.2-9.5 3.2-12.5" />
