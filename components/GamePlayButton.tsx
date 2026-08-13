@@ -83,7 +83,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
         onClick={handlePlay}
         className="shrink-0 font-pixel text-[11px] bg-[#2563eb] text-white px-8 py-4 hover:bg-[#1d4ed8] transition-colors whitespace-nowrap tracking-widest"
       >
-        🪙 {game.coin_cost ?? 1} · {T.games.playNow}
+        {T.games.playNow}
       </button>
 
       {agentGate && (

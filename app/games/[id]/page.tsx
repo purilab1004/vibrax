@@ -116,10 +116,12 @@ export default async function GameDetailPage({ params }: Props) {
               <ViewerIcon className="w-3.5 h-3.5" />{game.view_count ?? 0}
             </span>
             <LikeButton gameId={game.id} size="md" />
-            <ShareButton title={game.title} />
           </div>
         </div>
-        <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
+        <div className="flex gap-3 shrink-0">
+          <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
+          <ShareButton title={game.title} />
+        </div>
       </div>
     </div>
   )

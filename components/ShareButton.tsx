@@ -24,14 +24,14 @@ export default function ShareButton({ title }: { title?: string }) {
   return (
     <button
       onClick={share}
-      className="flex items-center gap-1.5 text-xs font-semibold text-[#857a68] hover:text-[#2563eb] transition-colors"
+      className="shrink-0 flex items-center gap-2 font-pixel text-[11px] bg-[#ec4899] text-white px-6 py-4 hover:bg-[#db2777] transition-colors whitespace-nowrap tracking-widest"
       title="게임 공유"
     >
       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
         <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
       </svg>
-      {copied ? '✓ 링크 복사됨' : '공유'}
+      {copied ? '✓ 복사됨' : '공유'}
     </button>
   )
 }
