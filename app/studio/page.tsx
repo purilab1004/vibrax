@@ -138,21 +138,26 @@ export default function StudioPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
-      <div className="flex items-end justify-between mb-2 flex-wrap gap-3">
-        <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest">{s.heading}</h1>
-        <div className="flex items-center gap-4">
-          <span className="font-pixel text-[11px] text-[#6b6152] tracking-widest">
-            {balance === null ? '—' : s.balance(balance)}
-          </span>
-          <Link
-            href="/credits"
-            className="font-pixel text-[11px] tracking-widest text-[#2563eb] border border-[#2563eb] px-3 py-1.5 hover:bg-[#2563eb] hover:text-white transition-colors"
-          >
-            {T.credits.heading}
-          </Link>
-        </div>
+    <div>
+      {/* 얇은 상단 바 — 에디터와 같은 문법: 왼쪽 홈 이동, 오른쪽 크레딧 */}
+      <div className="flex items-center gap-4 border-b border-[#ebe4d6] px-4 py-2">
+        <Link
+          href="/"
+          className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest transition-colors shrink-0"
+        >
+          ← 홈
+        </Link>
+        <span className="font-pixel text-[11px] text-[#2563eb] tracking-widest">{s.heading}</span>
+        <div className="flex-1" />
+        <Link
+          href="/credits"
+          className="font-pixel text-[11px] text-[#2563eb] tracking-widest shrink-0 hover:underline"
+        >
+          {balance === null ? '—' : s.balance(balance)}
+        </Link>
       </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
       <p className="text-[#4a4337] text-sm mb-8">{s.subtitle}</p>
 
       <div className="mb-10">
@@ -220,6 +225,7 @@ export default function StudioPage() {
           ))}
         </div>
       )}
+      </div>
       {editing && (
         <EditInfoModal
           projectId={editing.id}
