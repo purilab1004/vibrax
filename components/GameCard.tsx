@@ -169,6 +169,8 @@ interface GameCardProps {
   aspectClass?: string
   // 조회수 1위 — 골드 오로라 배경
   golden?: boolean
+  // 조회수 랭킹 (1~10만 표시)
+  rank?: number
 }
 
 interface AgentConfig { name: string; persona: string; avatarUrl?: string }
@@ -236,7 +238,7 @@ export function playStartSound() {
   } catch {}
 }
 
-export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video', golden = false }: GameCardProps) {
+export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video', golden = false, rank }: GameCardProps) {
   const flag = countryFlag(creatorCountry)
   const { T } = useLang()
   const [open, setOpen] = useState(false)
@@ -382,6 +384,14 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 <div className="pointer-events-auto absolute top-3 left-3 z-10 bg-white/85 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
                   <LikeButton gameId={game.id} size="lg" />
                 </div>
+                {/* 조회수 랭킹 배지 — 상단 우측 (#1 금 / #2 은 / #3 동) */}
+                {rank && rank <= 10 && (
+                  <span className={`absolute top-3 right-3 z-10 font-pixel text-[12px] px-2.5 py-1 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.2)] ${
+                    rank === 1 ? 'bg-[#c9940c] text-white' : rank === 2 ? 'bg-gray-300 text-[#241f17]' : rank === 3 ? 'bg-amber-600 text-white' : 'bg-white/85 text-[#241f17]'
+                  }`}>
+                    #{rank}
+                  </span>
+                )}
                 <div className="flex-1 relative min-h-0 mx-2 mt-2">
                   <RoomScene id={game.id} views={game.view_count ?? 0} />
                 </div>

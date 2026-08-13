@@ -16,7 +16,7 @@ import { useLang } from '@/lib/i18n/context'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
-function FeedScreen({ game, golden = false }: { game: GameWithCreator; golden?: boolean }) {
+function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; golden?: boolean; rank?: number }) {
   const { T } = useLang()
   const router = useRouter()
   const supabase = createClient()
@@ -58,6 +58,14 @@ function FeedScreen({ game, golden = false }: { game: GameWithCreator; golden?: 
       style={auroraOf(game.id, golden)}
       onClick={() => router.push(`/games/${game.id}`)}
     >
+      {/* 조회수 랭킹 배지 — 상단 우측 */}
+      {rank && rank <= 10 && (
+        <span className={`absolute top-4 right-4 z-10 font-pixel text-[13px] px-3 py-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.25)] ${
+          rank === 1 ? 'bg-[#c9940c] text-white' : rank === 2 ? 'bg-gray-300 text-[#241f17]' : rank === 3 ? 'bg-amber-600 text-white' : 'bg-white/85 text-[#241f17]'
+        }`}>
+          #{rank}
+        </span>
+      )}
       {/* 방 디오라마 — 화면 상중단을 채운다 */}
       <div className="absolute inset-x-1 top-[6%] bottom-[30%]">
         <RoomScene id={game.id} views={game.view_count ?? 0} />
@@ -155,8 +163,8 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
     <div>
       {/* ── 모바일: 쇼츠 피드 — 화면 전체를 채우고 스와이프하면 다음 게임 (유튜브 쇼츠/틱톡) ── */}
       <div className="md:hidden">
-        {sorted.map(game => (
-          <FeedScreen key={game.id} game={game} golden={(game.view_count ?? 0) > 0 && game.id === sorted[0].id} />
+        {sorted.map((game, i) => (
+          <FeedScreen key={game.id} game={game} golden={(game.view_count ?? 0) > 0 && game.id === sorted[0].id} rank={i < 10 ? i + 1 : undefined} />
         ))}
       </div>
 
@@ -194,6 +202,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
             <GameCard
               variant="tile"
               golden={(game.view_count ?? 0) > 0 && game.id === sorted[0].id}
+              rank={i < 10 ? i + 1 : undefined}
               aspectClass={aspectOf(game.id, i)}
               game={game}
               creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
