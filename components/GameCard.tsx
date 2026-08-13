@@ -407,10 +407,6 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 className="grain absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex flex-col"
                 style={auroraOf(game.id, golden)}
               >
-                {/* 좋아요 — 상단 좌측 */}
-                <div className="pointer-events-auto absolute top-3 left-3 z-10 bg-white/85 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
-                  <LikeButton gameId={game.id} size="lg" />
-                </div>
                 {/* 조회수 랭킹 배지 — 상단 우측 (#1 금 / #2 은 / #3 동) */}
                 {rank && rank <= 10 && (
                   <span className={`absolute top-3 right-3 z-10 font-pixel text-[12px] px-2.5 py-1 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.2)] ${
@@ -686,6 +682,9 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 {GENRE_LABELS[game.genre]}
               </span>
               <LiveTitleTicker title={game.title} />
+            </div>
+            <div className="shrink-0 ml-3 bg-white rounded-full px-3 py-1.5 border border-[#ebe4d6]">
+              <LikeButton gameId={game.id} size="md" />
             </div>
             <button
               onClick={() => setOpen(false)}

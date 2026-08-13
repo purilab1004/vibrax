@@ -295,38 +295,62 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
 
   return (
     <>
-      {/* ─── Desktop: side panel ─── */}
-      <div className="hidden md:flex w-72 shrink-0 flex-col border-l border-[#ebe4d6] bg-[#fcfaf5] h-full">
-        <div className="px-3 py-2 border-b border-[#ebe4d6] shrink-0 flex items-center gap-2">
-          <span className="font-pixel text-[11px] text-[#2563eb] tracking-widest">💬 LIVE CHAT</span>
-          {streamingDots}
-        </div>
-        {messageList}
-        {inputBar}
-
-        {/* ─── Desktop: 3D AJ avatar ─── */}
-        <div className="shrink-0 border-t border-[#ebe4d6]/40 bg-[#050508]" style={{ height: '220px' }}>
-          {!isMobile && bjAvatar}
-        </div>
-
-        <div className={`px-3 py-3 border-t border-[#ebe4d6] shrink-0 border-l-2 ${persona.borderColor}`}>
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full border-2 ${persona.borderColor} overflow-hidden shrink-0`}>
-              <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={40} height={40} className={`w-full h-full object-cover ${bjPic ? 'object-top' : ''}`} unoptimized />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="font-pixel text-[11px] text-[#241f17] truncate">{bjLabel}</span>
-                <span className="flex items-center gap-0.5 text-[11px] text-red-500 font-pixel">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
-                  LIVE
-                </span>
+      {/* ─── Desktop: 게임 위 오버레이 채팅 — 스트리밍 스타일, 위로 갈수록 자연스럽게 사라진다 ─── */}
+      <div className="hidden md:block absolute inset-0 pointer-events-none z-10">
+        {/* 좌하단 메시지 스택 */}
+        <div className="chat-fade absolute left-4 bottom-[74px] w-[360px] max-h-[58%] flex flex-col justify-end overflow-hidden">
+          <div className="space-y-1.5">
+            {messages.slice(-14).map((msg, i, arr) => (
+              <div key={i} className="flex items-start gap-2">
+                <div className="max-w-full text-[13px] leading-relaxed px-3 py-1.5 rounded-2xl backdrop-blur-[3px] text-white shadow-[0_1px_4px_rgba(0,0,0,0.3)] bg-black/45">
+                  <span className={`font-bold mr-1.5 ${
+                    msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'
+                  }`}>
+                    {msg.role === 'assistant' ? persona.name : msg.source === 'agent' ? (msg.agentName ?? 'AGENT') : agentConfig?.name ?? 'ME'}
+                  </span>
+                  {msg.content}
+                  {msg.role === 'assistant' && isStreaming && i === arr.length - 1 && (
+                    <span className="inline-block w-1.5 h-3 bg-sky-300 ml-1 animate-pulse align-middle" />
+                  )}
+                </div>
               </div>
-              <p className="text-[11px] text-[#6b6152] truncate">{persona.catchphrase}</p>
-              {agentConfig && (
-                <p className="text-[11px] text-purple-400 font-pixel mt-0.5">🤖 {agentConfig.name} 참전</p>
-              )}
+            ))}
+            <div ref={endRef} />
+          </div>
+        </div>
+        {/* 좌하단 입력 바 — 유리 알약 */}
+        <div className="absolute left-4 bottom-4 w-[360px] pointer-events-auto">
+          <div className="flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full pl-4 pr-1.5 py-1.5 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
+            <input
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
+              placeholder="AJ에게 말걸기..."
+              disabled={isStreaming}
+              className="flex-1 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none disabled:opacity-50"
+            />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={isStreaming || !input.trim()}
+              className="w-8 h-8 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-sm flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            >▶</button>
+          </div>
+        </div>
+        {/* 우하단 — AJ 아바타 + 프로필 배지 */}
+        <div className="absolute right-4 bottom-4 w-[180px]">
+          <div className="rounded-xl overflow-hidden border border-white/20 bg-[#050508] shadow-[0_8px_28px_rgba(0,0,0,0.5)]" style={{ height: '170px' }}>
+            {!isMobile && bjAvatar}
+          </div>
+          <div className="mt-2 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5">
+            <div className={`w-7 h-7 rounded-full border-2 ${persona.borderColor} overflow-hidden shrink-0`}>
+              <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={28} height={28} className={`w-full h-full object-cover ${bjPic ? 'object-top' : ''}`} unoptimized />
             </div>
+            <span className="font-pixel text-[10px] text-white truncate">{bjLabel}</span>
+            <span className="ml-auto flex items-center gap-1 text-[10px] text-red-400 font-pixel shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
+              LIVE
+            </span>
           </div>
         </div>
       </div>

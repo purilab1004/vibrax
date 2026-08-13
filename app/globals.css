@@ -564,3 +564,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .light-halo { animation: none; }
 }
+
+/* 오버레이 채팅 — 위로 갈수록 메시지가 자연스럽게 사라진다 */
+.chat-fade {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 30%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 30%);
+}

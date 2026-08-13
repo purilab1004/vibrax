@@ -10,6 +10,7 @@ import { loadAvatarConfig } from '@/lib/avatar/storage'
 import type { AvatarConfig } from '@/lib/avatar/config'
 import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
+import LikeButton from './LikeButton'
 import { hasCoinTicket, ticketKeyOf } from './GameCard'
 
 interface Props {
@@ -135,6 +136,9 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
                 {genreLabel}
               </span>
               <LiveTitleTicker title={game.title} />
+            </div>
+            <div className="shrink-0 ml-3 bg-white rounded-full px-3 py-1.5 border border-[#ebe4d6]">
+              <LikeButton gameId={game.id} size="md" />
             </div>
             <button
               onClick={() => setOpen(false)}
