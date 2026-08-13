@@ -18,7 +18,7 @@ import type { GameWithCreator } from '@/lib/supabase/types'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
 function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; golden?: boolean; rank?: number }) {
-  const { T } = useLang()
+  const { T, lang } = useLang()
   const router = useRouter()
   const supabase = createClient()
   const [coinState, setCoinState] = useState<'idle' | 'drop' | 'ready'>('idle')
@@ -89,7 +89,9 @@ function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; gol
         {/* 훅 문구 — 제목은 게임 페이지에서 공개 */}
         <h3 className="text-2xl font-extrabold text-white leading-snug line-clamp-2 pr-14">
           <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">
-            {game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length]}
+            {lang === 'en'
+              ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
+              : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
           </span>
         </h3>
         <p className="mt-2 flex items-center gap-2 text-[13px] font-semibold text-white/75">

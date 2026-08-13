@@ -64,18 +64,21 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
         gameManual = await manualFile.text()
       }
 
-      // 카드 앞면 훅 문구 — 직접 입력 우선, 비우면 AI 생성
+      // 카드 앞면 훅 문구 — 직접 입력 우선, AI가 한/영 생성
       let teaser: string | null = teaserInput.trim() || null
-      if (!teaser) {
-        try {
-          const r = await fetch('/api/teaser', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ title, description, genre }),
-          })
-          if (r.ok) teaser = (await r.json()).teaser ?? null
-        } catch {}
-      }
+      let teaserEn: string | null = null
+      try {
+        const r = await fetch('/api/teaser', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title, description, genre }),
+        })
+        if (r.ok) {
+          const j = await r.json()
+          if (!teaser) teaser = j.teaser ?? null
+          teaserEn = j.teaserEn ?? null
+        }
+      } catch {}
 
       const row = {
         title,
@@ -88,17 +91,28 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
         user_id: userId,
         coin_cost: Math.max(1, Math.min(100, coinCost)),
         teaser,
+        teaser_en: teaserEn,
       }
-      let { error: insertError } = await supabase.from('games').insert([row] as never)
+      let { data: inserted, error: insertError } = await supabase.from('games').insert([row] as never).select('id').single()
       // teaser 컬럼 마이그레이션 전 — 없이 재시도
       if (insertError?.message.includes('teaser')) {
-        const { teaser: _omit, ...rest } = row
-        ;({ error: insertError } = await supabase.from('games').insert([rest] as never))
+        const { teaser: _omit, teaser_en: _omit2, ...rest } = row
+        ;({ data: inserted, error: insertError } = await supabase.from('games').insert([rest] as never).select('id').single())
       }
 
       if (insertError) {
         setError(`등록 실패: ${insertError.message}`)
         return
+      }
+
+      // 게임 출시 소개 블로그 글 자동 생성 (fire-and-forget)
+      const newId = (inserted as { id: string } | null)?.id
+      if (newId) {
+        fetch('/api/blog/game-post', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ gameId: newId }),
+        }).catch(() => {})
       }
 
       router.push('/games')

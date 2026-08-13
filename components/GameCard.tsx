@@ -240,7 +240,7 @@ export function playStartSound() {
 
 export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video', golden = false, rank }: GameCardProps) {
   const flag = countryFlag(creatorCountry)
-  const { T } = useLang()
+  const { T, lang } = useLang()
   const [open, setOpen] = useState(false)
   // 호버 말풍선 — 구름처럼 튀어나오는 랜덤 멘트
   const [bubble, setBubble] = useState<string | null>(null)
@@ -399,7 +399,9 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 <div className="shrink-0 px-5 pb-5">
                   <h3 className="text-[20px] md:text-[23px] font-extrabold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
                     <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">
-                      {game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length]}
+                      {lang === 'en'
+                        ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
+                        : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
                     </span>
                   </h3>
                   <p className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.1em] text-white/70">

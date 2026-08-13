@@ -88,15 +88,20 @@ export default function PublishModal({
         return
       }
       const { data: { publicUrl } } = supabase.storage.from('thumbnails').getPublicUrl(path)
-      // 카드 앞면 유혹 질문 — AI 생성 (실패 시 null → 기본 문구 폴백)
+      // 카드 앞면 훅 문구 — AI가 한/영 생성 (실패 시 null → 기본 문구 폴백)
       let teaser: string | null = null
+      let teaserEn: string | null = null
       try {
         const r = await fetch('/api/teaser', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ title, genre }),
         })
-        if (r.ok) teaser = (await r.json()).teaser ?? null
+        if (r.ok) {
+          const j = await r.json()
+          teaser = j.teaser ?? null
+          teaserEn = j.teaserEn ?? null
+        }
       } catch {}
       const row = {
         title,
@@ -106,18 +111,28 @@ export default function PublishModal({
         user_id: user.id,
         studio_project_id: projectId,
         teaser,
+        teaser_en: teaserEn,
       }
-      let { error: insertError } = await supabase.from('games').insert([row] as never)
+      let { data: inserted, error: insertError } = await supabase.from('games').insert([row] as never).select('id').single()
       // teaser 컬럼 마이그레이션 전 — 없이 재시도
       if (insertError?.message.includes('teaser')) {
-        const { teaser: _omit, ...rest } = row
-        ;({ error: insertError } = await supabase.from('games').insert([rest] as never))
+        const { teaser: _omit, teaser_en: _omit2, ...rest } = row
+        ;({ data: inserted, error: insertError } = await supabase.from('games').insert([rest] as never).select('id').single())
       }
       if (insertError) {
         // 23505 = 다른 탭/요청이 먼저 게시함 (games_studio_project_unique)
         if (insertError.code === '23505') setAlreadyPublished(true)
         else setError(insertError.message)
         return
+      }
+      // 게임 출시 소개 블로그 글 자동 생성 (fire-and-forget)
+      const newId = (inserted as { id: string } | null)?.id
+      if (newId) {
+        fetch('/api/blog/game-post', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ gameId: newId }),
+        }).catch(() => {})
       }
       setDone(true)
     })
