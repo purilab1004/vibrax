@@ -67,6 +67,7 @@ interface EditingGame {
   game_manual: string
   play_url: string
   thumbnail_url: string
+  teaser: string
   newThumbnail?: File | null
   newManual?: File | null
 }
@@ -220,10 +221,11 @@ export default function ProfilePage() {
         game_manual: gameManual,
         play_url: editingGame.play_url,
         thumbnail_url: thumbnailUrl,
+        teaser: editingGame.teaser.trim() || null,
       } as never).eq('id', editingGame.id)
 
       if (error) { flash(setGameMsg, '저장 실패: ' + error.message, false); return }
-      setGames(prev => prev.map(g => g.id === editingGame.id ? { ...g, title: editingGame.title, genre: editingGame.genre, description: editingGame.description.trim() || null, language: editingGame.language || null, game_manual: gameManual, play_url: editingGame.play_url, thumbnail_url: thumbnailUrl } : g))
+      setGames(prev => prev.map(g => g.id === editingGame.id ? { ...g, title: editingGame.title, genre: editingGame.genre, description: editingGame.description.trim() || null, language: editingGame.language || null, game_manual: gameManual, play_url: editingGame.play_url, thumbnail_url: thumbnailUrl, teaser: editingGame.teaser.trim() || null } : g))
       setEditingGame(null)
       flash(setGameMsg, '수정되었습니다.', true)
     })
@@ -466,7 +468,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
-                      onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, newThumbnail: null, newManual: null })}
+                      onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, teaser: game.teaser ?? '', newThumbnail: null, newManual: null })}
                       className="font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] px-3 py-1.5 transition-colors tracking-widest"
                     >
                       EDIT
@@ -490,12 +492,12 @@ export default function ProfilePage() {
       {/* ── Edit Game Modal ── */}
       {editingGame && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
-          <div className="w-full max-w-md bg-[#fcfaf5] border border-[#ddd3bf]">
+          <div className="w-full max-w-md bg-[#fcfaf5] border border-[#ddd3bf] max-h-[90svh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#ebe4d6]">
               <p className="font-pixel text-[11px] text-[#2563eb] tracking-widest">EDIT GAME</p>
               <button onClick={() => setEditingGame(null)} className="font-pixel text-[11px] text-[#857a68] hover:text-[#241f17] transition-colors">✕</button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
               {/* Thumbnail preview + upload */}
               <div>
                 <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">THUMBNAIL</label>
@@ -522,6 +524,18 @@ export default function ProfilePage() {
               <div>
                 <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">TITLE</label>
                 <input className={inputClass} value={editingGame.title} onChange={e => setEditingGame(prev => prev ? { ...prev, title: e.target.value } : null)} />
+              </div>
+              <div>
+                <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">
+                  카드 훅 문구 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(카드 앞면에 표시 — 비워두면 기본 문구)</span>
+                </label>
+                <input
+                  className={inputClass}
+                  maxLength={40}
+                  placeholder="예: 멈추면 죽는다 / 왕좌를 뺏어라"
+                  value={editingGame.teaser}
+                  onChange={e => setEditingGame(prev => prev ? { ...prev, teaser: e.target.value } : null)}
+                />
               </div>
               <div>
                 <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">게임 언어</label>

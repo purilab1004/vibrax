@@ -26,6 +26,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
   const [manualFile, setManualFile] = useState<File | null>(null)
   const [playUrl, setPlayUrl] = useState('')
   const [coinCost, setCoinCost] = useState(1)
+  const [teaserInput, setTeaserInput] = useState('')
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -63,16 +64,18 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
         gameManual = await manualFile.text()
       }
 
-      // 카드 앞면 유혹 질문 — AI 생성 (실패 시 null → 기본 문구 폴백)
-      let teaser: string | null = null
-      try {
-        const r = await fetch('/api/teaser', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ title, description, genre }),
-        })
-        if (r.ok) teaser = (await r.json()).teaser ?? null
-      } catch {}
+      // 카드 앞면 훅 문구 — 직접 입력 우선, 비우면 AI 생성
+      let teaser: string | null = teaserInput.trim() || null
+      if (!teaser) {
+        try {
+          const r = await fetch('/api/teaser', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ title, description, genre }),
+          })
+          if (r.ok) teaser = (await r.json()).teaser ?? null
+        } catch {}
+      }
 
       const row = {
         title,
@@ -201,6 +204,20 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           className={inputClass}
         />
         <p className="text-xs text-[#4a4337] mt-1">{s.urlHint}</p>
+      </div>
+
+      <div>
+        <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
+          카드 훅 문구 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(선택 — 카드 앞면에 표시, 비워두면 AI가 자동 생성)</span>
+        </label>
+        <input
+          type="text"
+          maxLength={40}
+          value={teaserInput}
+          onChange={e => setTeaserInput(e.target.value)}
+          placeholder="예: 멈추면 죽는다 / 왕좌를 뺏어라 / 10초 버틸 수 있어?"
+          className={inputClass}
+        />
       </div>
 
       <div>

@@ -107,8 +107,8 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
   const tGold = views <= 2000 ? 0 : Math.min((views - 2000) / 2000, 1)
   const glowOpacity = 0.32 + t * 0.58
   const glowR = 58 + t * 54
-  const glowColor = `rgb(255, ${Math.round(255 - tGold * 40)}, ${Math.round(255 - tGold * 145)})`
-  const gid = `halo-${hashOf(id).toString(36)}`
+  const gv = Math.round(255 - tGold * 40)
+  const bv = Math.round(255 - tGold * 145)
 
   // 눈동자가 마우스를 따라간다 — rAF로 스로틀
   useEffect(() => {
@@ -138,22 +138,22 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
   }, [])
 
   return (
-    <svg ref={svgRef} viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
-      <defs>
-        <radialGradient id={gid} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity={glowOpacity} />
-          <stop offset="45%" stopColor={glowColor} stopOpacity={glowOpacity * 0.55} />
-          <stop offset="100%" stopColor={glowColor} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      {/* 광휘 — 숨쉬듯 맥동하는 빛. 인기 게임일수록 크고 밝다 */}
-      <circle className="light-halo" cx="100" cy="96" r={glowR} fill={`url(#${gid})`} />
-      {t > 0.4 && (
-        <circle className="light-halo" style={{ animationDelay: '1.6s' }} cx="100" cy="96" r={glowR * 1.5} fill={`url(#${gid})`} opacity="0.5" />
-      )}
-      {/* 구름 캐릭터 */}
-      <FluffFigure delay={`${(hashOf(id) % 30) / 10}s`} eyesRef={eyesRef} />
-    </svg>
+    <>
+      {/* 광휘 — CSS 라디얼이라 어느 기기에서도 부드럽게 사라진다 (SVG 그라디언트의 모바일 사각 아티팩트 방지) */}
+      <div
+        className="light-halo absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
+        style={{
+          width: `${Math.min(115, glowR * 1.15)}%`,
+          aspectRatio: '1 / 1',
+          background: `radial-gradient(circle, rgba(255,255,255,${glowOpacity}) 0%, rgba(255,${gv},${bv},${(glowOpacity * 0.55).toFixed(3)}) 45%, rgba(255,${gv},${bv},0) 72%)`,
+        }}
+        aria-hidden
+      />
+      <svg ref={svgRef} viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
+        {/* 구름 캐릭터 */}
+        <FluffFigure delay={`${(hashOf(id) % 30) / 10}s`} eyesRef={eyesRef} />
+      </svg>
+    </>
   )
 }
 
