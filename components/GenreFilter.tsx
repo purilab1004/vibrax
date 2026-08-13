@@ -5,12 +5,12 @@ import type { Genre } from '@/lib/supabase/types'
 
 type GenreOption = Genre | 'all'
 
-const GENRES: { key: GenreOption; label: string; emoji: string }[] = [
-  { key: 'all', label: 'ALL', emoji: '✦' },
-  { key: 'action', label: 'ACTION', emoji: '⚡' },
-  { key: 'adventure', label: 'ADVENTURE', emoji: '🧭' },
-  { key: 'strategy', label: 'STRATEGY', emoji: '♟️' },
-  { key: 'sports', label: 'SPORTS', emoji: '🏆' },
+const GENRES: { key: GenreOption; label: string }[] = [
+  { key: 'all', label: 'ALL' },
+  { key: 'action', label: 'ACTION' },
+  { key: 'adventure', label: 'ADVENTURE' },
+  { key: 'strategy', label: 'STRATEGY' },
+  { key: 'sports', label: 'SPORTS' },
 ]
 
 // 장르 필터 — 유리 알약 바 안에서 활성 장르가 그라디언트 필로 빛난다
@@ -32,7 +32,7 @@ export default function GenreFilter() {
 
   return (
     <div className="inline-flex items-center gap-1.5 rounded-full bg-white/75 backdrop-blur-xl border border-[#ebe4d6] p-1.5 shadow-[0_4px_20px_rgba(36,31,23,0.08)] overflow-x-auto scrollbar-hide max-w-full">
-      {GENRES.map(({ key, label, emoji }) => (
+      {GENRES.map(({ key, label }) => (
         <button
           key={key}
           onClick={() => handleSelect(key)}
@@ -42,7 +42,6 @@ export default function GenreFilter() {
               : 'text-[#6b6152] hover:text-[#2563eb] hover:bg-[#2563eb]/5'
           }`}
         >
-          <span aria-hidden>{emoji}</span>
           {label}
         </button>
       ))}

@@ -110,10 +110,10 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
   const gv = Math.round(255 - tGold * 40)
   const bv = Math.round(255 - tGold * 145)
 
-  // 눈동자가 마우스를 따라간다 — rAF로 스로틀
+  // 눈동자 — PC: 마우스 따라, 모바일: 터치 위치 + 스크롤 방향 따라 (rAF 스로틀)
   useEffect(() => {
     let raf = 0
-    const onMove = (e: MouseEvent) => {
+    const lookAt = (clientX: number, clientY: number) => {
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
         const svg = svgRef.current
@@ -123,17 +123,44 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
         if (r.width === 0) return
         const cx = r.left + r.width / 2
         const cy = r.top + r.height * 0.5
-        const dx = e.clientX - cx
-        const dy = e.clientY - cy
+        const dx = clientX - cx
+        const dy = clientY - cy
         const d = Math.hypot(dx, dy) || 1
         const m = Math.min(d / 60, 1) * 4.5
         eyes.style.transform = `translate(${(dx / d) * m}px, ${(dy / d) * m}px)`
       })
     }
+    const onMove = (e: MouseEvent) => lookAt(e.clientX, e.clientY)
+    const onTouch = (e: TouchEvent) => {
+      const t = e.touches[0]
+      if (t) lookAt(t.clientX, t.clientY)
+    }
+    // 스크롤 방향을 따라 위/아래를 본다 — 멈추면 정면으로 복귀
+    let lastY = typeof window !== 'undefined' ? window.scrollY : 0
+    let decay: ReturnType<typeof setTimeout> | null = null
+    const onScroll = () => {
+      const eyes = eyesRef.current
+      if (!eyes) return
+      const dy = window.scrollY - lastY
+      lastY = window.scrollY
+      const m = Math.max(-4.5, Math.min(4.5, dy * 0.12))
+      eyes.style.transform = `translate(0px, ${m}px)`
+      if (decay) clearTimeout(decay)
+      decay = setTimeout(() => {
+        if (eyesRef.current) eyesRef.current.style.transform = 'translate(0px, 0px)'
+      }, 260)
+    }
     window.addEventListener('mousemove', onMove, { passive: true })
+    window.addEventListener('touchstart', onTouch, { passive: true })
+    window.addEventListener('touchmove', onTouch, { passive: true })
+    window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
       window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('touchstart', onTouch)
+      window.removeEventListener('touchmove', onTouch)
+      window.removeEventListener('scroll', onScroll)
       cancelAnimationFrame(raf)
+      if (decay) clearTimeout(decay)
     }
   }, [])
 

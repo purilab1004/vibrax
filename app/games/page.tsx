@@ -1,21 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import GameCard from '@/components/GameCard'
+import GamesBrowse from '@/components/GamesBrowse'
 import GenreFilter from '@/components/GenreFilter'
-import Reveal from '@/components/Reveal'
 import { Suspense } from 'react'
 import type { Genre, GameWithCreator } from '@/lib/supabase/types'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
 
 const VALID_GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
-
-// 홈과 같은 매소너리 리듬 — 정사각 이상 비율만 (id 기반 고정)
-const ASPECTS = ['aspect-square', 'aspect-[4/5]', 'aspect-[3/4]', 'aspect-[5/6]', 'aspect-[4/5]', 'aspect-square', 'aspect-[3/4]'] as const
-
-function aspectOf(id: string, i: number): string {
-  let h = 0
-  for (let c = 0; c < id.length; c++) h = (h * 31 + id.charCodeAt(c)) | 0
-  return ASPECTS[Math.abs(h + i) % ASPECTS.length]
-}
 
 interface Props {
   searchParams: Promise<{ genre?: string; q?: string; creator?: string }>
@@ -44,23 +34,7 @@ async function GameGrid({ genre, q, creator }: { genre?: string; q?: string; cre
     )
   }
 
-  return (
-    <div className="columns-2 lg:columns-3 2xl:columns-4 gap-5">
-      {games.map((game, i) => (
-        <Reveal key={game.id} delay={(i % 4) * 80} className="mb-5 break-inside-avoid">
-          <GameCard
-            variant="tile"
-            aspectClass={aspectOf(game.id, i)}
-            game={game}
-            creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
-            creatorAvatarUrl={game.profiles?.avatar_config?.previewUrl ?? null}
-            creatorCountry={game.profiles?.country ?? null}
-            bjAvatarConfig={game.profiles?.avatar_config ?? null}
-          />
-        </Reveal>
-      ))}
-    </div>
-  )
+  return <GamesBrowse games={games} />
 }
 
 export default async function GamesPage({ searchParams }: Props) {
@@ -68,15 +42,15 @@ export default async function GamesPage({ searchParams }: Props) {
   const term = q?.trim()
 
   return (
-    <div className="w-full px-4 md:px-8 py-10">
-      <div className="flex items-center justify-between mb-6">
+    <div className="w-full md:px-8 md:py-10">
+      <div className="flex items-center justify-between mb-6 px-4 pt-6 md:px-0 md:pt-0">
         <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest">GAMES</h1>
         <span className="text-xs text-[#4a4337]">
           {term ? `🔍 "${term}"` : 'AI 바이브코딩 게임 모음'}
         </span>
       </div>
       {/* 장르 필터 — 스크롤해도 상단에 따라붙는 유리 바 */}
-      <div className="sticky top-16 z-40 mb-8 flex justify-center md:justify-start">
+      <div className="sticky top-16 z-40 mb-4 md:mb-8 px-4 md:px-0 flex justify-center md:justify-start">
         <Suspense>
           <GenreFilter />
         </Suspense>
