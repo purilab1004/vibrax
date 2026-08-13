@@ -17,20 +17,22 @@ const sb = (path, init = {}) => fetch(`${SB_URL}/rest/v1/${path}`, {
   headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'content-type': 'application/json', ...init.headers },
 })
 
-async function generate(title, description, genre) {
+const STYLES = ['도발하는 질문', '짧은 명령형 한마디', '강렬한 선언 한마디', '도전장을 던지는 한마디']
+
+async function generate(title, description, genre, style) {
   const prompt = [
-    "아케이드 게임 카드 앞면에 넣을 '유혹 질문' 한 줄을 만들어줘.",
+    '아케이드 게임 카드 앞면에 넣을, 당장 플레이하고 싶게 만드는 훅 문구 한 줄을 만들어줘.',
     `게임 제목: ${title}`,
     genre ? `장르: ${genre}` : null,
     description ? `설명: ${description}` : null,
     '',
     '규칙:',
-    '- 한국어, 5~12자, 물음표로 끝난다',
-    '- 아주 짧고 강렬하게 — 한 호흡에 읽히는 도발',
+    `- 형식: ${style}`,
+    '- 한국어, 5~12자 — 한 호흡에 읽히게 아주 짧고 강렬하게',
     '- 게임 제목 단어를 그대로 쓰지 않는다',
     '- 이모지 금지, 따옴표 금지',
-    '- 예시 톤: "멈추면 죽는다?" / "10초 버틸 수 있어?" / "네가 왕이 될 차례?" / "피할 수 있겠어?"',
-    '- 출력은 질문 한 줄만',
+    '- 예시 톤: "멈추면 죽는다" / "왕좌를 뺏어라" / "10초 생존 도전" / "피할 수 있겠어?"',
+    '- 출력은 한 줄만',
   ].filter(Boolean).join('\n')
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -49,9 +51,10 @@ if (!listRes.ok) { console.error('list failed:', await listRes.text()); process.
 const games = await listRes.json()
 console.log(`teaser 없는 게임: ${games.length}개`)
 
+let idx = 0
 for (const g of games) {
   try {
-    const teaser = await generate(g.title, g.description, g.genre)
+    const teaser = await generate(g.title, g.description, g.genre, STYLES[idx++ % STYLES.length])
     if (!teaser) { console.log(`- ${g.title}: 생성 실패, 건너뜀`); continue }
     const up = await sb(`games?id=eq.${g.id}`, { method: 'PATCH', body: JSON.stringify({ teaser }) })
     console.log(up.ok ? `✓ ${g.title} → ${teaser}` : `✗ ${g.title}: ${await up.text()}`)

@@ -1,6 +1,8 @@
 // 게임 제목/설명 기반 '유혹 질문' 생성 — 카드 앞면 플래시카드 문구
 // 서버 전용 (ANTHROPIC_API_KEY 사용)
 
+const STYLES = ['도발하는 질문', '짧은 명령형 한마디', '강렬한 선언 한마디', '도전장을 던지는 한마디'] as const
+
 export async function generateTeaser({ title, description, genre }: {
   title: string
   description?: string | null
@@ -9,19 +11,23 @@ export async function generateTeaser({ title, description, genre }: {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey || !title) return null
 
+  let th = 0
+  for (let i = 0; i < title.length; i++) th = (th * 31 + title.charCodeAt(i)) | 0
+  const style = STYLES[Math.abs(th) % STYLES.length]
+
   const prompt = [
-    "아케이드 게임 카드 앞면에 넣을 '유혹 질문' 한 줄을 만들어줘.",
+    '아케이드 게임 카드 앞면에 넣을, 당장 플레이하고 싶게 만드는 훅 문구 한 줄을 만들어줘.',
     `게임 제목: ${title}`,
     genre ? `장르: ${genre}` : null,
     description ? `설명: ${description}` : null,
     '',
     '규칙:',
-    '- 한국어, 5~12자, 물음표로 끝난다',
-    '- 아주 짧고 강렬하게 — 한 호흡에 읽히는 도발',
+    `- 형식: ${style}`,
+    '- 한국어, 5~12자 — 한 호흡에 읽히게 아주 짧고 강렬하게',
     '- 게임 제목 단어를 그대로 쓰지 않는다',
     '- 이모지 금지, 따옴표 금지',
-    '- 예시 톤: "멈추면 죽는다?" / "10초 버틸 수 있어?" / "네가 왕이 될 차례?" / "피할 수 있겠어?"',
-    '- 출력은 질문 한 줄만',
+    '- 예시 톤: "멈추면 죽는다" / "왕좌를 뺏어라" / "10초 생존 도전" / "피할 수 있겠어?"',
+    '- 출력은 한 줄만',
   ].filter(v => v !== null).join('\n')
 
   try {
