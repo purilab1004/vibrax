@@ -178,9 +178,9 @@ export default function StudioPage() {
               <div className="flex gap-2">
                 <Link
                   href={`/studio/${p.id}`}
-                  className="flex-1 text-center font-pixel text-[11px] bg-[#2563eb] text-white py-2.5 hover:bg-[#1d4ed8] transition-colors tracking-widest rounded-lg"
+                  className="flex-1 text-center font-pixel text-[11px] bg-[#2563eb] text-white py-2.5 hover:bg-[#1d4ed8] transition-colors tracking-widest rounded-lg whitespace-nowrap"
                 >
-                  열기
+                  프롬프트 하기
                 </Link>
                 <button
                   onClick={() => setEditing(p)}
@@ -191,7 +191,7 @@ export default function StudioPage() {
                 <button
                   onClick={() => deleteProject(p)}
                   disabled={deletingId === p.id}
-                  className="flex-1 font-pixel text-[11px] border border-[#ebe4d6] text-[#9d9280] py-2.5 hover:border-red-500 hover:text-red-500 transition-colors tracking-widest rounded-lg disabled:opacity-50"
+                  className="flex-1 font-pixel text-[11px] border border-red-400 text-red-500 py-2.5 hover:bg-red-50 hover:border-red-500 transition-colors tracking-widest rounded-lg disabled:opacity-50"
                 >
                   {deletingId === p.id ? '...' : '삭제'}
                 </button>
