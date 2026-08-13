@@ -76,30 +76,21 @@ function FluffFigure({ delay, eyesRef }: {
 }) {
   return (
     <g className="critter-bob" style={{ animationDelay: delay }}>
-      {/* 머리 위 야자수 — 로고와 같은 줄기/잎 5장, 작게 살랑살랑 */}
-      <g transform="translate(100 69) scale(0.62) translate(-100 -69)">
-        <g className="critter-sprout" style={{ transformOrigin: '100px 69px' }}>
-          <path d="M97 69c.9-9 2.6-16 6.9-22" stroke="#8a5a2b" strokeWidth="4.2" strokeLinecap="round" fill="none" />
-          <g fill="none" stroke="#39b36b" strokeWidth="4.4" strokeLinecap="round">
-            <path d="M104 47c-7-4.8-14-5.2-19.8-2.2" />
-            <path d="M104 47c-2.2-7.4-6.6-12.3-12.3-14.5" />
-            <path d="M104 47c3-7 8.3-11 14.5-11.8" />
-            <path d="M104 47c7.4-3 14.5-1.7 19.3 2.2" />
-            <path d="M104 47c5.7 1.3 10 5.2 12.3 11" />
-          </g>
-        </g>
+      {/* 몽실 흰 구름 몸통 — 봉우리 크기가 제각각인 스캘럽 */}
+      <g fill="#ffffff">
+        {[11.5, 8.5, 12.5, 9, 10.5, 8, 12, 9.5, 11, 8.5].map((r, i) => {
+          const a = (i / 10) * Math.PI * 2
+          return <circle key={i} cx={100 + Math.cos(a) * 23} cy={96 + Math.sin(a) * 23} r={r} />
+        })}
+        <circle cx="100" cy="96" r="25" />
       </g>
-      {/* 동그란 몸통 — 말랑 스퀴시 */}
-      <g className="critter-body" style={{ transformOrigin: '100px 124px' }}>
-        <circle cx="100" cy="96" r="28" fill="#ffffff" />
-        {/* 작은 검정 눈 — 마우스를 따라 움직인다 */}
-        <g ref={eyesRef} className="transition-transform duration-75">
-          <circle cx="92.5" cy="93" r="2.7" fill="#161616" />
-          <circle cx="107.5" cy="93" r="2.7" fill="#161616" />
-        </g>
-        {/* 작은 한 줄 커브 미소 */}
-        <path d="M96.5 101q3.5 3 7 0" stroke="#161616" strokeWidth="2.1" strokeLinecap="round" fill="none" />
+      {/* 작은 검정 눈 — 마우스를 따라 움직인다 */}
+      <g ref={eyesRef} className="transition-transform duration-75">
+        <circle cx="92.5" cy="93" r="2.7" fill="#161616" />
+        <circle cx="107.5" cy="93" r="2.7" fill="#161616" />
       </g>
+      {/* 작은 한 줄 커브 미소 */}
+      <path d="M96.5 100.5q3.5 3 7 0" stroke="#161616" strokeWidth="2.1" strokeLinecap="round" fill="none" />
     </g>
   )
 }
