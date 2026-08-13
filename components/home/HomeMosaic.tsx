@@ -57,7 +57,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
                 </div>
               </div>
               {/* 하단 정보 + PLAY */}
-              <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-8 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
+              <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-24 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
                 <h3 className="text-2xl font-extrabold text-white leading-snug line-clamp-2 pr-14">
                   {game.title}
                 </h3>

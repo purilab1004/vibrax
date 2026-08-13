@@ -197,6 +197,54 @@ interface GameCardProps {
 
 interface AgentConfig { name: string; persona: string; avatarUrl?: string }
 
+// 아케이드 코인 티켓 — 카드에서 코인을 넣으면 10분간 유효, 게임 페이지에서 이중 차감 방지
+export const ticketKeyOf = (gameId: string) => `vcoin_ticket_${gameId}`
+export function hasCoinTicket(gameId: string): boolean {
+  try {
+    const t = sessionStorage.getItem(ticketKeyOf(gameId))
+    return !!t && Date.now() - Number(t) < 10 * 60 * 1000
+  } catch { return false }
+}
+
+// 클래식 오락실 코인 사운드 — WebAudio 합성 (외부 파일 없음)
+function playCoinSound() {
+  try {
+    const ctx = new AudioContext()
+    const o = ctx.createOscillator()
+    const g = ctx.createGain()
+    o.type = 'square'
+    o.connect(g)
+    g.connect(ctx.destination)
+    g.gain.setValueAtTime(0.07, ctx.currentTime)
+    o.frequency.setValueAtTime(987, ctx.currentTime)
+    o.frequency.setValueAtTime(1319, ctx.currentTime + 0.09)
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
+    o.start()
+    o.stop(ctx.currentTime + 0.5)
+  } catch {}
+}
+
+// START 잉걸음 — 상승 아르페지오
+function playStartSound() {
+  try {
+    const ctx = new AudioContext()
+    const notes = [523, 659, 784, 1047]
+    notes.forEach((f, i) => {
+      const o = ctx.createOscillator()
+      const g = ctx.createGain()
+      o.type = 'square'
+      o.connect(g)
+      g.connect(ctx.destination)
+      const t = ctx.currentTime + i * 0.08
+      g.gain.setValueAtTime(0.05, t)
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.15)
+      o.frequency.setValueAtTime(f, t)
+      o.start(t)
+      o.stop(t + 0.15)
+    })
+  } catch {}
+}
+
 export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video' }: GameCardProps) {
   const flag = countryFlag(creatorCountry)
   const { T } = useLang()
@@ -232,6 +280,36 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
   const supabase = createClient()
   const router = useRouter()
+
+  // 아케이드 코인 투입 — idle(INSERT COIN) → drop(동전 떨어짐) → ready(PRESS START)
+  const [coinState, setCoinState] = useState<'idle' | 'drop' | 'ready'>('idle')
+
+  const insertCoin = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (coinState !== 'idle') return
+    if (hasCoinTicket(game.id)) { setCoinState('ready'); return }
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setAgentGate('login'); return }
+    setCoinState('drop')
+    playCoinSound()
+    const { error } = await supabase.rpc('spend_vcoin', { p_game_id: game.id } as never)
+    if (error) {
+      if (error.message.includes('insufficient_vcoin')) {
+        alert(T.games.insufficientCoin)
+        setCoinState('idle')
+        return
+      }
+      console.warn('vcoin spend skipped:', error.message)
+    }
+    try { sessionStorage.setItem(ticketKeyOf(game.id), String(Date.now())) } catch {}
+    setTimeout(() => setCoinState('ready'), 650)
+  }
+
+  const startGame = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    playStartSound()
+    setTimeout(() => router.push(`/games/${game.id}`), 250)
+  }
 
   // 모달이 열리면 뒤 홈페이지 스크롤 잠금
   useEffect(() => {
@@ -361,16 +439,50 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                     </div>
                   </div>
                 )}
-                {/* 중앙 큰 PLAY 버튼 */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <button
-                    onClick={e => { e.stopPropagation(); router.push(`/games/${game.id}`) }}
-                    className="flex items-center gap-2.5 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white font-bold text-base md:text-lg px-8 py-4 shadow-[0_0_0_3px_rgba(255,255,255,0.25),0_10px_30px_rgba(37,99,235,0.5)] hover:shadow-[0_0_0_4px_rgba(255,255,255,0.35),0_14px_36px_rgba(37,99,235,0.6)] hover:scale-105 active:scale-95 transition-all"
-                  >
-                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden><path d="M8 5v14l11-7-11-7Z" /></svg>
-                    PLAY
-                    <span className="ml-1 bg-white/25 rounded-full px-2.5 py-0.5 text-[13px]">🪙 {game.coin_cost ?? 1}</span>
-                  </button>
+                {/* 아케이드 패널 — 코인 슬롯 + INSERT COIN / PRESS START */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                  {/* 코인 슬롯 — 투입구 + 상태등 */}
+                  <div className="relative w-14 h-[70px]">
+                    <div className={`w-full h-full rounded-lg bg-gradient-to-b from-[#4a4a4a] to-[#2a2a2a] border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_4px_10px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-2 transition-shadow ${
+                      coinState === 'ready' ? 'shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_0_18px_rgba(76,255,106,0.5)]' : ''
+                    }`}>
+                      {/* 투입구 슬릿 */}
+                      <span className="w-1.5 h-8 rounded-full bg-black shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" />
+                      {/* 상태등 — 대기: 빨강, 준비: 초록 */}
+                      <span className={`w-2.5 h-2.5 rounded-full ${coinState === 'ready' ? 'bg-[#4cff6a] shadow-[0_0_8px_#4cff6a]' : 'bg-red-500/80 shadow-[0_0_6px_rgba(239,68,68,0.8)] animate-pulse'}`} />
+                    </div>
+                    {/* 떨어지는 동전 */}
+                    {coinState === 'drop' && (
+                      <span className="coin-drop absolute left-1/2 -translate-x-1/2 -top-8 text-2xl" aria-hidden>🪙</span>
+                    )}
+                  </div>
+
+                  {coinState !== 'ready' ? (
+                    <>
+                      <p className="arcade-blink font-pixel text-[13px] tracking-[0.3em] text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.7)]">
+                        INSERT COIN
+                      </p>
+                      <button
+                        onClick={insertCoin}
+                        className="flex items-center gap-2 rounded-full bg-gradient-to-b from-[#d9a71b] to-[#b3830a] text-white font-bold text-[14px] px-6 py-2.5 shadow-[0_4px_0_#7d5a06,0_8px_16px_rgba(0,0,0,0.45)] active:translate-y-1 active:shadow-[0_1px_0_#7d5a06] transition-all"
+                      >
+                        🪙 × {game.coin_cost ?? 1} 코인 넣기
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="arcade-blink font-pixel text-[13px] tracking-[0.3em] text-[#4cff6a] drop-shadow-[0_0_6px_rgba(76,255,106,0.7)]">
+                        PRESS START
+                      </p>
+                      {/* 빨간 아케이드 돔 버튼 */}
+                      <button
+                        onClick={startGame}
+                        className="w-20 h-20 rounded-full bg-gradient-to-b from-[#ff6a52] to-[#d92c1a] text-white font-pixel text-[13px] tracking-widest shadow-[inset_0_3px_6px_rgba(255,255,255,0.35),0_6px_0_#8f1508,0_12px_22px_rgba(0,0,0,0.55)] active:translate-y-1.5 active:shadow-[inset_0_3px_6px_rgba(255,255,255,0.35),0_2px_0_#8f1508] transition-all"
+                      >
+                        START
+                      </button>
+                    </>
+                  )}
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-4 pointer-events-none">
                   <h3 className="text-lg font-bold text-white truncate leading-tight">{game.title}</h3>
