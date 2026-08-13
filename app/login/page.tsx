@@ -10,6 +10,7 @@ function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [resetMsg, setResetMsg] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -29,6 +30,26 @@ function LoginForm() {
       }
       router.push(redirect)
       router.refresh()
+    })
+  }
+
+  // 비밀번호 찾기 — 입력한 이메일로 재설정 링크 발송
+  const handleForgotPassword = () => {
+    setError(null)
+    setResetMsg(null)
+    if (!email.trim()) {
+      setError('이메일을 먼저 입력해주세요.')
+      return
+    }
+    startTransition(async () => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+      if (error) {
+        setError(error.message)
+        return
+      }
+      setResetMsg('비밀번호 재설정 링크를 이메일로 보냈어요. 메일함(스팸함 포함)을 확인해주세요.')
     })
   }
 
@@ -74,6 +95,11 @@ function LoginForm() {
               {error}
             </p>
           )}
+          {resetMsg && (
+            <p className="text-[#2563eb] text-xs border border-[#2563eb]/30 bg-[#2563eb]/5 px-3 py-2 rounded">
+              ✉️ {resetMsg}
+            </p>
+          )}
           <button
             type="submit"
             disabled={isPending}
@@ -82,12 +108,23 @@ function LoginForm() {
             {isPending ? a.loading : a.login}
           </button>
         </form>
-        <p className="text-center text-xs text-[#4a4337] mt-6">
-          {a.noAccount}{' '}
-          <Link href="/signup" className="text-[#2563eb] hover:underline">
-            SIGNUP
-          </Link>
-        </p>
+        <div className="flex items-center justify-center gap-4 mt-6 text-xs">
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            disabled={isPending}
+            className="text-[#857a68] hover:text-[#2563eb] hover:underline transition-colors disabled:opacity-50"
+          >
+            비밀번호 찾기
+          </button>
+          <span className="text-[#ddd3bf]">|</span>
+          <p className="text-[#4a4337]">
+            {a.noAccount}{' '}
+            <Link href="/signup" className="text-[#2563eb] hover:underline">
+              SIGNUP
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )
