@@ -12,6 +12,29 @@ import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 export default function StudioPage() {
   const [projects, setProjects] = useState<StudioProject[] | null>(null)
   const [editing, setEditing] = useState<StudioProject | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // 프로젝트 삭제 — 퍼블리싱된 게임이 있으면 게임까지 함께 삭제 (안내 후)
+  const deleteProject = async (p: StudioProject) => {
+    const { data: game } = await supabase
+      .from('games').select('id').eq('studio_project_id', p.id).maybeSingle()
+    const msg = game
+      ? '퍼블리싱된 게임입니다. 정말 삭제하시겠습니까?\n게시된 게임과 대화·버전 기록이 모두 지워집니다.'
+      : '이 프로젝트를 삭제할까요?\n대화와 모든 버전이 함께 삭제됩니다.'
+    if (!confirm(msg)) return
+    setDeletingId(p.id)
+    try {
+      if (game) {
+        const { error: gameError } = await supabase.from('games').delete().eq('id', (game as { id: string }).id)
+        if (gameError) { alert('게시된 게임 삭제 실패: ' + gameError.message); return }
+      }
+      const { error } = await supabase.from('studio_projects').delete().eq('id', p.id)
+      if (error) { alert('삭제 실패: ' + error.message); return }
+      setProjects(prev => prev ? prev.filter(x => x.id !== p.id) : prev)
+    } finally {
+      setDeletingId(null)
+    }
+  }
   const [balance, setBalance] = useState<number | null>(null)
   const [creating, setCreating] = useState(false)
   const [loadError, setLoadError] = useState(false)
@@ -141,33 +164,39 @@ export default function StudioPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.map(p => (
-            <Link
+            <div
               key={p.id}
-              href={`/studio/${p.id}`}
-              className="border border-[#ebe4d6] bg-[#ffffff] p-5 hover:border-[#2563eb] transition-colors group"
+              className="border border-[#ebe4d6] bg-[#ffffff] p-5 hover:border-[#2563eb] transition-colors flex flex-col gap-4"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-[#241f17] text-sm truncate flex-1">{p.title || s.untitled}</h2>
-                {/* 제목/훅 문구 수정 */}
-                <button
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); setEditing(p) }}
-                  title="게임 정보 수정"
-                  className="shrink-0 text-[#9d9280] hover:text-[#2563eb] transition-colors"
-                >
-                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                  </svg>
-                </button>
-              </div>
-              <div className="flex items-center justify-between">
+              <Link href={`/studio/${p.id}`} className="block min-w-0">
+                <h2 className="text-[#241f17] text-sm font-semibold truncate mb-1.5">{p.title || s.untitled}</h2>
                 <span className="text-[11px] text-[#9d9280]">
                   {new Date(p.created_at).toLocaleDateString()}
                 </span>
-                <span className="font-pixel text-[11px] text-[#857a68] group-hover:text-[#2563eb] tracking-widest transition-colors">
-                  {s.openProject}
-                </span>
+              </Link>
+              {/* 열기 · 수정 · 삭제 */}
+              <div className="flex gap-2">
+                <Link
+                  href={`/studio/${p.id}`}
+                  className="flex-1 text-center font-pixel text-[11px] bg-[#2563eb] text-white py-2.5 hover:bg-[#1d4ed8] transition-colors tracking-widest rounded-lg"
+                >
+                  열기
+                </Link>
+                <button
+                  onClick={() => setEditing(p)}
+                  className="flex-1 font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] py-2.5 hover:border-[#2563eb] hover:text-[#2563eb] transition-colors tracking-widest rounded-lg"
+                >
+                  수정
+                </button>
+                <button
+                  onClick={() => deleteProject(p)}
+                  disabled={deletingId === p.id}
+                  className="flex-1 font-pixel text-[11px] border border-[#ebe4d6] text-[#9d9280] py-2.5 hover:border-red-500 hover:text-red-500 transition-colors tracking-widest rounded-lg disabled:opacity-50"
+                >
+                  {deletingId === p.id ? '...' : '삭제'}
+                </button>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
