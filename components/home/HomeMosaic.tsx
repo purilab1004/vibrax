@@ -16,7 +16,7 @@ import { useLang } from '@/lib/i18n/context'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
-function FeedScreen({ game }: { game: GameWithCreator }) {
+function FeedScreen({ game, golden = false }: { game: GameWithCreator; golden?: boolean }) {
   const { T } = useLang()
   const router = useRouter()
   const supabase = createClient()
@@ -55,7 +55,7 @@ function FeedScreen({ game }: { game: GameWithCreator }) {
   return (
     <div
       className="feed-snap grain relative h-[100svh] overflow-hidden"
-      style={auroraOf(game.id)}
+      style={auroraOf(game.id, golden)}
       onClick={() => router.push(`/games/${game.id}`)}
     >
       {/* 방 디오라마 — 화면 상중단을 채운다 */}
@@ -156,7 +156,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
       {/* ── 모바일: 쇼츠 피드 — 화면 전체를 채우고 스와이프하면 다음 게임 (유튜브 쇼츠/틱톡) ── */}
       <div className="md:hidden">
         {sorted.map(game => (
-          <FeedScreen key={game.id} game={game} />
+          <FeedScreen key={game.id} game={game} golden={(game.view_count ?? 0) > 0 && game.id === sorted[0].id} />
         ))}
       </div>
 
@@ -193,6 +193,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
           <Reveal key={game.id} delay={(i % 4) * 80} className="mb-5 break-inside-avoid">
             <GameCard
               variant="tile"
+              golden={(game.view_count ?? 0) > 0 && game.id === sorted[0].id}
               aspectClass={aspectOf(game.id, i)}
               game={game}
               creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}

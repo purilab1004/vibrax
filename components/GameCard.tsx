@@ -13,6 +13,7 @@ import type { AvatarConfig } from '@/lib/avatar/config'
 import { countryFlag } from '@/lib/country'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
+import LOCAL_TEASERS from '@/lib/teasers-local.json'
 
 const GENRE_LABELS: Record<Game['genre'], string> = {
   action: 'ACTION',
@@ -46,22 +47,24 @@ export function hashOf(id: string): number {
   return Math.abs(h)
 }
 
-// 오로라 배경 — 파랑·핑크·퍼플·시안이 번지는 타이다이 (게임마다 배치가 다르다)
-export function auroraOf(id: string): React.CSSProperties {
+// 오로라 배경 — 파랑·핑크·퍼플·시안이 번지는 타이다이 (게임마다 배치가 다르다).
+// golden=true(조회수 1위)면 앰버·옐로·오렌지가 번지는 골드 오로라
+export function auroraOf(id: string, golden = false): React.CSSProperties {
   const h = hashOf(id)
   const hue = (base: number, spread: number, salt: number) => (base + ((h >> salt) % spread) - spread / 2 + 360) % 360
-  const blue = hue(212, 30, 0)
-  const pink = hue(322, 36, 3)
-  const purple = hue(264, 30, 6)
-  const cyan = hue(188, 24, 9)
+  const c1 = golden ? hue(42, 10, 3) : hue(322, 36, 3)   // 핑크 → 앰버
+  const c2 = golden ? hue(52, 10, 9) : hue(188, 24, 9)   // 시안 → 옐로
+  const c3 = golden ? hue(30, 10, 6) : hue(264, 30, 6)   // 퍼플 → 오렌지
+  const base = golden ? hue(45, 8, 0) : hue(212, 30, 0)  // 파랑 → 골드
+  const sat = golden ? 92 : 78
   const p = (salt: number, min: number, span: number) => min + ((h >> salt) % span)
   return {
     background: [
-      `radial-gradient(at ${p(1, 12, 26)}% ${p(2, 8, 22)}%, hsl(${pink} 78% 72%), transparent 52%)`,
-      `radial-gradient(at ${p(3, 62, 26)}% ${p(4, 14, 26)}%, hsl(${cyan} 82% 68%), transparent 55%)`,
-      `radial-gradient(at ${p(5, 16, 26)}% ${p(6, 62, 26)}%, hsl(${purple} 70% 62%), transparent 58%)`,
-      `radial-gradient(at ${p(7, 60, 28)}% ${p(8, 66, 24)}%, hsl(${pink} 74% 70%), transparent 55%)`,
-      `hsl(${blue} 62% 56%)`,
+      `radial-gradient(at ${p(1, 12, 26)}% ${p(2, 8, 22)}%, hsl(${c1} ${sat}% 72%), transparent 52%)`,
+      `radial-gradient(at ${p(3, 62, 26)}% ${p(4, 14, 26)}%, hsl(${c2} ${sat}% 70%), transparent 55%)`,
+      `radial-gradient(at ${p(5, 16, 26)}% ${p(6, 62, 26)}%, hsl(${c3} ${golden ? 85 : 70}% 62%), transparent 58%)`,
+      `radial-gradient(at ${p(7, 60, 28)}% ${p(8, 66, 24)}%, hsl(${c1} ${sat - 4}% 70%), transparent 55%)`,
+      `hsl(${base} ${golden ? 80 : 62}% ${golden ? 58 : 56}%)`,
     ].join(', '),
   }
 }
@@ -73,21 +76,28 @@ function FluffFigure({ delay, eyesRef }: {
 }) {
   return (
     <g className="critter-bob" style={{ animationDelay: delay }}>
-      {/* 몽실 몸통 — 봉우리 크기가 제각각인 스캘럽 */}
-      <g fill="#ffffff">
-        {[11.5, 8.5, 12.5, 9, 10.5, 8, 12, 9.5, 11, 8.5].map((r, i) => {
-          const a = (i / 10) * Math.PI * 2
-          return <circle key={i} cx={100 + Math.cos(a) * 23} cy={96 + Math.sin(a) * 23} r={r} />
-        })}
-        <circle cx="100" cy="96" r="25" />
+      {/* 머리 위 야자수 — 로고와 같은 줄기/잎 5장, 살랑살랑 */}
+      <g className="critter-sprout" style={{ transformOrigin: '100px 69px' }}>
+        <path d="M97 69c.9-9 2.6-16 6.9-22" stroke="#8a5a2b" strokeWidth="4.2" strokeLinecap="round" fill="none" />
+        <g fill="none" stroke="#39b36b" strokeWidth="4.4" strokeLinecap="round">
+          <path d="M104 47c-7-4.8-14-5.2-19.8-2.2" />
+          <path d="M104 47c-2.2-7.4-6.6-12.3-12.3-14.5" />
+          <path d="M104 47c3-7 8.3-11 14.5-11.8" />
+          <path d="M104 47c7.4-3 14.5-1.7 19.3 2.2" />
+          <path d="M104 47c5.7 1.3 10 5.2 12.3 11" />
+        </g>
       </g>
-      {/* 작은 검정 눈 — 마우스를 따라 움직인다 */}
-      <g ref={eyesRef} className="transition-transform duration-75">
-        <circle cx="92.5" cy="93" r="2.7" fill="#161616" />
-        <circle cx="107.5" cy="93" r="2.7" fill="#161616" />
+      {/* 동그란 몸통 — 말랑 스퀴시 */}
+      <g className="critter-body" style={{ transformOrigin: '100px 124px' }}>
+        <circle cx="100" cy="96" r="28" fill="#ffffff" />
+        {/* 작은 검정 눈 — 마우스를 따라 움직인다 */}
+        <g ref={eyesRef} className="transition-transform duration-75">
+          <circle cx="92.5" cy="93" r="2.7" fill="#161616" />
+          <circle cx="107.5" cy="93" r="2.7" fill="#161616" />
+        </g>
+        {/* 작은 한 줄 커브 미소 */}
+        <path d="M96.5 101q3.5 3 7 0" stroke="#161616" strokeWidth="2.1" strokeLinecap="round" fill="none" />
       </g>
-      {/* 작은 한 줄 커브 미소 */}
-      <path d="M96.5 100.5q3.5 3 7 0" stroke="#161616" strokeWidth="2.1" strokeLinecap="round" fill="none" />
     </g>
   )
 }
@@ -164,6 +174,8 @@ interface GameCardProps {
   variant?: 'card' | 'tile'
   // 매소너리(핀터레스트) 배치용 — 타일 비율 오버라이드
   aspectClass?: string
+  // 조회수 1위 — 골드 오로라 배경
+  golden?: boolean
 }
 
 interface AgentConfig { name: string; persona: string; avatarUrl?: string }
@@ -231,7 +243,7 @@ export function playStartSound() {
   } catch {}
 }
 
-export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video' }: GameCardProps) {
+export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video', golden = false }: GameCardProps) {
   const flag = countryFlag(creatorCountry)
   const { T } = useLang()
   const [open, setOpen] = useState(false)
@@ -367,23 +379,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
           >
             {/* 흔들림 셸 — 호버 판정은 바깥(고정), 흔들림·원근은 여기 */}
             <div className="gacha-shell [perspective:1200px]">
-            <div className={`relative ${aspectClass} w-full transition-transform duration-300 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] ${flipped ? '[transform:rotateY(180deg)]' : ''}`}>
+            <div className={`pointer-events-none relative ${aspectClass} w-full transition-transform duration-300 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)] ${flipped ? '[transform:rotateY(180deg)]' : ''}`}>
               {/* 앞면 — 오로라 배경 + 몽실 태양 + 유혹 질문 (제목은 플립해야 공개) */}
               <div
                 className="grain absolute inset-0 rounded-xl overflow-hidden [backface-visibility:hidden] flex flex-col"
-                style={auroraOf(game.id)}
+                style={auroraOf(game.id, golden)}
               >
                 {/* 좋아요 — 상단 좌측 */}
-                <div className="absolute top-3 left-3 z-10 bg-white/85 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
+                <div className="pointer-events-auto absolute top-3 left-3 z-10 bg-white/85 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
                   <LikeButton gameId={game.id} size="lg" />
                 </div>
-                {/* 플립 힌트 아이콘 — 상단 우측 */}
-                <span className="absolute top-3 right-3 z-10 text-white/90 drop-shadow" aria-hidden>
-                  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 12a9 9 0 0 1-15.3 6.4M3 12a9 9 0 0 1 15.3-6.4" />
-                    <path d="M21 4v5h-5M3 20v-5h5" />
-                  </svg>
-                </span>
                 <div className="flex-1 relative min-h-0 mx-2 mt-2">
                   <RoomScene id={game.id} views={game.view_count ?? 0} />
                 </div>
@@ -391,7 +396,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 <div className="shrink-0 px-5 pb-5">
                   <h3 className="text-[20px] md:text-[23px] font-extrabold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
                     <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">
-                      {game.teaser || T.games.teasers[hashOf(game.id) % T.games.teasers.length]}
+                      {game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length]}
                     </span>
                   </h3>
                   <p className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.1em] text-white/70">
@@ -463,7 +468,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                       </p>
                       <button
                         onClick={insertCoin}
-                        className="flex items-center gap-2 rounded-full bg-gradient-to-b from-[#d9a71b] to-[#b3830a] text-white font-bold text-[14px] px-6 py-2.5 shadow-[0_4px_0_#7d5a06,0_8px_16px_rgba(0,0,0,0.45)] active:translate-y-1 active:shadow-[0_1px_0_#7d5a06] transition-all"
+                        className="pointer-events-auto flex items-center gap-2 rounded-full bg-gradient-to-b from-[#d9a71b] to-[#b3830a] text-white font-bold text-[14px] px-6 py-2.5 shadow-[0_4px_0_#7d5a06,0_8px_16px_rgba(0,0,0,0.45)] active:translate-y-1 active:shadow-[0_1px_0_#7d5a06] transition-all"
                       >
                         🪙 × {game.coin_cost ?? 1} 코인 넣기
                       </button>
@@ -476,7 +481,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                       {/* 빨간 아케이드 돔 버튼 */}
                       <button
                         onClick={startGame}
-                        className="w-20 h-20 rounded-full bg-gradient-to-b from-[#ff6a52] to-[#d92c1a] text-white font-pixel text-[13px] tracking-widest shadow-[inset_0_3px_6px_rgba(255,255,255,0.35),0_6px_0_#8f1508,0_12px_22px_rgba(0,0,0,0.55)] active:translate-y-1.5 active:shadow-[inset_0_3px_6px_rgba(255,255,255,0.35),0_2px_0_#8f1508] transition-all"
+                        className="pointer-events-auto w-20 h-20 rounded-full bg-gradient-to-b from-[#ff6a52] to-[#d92c1a] text-white font-pixel text-[13px] tracking-widest shadow-[inset_0_3px_6px_rgba(255,255,255,0.35),0_6px_0_#8f1508,0_12px_22px_rgba(0,0,0,0.55)] active:translate-y-1.5 active:shadow-[inset_0_3px_6px_rgba(255,255,255,0.35),0_2px_0_#8f1508] transition-all"
                       >
                         START
                       </button>
