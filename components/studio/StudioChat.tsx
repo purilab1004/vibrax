@@ -116,9 +116,9 @@ export default function StudioChat({
               )}
               {streaming.htmlBytes > 0 && (
                 <>
-                  {/* 실시간 코드 터미널 — 실제 생성 중인 코드의 꼬리를 흘려보여준다 */}
-                  <div className="mt-3 bg-black border border-[#2563eb]/25 rounded-md overflow-hidden">
-                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#2563eb]/15">
+                  {/* 실시간 코드 터미널 — 밝은 배경에 진한 코드로 또렷하게 */}
+                  <div className="mt-3 bg-[#f8f5ec] border border-[#ddd3bf] rounded-md overflow-hidden">
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#e5dcc8] bg-[#f1ecdd]">
                       <span className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-red-500/80" />
                         <span className="w-2 h-2 rounded-full bg-yellow-500/80" />
@@ -131,7 +131,7 @@ export default function StudioChat({
                         </span>
                       </span>
                     </div>
-                    <pre className="px-3 py-2 h-28 overflow-hidden flex flex-col justify-end font-mono text-[11px] leading-relaxed text-[#2563eb]/70 whitespace-pre-wrap break-all">
+                    <pre className="px-3 py-2 h-28 overflow-hidden flex flex-col justify-end font-mono text-[11.5px] leading-relaxed text-[#1d4ed8] whitespace-pre-wrap break-all">
                       {streaming.codeTail}
                       <span className="inline-block w-2 h-3.5 bg-[#2563eb] animate-pulse align-text-bottom" />
                     </pre>
