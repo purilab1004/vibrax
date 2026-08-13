@@ -48,7 +48,7 @@ export default async function GamesPage({ searchParams }: Props) {
         {term && <span className="text-xs text-[#4a4337]">🔍 &quot;{term}&quot;</span>}
       </div>
       {/* 장르 필터 — 스크롤해도 상단에 따라붙는 유리 바 */}
-      <div className="sticky top-16 z-40 mb-4 md:mb-8 px-4 md:px-0 flex justify-center md:justify-start">
+      <div className="sticky top-2 md:top-16 z-40 mb-4 md:mb-8 px-4 md:px-0 flex justify-center md:justify-start">
         <Suspense>
           <GenreFilter />
         </Suspense>
