@@ -73,11 +73,11 @@ function FluffFigure({ delay, eyesRef }: {
 }) {
   return (
     <g className="critter-bob" style={{ animationDelay: delay }}>
-      {/* 몽실 몸통 — 동글동글 스캘럽 (처음 모양) */}
+      {/* 몽실 몸통 — 봉우리 크기가 제각각인 스캘럽 */}
       <g fill="#ffffff">
-        {Array.from({ length: 10 }, (_, i) => {
+        {[11.5, 8.5, 12.5, 9, 10.5, 8, 12, 9.5, 11, 8.5].map((r, i) => {
           const a = (i / 10) * Math.PI * 2
-          return <circle key={i} cx={100 + Math.cos(a) * 23} cy={96 + Math.sin(a) * 23} r="10.5" />
+          return <circle key={i} cx={100 + Math.cos(a) * 23} cy={96 + Math.sin(a) * 23} r={r} />
         })}
         <circle cx="100" cy="96" r="25" />
       </g>
@@ -86,6 +86,8 @@ function FluffFigure({ delay, eyesRef }: {
         <circle cx="92.5" cy="93" r="2.7" fill="#161616" />
         <circle cx="107.5" cy="93" r="2.7" fill="#161616" />
       </g>
+      {/* 작은 한 줄 커브 미소 */}
+      <path d="M96.5 100.5q3.5 3 7 0" stroke="#161616" strokeWidth="2.1" strokeLinecap="round" fill="none" />
     </g>
   )
 }
@@ -389,7 +391,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 <div className="shrink-0 px-5 pb-5">
                   <h3 className="text-[20px] md:text-[23px] font-extrabold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
                     <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">
-                      {T.games.teasers[hashOf(game.id) % T.games.teasers.length]}
+                      {game.teaser || T.games.teasers[hashOf(game.id) % T.games.teasers.length]}
                     </span>
                   </h3>
                   <p className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.1em] text-white/70">

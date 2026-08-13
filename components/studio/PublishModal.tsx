@@ -88,16 +88,31 @@ export default function PublishModal({
         return
       }
       const { data: { publicUrl } } = supabase.storage.from('thumbnails').getPublicUrl(path)
-      const { error: insertError } = await supabase.from('games').insert([
-        {
-          title,
-          genre,
-          play_url: `${window.location.origin}/play/${projectId}`,
-          thumbnail_url: publicUrl,
-          user_id: user.id,
-          studio_project_id: projectId,
-        },
-      ] as never)
+      // 카드 앞면 유혹 질문 — AI 생성 (실패 시 null → 기본 문구 폴백)
+      let teaser: string | null = null
+      try {
+        const r = await fetch('/api/teaser', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title, genre }),
+        })
+        if (r.ok) teaser = (await r.json()).teaser ?? null
+      } catch {}
+      const row = {
+        title,
+        genre,
+        play_url: `${window.location.origin}/play/${projectId}`,
+        thumbnail_url: publicUrl,
+        user_id: user.id,
+        studio_project_id: projectId,
+        teaser,
+      }
+      let { error: insertError } = await supabase.from('games').insert([row] as never)
+      // teaser 컬럼 마이그레이션 전 — 없이 재시도
+      if (insertError?.message.includes('teaser')) {
+        const { teaser: _omit, ...rest } = row
+        ;({ error: insertError } = await supabase.from('games').insert([rest] as never))
+      }
       if (insertError) {
         // 23505 = 다른 탭/요청이 먼저 게시함 (games_studio_project_unique)
         if (insertError.code === '23505') setAlreadyPublished(true)

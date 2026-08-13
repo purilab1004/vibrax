@@ -16,6 +16,7 @@ export interface Game {
   view_count: number
   studio_project_id?: string | null
   coin_cost?: number   // 플레이 1회당 vcoin 비용 (기본 1)
+  teaser?: string | null   // 카드 앞면 유혹 질문 (AI 생성)
 }
 
 export interface GameLike {

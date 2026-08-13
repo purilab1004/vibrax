@@ -63,19 +63,35 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
         gameManual = await manualFile.text()
       }
 
-      const { error: insertError } = await supabase.from('games').insert([
-        {
-          title,
-          genre,
-          description: description.trim() || null,
-          language,
-          game_manual: gameManual,
-          play_url: playUrl,
-          thumbnail_url: publicUrl,
-          user_id: userId,
-          coin_cost: Math.max(1, Math.min(100, coinCost)),
-        },
-      ] as never)
+      // 카드 앞면 유혹 질문 — AI 생성 (실패 시 null → 기본 문구 폴백)
+      let teaser: string | null = null
+      try {
+        const r = await fetch('/api/teaser', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title, description, genre }),
+        })
+        if (r.ok) teaser = (await r.json()).teaser ?? null
+      } catch {}
+
+      const row = {
+        title,
+        genre,
+        description: description.trim() || null,
+        language,
+        game_manual: gameManual,
+        play_url: playUrl,
+        thumbnail_url: publicUrl,
+        user_id: userId,
+        coin_cost: Math.max(1, Math.min(100, coinCost)),
+        teaser,
+      }
+      let { error: insertError } = await supabase.from('games').insert([row] as never)
+      // teaser 컬럼 마이그레이션 전 — 없이 재시도
+      if (insertError?.message.includes('teaser')) {
+        const { teaser: _omit, ...rest } = row
+        ;({ error: insertError } = await supabase.from('games').insert([rest] as never))
+      }
 
       if (insertError) {
         setError(`등록 실패: ${insertError.message}`)
