@@ -368,14 +368,13 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
         role="button"
         tabIndex={0}
         onClick={() => {
-          // 타일: 카드 안 실행 없음 — 게임 페이지로 이동 (모바일은 첫 탭에 뽑기 플립)
+          // 타일: 본문 클릭으로는 이동하지 않는다 — 코인 넣기 → START 버튼으로만 진입.
+          // (모바일은 첫 탭에 뽑기 플립만)
           if (variant === 'tile') {
             if (touchMode && !flipped) {
               setFlipped(true)
               setBubble(T.games.hoverMsgs[Math.floor(Math.random() * T.games.hoverMsgs.length)])
-              return
             }
-            router.push(`/games/${game.id}`)
             return
           }
           handlePlay()

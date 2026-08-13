@@ -55,7 +55,6 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
     <div
       className="feed-snap grain relative h-[100svh] overflow-hidden"
       style={auroraOf(game.id, golden)}
-      onClick={() => router.push(`/games/${game.id}`)}
     >
       {/* 조회수 랭킹 배지 — 상단 우측 */}
       {rank && rank <= 10 && (
