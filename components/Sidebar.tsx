@@ -111,6 +111,8 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
 
   // 접힘 — 좌상단 플로팅 'Menu' 버튼만
   if (!open) {
+    // 스튜디오 에디터(/studio/[id])에서는 플로팅 메뉴 버튼도 숨긴다 — 자체 상단 바만 사용
+    if (/^\/studio\/.+/.test(pathname)) return null
     return (
       <div className="hidden md:block fixed top-2 left-3 z-[60]">
         <button
