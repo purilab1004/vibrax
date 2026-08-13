@@ -132,9 +132,17 @@ function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; gol
           {coinState !== 'ready' ? (
             <button
               onClick={insertCoin}
-              className="flex-1 h-12 rounded-full bg-gradient-to-b from-[#d9a71b] to-[#b3830a] text-white font-bold text-[15px] shadow-[0_4px_0_#7d5a06,0_8px_16px_rgba(0,0,0,0.45)] active:translate-y-1 active:shadow-[0_1px_0_#7d5a06] transition-all flex items-center justify-center gap-2"
+              disabled={coinState === 'drop'}
+              className="flex-1 h-12 rounded-full bg-gradient-to-b from-[#d9a71b] to-[#b3830a] text-white font-bold text-[15px] shadow-[0_4px_0_#7d5a06,0_8px_16px_rgba(0,0,0,0.45)] active:translate-y-1 active:shadow-[0_1px_0_#7d5a06] transition-all flex items-center justify-center gap-2 disabled:opacity-90"
             >
-              🪙 × {game.coin_cost ?? 1} 코인 넣기
+              {coinState === 'drop' ? (
+                <>
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 animate-spin" fill="none" aria-hidden><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+                  코인 투입 중...
+                </>
+              ) : (
+                <>🪙 × {game.coin_cost ?? 1} 코인 넣기</>
+              )}
             </button>
           ) : (
             <button
