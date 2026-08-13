@@ -211,7 +211,8 @@ export default function StudioComposerPage() {
 
   return (
     <div className="flex flex-col" style={{ height: '100svh' }}>
-      <div className="flex items-center gap-4 border-b border-[#ebe4d6] px-4 py-2 shrink-0">
+      {/* 좌측 플로팅 메뉴 버튼과 겹치지 않게 데스크톱은 버튼 폭만큼 들여쓴다 */}
+      <div className="flex items-center gap-4 border-b border-[#ebe4d6] px-4 md:pl-36 py-2 shrink-0">
         <Link
           href="/studio"
           className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest transition-colors shrink-0"
