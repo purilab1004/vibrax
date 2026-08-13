@@ -297,18 +297,16 @@ export default function StudioComposerPage() {
         )}
 
         {!html && versions.length === 0 ? (
-          /* 아직 게임이 없음 — 채팅이 나머지 전체를 쓴다 */
-          <div className="flex-1 min-h-0 flex justify-center">
-            <div className="w-full max-w-3xl min-h-0 flex flex-col">
-              <StudioChat
-                messages={messages}
-                streaming={streaming}
-                usage={usage}
-                error={error}
-                onSend={send}
-                busy={streaming !== null}
-              />
-            </div>
+          /* 아직 게임이 없음 — 채팅이 사이드바를 제외한 전체 폭을 쓴다 */
+          <div className="flex-1 min-h-0 flex flex-col min-w-0">
+            <StudioChat
+              messages={messages}
+              streaming={streaming}
+              usage={usage}
+              error={error}
+              onSend={send}
+              busy={streaming !== null}
+            />
           </div>
         ) : (
           /* 게임 생성 후 — 중앙 채팅 / 우측 프리뷰 (모바일: 상 프리뷰 / 하 채팅) */
