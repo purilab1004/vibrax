@@ -24,7 +24,7 @@ export default function ShareButton({ title }: { title?: string }) {
   return (
     <button
       onClick={share}
-      className="shrink-0 flex items-center gap-2 font-pixel text-[11px] bg-[#ec4899] text-white px-6 py-4 hover:bg-[#db2777] transition-colors whitespace-nowrap tracking-widest"
+      className="shrink-0 flex items-center justify-center gap-2 rounded-full font-pixel text-[12px] bg-[#ec4899] text-white px-8 hover:bg-[#db2777] transition-colors whitespace-nowrap tracking-widest shadow-[0_4px_0_#9d1c5e,0_8px_16px_rgba(236,72,153,0.35)] active:translate-y-1 active:shadow-[0_1px_0_#9d1c5e]"
       title="게임 공유"
     >
       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
