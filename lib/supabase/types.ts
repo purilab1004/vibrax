@@ -15,6 +15,7 @@ export interface Game {
   created_at: string
   view_count: number
   studio_project_id?: string | null
+  coin_cost?: number   // 플레이 1회당 vcoin 비용 (기본 1)
 }
 
 export interface GameLike {
@@ -32,6 +33,7 @@ export interface Profile {
   agent_name?: string | null   // 공개 표시명(에이전트 이름) — 게임 카드/상세에 username 대신 노출
   role?: 'user' | 'admin'
   banned_at?: string | null
+  vcoin?: number   // 오락실 코인 잔액 (가입 시 1000)
 }
 
 export interface StudioProject {

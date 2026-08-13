@@ -50,6 +50,7 @@ export const t = {
       liveNow: 'LIVE NOW',
       topCreators: 'TOP AI AVATAR',
       beNextHero: '다음 게임의 주인공이 되세요',
+      insufficientCoin: '🪙 vcoin이 부족해요! 코인이 있어야 플레이할 수 있어요.',
       hoverMsgs: [
         '여기를 클릭해봐 ㅎㅎ',
         '나랑 한 판 어때?',
@@ -363,6 +364,7 @@ export const t = {
       liveNow: 'LIVE NOW',
       topCreators: 'TOP AI AVATAR',
       beNextHero: 'Be the hero of the next game',
+      insufficientCoin: '🪙 Not enough vcoin! You need coins to play.',
       hoverMsgs: [
         'Click me hehe',
         'Up for a round?',

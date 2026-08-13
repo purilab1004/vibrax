@@ -37,8 +37,8 @@ const GENRE_COLORS: Record<Game['genre'], string> = {
   sports: 'bg-green-700',
 }
 
-// ── 감성 앞면 — 파스텔 배경 + 움직이는 눈알 캐릭터 (id로 색·패턴 고정) ──
-export const PASTELS = ['#F6EE8D', '#9FA2F2', '#C9E8F5', '#79C7F2', '#A6E3AE', '#F6C4DC', '#F8D9A2', '#F5978A'] as const
+// ── 감성 앞면 — 차콜 다크 + 코랄 배경 (id로 색·패턴 고정) ──
+export const PASTELS = ['#3B3B3B', '#E8593F', '#343434', '#3B3B3B', '#E8593F', '#2E2E2E', '#3F3F3F', '#E8593F'] as const
 
 export function hashOf(id: string): number {
   let h = 0
@@ -46,8 +46,8 @@ export function hashOf(id: string): number {
   return Math.abs(h)
 }
 
-// 몸통 색 — 파스텔 배경 위에서 도드라지는 진한 톤 (배경과 같은 해시로 짝지어진다)
-const CRITTER_BODIES = ['#5B5F97', '#3E8E7E', '#E2856E', '#4E86B8', '#4E937A', '#C4699B', '#C98A2E', '#B85B4E'] as const
+// 몸통 색 — 다크/코랄 배경 위에서 도드라지는 밝은 톤 (배경과 같은 해시로 짝지어진다)
+const CRITTER_BODIES = ['#F2B436', '#5AB0F2', '#F2E8DA', '#4CC97E', '#F2B436', '#C9E8F5', '#5AB0F2', '#F2E8DA'] as const
 
 // 캐릭터 한 마리 — 야자수 + 젤리 몸통 (eyesRef가 있으면 눈동자가 마우스를 따라간다)
 function CritterFigure({ body, delay, eyesRef }: {
@@ -246,6 +246,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
     if (!user) { setAgentGate('login'); return }
     const name = user.user_metadata?.agent_name?.trim()
     if (!name) { setAgentGate('agent'); return }
+    // 🪙 코인 투입 — 잔액 부족이면 플레이 불가 (관리자는 서버에서 무료 처리)
+    const { error: coinError } = await supabase.rpc('spend_vcoin', { p_game_id: game.id } as never)
+    if (coinError) {
+      if (coinError.message.includes('insufficient_vcoin')) {
+        alert(T.games.insufficientCoin)
+        return
+      }
+      // 마이그레이션 전/일시 오류 — 플레이는 막지 않는다
+      console.warn('vcoin spend skipped:', coinError.message)
+    }
     const persona = user.user_metadata?.agent_persona?.trim()
     const avatarUrl = user.user_metadata?.agent_avatar_url ?? ''
     setAgentConfig({ name, persona: persona ?? '', avatarUrl })
@@ -307,10 +317,10 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 </div>
                 {/* 포스터 타이틀 — 제목이 주인공 */}
                 <div className="shrink-0 px-4 pb-5 text-center">
-                  <h3 className="text-[19px] md:text-[22px] font-extrabold text-[#1d1a14] leading-snug line-clamp-2 tracking-tight">
+                  <h3 className="text-[19px] md:text-[22px] font-extrabold text-white leading-snug line-clamp-2 tracking-tight">
                     {game.title}
                   </h3>
-                  <p className="mt-2 flex items-center justify-center gap-1.5 text-[12px] font-semibold tracking-[0.12em] text-[#1d1a14]/55">
+                  <p className="mt-2 flex items-center justify-center gap-1.5 text-[12px] font-semibold tracking-[0.12em] text-white/65">
                     <span className="w-5 h-5 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 inline-flex items-center justify-center">
                       {creatorAvatarUrl ? (
                         <Image
@@ -326,7 +336,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                       )}
                     </span>
                     <span className="truncate max-w-[45%]">{creatorName ?? 'unknown'}{flag && ` ${flag}`}</span>
-                    <span className="text-[#1d1a14]/30">·</span>
+                    <span className="text-white/30">·</span>
                     <ViewerIcon className="w-4 h-4" />
                     {formatViewers(game.view_count ?? 0)}
                   </p>
@@ -359,6 +369,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   >
                     <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden><path d="M8 5v14l11-7-11-7Z" /></svg>
                     PLAY
+                    <span className="ml-1 bg-white/25 rounded-full px-2.5 py-0.5 text-[13px]">🪙 {game.coin_cost ?? 1}</span>
                   </button>
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-4 pointer-events-none">

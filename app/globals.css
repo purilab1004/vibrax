@@ -466,12 +466,13 @@ body {
   .char-in { animation: none; }
 }
 
-/* 모바일 쇼츠 피드 — 페이지 스크롤이 섹션·게임 단위로 스냅 */
+/* 모바일 쇼츠 피드 — 틱톡처럼 스와이프 한 번에 정확히 한 화면씩 강제 스냅 */
 @media (max-width: 767px) {
   html {
-    scroll-snap-type: y proximity;
+    scroll-snap-type: y mandatory;
   }
   .feed-snap {
     scroll-snap-align: start;
+    scroll-snap-stop: always; /* 빠르게 튕겨도 한 장씩만 넘어간다 */
   }
 }

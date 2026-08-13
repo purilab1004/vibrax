@@ -51,17 +51,17 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
                 >
                   <LikeButton gameId={game.id} size="lg" />
                 </div>
-                <div className="flex flex-col items-center gap-0.5 text-[#1d1a14]/70">
+                <div className="flex flex-col items-center gap-0.5 text-white/85 drop-shadow">
                   <ViewerIcon className="w-6 h-6" />
                   <span className="text-[12px] font-bold">{formatViewers(game.view_count ?? 0)}</span>
                 </div>
               </div>
               {/* 하단 정보 + PLAY */}
-              <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-8 pt-14 bg-gradient-to-t from-white/75 via-white/40 to-transparent">
-                <h3 className="text-2xl font-extrabold text-[#1d1a14] leading-snug line-clamp-2 pr-14">
+              <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-8 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
+                <h3 className="text-2xl font-extrabold text-white leading-snug line-clamp-2 pr-14">
                   {game.title}
                 </h3>
-                <p className="mt-2 flex items-center gap-2 text-[13px] font-semibold text-[#1d1a14]/60">
+                <p className="mt-2 flex items-center gap-2 text-[13px] font-semibold text-white/75">
                   <span className="w-6 h-6 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 inline-flex items-center justify-center">
                     {avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -75,6 +75,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
                 <button className="mt-4 w-full h-12 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white font-bold text-base shadow-[0_8px_24px_rgba(37,99,235,0.4)] active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
                   <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden><path d="M8 5v14l11-7-11-7Z" /></svg>
                   PLAY
+                  <span className="ml-1 bg-white/25 rounded-full px-2.5 py-0.5 text-[13px]">🪙 {game.coin_cost ?? 1}</span>
                 </button>
               </div>
             </div>

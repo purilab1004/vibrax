@@ -42,6 +42,16 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
     if (!user) { setAgentGate('login'); return }
     const name = user.user_metadata?.agent_name?.trim()
     if (!name) { setAgentGate('agent'); return }
+    // 🪙 코인 투입 — 잔액 부족이면 플레이 불가 (관리자는 서버에서 무료 처리)
+    const { error: coinError } = await supabase.rpc('spend_vcoin', { p_game_id: game.id } as never)
+    if (coinError) {
+      if (coinError.message.includes('insufficient_vcoin')) {
+        alert(T.games.insufficientCoin)
+        return
+      }
+      // 마이그레이션 전/일시 오류 — 플레이는 막지 않는다
+      console.warn('vcoin spend skipped:', coinError.message)
+    }
     const persona = user.user_metadata?.agent_persona?.trim()
     const avatarUrl = user.user_metadata?.agent_avatar_url ?? ''
     setAgentConfig({ name, persona: persona ?? '', avatarUrl })
@@ -57,7 +67,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
         onClick={handlePlay}
         className="shrink-0 font-pixel text-[11px] bg-[#2563eb] text-white px-8 py-4 hover:bg-[#1d4ed8] transition-colors whitespace-nowrap tracking-widest"
       >
-        {T.games.playNow}
+        🪙 {game.coin_cost ?? 1} · {T.games.playNow}
       </button>
 
       {agentGate && (

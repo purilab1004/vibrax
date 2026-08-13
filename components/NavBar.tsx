@@ -15,6 +15,7 @@ export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [scrolled, setScrolled] = useState(false)
+  const [vcoin, setVcoin] = useState<number | null>(null)
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -42,8 +43,18 @@ export default function NavBar() {
   // 관리자 링크는 user 블록 안에서만 렌더되므로 로그아웃 시 초기화가 필요 없다
   useEffect(() => {
     if (!user) return
-    supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-      .then(({ data }) => setIsAdmin((data as { role?: string } | null)?.role === 'admin'))
+    supabase.from('profiles').select('role, vcoin').eq('id', user.id).maybeSingle()
+      .then(({ data, error }) => {
+        if (error) {
+          // vcoin 컬럼 마이그레이션 전 — role만 폴백 조회
+          supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+            .then(({ data: d2 }) => setIsAdmin((d2 as { role?: string } | null)?.role === 'admin'))
+          return
+        }
+        const p = data as { role?: string; vcoin?: number } | null
+        setIsAdmin(p?.role === 'admin')
+        setVcoin(p?.vcoin ?? null)
+      })
   }, [user])
 
   const handleSignOut = async () => {
@@ -190,6 +201,11 @@ export default function NavBar() {
             <div className="flex items-center justify-end gap-5">
               {user ? (
                 <>
+                  {vcoin !== null && (
+                    <span className="flex items-center gap-1 text-[13px] font-bold text-[#c9940c] whitespace-nowrap" title="VCOIN">
+                      🪙 {vcoin.toLocaleString()}
+                    </span>
+                  )}
                   {navLinkDesktop('/submit', T.nav.submit)}
                   {navLinkDesktop('/profile', T.nav.mypage)}
                   <button

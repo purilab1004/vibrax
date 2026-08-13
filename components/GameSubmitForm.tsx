@@ -25,6 +25,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
   const [language, setLanguage] = useState('ko')
   const [manualFile, setManualFile] = useState<File | null>(null)
   const [playUrl, setPlayUrl] = useState('')
+  const [coinCost, setCoinCost] = useState(1)
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -72,6 +73,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           play_url: playUrl,
           thumbnail_url: publicUrl,
           user_id: userId,
+          coin_cost: Math.max(1, Math.min(100, coinCost)),
         },
       ] as never)
 
@@ -183,6 +185,22 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           className={inputClass}
         />
         <p className="text-xs text-[#4a4337] mt-1">{s.urlHint}</p>
+      </div>
+
+      <div>
+        <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
+          🪙 플레이 비용 (VCOIN)
+        </label>
+        <input
+          type="number"
+          min={1}
+          max={100}
+          value={coinCost}
+          onChange={e => setCoinCost(Number(e.target.value) || 1)}
+          required
+          className={inputClass}
+        />
+        <p className="text-xs text-[#4a4337] mt-1">플레이어가 이 게임을 1회 플레이할 때 지불하는 vcoin 수 (1~100, 기본 1)</p>
       </div>
 
       <div>
