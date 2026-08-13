@@ -206,21 +206,36 @@ export function hasCoinTicket(gameId: string): boolean {
   } catch { return false }
 }
 
-// 클래식 오락실 코인 사운드 — WebAudio 합성 (외부 파일 없음)
+// 단음 헬퍼 — 짧은 감쇠 엔벨로프
+function tone(ctx: AudioContext, type: OscillatorType, freq: number, start: number, dur: number, vol: number) {
+  const o = ctx.createOscillator()
+  const g = ctx.createGain()
+  o.type = type
+  o.frequency.setValueAtTime(freq, start)
+  o.connect(g)
+  g.connect(ctx.destination)
+  g.gain.setValueAtTime(vol, start)
+  g.gain.exponentialRampToValueAtTime(0.001, start + dur)
+  o.start(start)
+  o.stop(start + dur)
+}
+
+// 코인 투입 사운드 — 낙하 '톡' → 착지 '찰그랑'(금속성 2연타) → 클래식 코인 징글
 function playCoinSound() {
   try {
     const ctx = new AudioContext()
-    const o = ctx.createOscillator()
-    const g = ctx.createGain()
-    o.type = 'square'
-    o.connect(g)
-    g.connect(ctx.destination)
-    g.gain.setValueAtTime(0.07, ctx.currentTime)
-    o.frequency.setValueAtTime(987, ctx.currentTime)
-    o.frequency.setValueAtTime(1319, ctx.currentTime + 0.09)
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
-    o.start()
-    o.stop(ctx.currentTime + 0.5)
+    const t = ctx.currentTime
+    // 낙하 시작 '톡'
+    tone(ctx, 'triangle', 740, t + 0.02, 0.06, 0.04)
+    // 착지 '찰' — 고음 금속성
+    tone(ctx, 'triangle', 3136, t + 0.42, 0.12, 0.1)
+    tone(ctx, 'sine', 4699, t + 0.42, 0.08, 0.05)
+    // 되튐 '그랑'
+    tone(ctx, 'triangle', 2637, t + 0.52, 0.18, 0.08)
+    tone(ctx, 'sine', 3951, t + 0.54, 0.12, 0.04)
+    // 클래식 코인 징글 (B5 → E6)
+    tone(ctx, 'square', 987, t + 0.62, 0.09, 0.06)
+    tone(ctx, 'square', 1319, t + 0.7, 0.32, 0.06)
   } catch {}
 }
 
@@ -302,7 +317,8 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
       console.warn('vcoin spend skipped:', error.message)
     }
     try { sessionStorage.setItem(ticketKeyOf(game.id), String(Date.now())) } catch {}
-    setTimeout(() => setCoinState('ready'), 650)
+    // 코인이 슬릿에 들어가고 찰그랑 소리가 끝날 때쯤 READY
+    setTimeout(() => setCoinState('ready'), 900)
   }
 
   const startGame = (e: React.MouseEvent) => {
@@ -445,15 +461,18 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   <div className="relative w-14 h-[70px]">
                     <div className={`w-full h-full rounded-lg bg-gradient-to-b from-[#4a4a4a] to-[#2a2a2a] border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_4px_10px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-2 transition-shadow ${
                       coinState === 'ready' ? 'shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_0_18px_rgba(76,255,106,0.5)]' : ''
-                    }`}>
+                    } ${coinState === 'drop' ? 'slot-clink' : ''}`}>
                       {/* 투입구 슬릿 */}
                       <span className="w-1.5 h-8 rounded-full bg-black shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" />
                       {/* 상태등 — 대기: 빨강, 준비: 초록 */}
                       <span className={`w-2.5 h-2.5 rounded-full ${coinState === 'ready' ? 'bg-[#4cff6a] shadow-[0_0_8px_#4cff6a]' : 'bg-red-500/80 shadow-[0_0_6px_rgba(239,68,68,0.8)] animate-pulse'}`} />
                     </div>
-                    {/* 떨어지는 동전 */}
+                    {/* 골드 코인 — 떨어져서 슬릿 안으로 쏙 들어간다 */}
                     {coinState === 'drop' && (
-                      <span className="coin-drop absolute left-1/2 -translate-x-1/2 -top-8 text-2xl" aria-hidden>🪙</span>
+                      <>
+                        <span className="gold-coin absolute left-1/2 -top-8" aria-hidden />
+                        <span className="slot-spark absolute left-1/2 top-[10px] -translate-x-1/2 text-sm" aria-hidden>✨</span>
+                      </>
                     )}
                   </div>
 

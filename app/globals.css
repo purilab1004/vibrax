@@ -484,14 +484,46 @@ body {
 @keyframes arcadeBlink {
   50% { opacity: 0; }
 }
-.coin-drop {
-  animation: coinDrop 0.6s cubic-bezier(0.4, 0, 0.9, 0.6) both;
+/* 골드 코인 — 금속 질감 디스크가 떨어져 슬릿 앞에서 옆으로 기울며 안으로 들어간다 */
+.gold-coin {
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 30%, #ffe9a8, #f2b436 45%, #c9940c 75%, #8f6a06);
+  box-shadow:
+    inset 0 0 0 2.5px rgba(255, 255, 255, 0.35),
+    inset 0 0 0 5px rgba(143, 106, 6, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+  animation: coinInsert 0.62s cubic-bezier(0.4, 0, 0.75, 0.5) both;
 }
-@keyframes coinDrop {
-  0% { opacity: 1; transform: translate(-50%, 0) rotate(0deg); }
-  70% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, 46px) rotate(120deg) scale(0.45); }
+@keyframes coinInsert {
+  0% { opacity: 0; transform: translateY(-30px) scaleX(1) rotate(-14deg); }
+  14% { opacity: 1; }
+  55% { transform: translateY(42px) scaleX(1) rotate(6deg); }
+  80% { opacity: 1; transform: translateY(54px) scaleX(0.3) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(60px) scaleX(0.08); }
+}
+/* 착지 순간 — 슬롯이 살짝 흔들리며 반응 */
+.slot-clink {
+  animation: slotClink 0.28s ease-in-out 0.4s;
+}
+@keyframes slotClink {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  55% { transform: translateX(2px); }
+  80% { transform: translateX(-1px); }
+}
+/* 슬릿 스파크 — 코인이 들어가는 순간 반짝 */
+.slot-spark {
+  opacity: 0;
+  animation: sparkPop 0.35s ease-out 0.44s both;
+}
+@keyframes sparkPop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.3); }
+  40% { opacity: 1; transform: translateX(-50%) scale(1.25); }
+  100% { opacity: 0; transform: translateX(-50%) scale(0.9) translateY(-6px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .arcade-blink, .coin-drop { animation: none; }
+  .arcade-blink, .gold-coin, .slot-clink, .slot-spark { animation: none; }
 }
