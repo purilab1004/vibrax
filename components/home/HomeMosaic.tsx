@@ -13,6 +13,7 @@ import Reveal from '@/components/Reveal'
 import ViewerIcon from '@/components/ViewerIcon'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
+import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
@@ -85,8 +86,11 @@ function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; gol
       </div>
       {/* 하단 정보 + 아케이드 코인 플로우 */}
       <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-24 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
+        {/* 훅 문구 — 제목은 게임 페이지에서 공개 */}
         <h3 className="text-2xl font-extrabold text-white leading-snug line-clamp-2 pr-14">
-          {game.title}
+          <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">
+            {game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length]}
+          </span>
         </h3>
         <p className="mt-2 flex items-center gap-2 text-[13px] font-semibold text-white/75">
           <span className="w-6 h-6 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 inline-flex items-center justify-center">

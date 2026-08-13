@@ -12,8 +12,8 @@ export default function MobileNav() {
   const pathname = usePathname()
   const { T } = useLang()
 
-  // 관리자 화면에서는 숨김
-  if (pathname.startsWith('/admin')) return null
+  // 관리자·스튜디오 화면에서는 숨김
+  if (pathname.startsWith('/admin') || pathname.startsWith('/studio')) return null
 
   const item = (href: string, label: string, icon: React.ReactNode, active: boolean) => (
     <Link

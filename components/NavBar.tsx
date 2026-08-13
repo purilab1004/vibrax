@@ -123,6 +123,9 @@ export default function NavBar() {
     </button>
   )
 
+  // 스튜디오 — 작업 공간이므로 헤더 없음 (자체 상단 바 사용)
+  if (pathname.startsWith('/studio')) return null
+
   // 관리자 — 큰 메뉴 없이 로고 + 관리자 홈 + 복귀/로그아웃만 있는 미니 헤더 (Notion풍)
   if (pathname.startsWith('/admin')) {
     return (

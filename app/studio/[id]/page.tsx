@@ -8,6 +8,7 @@ import { useLang } from '@/lib/i18n/context'
 import StudioChat, { type ChatMsg } from '@/components/studio/StudioChat'
 import GamePreview from '@/components/studio/GamePreview'
 import PublishModal from '@/components/studio/PublishModal'
+import EditInfoModal from '@/components/studio/EditInfoModal'
 import { parseGeneration, hasGenError, hasOffTopic } from '@/lib/studio/parse'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import type { StudioProject, StudioVersionMeta } from '@/lib/supabase/types'
@@ -29,6 +30,7 @@ export default function StudioComposerPage() {
   const [usage, setUsage] = useState<{ input: number; output: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showPublish, setShowPublish] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
   // 홈 히어로에서 넘어온 첫 프롬프트 자동 전송은 1회만 (StrictMode 이중 실행 가드)
   const autoSentRef = useRef(false)
 
@@ -208,7 +210,7 @@ export default function StudioComposerPage() {
   }
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 3.5rem)' }}>
+    <div className="flex flex-col" style={{ height: '100svh' }}>
       <div className="flex items-center gap-4 border-b border-[#ebe4d6] px-4 py-2 shrink-0">
         <Link
           href="/studio"
@@ -217,6 +219,16 @@ export default function StudioComposerPage() {
           {s.backToStudio}
         </Link>
         <h1 className="text-[#241f17] text-sm truncate">{project.title}</h1>
+        {/* 제목/훅 문구 수정 */}
+        <button
+          onClick={() => setShowEdit(true)}
+          title="게임 정보 수정"
+          className="shrink-0 text-[#9d9280] hover:text-[#2563eb] transition-colors"
+        >
+          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+          </svg>
+        </button>
         <div className="flex-1" />
         <Link
           href="/credits"
@@ -253,6 +265,14 @@ export default function StudioComposerPage() {
           projectId={id}
           defaultTitle={project.title}
           onClose={() => setShowPublish(false)}
+        />
+      )}
+      {showEdit && (
+        <EditInfoModal
+          projectId={id}
+          initialTitle={project.title}
+          onClose={() => setShowEdit(false)}
+          onSaved={t => setProject(p => (p ? { ...p, title: t } : p))}
         />
       )}
     </div>

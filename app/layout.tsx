@@ -4,7 +4,7 @@ import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
 import './globals.css'
 import NavBar from '@/components/NavBar'
 import MobileNav from '@/components/MobileNav'
-import FooterLinks from '@/components/FooterLinks'
+import SiteFooter from '@/components/SiteFooter'
 import Sidebar, { type SidebarChannel } from '@/components/Sidebar'
 import { Suspense } from 'react'
 import { LangProvider } from '@/lib/i18n/context'
@@ -192,10 +192,7 @@ export default async function RootLayout({
             <Sidebar newGenres={newGenres} channels={channels} tournament={tournament} />
           </Suspense>
           <main className="flex-1 md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">{children}</main>
-          {/* 모바일: 하단 내비 높이만큼 푸터에 여유 */}
-          <footer className="border-t border-[#ebe4d6] py-6 px-6 pb-20 md:pb-6 mt-auto md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">
-            <FooterLinks />
-          </footer>
+          <SiteFooter />
           <MobileNav />
         </LangProvider>
       </body>
