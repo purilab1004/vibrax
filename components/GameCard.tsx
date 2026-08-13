@@ -73,23 +73,22 @@ function FluffFigure({ delay, eyesRef }: {
 }) {
   return (
     <g className="critter-bob" style={{ animationDelay: delay }}>
-      {/* 구름 몸통 — 크고 작은 봉우리가 뭉친 비대칭 실루엣 */}
+      {/* 몽실 몸통 — 동글동글 스캘럽 (처음 모양) */}
       <g fill="#ffffff">
-        <circle cx="100" cy="90" r="20" />
-        <circle cx="82" cy="97" r="15" />
-        <circle cx="119" cy="96" r="14" />
-        <circle cx="69" cy="104" r="10" />
-        <circle cx="131" cy="103" r="9" />
-        <ellipse cx="100" cy="104" rx="33" ry="12" />
+        {Array.from({ length: 10 }, (_, i) => {
+          const a = (i / 10) * Math.PI * 2
+          return <circle key={i} cx={100 + Math.cos(a) * 23} cy={96 + Math.sin(a) * 23} r="10.5" />
+        })}
+        <circle cx="100" cy="96" r="25" />
       </g>
       {/* 작은 검정 눈 — 마우스를 따라 움직인다 */}
       <g ref={eyesRef} className="transition-transform duration-75">
-        <circle cx="93" cy="92" r="2.7" fill="#161616" />
-        <circle cx="107" cy="92" r="2.7" fill="#161616" />
+        <circle cx="92.5" cy="93" r="2.7" fill="#161616" />
+        <circle cx="107.5" cy="93" r="2.7" fill="#161616" />
       </g>
       {/* 활짝 연 입 + 혀 */}
-      <path d="M94.5 99a5.5 5.5 0 0 0 11 0Z" fill="#161616" />
-      <path d="M97.3 102.8a3.2 3.2 0 0 0 5.4 0c-.8-1.6-4.6-1.6-5.4 0Z" fill="#ff8e8e" />
+      <path d="M94.5 100a5.5 5.5 0 0 0 11 0Z" fill="#161616" />
+      <path d="M97.3 103.8a3.2 3.2 0 0 0 5.4 0c-.8-1.6-4.6-1.6-5.4 0Z" fill="#ff8e8e" />
     </g>
   )
 }
@@ -100,10 +99,11 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
 
-  // 광량 — 0뷰: 은은, 800뷰+: 최대 (카드 색이 달라 보일 정도)
+  // 광량 — 0뷰: 은은한 흰 빛, 800뷰+: 최대. 인기가 오를수록 금빛으로 물든다
   const t = Math.min(views / 800, 1)
-  const glowOpacity = 0.32 + t * 0.55
-  const glowR = 58 + t * 52
+  const glowOpacity = 0.32 + t * 0.58
+  const glowR = 58 + t * 54
+  const glowColor = `rgb(255, ${Math.round(255 - t * 40)}, ${Math.round(255 - t * 145)})`
   const gid = `halo-${hashOf(id).toString(36)}`
 
   // 눈동자가 마우스를 따라간다 — rAF로 스로틀
@@ -138,8 +138,8 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
       <defs>
         <radialGradient id={gid} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity={glowOpacity} />
-          <stop offset="45%" stopColor="#ffffff" stopOpacity={glowOpacity * 0.5} />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="45%" stopColor={glowColor} stopOpacity={glowOpacity * 0.55} />
+          <stop offset="100%" stopColor={glowColor} stopOpacity="0" />
         </radialGradient>
       </defs>
       {/* 광휘 — 숨쉬듯 맥동하는 빛. 인기 게임일수록 크고 밝다 */}
