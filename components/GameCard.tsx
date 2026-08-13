@@ -76,15 +76,17 @@ function FluffFigure({ delay, eyesRef }: {
 }) {
   return (
     <g className="critter-bob" style={{ animationDelay: delay }}>
-      {/* 머리 위 야자수 — 로고와 같은 줄기/잎 5장, 살랑살랑 */}
-      <g className="critter-sprout" style={{ transformOrigin: '100px 69px' }}>
-        <path d="M97 69c.9-9 2.6-16 6.9-22" stroke="#8a5a2b" strokeWidth="4.2" strokeLinecap="round" fill="none" />
-        <g fill="none" stroke="#39b36b" strokeWidth="4.4" strokeLinecap="round">
-          <path d="M104 47c-7-4.8-14-5.2-19.8-2.2" />
-          <path d="M104 47c-2.2-7.4-6.6-12.3-12.3-14.5" />
-          <path d="M104 47c3-7 8.3-11 14.5-11.8" />
-          <path d="M104 47c7.4-3 14.5-1.7 19.3 2.2" />
-          <path d="M104 47c5.7 1.3 10 5.2 12.3 11" />
+      {/* 머리 위 야자수 — 로고와 같은 줄기/잎 5장, 작게 살랑살랑 */}
+      <g transform="translate(100 69) scale(0.62) translate(-100 -69)">
+        <g className="critter-sprout" style={{ transformOrigin: '100px 69px' }}>
+          <path d="M97 69c.9-9 2.6-16 6.9-22" stroke="#8a5a2b" strokeWidth="4.2" strokeLinecap="round" fill="none" />
+          <g fill="none" stroke="#39b36b" strokeWidth="4.4" strokeLinecap="round">
+            <path d="M104 47c-7-4.8-14-5.2-19.8-2.2" />
+            <path d="M104 47c-2.2-7.4-6.6-12.3-12.3-14.5" />
+            <path d="M104 47c3-7 8.3-11 14.5-11.8" />
+            <path d="M104 47c7.4-3 14.5-1.7 19.3 2.2" />
+            <path d="M104 47c5.7 1.3 10 5.2 12.3 11" />
+          </g>
         </g>
       </g>
       {/* 동그란 몸통 — 말랑 스퀴시 */}
