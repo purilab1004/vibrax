@@ -3,13 +3,13 @@
 import { useEffect, useState, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-// 스튜디오 — 게임 제목/카드 훅 문구 수정 모달.
-// 게시된 게임(games.studio_project_id)이 있으면 게임 제목·훅 문구도 함께 갱신한다.
+// 스튜디오 — 게임 제목/질문(훅 문구) 수정 모달.
+// 질문은 게시 전엔 프로젝트에, 게시 후엔 게임에 저장한다 (게시 시점에 게임으로 이어짐).
 export default function EditInfoModal({ projectId, initialTitle, onClose, onSaved }: {
   projectId: string
   initialTitle: string
   onClose: () => void
-  onSaved: (title: string) => void
+  onSaved: (title: string, teaser?: string | null) => void
 }) {
   const supabase = createClient()
   const [title, setTitle] = useState(initialTitle)
@@ -19,6 +19,7 @@ export default function EditInfoModal({ projectId, initialTitle, onClose, onSave
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
+    // 게시된 게임이 있으면 게임의 제목/질문을 우선 로드, 없으면 프로젝트 저장분
     supabase.from('games').select('id, title, teaser').eq('studio_project_id', projectId).maybeSingle()
       .then(({ data }) => {
         const g = data as { id: string; title: string; teaser?: string | null } | null
@@ -26,24 +27,36 @@ export default function EditInfoModal({ projectId, initialTitle, onClose, onSave
           setGameId(g.id)
           setTitle(g.title)
           setTeaser(g.teaser ?? '')
+          return
         }
+        supabase.from('studio_projects').select('teaser').eq('id', projectId).maybeSingle()
+          .then(({ data: pr }) => {
+            const t = (pr as { teaser?: string | null } | null)?.teaser
+            if (t) setTeaser(t)
+          })
       })
   }, [projectId])
 
   const save = () => {
     const t = title.trim()
+    const tz = teaser.trim() || null
     if (!t) { setError('제목을 입력해주세요'); return }
     setError(null)
     startTransition(async () => {
-      const { error: e1 } = await supabase.from('studio_projects').update({ title: t } as never).eq('id', projectId)
+      // 프로젝트 갱신 — teaser 컬럼 마이그레이션 전이면 제목만 재시도
+      let { error: e1 } = await supabase.from('studio_projects')
+        .update({ title: t, teaser: tz } as never).eq('id', projectId)
+      if (e1?.message.includes('teaser')) {
+        ;({ error: e1 } = await supabase.from('studio_projects').update({ title: t } as never).eq('id', projectId))
+      }
       if (e1) { setError(e1.message); return }
       if (gameId) {
         const { error: e2 } = await supabase.from('games')
-          .update({ title: t, teaser: teaser.trim() || null } as never)
+          .update({ title: t, teaser: tz } as never)
           .eq('id', gameId)
         if (e2 && !e2.message.includes('teaser')) { setError(e2.message); return }
       }
-      onSaved(t)
+      onSaved(t, tz)
       onClose()
     })
   }
@@ -62,22 +75,18 @@ export default function EditInfoModal({ projectId, initialTitle, onClose, onSave
             <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">제목</label>
             <input className={inputClass} value={title} maxLength={60} onChange={e => setTitle(e.target.value)} />
           </div>
-          {gameId ? (
-            <div>
-              <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">
-                카드 훅 문구 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(카드 앞면에 표시 — 비워두면 기본 문구)</span>
-              </label>
-              <input
-                className={inputClass}
-                maxLength={40}
-                placeholder="예: 멈추면 죽는다 / 왕좌를 뺏어라"
-                value={teaser}
-                onChange={e => setTeaser(e.target.value)}
-              />
-            </div>
-          ) : (
-            <p className="text-[12px] text-[#9d9280]">카드 훅 문구는 게임을 게시한 뒤에 수정할 수 있어요.</p>
-          )}
+          <div>
+            <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">
+              질문 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(카드 앞면 훅 문구 — 비워두면 기본 문구)</span>
+            </label>
+            <input
+              className={inputClass}
+              maxLength={40}
+              placeholder="예: 멈추면 죽는다 / 왕좌를 뺏어라"
+              value={teaser}
+              onChange={e => setTeaser(e.target.value)}
+            />
+          </div>
           {error && (
             <p className="text-red-600 text-xs border border-red-200 bg-red-50 rounded-lg px-3 py-2">{error}</p>
           )}

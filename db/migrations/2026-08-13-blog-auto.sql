@@ -7,3 +7,6 @@ alter table public.blog_posts add column if not exists game_id uuid references p
 
 -- 3) 카드 훅 문구 영문판 (EN 모드에서 표시)
 alter table public.games add column if not exists teaser_en text;
+
+-- 4) 게시 전 프로젝트에도 질문(훅 문구) 저장
+alter table public.studio_projects add column if not exists teaser text;

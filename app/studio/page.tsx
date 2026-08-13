@@ -13,6 +13,8 @@ export default function StudioPage() {
   const [projects, setProjects] = useState<StudioProject[] | null>(null)
   const [editing, setEditing] = useState<StudioProject | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  // 프로젝트별 질문(훅 문구) — 게시된 게임의 teaser 우선, 없으면 프로젝트 저장분
+  const [teasers, setTeasers] = useState<Record<string, string | null>>({})
 
   // 프로젝트 삭제 — 퍼블리싱된 게임이 있으면 게임까지 함께 삭제 (안내 후)
   const deleteProject = async (p: StudioProject) => {
@@ -78,6 +80,19 @@ export default function StudioPage() {
         .from('studio_projects')
         .select('*')
         .order('created_at', { ascending: false })
+      // 게시된 게임의 훅 문구 로드 — 프로젝트 자체 저장분과 병합
+      if (data && (data as StudioProject[]).length > 0) {
+        const rows = data as (StudioProject & { teaser?: string | null })[]
+        const map: Record<string, string | null> = {}
+        for (const r of rows) map[r.id] = r.teaser ?? null
+        const ids = rows.map(r => r.id)
+        const { data: gameRows } = await supabase
+          .from('games').select('studio_project_id, teaser').in('studio_project_id', ids)
+        for (const g of (gameRows as { studio_project_id: string; teaser: string | null }[] | null) ?? []) {
+          if (g.teaser) map[g.studio_project_id] = g.teaser
+        }
+        setTeasers(map)
+      }
       if (listError) {
         console.error('[studio]', listError)
         setLoadError(true)
@@ -169,8 +184,13 @@ export default function StudioPage() {
               className="border border-[#ebe4d6] bg-[#ffffff] p-5 hover:border-[#2563eb] transition-colors flex flex-col gap-4"
             >
               <Link href={`/studio/${p.id}`} className="block min-w-0">
-                <h2 className="text-[#241f17] text-sm font-semibold truncate mb-1.5">{p.title || s.untitled}</h2>
-                <span className="text-[11px] text-[#9d9280]">
+                <p className="font-pixel text-[9px] text-[#9d9280] tracking-widest mb-1">제목</p>
+                <h2 className="text-[#241f17] text-sm font-semibold truncate">{p.title || s.untitled}</h2>
+                <p className="font-pixel text-[9px] text-[#9d9280] tracking-widest mt-2.5 mb-1">질문</p>
+                <p className="text-[13px] text-[#2563eb] truncate">
+                  {teasers[p.id] ? `❝ ${teasers[p.id]} ❞` : '— 수정에서 추가하세요'}
+                </p>
+                <span className="block mt-2 text-[11px] text-[#9d9280]">
                   {new Date(p.created_at).toLocaleDateString()}
                 </span>
               </Link>
@@ -205,7 +225,10 @@ export default function StudioPage() {
           projectId={editing.id}
           initialTitle={editing.title || ''}
           onClose={() => setEditing(null)}
-          onSaved={t => setProjects(prev => prev ? prev.map(x => x.id === editing.id ? { ...x, title: t } : x) : prev)}
+          onSaved={(t, tz) => {
+            setProjects(prev => prev ? prev.map(x => x.id === editing.id ? { ...x, title: t } : x) : prev)
+            setTeasers(prev => ({ ...prev, [editing.id]: tz ?? null }))
+          }}
         />
       )}
     </div>

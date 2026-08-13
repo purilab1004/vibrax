@@ -88,10 +88,13 @@ export default function PublishModal({
         return
       }
       const { data: { publicUrl } } = supabase.storage.from('thumbnails').getPublicUrl(path)
-      // 카드 앞면 훅 문구 — AI가 한/영 생성 (실패 시 null → 기본 문구 폴백)
+      // 카드 앞면 훅 문구 — 프로젝트에 저장한 질문 우선, 없으면 AI가 한/영 생성
       let teaser: string | null = null
       let teaserEn: string | null = null
-      try {
+      const { data: projRow, error: projErr } = await supabase
+        .from('studio_projects').select('teaser').eq('id', projectId).maybeSingle()
+      if (!projErr) teaser = (projRow as { teaser?: string | null } | null)?.teaser ?? null
+      if (!teaser) try {
         const r = await fetch('/api/teaser', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
