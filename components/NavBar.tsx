@@ -16,6 +16,7 @@ export default function NavBar() {
   const [query, setQuery] = useState('')
   const [scrolled, setScrolled] = useState(false)
   const [vcoin, setVcoin] = useState<number | null>(null)
+  const [hideMobile, setHideMobile] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -32,13 +33,17 @@ export default function NavBar() {
   // Close menu on route change
   useEffect(() => { setMenuOpen(false) }, [pathname])
 
-  // 상단에서는 투명, 스크롤하면 유리(글래스) 배경
+  // 상단에서는 투명, 스크롤하면 유리(글래스) 배경.
+  // 모바일 홈: 쇼츠 피드로 넘어가면(히어로를 지나면) 헤더 숨김
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8)
+    const onScroll = () => {
+      setScrolled(window.scrollY > 8)
+      setHideMobile(pathname === '/' && window.scrollY > window.innerHeight * 0.6)
+    }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [pathname])
 
   // 관리자 링크는 user 블록 안에서만 렌더되므로 로그아웃 시 초기화가 필요 없다
   useEffect(() => {
@@ -163,9 +168,9 @@ export default function NavBar() {
     <>
       {/* 상단: 투명(첫 섹션 배경이 뒤로 지나감) → 스크롤: 유리 배경 */}
       <header
-        className={`sticky top-0 z-50 md:pl-[var(--rail-w,0rem)] transition-[padding,background-color,box-shadow,backdrop-filter] duration-200 ${
+        className={`sticky top-0 z-50 md:pl-[var(--rail-w,0rem)] transition-[padding,background-color,box-shadow,backdrop-filter,transform] duration-200 ${
           scrolled || pathname !== '/' ? 'bg-white/55 backdrop-blur-xl' : ''
-        }`}
+        } ${hideMobile ? '-translate-y-full md:translate-y-0' : ''}`}
       >
         <nav className="w-full px-5 h-14 flex items-center gap-4">
           {/* 데스크톱은 사이드바 상단에 로고가 있으므로 모바일에서만 표시 */}
