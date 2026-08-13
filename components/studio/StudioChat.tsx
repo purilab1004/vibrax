@@ -6,6 +6,7 @@ import { useLang } from '@/lib/i18n/context'
 export interface ChatMsg {
   role: 'user' | 'assistant'
   content: string
+  images?: string[]  // 첨부 이미지 미리보기 URL (낙관적 표시용, 미저장)
 }
 
 export default function StudioChat({
@@ -15,10 +16,32 @@ export default function StudioChat({
   streaming: { description: string; htmlBytes: number; codeTail: string } | null
   usage?: { input: number; output: number } | null
   error: string | null
-  onSend: (prompt: string) => void
+  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[]) => void
   busy: boolean
 }) {
   const [input, setInput] = useState('')
+  // 첨부 이미지 — 레퍼런스를 보여주면 AI가 보고 만든다 (최대 3장, 각 5MB)
+  const [attachments, setAttachments] = useState<{ media_type: string; data: string; previewUrl: string }[]>([])
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const addFiles = (files: FileList | null) => {
+    if (!files) return
+    Array.from(files).slice(0, 3).forEach(file => {
+      if (!file.type.startsWith('image/')) return
+      if (file.size > 5 * 1024 * 1024) { alert('이미지는 5MB 이하만 첨부할 수 있어요.'); return }
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = reader.result as string
+        const base64 = dataUrl.split(',')[1]
+        setAttachments(prev => prev.length >= 3 ? prev : [...prev, {
+          media_type: file.type,
+          data: base64,
+          previewUrl: URL.createObjectURL(file),
+        }])
+      }
+      reader.readAsDataURL(file)
+    })
+  }
   const listRef = useRef<HTMLDivElement>(null)
   const { T } = useLang()
   const s = T.studio
@@ -44,7 +67,9 @@ export default function StudioChat({
     const p = input.trim()
     if (!p || busy) return
     setInput('')
-    onSend(p)
+    const imgs = attachments
+    setAttachments([])
+    onSend(p, imgs.length > 0 ? imgs : undefined)
   }
 
   return (
@@ -65,6 +90,14 @@ export default function StudioChat({
                   : 'bg-[#ffffff] border border-[#ebe4d6] text-[#3a332a]'
               }`}
             >
+              {m.images && m.images.length > 0 && (
+                <div className="flex gap-1.5 mb-2">
+                  {m.images.map((src, j) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={j} src={src} alt="첨부 이미지" className="w-16 h-16 object-cover rounded-lg border border-[#2563eb]/30" />
+                  ))}
+                </div>
+              )}
               {m.content}
             </div>
           </div>
@@ -136,8 +169,40 @@ export default function StudioChat({
             placeholder={s.chatPlaceholder}
             className="w-full bg-transparent px-4 pt-3.5 pb-1 text-sm text-[#241f17] placeholder-[#a1957f] outline-none resize-none"
           />
+          {/* 첨부 이미지 미리보기 */}
+          {attachments.length > 0 && (
+            <div className="flex gap-2 px-4 pb-1">
+              {attachments.map((a, i) => (
+                <div key={i} className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={a.previewUrl} alt="첨부 이미지" className="w-14 h-14 object-cover rounded-lg border border-[#ebe4d6]" />
+                  <button
+                    type="button"
+                    onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#241f17] text-white text-[10px] flex items-center justify-center"
+                    aria-label="첨부 제거"
+                  >✕</button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-center justify-between px-3 pb-2.5">
-            <p className="text-[11px] text-[#9d9280]">{s.costNote}</p>
+            <div className="flex items-center gap-2">
+              {/* 이미지 첨부 */}
+              <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={e => { addFiles(e.target.files); e.target.value = '' }} />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={attachments.length >= 3}
+                title="이미지 첨부 (레퍼런스를 보여주면 AI가 보고 만들어요)"
+                className="w-8 h-8 rounded-full border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] flex items-center justify-center transition-colors disabled:opacity-40"
+              >
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.5" /><path d="m21 15-4.5-4.5L9 18" />
+                </svg>
+              </button>
+              <p className="text-[11px] text-[#9d9280]">{s.costNote}</p>
+            </div>
             <button
               type="submit"
               disabled={busy || !input.trim()}

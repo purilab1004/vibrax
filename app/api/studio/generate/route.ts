@@ -14,7 +14,15 @@ export async function POST(req: Request) {
   } catch {
     return new Response('bad request', { status: 400 })
   }
-  const { projectId, prompt } = (body ?? {}) as { projectId?: unknown; prompt?: unknown }
+  const { projectId, prompt, images: rawImages } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown }
+  // 첨부 이미지 — 최대 3장, jpeg/png/webp/gif, 각 5MB(base64 ~7M자) 이내
+  const ALLOWED_MEDIA = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  const images = (Array.isArray(rawImages) ? rawImages : [])
+    .filter((i): i is { media_type: string; data: string } =>
+      !!i && typeof i.media_type === 'string' && ALLOWED_MEDIA.includes(i.media_type) &&
+      typeof i.data === 'string' && i.data.length > 0 && i.data.length < 7_000_000)
+    .slice(0, 3)
+
   if (typeof projectId !== 'string' || typeof prompt !== 'string' || !projectId || !prompt.trim()) {
     return new Response('bad request', { status: 400 })
   }
@@ -94,7 +102,7 @@ export async function POST(req: Request) {
       model: 'claude-sonnet-5',
       max_tokens: 64000,
       system: SYSTEM_PROMPT,
-      messages: buildMessages({ prompt, currentHtml: latest?.html ?? null, history }),
+      messages: buildMessages({ prompt, currentHtml: latest?.html ?? null, history, images }) as never,
     })
   } catch (e) {
     await refund()

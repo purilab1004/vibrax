@@ -85,9 +85,9 @@ export default function StudioComposerPage() {
     }
   }
 
-  const send = async (prompt: string) => {
+  const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[]) => {
     setError(null)
-    setMessages(m => [...m, { role: 'user', content: prompt }])
+    setMessages(m => [...m, { role: 'user', content: prompt, images: images?.map(i => i.previewUrl) }])
     // 낙관적 user 메시지가 아직 롤백 대상인지 추적 (성공/GEN_ERROR 처리 후에는 롤백 금지)
     let optimisticPending = true
     setStreaming({ description: '', htmlBytes: 0, codeTail: '' })
@@ -96,7 +96,11 @@ export default function StudioComposerPage() {
       const res = await fetch('/api/studio/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: id, prompt }),
+        body: JSON.stringify({
+          projectId: id,
+          prompt,
+          images: images?.map(i => ({ media_type: i.media_type, data: i.data })),
+        }),
       })
 
       if (res.status === 402) {

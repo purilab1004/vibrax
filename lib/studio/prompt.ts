@@ -16,11 +16,23 @@ export interface ChatTurn {
   content: string
 }
 
+export interface PromptImage {
+  media_type: string
+  data: string  // base64 (data: 접두어 없이)
+}
+
+// Anthropic 메시지 파라미터 — 마지막 user 턴은 이미지 블록을 포함할 수 있다
+export type BuiltMessage = {
+  role: 'user' | 'assistant'
+  content: string | ({ type: 'text'; text: string } | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } })[]
+}
+
 export function buildMessages(opts: {
   prompt: string
   currentHtml: string | null
   history: ChatTurn[]
-}): ChatTurn[] {
+  images?: PromptImage[]
+}): BuiltMessage[] {
   // 최근 6턴만, 역할 교대 강제 (기존 app/api/user-agent/chat 패턴)
   const sanitized: ChatTurn[] = []
   for (const m of opts.history.slice(-6)) {
@@ -36,5 +48,23 @@ export function buildMessages(opts: {
   const parts: string[] = []
   if (opts.currentHtml) parts.push(`현재 게임 HTML:\n<game>${opts.currentHtml}</game>`)
   parts.push(`요청: ${opts.prompt}`)
-  return [...sanitized, { role: 'user', content: parts.join('\n\n') }]
+  const text = parts.join('\n\n')
+
+  // 이미지가 있으면 비전 블록으로 — 레퍼런스 이미지를 보고 게임을 만든다
+  if (opts.images && opts.images.length > 0) {
+    return [
+      ...sanitized,
+      {
+        role: 'user',
+        content: [
+          ...opts.images.map(img => ({
+            type: 'image' as const,
+            source: { type: 'base64' as const, media_type: img.media_type, data: img.data },
+          })),
+          { type: 'text' as const, text },
+        ],
+      },
+    ]
+  }
+  return [...sanitized, { role: 'user', content: text }]
 }
