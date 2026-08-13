@@ -120,28 +120,36 @@ export default function StudioChat({
           </p>
         )}
       </div>
-      <form onSubmit={submit} className="border-t border-[#ebe4d6] p-3">
-        <textarea
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              submit(e)
-            }
-          }}
-          rows={3}
-          placeholder={s.chatPlaceholder}
-          className="w-full bg-[#ffffff] border border-[#ebe4d6] focus:border-[#2563eb] px-3.5 py-3 text-sm text-[#241f17] placeholder-[#a1957f] outline-none transition-colors resize-none rounded-lg"
-        />
-        <button
-          type="submit"
-          disabled={busy || !input.trim()}
-          className="w-full mt-2 bg-[#2563eb] text-white text-sm font-semibold py-3 rounded-lg hover:bg-[#1d4ed8] transition-colors disabled:opacity-40"
-        >
-          {s.send}
-        </button>
-        <p className="text-[11px] text-[#9d9280] mt-2">{s.costNote}</p>
+      {/* 클로드 스타일 플로팅 입력 카드 — 둥근 카드가 하단에 떠 있고 전송 버튼은 안쪽 우하단 */}
+      <form onSubmit={submit} className="px-4 pb-4 pt-1 shrink-0">
+        <div className="rounded-2xl bg-white border border-[#ddd3bf] focus-within:border-[#2563eb] shadow-[0_8px_28px_rgba(36,31,23,0.1)] focus-within:shadow-[0_10px_32px_rgba(37,99,235,0.16)] transition-all overflow-hidden">
+          <textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                submit(e)
+              }
+            }}
+            rows={3}
+            placeholder={s.chatPlaceholder}
+            className="w-full bg-transparent px-4 pt-3.5 pb-1 text-sm text-[#241f17] placeholder-[#a1957f] outline-none resize-none"
+          />
+          <div className="flex items-center justify-between px-3 pb-2.5">
+            <p className="text-[11px] text-[#9d9280]">{s.costNote}</p>
+            <button
+              type="submit"
+              disabled={busy || !input.trim()}
+              aria-label={s.send}
+              className="w-9 h-9 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-30"
+            >
+              <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   )
