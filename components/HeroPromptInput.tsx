@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLang } from '@/lib/i18n/context'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
@@ -8,8 +8,40 @@ import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 // 프롬프트 카드 — 그라디언트 보더 + 멀티라인 입력 + 카드 안 하단 바(예시 칩 / BUILD 버튼)
 export default function HeroPromptInput() {
   const [value, setValue] = useState('')
+  const [focused, setFocused] = useState(false)
+  // 아무것도 안 치고 있으면 예시 프롬프트가 자동 타이핑된다 (포커스하면 사라지고 새로 입력)
+  const [ghost, setGhost] = useState('')
   const router = useRouter()
-  const { T } = useLang()
+  const { T, lang } = useLang()
+
+  useEffect(() => {
+    if (focused || value) {
+      setGhost('')
+      return
+    }
+    const examples = T.hero.chips.map(c => {
+      const body = c.replace(/^\S+\s/, '')
+      return lang === 'ko' ? `${body} 게임 만들어줘` : `Make me ${body.toLowerCase()}`
+    })
+    let ex = 0
+    let ch = 0
+    let hold = 0
+    const id = setInterval(() => {
+      const target = examples[ex]
+      if (ch < target.length) {
+        ch++
+        setGhost(target.slice(0, ch))
+      } else if (hold < 20) {
+        hold++
+      } else {
+        ex = (ex + 1) % examples.length
+        ch = 0
+        hold = 0
+        setGhost('')
+      }
+    }, 80)
+    return () => clearInterval(id)
+  }, [focused, value, lang, T])
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,20 +57,31 @@ export default function HeroPromptInput() {
     <form onSubmit={submit} className="w-full max-w-2xl">
       <div className="prompt-ring rounded-2xl p-[1.5px] shadow-[0_12px_40px_rgba(37,99,235,0.16)] focus-within:shadow-[0_16px_52px_rgba(37,99,235,0.28)] transition-shadow">
         <div className="rounded-[14.5px] bg-white overflow-hidden">
-          <textarea
-            value={value}
-            onChange={e => setValue(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                submit(e)
-              }
-            }}
-            rows={3}
-            placeholder={T.hero.promptPlaceholder}
-            aria-label={T.hero.promptPlaceholder}
-            className="w-full resize-none bg-transparent px-5 pt-4 pb-1 text-sm md:text-base text-[#241f17] placeholder-[#a1957f] outline-none text-left"
-          />
+          <div className="relative">
+            {/* 자동 타이핑 고스트 — 입력 전까지만 보인다 */}
+            {ghost && !value && !focused && (
+              <div className="pointer-events-none absolute inset-x-0 top-0 px-5 pt-4 text-sm md:text-base text-[#a1957f] text-left whitespace-pre-wrap" aria-hidden>
+                {ghost}
+                <span className="inline-block w-[2px] h-[1em] bg-[#2563eb] ml-0.5 align-middle animate-pulse" />
+              </div>
+            )}
+            <textarea
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  submit(e)
+                }
+              }}
+              rows={3}
+              placeholder={ghost ? '' : T.hero.promptPlaceholder}
+              aria-label={T.hero.promptPlaceholder}
+              className="w-full resize-none bg-transparent px-5 pt-4 pb-1 text-sm md:text-base text-[#241f17] placeholder-[#a1957f] outline-none text-left"
+            />
+          </div>
           <div className="flex items-center justify-end px-3 pb-3">
             {/* linearity 스타일 필 버튼 — 흰 갭 + 헤일로 링 + 글로우 */}
             <button
