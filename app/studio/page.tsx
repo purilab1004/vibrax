@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import EditInfoModal from '@/components/studio/EditInfoModal'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
@@ -10,6 +11,7 @@ import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 
 export default function StudioPage() {
   const [projects, setProjects] = useState<StudioProject[] | null>(null)
+  const [editing, setEditing] = useState<StudioProject | null>(null)
   const [balance, setBalance] = useState<number | null>(null)
   const [creating, setCreating] = useState(false)
   const [loadError, setLoadError] = useState(false)
@@ -144,7 +146,19 @@ export default function StudioPage() {
               href={`/studio/${p.id}`}
               className="border border-[#ebe4d6] bg-[#ffffff] p-5 hover:border-[#2563eb] transition-colors group"
             >
-              <h2 className="text-[#241f17] text-sm mb-2 truncate">{p.title || s.untitled}</h2>
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-[#241f17] text-sm truncate flex-1">{p.title || s.untitled}</h2>
+                {/* 제목/훅 문구 수정 */}
+                <button
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); setEditing(p) }}
+                  title="게임 정보 수정"
+                  className="shrink-0 text-[#9d9280] hover:text-[#2563eb] transition-colors"
+                >
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                  </svg>
+                </button>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-[#9d9280]">
                   {new Date(p.created_at).toLocaleDateString()}
@@ -156,6 +170,14 @@ export default function StudioPage() {
             </Link>
           ))}
         </div>
+      )}
+      {editing && (
+        <EditInfoModal
+          projectId={editing.id}
+          initialTitle={editing.title || ''}
+          onClose={() => setEditing(null)}
+          onSaved={t => setProjects(prev => prev ? prev.map(x => x.id === editing.id ? { ...x, title: t } : x) : prev)}
+        />
       )}
     </div>
   )
