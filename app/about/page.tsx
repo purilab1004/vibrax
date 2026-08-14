@@ -155,7 +155,19 @@ export default function AboutPage() {
 
       {/* ── 3 PHASE 한눈에 — 상세로 들어가기 전 요약 스트립 ── */}
       <section className="max-w-6xl mx-auto px-6 pb-20">
-        <Reveal>
+        <Reveal className="text-center mb-12">
+          <p className="font-serif italic text-xl md:text-2xl text-[#F05A28] mb-3">
+            {ko ? 'How it works' : 'How it works'}
+          </p>
+          <h2 className="text-3xl md:text-5xl font-extrabold text-[#241f17] leading-[1.25]">
+            {ko ? (
+              <>추억을 <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">프롬프트</span>로 되살리다.<br />그리고 즐겨라.</>
+            ) : (
+              <>Bring memories back with a <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">prompt</span>.<br />Then enjoy the ride.</>
+            )}
+          </h2>
+        </Reveal>
+        <Reveal delay={120}>
           <div className="grid md:grid-cols-3 border-t border-l border-[#ddd3bf]">
             {phases.map((p, i) => (
               <a
