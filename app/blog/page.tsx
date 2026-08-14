@@ -71,13 +71,18 @@ export default async function BlogPage({ searchParams }: {
       {posts.length === 0 ? (
         <p className="text-[#857a68] text-base py-20 text-center">아직 글이 없습니다.</p>
       ) : (
-        /* 에디토리얼 그리드 — 헤어라인 경계선, 셀마다 카테고리/날짜 → 이미지 → 제목—발췌 */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t border-l border-[#ddd3bf]">
-          {posts.map(p => (
+        /* 에디토리얼 그리드 — 큰 칸/작은 칸이 섞인 헤어라인 레이아웃 (6개 주기 패턴) */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-t border-l border-[#ddd3bf]">
+          {posts.map((p, i) => {
+            // 패턴: [넓게, 좁게, 좁게, 좁게, 좁게, 넓게] — 4열 기준 2행마다 리듬이 반복된다
+            const big = i % 6 === 0 || i % 6 === 5
+            return (
             <Link
               key={p.id}
               href={`/blog/${p.id}`}
-              className="group border-b border-r border-[#ddd3bf] p-6 flex flex-col hover:bg-white transition-colors"
+              className={`group border-b border-r border-[#ddd3bf] flex flex-col hover:bg-white transition-colors ${
+                big ? 'md:col-span-2 p-7' : 'p-6'
+              }`}
             >
               {/* 상단 — 카테고리 라벨 · 날짜 */}
               <div className="flex items-baseline justify-between mb-5">
@@ -86,28 +91,31 @@ export default async function BlogPage({ searchParams }: {
                 </span>
                 <span className="text-[13px] text-[#857a68] tabular-nums">{fmtDate(p.published_at)}</span>
               </div>
-              {/* 이미지 */}
+              {/* 이미지 — 큰 칸은 와이드, 작은 칸은 4:3 */}
               {p.thumbnail_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={p.thumbnail_url}
                   alt=""
-                  className="w-full aspect-[4/3] object-cover mb-5 grayscale-[15%] group-hover:grayscale-0 transition-[filter] duration-300"
+                  className={`w-full object-cover mb-5 grayscale-[15%] group-hover:grayscale-0 transition-[filter] duration-300 ${
+                    big ? 'aspect-[16/8]' : 'aspect-[4/3]'
+                  }`}
                 />
               ) : (
-                <div className="w-full aspect-[4/3] mb-5 bg-[#f5efe3] flex items-center justify-center">
+                <div className={`w-full mb-5 bg-[#f5efe3] flex items-center justify-center ${big ? 'aspect-[16/8]' : 'aspect-[4/3]'}`}>
                   <span className="font-pixel text-[#2563eb]/20 text-xs">VIBREX<span className="text-[#c9940c]/20">CUP</span></span>
                 </div>
               )}
-              {/* 제목 — 발췌가 한 문장처럼 이어진다 */}
-              <p className="text-[15px] leading-relaxed text-[#4a4337]">
+              {/* 제목 — 발췌가 한 문장처럼 이어진다. 큰 칸은 타이포도 크게 */}
+              <p className={`leading-relaxed text-[#4a4337] ${big ? 'text-[17px] max-w-2xl' : 'text-[15px]'}`}>
                 <span className="font-bold text-[#241f17] group-hover:underline decoration-[#2563eb] decoration-2 underline-offset-4">
                   {p.title}
                 </span>
                 {p.excerpt && <> — <span className="line-clamp-3 inline">{p.excerpt}</span></>}
               </p>
             </Link>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
