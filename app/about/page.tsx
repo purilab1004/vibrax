@@ -347,7 +347,7 @@ function AboutScene({ variant }: { variant: number }) {
             <path d="M86 84q14 13 28 0" stroke="#161616" strokeWidth="4" strokeLinecap="round" fill="none" />
           </g>
           {/* 하늘에서 쏟아지는 동전들 — 점토이 주변으로 떨어져 쌓인다 */}
-          {([['-46px', '118px', '0s', 54], ['-16px', '128px', '0.4s', 88], ['14px', '124px', '0.8s', 118], ['42px', '112px', '1.2s', 148], ['-32px', '132px', '1.5s', 70], ['30px', '130px', '0.2s', 134]] as const).map(([fx, fy, d, sx], i) => (
+          {([['-8px', '118px', '0s', 54], ['5px', '128px', '0.4s', 88], ['-6px', '124px', '0.8s', 118], ['8px', '112px', '1.2s', 148], ['4px', '132px', '1.5s', 70], ['-5px', '130px', '0.2s', 134]] as const).map(([fx, fy, d, sx], i) => (
             <g key={i} className="coin-flow" style={{ ['--fx' as string]: fx, ['--fy' as string]: fy, animationDelay: d }}>
               <circle cx={sx} cy="26" r="8" fill="#F2B436" stroke="#b3830a" strokeWidth="2.5" />
               <circle cx={sx} cy="26" r="4" fill="none" stroke="#b3830a" strokeWidth="1.6" />
