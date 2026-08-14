@@ -203,7 +203,7 @@ export default function GamesBrowse({ games }: { games: GameWithCreator[] }) {
       <div className="hidden md:block relative">
         <div
           ref={feedRef}
-          className="h-[calc(100svh-5rem)] min-h-[560px] overflow-y-auto snap-y snap-mandatory scrollbar-hide"
+          className="h-[100svh] min-h-[560px] pt-16 pb-2 overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
           {games.map((game, i) => (
             <DesktopFeedCard key={game.id} game={game} rank={i < 10 ? i + 1 : undefined} />
