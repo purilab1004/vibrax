@@ -302,7 +302,7 @@ export const t = {
         phase: 'PHASE 01',
         label: 'REMEMBER & CREATE',
         quote: '"그 게임, 기억하시나요? 이제 직접 만들어간다"',
-        body: '밤새 플레이했던 그 게임들. 픽셀 하나하나에 담긴 설렘, 처음 클리어했을 때의 짜릿함. 그 감각은 시간이 흘러도 사라지지 않아요. 이제 코드를 몰라도 괜찮아요. ChatGPT, Claude, Cursor — AI에게 프롬프트 하나만 주면 그 추억 속 게임이 현실이 됩니다. 당신의 추억이 게임이 되고, 그 게임을 Vibrexcup에서 전 세계와 나눠요.',
+        body: '밤새 플레이했던 그 게임들. 픽셀 하나하나에 담긴 설렘, 처음 클리어했을 때의 짜릿함. 그 감각은 시간이 흘러도 사라지지 않아요. 이제 코드를 몰라도 괜찮아요. Vibrexcup 스튜디오에 프롬프트 한 줄만 적으면, AI가 그 추억 속 게임을 바로 빚어냅니다. 만들고 → 실행하고 → 다듬는 과정이 전부 이 안에서 끝나요. 당신의 추억이 게임이 되고, 그 게임을 전 세계와 나눠요.',
       },
       p2: {
         phase: 'PHASE 02',
@@ -626,7 +626,7 @@ export const t = {
         phase: 'PHASE 01',
         label: 'REMEMBER & CREATE',
         quote: '"Remember those games? Now build them yourself."',
-        body: "The games we played all night. The thrill in every pixel, the rush of clearing a level for the first time. That feeling never fades. Now, you don't need to know how to code. One AI prompt brings your favorite game back to life. ChatGPT, Claude, Cursor — any AI is in your hands. Build it, upload it, and share it with the world on Vibrexcup.",
+        body: "The games we played all night. The thrill in every pixel, the rush of clearing a level for the first time. That feeling never fades. Now, you don't need to know how to code. Write a single prompt in Vibrexcup Studio and AI shapes that game from your memories on the spot. Build, play, and refine — all in one place. Then share it with the world.",
       },
       p2: {
         phase: 'PHASE 02',
