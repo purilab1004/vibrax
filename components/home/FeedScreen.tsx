@@ -68,15 +68,15 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
         </span>
       )}
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
-      <div className="absolute inset-x-0 top-[7%] px-5 text-center z-[5]">
-        <h3 className={`${jua.className} text-[34px] leading-[1.2] bg-clip-text text-transparent bg-gradient-to-b from-[#fff3a8] via-[#ffd75c] to-[#ff9d3e] drop-shadow-[0_3px_2px_rgba(60,25,80,0.5)]`}>
+      <div className="absolute inset-x-0 top-[17%] px-5 text-center z-[5]">
+        <h3 className={`${jua.className} text-[34px] leading-[1.2] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
           {lang === 'en'
             ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
             : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
         </h3>
       </div>
       {/* 방 디오라마 — 캐릭터는 중앙 */}
-      <div className="absolute inset-x-1 top-[15%] bottom-[28%]">
+      <div className="absolute inset-x-1 top-[25%] bottom-[26%]">
         <RoomScene id={game.id} views={game.view_count ?? 0} />
       </div>
       {/* 우측 액션 레일 — 틱톡 스타일 */}
