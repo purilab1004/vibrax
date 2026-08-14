@@ -196,7 +196,7 @@ export default function NavBar() {
             <div />
             {pathname === '/games' ? (
               /* /games — 유튜브식 중앙 검색바 */
-              <form onSubmit={handleSearch} className="w-[min(620px,50vw)]">
+              <form onSubmit={handleSearch} className="w-[min(620px,50vw)] translate-x-[7.25rem]">
                 <div className="flex items-center rounded-full border border-[#ddd3bf] bg-white/95 shadow-[0_2px_10px_rgba(36,31,23,0.06)] focus-within:border-[#2563eb] transition-colors overflow-hidden">
                   <input
                     value={query}
