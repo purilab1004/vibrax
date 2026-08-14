@@ -1,20 +1,18 @@
-// 해변 로고 마크 — 파란 하늘 배지 + 모래 언덕 + 야자수 (NavBar·Sidebar 공용)
+// 로고 마크 — 파란 배지 + 찰흙 큐브 캐릭터 (카드 캐릭터와 동일 모티프)
 export default function LogoMark({ className = 'w-7 h-7 shrink-0' }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden>
       <rect x="0" y="0" width="32" height="32" rx="8" fill="#2563eb" />
-      {/* 모래 언덕 */}
-      <path d="M0 25c6-3.5 14-4.5 20-3.5s9 2 12 3.5v7H0Z" fill="#f3e3b8" />
-      {/* 야자수 줄기 */}
-      <path d="M15.5 24.5c.4-4.5 1.2-8.5 3.2-11.5" stroke="#8a5a2b" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-      {/* 야자잎 5장 */}
-      <g fill="none" stroke="#39b36b" strokeWidth="2.4" strokeLinecap="round">
-        <path d="M18.7 13c-3.2-2.2-6.4-2.4-9-1" />
-        <path d="M18.7 13c-1-3.4-3-5.6-5.6-6.6" />
-        <path d="M18.7 13c1.4-3.2 3.8-5 6.6-5.4" />
-        <path d="M18.7 13c3.4-1.4 6.6-.8 8.8 1" />
-        <path d="M18.7 13c2.6.6 4.6 2.4 5.6 5" />
-      </g>
+      {/* 뒤판 — 3D 두께 */}
+      <rect x="8.6" y="8.6" width="17" height="17" rx="5" fill="#b93d16" transform="rotate(-3 17 17)" />
+      {/* 앞판 — 클레이 오렌지 */}
+      <rect x="7" y="7" width="17" height="17" rx="5" fill="#F05A28" transform="rotate(-3 15.5 15.5)" />
+      {/* 상단 밝은 면 */}
+      <rect x="7" y="7" width="17" height="8" rx="5" fill="#ff8a5c" opacity="0.65" transform="rotate(-3 15.5 15.5)" />
+      {/* 눈 + 미소 */}
+      <circle cx="12.6" cy="15.4" r="1.5" fill="#161616" />
+      <circle cx="18.8" cy="15.1" r="1.5" fill="#161616" />
+      <path d="M13.9 19.2q1.8 1.6 3.6 0" stroke="#161616" strokeWidth="1.4" strokeLinecap="round" fill="none" />
     </svg>
   )
 }

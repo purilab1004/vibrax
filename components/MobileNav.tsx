@@ -42,14 +42,12 @@ export default function MobileNav() {
         {/* 중앙 만들기 — 그라디언트 원형 강조 */}
         <Link href="/studio" className="flex flex-col items-center justify-center flex-1" aria-label={T.nav.studio}>
           <span className="w-11 h-11 -mt-1 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] flex items-center justify-center text-white shadow-[0_6px_16px_rgba(37,99,235,0.45)] active:scale-95 transition-transform">
-{/* 야자수 — 로고와 같은 형태를 흰 선으로 */}
-            <svg viewBox="0 0 32 32" className="w-7 h-7" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={2.4}>
-              <path d="M14.5 26c.4-5 1.2-9.5 3.2-12.5" />
-              <path d="M17.7 13.5c-3.2-2.2-6.4-2.4-9-1" />
-              <path d="M17.7 13.5c-1-3.4-3-5.6-5.6-6.6" />
-              <path d="M17.7 13.5c1.4-3.2 3.8-5 6.6-5.4" />
-              <path d="M17.7 13.5c3.4-1.4 6.6-.8 8.8 1" />
-              <path d="M17.7 13.5c2.6.6 4.6 2.4 5.6 5" />
+{/* 찰흙 큐브 얼굴 — 로고 캐릭터를 흰 선으로 */}
+            <svg viewBox="0 0 32 32" className="w-7 h-7" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={2.2}>
+              <rect x="7" y="7" width="18" height="18" rx="5.5" transform="rotate(-3 16 16)" />
+              <circle cx="12.8" cy="15.2" r="0.6" fill="currentColor" strokeWidth={1.6} />
+              <circle cx="19.4" cy="14.9" r="0.6" fill="currentColor" strokeWidth={1.6} />
+              <path d="M14 19.6q2 1.8 4 0" strokeWidth={1.9} />
             </svg>
           </span>
         </Link>
