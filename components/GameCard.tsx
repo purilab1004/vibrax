@@ -69,28 +69,51 @@ export function auroraOf(id: string, golden = false): React.CSSProperties {
   }
 }
 
-// 뭉게구름 캐릭터 — 비대칭 구름 몸통 + 작은 검정 점 눈 + 활짝 연 입(혀)
-function FluffFigure({ delay, eyesRef }: {
+// 찰흙 색 팔레트 — 레퍼런스처럼 다양한 클레이 톤 (게임마다 다름)
+const CLAY_COLORS = ['#F05A28', '#5AB0F2', '#9B8CE8', '#F2B436', '#4CB97E', '#F2A0C0', '#6ACBE0', '#E8574F'] as const
+
+// hex 밝기 조절 — 클레이 음영용
+function shade(hex: string, amt: number): string {
+  const n = parseInt(hex.slice(1), 16)
+  const c = (v: number) => Math.max(0, Math.min(255, v + amt))
+  return `#${((c(n >> 16) << 16) | (c((n >> 8) & 255) << 8) | c(n & 255)).toString(16).padStart(6, '0')}`
+}
+
+// 찰흙 캐릭터 — 라운드 3D 사각형 몸통 + 작은 검정 점 눈 + 한 줄 미소
+function FluffFigure({ delay, eyesRef, color = '#F05A28', gid = 'clay' }: {
   delay: string
   eyesRef?: React.Ref<SVGGElement>
+  color?: string
+  gid?: string
 }) {
   return (
     <g className="critter-bob" style={{ animationDelay: delay }}>
-      {/* 몽실 흰 구름 몸통 — 같은 크기 봉우리가 고르게 둘러싼 스캘럽 */}
-      <g fill="#ffffff">
-        {Array.from({ length: 10 }, (_, i) => {
-          const a = (i / 10) * Math.PI * 2
-          return <circle key={i} cx={100 + Math.cos(a) * 23} cy={96 + Math.sin(a) * 23} r="10.5" />
-        })}
-        <circle cx="100" cy="96" r="25" />
+      <defs>
+        {/* 클레이 음영 — 좌상단 빛, 우하단 그늘 */}
+        <linearGradient id={gid} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={shade(color, 36)} />
+          <stop offset="55%" stopColor={color} />
+          <stop offset="100%" stopColor={shade(color, -34)} />
+        </linearGradient>
+      </defs>
+      {/* 바닥 그림자 */}
+      <ellipse cx="100" cy="130" rx="26" ry="5" fill="#000" opacity="0.12" />
+      {/* 라운드 큐브 몸통 — 살짝 기울어진 찰흙 덩어리 */}
+      <g className="critter-body" style={{ transformOrigin: '100px 128px' }}>
+        <rect x="68" y="62" width="64" height="64" rx="17" fill={`url(#${gid})`} transform="rotate(-3 100 94)" />
+        {/* 정수리 소프트 하이라이트 */}
+        <ellipse cx="84" cy="74" rx="14" ry="8" fill="#ffffff" opacity="0.3" transform="rotate(-18 84 74)" />
+        {/* 작은 검정 눈 — 마우스를 따라 움직인다 */}
+        <g ref={eyesRef} className="transition-transform duration-75">
+          <circle cx="92" cy="90" r="2.7" fill="#161616" />
+          <circle cx="108" cy="90" r="2.7" fill="#161616" />
+        </g>
+        {/* 볼터치 */}
+        <circle cx="85" cy="99" r="4" fill="#ffffff" opacity="0.28" />
+        <circle cx="115" cy="99" r="4" fill="#ffffff" opacity="0.28" />
+        {/* 작은 한 줄 커브 미소 */}
+        <path d="M96.5 99.5q3.5 3.2 7 0" stroke="#161616" strokeWidth="2.1" strokeLinecap="round" fill="none" />
       </g>
-      {/* 작은 검정 눈 — 마우스를 따라 움직인다 */}
-      <g ref={eyesRef} className="transition-transform duration-75">
-        <circle cx="92.5" cy="93" r="2.7" fill="#161616" />
-        <circle cx="107.5" cy="93" r="2.7" fill="#161616" />
-      </g>
-      {/* 작은 한 줄 커브 미소 */}
-      <path d="M96.5 100.5q3.5 3 7 0" stroke="#161616" strokeWidth="2.1" strokeLinecap="round" fill="none" />
     </g>
   )
 }
@@ -177,8 +200,13 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
         aria-hidden
       />
       <svg ref={svgRef} viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
-        {/* 구름 캐릭터 */}
-        <FluffFigure delay={`${(hashOf(id) % 30) / 10}s`} eyesRef={eyesRef} />
+        {/* 찰흙 캐릭터 — 게임마다 다른 클레이 색 */}
+        <FluffFigure
+          delay={`${(hashOf(id) % 30) / 10}s`}
+          eyesRef={eyesRef}
+          color={CLAY_COLORS[hashOf(id) % CLAY_COLORS.length]}
+          gid={`clay-${hashOf(id).toString(36)}`}
+        />
       </svg>
     </>
   )
