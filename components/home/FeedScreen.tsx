@@ -8,6 +8,7 @@ import {
   hasCoinTicket, ticketKeyOf, playCoinSound, playStartSound,
 } from '@/components/GameCard'
 import LikeButton from '@/components/LikeButton'
+import Reveal from '@/components/Reveal'
 import ViewerIcon from '@/components/ViewerIcon'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
@@ -56,6 +57,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       className="feed-snap grain relative h-[100svh] overflow-hidden"
       style={auroraOf(game.id, golden)}
     >
+      <Reveal className="absolute inset-0">
       {/* 조회수 랭킹 배지 — 상단 우측 */}
       {rank && rank <= 10 && (
         <span className={`absolute top-4 right-4 z-10 font-pixel text-[13px] px-3 py-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.25)] ${
@@ -151,6 +153,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
           )}
         </div>
       </div>
+      </Reveal>
     </div>
   )
 }
