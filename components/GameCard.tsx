@@ -463,7 +463,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                 )}
                 {/* 유혹 질문 — Jua 포스터 타이틀 (games 카드와 동일 배치) */}
                 <div className="absolute inset-x-0 top-[12%] px-4 text-center z-[5]">
-                  <h3 className={`${titleFont.className} text-[30px] md:text-[34px] leading-[1.05] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
+                  <h3 className={`${titleFont.className} text-[32px] md:text-[36px] leading-[1.25] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
                     {lang === 'en'
                       ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
                       : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}

@@ -1,4 +1,4 @@
-import { Dongle } from 'next/font/google'
+import { Jua } from 'next/font/google'
 
-// 카드 훅 타이틀용 — 동글동글 말랑한 동글체 (Dongle)
-export const titleFont = Dongle({ weight: '700', subsets: ['latin'] })
+// 카드 훅 타이틀용 — 통통한 라운드 한글 (Jua)
+export const titleFont = Jua({ weight: '400', subsets: ['latin'] })

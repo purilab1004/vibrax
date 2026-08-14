@@ -69,7 +69,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       )}
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
       <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]">
-        <h3 className={`${titleFont.className} text-[46px] leading-[1.05] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
+        <h3 className={`${titleFont.className} text-[48px] leading-[1.25] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
           {lang === 'en'
             ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
             : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
