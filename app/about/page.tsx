@@ -335,18 +335,22 @@ function AboutScene({ variant }: { variant: number }) {
             <rect x="66" y="40" width="80" height="80" rx="20" fill="#b3830a" transform="rotate(-3 111 85)" />
             <rect x="60" y="34" width="80" height="80" rx="20" fill="#F2B436" transform="rotate(-3 100 74)" />
             <rect x="60" y="34" width="80" height="36" rx="20" fill="#ffd97a" opacity="0.65" transform="rotate(-3 100 74)" />
-            {/* 눈 — 신난 눈 */}
-            <circle cx="85" cy="68" r="4" fill="#161616" />
-            <circle cx="115" cy="68" r="4" fill="#161616" />
-            {/* 활짝 연 입 — 동전이 나오는 곳 */}
-            <ellipse cx="100" cy="92" rx="13" ry="10" fill="#161616" />
-            <ellipse cx="100" cy="96" rx="7" ry="4.5" fill="#ff8e8e" />
+            {/* 눈 — 활짝 웃는 눈 */}
+            <g stroke="#161616" strokeWidth="3.5" strokeLinecap="round" fill="none">
+              <path d="M78 68q7 -6 14 0" />
+              <path d="M108 68q7 -6 14 0" />
+            </g>
+            {/* 볼터치 */}
+            <circle cx="76" cy="82" r="6" fill="#ffffff" opacity="0.35" />
+            <circle cx="124" cy="82" r="6" fill="#ffffff" opacity="0.35" />
+            {/* 활짝 웃는 입 */}
+            <path d="M86 84q14 13 28 0" stroke="#161616" strokeWidth="4" strokeLinecap="round" fill="none" />
           </g>
-          {/* 흘러나오는 동전들 */}
-          {([['-42px', '58px', '0s'], ['-18px', '68px', '0.35s'], ['10px', '66px', '0.7s'], ['36px', '54px', '1.05s'], ['-30px', '40px', '1.35s'], ['24px', '74px', '0.15s']] as const).map(([fx, fy, d], i) => (
+          {/* 하늘에서 쏟아지는 동전들 — 점토이 주변으로 떨어져 쌓인다 */}
+          {([['-46px', '118px', '0s', 54], ['-16px', '128px', '0.4s', 88], ['14px', '124px', '0.8s', 118], ['42px', '112px', '1.2s', 148], ['-32px', '132px', '1.5s', 70], ['30px', '130px', '0.2s', 134]] as const).map(([fx, fy, d, sx], i) => (
             <g key={i} className="coin-flow" style={{ ['--fx' as string]: fx, ['--fy' as string]: fy, animationDelay: d }}>
-              <circle cx="100" cy="94" r="8" fill="#F2B436" stroke="#b3830a" strokeWidth="2.5" />
-              <circle cx="100" cy="94" r="4" fill="none" stroke="#b3830a" strokeWidth="1.6" />
+              <circle cx={sx} cy="26" r="8" fill="#F2B436" stroke="#b3830a" strokeWidth="2.5" />
+              <circle cx={sx} cy="26" r="4" fill="none" stroke="#b3830a" strokeWidth="1.6" />
             </g>
           ))}
           {/* 바닥에 쌓인 동전 */}
