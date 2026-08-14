@@ -23,7 +23,7 @@ function ClayHero() {
     <div className="relative select-none">
       <svg
         viewBox="0 0 200 200"
-        className="w-full max-w-[420px] mx-auto cursor-pointer touch-none"
+        className="w-full max-w-[560px] lg:max-w-[660px] mx-auto cursor-pointer touch-none"
         onPointerDown={press}
         onPointerUp={release}
         onPointerLeave={release}
@@ -98,7 +98,7 @@ export default function AboutPage() {
   return (
     <div className="overflow-hidden">
       {/* ── Hero — 좌: 환영 카피 / 우: 눌리는 점토이 ── */}
-      <section className="max-w-6xl mx-auto px-6 pt-16 md:pt-24 pb-20 grid md:grid-cols-2 gap-12 items-center">
+      <section className="max-w-7xl mx-auto px-6 pt-16 md:pt-20 pb-20 grid md:grid-cols-[1fr_1.25fr] gap-12 items-center">
         <Reveal>
           <p className="font-pixel text-[#2563eb] text-[11px] tracking-[0.4em] mb-6">{a.badge}</p>
           <h1 className="text-3xl md:text-5xl font-extrabold text-[#241f17] leading-[1.2] mb-7">
