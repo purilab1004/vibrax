@@ -13,6 +13,7 @@ import ViewerIcon from '@/components/ViewerIcon'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
+import { jua } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
@@ -78,14 +79,11 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
             #{rank}
           </span>
         )}
-        {/* 상단 중앙 — 말풍선 훅 (꼬리가 캐릭터를 가리킨다) */}
-        <div className="absolute inset-x-0 top-6 px-6 text-center z-[5]">
-          <div className="inline-block relative bg-white rounded-2xl px-5 py-3 shadow-[0_6px_20px_rgba(0,0,0,0.18)]">
-            <span className="text-[19px] font-extrabold text-[#241f17] leading-snug">
-              {teaser}
-            </span>
-            <span className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-3.5 h-3.5 bg-white rotate-45 rounded-[3px]" aria-hidden />
-          </div>
+        {/* 상단 중앙 — Jua 포스터 타이틀 */}
+        <div className="absolute inset-x-0 top-7 px-5 text-center z-[5]">
+          <h3 className={`${jua.className} text-[32px] leading-[1.2] bg-clip-text text-transparent bg-gradient-to-b from-[#fff3a8] via-[#ffd75c] to-[#ff9d3e] drop-shadow-[0_3px_2px_rgba(60,25,80,0.5)]`}>
+            {teaser}
+          </h3>
         </div>
         {/* 방 장면 — 캐릭터는 중앙 */}
         <div className="absolute inset-x-1 top-[14%] bottom-[30%]">
