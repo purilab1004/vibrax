@@ -78,16 +78,19 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
             #{rank}
           </span>
         )}
-        {/* 방 장면 */}
-        <div className="absolute inset-x-1 top-[4%] bottom-[32%]">
-          <RoomScene id={game.id} views={game.view_count ?? 0} />
-        </div>
-        {/* 하단 — 훅 문구 + 아케이드 플로우 */}
-        <div className="absolute inset-x-0 bottom-0 px-6 pb-6 pt-16 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
-          <h3 className="text-[22px] font-extrabold text-white leading-snug line-clamp-2">
+        {/* 상단 중앙 — 훅 문구 */}
+        <div className="absolute inset-x-0 top-6 px-8 text-center z-[5]">
+          <h3 className="text-[22px] font-extrabold text-white leading-snug line-clamp-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
             <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">{teaser}</span>
           </h3>
-          <p className={`arcade-blink mt-3 font-pixel text-[11px] tracking-[0.3em] ${
+        </div>
+        {/* 방 장면 — 캐릭터는 중앙 */}
+        <div className="absolute inset-x-1 top-[14%] bottom-[30%]">
+          <RoomScene id={game.id} views={game.view_count ?? 0} />
+        </div>
+        {/* 하단 — 아케이드 플로우 */}
+        <div className="absolute inset-x-0 bottom-0 px-6 pb-6 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
+          <p className={`arcade-blink font-pixel text-[11px] tracking-[0.3em] ${
             coinState === 'ready'
               ? 'text-[#4cff6a] drop-shadow-[0_0_6px_rgba(76,255,106,0.7)]'
               : 'text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.7)]'

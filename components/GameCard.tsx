@@ -457,11 +457,8 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                     #{rank}
                   </span>
                 )}
-                <div className="flex-1 relative min-h-0 mx-2 mt-2">
-                  <RoomScene id={game.id} views={game.view_count ?? 0} />
-                </div>
-                {/* 유혹 질문 — 플래시카드처럼, 답(제목)은 뒷면에 */}
-                <div className="shrink-0 px-5 pb-5">
+                {/* 유혹 질문 — 상단 중앙, 답(제목)은 뒷면에 */}
+                <div className="shrink-0 px-5 pt-5 text-center">
                   <h3 className="text-[20px] md:text-[23px] font-extrabold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
                     <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">
                       {lang === 'en'
@@ -469,7 +466,12 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                         : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
                     </span>
                   </h3>
-                  <p className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.1em] text-white/70">
+                </div>
+                <div className="flex-1 relative min-h-0 mx-2">
+                  <RoomScene id={game.id} views={game.view_count ?? 0} />
+                </div>
+                <div className="shrink-0 px-5 pb-5">
+                  <p className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.1em] text-white/70">
                     <span className="w-5 h-5 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 inline-flex items-center justify-center">
                       {creatorAvatarUrl ? (
                         <Image

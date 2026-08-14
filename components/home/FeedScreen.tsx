@@ -66,8 +66,18 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
           #{rank}
         </span>
       )}
-      {/* 방 디오라마 — 화면 상중단을 채운다 */}
-      <div className="absolute inset-x-1 top-[6%] bottom-[30%]">
+      {/* 상단 중앙 — 훅 문구 */}
+      <div className="absolute inset-x-0 top-[7%] px-8 text-center z-[5]">
+        <h3 className="text-2xl font-extrabold text-white leading-snug line-clamp-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+          <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">
+            {lang === 'en'
+              ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
+              : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
+          </span>
+        </h3>
+      </div>
+      {/* 방 디오라마 — 캐릭터는 중앙 */}
+      <div className="absolute inset-x-1 top-[15%] bottom-[28%]">
         <RoomScene id={game.id} views={game.view_count ?? 0} />
       </div>
       {/* 우측 액션 레일 — 틱톡 스타일 */}
@@ -85,15 +95,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       </div>
       {/* 하단 정보 + 아케이드 코인 플로우 */}
       <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-24 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
-        {/* 훅 문구 — 제목은 게임 페이지에서 공개 */}
-        <h3 className="text-2xl font-extrabold text-white leading-snug line-clamp-2 pr-14">
-          <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">
-            {lang === 'en'
-              ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
-              : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
-          </span>
-        </h3>
-        <p className="mt-2 flex items-center gap-2 text-[13px] font-semibold text-white/75">
+        <p className="flex items-center gap-2 text-[13px] font-semibold text-white/75">
           <span className="w-6 h-6 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 inline-flex items-center justify-center">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
