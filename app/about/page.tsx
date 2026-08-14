@@ -6,18 +6,36 @@ import { auroraOf } from '@/components/GameCard'
 import Reveal from '@/components/Reveal'
 import { useLang } from '@/lib/i18n/context'
 
-// 눌리는 점토이 — 누른 자리가 움푹 들어가는 대형 클레이 캐릭터
+// 눌리는 점토이 — 누른 '방향'에 따라 다르게 찌그러지는 대형 클레이 캐릭터
+type PressZone = 'top' | 'bottom' | 'left' | 'right' | 'center'
+
+// 방향별 찌그러짐 — 누른 쪽이 눌리도록 반대편을 기준점으로 스케일
+const PRESS_DEFORM: Record<PressZone, { origin: string; transform: string }> = {
+  top: { origin: '100px 166px', transform: 'scale(1.08, 0.82)' },
+  bottom: { origin: '100px 30px', transform: 'scale(1.08, 0.88)' },
+  left: { origin: '164px 96px', transform: 'scale(0.84, 1.07)' },
+  right: { origin: '32px 96px', transform: 'scale(0.84, 1.07)' },
+  center: { origin: '97px 96px', transform: 'scale(0.9, 0.9)' },
+}
+
 function ClayHero() {
-  const [dent, setDent] = useState<{ x: number; y: number } | null>(null)
+  const [dent, setDent] = useState<{ x: number; y: number; zone: PressZone } | null>(null)
 
   const press = (e: React.PointerEvent<SVGSVGElement>) => {
     const r = e.currentTarget.getBoundingClientRect()
-    setDent({
-      x: ((e.clientX - r.left) / r.width) * 200,
-      y: ((e.clientY - r.top) / r.height) * 200,
-    })
+    const x = ((e.clientX - r.left) / r.width) * 200
+    const y = ((e.clientY - r.top) / r.height) * 200
+    const dx = x - 97
+    const dy = y - 96
+    let zone: PressZone = 'center'
+    if (Math.abs(dx) > 30 || Math.abs(dy) > 30) {
+      zone = Math.abs(dy) >= Math.abs(dx) ? (dy < 0 ? 'top' : 'bottom') : (dx < 0 ? 'left' : 'right')
+    }
+    setDent({ x, y, zone })
   }
   const release = () => setDent(null)
+
+  const deform = dent ? PRESS_DEFORM[dent.zone] : null
 
   return (
     <div className="relative select-none">
@@ -31,12 +49,12 @@ function ClayHero() {
       >
         {/* 바닥 그림자 */}
         <ellipse cx="100" cy="176" rx="62" ry="10" fill="#000" opacity="0.12" />
-        {/* 몸통 — 누르면 눌린 자리 쪽으로 살짝 찌그러진다 */}
+        {/* 몸통 — 누른 방향으로 찌그러진다 */}
         <g
           className="transition-transform duration-150 ease-out"
           style={{
-            transformOrigin: '100px 168px',
-            transform: dent ? 'scale(1.045, 0.94)' : 'scale(1, 1)',
+            transformOrigin: deform ? deform.origin : '100px 166px',
+            transform: deform ? deform.transform : 'scale(1, 1)',
           }}
         >
           {/* 뒤판 */}
@@ -45,8 +63,6 @@ function ClayHero() {
           <rect x="30" y="28" width="130" height="130" rx="34" fill="#F05A28" transform="rotate(-3 95 93)" />
           {/* 상단 밝은 면 */}
           <rect x="30" y="28" width="130" height="58" rx="34" fill="#ff8a5c" opacity="0.6" transform="rotate(-3 95 93)" />
-          {/* 하이라이트 */}
-          <ellipse cx="62" cy="52" rx="26" ry="14" fill="#ffffff" opacity="0.4" transform="rotate(-16 62 52)" />
           {/* 눌린 자국 — 누른 지점에 움푹 */}
           {dent && (
             <g className="pointer-events-none">
@@ -54,12 +70,19 @@ function ClayHero() {
               <ellipse cx={dent.x - 3} cy={dent.y - 3} rx="9" ry="7" fill="#701f05" opacity="0.35" />
             </g>
           )}
-          {/* 눈 — 누르면 질끈 감는다 */}
-          {dent ? (
+          {/* 눈 — 중앙(얼굴)을 누르면 질끈, 가장자리를 누르면 놀란 눈 */}
+          {dent?.zone === 'center' ? (
             <g stroke="#161616" strokeWidth="4" strokeLinecap="round" fill="none">
               <path d="M74 92q6 5 12 0" />
               <path d="M114 92q6 5 12 0" />
             </g>
+          ) : dent ? (
+            <>
+              <circle cx="80" cy="90" r="7" fill="#161616" />
+              <circle cx="120" cy="90" r="7" fill="#161616" />
+              <circle cx="82" cy="87.5" r="2" fill="#ffffff" />
+              <circle cx="122" cy="87.5" r="2" fill="#ffffff" />
+            </>
           ) : (
             <>
               <circle cx="80" cy="90" r="5.5" fill="#161616" />
@@ -69,9 +92,11 @@ function ClayHero() {
           {/* 볼터치 */}
           <circle cx="66" cy="108" r="8" fill="#ffffff" opacity="0.32" />
           <circle cx="134" cy="108" r="8" fill="#ffffff" opacity="0.32" />
-          {/* 입 — 누르면 오므린다 */}
-          {dent ? (
+          {/* 입 — 중앙: 오므림, 가장자리: 앗! 벌어짐, 평소: 미소 */}
+          {dent?.zone === 'center' ? (
             <ellipse cx="100" cy="112" rx="5" ry="6.5" fill="#161616" />
+          ) : dent ? (
+            <ellipse cx="100" cy="113" rx="7.5" ry="9" fill="#161616" />
           ) : (
             <path d="M92 108q8 7 16 0" stroke="#161616" strokeWidth="4.5" strokeLinecap="round" fill="none" />
           )}
