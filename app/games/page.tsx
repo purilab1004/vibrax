@@ -43,7 +43,7 @@ export default async function GamesPage({ searchParams }: Props) {
   const term = q?.trim()
 
   return (
-    <div className="w-full md:px-6 md:-mt-14">
+    <div className="w-full md:px-6">
       {/* 모바일 — 유리 알약 필터만 (쇼츠 피드 위) */}
       <div className="md:hidden sticky top-2 z-40 mb-2 px-4 flex justify-center">
         <Suspense>
