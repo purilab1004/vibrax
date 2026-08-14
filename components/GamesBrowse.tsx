@@ -80,13 +80,13 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
           </span>
         )}
         {/* 상단 중앙 — Jua 포스터 타이틀 */}
-        <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]">
+        <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]">
           <h3 className={`${jua.className} text-[32px] leading-[1.2] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
             {teaser}
           </h3>
         </div>
         {/* 방 장면 — 캐릭터는 중앙 */}
-        <div className="absolute inset-x-1 top-[24%] bottom-[28%]">
+        <div className="absolute inset-x-1 top-[23%] bottom-[27%]">
           <RoomScene id={game.id} views={game.view_count ?? 0} />
         </div>
         {/* 하단 — 아케이드 플로우 */}
@@ -99,21 +99,6 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
             {coinState === 'ready' ? 'PRESS START' : 'INSERT COIN'}
           </p>
           <div className="mt-2 flex items-center gap-3">
-            {/* 미니 코인 슬롯 */}
-            <div className="relative w-12 h-14 shrink-0">
-              <div className={`w-full h-full rounded-lg bg-gradient-to-b from-[#4a4a4a] to-[#2a2a2a] border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_4px_10px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-1.5 transition-shadow ${
-                coinState === 'ready' ? 'shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_0_16px_rgba(76,255,106,0.5)]' : ''
-              } ${coinState === 'drop' ? 'slot-clink' : ''}`}>
-                <span className="w-1.5 h-6 rounded-full bg-black shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" />
-                <span className={`w-2 h-2 rounded-full ${coinState === 'ready' ? 'bg-[#4cff6a] shadow-[0_0_8px_#4cff6a]' : 'bg-red-500/80 shadow-[0_0_6px_rgba(239,68,68,0.8)] animate-pulse'}`} />
-              </div>
-              {coinState === 'drop' && (
-                <>
-                  <span className="gold-coin absolute left-1/2 -top-6" style={{ ['--coin-drop' as string]: '31px' }} aria-hidden />
-                  <span className="slot-spark absolute left-1/2 top-[8px] -translate-x-1/2 text-xs" aria-hidden>✨</span>
-                </>
-              )}
-            </div>
             {coinState !== 'ready' ? (
               <button
                 onClick={insertCoin}
@@ -137,6 +122,21 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
                 ▶ START
               </button>
             )}
+            {/* 미니 코인 슬롯 */}
+            <div className="relative w-12 h-14 shrink-0">
+              <div className={`w-full h-full rounded-lg bg-gradient-to-b from-[#4a4a4a] to-[#2a2a2a] border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_4px_10px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-1.5 transition-shadow ${
+                coinState === 'ready' ? 'shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_0_16px_rgba(76,255,106,0.5)]' : ''
+              } ${coinState === 'drop' ? 'slot-clink' : ''}`}>
+                <span className="w-1.5 h-6 rounded-full bg-black shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" />
+                <span className={`w-2 h-2 rounded-full ${coinState === 'ready' ? 'bg-[#4cff6a] shadow-[0_0_8px_#4cff6a]' : 'bg-red-500/80 shadow-[0_0_6px_rgba(239,68,68,0.8)] animate-pulse'}`} />
+              </div>
+              {coinState === 'drop' && (
+                <>
+                  <span className="gold-coin absolute left-1/2 -top-6" style={{ ['--coin-drop' as string]: '31px' }} aria-hidden />
+                  <span className="slot-spark absolute left-1/2 top-[8px] -translate-x-1/2 text-xs" aria-hidden>✨</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
