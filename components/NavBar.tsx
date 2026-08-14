@@ -17,6 +17,7 @@ export default function NavBar() {
   const [scrolled, setScrolled] = useState(false)
   const [vcoin, setVcoin] = useState<number | null>(null)
   const [hideMobile, setHideMobile] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -31,7 +32,7 @@ export default function NavBar() {
   }, [])
 
   // Close menu on route change
-  useEffect(() => { setMenuOpen(false) }, [pathname])
+  useEffect(() => { setMenuOpen(false); setUserMenuOpen(false) }, [pathname])
 
   // 상단에서는 투명, 스크롤하면 유리(글래스) 배경.
   // 모바일 홈: 쇼츠 피드로 넘어가면(히어로를 지나면) 헤더 숨김
@@ -214,15 +215,41 @@ export default function NavBar() {
                       🪙 {vcoin.toLocaleString()}
                     </span>
                   )}
-                  {navLinkDesktop('/submit', T.nav.submit)}
-                  {navLinkDesktop('/profile', T.nav.mypage)}
-                  <button
-                    onClick={handleSignOut}
-                    className="text-[13px] font-medium tracking-wider text-[#6b6152] hover:text-[#2563eb] transition-colors"
-                  >
-                    {T.nav.logout}
-                  </button>
-                  {isAdmin && navLinkDesktop('/admin', `⚙ ${T.nav.admin}`)}
+                  {/* 계정 드롭다운 — 등록/마이페이지/관리자/로그아웃을 하나로 정리 */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setUserMenuOpen(v => !v)}
+                      className="flex items-center gap-1.5 h-9 pl-1.5 pr-2.5 rounded-full border border-[#ddd3bf] bg-white hover:border-[#2563eb]/50 transition-colors"
+                      aria-haspopup="menu"
+                      aria-expanded={userMenuOpen}
+                    >
+                      <span className="w-6 h-6 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center text-[11px] font-bold">
+                        {(user.email ?? 'U').charAt(0).toUpperCase()}
+                      </span>
+                      <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 text-[#857a68] transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </button>
+                    {userMenuOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                        <div className="absolute right-0 top-11 z-50 w-44 bg-white border border-[#ebe4d6] rounded-xl shadow-[0_10px_36px_rgba(36,31,23,0.14)] py-1.5 overflow-hidden">
+                          <Link href="/submit" className="block px-4 py-2.5 text-[13px] text-[#4a4337] hover:bg-[#2563eb]/5 hover:text-[#2563eb] transition-colors">{T.nav.submit}</Link>
+                          <Link href="/profile" className="block px-4 py-2.5 text-[13px] text-[#4a4337] hover:bg-[#2563eb]/5 hover:text-[#2563eb] transition-colors">{T.nav.mypage}</Link>
+                          {isAdmin && (
+                            <Link href="/admin" className="block px-4 py-2.5 text-[13px] text-[#4a4337] hover:bg-[#2563eb]/5 hover:text-[#2563eb] transition-colors">⚙ {T.nav.admin}</Link>
+                          )}
+                          <div className="my-1 border-t border-[#ebe4d6]" />
+                          <button
+                            onClick={handleSignOut}
+                            className="w-full text-left px-4 py-2.5 text-[13px] text-[#857a68] hover:bg-red-50 hover:text-red-500 transition-colors"
+                          >
+                            {T.nav.logout}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </>
               ) : (
                 /* 골드 필 — 모래·트로피 팔레트에서 딴 색 + 모래 위에 떠 있는 효과 */
