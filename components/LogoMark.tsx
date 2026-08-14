@@ -2,7 +2,7 @@
 export default function LogoMark({ className = 'w-7 h-7 shrink-0' }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden>
-      <rect x="0" y="0" width="32" height="32" rx="8" fill="#2563eb" />
+      <rect x="0" y="0" width="32" height="32" rx="8" fill="#7dd3fc" />
       {/* 뒤판 — 3D 두께 */}
       <rect x="8.6" y="8.6" width="17" height="17" rx="5" fill="#b93d16" transform="rotate(-3 17 17)" />
       {/* 앞판 — 클레이 오렌지 */}
