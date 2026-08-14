@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import GamesBrowse from '@/components/GamesBrowse'
 import GenreFilter from '@/components/GenreFilter'
+import GenreSidebar from '@/components/GenreSidebar'
 import { Suspense } from 'react'
 import type { Genre, GameWithCreator } from '@/lib/supabase/types'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
@@ -42,27 +43,38 @@ export default async function GamesPage({ searchParams }: Props) {
   const term = q?.trim()
 
   return (
-    <div className="w-full md:px-8 md:py-10">
-      <div className="flex items-center justify-between mb-6 px-4 pt-6 md:px-0 md:pt-0">
-        <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest">GAMES</h1>
-        {term && <span className="text-xs text-[#4a4337]">🔍 &quot;{term}&quot;</span>}
-      </div>
-      {/* 장르 필터 — 스크롤해도 상단에 따라붙는 유리 바 */}
-      <div className="sticky top-2 md:top-16 z-40 mb-4 md:mb-8 px-4 md:px-0 flex justify-center md:justify-start">
+    <div className="w-full md:px-6 md:pt-3">
+      {/* 모바일 — 유리 알약 필터만 (쇼츠 피드 위) */}
+      <div className="md:hidden sticky top-2 z-40 mb-2 px-4 flex justify-center">
         <Suspense>
           <GenreFilter />
         </Suspense>
       </div>
-      <Suspense
-        key={`${genre ?? ''}-${term ?? ''}-${creator ?? ''}`}
-        fallback={
-          <div className="text-center text-[#4a4337] text-xs py-24 font-pixel tracking-widest">
-            LOADING...
-          </div>
-        }
-      >
-        <GameGrid genre={genre} q={q} creator={creator} />
-      </Suspense>
+
+      <div className="md:flex md:gap-6">
+        {/* 데스크톱 — 좌측 카테고리 + 메뉴 사이드바 */}
+        <aside className="hidden md:block w-52 shrink-0 sticky top-20 self-start">
+          <Suspense>
+            <GenreSidebar />
+          </Suspense>
+        </aside>
+
+        <div className="flex-1 min-w-0">
+          {term && (
+            <p className="hidden md:block text-xs text-[#4a4337] mb-2">🔍 &quot;{term}&quot;</p>
+          )}
+          <Suspense
+            key={`${genre ?? ''}-${term ?? ''}-${creator ?? ''}`}
+            fallback={
+              <div className="text-center text-[#4a4337] text-xs py-24 font-pixel tracking-widest">
+                LOADING...
+              </div>
+            }
+          >
+            <GameGrid genre={genre} q={q} creator={creator} />
+          </Suspense>
+        </div>
+      </div>
     </div>
   )
 }
