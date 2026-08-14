@@ -173,7 +173,7 @@ export default function NavBar() {
       {/* 상단: 투명(첫 섹션 배경이 뒤로 지나감) → 스크롤: 유리 배경 */}
       <header
         className={`sticky top-0 z-50 md:pl-[var(--rail-w,0rem)] transition-[padding,background-color,box-shadow,backdrop-filter,transform] duration-200 ${
-          scrolled || pathname !== '/' ? 'bg-white/55 backdrop-blur-xl' : ''
+          (scrolled || pathname !== '/') && pathname !== '/games' ? 'bg-white/55 backdrop-blur-xl' : ''
         } ${hideMobile ? '-translate-y-full md:translate-y-0' : ''} ${pathname === '/games' ? 'hidden md:block' : ''}`}
       >
         <nav className="w-full px-5 h-14 flex items-center gap-4">
@@ -194,7 +194,7 @@ export default function NavBar() {
           {/* ── Desktop: 3분할 그리드 — 메뉴는 중앙, 로그인/언어는 우측 ── */}
           <div className="hidden md:grid flex-1 grid-cols-[1fr_auto_1fr] items-center">
             <div />
-            <div className="flex items-center gap-6">
+            <div className={`flex items-center gap-6 ${pathname === '/games' ? 'invisible' : ''}`}>
               {navLinkDesktop('/games', T.nav.games)}
               {navLinkDesktop('/studio', T.nav.studio)}
               <Link
