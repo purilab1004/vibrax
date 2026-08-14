@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { RoomScene, auroraOf } from '@/components/GameCard'
+import { auroraOf } from '@/components/GameCard'
 import Reveal from '@/components/Reveal'
 import { useLang } from '@/lib/i18n/context'
 
@@ -139,8 +139,8 @@ export default function AboutPage() {
             <Reveal delay={120} className={i % 2 === 1 ? 'md:order-1' : ''}>
               <div className={`relative mx-auto w-full max-w-sm ${i % 2 === 1 ? 'md:-rotate-2' : 'md:rotate-2'}`}>
                 <div className="grain relative aspect-[4/5] rounded-2xl overflow-hidden shadow-[0_24px_70px_rgba(36,31,23,0.25)]" style={auroraOf(p.seed, i === 2)}>
-                  <div className="absolute inset-x-1 top-[8%] bottom-[16%]">
-                    <RoomScene id={p.seed} views={p.views} />
+                  <div className="absolute inset-x-1 top-[6%] bottom-[12%]">
+                    <AboutScene variant={i} />
                   </div>
                   <span className="absolute left-4 bottom-4 font-pixel text-[11px] tracking-[0.2em] text-white drop-shadow">
                     {p.label}
@@ -188,6 +188,103 @@ export default function AboutPage() {
         </Reveal>
       </section>
     </div>
+  )
+}
+
+
+// 섹션별 점토 장면 — 0: 안경+노트북 프롬프팅 / 1: 헤드폰+뻐끔 입 / 2: 동전 쏟아짐
+function AboutScene({ variant }: { variant: number }) {
+  return (
+    <svg viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
+      {variant === 0 && (
+        <g className="critter-bob">
+          <ellipse cx="100" cy="168" rx="52" ry="8" fill="#000" opacity="0.14" />
+          {/* 몸통 — 오렌지 점토 */}
+          <rect x="66" y="42" width="80" height="80" rx="20" fill="#b93d16" transform="rotate(-3 111 87)" />
+          <rect x="60" y="36" width="80" height="80" rx="20" fill="#F05A28" transform="rotate(-3 100 76)" />
+          <rect x="60" y="36" width="80" height="36" rx="20" fill="#ff8a5c" opacity="0.6" transform="rotate(-3 100 76)" />
+          {/* 안경 — 동그란 렌즈 + 브리지 */}
+          <g stroke="#161616" strokeWidth="3" fill="#ffffff" fillOpacity="0.85">
+            <circle cx="84" cy="72" r="11" />
+            <circle cx="116" cy="72" r="11" />
+          </g>
+          <path d="M95 72h10" stroke="#161616" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="85" cy="73" r="2.6" fill="#161616" />
+          <circle cx="115" cy="73" r="2.6" fill="#161616" />
+          {/* 집중한 입 */}
+          <path d="M95 92q5 3.5 10 0" stroke="#161616" strokeWidth="3" strokeLinecap="round" fill="none" />
+          {/* 노트북 — 화면 + 타이핑 코드 + 깜빡이 커서 */}
+          <g transform="rotate(-2 100 140)">
+            <rect x="58" y="112" width="84" height="40" rx="4" fill="#1c1c26" />
+            <rect x="63" y="118" width="42" height="3.5" rx="1.5" fill="#7ef0ff" opacity="0.85" />
+            <rect x="63" y="126" width="58" height="3.5" rx="1.5" fill="#8fa6ff" opacity="0.7" />
+            <rect x="63" y="134" width="30" height="3.5" rx="1.5" fill="#7ef0ff" opacity="0.6" />
+            <rect x="96" y="133" width="4" height="6" fill="#7ef0ff" className="animate-pulse" />
+            <rect x="50" y="152" width="100" height="9" rx="4" fill="#3a3a46" />
+          </g>
+          {/* 타이핑 손 */}
+          <circle cx="74" cy="152" r="6.5" fill="#F05A28" />
+          <circle cx="126" cy="152" r="6.5" fill="#F05A28" />
+        </g>
+      )}
+      {variant === 1 && (
+        <g className="critter-bob">
+          <ellipse cx="100" cy="168" rx="52" ry="8" fill="#000" opacity="0.14" />
+          {/* 몸통 — 블루 점토 */}
+          <rect x="66" y="52" width="80" height="80" rx="20" fill="#2f7cb8" transform="rotate(-3 111 97)" />
+          <rect x="60" y="46" width="80" height="80" rx="20" fill="#5AB0F2" transform="rotate(-3 100 86)" />
+          <rect x="60" y="46" width="80" height="36" rx="20" fill="#8fd0ff" opacity="0.6" transform="rotate(-3 100 86)" />
+          {/* 헤드폰 — 핑크 밴드 + 이어컵 */}
+          <path d="M58 84c0-30 18-46 42-46s42 16 42 46" stroke="#ec4899" strokeWidth="9" strokeLinecap="round" fill="none" />
+          <rect x="48" y="76" width="16" height="30" rx="7" fill="#ec4899" />
+          <rect x="136" y="76" width="16" height="30" rx="7" fill="#ec4899" />
+          {/* 눈 — 신나서 감은 눈 */}
+          <g stroke="#161616" strokeWidth="3.5" strokeLinecap="round" fill="none">
+            <path d="M78 82q6 -5 12 0" />
+            <path d="M110 82q6 -5 12 0" />
+          </g>
+          {/* 입 — 커졌다 작아졌다 뻐끔 */}
+          <circle cx="100" cy="102" r="8" fill="#161616" className="mouth-pulse" style={{ transformOrigin: '100px 102px' }} />
+          {/* 음표 */}
+          <g fill="#ffffff" opacity="0.9">
+            <text x="150" y="70" fontSize="17" style={{ animation: 'floatUpFade 2.6s ease-out infinite' }}>♪</text>
+            <text x="38" y="96" fontSize="14" style={{ animation: 'floatUpFade 3.1s ease-out infinite', animationDelay: '1.2s' }}>♫</text>
+          </g>
+        </g>
+      )}
+      {variant === 2 && (
+        <g>
+          <ellipse cx="100" cy="168" rx="56" ry="8" fill="#000" opacity="0.14" />
+          {/* 몸통 — 골드 점토 */}
+          <g className="critter-bob">
+            <rect x="66" y="40" width="80" height="80" rx="20" fill="#b3830a" transform="rotate(-3 111 85)" />
+            <rect x="60" y="34" width="80" height="80" rx="20" fill="#F2B436" transform="rotate(-3 100 74)" />
+            <rect x="60" y="34" width="80" height="36" rx="20" fill="#ffd97a" opacity="0.65" transform="rotate(-3 100 74)" />
+            {/* 눈 — 신난 눈 */}
+            <circle cx="85" cy="68" r="4" fill="#161616" />
+            <circle cx="115" cy="68" r="4" fill="#161616" />
+            {/* 활짝 연 입 — 동전이 나오는 곳 */}
+            <ellipse cx="100" cy="92" rx="13" ry="10" fill="#161616" />
+            <ellipse cx="100" cy="96" rx="7" ry="4.5" fill="#ff8e8e" />
+          </g>
+          {/* 흘러나오는 동전들 */}
+          {([['-42px', '58px', '0s'], ['-18px', '68px', '0.35s'], ['10px', '66px', '0.7s'], ['36px', '54px', '1.05s'], ['-30px', '40px', '1.35s'], ['24px', '74px', '0.15s']] as const).map(([fx, fy, d], i) => (
+            <g key={i} className="coin-flow" style={{ ['--fx' as string]: fx, ['--fy' as string]: fy, animationDelay: d }}>
+              <circle cx="100" cy="94" r="8" fill="#F2B436" stroke="#b3830a" strokeWidth="2.5" />
+              <circle cx="100" cy="94" r="4" fill="none" stroke="#b3830a" strokeWidth="1.6" />
+            </g>
+          ))}
+          {/* 바닥에 쌓인 동전 */}
+          <g fill="#F2B436" stroke="#b3830a" strokeWidth="2">
+            <ellipse cx="70" cy="156" rx="10" ry="4.5" />
+            <ellipse cx="92" cy="162" rx="10" ry="4.5" />
+            <ellipse cx="116" cy="158" rx="10" ry="4.5" />
+            <ellipse cx="103" cy="152" rx="10" ry="4.5" />
+            <ellipse cx="136" cy="162" rx="10" ry="4.5" />
+          </g>
+        </g>
+      )}
+    </svg>
   )
 }
 
