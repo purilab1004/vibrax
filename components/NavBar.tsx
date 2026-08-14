@@ -194,7 +194,28 @@ export default function NavBar() {
           {/* ── Desktop: 3분할 그리드 — 메뉴는 중앙, 로그인/언어는 우측 ── */}
           <div className="hidden md:grid flex-1 grid-cols-[1fr_auto_1fr] items-center">
             <div />
-            <div className={`flex items-center gap-6 ${pathname === '/games' ? 'invisible' : ''}`}>
+            {pathname === '/games' ? (
+              /* /games — 유튜브식 중앙 검색바 */
+              <form onSubmit={handleSearch} className="w-[min(480px,42vw)]">
+                <div className="flex items-center rounded-full border border-[#ddd3bf] bg-white/95 shadow-[0_2px_10px_rgba(36,31,23,0.06)] focus-within:border-[#2563eb] transition-colors overflow-hidden">
+                  <input
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    placeholder={T.nav.searchPlaceholder}
+                    aria-label={T.nav.search}
+                    className="flex-1 bg-transparent px-5 py-2 text-sm text-[#241f17] placeholder-[#a1957f] outline-none"
+                  />
+                  <button
+                    type="submit"
+                    aria-label={T.nav.search}
+                    className="shrink-0 h-9 px-4 bg-[#f5efe3] hover:bg-[#ece2cc] text-[#6b6152] hover:text-[#2563eb] transition-colors border-l border-[#ddd3bf]"
+                  >
+                    <SearchIcon />
+                  </button>
+                </div>
+              </form>
+            ) : (
+            <div className="flex items-center gap-6">
               {navLinkDesktop('/games', T.nav.games)}
               {navLinkDesktop('/studio', T.nav.studio)}
               <Link
@@ -207,6 +228,7 @@ export default function NavBar() {
               {navLinkDesktop('/partner', T.nav.partner)}
               {navLinkDesktop('/about', T.nav.about)}
             </div>
+            )}
             <div className="flex items-center justify-end gap-5">
               {user ? (
                 <>
