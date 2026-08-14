@@ -78,11 +78,14 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
             #{rank}
           </span>
         )}
-        {/* 상단 중앙 — 훅 문구 */}
-        <div className="absolute inset-x-0 top-6 px-8 text-center z-[5]">
-          <h3 className="text-[22px] font-extrabold text-white leading-snug line-clamp-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-            <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">{teaser}</span>
-          </h3>
+        {/* 상단 중앙 — 말풍선 훅 (꼬리가 캐릭터를 가리킨다) */}
+        <div className="absolute inset-x-0 top-6 px-6 text-center z-[5]">
+          <div className="inline-block relative bg-white rounded-2xl px-5 py-3 shadow-[0_6px_20px_rgba(0,0,0,0.18)]">
+            <span className="text-[19px] font-extrabold text-[#241f17] leading-snug">
+              {teaser}
+            </span>
+            <span className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-3.5 h-3.5 bg-white rotate-45 rounded-[3px]" aria-hidden />
+          </div>
         </div>
         {/* 방 장면 — 캐릭터는 중앙 */}
         <div className="absolute inset-x-1 top-[14%] bottom-[30%]">

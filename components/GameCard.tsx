@@ -457,15 +457,16 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                     #{rank}
                   </span>
                 )}
-                {/* 유혹 질문 — 상단 중앙, 답(제목)은 뒷면에 */}
-                <div className="shrink-0 px-5 pt-5 text-center">
-                  <h3 className="text-[20px] md:text-[23px] font-extrabold text-white leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
-                    <span className="underline decoration-white/50 decoration-2 underline-offset-[6px]">
+                {/* 유혹 질문 — 말풍선, 답(제목)은 뒷면에 */}
+                <div className="shrink-0 px-4 pt-4 text-center">
+                  <div className="inline-block relative bg-white rounded-2xl px-4 py-2.5 shadow-[0_5px_16px_rgba(0,0,0,0.16)]">
+                    <span className="text-[16px] md:text-[18px] font-extrabold text-[#241f17] leading-snug">
                       {lang === 'en'
                         ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
                         : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
                     </span>
-                  </h3>
+                    <span className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-3 h-3 bg-white rotate-45 rounded-[2px]" aria-hidden />
+                  </div>
                 </div>
                 <div className="flex-1 relative min-h-0 mx-2">
                   <RoomScene id={game.id} views={game.view_count ?? 0} />
