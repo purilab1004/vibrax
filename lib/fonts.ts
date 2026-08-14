@@ -1,4 +1,4 @@
-import { Jua } from 'next/font/google'
+import { Yeon_Sung } from 'next/font/google'
 
-// 카드 훅 타이틀용 — 통통한 라운드 한글 (Jua)
-export const jua = Jua({ weight: '400', subsets: ['latin'] })
+// 카드 훅 타이틀용 — 손글씨 느낌의 연성체 (Yeon Sung)
+export const titleFont = Yeon_Sung({ weight: '400', subsets: ['latin'] })

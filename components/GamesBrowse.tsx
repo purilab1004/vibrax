@@ -13,7 +13,7 @@ import ViewerIcon from '@/components/ViewerIcon'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
-import { jua } from '@/lib/fonts'
+import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
@@ -81,7 +81,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         )}
         {/* 상단 중앙 — Jua 포스터 타이틀 */}
         <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]">
-          <h3 className={`${jua.className} text-[32px] leading-[1.2] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
+          <h3 className={`${titleFont.className} text-[32px] leading-[1.2] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
             {teaser}
           </h3>
         </div>

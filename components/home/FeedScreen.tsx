@@ -13,7 +13,7 @@ import ViewerIcon from '@/components/ViewerIcon'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
-import { jua } from '@/lib/fonts'
+import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
@@ -69,7 +69,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       )}
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
       <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]">
-        <h3 className={`${jua.className} text-[34px] leading-[1.2] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
+        <h3 className={`${titleFont.className} text-[34px] leading-[1.2] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
           {lang === 'en'
             ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
             : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
