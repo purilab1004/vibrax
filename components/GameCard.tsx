@@ -217,12 +217,15 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
       />
       <svg ref={svgRef} viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
         {/* 찰흙 캐릭터 — 게임마다 다른 클레이 색 */}
-        <FluffFigure
-          delay={`${(hashOf(id) % 30) / 10}s`}
-          eyesRef={eyesRef}
-          color={CLAY_COLORS[hashOf(id) % CLAY_COLORS.length]}
-          shape={(hashOf(id) >> 4) % 6}
-        />
+        {/* 1.35배 확대 — 카드에서 존재감 있게 */}
+        <g transform="translate(100 96) scale(1.35) translate(-100 -96)">
+          <FluffFigure
+            delay={`${(hashOf(id) % 30) / 10}s`}
+            eyesRef={eyesRef}
+            color={CLAY_COLORS[hashOf(id) % CLAY_COLORS.length]}
+            shape={(hashOf(id) >> 4) % 6}
+          />
+        </g>
       </svg>
     </>
   )
@@ -458,18 +461,18 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                     #{rank}
                   </span>
                 )}
-                {/* 유혹 질문 — Jua 포스터 타이틀, 답(제목)은 뒷면에 */}
-                <div className="shrink-0 px-4 pt-4 text-center">
+                {/* 유혹 질문 — Jua 포스터 타이틀 (games 카드와 동일 배치) */}
+                <div className="absolute inset-x-0 top-[12%] px-4 text-center z-[5]">
                   <h3 className={`${jua.className} text-[22px] md:text-[25px] leading-[1.2] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
                     {lang === 'en'
                       ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
                       : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
                   </h3>
                 </div>
-                <div className="flex-1 relative min-h-0 mx-2">
+                <div className="absolute inset-x-1 top-[21%] bottom-[16%]">
                   <RoomScene id={game.id} views={game.view_count ?? 0} />
                 </div>
-                <div className="shrink-0 px-5 pb-5">
+                <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
                   <p className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.1em] text-white/70">
                     <span className="w-5 h-5 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 inline-flex items-center justify-center">
                       {creatorAvatarUrl ? (
