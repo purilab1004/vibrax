@@ -156,7 +156,7 @@ export default function AboutPage() {
       {/* ── 3 PHASE 한눈에 — 상세로 들어가기 전 요약 스트립 ── */}
       <section className="max-w-6xl mx-auto px-6 pb-20">
         <Reveal className="text-center mb-12">
-          <p className="font-serif italic text-xl md:text-2xl text-[#F05A28] mb-3">
+          <p className="italic font-bold tracking-tight text-xl md:text-2xl text-[#F05A28] mb-3">
             {ko ? 'How it works' : 'How it works'}
           </p>
           <h2 className="text-3xl md:text-5xl font-extrabold text-[#241f17] leading-[1.25]">
@@ -179,7 +179,7 @@ export default function AboutPage() {
                   <span className="font-pixel text-[24px] font-extrabold" style={{ color: p.color }}>
                     0{i + 1}
                   </span>
-                  <span className="font-serif italic text-lg text-[#857a68] group-hover:text-[#F05A28] transition-colors">
+                  <span className="italic font-bold tracking-tight text-lg text-[#857a68] group-hover:text-[#F05A28] transition-colors">
                     {p.accent}
                   </span>
                 </div>
@@ -200,7 +200,7 @@ export default function AboutPage() {
           <div className={`max-w-6xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center`}>
             {/* 텍스트 */}
             <Reveal className={i % 2 === 1 ? 'md:order-2' : ''}>
-              <p className="font-serif italic text-2xl md:text-3xl text-[#F05A28] -mb-1">{p.accent}</p>
+              <p className="italic font-bold tracking-tight text-2xl md:text-3xl text-[#F05A28] -mb-1">{p.accent}</p>
               <p className="font-pixel text-[#241f17] text-2xl md:text-4xl tracking-tight font-extrabold mb-2">
                 {p.phase}
               </p>
