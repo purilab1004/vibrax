@@ -79,40 +79,36 @@ function shade(hex: string, amt: number): string {
   return `#${((c(n >> 16) << 16) | (c((n >> 8) & 255) << 8) | c(n & 255)).toString(16).padStart(6, '0')}`
 }
 
-// 찰흙 캐릭터 — 라운드 3D 사각형 몸통 + 작은 검정 점 눈 + 한 줄 미소
-function FluffFigure({ delay, eyesRef, color = '#F05A28', gid = 'clay' }: {
+// 찰흙 캐릭터 — 라운드 3D 사각형 몸통(단색 + 입체 레이어, 그라디언트/ID 미사용) + 작은 점 눈 + 미소
+// ※ 홈에서 같은 카드가 모바일/PC 두 벌 렌더되므로 SVG defs id는 충돌한다 — 반드시 id 없는 도형만 사용
+function FluffFigure({ delay, eyesRef, color = '#F05A28' }: {
   delay: string
   eyesRef?: React.Ref<SVGGElement>
   color?: string
-  gid?: string
 }) {
   return (
     <g className="critter-bob" style={{ animationDelay: delay }}>
-      <defs>
-        {/* 클레이 음영 — 좌상단 빛, 우하단 그늘 */}
-        <linearGradient id={gid} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={shade(color, 36)} />
-          <stop offset="55%" stopColor={color} />
-          <stop offset="100%" stopColor={shade(color, -34)} />
-        </linearGradient>
-      </defs>
       {/* 바닥 그림자 */}
-      <ellipse cx="100" cy="130" rx="26" ry="5" fill="#000" opacity="0.12" />
-      {/* 라운드 큐브 몸통 — 살짝 기울어진 찰흙 덩어리 */}
+      <ellipse cx="100" cy="132" rx="27" ry="5" fill="#000" opacity="0.14" />
       <g className="critter-body" style={{ transformOrigin: '100px 128px' }}>
-        <rect x="68" y="62" width="64" height="64" rx="17" fill={`url(#${gid})`} transform="rotate(-3 100 94)" />
+        {/* 뒤판 — 어두운 톤을 우하단으로 밀어 3D 두께 */}
+        <rect x="73" y="67" width="64" height="64" rx="17" fill={shade(color, -42)} transform="rotate(-3 105 99)" />
+        {/* 앞판 — 본색 */}
+        <rect x="68" y="62" width="64" height="64" rx="17" fill={color} transform="rotate(-3 100 94)" />
+        {/* 앞판 상단 밝은 면 — 클레이 광 */}
+        <rect x="68" y="62" width="64" height="30" rx="17" fill={shade(color, 30)} opacity="0.55" transform="rotate(-3 100 94)" />
         {/* 정수리 소프트 하이라이트 */}
-        <ellipse cx="84" cy="74" rx="14" ry="8" fill="#ffffff" opacity="0.3" transform="rotate(-18 84 74)" />
+        <ellipse cx="84" cy="73" rx="13" ry="7" fill="#ffffff" opacity="0.4" transform="rotate(-16 84 73)" />
         {/* 작은 검정 눈 — 마우스를 따라 움직인다 */}
         <g ref={eyesRef} className="transition-transform duration-75">
-          <circle cx="92" cy="90" r="2.7" fill="#161616" />
-          <circle cx="108" cy="90" r="2.7" fill="#161616" />
+          <circle cx="92" cy="92" r="2.8" fill="#161616" />
+          <circle cx="108" cy="92" r="2.8" fill="#161616" />
         </g>
         {/* 볼터치 */}
-        <circle cx="85" cy="99" r="4" fill="#ffffff" opacity="0.28" />
-        <circle cx="115" cy="99" r="4" fill="#ffffff" opacity="0.28" />
+        <circle cx="84" cy="101" r="4.2" fill="#ffffff" opacity="0.35" />
+        <circle cx="116" cy="101" r="4.2" fill="#ffffff" opacity="0.35" />
         {/* 작은 한 줄 커브 미소 */}
-        <path d="M96.5 99.5q3.5 3.2 7 0" stroke="#161616" strokeWidth="2.1" strokeLinecap="round" fill="none" />
+        <path d="M96.5 101.5q3.5 3.2 7 0" stroke="#161616" strokeWidth="2.2" strokeLinecap="round" fill="none" />
       </g>
     </g>
   )
@@ -205,7 +201,6 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
           delay={`${(hashOf(id) % 30) / 10}s`}
           eyesRef={eyesRef}
           color={CLAY_COLORS[hashOf(id) % CLAY_COLORS.length]}
-          gid={`clay-${hashOf(id).toString(36)}`}
         />
       </svg>
     </>
