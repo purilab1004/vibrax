@@ -115,9 +115,18 @@ export default function AboutPage() {
   const ko = lang === 'ko'
 
   const phases = [
-    { ...a.p1, accent: ko ? '만들다' : 'Create', color: '#F05A28', seed: 'about-create-01', views: 300 },
-    { ...a.p2, accent: ko ? '방송하다' : 'Stream', color: '#5AB0F2', seed: 'about-stream-2', views: 900 },
-    { ...a.p3, accent: ko ? '벌다' : 'Earn', color: '#c9940c', seed: 'about-earn-x7', views: 4500 },
+    {
+      ...a.p1, accent: ko ? '만들다' : 'Create', color: '#F05A28', seed: 'about-create-01', views: 300,
+      brief: ko ? '코드 없이 프롬프트만으로 나만의 게임을 빚어냅니다' : 'Shape your own game with prompts alone — no code',
+    },
+    {
+      ...a.p2, accent: ko ? '방송하다' : 'Stream', color: '#5AB0F2', seed: 'about-stream-2', views: 900,
+      brief: ko ? 'AI 스트리머 AJ가 내 게임을 실시간으로 중계합니다' : 'AI streamer AJ broadcasts your game live',
+    },
+    {
+      ...a.p3, accent: ko ? '벌다' : 'Earn', color: '#c9940c', seed: 'about-earn-x7', views: 4500,
+      brief: ko ? '내 AGENT가 대신 뛰며 수익의 기회를 만듭니다' : 'Your AGENT plays for you and opens up income',
+    },
   ]
 
   return (
@@ -144,9 +153,38 @@ export default function AboutPage() {
         </Reveal>
       </section>
 
+      {/* ── 3 PHASE 한눈에 — 상세로 들어가기 전 요약 스트립 ── */}
+      <section className="max-w-6xl mx-auto px-6 pb-20">
+        <Reveal>
+          <div className="grid md:grid-cols-3 border-t border-l border-[#ddd3bf]">
+            {phases.map((p, i) => (
+              <a
+                key={i}
+                href={`#phase-${i + 1}`}
+                className="group border-b border-r border-[#ddd3bf] p-7 bg-white/50 hover:bg-white transition-colors"
+              >
+                <div className="flex items-baseline justify-between mb-4">
+                  <span className="font-pixel text-[24px] font-extrabold" style={{ color: p.color }}>
+                    0{i + 1}
+                  </span>
+                  <span className="font-serif italic text-lg text-[#857a68] group-hover:text-[#F05A28] transition-colors">
+                    {p.accent}
+                  </span>
+                </div>
+                <p className="font-pixel text-[11px] text-[#9d9280] tracking-[0.25em] mb-2.5">{p.label}</p>
+                <p className="text-[15px] font-semibold text-[#241f17] leading-relaxed">{p.brief}</p>
+                <span className="inline-block mt-4 text-[13px] text-[#857a68] group-hover:text-[#2563eb] group-hover:translate-x-1 transition-all">
+                  {ko ? '자세히 보기' : 'Read more'} →
+                </span>
+              </a>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
       {/* ── 세 가지 이유 — 교차 레이아웃 ── */}
       {phases.map((p, i) => (
-        <section key={i} className={i % 2 === 1 ? 'bg-white/60' : ''}>
+        <section key={i} id={`phase-${i + 1}`} className={`scroll-mt-20 ${i % 2 === 1 ? 'bg-white/60' : ''}`}>
           <div className={`max-w-6xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center`}>
             {/* 텍스트 */}
             <Reveal className={i % 2 === 1 ? 'md:order-2' : ''}>
