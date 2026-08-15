@@ -41,13 +41,17 @@ export default function MobileNav() {
         ), pathname.startsWith('/games'))}
         {/* 중앙 만들기 — 그라디언트 원형 강조 */}
         <Link href="/studio" className="flex flex-col items-center justify-center flex-1" aria-label={T.nav.studio}>
-          <span className="w-11 h-11 -mt-1 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] flex items-center justify-center text-white shadow-[0_6px_16px_rgba(37,99,235,0.45)] active:scale-95 transition-transform">
-{/* 찰흙 큐브 얼굴 — 로고 캐릭터를 흰 선으로 */}
-            <svg viewBox="0 0 32 32" className="w-7 h-7" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={2.2}>
-              <rect x="7" y="7" width="18" height="18" rx="5.5" transform="rotate(-3 16 16)" />
-              <circle cx="12.8" cy="15.2" r="0.6" fill="currentColor" strokeWidth={1.6} />
-              <circle cx="19.4" cy="14.9" r="0.6" fill="currentColor" strokeWidth={1.6} />
-              <path d="M14 19.6q2 1.8 4 0" strokeWidth={1.9} />
+          {/* 큰 네모 점토 캐릭터 — 로고 그대로, 가끔 윙크 */}
+          <span className="-mt-2 block w-12 h-12 drop-shadow-[0_6px_14px_rgba(240,90,40,0.45)] active:scale-95 transition-transform">
+            <svg viewBox="0 0 32 32" className="w-full h-full" aria-hidden>
+              <rect x="6.2" y="6.2" width="22" height="22" rx="6.5" fill="#b93d16" transform="rotate(-3 17.2 17.2)" />
+              <rect x="4.5" y="4.5" width="22" height="22" rx="6.5" fill="#F05A28" transform="rotate(-3 15.5 15.5)" />
+              <rect x="4.5" y="4.5" width="22" height="10" rx="6.5" fill="#ff8a5c" opacity="0.65" transform="rotate(-3 15.5 15.5)" />
+              {/* 왼눈 — 평소 점, 가끔 윙크(곡선) */}
+              <circle className="wink-open" cx="11.8" cy="15" r="1.9" fill="#161616" />
+              <path className="wink-closed" d="M9.6 15.2q2.2 1.8 4.4 0" stroke="#161616" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+              <circle cx="19.8" cy="14.6" r="1.9" fill="#161616" />
+              <path d="M13.4 20q2.3 2 4.6 0" stroke="#161616" strokeWidth="1.8" strokeLinecap="round" fill="none" />
             </svg>
           </span>
         </Link>
