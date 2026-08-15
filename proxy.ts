@@ -27,7 +27,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // 점검 모드 — 허용 IP 외에는 전부 점검 페이지로 rewrite (URL은 유지)
-  if (MAINTENANCE_MODE) {
+  if (MAINTENANCE_MODE && process.env.NODE_ENV !== 'development') {
     const { pathname } = request.nextUrl
     const exempt =
       pathname === '/maintenance' ||

@@ -1,0 +1,87 @@
+/* lib/jeumto/editor.css — jeumto/src/style.css 를 .jeumto 아래로 스코프 */
+.jeumto {
+  --bg: #0b0b0c;
+  --panel: #131316;
+  --panel-2: #1b1b20;
+  --ink: #ececec;
+  --muted: #8b8b93;
+  --line: #26262c;
+  --accent: #ff7a59;
+  --accent-ink: #1a0f0b;
+  font-family: "Pretendard", -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif;
+  color: var(--ink);
+  color-scheme: dark;
+  width: 100%; height: 100%; overflow: hidden; background: var(--bg);
+}
+.jeumto * { box-sizing: border-box; }
+.jeumto #app { display: flex; height: 100%; }
+.jeumto #panel {
+  width: 300px; flex: none; overflow-y: auto; padding: 16px 16px 40px;
+  background: var(--panel); border-right: 1px solid var(--line);
+}
+.jeumto #panel header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.jeumto #panel h1 { font-size: 26px; margin: 0; letter-spacing: -0.5px; font-weight: 700; }
+.jeumto #panel .sub { color: var(--muted); font-size: 12px; }
+.jeumto #panel .stats { margin-left: auto; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.jeumto section { border-top: 1px solid var(--line); padding: 12px 0; }
+.jeumto h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+.jeumto h3 { font-size: 12px; color: var(--muted); margin: 12px 0 6px; }
+.jeumto label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; margin: 6px 0; }
+.jeumto label input[type=range] { flex: 1; accent-color: var(--accent); }
+.jeumto label input[type=text], .jeumto label select { flex: 1; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: var(--panel-2); color: var(--ink); }
+.jeumto label input[type=color] { width: 44px; height: 26px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); padding: 2px; }
+.jeumto label.check { justify-content: flex-start; }
+.jeumto label.check input { accent-color: var(--accent); }
+.jeumto .hint { font-size: 11.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
+.jeumto button, .jeumto .file-btn {
+  font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel-2); color: var(--ink);
+}
+.jeumto button:hover, .jeumto .file-btn:hover { border-color: var(--accent); }
+.jeumto button:disabled { opacity: .4; cursor: default; }
+.jeumto button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.jeumto .row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.jeumto .seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.jeumto .seg button { flex: 1; border: 0; border-radius: 0; background: var(--panel-2); padding: 7px 4px; }
+.jeumto .seg button.active { background: var(--ink); color: #111; font-weight: 600; }
+.jeumto .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+.jeumto .tabs button { flex: 1; padding: 5px 0; }
+.jeumto .tabs button.active { background: var(--ink); color: #111; border-color: var(--ink); }
+.jeumto .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.jeumto .grid button { aspect-ratio: 1; padding: 0; display: grid; place-items: center; background: #fff; }
+.jeumto .grid button.active { outline: 2px solid var(--accent); }
+.jeumto .grid svg { width: 80%; height: 80%; }
+.jeumto .swatches { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.jeumto .swatches button { width: 26px; height: 26px; border-radius: 50%; padding: 0; border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--line); }
+.jeumto .swatches button.active { box-shadow: 0 0 0 2px var(--accent); }
+.jeumto #viewport { flex: 1; min-width: 0; position: relative; background: var(--bg); }
+.jeumto #c { width: 100%; height: 100%; display: block; touch-action: none; }
+.jeumto #viewport.sculpt, .jeumto #viewport.paint, .jeumto #viewport.place { cursor: crosshair; }
+.jeumto #viewport.grabbing { cursor: grabbing !important; }
+.jeumto #toast {
+  position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
+  background: var(--ink); color: #111; padding: 8px 14px; border-radius: 999px; font-size: 13px;
+  opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap;
+}
+.jeumto #toast.show { opacity: 1; }
+.jeumto #hud, .jeumto #hud-top {
+  position: absolute; left: 0; right: 0; display: flex; justify-content: center; gap: 18px; flex-wrap: wrap;
+  padding: 0 16px; font-size: 12px; color: #6f6f78; pointer-events: none; text-align: center; line-height: 1.6;
+}
+.jeumto #hud { bottom: 14px; }
+.jeumto #hud-top { top: 14px; font-size: 13px; color: #9a9aa3; }
+.jeumto section[hidden] { display: none; }
+.jeumto label .val { min-width: 36px; text-align: right; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.jeumto #app.panel-collapsed #panel { display: none; }
+.jeumto #panel-toggle {
+  position: absolute; top: 12px; left: 12px; width: 30px; height: 30px; padding: 0;
+  border-radius: 8px; background: rgba(27,27,32,.85); color: var(--muted); font-size: 12px; z-index: 2;
+}
+.jeumto #panel-toggle:hover { color: var(--ink); }
+@media (max-width: 720px) {
+  .jeumto #panel { position: absolute; inset: 0 auto 0 0; z-index: 3; width: min(300px, 86vw); }
+  .jeumto #hud { display: none; }
+}
+@media (max-width: 720px) {
+  .jeumto #panel-toggle { left: auto; right: 12px; z-index: 4; }
+}

@@ -7,10 +7,10 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Game, Genre } from '@/lib/supabase/types'
-import { loadAvatarConfig } from '@/lib/avatar/storage'
-import type { AvatarConfig } from '@/lib/avatar/config'
+import { loadAvatarConfig } from '@/lib/jeumto/storage'
+import type { AvatarConfig } from '@/lib/jeumto/config'
 
-const AvatarMiniView = dynamic(() => import('@/lib/avatar/companion/AvatarMiniView'), { ssr: false })
+const JeumtoView = dynamic(() => import('@/lib/jeumto/JeumtoView'), { ssr: false })
 
 const LANGUAGES = [
   { value: 'ko', label: '한국어' },
@@ -417,7 +417,7 @@ export default function ProfilePage() {
             <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest">MY CHARACTER · 게임 방송 BJ</p>
             <div className="relative w-full max-w-[260px] aspect-[3/4] border border-[#ebe4d6] bg-[#050508] overflow-hidden">
               {myAvatarConfig ? (
-                <AvatarMiniView config={myAvatarConfig} />
+                <JeumtoView config={myAvatarConfig} />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
                   <span className="text-3xl">🧍</span>

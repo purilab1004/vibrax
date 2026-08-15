@@ -5,10 +5,10 @@ import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
-import type { AvatarConfig } from '@/lib/avatar/config'
+import type { AvatarConfig } from '@/lib/jeumto/config'
 
 const AvatarOverlay = dynamic(() => import('./AvatarOverlay'), { ssr: false })
-const CustomBjOverlay = dynamic(() => import('@/lib/avatar/companion/CustomBjOverlay'), { ssr: false })
+const JeumtoBjOverlay = dynamic(() => import('@/lib/jeumto/JeumtoBjOverlay'), { ssr: false })
 
 
 interface Message {
@@ -47,7 +47,7 @@ const AUTO_COMMENTARY = [
 
 export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName }: Props) {
   const persona = AJ_PERSONAS[genre]
-  const bjAvatar = bjAvatarConfig ? <CustomBjOverlay config={bjAvatarConfig} /> : <AvatarOverlay />
+  const bjAvatar = bjAvatarConfig ? <JeumtoBjOverlay config={bjAvatarConfig} /> : <AvatarOverlay />
   // 하단 BJ 프로필 — 제작자 에이전트 이름 + 아바타(없으면 AJ 페르소나 fallback)
   const bjLabel = bjName?.trim() || persona.name
   const bjPic = bjAvatarConfig?.previewUrl ?? null
