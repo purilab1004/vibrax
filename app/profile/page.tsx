@@ -415,7 +415,7 @@ export default function ProfilePage() {
           {/* ── Col 2: 내 아바타 (게임 방송 BJ) ── */}
           <div className="space-y-3">
             <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest">MY CHARACTER · 게임 방송 BJ</p>
-            <div className="relative w-full max-w-[260px] aspect-[3/4] border border-[#ebe4d6] avatar-wave rounded-2xl overflow-hidden">
+            <div className="relative w-full max-w-[260px] aspect-[3/4] avatar-wave rounded-2xl overflow-hidden">
               {myAvatarConfig ? (
                 <JeumtoView
                   config={myAvatarConfig}

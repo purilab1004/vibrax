@@ -316,7 +316,7 @@ export function playStartSound() {
 function CreatorBadge({ url, name, size }: { url?: string | null; name?: string | null; size: number }) {
   return (
     <span
-      className="avatar-wave relative shrink-0 rounded-full border-2 border-white/80 shadow-md overflow-hidden inline-flex items-center justify-center"
+      className="avatar-wave relative shrink-0 rounded-full shadow-md overflow-hidden inline-flex items-center justify-center"
       style={{ width: size, height: size }}
     >
       {url ? (
@@ -643,7 +643,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
           {/* 정보 블록 — 아바타 + 2줄 제목 + 채널명 + 조회수·장르 (card 변형 전용) */}
           {variant === 'card' && (
           <div className="mt-4 flex items-start gap-3 px-0.5">
-            <div className="avatar-wave w-9 h-9 shrink-0 rounded-full border border-[#ebe4d6] overflow-hidden flex items-center justify-center">
+            <div className="avatar-wave w-9 h-9 shrink-0 rounded-full overflow-hidden flex items-center justify-center">
               {creatorAvatarUrl ? (
                 <Image
                   src={creatorAvatarUrl}

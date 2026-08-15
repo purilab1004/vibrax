@@ -342,7 +342,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             {!isMobile && bjAvatar}
           </div>
           <div className="mt-2 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5">
-            <div className={`avatar-wave w-7 h-7 rounded-full border-2 ${persona.borderColor} overflow-hidden shrink-0`}>
+            <div className="avatar-wave w-7 h-7 rounded-full overflow-hidden shrink-0">
               <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={28} height={28} className={`w-full h-full object-cover ${bjPic ? 'object-top' : ''}`} unoptimized />
             </div>
             <span className="font-pixel text-[10px] text-white truncate">{bjLabel}</span>
@@ -412,7 +412,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             onClick={() => setMobileOpen(v => !v)}
             className={`flex items-center gap-3 w-full px-4 py-3 bg-[#ffffff] border-t-2 ${persona.borderColor} active:brightness-125 transition-all`}
           >
-            <div className={`avatar-wave w-8 h-8 rounded-full border-2 ${persona.borderColor} overflow-hidden shrink-0`}>
+            <div className="avatar-wave w-8 h-8 rounded-full overflow-hidden shrink-0">
               <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={32} height={32} className={`w-full h-full object-cover ${bjPic ? 'object-top' : ''}`} unoptimized />
             </div>
             <div className="flex flex-col items-start min-w-0">
