@@ -492,12 +492,12 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   <RoomScene id={game.id} views={game.view_count ?? 0} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
-                  <p className="flex items-center gap-3 text-[16px] font-bold tracking-[0.06em] text-white/85">
-                    <CreatorBadge url={creatorAvatarUrl} name={creatorName} size={44} />
+                  <p className="flex items-center gap-2.5 text-[15px] font-bold tracking-[0.06em] text-white/85">
+                    <CreatorBadge url={creatorAvatarUrl} name={creatorName} size={32} />
                     <span className="truncate max-w-[45%]">{creatorName ?? 'unknown'}{flag && ` ${flag}`}</span>
                     <span className="text-white/40">·</span>
                     <ViewerIcon className="w-5 h-5" />
-                    <span className="text-[17px]">{formatViewers(game.view_count ?? 0)}</span>
+                    <span className="text-[16px]">{formatViewers(game.view_count ?? 0)}</span>
                   </p>
                 </div>
               </div>
