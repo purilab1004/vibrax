@@ -8,7 +8,7 @@ export default function SiteFooter() {
   const pathname = usePathname()
   if (pathname.startsWith('/studio')) return null
   // /games(쇼츠 피드)에서는 모바일 푸터를 숨긴다 — 데스크톱만 표시
-  const mobileHidden = pathname === '/games' || /^\/games\/[^/]+$/.test(pathname)
+  const mobileHidden = pathname === '/games' || /^\/games\/[^/]+$/.test(pathname) || pathname.startsWith('/profile')
   return (
     <footer className={`${mobileHidden ? 'hidden md:block' : ''} border-t border-[#ebe4d6] py-6 px-6 pb-20 md:pb-6 mt-auto md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200`}>
       <FooterLinks />
