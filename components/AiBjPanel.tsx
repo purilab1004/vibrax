@@ -338,7 +338,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         </div>
         {/* 우하단 — AJ 아바타 + 프로필 배지 */}
         <div className="absolute right-4 bottom-4 w-[180px]">
-          <div className="rounded-xl overflow-hidden border border-white/20 bg-[#050508] shadow-[0_8px_28px_rgba(0,0,0,0.5)]" style={{ height: '170px' }}>
+          <div className="rounded-xl overflow-hidden border border-white/20 bg-[#f3ecdf] shadow-[0_8px_28px_rgba(0,0,0,0.5)]" style={{ height: '170px' }}>
             {!isMobile && bjAvatar}
           </div>
           <div className="mt-2 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5">
@@ -380,7 +380,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         {/* Mobile: 3D AJ avatar, bottom-right */}
         {isMobile && (
           <div
-            className="absolute right-2 z-10 overflow-hidden rounded-lg border border-[#ebe4d6] bg-[#050508] pointer-events-none"
+            className="absolute right-2 z-10 overflow-hidden rounded-lg border border-[#ebe4d6] bg-[#f3ecdf] pointer-events-none"
             style={{ bottom: '72px', width: 116, height: 150 }}
           >
             {isMobile && bjAvatar}

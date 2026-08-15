@@ -55,7 +55,7 @@ export default function JeumtoBjOverlay({ config }: { config: AvatarConfig | nul
   }, [voice])
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative', background: '#050508' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative', background: 'linear-gradient(180deg,#fbf7ef,#ece4d4)' }}>
       <div ref={containerRef} className="absolute inset-0" />
       {!loaded && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">

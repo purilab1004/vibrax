@@ -415,19 +415,19 @@ export default function ProfilePage() {
           {/* ── Col 2: 내 아바타 (게임 방송 BJ) ── */}
           <div className="space-y-3">
             <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest">MY CHARACTER · 게임 방송 BJ</p>
-            <div className="relative w-full max-w-[260px] aspect-[3/4] border border-[#ebe4d6] bg-[#050508] overflow-hidden">
+            <div className="relative w-full max-w-[260px] aspect-[3/4] border border-[#ebe4d6] bg-gradient-to-b from-[#fbf7ef] to-[#ece4d4] rounded-2xl overflow-hidden">
               {myAvatarConfig ? (
                 <JeumtoView
                   config={myAvatarConfig}
                   onLoaded={async (snapshot) => {
                     // 옛(불투명 배경) 프리뷰면 투명 스냅샷으로 자동 재생성 — 카드 배지에서 캐릭터가 원 밖으로 튀어나오게
-                    if (!user || myAvatarConfig.previewVersion === 2) return
+                    if (!user || myAvatarConfig.previewVersion === 3) return
                     await new Promise<void>((r) => requestAnimationFrame(() => r()))
                     const blob = await new Promise<Blob | null>((r) => snapshot(512).toBlob((b) => r(b), 'image/png'))
                     if (!blob) return
                     const url = await uploadPreview(supabase, user.id, blob)
                     if (!url) return
-                    const next = { ...myAvatarConfig, previewUrl: url, previewVersion: 2 }
+                    const next = { ...myAvatarConfig, previewUrl: url, previewVersion: 3 }
                     const { error } = await saveAvatarConfig(supabase, user.id, next)
                     if (!error) setMyAvatarConfig(next)
                   }}
