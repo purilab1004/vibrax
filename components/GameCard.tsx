@@ -10,6 +10,7 @@ import LikeButton from './LikeButton'
 import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
 import type { AvatarConfig } from '@/lib/jeumto/config'
+import { useTransparentPreview } from '@/lib/jeumto/useTransparentPreview'
 import { countryFlag } from '@/lib/country'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
@@ -314,7 +315,9 @@ export function playStartSound() {
 
 // 제작자 아바타 배지 — 동그란 배경 위로 캐릭터(투명 PNG)가 살짝 튀어나와 보이게.
 // 이미지를 두 번 그린다: 원 안에 클립된 전체 + 원 밖으로 나가는 위쪽 절반(클립 없음).
-function CreatorBadge({ url, name, size }: { url?: string | null; name?: string | null; size: number }) {
+function CreatorBadge({ url: rawUrl, name, size }: { url?: string | null; name?: string | null; size: number }) {
+  // 옛 불투명 프리뷰는 키잉해서 투명하게 — 처리 전엔 이미지 대신 이니셜을 보여준다
+  const url = useTransparentPreview(rawUrl)
   const img = (cls: string) => (
     <Image src={url!} alt={name ?? 'creator'} width={size} height={size} unoptimized
       className={`absolute left-1/2 -translate-x-1/2 bottom-[-6%] w-[124%] h-[124%] max-w-none object-contain object-bottom ${cls}`} />
