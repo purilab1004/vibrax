@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import type { Metadata } from 'next'
 import type { Game } from '@/lib/supabase/types'
 import GamePlayButton from '@/components/GamePlayButton'
@@ -75,14 +74,7 @@ export default async function GameDetailPage({ params }: Props) {
   const genreColor = GENRE_COLORS[game.genre] ?? 'bg-gray-700'
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-6 md:py-10">
-      {/* 모바일은 헤더가 없으므로 뒤로가기를 크게·상단 고정 느낌으로 */}
-      <Link
-        href="/games"
-        className="inline-flex items-center gap-1.5 text-[13px] md:text-xs font-semibold md:font-normal text-[#241f17] md:text-[#4a4337] hover:text-[#2563eb] transition-colors mb-5 md:mb-6 tracking-wider"
-      >
-        ← BACK TO GAMES
-      </Link>
+    <div className="max-w-5xl mx-auto px-6 pt-16 pb-10 md:pt-10">
 
       <div className="relative aspect-video w-full mb-8 overflow-hidden bg-gray-900 border border-[#ebe4d6]">
         <Image

@@ -116,7 +116,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
     // 게임 상세 페이지 — 메뉴 대신 뒤로가기 버튼
     if (/^\/games\/[^/]+$/.test(pathname)) {
       return (
-        <div className="hidden md:block fixed top-2 left-3 z-[60]">
+        <div className="fixed top-2 left-3 z-[60]">
           <button
             onClick={() => { if (window.history.length > 1) router.back(); else router.push('/games') }}
             aria-label="back"
