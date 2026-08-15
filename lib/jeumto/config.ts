@@ -43,3 +43,8 @@ export function validateConfig(raw: unknown): AvatarConfig | null {
 export function isJeumtoCharacter(raw: unknown): raw is JeumtoCharacterData {
   return !!raw && typeof raw === 'object' && (raw as Record<string, unknown>).format === 'jeumto-character'
 }
+
+/** DB row 의 avatar_config 에서 프리뷰 URL 만 — 구 포맷은 null (옛 VRM 프리뷰가 남아 보이지 않도록) */
+export function avatarPreviewUrl(raw: unknown): string | null {
+  return validateConfig(raw)?.previewUrl ?? null
+}

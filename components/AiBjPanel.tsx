@@ -7,7 +7,6 @@ import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 
-const AvatarOverlay = dynamic(() => import('./AvatarOverlay'), { ssr: false })
 const JeumtoBjOverlay = dynamic(() => import('@/lib/jeumto/JeumtoBjOverlay'), { ssr: false })
 
 
@@ -29,7 +28,7 @@ interface Props {
   gameTitle: string
   gameDescription?: string | null
   agentConfig?: AgentConfig | null
-  // 게임 제작자의 저장된 아바타 — 있으면 BJ 3D 아바타로 사용(없으면 기본 AvatarOverlay)
+  // 게임 제작자의 저장된 점토 아바타 — 없으면 기본 점토 얼굴
   bjAvatarConfig?: AvatarConfig | null
   // 게임 제작자의 공개 표시명(에이전트 이름) — 하단 BJ 프로필에 AJ 페르소나 대신 노출
   bjName?: string | null
@@ -47,7 +46,7 @@ const AUTO_COMMENTARY = [
 
 export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName }: Props) {
   const persona = AJ_PERSONAS[genre]
-  const bjAvatar = bjAvatarConfig ? <JeumtoBjOverlay config={bjAvatarConfig} /> : <AvatarOverlay />
+  const bjAvatar = <JeumtoBjOverlay config={bjAvatarConfig ?? null} />
   // 하단 BJ 프로필 — 제작자 에이전트 이름 + 아바타(없으면 AJ 페르소나 fallback)
   const bjLabel = bjName?.trim() || persona.name
   const bjPic = bjAvatarConfig?.previewUrl ?? null

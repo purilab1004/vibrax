@@ -15,6 +15,7 @@ import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
+import { avatarPreviewUrl } from '@/lib/jeumto/config'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
 function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number }) {
@@ -25,7 +26,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
   const [copied, setCopied] = useState(false)
 
   const creatorName = game.profiles?.agent_name ?? game.profiles?.username ?? 'unknown'
-  const avatarUrl = game.profiles?.avatar_config?.previewUrl ?? null
+  const avatarUrl = avatarPreviewUrl(game.profiles?.avatar_config)
   const teaser = lang === 'en'
     ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
     : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])

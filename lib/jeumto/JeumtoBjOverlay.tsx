@@ -8,24 +8,29 @@ import { fetchCharacterData } from './storage'
 import { speakText } from './tts'
 import { useJeumtoViewer, type JeumtoViewerHandle } from './useJeumtoViewer'
 
-export default function JeumtoBjOverlay({ config }: { config: AvatarConfig }) {
+// config 가 없으면(제작자가 아바타를 안 만들었으면) 기본 점토 얼굴을 보여준다.
+export default function JeumtoBjOverlay({ config }: { config: AvatarConfig | null }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewerRef = useRef<JeumtoViewerHandle | null>(null)
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null)
-  const loaded = !!config.dataUrl && loadedUrl === config.dataUrl
+  const dataUrl = config?.dataUrl ?? null
+  const voice = config?.voice ?? 'female'
+  const loaded = dataUrl ? loadedUrl === dataUrl : true
   const [bubble, setBubble] = useState<string | null>(null)
   useJeumtoViewer(containerRef, viewerRef, { interactive: false })
 
   useEffect(() => {
     let cancelled = false
-    const url = config.dataUrl
-    if (!url) return
+    const url = dataUrl
+    if (!url) { viewerRef.current?.loadDefault(); return }
     fetchCharacterData(url).then((data) => {
-      if (cancelled || !data || !viewerRef.current) return
-      try { viewerRef.current.load(data); setLoadedUrl(url) } catch (e) { console.error('[jeumto] load failed', e) }
+      if (cancelled || !viewerRef.current) return
+      if (!data) { viewerRef.current.loadDefault(); setLoadedUrl(url); return }
+      try { viewerRef.current.load(data) } catch (e) { console.error('[jeumto] load failed', e); viewerRef.current.loadDefault() }
+      setLoadedUrl(url)
     })
     return () => { cancelled = true }
-  }, [config.dataUrl])
+  }, [dataUrl])
 
   useEffect(() => {
     let endTimer: ReturnType<typeof setTimeout> | undefined
@@ -37,7 +42,7 @@ export default function JeumtoBjOverlay({ config }: { config: AvatarConfig }) {
       const end = () => { setBubble(null); viewerRef.current?.stop() }
       let ms = 4000
       try {
-        ms = (await speakText(text, config.voice)).durationMs
+        ms = (await speakText(text, voice)).durationMs
       } catch (err) {
         console.error('[jeumto bj] TTS failed:', err)
         ms = Math.min(6000, 1500 + text.length * 80)
@@ -47,14 +52,14 @@ export default function JeumtoBjOverlay({ config }: { config: AvatarConfig }) {
     }
     window.addEventListener('avatar:speak', handler)
     return () => { window.removeEventListener('avatar:speak', handler); if (endTimer) clearTimeout(endTimer) }
-  }, [config.voice])
+  }, [voice])
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', background: '#050508' }}>
       <div ref={containerRef} className="absolute inset-0" />
       {!loaded && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">
-          {config.previewUrl ? (
+          {config?.previewUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={config.previewUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
           ) : null}

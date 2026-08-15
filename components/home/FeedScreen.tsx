@@ -15,6 +15,7 @@ import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
+import { avatarPreviewUrl } from '@/lib/jeumto/config'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
 export default function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; golden?: boolean; rank?: number }) {
@@ -24,7 +25,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
   const [coinState, setCoinState] = useState<'idle' | 'drop' | 'ready'>('idle')
 
   const creatorName = game.profiles?.agent_name ?? game.profiles?.username ?? 'unknown'
-  const avatarUrl = game.profiles?.avatar_config?.previewUrl ?? null
+  const avatarUrl = avatarPreviewUrl(game.profiles?.avatar_config)
 
   const insertCoin = async (e: React.MouseEvent) => {
     e.stopPropagation()

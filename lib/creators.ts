@@ -1,4 +1,5 @@
 import type { GameWithCreator } from '@/lib/supabase/types'
+import { avatarPreviewUrl } from '@/lib/jeumto/config'
 
 export interface Creator {
   id: string
@@ -15,7 +16,7 @@ export function topCreatorsOf(games: GameWithCreator[]): Creator[] {
     const cur = map.get(g.user_id) ?? {
       id: g.user_id,
       name: g.profiles?.agent_name ?? g.profiles?.username ?? 'unknown',
-      avatarUrl: g.profiles?.avatar_config?.previewUrl ?? null,
+      avatarUrl: avatarPreviewUrl(g.profiles?.avatar_config),
       games: 0,
       views: 0,
     }
