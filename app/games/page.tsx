@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import GamesBrowse from '@/components/GamesBrowse'
-import GenreFilter from '@/components/GenreFilter'
+import MobileGamesTools from '@/components/MobileGamesTools'
 import GenreSidebar from '@/components/GenreSidebar'
 import { Suspense } from 'react'
 import type { Genre, GameWithCreator } from '@/lib/supabase/types'
@@ -44,12 +44,10 @@ export default async function GamesPage({ searchParams }: Props) {
 
   return (
     <div className="w-full md:px-6">
-      {/* 모바일 — 유리 알약 필터만 (쇼츠 피드 위) */}
-      <div className="md:hidden sticky top-2 z-40 mb-2 px-4 flex justify-center">
-        <Suspense>
-          <GenreFilter />
-        </Suspense>
-      </div>
+      {/* 모바일 — 검색·카테고리는 우상단 버튼을 눌러야 나온다 (피드를 가리지 않게) */}
+      <Suspense>
+        <MobileGamesTools />
+      </Suspense>
 
       <div className="md:flex md:gap-6">
         {/* 데스크톱 — 좌측 카테고리 + 메뉴 사이드바 */}
