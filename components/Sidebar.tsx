@@ -113,6 +113,23 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   if (!open) {
     // 스튜디오에서는 플로팅 메뉴 버튼도 숨긴다 — 자체 상단 바만 사용
     if (pathname.startsWith('/studio')) return null
+    // 게임 상세 페이지 — 메뉴 대신 뒤로가기 버튼
+    if (/^\/games\/[^/]+$/.test(pathname)) {
+      return (
+        <div className="hidden md:block fixed top-2 left-3 z-[60]">
+          <button
+            onClick={() => { if (window.history.length > 1) router.back(); else router.push('/games') }}
+            aria-label="back"
+            className="sand-float sand-button flex items-center gap-2 h-9 px-3 text-[#241f17]"
+          >
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 5l-7 7 7 7" />
+            </svg>
+            <span className="text-[12px] font-semibold tracking-wider">BACK</span>
+          </button>
+        </div>
+      )
+    }
     return (
       <div className="hidden md:block fixed top-2 left-3 z-[60]">
         <button
