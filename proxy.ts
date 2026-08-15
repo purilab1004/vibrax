@@ -12,9 +12,12 @@ const MAINTENANCE_MODE = true
 const ALLOWED_IPS = ['222.111.202.123']
 
 function clientIp(request: NextRequest): string {
+  // x-real-ip는 Vercel 엣지가 실제 접속 IP로 설정 — 클라이언트가 위조 불가.
+  // (x-forwarded-for의 첫 항목은 위조 가능하므로 신뢰하지 않는다)
+  const real = request.headers.get('x-real-ip')
+  if (real) return real.trim()
   const xff = request.headers.get('x-forwarded-for')
-  if (xff) return xff.split(',')[0].trim()
-  return request.headers.get('x-real-ip') ?? ''
+  return xff ? xff.split(',')[0].trim() : ''
 }
 
 export async function proxy(request: NextRequest) {
