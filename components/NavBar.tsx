@@ -174,7 +174,7 @@ export default function NavBar() {
       <header
         className={`sticky top-0 z-50 md:pl-[var(--rail-w,0rem)] transition-[padding,background-color,box-shadow,backdrop-filter,transform] duration-200 ${
           (scrolled || pathname !== '/') && pathname !== '/games' ? 'bg-white/55 backdrop-blur-xl' : ''
-        } ${hideMobile ? '-translate-y-full md:translate-y-0' : ''} ${pathname === '/games' ? 'hidden md:block' : ''}`}
+        } ${hideMobile ? '-translate-y-full md:translate-y-0' : ''} ${pathname === '/games' || /^\/games\/[^/]+$/.test(pathname) ? 'hidden md:block' : ''}`}
       >
         <nav className="w-full px-5 h-14 flex items-center gap-4">
           {/* 데스크톱은 사이드바 상단에 로고가 있으므로 모바일에서만 표시 */}

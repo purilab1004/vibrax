@@ -75,10 +75,11 @@ export default async function GameDetailPage({ params }: Props) {
   const genreColor = GENRE_COLORS[game.genre] ?? 'bg-gray-700'
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto px-6 py-6 md:py-10">
+      {/* 모바일은 헤더가 없으므로 뒤로가기를 크게·상단 고정 느낌으로 */}
       <Link
         href="/games"
-        className="text-xs text-[#4a4337] hover:text-[#2563eb] transition-colors mb-6 inline-block tracking-wider"
+        className="inline-flex items-center gap-1.5 text-[13px] md:text-xs font-semibold md:font-normal text-[#241f17] md:text-[#4a4337] hover:text-[#2563eb] transition-colors mb-5 md:mb-6 tracking-wider"
       >
         ← BACK TO GAMES
       </Link>
