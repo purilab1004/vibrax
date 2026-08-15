@@ -625,3 +625,12 @@ body {
   background-size: 300% 300%;
   animation: avatar-wave 7s ease-in-out infinite;
 }
+
+/* 아바타 캐릭터가 살짝 까딱까딱 움직인다 */
+@keyframes avatar-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  25%      { transform: translateY(-4%) rotate(-3deg) scale(1.03); }
+  50%      { transform: translateY(0) rotate(0deg) scale(1); }
+  75%      { transform: translateY(-3%) rotate(3deg) scale(1.03); }
+}
+.avatar-bob { animation: avatar-bob 2.8s ease-in-out infinite; transform-origin: 50% 80%; }

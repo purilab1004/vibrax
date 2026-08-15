@@ -320,7 +320,7 @@ function CreatorBadge({ url, name, size }: { url?: string | null; name?: string 
       style={{ width: size, height: size }}
     >
       {url ? (
-        <Image src={url} alt={name ?? 'creator'} width={size} height={size} unoptimized className="w-full h-full object-cover object-center" />
+        <Image src={url} alt={name ?? 'creator'} width={size} height={size} unoptimized className="avatar-bob w-full h-full object-cover object-center" />
       ) : (
         <span className="font-pixel text-[13px] text-white">{(name ?? '?').charAt(0).toUpperCase()}</span>
       )}
@@ -650,7 +650,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   alt={creatorName ?? 'creator'}
                   width={36}
                   height={36}
-                  className="w-full h-full object-cover object-top"
+                  className="avatar-bob w-full h-full object-cover object-top"
                   unoptimized
                 />
               ) : (

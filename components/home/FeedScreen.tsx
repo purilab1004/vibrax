@@ -99,7 +99,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
           <span className="avatar-wave w-6 h-6 shrink-0 rounded-full overflow-hidden inline-flex items-center justify-center">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt={creatorName} className="w-full h-full object-cover object-top" />
+              <img src={avatarUrl} alt={creatorName} className="avatar-bob w-full h-full object-cover object-top" />
             ) : (
               <span className="font-pixel text-[10px] text-white">{creatorName.charAt(0).toUpperCase()}</span>
             )}

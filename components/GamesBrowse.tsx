@@ -149,7 +149,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
           <span className="avatar-wave w-12 h-12 rounded-full overflow-hidden shadow-[0_2px_10px_rgba(36,31,23,0.15)] flex items-center justify-center">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt={creatorName} className="w-full h-full object-cover object-top" />
+              <img src={avatarUrl} alt={creatorName} className="avatar-bob w-full h-full object-cover object-top" />
             ) : (
               <span className="font-pixel text-sm text-white">{creatorName.charAt(0).toUpperCase()}</span>
             )}
