@@ -312,6 +312,25 @@ export function playStartSound() {
   } catch {}
 }
 
+// 제작자 아바타 배지 — 동그란 배경 위로 캐릭터(투명 PNG)가 살짝 튀어나와 보이게.
+// 이미지를 두 번 그린다: 원 안에 클립된 전체 + 원 밖으로 나가는 위쪽 절반(클립 없음).
+function CreatorBadge({ url, name, size }: { url?: string | null; name?: string | null; size: number }) {
+  const img = (cls: string) => (
+    <Image src={url!} alt={name ?? 'creator'} width={size} height={size} unoptimized
+      className={`absolute left-1/2 -translate-x-1/2 bottom-[-6%] w-[124%] h-[124%] max-w-none object-contain object-bottom ${cls}`} />
+  )
+  return (
+    <span className="relative shrink-0 inline-block" style={{ width: size, height: size }}>
+      <span className="absolute inset-0 rounded-full border-2 border-white/80 bg-white/70 shadow-md overflow-hidden inline-flex items-center justify-center">
+        {url ? img('') : (
+          <span className="font-pixel text-[13px] text-[#857a68]">{(name ?? '?').charAt(0).toUpperCase()}</span>
+        )}
+      </span>
+      {url && img('[clip-path:inset(0_0_52%_0)]')}
+    </span>
+  )
+}
+
 export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video', golden = false, rank }: GameCardProps) {
   const flag = countryFlag(creatorCountry)
   const { T, lang } = useLang()
@@ -473,25 +492,12 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   <RoomScene id={game.id} views={game.view_count ?? 0} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
-                  <p className="flex items-center gap-2.5 text-[15px] font-bold tracking-[0.06em] text-white/85">
-                    <span className="w-8 h-8 shrink-0 rounded-full border-2 border-white/70 overflow-hidden bg-white/70 inline-flex items-center justify-center shadow-md">
-                      {creatorAvatarUrl ? (
-                        <Image
-                          src={creatorAvatarUrl}
-                          alt={creatorName ?? 'creator'}
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-cover object-top"
-                          unoptimized
-                        />
-                      ) : (
-                        <span className="font-pixel text-[12px] text-[#857a68]">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
-                      )}
-                    </span>
+                  <p className="flex items-center gap-3 text-[16px] font-bold tracking-[0.06em] text-white/85">
+                    <CreatorBadge url={creatorAvatarUrl} name={creatorName} size={44} />
                     <span className="truncate max-w-[45%]">{creatorName ?? 'unknown'}{flag && ` ${flag}`}</span>
                     <span className="text-white/40">·</span>
                     <ViewerIcon className="w-5 h-5" />
-                    <span className="text-[16px]">{formatViewers(game.view_count ?? 0)}</span>
+                    <span className="text-[17px]">{formatViewers(game.view_count ?? 0)}</span>
                   </p>
                 </div>
               </div>
