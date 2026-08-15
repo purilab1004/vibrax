@@ -146,12 +146,12 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
       <div className="flex flex-col items-center gap-5 self-end pb-8">
         {/* 제작자 아바타 */}
         <div className="flex flex-col items-center gap-1.5" title={creatorName}>
-          <span className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-white shadow-[0_2px_10px_rgba(36,31,23,0.15)] flex items-center justify-center">
+          <span className="avatar-wave w-12 h-12 rounded-full border-2 border-white overflow-hidden shadow-[0_2px_10px_rgba(36,31,23,0.15)] flex items-center justify-center">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt={creatorName} className="w-full h-full object-cover object-top" />
             ) : (
-              <span className="font-pixel text-sm text-[#b3a78f]">{creatorName.charAt(0).toUpperCase()}</span>
+              <span className="font-pixel text-sm text-white">{creatorName.charAt(0).toUpperCase()}</span>
             )}
           </span>
           <span className="text-[11px] font-semibold text-[#6b6152] max-w-[72px] truncate">{creatorName}</span>

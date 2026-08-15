@@ -613,3 +613,15 @@ body {
   .wink-open { animation: none; opacity: 1; }
   .wink-closed { animation: none; opacity: 0; }
 }
+
+/* 아바타 배경 — 보라→핑크 그라데이션이 물결처럼 계속 흐른다 */
+@keyframes avatar-wave {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.avatar-wave {
+  background: linear-gradient(120deg, #7f78e6 0%, #a77de9 30%, #e07ae0 60%, #f78bd6 80%, #8b7ce8 100%);
+  background-size: 300% 300%;
+  animation: avatar-wave 7s ease-in-out infinite;
+}

@@ -96,12 +96,12 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       {/* 하단 정보 + 아케이드 코인 플로우 */}
       <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-24 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
         <p className="flex items-center gap-2 text-[13px] font-semibold text-white/75">
-          <span className="w-6 h-6 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 inline-flex items-center justify-center">
+          <span className="avatar-wave w-6 h-6 shrink-0 rounded-full border border-white/60 overflow-hidden inline-flex items-center justify-center">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt={creatorName} className="w-full h-full object-cover object-top" />
             ) : (
-              <span className="font-pixel text-[10px] text-[#857a68]">{creatorName.charAt(0).toUpperCase()}</span>
+              <span className="font-pixel text-[10px] text-white">{creatorName.charAt(0).toUpperCase()}</span>
             )}
           </span>
           {creatorName}
