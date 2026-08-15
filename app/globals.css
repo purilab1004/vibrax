@@ -592,3 +592,24 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .mouth-pulse, .coin-flow { animation: none; }
 }
+
+/* 모바일 네비 캐릭터 — 몇 초마다 한쪽 눈 윙크 */
+.wink-open {
+  animation: winkOpen 5.5s infinite;
+}
+.wink-closed {
+  opacity: 0;
+  animation: winkClosed 5.5s infinite;
+}
+@keyframes winkOpen {
+  0%, 86%, 95%, 100% { opacity: 1; }
+  87%, 94% { opacity: 0; }
+}
+@keyframes winkClosed {
+  0%, 86%, 95%, 100% { opacity: 0; }
+  87%, 94% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wink-open { animation: none; opacity: 1; }
+  .wink-closed { animation: none; opacity: 0; }
+}
