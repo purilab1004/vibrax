@@ -6,10 +6,36 @@ import { NextResponse, type NextRequest } from 'next/server'
 const AI_BLOCK_UA =
   /GPTBot|ChatGPT-User|ClaudeBot|Claude-User|Claude-Web|anthropic-ai|Google-Extended|CCBot|Bytespider|meta-externalagent|cohere-ai|Perplexity-User|Diffbot|Google-CloudVertexBot|GoogleOther|Amazonbot|omgili|TimpiBot|YouBot|AI2Bot|img2dataset/i
 
+// ── 점검 모드 — 허용 IP만 접속, 나머지는 점검 페이지 ──
+// 끄려면 MAINTENANCE_MODE를 false로 바꾸고 배포
+const MAINTENANCE_MODE = true
+const ALLOWED_IPS = ['222.111.202.123']
+
+function clientIp(request: NextRequest): string {
+  const xff = request.headers.get('x-forwarded-for')
+  if (xff) return xff.split(',')[0].trim()
+  return request.headers.get('x-real-ip') ?? ''
+}
+
 export async function proxy(request: NextRequest) {
   const ua = request.headers.get('user-agent') ?? ''
   if (AI_BLOCK_UA.test(ua)) {
     return new NextResponse('Forbidden', { status: 403 })
+  }
+
+  // 점검 모드 — 허용 IP 외에는 전부 점검 페이지로 rewrite (URL은 유지)
+  if (MAINTENANCE_MODE) {
+    const { pathname } = request.nextUrl
+    const exempt =
+      pathname === '/maintenance' ||
+      pathname.startsWith('/api/webhooks') ||   // 결제 웹훅은 살려둔다
+      pathname.startsWith('/_next') ||
+      pathname === '/icon.svg'
+    if (!exempt && !ALLOWED_IPS.includes(clientIp(request))) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/maintenance'
+      return NextResponse.rewrite(url, { status: 503 })
+    }
   }
 
   // /submit 로그인 게이트 — 세션 쿠키 갱신 포함 (기존 동작 유지)
