@@ -33,14 +33,14 @@ export default function MobileGamesTools() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'close search' : 'search & filter'}
-        className={`fixed top-3 right-3 z-[65] w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-xl border shadow-[0_4px_16px_rgba(36,31,23,0.15)] transition-colors ${
-          open || active ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white border-transparent' : 'bg-white/80 text-[#241f17] border-[#ebe4d6]'
+        className={`fixed top-3 right-3 z-[65] w-10 h-10 flex items-center justify-center transition-colors drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)] ${
+          open || active ? 'text-[#7cc4ff]' : 'text-white'
         }`}
       >
         {open ? (
-          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         ) : (
-          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
         )}
       </button>
 
