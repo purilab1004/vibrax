@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache'
 import { createClient as createAnonClient } from '@supabase/supabase-js'
 import HeroSection from '@/components/HeroSection'
+import ScrollTopOnMount from '@/components/ScrollTopOnMount'
 import HomeBanner from '@/components/HomeBanner'
 import HomeMosaic from '@/components/home/HomeMosaic'
 import Link from 'next/link'
@@ -31,6 +32,7 @@ export default async function HomePage() {
 
   return (
     <div>
+      <ScrollTopOnMount />
       <HomeBanner />
       <HeroSection games={games ?? []} />
       {/* 모바일은 쇼츠 피드가 전체 화면을 쓰므로 여백 없음, 데스크톱은 매소너리 여백 */}

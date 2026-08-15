@@ -18,6 +18,7 @@ export default function MobileNav() {
   const item = (href: string, label: string, icon: React.ReactNode, active: boolean) => (
     <Link
       href={href}
+      onClick={() => { if (href === '/') window.scrollTo({ top: 0, behavior: pathname === '/' ? 'smooth' : 'auto' }) }}
       className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors ${
         active ? 'text-[#2563eb]' : 'text-[#857a68]'
       }`}
