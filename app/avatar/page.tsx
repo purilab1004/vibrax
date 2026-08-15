@@ -92,6 +92,7 @@ export default function AvatarEditorPage() {
         voice,
         previewUrl: previewUrl ?? savedRef.current?.previewUrl ?? null,
         dataUrl: up.url,
+        previewVersion: 2,
       }
       const { error } = await saveAvatarConfig(supabase, user.id, config)
       if (error) throw new Error(error)

@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Game, Genre } from '@/lib/supabase/types'
-import { loadAvatarConfig } from '@/lib/jeumto/storage'
+import { loadAvatarConfig, saveAvatarConfig, uploadPreview } from '@/lib/jeumto/storage'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 
 const JeumtoView = dynamic(() => import('@/lib/jeumto/JeumtoView'), { ssr: false })
@@ -417,7 +417,21 @@ export default function ProfilePage() {
             <p className="font-pixel text-[11px] text-[#9d9280] tracking-widest">MY CHARACTER · 게임 방송 BJ</p>
             <div className="relative w-full max-w-[260px] aspect-[3/4] border border-[#ebe4d6] bg-[#050508] overflow-hidden">
               {myAvatarConfig ? (
-                <JeumtoView config={myAvatarConfig} />
+                <JeumtoView
+                  config={myAvatarConfig}
+                  onLoaded={async (snapshot) => {
+                    // 옛(불투명 배경) 프리뷰면 투명 스냅샷으로 자동 재생성 — 카드 배지에서 캐릭터가 원 밖으로 튀어나오게
+                    if (!user || myAvatarConfig.previewVersion === 2) return
+                    await new Promise<void>((r) => requestAnimationFrame(() => r()))
+                    const blob = await new Promise<Blob | null>((r) => snapshot(512).toBlob((b) => r(b), 'image/png'))
+                    if (!blob) return
+                    const url = await uploadPreview(supabase, user.id, blob)
+                    if (!url) return
+                    const next = { ...myAvatarConfig, previewUrl: url, previewVersion: 2 }
+                    const { error } = await saveAvatarConfig(supabase, user.id, next)
+                    if (!error) setMyAvatarConfig(next)
+                  }}
+                />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
                   <span className="text-3xl">🧍</span>

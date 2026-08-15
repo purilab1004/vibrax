@@ -11,9 +11,11 @@ interface Props {
   config: AvatarConfig
   interactive?: boolean
   className?: string
+  /** 캐릭터 로드 완료 시 — 스냅샷 함수를 넘겨준다 (프로필에서 옛 프리뷰 재생성 등에 사용) */
+  onLoaded?: (snapshot: (size?: number) => HTMLCanvasElement) => void
 }
 
-export default function JeumtoView({ config, interactive = true, className }: Props) {
+export default function JeumtoView({ config, interactive = true, className, onLoaded }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   // 어떤 URL 을 성공/실패로 처리했는지 기록 → 현재 config.dataUrl 과 비교해 상태를 도출 (effect 안 동기 setState 회피)
   const [done, setDone] = useState<{ url: string; ok: boolean } | null>(null)
@@ -21,6 +23,8 @@ export default function JeumtoView({ config, interactive = true, className }: Pr
     !config.dataUrl ? 'error' : done?.url === config.dataUrl ? (done.ok ? 'ready' : 'error') : 'loading'
   const viewerRef = useRef<JeumtoViewerHandle | null>(null)
   useJeumtoViewer(containerRef, viewerRef, { interactive })
+  const onLoadedRef = useRef(onLoaded)
+  onLoadedRef.current = onLoaded
 
   useEffect(() => {
     let cancelled = false
@@ -29,7 +33,11 @@ export default function JeumtoView({ config, interactive = true, className }: Pr
     fetchCharacterData(url).then((data) => {
       if (cancelled) return
       if (!data || !viewerRef.current) { setDone({ url, ok: false }); return }
-      try { viewerRef.current.load(data); setDone({ url, ok: true }) } catch (e) { console.error('[jeumto] load failed', e); setDone({ url, ok: false }) }
+      try {
+        const v = viewerRef.current
+        v.load(data); setDone({ url, ok: true })
+        onLoadedRef.current?.((size) => v.snapshot(size))
+      } catch (e) { console.error('[jeumto] load failed', e); setDone({ url, ok: false }) }
     })
     return () => { cancelled = true }
   }, [config.dataUrl])
