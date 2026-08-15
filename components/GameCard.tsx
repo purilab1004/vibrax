@@ -473,25 +473,25 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   <RoomScene id={game.id} views={game.view_count ?? 0} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
-                  <p className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.1em] text-white/70">
-                    <span className="w-5 h-5 shrink-0 rounded-full border border-white/60 overflow-hidden bg-white/70 inline-flex items-center justify-center">
+                  <p className="flex items-center gap-2.5 text-[15px] font-bold tracking-[0.06em] text-white/85">
+                    <span className="w-8 h-8 shrink-0 rounded-full border-2 border-white/70 overflow-hidden bg-white/70 inline-flex items-center justify-center shadow-md">
                       {creatorAvatarUrl ? (
                         <Image
                           src={creatorAvatarUrl}
                           alt={creatorName ?? 'creator'}
-                          width={20}
-                          height={20}
+                          width={32}
+                          height={32}
                           className="w-full h-full object-cover object-top"
                           unoptimized
                         />
                       ) : (
-                        <span className="font-pixel text-[9px] text-[#857a68]">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
+                        <span className="font-pixel text-[12px] text-[#857a68]">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
                       )}
                     </span>
                     <span className="truncate max-w-[45%]">{creatorName ?? 'unknown'}{flag && ` ${flag}`}</span>
-                    <span className="text-white/30">·</span>
-                    <ViewerIcon className="w-4 h-4" />
-                    {formatViewers(game.view_count ?? 0)}
+                    <span className="text-white/40">·</span>
+                    <ViewerIcon className="w-5 h-5" />
+                    <span className="text-[16px]">{formatViewers(game.view_count ?? 0)}</span>
                   </p>
                 </div>
               </div>
