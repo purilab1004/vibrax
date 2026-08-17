@@ -479,7 +479,7 @@ export default function ProfilePage() {
                   : 'border-[#e11d48] text-[#e11d48] hover:bg-[#e11d48] hover:text-white'
               }`}
             >
-              {!!(user && (liveInfoOf(myAvatarConfig?.broadcast, user.id) || myAvatarConfig?.broadcasts?.some((b) => b.on))) ? '● ON AIR' : '📱 방송 추가'}
+              {!!(user && (liveInfoOf(myAvatarConfig?.broadcast, user.id) || myAvatarConfig?.broadcasts?.some((b) => b.on))) ? '● ON AIR · 방송 추가/관리' : '📱 방송 추가'}
             </a>
             <a href="/submit" className="font-pixel text-[11px] px-4 py-2 border border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">+ 게임 추가</a>
           </div>
