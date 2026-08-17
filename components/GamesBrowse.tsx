@@ -190,8 +190,11 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
 }
 
 // 게임 목록 — 모바일: 쇼츠 풀스크린 피드 / 데스크톱: 틱톡 웹형 중앙 카드 피드
-export default function GamesBrowse({ games }: { games: GameWithCreator[] }) {
+export default function GamesBrowse({ games: input }: { games: GameWithCreator[] }) {
   const feedRef = useRef<HTMLDivElement>(null)
+  // 방송 중인 게임을 맨 앞으로 — 라이브가 /games 첫 화면에 바로 보이도록
+  const liveMap = useLiveBroadcasts()
+  const games = [...input].sort((a, b) => Number(!!liveMap[b.id]) - Number(!!liveMap[a.id]))
 
   const jump = (dir: 1 | -1) => {
     const el = feedRef.current
