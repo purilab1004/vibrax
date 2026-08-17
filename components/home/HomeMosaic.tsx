@@ -72,6 +72,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
               game={game}
               creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
               creatorAvatarUrl={avatarPreviewUrl(game.profiles?.avatar_config)}
+              creatorAvatarBlinkUrl={validateConfig(game.profiles?.avatar_config)?.blinkUrl ?? null}
               creatorCountry={game.profiles?.country ?? null}
               bjAvatarConfig={validateConfig(game.profiles?.avatar_config)}
             />

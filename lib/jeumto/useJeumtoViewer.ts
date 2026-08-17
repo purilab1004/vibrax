@@ -6,7 +6,7 @@ import type { JeumtoCharacterData } from './config'
 export interface JeumtoViewerHandle {
   load(data: JeumtoCharacterData): void
   loadDefault(color?: string): void
-  snapshot(size?: number): HTMLCanvasElement
+  snapshot(size?: number, opts?: { blink?: boolean }): HTMLCanvasElement
   speak(ms: number): void
   stop(): void
   dispose(): void

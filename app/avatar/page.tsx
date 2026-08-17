@@ -13,7 +13,7 @@ interface EditorApi {
   character: { serialize(): JeumtoCharacterData; name: string }
   newCharacter(): void
   setHasSaved(v: boolean): void
-  snapshot(size?: number): HTMLCanvasElement
+  snapshot(size?: number, opts?: { blink?: boolean }): HTMLCanvasElement
   loadCharacterData(data: JeumtoCharacterData): void
   setName(n: string): void
   toast(msg: string): void
@@ -88,9 +88,12 @@ export default function AvatarEditorPage() {
     try {
       const data = api.character.serialize()
       const voice: Gender = rootRef.current?.querySelector<HTMLSelectElement>('#voice')?.value === 'male' ? 'male' : 'female'
-      const blob = await new Promise<Blob | null>((r) => api.snapshot(512).toBlob((b) => r(b), 'image/png'))
-      const [previewUrl, up] = await Promise.all([
+      const toBlob = (c: HTMLCanvasElement) => new Promise<Blob | null>((r) => c.toBlob((b) => r(b), 'image/png'))
+      const blob = await toBlob(api.snapshot(512))
+      const blinkBlob = await toBlob(api.snapshot(512, { blink: true }))
+      const [previewUrl, blinkUrl, up] = await Promise.all([
         blob ? uploadPreview(supabase, user.id, blob) : Promise.resolve(null),
+        blinkBlob ? uploadPreview(supabase, user.id, blinkBlob, 'blink') : Promise.resolve(null),
         uploadCharacterData(supabase, user.id, data),
       ])
       if (!up.url) throw new Error(up.error ?? '캐릭터 업로드 실패')
@@ -99,8 +102,9 @@ export default function AvatarEditorPage() {
         name: (api.character.name || '내 점토').slice(0, 24),
         voice,
         previewUrl: previewUrl ?? savedRef.current?.previewUrl ?? null,
+        blinkUrl: blinkUrl ?? null,
         dataUrl: up.url,
-        previewVersion: 3,
+        previewVersion: 4,
       }
       const { error } = await saveAvatarConfig(supabase, user.id, config)
       if (error) throw new Error(error)
