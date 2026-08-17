@@ -11,6 +11,8 @@ import '@/lib/jeumto/editor.css'
 
 interface EditorApi {
   character: { serialize(): JeumtoCharacterData; name: string }
+  newCharacter(): void
+  setHasSaved(v: boolean): void
   snapshot(size?: number): HTMLCanvasElement
   loadCharacterData(data: JeumtoCharacterData): void
   setName(n: string): void
@@ -29,6 +31,9 @@ export default function AvatarEditorPage() {
   const rootRef = useRef<HTMLDivElement>(null)
   const apiRef = useRef<EditorApi | null>(null)
   const savedRef = useRef<AvatarConfig | null>(null)
+  const savedDataRef = useRef<JeumtoCharacterData | null>(null) // 마지막 저장본(되돌리기용)
+  const [hasSaved, setHasSaved] = useState(false)
+  const revertRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     let disposed = false
@@ -43,7 +48,7 @@ export default function AvatarEditorPage() {
       root.innerHTML = EDITOR_HTML
       const { createJeumtoEditor } = await import('@/lib/jeumto/editor.js')
       if (disposed) return
-      api = createJeumtoEditor(root, { onDirty: () => setDirty(true) }) as unknown as EditorApi
+      api = createJeumtoEditor(root, { onDirty: () => setDirty(true), onRevert: () => revertRef.current?.() }) as unknown as EditorApi
       apiRef.current = api
       const saved = await loadAvatarConfig(supabase, user.id)
       if (disposed) return
@@ -54,7 +59,10 @@ export default function AvatarEditorPage() {
         if (saved.dataUrl) {
           const data = await fetchCharacterData(saved.dataUrl)
           if (disposed) return
-          if (data) { try { api.loadCharacterData(data) } catch (e) { console.error('[avatar] load failed', e) } }
+          if (data) {
+            savedDataRef.current = data; setHasSaved(true); api.setHasSaved(true)
+            try { api.loadCharacterData(data) } catch (e) { console.error('[avatar] load failed', e) }
+          }
         }
       }
       setDirty(false)
@@ -97,6 +105,7 @@ export default function AvatarEditorPage() {
       const { error } = await saveAvatarConfig(supabase, user.id, config)
       if (error) throw new Error(error)
       savedRef.current = config
+      savedDataRef.current = data; setHasSaved(true); api.setHasSaved(true)
       setDirty(false)
       setMsg({ text: '저장되었습니다.', ok: true })
       api.toast(`'${config.name}' 저장했어요`)
@@ -106,6 +115,23 @@ export default function AvatarEditorPage() {
       setSaving(false)
       setTimeout(() => setMsg(null), 3000)
     }
+  }
+
+  const revertToSaved = () => {
+    const api = apiRef.current, data = savedDataRef.current
+    if (!api || !data) return
+    if (dirty && !confirm('지금 작업 중인 변경을 버리고 마지막 저장본으로 되돌릴까요?')) return
+    api.loadCharacterData(data)
+    setDirty(false)
+    api.toast('마지막 저장본으로 되돌렸어요')
+  }
+  useEffect(() => { revertRef.current = revertToSaved })
+  const resetToDefault = () => {
+    const api = apiRef.current
+    if (!api) return
+    if (!confirm('처음(기본 점토)으로 되돌릴까요? 저장하지 않은 변경은 사라져요.')) return
+    api.newCharacter()
+    api.toast('기본 점토로 되돌렸어요')
   }
 
   return (
@@ -119,6 +145,22 @@ export default function AvatarEditorPage() {
         </button>
         <h1 className="font-pixel text-[#ff7a59] text-[11px] tracking-widest">아바타 설정 · 점토</h1>
         <div className="flex-1" />
+        <button
+          onClick={revertToSaved}
+          disabled={!ready || !hasSaved}
+          title="마지막으로 저장한 상태로 되돌리기"
+          className="hidden sm:inline-block font-pixel text-[10px] text-[#8b8b93] hover:text-[#ececec] disabled:opacity-30 tracking-widest px-2"
+        >
+          ↩ 저장본으로
+        </button>
+        <button
+          onClick={resetToDefault}
+          disabled={!ready}
+          title="처음 기본 점토로 되돌리기"
+          className="hidden sm:inline-block font-pixel text-[10px] text-[#8b8b93] hover:text-[#ececec] disabled:opacity-30 tracking-widest px-2 mr-2"
+        >
+          ⟲ 처음으로
+        </button>
         {msg && <span className={`text-xs font-pixel tracking-widest ${msg.ok ? 'text-[#39d353]' : 'text-red-400'}`}>{msg.text}</span>}
         <button
           onClick={handleSave}
