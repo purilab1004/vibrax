@@ -16,6 +16,8 @@ export default function BroadcastPage() {
   const [config, setConfig] = useState<AvatarConfig | null>(null)
   const [games, setGames] = useState<Game[]>([])
   const [gameId, setGameId] = useState<string>('')
+  const [q, setQ] = useState('')
+  const [results, setResults] = useState<Game[]>([])
   const [onAir, setOnAir] = useState(false)
   const [viewers, setViewers] = useState(0)
   const [facing, setFacing] = useState<'user' | 'environment'>('user')
@@ -31,10 +33,21 @@ export default function BroadcastPage() {
       setUser(user)
       const cfg = await loadAvatarConfig(supabase, user.id)
       setConfig(cfg)
-      const { data } = await supabase.from('games').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-      const list = (data ?? []) as Game[]
+      // 기본 목록: 내 게임 + 인기 게임(조회수순). 검색으로 아무 게임이나 고를 수 있다
+      const [{ data: mine }, { data: top }] = await Promise.all([
+        supabase.from('games').select('id,title,user_id,view_count,thumbnail_url').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('games').select('id,title,user_id,view_count,thumbnail_url').order('view_count', { ascending: false }).limit(20),
+      ])
+      const seen = new Set<string>()
+      const list = [...(mine ?? []), ...(top ?? [])].filter((g) => (seen.has(g.id) ? false : (seen.add(g.id), true))) as Game[]
       setGames(list)
-      setGameId(cfg?.broadcast?.gameId && list.some((g) => g.id === cfg.broadcast!.gameId) ? cfg.broadcast!.gameId! : (list[0]?.id ?? ''))
+      // 이전에 고른 게임이 목록에 없으면 따로 받아서 넣는다
+      const prev = cfg?.broadcast?.gameId
+      if (prev && !list.some((g) => g.id === prev)) {
+        const { data: g } = await supabase.from('games').select('id,title,user_id,view_count,thumbnail_url').eq('id', prev).maybeSingle()
+        if (g) setGames([g as Game, ...list])
+      }
+      setGameId(prev ?? (mine?.[0]?.id ?? list[0]?.id ?? ''))
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -103,6 +116,23 @@ export default function BroadcastPage() {
     return () => window.removeEventListener('pagehide', h)
   }, [onAir, user, config, supabase, gameId])
 
+  // 게임 검색 (제목 부분 일치) — 아무 게임이나 추천 게임으로 연결 가능
+  useEffect(() => {
+    const term = q.trim()
+    let alive = true
+    const t = setTimeout(async () => {
+      if (!term) { if (alive) setResults([]); return }
+      const { data } = await supabase.from('games').select('id,title,user_id,view_count,thumbnail_url').ilike('title', `%${term}%`).limit(12)
+      if (alive) setResults((data ?? []) as Game[])
+    }, term ? 250 : 0)
+    return () => { alive = false; clearTimeout(t) }
+  }, [q, supabase])
+  const pick = (g: Game) => {
+    setGames((prev) => (prev.some((x) => x.id === g.id) ? prev : [g, ...prev]))
+    setGameId(g.id); setQ(''); setResults([])
+  }
+  const selected = games.find((g) => g.id === gameId)
+
   const mmss = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`
 
   return (
@@ -123,13 +153,35 @@ export default function BroadcastPage() {
         {!onAir && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
             <p className="text-sm text-white/85 leading-relaxed">방송을 시작하면 <b>추천 게임 카드</b>에 이 카메라 영상이 나오고, 코인을 넣으면 그 게임을 바로 플레이해요.<br />게임 안에서도 AJ 아바타 대신 방송이 BJ 자리에 나와요. 이 화면을 켜 둔 동안만 방송됩니다.</p>
-            <label className="w-full max-w-sm text-left">
-              <span className="block font-pixel text-[10px] tracking-widest text-white/60 mb-1">추천 게임</span>
+            <div className="w-full max-w-sm text-left space-y-2">
+              <span className="block font-pixel text-[10px] tracking-widest text-white/60">추천 게임 — 내 게임이 아니어도 돼요</span>
+              <div className="relative">
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="게임 제목 검색…"
+                  className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
+                />
+                {results.length > 0 && (
+                  <ul className="absolute z-10 left-0 right-0 mt-1 max-h-56 overflow-y-auto rounded-lg bg-[#1a1a1f] border border-white/15 shadow-xl">
+                    {results.map((g) => (
+                      <li key={g.id}>
+                        <button onClick={() => pick(g)} className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 flex items-center gap-2">
+                          {g.thumbnail_url && <span className="w-8 h-5 rounded bg-cover bg-center shrink-0" style={{ backgroundImage: `url(${g.thumbnail_url})` }} />}
+                          <span className="truncate">{g.title}</span>
+                          <span className="ml-auto text-[10px] text-white/40 shrink-0">👥 {g.view_count ?? 0}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <select value={gameId} onChange={(e) => setGameId(e.target.value)} className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none">
-                {games.length === 0 && <option value="">등록한 게임이 없어요</option>}
-                {games.map((g) => <option key={g.id} value={g.id} className="text-black">{g.title}</option>)}
+                {games.length === 0 && <option value="">게임을 검색해서 골라 주세요</option>}
+                {games.map((g) => <option key={g.id} value={g.id} className="text-black">{g.user_id === user?.id ? '★ ' : ''}{g.title}</option>)}
               </select>
-            </label>
+              {selected && <p className="text-[11px] text-white/60">선택: <b className="text-white/90">{selected.title}</b>{selected.user_id === user?.id ? ' (내 게임)' : ''}</p>}
+            </div>
             {err && <p className="text-[12px] text-red-400">{err}</p>}
           </div>
         )}

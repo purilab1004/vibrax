@@ -12,7 +12,7 @@ import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
 import type { AvatarConfig, AvatarFrames } from '@/lib/jeumto/config'
 import { useImageBounds } from '@/lib/jeumto/useImageBounds'
-import { liveHostForGame } from '@/lib/broadcast'
+import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 const CameraBjView = dynamic(() => import('@/components/CameraBjView'), { ssr: false })
 import { countryFlag } from '@/lib/country'
 import { formatViewers } from '@/lib/format'
@@ -461,6 +461,7 @@ function CreatorBadge({ url, name, size }: { url?: string | null; name?: string 
 }
 
 export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorAvatar, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video', golden = false, rank }: GameCardProps) {
+  const liveMap = useLiveBroadcasts()
   const flag = countryFlag(creatorCountry)
   const { T, lang } = useLang()
   const [open, setOpen] = useState(false)
@@ -618,7 +619,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                   </h3>
                 </div>
                 <div className="absolute inset-x-1 top-[21%] bottom-[16%]">
-                  <RoomScene id={game.id} views={game.view_count ?? 0} avatar={creatorAvatar} liveHost={liveHostForGame(bjAvatarConfig?.broadcast, game.id, game.user_id)} />
+                  <RoomScene id={game.id} views={game.view_count ?? 0} avatar={creatorAvatar} liveHost={liveMap[game.id] ?? null} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
                   <p className="flex items-center gap-2.5 text-[15px] font-bold tracking-[0.06em] text-white/85">
@@ -885,7 +886,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                 title={game.title}
               />
             </div>
-            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={creatorName} bjHostId={game.user_id} />
+            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={creatorName} bjHostId={liveMap[game.id] ?? null} />
           </div>
         </div>
       )}

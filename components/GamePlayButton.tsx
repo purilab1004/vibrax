@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import { useLang } from '@/lib/i18n/context'
 import { loadAvatarConfig } from '@/lib/jeumto/storage'
+import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
@@ -27,6 +28,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
   const [bjAvatarConfig, setBjAvatarConfig] = useState<AvatarConfig | null>(null)
+  const liveMap = useLiveBroadcasts()
   const [isGuest, setIsGuest] = useState(false)
   const { T } = useLang()
   const supabase = createClient()
@@ -176,7 +178,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
                 </div>
               </>
             ) : (
-              <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={bjName} bjHostId={game.user_id} />
+              <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={bjName} bjHostId={liveMap[game.id] ?? null} />
             )}
           </div>
         </div>

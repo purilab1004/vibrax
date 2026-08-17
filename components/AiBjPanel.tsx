@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
 import type { AvatarConfig } from '@/lib/jeumto/config'
-import { isCameraOn } from '@/lib/broadcast'
 const CameraBjView = dynamic(() => import('@/components/CameraBjView'), { ssr: false })
 
 const JeumtoBjOverlay = dynamic(() => import('@/lib/jeumto/JeumtoBjOverlay'), { ssr: false })
@@ -51,7 +50,8 @@ const AUTO_COMMENTARY = [
 export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName, bjHostId }: Props) {
   const persona = AJ_PERSONAS[genre]
   // 제작자가 라이브 방송(ON AIR)을 켜 두었으면 아바타 대신 영상이 BJ 자리에 나온다 (아바타 TTS 는 꺼짐)
-  const camera = isCameraOn(bjAvatarConfig?.broadcast) && bjHostId ? bjHostId : null
+  // bjHostId 는 지금 이 게임을 추천 게임으로 방송 중인 사람(게임 주인이 아닐 수도) — 있으면 라이브
+  const camera = bjHostId ?? null
   const bjAvatar = camera ? <CameraBjView hostId={camera} /> : <JeumtoBjOverlay config={bjAvatarConfig ?? null} />
   // 하단 BJ 프로필 — 제작자 에이전트 이름 + 아바타(없으면 AJ 페르소나 fallback)
   const bjLabel = bjName?.trim() || persona.name
