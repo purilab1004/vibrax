@@ -6,7 +6,7 @@ import { startViewer, type ViewerState } from '@/lib/live/viewer'
 import type { LiveInfo } from '@/lib/broadcast'
 
 /** 링크(YouTube/Twitch) 방송 임베드 */
-export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true, controls = false }: { src: string; aspect?: number; cover?: boolean; badge?: boolean; controls?: boolean }) {
+export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true, controls = false, controlsClass = 'top-3 right-3' }: { src: string; aspect?: number; cover?: boolean; badge?: boolean; controls?: boolean; controlsClass?: string }) {
   // 스피커 — YouTube 는 postMessage 로 mute/unMute/setVolume, Twitch/기타는 src 의 muted 파라미터를 바꿔 다시 로드
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [muted, setMuted] = useState(true)
@@ -62,7 +62,7 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
       {/* controls 모드(카드)에선 iframe 클릭/호버를 막아 유튜브 자체 UI 가 뜨지 않게 — 우리 스피커 버튼만 노출 */}
       <iframe ref={iframeRef} src={liveSrc} className={`${cover && box ? '' : 'absolute inset-0 w-full h-full'} ${controls ? 'pointer-events-none' : ''}`} style={style} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
       {controls && (
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur px-2 py-1">
+        <div className={`absolute ${controlsClass} z-10 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur px-2 py-1`}>
           <button onClick={toggleMute} aria-label={muted ? '소리 켜기' : '음소거'} className="text-white text-[15px] leading-none w-7 h-7 flex items-center justify-center">
             {muted ? '🔇' : volume > 50 ? '🔊' : '🔉'}
           </button>
@@ -81,11 +81,11 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
 }
 
 /** 라이브 종류에 따라 카메라(WebRTC) 또는 링크 임베드 */
-export function LiveView({ live, cover = false, badge = true, controls = false }: { live: LiveInfo; cover?: boolean; badge?: boolean; controls?: boolean }) {
-  return live.kind === 'camera' ? <CameraBjView hostId={live.hostId} badge={badge} controls={controls} /> : <LinkLiveView src={live.src} aspect={live.aspect} cover={cover} badge={badge} controls={controls} />
+export function LiveView({ live, cover = false, badge = true, controls = false, controlsClass }: { live: LiveInfo; cover?: boolean; badge?: boolean; controls?: boolean; controlsClass?: string }) {
+  return live.kind === 'camera' ? <CameraBjView hostId={live.hostId} badge={badge} controls={controls} controlsClass={controlsClass} /> : <LinkLiveView src={live.src} aspect={live.aspect} cover={cover} badge={badge} controls={controls} controlsClass={controlsClass} />
 }
 
-export default function CameraBjView({ hostId, badge = true, controls = false }: { hostId: string; badge?: boolean; controls?: boolean }) {
+export default function CameraBjView({ hostId, badge = true, controls = false, controlsClass = 'top-3 right-3' }: { hostId: string; badge?: boolean; controls?: boolean; controlsClass?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [state, setState] = useState<ViewerState>('connecting')
   const [muted, setMuted] = useState(true)
@@ -111,7 +111,7 @@ export default function CameraBjView({ hostId, badge = true, controls = false }:
         </span>
       )}
       {state === 'live' && (
-        <div className={`absolute z-10 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur px-2 py-1 ${controls ? 'top-3 right-3' : 'bottom-1.5 right-1.5'}`}>
+        <div className={`absolute z-10 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur px-2 py-1 ${controls ? controlsClass : 'bottom-1.5 right-1.5'}`}>
           <button onClick={() => setMuted((m) => !m)} aria-label={muted ? '소리 켜기' : '음소거'} className="text-white text-[15px] leading-none w-7 h-7 flex items-center justify-center">{muted ? '🔇' : '🔊'}</button>
           {!muted && <input type="range" min={0} max={100} defaultValue={100} onChange={(e) => { if (videoRef.current) videoRef.current.volume = Number(e.target.value) / 100 }} className="w-20 accent-[#ffb62e]" aria-label="볼륨" />}
         </div>
