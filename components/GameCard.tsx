@@ -136,7 +136,8 @@ function FluffFigure({ delay, eyesRef, color = '#F05A28', shape = 0 }: {
 
 // 빛 장면 — 오로라 배경 위 하얀 광휘 속 구름 캐릭터.
 // 조회수가 많을수록 빛의 범위·세기가 커져 카드 자체가 밝아 보인다.
-export function RoomScene({ id, views }: { id: string; views: number }) {
+// avatarUrl: 제작자가 저장한 점토 캐릭터(투명 PNG)가 있으면 기본 클레이 대신 그 캐릭터를 보여준다
+export function RoomScene({ id, views, avatarUrl }: { id: string; views: number; avatarUrl?: string | null }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
 
@@ -215,6 +216,18 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
         }}
         aria-hidden
       />
+      {avatarUrl ? (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden>
+          <div className="critter-bob relative w-[68%] h-[80%]" style={{ animationDelay: `${(hashOf(id) % 30) / 10}s` }}>
+            {/* 바닥 그림자 */}
+            <div className="absolute left-1/2 bottom-[2%] -translate-x-1/2 w-[62%] h-[7%] rounded-full bg-black/15 blur-[2px]" />
+            <div className="critter-body absolute inset-0" style={{ transformOrigin: '50% 100%' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={avatarUrl} alt="" className="w-full h-full object-contain object-bottom drop-shadow-[0_6px_10px_rgba(0,0,0,0.18)]" draggable={false} />
+            </div>
+          </div>
+        </div>
+      ) : (
       <svg ref={svgRef} viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
         {/* 찰흙 캐릭터 — 게임마다 다른 클레이 색 */}
         {/* 1.35배 확대 — 카드에서 존재감 있게 */}
@@ -227,6 +240,7 @@ export function RoomScene({ id, views }: { id: string; views: number }) {
           />
         </g>
       </svg>
+      )}
     </>
   )
 }
@@ -488,7 +502,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   </h3>
                 </div>
                 <div className="absolute inset-x-1 top-[21%] bottom-[16%]">
-                  <RoomScene id={game.id} views={game.view_count ?? 0} />
+                  <RoomScene id={game.id} views={game.view_count ?? 0} avatarUrl={creatorAvatarUrl} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
                   <p className="flex items-center gap-2.5 text-[15px] font-bold tracking-[0.06em] text-white/85">

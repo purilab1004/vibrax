@@ -88,7 +88,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         </div>
         {/* 방 장면 — 캐릭터는 중앙 */}
         <div className="absolute inset-x-1 top-[23%] bottom-[27%]">
-          <RoomScene id={game.id} views={game.view_count ?? 0} />
+          <RoomScene id={game.id} views={game.view_count ?? 0} avatarUrl={avatarUrl} />
         </div>
         {/* 하단 — 아케이드 플로우 */}
         <div className="absolute inset-x-0 bottom-0 px-6 pb-6 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
