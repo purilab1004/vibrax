@@ -6,7 +6,7 @@ import { startViewer, type ViewerState } from '@/lib/live/viewer'
 import type { LiveInfo } from '@/lib/broadcast'
 
 /** 링크(YouTube/Twitch) 방송 임베드 */
-export function LinkLiveView({ src, aspect = 16 / 9, cover = false }: { src: string; aspect?: number; cover?: boolean }) {
+export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true }: { src: string; aspect?: number; cover?: boolean; badge?: boolean }) {
   // cover: 영상 비율(aspect)로 iframe 을 컨테이너보다 크게 잡아 여백 없이 꽉 채운다 (넘치는 부분은 잘림)
   const ref = useRef<HTMLDivElement>(null)
   const [box, setBox] = useState<{ w: number; h: number } | null>(null)
@@ -27,19 +27,21 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false }: { src: str
   return (
     <div ref={ref} className="relative w-full h-full bg-black overflow-hidden">
       <iframe src={src} className={cover && box ? '' : 'absolute inset-0 w-full h-full'} style={style} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
-      <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
-        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
-      </span>
+      {badge && (
+        <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
+        </span>
+      )}
     </div>
   )
 }
 
 /** 라이브 종류에 따라 카메라(WebRTC) 또는 링크 임베드 */
-export function LiveView({ live, cover = false }: { live: LiveInfo; cover?: boolean }) {
-  return live.kind === 'camera' ? <CameraBjView hostId={live.hostId} /> : <LinkLiveView src={live.src} aspect={live.aspect} cover={cover} />
+export function LiveView({ live, cover = false, badge = true }: { live: LiveInfo; cover?: boolean; badge?: boolean }) {
+  return live.kind === 'camera' ? <CameraBjView hostId={live.hostId} badge={badge} /> : <LinkLiveView src={live.src} aspect={live.aspect} cover={cover} badge={badge} />
 }
 
-export default function CameraBjView({ hostId }: { hostId: string }) {
+export default function CameraBjView({ hostId, badge = true }: { hostId: string; badge?: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [state, setState] = useState<ViewerState>('connecting')
   const [muted, setMuted] = useState(true)
@@ -51,9 +53,11 @@ export default function CameraBjView({ hostId }: { hostId: string }) {
   return (
     <div className="relative w-full h-full bg-black">
       <video ref={videoRef} autoPlay playsInline muted={muted} className="absolute inset-0 w-full h-full object-cover" />
-      <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
-        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
-      </span>
+      {badge && (
+        <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
+        </span>
+      )}
       {state === 'live' && (
         <button onClick={() => setMuted((m) => !m)} className="absolute bottom-1.5 right-1.5 rounded-full bg-black/60 text-white text-[11px] px-2 py-1">
           {muted ? '🔇 소리 켜기' : '🔊'}

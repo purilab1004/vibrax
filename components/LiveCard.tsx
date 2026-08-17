@@ -12,27 +12,30 @@ const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m
 
 interface Props {
   live: LiveEntry
-  game?: Pick<Game, 'id' | 'title' | 'thumbnail_url'> | null
+  game?: Pick<Game, 'id' | 'title' | 'thumbnail_url' | 'coin_cost'> | null
   layout: 'feed-mobile' | 'feed-desktop' | 'tile'
 }
 
 export default function LiveCard({ live, game: given, layout }: Props) {
   const router = useRouter()
-  const [game, setGame] = useState<Pick<Game, 'id' | 'title' | 'thumbnail_url'> | null>(given ?? null)
+  const [game, setGame] = useState<Pick<Game, 'id' | 'title' | 'thumbnail_url' | 'coin_cost'> | null>(given ?? null)
   useEffect(() => {
     if (given) return
     let alive = true
-    createClient().from('games').select('id,title,thumbnail_url').eq('id', live.gameId).maybeSingle().then(({ data }) => { if (alive && data) setGame(data as Game) })
+    createClient().from('games').select('id,title,thumbnail_url,coin_cost').eq('id', live.gameId).maybeSingle().then(({ data }) => { if (alive && data) setGame(data as Game) })
     return () => { alive = false }
   }, [given, live.gameId])
 
+  const [coin, setCoin] = useState<'idle' | 'drop' | 'ready'>('idle')
   const go = () => router.push(`/games/${live.gameId}`)
+  // 코인 투입 연출 → START → 게임 페이지 (실제 코인 차감은 게임 페이지의 기존 흐름에서)
+  const insert = () => { if (coin !== 'idle') return; setCoin('drop'); setTimeout(() => setCoin('ready'), 900) }
 
   const inner = (
     <>
       {/* 영상 — 카드 가득 */}
       <div className="absolute inset-0 bg-black">
-        <LiveView live={live} cover />
+        <LiveView live={live} cover badge={false} />
       </div>
       {/* 상단 — 방송자 */}
       <div className="absolute top-3 left-3 right-3 flex items-center gap-2 pointer-events-none">
@@ -59,12 +62,40 @@ export default function LiveCard({ live, game: given, layout }: Props) {
             </div>
           </div>
         )}
-        <button
-          onClick={go}
-          className={`w-full h-[52px] ${titleFont.className} text-[21px] rounded-full bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] shadow-[0_5px_0_#d18f00,0_9px_16px_rgba(0,0,0,0.35)] active:translate-y-1 active:shadow-[0_1px_0_#d18f00] transition-all flex items-center justify-center gap-2`}
-        >
-          🪙 코인 넣고 플레이 →
-        </button>
+        {/* 게임 카드와 같은 INSERT COIN + 코인 넣기 + 코인 통 — 누르면 코인 투입 연출 후 게임 페이지로 */}
+        <p className={`arcade-blink font-pixel text-[14px] tracking-[0.3em] ${coin === 'ready' ? 'text-[#4cff6a] drop-shadow-[0_0_6px_rgba(76,255,106,0.7)]' : 'text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.7)]'}`}>
+          {coin === 'ready' ? 'PRESS START' : 'INSERT COIN'}
+        </p>
+        <div className="mt-2 flex items-center gap-3">
+          {coin !== 'ready' ? (
+            <button
+              onClick={insert}
+              disabled={coin === 'drop'}
+              className={`flex-1 h-[52px] ${titleFont.className} text-[21px] rounded-full bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] shadow-[0_5px_0_#d18f00,0_9px_16px_rgba(0,0,0,0.35)] active:translate-y-1 active:shadow-[0_1px_0_#d18f00] transition-all flex items-center justify-center gap-2 disabled:opacity-90`}
+            >
+              {coin === 'drop' ? '코인 투입 중...' : <>🪙 × {game?.coin_cost ?? 1} 코인 넣기</>}
+            </button>
+          ) : (
+            <button
+              onClick={go}
+              className="flex-1 h-[52px] rounded-full bg-gradient-to-b from-[#ff6a52] to-[#d92c1a] text-white font-pixel text-[17px] tracking-widest shadow-[inset_0_2px_5px_rgba(255,255,255,0.35),0_5px_0_#8f1508,0_10px_18px_rgba(0,0,0,0.5)] active:translate-y-1 transition-all flex items-center justify-center gap-2"
+            >
+              ▶ START
+            </button>
+          )}
+          <div className="relative w-12 h-[58px] shrink-0">
+            <div className={`w-full h-full rounded-lg bg-gradient-to-b from-[#4a4a4a] to-[#2a2a2a] border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_4px_10px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-1.5 transition-shadow ${coin === 'ready' ? 'shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_0_16px_rgba(76,255,106,0.5)]' : ''} ${coin === 'drop' ? 'slot-clink' : ''}`}>
+              <span className="w-1.5 h-7 rounded-full bg-black shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" />
+              <span className={`w-2.5 h-2.5 rounded-full ${coin === 'ready' ? 'bg-[#4cff6a] shadow-[0_0_8px_#4cff6a]' : 'bg-red-500/80 shadow-[0_0_6px_rgba(239,68,68,0.8)] animate-pulse'}`} />
+            </div>
+            {coin === 'drop' && (
+              <>
+                <span className="gold-coin absolute left-1/2 -top-6" style={{ '--coin-drop': '31px' } as React.CSSProperties} aria-hidden />
+                <span className="slot-spark absolute left-1/2 top-[8px] -translate-x-1/2 text-xs" aria-hidden>✨</span>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </>
   )
