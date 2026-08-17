@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
 import type { AvatarConfig } from '@/lib/jeumto/config'
+import { isLiveOn, toEmbed } from '@/lib/broadcast'
 
 const JeumtoBjOverlay = dynamic(() => import('@/lib/jeumto/JeumtoBjOverlay'), { ssr: false })
 
@@ -46,7 +47,18 @@ const AUTO_COMMENTARY = [
 
 export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName }: Props) {
   const persona = AJ_PERSONAS[genre]
-  const bjAvatar = <JeumtoBjOverlay config={bjAvatarConfig ?? null} />
+  // 제작자가 라이브 방송(ON AIR)을 켜 두었으면 아바타 대신 영상이 BJ 자리에 나온다 (아바타 TTS 는 꺼짐)
+  const live = isLiveOn(bjAvatarConfig?.broadcast) ? toEmbed(bjAvatarConfig!.broadcast!.url) : null
+  const bjAvatar = live ? (
+    <div className="relative w-full h-full bg-black">
+      <iframe src={live.src} className="absolute inset-0 w-full h-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+      <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
+        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
+      </span>
+    </div>
+  ) : (
+    <JeumtoBjOverlay config={bjAvatarConfig ?? null} />
+  )
   // 하단 BJ 프로필 — 제작자 에이전트 이름 + 아바타(없으면 AJ 페르소나 fallback)
   const bjLabel = bjName?.trim() || persona.name
   const bjPic = bjAvatarConfig?.previewUrl ?? null
@@ -380,8 +392,8 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         {/* Mobile: 3D AJ avatar, bottom-right */}
         {isMobile && (
           <div
-            className="absolute right-2 z-10 overflow-hidden rounded-lg border border-[#ebe4d6] bg-[#f3ecdf] pointer-events-none"
-            style={{ bottom: '72px', width: 116, height: 150 }}
+            className={`absolute right-2 z-10 overflow-hidden rounded-lg border border-[#ebe4d6] bg-[#f3ecdf] ${live ? 'pointer-events-auto' : 'pointer-events-none'}`}
+            style={live ? { bottom: '72px', width: 200, height: 112 } : { bottom: '72px', width: 116, height: 150 }}
           >
             {isMobile && bjAvatar}
           </div>

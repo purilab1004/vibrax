@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Game, Genre } from '@/lib/supabase/types'
 import { loadAvatarConfig, saveAvatarConfig, uploadPreview } from '@/lib/jeumto/storage'
+import BroadcastSettings from '@/components/BroadcastSettings'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 
 const JeumtoView = dynamic(() => import('@/lib/jeumto/JeumtoView'), { ssr: false })
@@ -448,6 +449,11 @@ export default function ProfilePage() {
               🎨 아바타 설정
             </a>
             <p className="text-[11px] text-[#857a68] leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요. 게임 목록엔 아이디 대신 <span className="text-purple-400">에이전트 이름</span>이 표시됩니다.</p>
+            {user && (
+              <div className="pt-3 border-t border-[#ebe4d6]">
+                <BroadcastSettings supabase={supabase} userId={user.id} config={myAvatarConfig} onSaved={setMyAvatarConfig} />
+              </div>
+            )}
           </div>
         </div>
       </section>
