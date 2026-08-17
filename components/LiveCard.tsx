@@ -35,7 +35,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
     <>
       {/* 영상 — 카드 가득 */}
       <div className="absolute inset-0 bg-black">
-        <LiveView live={live} cover badge={false} />
+        <LiveView live={live} cover badge={false} controls />
       </div>
       {/* 상단 — 방송자 */}
       <div className="absolute top-3 left-3 right-3 flex items-center gap-2 pointer-events-none">
