@@ -14,6 +14,7 @@ import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont } from '@/lib/fonts'
+import RevealTitle from '@/components/RevealTitle'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 
@@ -70,13 +71,13 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
         </span>
       )}
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
-      <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]">
+      <RevealTitle className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]">
         <h3 className={`${titleFont.className} text-[48px] leading-[1.25] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
           {lang === 'en'
             ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
             : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
         </h3>
-      </div>
+      </RevealTitle>
       {/* 방 디오라마 — 캐릭터는 중앙 */}
       <div className="absolute inset-x-1 top-[24%] bottom-[26%]">
         <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />

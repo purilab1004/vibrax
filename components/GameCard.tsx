@@ -16,6 +16,7 @@ import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont } from '@/lib/fonts'
+import RevealTitle from '@/components/RevealTitle'
 
 const GENRE_LABELS: Record<Game['genre'], string> = {
   action: 'ACTION',
@@ -602,13 +603,13 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                   </span>
                 )}
                 {/* 유혹 질문 — Jua 포스터 타이틀 (games 카드와 동일 배치) */}
-                <div className="absolute inset-x-0 top-[12%] px-4 text-center z-[5]">
+                <RevealTitle className="absolute inset-x-0 top-[12%] px-4 text-center z-[5]">
                   <h3 className={`${titleFont.className} text-[32px] md:text-[36px] leading-[1.25] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
                     {lang === 'en'
                       ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
                       : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
                   </h3>
-                </div>
+                </RevealTitle>
                 <div className="absolute inset-x-1 top-[21%] bottom-[16%]">
                   <RoomScene id={game.id} views={game.view_count ?? 0} avatar={creatorAvatar} />
                 </div>

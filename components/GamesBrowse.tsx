@@ -14,6 +14,7 @@ import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont } from '@/lib/fonts'
+import RevealTitle from '@/components/RevealTitle'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 
@@ -82,11 +83,11 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
           </span>
         )}
         {/* 상단 중앙 — Jua 포스터 타이틀 */}
-        <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]">
+        <RevealTitle className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]">
           <h3 className={`${titleFont.className} text-[42px] leading-[1.25] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
             {teaser}
           </h3>
-        </div>
+        </RevealTitle>
         {/* 방 장면 — 캐릭터는 중앙 */}
         <div className="absolute inset-x-1 top-[23%] bottom-[27%]">
           <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />
