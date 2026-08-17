@@ -200,7 +200,7 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden>
       {/* 프리뷰 PNG 는 정사각형이고 캐릭터 아래에 여백이 있다(약 8%) → 그림자를 그 발밑에 맞춘다 */}
-      <div className="relative w-[72%] aspect-square">
+      <div className="relative w-[58%] aspect-square">
         {/* PNG 의 실제 보이는 영역(알파 bbox)에 맞춰 그림자는 발밑, 말풍선은 머리 바로 위 */}
         <div
           className="clay-shadow absolute rounded-[50%] bg-black/25 blur-[3px]"
@@ -223,12 +223,13 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
             <img src={talkUrl} alt="" className="absolute inset-0 w-full h-full object-contain" draggable={false} style={{ opacity: !blink && mouthOpen ? 1 : 0 }} />
           )}
           {line && (
+            /* 말풍선 — 캐릭터 발밑(그림자 아래)에 */
             <div
-              className="clay-bubble absolute left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-2xl bg-white/95 text-[#241f17] text-[11px] font-semibold px-2.5 py-1 shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
-              style={{ top: `${bounds ? Math.max(0, bounds.top * 100 - 1) : 6}%` }}
+              className="clay-bubble absolute left-1/2 whitespace-nowrap rounded-2xl bg-white/95 text-[#241f17] text-[11px] font-semibold px-2.5 py-1 shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
+              style={{ top: `${bounds ? Math.min(100, bounds.bottom * 100 + 9) : 100}%` }}
             >
               {line}
-              <span className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-3 h-3 bg-white/95 rotate-45 rounded-[2px]" />
+              <span className="absolute left-1/2 -top-1.5 -translate-x-1/2 w-3 h-3 bg-white/95 rotate-45 rounded-[2px]" />
             </div>
           )}
         </div>

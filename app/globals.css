@@ -722,10 +722,10 @@ body {
   75% { transform: scale(1.02, 0.98); }
 }
 @keyframes clayBubble {
-  0%   { opacity: 0; transform: translate(-50%, -90%) scale(.85); }
-  15%  { opacity: 1; transform: translate(-50%, -100%) scale(1); }
-  85%  { opacity: 1; transform: translate(-50%, -100%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -100%) scale(.95); }
+  0%   { opacity: 0; transform: translate(-50%, 10%) scale(.85); }
+  15%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  85%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, 0) scale(.95); }
 }
 .clay-actor  { animation: clayFloat 3.6s ease-in-out infinite; will-change: transform; }
 .clay-shadow { animation: clayShadow 3.6s ease-in-out infinite; }
