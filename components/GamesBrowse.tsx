@@ -213,7 +213,7 @@ export default function GamesBrowse({ games: input }: { games: GameWithCreator[]
     <div>
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">
-        {lives.map((l) => <LiveCard key={`live-${l.gameId}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-mobile" />)}
+        {lives.map((l) => <LiveCard key={`live-${l.hostId}-${l.gameId}-${l.kind === 'link' ? l.src : 'cam'}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-mobile" />)}
         {games.map(game => (
           <FeedScreen key={game.id} game={game} />
         ))}
@@ -225,7 +225,7 @@ export default function GamesBrowse({ games: input }: { games: GameWithCreator[]
           ref={feedRef}
           className="h-[calc(100svh-3.75rem)] min-h-[540px] pt-1 pb-2 overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          {lives.map((l) => <LiveCard key={`live-${l.gameId}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-desktop" />)}
+          {lives.map((l) => <LiveCard key={`live-${l.hostId}-${l.gameId}-${l.kind === 'link' ? l.src : 'cam'}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-desktop" />)}
           {games.map((game, i) => (
             <DesktopFeedCard key={game.id} game={game} rank={i < 10 ? i + 1 : undefined} />
           ))}

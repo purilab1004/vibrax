@@ -31,7 +31,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
     <div>
       {/* ── 모바일: 쇼츠 피드 — 화면 전체를 채우고 스와이프하면 다음 게임 (유튜브 쇼츠/틱톡) ── */}
       <div className="md:hidden">
-        {lives.map((l) => <LiveCard key={`live-${l.gameId}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-mobile" />)}
+        {lives.map((l) => <LiveCard key={`live-${l.hostId}-${l.gameId}-${l.kind === 'link' ? l.src : 'cam'}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-mobile" />)}
         {sorted.map((game, i) => (
           <FeedScreen key={game.id} game={game} golden={(game.view_count ?? 0) > 0 && game.id === sorted[0].id} rank={i < 10 ? i + 1 : undefined} />
         ))}
@@ -67,7 +67,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
         </Reveal>
 
         {lives.map((l) => (
-          <Reveal key={`live-${l.gameId}`} className="mb-5 break-inside-avoid">
+          <Reveal key={`live-${l.hostId}-${l.gameId}-${l.kind === 'link' ? l.src : 'cam'}`} className="mb-5 break-inside-avoid">
             <LiveCard live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="tile" />
           </Reveal>
         ))}

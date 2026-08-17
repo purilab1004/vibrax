@@ -3,7 +3,7 @@
 // 캐릭터 본체(정점 오프셋·페인트·파츠)는 크기가 커서 Storage(avatars 버킷)에 JSON으로 올리고
 // 여기엔 그 URL + 프리뷰 PNG URL + 이름/목소리만 둔다. 게임 목록 쿼리가 profiles(avatar_config)를
 // 함께 읽으므로 이 객체는 가볍게 유지해야 한다.
-import { parseBroadcast, type BroadcastSetting } from '@/lib/broadcast'
+import { parseBroadcast, parseLinkBroadcasts, type BroadcastSetting, type LinkBroadcast } from '@/lib/broadcast'
 
 export type Gender = 'male' | 'female'
 
@@ -17,7 +17,8 @@ export interface AvatarConfig {
   talkUrl?: string | null  // 입 벌린 프레임 PNG (카드 말하기용)
   dataUrl: string | null // *.jeumto.json (Storage public URL)
   previewVersion?: number // 5 = 투명·정상 비율 + 깜빡임·말하기 프레임 (없으면 옛 어두운 배경 → 프로필에서 자동 재생성)
-  broadcast?: BroadcastSetting // 라이브 방송(영상) 설정 — 아바타 대신 실제 영상으로 BJ
+  broadcast?: BroadcastSetting // 폰 카메라 방송 설정
+  broadcasts?: LinkBroadcast[] // 링크(YouTube/Twitch) 방송 목록 — 여러 개, 각각 게임 연결
 }
 
 /** 점토 에디터가 직렬화하는 캐릭터 데이터(character.serialize()) — 형태만 느슨하게 */
@@ -47,6 +48,7 @@ export function validateConfig(raw: unknown): AvatarConfig | null {
     dataUrl: typeof r.dataUrl === 'string' ? r.dataUrl : null,
     previewVersion: typeof r.previewVersion === 'number' ? r.previewVersion : undefined,
     broadcast: parseBroadcast(r.broadcast),
+    broadcasts: parseLinkBroadcasts(r.broadcasts),
   }
 }
 

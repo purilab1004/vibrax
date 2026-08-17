@@ -12,7 +12,7 @@ import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
 import type { AvatarConfig, AvatarFrames } from '@/lib/jeumto/config'
 import { useImageBounds } from '@/lib/jeumto/useImageBounds'
-import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
+import { useLiveBroadcasts, liveForGame } from '@/lib/live/useLiveBroadcasts'
 const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m.LiveView), { ssr: false })
 import type { LiveInfo } from '@/lib/broadcast'
 import { countryFlag } from '@/lib/country'
@@ -887,7 +887,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                 title={game.title}
               />
             </div>
-            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={creatorName} bjLive={liveMap[game.id] ?? null} />
+            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={creatorName} bjLive={liveForGame(liveMap, game.id)} />
           </div>
         </div>
       )}

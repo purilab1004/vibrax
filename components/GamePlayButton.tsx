@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import { useLang } from '@/lib/i18n/context'
 import { loadAvatarConfig } from '@/lib/jeumto/storage'
-import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
+import { useLiveBroadcasts, liveForGame } from '@/lib/live/useLiveBroadcasts'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
@@ -178,7 +178,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
                 </div>
               </>
             ) : (
-              <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={bjName} bjLive={liveMap[game.id] ?? null} />
+              <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={bjName} bjLive={liveForGame(liveMap, game.id)} />
             )}
           </div>
         </div>

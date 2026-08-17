@@ -93,7 +93,7 @@ export default function ProfilePage() {
   const [agentAvatarFile, setAgentAvatarFile] = useState<File | null>(null)
   const [agentMsg, setAgentMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const [myAvatarConfig, setMyAvatarConfig] = useState<AvatarConfig | null>(null)
-  const [onAirGame, setOnAirGame] = useState<Game | null>(null)
+  const [onAirGames, setOnAirGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
@@ -108,11 +108,13 @@ export default function ProfilePage() {
       loadAvatarConfig(supabase, user.id).then(async (cfg) => {
         setMyAvatarConfig(cfg)
         // 방송 중이면 추천 게임을 MY GAMES 맨 위에 ON AIR 로 보여준다 (내 게임이 아니어도)
-        const gid = cfg && liveInfoOf(cfg.broadcast, user.id) ? cfg.broadcast?.gameId : null
-        if (gid) {
-          const { data } = await supabase.from('games').select('*').eq('id', gid).maybeSingle()
-          setOnAirGame((data as Game | null) ?? null)
-        } else setOnAirGame(null)
+        const ids = new Set<string>()
+        if (cfg && liveInfoOf(cfg.broadcast, user.id) && cfg.broadcast?.gameId) ids.add(cfg.broadcast.gameId)
+        for (const l of cfg?.broadcasts ?? []) if (l.on && l.gameId) ids.add(l.gameId)
+        if (ids.size) {
+          const { data } = await supabase.from('games').select('*').in('id', [...ids])
+          setOnAirGames((data as Game[]) ?? [])
+        } else setOnAirGames([])
       }).catch(() => {})
       setCountry(user.user_metadata?.country ?? '')
       setAgentName(user.user_metadata?.agent_name ?? '')
@@ -472,31 +474,31 @@ export default function ProfilePage() {
             <a
               href="/broadcast"
               className={`font-pixel text-[11px] px-4 py-2 border tracking-widest transition-colors ${
-                !!(user && liveInfoOf(myAvatarConfig?.broadcast, user.id))
+                !!(user && (liveInfoOf(myAvatarConfig?.broadcast, user.id) || myAvatarConfig?.broadcasts?.some((b) => b.on)))
                   ? 'bg-[#e11d48] text-white border-[#e11d48] animate-pulse'
                   : 'border-[#e11d48] text-[#e11d48] hover:bg-[#e11d48] hover:text-white'
               }`}
             >
-              {!!(user && liveInfoOf(myAvatarConfig?.broadcast, user.id)) ? '● ON AIR' : '📱 방송 추가'}
+              {!!(user && (liveInfoOf(myAvatarConfig?.broadcast, user.id) || myAvatarConfig?.broadcasts?.some((b) => b.on))) ? '● ON AIR' : '📱 방송 추가'}
             </a>
             <a href="/submit" className="font-pixel text-[11px] px-4 py-2 border border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">+ 게임 추가</a>
           </div>
         </div>
 
-        {onAirGame && (
-          <div className="mb-3 border-2 border-[#e11d48] bg-[#fff1f4] flex items-center gap-4 p-4">
+        {onAirGames.map((onAirGame) => (
+          <div key={`onair-${onAirGame.id}`} className="mb-3 border-2 border-[#e11d48] bg-[#fff1f4] flex items-center gap-4 p-4">
             <div className="relative w-20 h-12 shrink-0 overflow-hidden bg-gray-900">
               <Image src={onAirGame.thumbnail_url} alt={onAirGame.title} fill className="object-cover" />
               <span className="absolute top-1 left-1 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[8px] px-1.5 py-0.5 tracking-widest"><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />LIVE</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-pixel text-[10px] text-[#e11d48] tracking-widest mb-1">● ON AIR · 방송 중인 추천 게임{onAirGame.user_id !== user?.id ? ' (다른 사람 게임)' : ''}</p>
+              <p className="font-pixel text-[10px] text-[#e11d48] tracking-widest mb-1">● ON AIR · 방송 중인 게임{onAirGame.user_id !== user?.id ? ' (다른 사람 게임)' : ''}</p>
               <p className="text-sm text-[#241f17] truncate font-medium">{onAirGame.title}</p>
             </div>
             <a href={`/games/${onAirGame.id}`} className="font-pixel text-[10px] px-3 py-2 border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] tracking-widest">게임 보기</a>
             <a href="/broadcast" className="font-pixel text-[10px] px-3 py-2 bg-[#e11d48] text-white tracking-widest">방송 관리</a>
           </div>
-        )}
+        ))}
         {games.length === 0 ? (
           <div className="border border-[#ebe4d6] p-12 text-center">
             <p className="text-[#857a68] text-sm mb-4">아직 등록한 게임이 없습니다.</p>

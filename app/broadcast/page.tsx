@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { loadAvatarConfig, saveAvatarConfig } from '@/lib/jeumto/storage'
 import { emptyConfig, type AvatarConfig } from '@/lib/jeumto/config'
 import { startHost, type HostHandle } from '@/lib/live/host'
-import { toEmbed } from '@/lib/broadcast'
+import { toEmbed, type LinkBroadcast } from '@/lib/broadcast'
 import type { Game } from '@/lib/supabase/types'
 
 export default function BroadcastPage() {
@@ -20,7 +20,7 @@ export default function BroadcastPage() {
   const [q, setQ] = useState('')
   const [tab, setTab] = useState<'camera' | 'link'>('camera')
   const [linkUrl, setLinkUrl] = useState('')
-  const [linkOn, setLinkOn] = useState(false)
+  const [links, setLinks] = useState<LinkBroadcast[]>([])
   const [linkMsg, setLinkMsg] = useState<string | null>(null)
   const [results, setResults] = useState<Game[]>([])
   const [onAir, setOnAir] = useState(false)
@@ -38,7 +38,8 @@ export default function BroadcastPage() {
       setUser(user)
       const cfg = await loadAvatarConfig(supabase, user.id)
       setConfig(cfg)
-      if (cfg?.broadcast?.mode === 'live') { setTab('link'); setLinkUrl(cfg.broadcast.url); setLinkOn(cfg.broadcast.on) }
+      setLinks(cfg?.broadcasts ?? [])
+      if ((cfg?.broadcasts?.length ?? 0) > 0 && !(cfg?.broadcast?.mode === 'camera' && cfg.broadcast.on)) setTab('link')
       // 기본 목록: 내 게임 + 인기 게임(조회수순). 검색으로 아무 게임이나 고를 수 있다
       const [{ data: mine }, { data: top }] = await Promise.all([
         supabase.from('games').select('id,title,user_id,view_count,thumbnail_url').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -65,18 +66,25 @@ export default function BroadcastPage() {
     return () => clearInterval(iv)
   }, [onAir])
 
-  const saveLink = async (on: boolean) => {
+  const persistLinks = async (next: LinkBroadcast[]) => {
     if (!user) return
-    if (on && !toEmbed(linkUrl)) { setLinkMsg('지원하지 않는 링크예요 (YouTube/Twitch)'); return }
-    if (on && !gameId) { setLinkMsg('추천 게임을 골라 주세요'); return }
     const base = config ?? emptyConfig()
-    const next: AvatarConfig = { ...base, broadcast: { mode: 'live', url: linkUrl.trim(), on, gameId: gameId || null } }
-    const { error } = await saveAvatarConfig(supabase, user.id, next)
+    const merged: AvatarConfig = { ...base, broadcasts: next }
+    const { error } = await saveAvatarConfig(supabase, user.id, merged)
     if (error) { setLinkMsg('저장 실패: ' + error); return }
-    setConfig(next); setLinkOn(on)
-    setLinkMsg(on ? '● ON AIR — 추천 게임 카드와 게임 안에 영상이 나와요' : '방송을 껐어요')
-    setTimeout(() => setLinkMsg(null), 3000)
+    setConfig(merged); setLinks(next)
   }
+  const addLink = async () => {
+    if (!toEmbed(linkUrl)) { setLinkMsg('지원하지 않는 링크예요 (YouTube/Twitch)'); return }
+    if (!gameId) { setLinkMsg('연결할 게임을 골라 주세요'); return }
+    const g = games.find((x) => x.id === gameId)
+    const item: LinkBroadcast = { id: `l_${Date.now().toString(36)}`, url: linkUrl.trim(), gameId, on: true, title: g?.title }
+    await persistLinks([item, ...links])
+    setLinkUrl('')
+    setLinkMsg('● 추가했어요 — 목록·게임 안에 영상이 나와요'); setTimeout(() => setLinkMsg(null), 2500)
+  }
+  const toggleLink = (id: string) => persistLinks(links.map((l) => (l.id === id ? { ...l, on: !l.on } : l)))
+  const removeLink = (id: string) => persistLinks(links.filter((l) => l.id !== id))
   const setBroadcast = async (on: boolean) => {
     if (!user) return
     const base = config ?? emptyConfig()
@@ -160,7 +168,7 @@ export default function BroadcastPage() {
         <span className="font-pixel text-[11px] tracking-widest text-[#ff6b8a]">📱 폰 카메라 방송</span>
         <div className="flex-1" />
         {onAir && <span className="font-pixel text-[10px] tracking-widest text-white/80">👥 {viewers} · {mmss}</span>}
-        {!onAir && linkOn && <span className="font-pixel text-[10px] tracking-widest text-[#ff6b8a] animate-pulse">● 링크 ON AIR</span>}
+        {!onAir && links.some((l) => l.on) && <span className="font-pixel text-[10px] tracking-widest text-[#ff6b8a] animate-pulse">● 링크 {links.filter((l) => l.on).length}개 ON AIR</span>}
       </div>
       {!onAir && (
         <div className="shrink-0 px-4 pb-2 flex gap-2">
@@ -181,7 +189,7 @@ export default function BroadcastPage() {
               <p className="text-sm text-white/85 leading-relaxed">방송을 시작하면 <b>추천 게임 카드</b>에 이 카메라 영상이 나오고, 코인을 넣으면 그 게임을 바로 플레이해요.<br />게임 안에서도 AJ 아바타 대신 방송이 BJ 자리에 나와요. 이 화면을 켜 둔 동안만 방송됩니다.</p>
             ) : (
               <div className="w-full max-w-sm text-left space-y-2">
-                <p className="text-sm text-white/85 leading-relaxed text-center">YouTube 라이브/영상이나 Twitch 채널 링크를 걸면 <b>추천 게임 카드</b>와 게임 안 BJ 자리에 그 영상이 나와요. 이 화면을 닫아도 유지되고, 끌 때까지 계속 방송돼요.</p>
+                <p className="text-sm text-white/85 leading-relaxed text-center">YouTube 라이브/영상이나 Twitch 채널 링크를 게임에 연결하면 <b>LIVE 카드</b>로 목록에 나오고, 게임 안 BJ 자리에도 그 영상이 나와요. <b>여러 개</b> 계속 추가할 수 있어요.</p>
                 <input
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
@@ -195,6 +203,21 @@ export default function BroadcastPage() {
                   </div>
                 )}
                 {linkMsg && <p className="text-[11px] text-[#7fd0ff]">{linkMsg}</p>}
+                {links.length > 0 && (
+                  <ul className="mt-3 space-y-2">
+                    <li className="font-pixel text-[10px] tracking-widest text-white/60">추가한 영상 ({links.length})</li>
+                    {links.map((l) => (
+                      <li key={l.id} className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${l.on ? 'border-[#e11d48]/70 bg-[#e11d48]/10' : 'border-white/15 bg-white/5'}`}>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[12px] text-white truncate">🎮 {l.title ?? games.find((g) => g.id === l.gameId)?.title ?? '게임'}</p>
+                          <p className="text-[10px] text-white/50 truncate">{l.url}</p>
+                        </div>
+                        <button onClick={() => toggleLink(l.id)} className={`font-pixel text-[9px] px-2 py-1 rounded-full tracking-widest ${l.on ? 'bg-[#e11d48] text-white' : 'bg-white/15 text-white/70'}`}>{l.on ? '● ON' : '○ OFF'}</button>
+                        <button onClick={() => removeLink(l.id)} aria-label="삭제" className="text-white/50 hover:text-white text-sm px-1">✕</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
             <div className="w-full max-w-sm text-left space-y-2">
@@ -236,11 +259,7 @@ export default function BroadcastPage() {
       <div className="shrink-0 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-center gap-3">
         {tab === 'camera' && <button onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} disabled={onAir} className="rounded-full bg-white/15 px-4 py-3 text-[12px] disabled:opacity-40">🔄 {facing === 'user' ? '전면' : '후면'}</button>}
         {!onAir && tab === 'link' ? (
-          linkOn ? (
-            <button onClick={() => saveLink(false)} className="rounded-full bg-white text-black px-8 py-3 font-pixel text-[12px] tracking-widest">■ 링크 방송 끄기</button>
-          ) : (
-            <button onClick={() => saveLink(true)} disabled={!user || !gameId || !toEmbed(linkUrl)} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">● 링크로 방송 시작</button>
-          )
+          <button onClick={addLink} disabled={!user || !gameId || !toEmbed(linkUrl)} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">＋ 이 게임에 영상 추가</button>
         ) : !onAir ? (
           <button onClick={start} disabled={!user || !gameId} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">● 방송 시작</button>
         ) : (
