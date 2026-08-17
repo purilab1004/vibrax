@@ -746,12 +746,3 @@ body {
 }
 .clay-enter { animation: clayEnter 0.85s cubic-bezier(.22,.9,.3,1) both; }
 @media (prefers-reduced-motion: reduce) { .clay-enter { animation: none; opacity: 1; } }
-
-/* 카드 타이틀 등장 — 캐릭터 뒤이어 아래에서 통통 떠오른다 */
-@keyframes titleIn {
-  0%   { opacity: 0; transform: translateY(18px) scale(.92); filter: blur(4px); }
-  60%  { opacity: 1; transform: translateY(-4px) scale(1.03); filter: blur(0); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-.title-in { animation: titleIn 0.6s cubic-bezier(.22,.9,.3,1) both; }
-@media (prefers-reduced-motion: reduce) { .title-in { animation: none; opacity: 1; } }
