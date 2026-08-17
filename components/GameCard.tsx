@@ -146,6 +146,18 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
   const [blink, setBlink] = useState(false)
   const [mouthOpen, setMouthOpen] = useState(false)
   const bounds = useImageBounds(url)
+  // 화면에 들어올 때 왼쪽에서 "윙" 하고 날아 들어온다
+  const enterRef = useRef<HTMLDivElement>(null)
+  const [entered, setEntered] = useState(false)
+  useEffect(() => {
+    const el = enterRef.current
+    if (!el) return
+    const io = new IntersectionObserver((es) => {
+      if (es.some((e) => e.isIntersecting)) { setEntered(true); io.disconnect() }
+    }, { threshold: 0.35 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
   // 말하는 동안 입 벌린 프레임과 번갈아 (뻥긋뻥긋)
   useEffect(() => {
     if (!line || !talkUrl) return
@@ -198,7 +210,7 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
   }, [id])
   const delay = `${(hashOf(id) % 30) / 10}s`
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden>
+    <div ref={enterRef} className={`absolute inset-0 flex items-center justify-center pointer-events-none ${entered ? 'clay-enter' : 'opacity-0'}`} aria-hidden>
       {/* 프리뷰 PNG 는 정사각형이고 캐릭터 아래에 여백이 있다(약 8%) → 그림자를 그 발밑에 맞춘다 */}
       <div className="relative w-[58%] aspect-square">
         {/* PNG 의 실제 보이는 영역(알파 bbox)에 맞춰 그림자는 발밑, 말풍선은 머리 바로 위 */}

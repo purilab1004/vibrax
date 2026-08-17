@@ -736,3 +736,13 @@ body {
 .clay-actor.clay-talk   { animation: clayTalk 0.5s ease-in-out 5; }
 .clay-bubble { animation: clayBubble 2.4s ease-in-out 1 both; }
 @media (prefers-reduced-motion: reduce) { .clay-actor, .clay-shadow, .clay-bubble { animation: none; } }
+
+/* 카드 속 캐릭터 등장 — 왼쪽에서 윙~ 하고 날아와 살짝 넘어갔다 자리 잡는다 */
+@keyframes clayEnter {
+  0%   { opacity: 0; transform: translateX(-120%) rotate(-14deg) skewX(12deg); }
+  55%  { opacity: 1; transform: translateX(6%) rotate(4deg) skewX(-3deg); }
+  75%  { transform: translateX(-2%) rotate(-2deg) skewX(0); }
+  100% { opacity: 1; transform: translateX(0) rotate(0) skewX(0); }
+}
+.clay-enter { animation: clayEnter 0.85s cubic-bezier(.22,.9,.3,1) both; }
+@media (prefers-reduced-motion: reduce) { .clay-enter { animation: none; opacity: 1; } }
