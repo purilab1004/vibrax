@@ -13,7 +13,7 @@ interface EditorApi {
   character: { serialize(): JeumtoCharacterData; name: string }
   newCharacter(): void
   setHasSaved(v: boolean): void
-  snapshot(size?: number, opts?: { blink?: boolean }): HTMLCanvasElement
+  snapshot(size?: number, opts?: { blink?: boolean; talk?: boolean }): HTMLCanvasElement
   loadCharacterData(data: JeumtoCharacterData): void
   setName(n: string): void
   toast(msg: string): void
@@ -91,9 +91,11 @@ export default function AvatarEditorPage() {
       const toBlob = (c: HTMLCanvasElement) => new Promise<Blob | null>((r) => c.toBlob((b) => r(b), 'image/png'))
       const blob = await toBlob(api.snapshot(512))
       const blinkBlob = await toBlob(api.snapshot(512, { blink: true }))
-      const [previewUrl, blinkUrl, up] = await Promise.all([
+      const talkBlob = await toBlob(api.snapshot(512, { talk: true }))
+      const [previewUrl, blinkUrl, talkUrl, up] = await Promise.all([
         blob ? uploadPreview(supabase, user.id, blob) : Promise.resolve(null),
         blinkBlob ? uploadPreview(supabase, user.id, blinkBlob, 'blink') : Promise.resolve(null),
+        talkBlob ? uploadPreview(supabase, user.id, talkBlob, 'talk') : Promise.resolve(null),
         uploadCharacterData(supabase, user.id, data),
       ])
       if (!up.url) throw new Error(up.error ?? '캐릭터 업로드 실패')
@@ -103,8 +105,9 @@ export default function AvatarEditorPage() {
         voice,
         previewUrl: previewUrl ?? savedRef.current?.previewUrl ?? null,
         blinkUrl: blinkUrl ?? null,
+        talkUrl: talkUrl ?? null,
         dataUrl: up.url,
-        previewVersion: 4,
+        previewVersion: 5,
       }
       const { error } = await saveAvatarConfig(supabase, user.id, config)
       if (error) throw new Error(error)

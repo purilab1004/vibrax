@@ -421,16 +421,18 @@ export default function ProfilePage() {
                   config={myAvatarConfig}
                   onLoaded={async (snapshot) => {
                     // 옛(불투명 배경) 프리뷰면 투명 스냅샷으로 자동 재생성 — 카드 배지에서 캐릭터가 원 밖으로 튀어나오게
-                    if (!user || myAvatarConfig.previewVersion === 4) return
+                    if (!user || myAvatarConfig.previewVersion === 5) return
                     await new Promise<void>((r) => requestAnimationFrame(() => r()))
                     const toBlob = (c: HTMLCanvasElement) => new Promise<Blob | null>((r) => c.toBlob((b) => r(b), 'image/png'))
                     const blob = await toBlob(snapshot(512))
                     const blinkBlob = await toBlob(snapshot(512, { blink: true }))
+                    const talkBlob = await toBlob(snapshot(512, { talk: true }))
                     if (!blob) return
                     const url = await uploadPreview(supabase, user.id, blob)
                     const blinkUrl = blinkBlob ? await uploadPreview(supabase, user.id, blinkBlob, 'blink') : null
+                    const talkUrl = talkBlob ? await uploadPreview(supabase, user.id, talkBlob, 'talk') : null
                     if (!url) return
-                    const next = { ...myAvatarConfig, previewUrl: url, blinkUrl, previewVersion: 4 }
+                    const next = { ...myAvatarConfig, previewUrl: url, blinkUrl, talkUrl, previewVersion: 5 }
                     const { error } = await saveAvatarConfig(supabase, user.id, next)
                     if (!error) setMyAvatarConfig(next)
                   }}

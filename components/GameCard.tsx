@@ -9,7 +9,8 @@ import type { Game } from '@/lib/supabase/types'
 import LikeButton from './LikeButton'
 import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
-import type { AvatarConfig } from '@/lib/jeumto/config'
+import type { AvatarConfig, AvatarFrames } from '@/lib/jeumto/config'
+import { useImageBounds } from '@/lib/jeumto/useImageBounds'
 import { countryFlag } from '@/lib/country'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
@@ -138,10 +139,20 @@ function FluffFigure({ delay, eyesRef, color = '#F05A28', shape = 0 }: {
 // 그림자는 캐릭터와 분리해 바닥에 고정하고, 뛰어오를 때 작아진다.
 const CLAY_LINES = ['안녕! 놀러 와~', '이 게임 재밌어!', '한 판 할래?', '같이 놀자!', '나 잘하지? 히히', '두근두근…', '오늘도 화이팅!', '기다리고 있었어!', '클리어 도전!', '눌러 봐 눌러 봐~']
 const CLAY_ACTS = ['clay-hop', 'clay-tilt', 'clay-look', 'clay-wiggle'] as const
-function ClayAvatarActor({ id, url, blinkUrl }: { id: string; url: string; blinkUrl?: string | null }) {
+function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
+  const { url, blinkUrl, talkUrl } = frames
   const [line, setLine] = useState<string | null>(null)
   const [act, setAct] = useState<string>('')
   const [blink, setBlink] = useState(false)
+  const [mouthOpen, setMouthOpen] = useState(false)
+  const bounds = useImageBounds(url)
+  // 말하는 동안 입 벌린 프레임과 번갈아 (뻥긋뻥긋)
+  useEffect(() => {
+    if (!line || !talkUrl) return
+    let on = false
+    const iv = setInterval(() => { on = !on; setMouthOpen(on) }, 140)
+    return () => { clearInterval(iv); setMouthOpen(false) }
+  }, [line, talkUrl])
   // 눈 깜빡임 — 눈 감은 프레임이 있으면 2.5~5초마다 120ms 동안 교체 (가끔 두 번 연속)
   useEffect(() => {
     if (!blinkUrl) return
@@ -190,17 +201,32 @@ function ClayAvatarActor({ id, url, blinkUrl }: { id: string; url: string; blink
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden>
       {/* 프리뷰 PNG 는 정사각형이고 캐릭터 아래에 여백이 있다(약 8%) → 그림자를 그 발밑에 맞춘다 */}
       <div className="relative w-[72%] aspect-square">
-        {/* left/width 로 가운데 정렬 (translate 는 애니메이션 transform 과 겹쳐 밀리므로 쓰지 않는다) */}
-        <div className="clay-shadow absolute left-[22%] bottom-[11%] w-[56%] h-[7%] rounded-[50%] bg-black/25 blur-[3px]" style={{ animationDelay: delay, transformOrigin: '50% 50%' }} />
-        <div className={`clay-actor absolute inset-0 ${act}`} style={{ animationDelay: delay, transformOrigin: '50% 92%' }}>
+        {/* PNG 의 실제 보이는 영역(알파 bbox)에 맞춰 그림자는 발밑, 말풍선은 머리 바로 위 */}
+        <div
+          className="clay-shadow absolute rounded-[50%] bg-black/25 blur-[3px]"
+          style={{
+            animationDelay: delay, transformOrigin: '50% 50%',
+            left: `${((bounds ? (bounds.left + bounds.right) / 2 : 0.5) * 100) - 28}%`, width: '56%', height: '7%',
+            bottom: `${bounds ? Math.max(0, (1 - bounds.bottom) * 100 - 2.5) : 11}%`,
+          }}
+        />
+        <div className={`clay-actor absolute inset-0 ${act}`} style={{ animationDelay: delay, transformOrigin: `50% ${bounds ? bounds.bottom * 100 : 92}%` }}>
+          {/* 세 프레임(기본/눈감음/입벌림)을 겹쳐 두고 opacity 로 교체 */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={url} alt="" className="absolute inset-0 w-full h-full object-contain" draggable={false} style={{ opacity: blink ? 0 : 1 }} />
+          <img src={url} alt="" className="absolute inset-0 w-full h-full object-contain" draggable={false} style={{ opacity: blink || (mouthOpen && talkUrl) ? 0 : 1 }} />
           {blinkUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={blinkUrl} alt="" className="absolute inset-0 w-full h-full object-contain" draggable={false} style={{ opacity: blink ? 1 : 0 }} />
           )}
+          {talkUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={talkUrl} alt="" className="absolute inset-0 w-full h-full object-contain" draggable={false} style={{ opacity: !blink && mouthOpen ? 1 : 0 }} />
+          )}
           {line && (
-            <div className="clay-bubble absolute left-1/2 top-[6%] -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-2xl bg-white/95 text-[#241f17] text-[11px] font-semibold px-2.5 py-1 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+            <div
+              className="clay-bubble absolute left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-2xl bg-white/95 text-[#241f17] text-[11px] font-semibold px-2.5 py-1 shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
+              style={{ top: `${bounds ? Math.max(0, bounds.top * 100 - 1) : 6}%` }}
+            >
               {line}
               <span className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-3 h-3 bg-white/95 rotate-45 rounded-[2px]" />
             </div>
@@ -214,7 +240,7 @@ function ClayAvatarActor({ id, url, blinkUrl }: { id: string; url: string; blink
 // 빛 장면 — 오로라 배경 위 하얀 광휘 속 구름 캐릭터.
 // 조회수가 많을수록 빛의 범위·세기가 커져 카드 자체가 밝아 보인다.
 // avatarUrl: 제작자가 저장한 점토 캐릭터(투명 PNG)가 있으면 기본 클레이 대신 그 캐릭터를 보여준다
-export function RoomScene({ id, views, avatarUrl, avatarBlinkUrl }: { id: string; views: number; avatarUrl?: string | null; avatarBlinkUrl?: string | null }) {
+export function RoomScene({ id, views, avatar }: { id: string; views: number; avatar?: AvatarFrames | null }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
 
@@ -293,8 +319,8 @@ export function RoomScene({ id, views, avatarUrl, avatarBlinkUrl }: { id: string
         }}
         aria-hidden
       />
-      {avatarUrl ? (
-        <ClayAvatarActor id={id} url={avatarUrl} blinkUrl={avatarBlinkUrl} />
+      {avatar ? (
+        <ClayAvatarActor id={id} frames={avatar} />
       ) : (
       <svg ref={svgRef} viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
         {/* 찰흙 캐릭터 — 게임마다 다른 클레이 색 */}
@@ -317,7 +343,7 @@ interface GameCardProps {
   game: Game
   creatorName?: string | null
   creatorAvatarUrl?: string | null   // 제작자 아바타 프리뷰 PNG (avatar_config.previewUrl)
-  creatorAvatarBlinkUrl?: string | null // 눈 감은 프레임 (카드 깜빡임)
+  creatorAvatar?: AvatarFrames | null // 카드 속 캐릭터 프레임(기본/눈감음/입벌림)
   creatorCountry?: string | null     // 제작자 국가코드 (ISO alpha-2) → 국기
   bjAvatarConfig?: AvatarConfig | null // 제작자 저장 아바타 — 게임 내 BJ 로 사용
   // 'card' = 썸네일 아래 정보 블록(목록용), 'tile' = 정보를 썸네일 위 오버레이로(홈 모자이크용)
@@ -413,7 +439,7 @@ function CreatorBadge({ url, name, size }: { url?: string | null; name?: string 
   )
 }
 
-export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorAvatarBlinkUrl, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video', golden = false, rank }: GameCardProps) {
+export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorAvatar, creatorCountry, bjAvatarConfig, variant = 'card', aspectClass = 'aspect-video', golden = false, rank }: GameCardProps) {
   const flag = countryFlag(creatorCountry)
   const { T, lang } = useLang()
   const [open, setOpen] = useState(false)
@@ -571,7 +597,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                   </h3>
                 </div>
                 <div className="absolute inset-x-1 top-[21%] bottom-[16%]">
-                  <RoomScene id={game.id} views={game.view_count ?? 0} avatarUrl={creatorAvatarUrl} avatarBlinkUrl={creatorAvatarBlinkUrl} />
+                  <RoomScene id={game.id} views={game.view_count ?? 0} avatar={creatorAvatar} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
                   <p className="flex items-center gap-2.5 text-[15px] font-bold tracking-[0.06em] text-white/85">

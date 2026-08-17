@@ -12,8 +12,9 @@ export interface AvatarConfig {
   voice: Gender          // TTS 목소리
   previewUrl: string | null
   blinkUrl?: string | null // 눈 감은 프레임 PNG (카드 깜빡임용)
+  talkUrl?: string | null  // 입 벌린 프레임 PNG (카드 말하기용)
   dataUrl: string | null // *.jeumto.json (Storage public URL)
-  previewVersion?: number // 4 = 투명·정상 비율 + 깜빡임 프레임 (없으면 옛 어두운 배경 → 프로필에서 자동 재생성)
+  previewVersion?: number // 5 = 투명·정상 비율 + 깜빡임·말하기 프레임 (없으면 옛 어두운 배경 → 프로필에서 자동 재생성)
 }
 
 /** 점토 에디터가 직렬화하는 캐릭터 데이터(character.serialize()) — 형태만 느슨하게 */
@@ -39,6 +40,7 @@ export function validateConfig(raw: unknown): AvatarConfig | null {
     voice: r.voice === 'male' ? 'male' : 'female',
     previewUrl: typeof r.previewUrl === 'string' ? r.previewUrl : null,
     blinkUrl: typeof r.blinkUrl === 'string' ? r.blinkUrl : null,
+    talkUrl: typeof r.talkUrl === 'string' ? r.talkUrl : null,
     dataUrl: typeof r.dataUrl === 'string' ? r.dataUrl : null,
     previewVersion: typeof r.previewVersion === 'number' ? r.previewVersion : undefined,
   }
@@ -54,7 +56,8 @@ export function avatarPreviewUrl(raw: unknown): string | null {
 }
 
 /** 카드용: 프리뷰 + 깜빡임 프레임 URL (구 포맷은 null) */
-export function avatarPreview(raw: unknown): { url: string; blinkUrl: string | null } | null {
+export interface AvatarFrames { url: string; blinkUrl: string | null; talkUrl: string | null }
+export function avatarFrames(raw: unknown): AvatarFrames | null {
   const c = validateConfig(raw)
-  return c?.previewUrl ? { url: c.previewUrl, blinkUrl: c.blinkUrl ?? null } : null
+  return c?.previewUrl ? { url: c.previewUrl, blinkUrl: c.blinkUrl ?? null, talkUrl: c.talkUrl ?? null } : null
 }

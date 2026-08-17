@@ -18,7 +18,7 @@ function publicUrl(supabase: SupabaseClient, path: string): string {
   return `${supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl}?v=${Date.now()}`
 }
 
-export async function uploadPreview(supabase: SupabaseClient, userId: string, blob: Blob, variant: '' | 'blink' = ''): Promise<string | null> {
+export async function uploadPreview(supabase: SupabaseClient, userId: string, blob: Blob, variant: '' | 'blink' | 'talk' = ''): Promise<string | null> {
   const path = `avatar-models/${userId}${variant ? '.' + variant : ''}.png`
   const { error } = await supabase.storage.from('avatars').upload(path, blob, { upsert: true, contentType: 'image/png' })
   if (error) { console.error('[jeumto] preview upload failed:', error); return null }

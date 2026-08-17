@@ -7,7 +7,7 @@ import FeedScreen from '@/components/home/FeedScreen'
 import Reveal from '@/components/Reveal'
 import { useLang } from '@/lib/i18n/context'
 import type { GameWithCreator } from '@/lib/supabase/types'
-import { validateConfig, avatarPreviewUrl } from '@/lib/jeumto/config'
+import { validateConfig, avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 
 // 핀터레스트 매소너리 — 정사각 이상(세로형)만 사용해 캐릭터가 답답하지 않게 (id 기반으로 고정)
 const ASPECTS = ['aspect-square', 'aspect-[4/5]', 'aspect-[3/4]', 'aspect-[5/6]', 'aspect-[4/5]', 'aspect-square', 'aspect-[3/4]'] as const
@@ -72,7 +72,7 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
               game={game}
               creatorName={game.profiles?.agent_name ?? game.profiles?.username ?? null}
               creatorAvatarUrl={avatarPreviewUrl(game.profiles?.avatar_config)}
-              creatorAvatarBlinkUrl={validateConfig(game.profiles?.avatar_config)?.blinkUrl ?? null}
+              creatorAvatar={avatarFrames(game.profiles?.avatar_config)}
               creatorCountry={game.profiles?.country ?? null}
               bjAvatarConfig={validateConfig(game.profiles?.avatar_config)}
             />

@@ -12,7 +12,7 @@ interface Props {
   interactive?: boolean
   className?: string
   /** 캐릭터 로드 완료 시 — 스냅샷 함수를 넘겨준다 (프로필에서 옛 프리뷰 재생성 등에 사용) */
-  onLoaded?: (snapshot: (size?: number, opts?: { blink?: boolean }) => HTMLCanvasElement) => void
+  onLoaded?: (snapshot: (size?: number, opts?: { blink?: boolean; talk?: boolean }) => HTMLCanvasElement) => void
 }
 
 export default function JeumtoView({ config, interactive = true, className, onLoaded }: Props) {
