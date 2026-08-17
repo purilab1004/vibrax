@@ -4,8 +4,10 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { parseBroadcast, liveInfoOf, type LiveInfo } from '@/lib/broadcast'
+import { avatarPreviewUrl } from '@/lib/jeumto/config'
 
-export type LiveMap = Record<string, LiveInfo>
+export type LiveEntry = LiveInfo & { gameId: string; hostName: string; hostAvatarUrl: string | null }
+export type LiveMap = Record<string, LiveEntry>
 let cache: LiveMap = {}
 let fetchedAt = 0
 let inflight: Promise<LiveMap> | null = null
@@ -15,14 +17,14 @@ async function fetchLive(): Promise<LiveMap> {
   const supabase = createClient()
   const { data } = await supabase
     .from('profiles')
-    .select('id, avatar_config')
+    .select('id, username, agent_name, avatar_config')
     .filter('avatar_config->broadcast->>on', 'eq', 'true')
     .limit(200)
   const m: LiveMap = {}
-  for (const row of (data ?? []) as { id: string; avatar_config: { broadcast?: unknown } | null }[]) {
+  for (const row of (data ?? []) as { id: string; username: string | null; agent_name?: string | null; avatar_config: { broadcast?: unknown } | null }[]) {
     const b = parseBroadcast(row.avatar_config?.broadcast)
     const info = liveInfoOf(b, row.id)
-    if (info && b?.gameId) m[b.gameId] = info
+    if (info && b?.gameId) m[b.gameId] = { ...info, gameId: b.gameId, hostName: row.agent_name ?? row.username ?? 'LIVE', hostAvatarUrl: avatarPreviewUrl(row.avatar_config) }
   }
   cache = m; fetchedAt = Date.now()
   listeners.forEach((l) => l(m))

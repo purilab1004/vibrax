@@ -620,7 +620,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                   </h3>
                 </div>
                 <div className="absolute inset-x-1 top-[21%] bottom-[16%]">
-                  <RoomScene id={game.id} views={game.view_count ?? 0} avatar={creatorAvatar} live={liveMap[game.id] ?? null} />
+                  <RoomScene id={game.id} views={game.view_count ?? 0} avatar={creatorAvatar} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
                   <p className="flex items-center gap-2.5 text-[15px] font-bold tracking-[0.06em] text-white/85">

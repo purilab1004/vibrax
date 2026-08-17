@@ -8,6 +8,8 @@ import Reveal from '@/components/Reveal'
 import { useLang } from '@/lib/i18n/context'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { validateConfig, avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
+import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
+import LiveCard from '@/components/LiveCard'
 
 // 핀터레스트 매소너리 — 정사각 이상(세로형)만 사용해 캐릭터가 답답하지 않게 (id 기반으로 고정)
 const ASPECTS = ['aspect-square', 'aspect-[4/5]', 'aspect-[3/4]', 'aspect-[5/6]', 'aspect-[4/5]', 'aspect-square', 'aspect-[3/4]'] as const
@@ -23,11 +25,13 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
   const router = useRouter()
 
   const sorted = [...games].sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0))
+  const lives = Object.values(useLiveBroadcasts())
 
   return (
     <div>
       {/* ── 모바일: 쇼츠 피드 — 화면 전체를 채우고 스와이프하면 다음 게임 (유튜브 쇼츠/틱톡) ── */}
       <div className="md:hidden">
+        {lives.map((l) => <LiveCard key={`live-${l.gameId}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-mobile" />)}
         {sorted.map((game, i) => (
           <FeedScreen key={game.id} game={game} golden={(game.view_count ?? 0) > 0 && game.id === sorted[0].id} rank={i < 10 ? i + 1 : undefined} />
         ))}
@@ -62,6 +66,11 @@ export default function HomeMosaic({ games }: { games: GameWithCreator[] }) {
           </Link>
         </Reveal>
 
+        {lives.map((l) => (
+          <Reveal key={`live-${l.gameId}`} className="mb-5 break-inside-avoid">
+            <LiveCard live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="tile" />
+          </Reveal>
+        ))}
         {sorted.map((game, i) => (
           <Reveal key={game.id} delay={(i % 4) * 80} className="mb-5 break-inside-avoid">
             <GameCard

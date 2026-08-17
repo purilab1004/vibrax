@@ -17,6 +17,7 @@ import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
+import LiveCard from '@/components/LiveCard'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
 function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number }) {
@@ -28,7 +29,6 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
 
   const creatorName = game.profiles?.agent_name ?? game.profiles?.username ?? 'unknown'
   const avatarUrl = avatarPreviewUrl(game.profiles?.avatar_config)
-  const liveMap = useLiveBroadcasts()
   const avatarFramesV = avatarFrames(game.profiles?.avatar_config)
   const teaser = lang === 'en'
     ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
@@ -91,7 +91,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         </div>
         {/* 방 장면 — 캐릭터는 중앙 */}
         <div className="absolute inset-x-1 top-[23%] bottom-[27%]">
-          <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} live={liveMap[game.id] ?? null} />
+          <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />
         </div>
         {/* 하단 — 아케이드 플로우 */}
         <div className="absolute inset-x-0 bottom-0 px-6 pb-6 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
@@ -193,14 +193,16 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
 export default function GamesBrowse({ games: input }: { games: GameWithCreator[] }) {
   const feedRef = useRef<HTMLDivElement>(null)
   // 방송 중인 게임을 맨 앞으로 — 라이브가 /games 첫 화면에 바로 보이도록
+  // 방송 카드 — 게임 카드와 별개로 피드 맨 앞에 끼워 넣는다
   const liveMap = useLiveBroadcasts()
-  const games = [...input].sort((a, b) => Number(!!liveMap[b.id]) - Number(!!liveMap[a.id]))
-  // 라이브 카드가 앞으로 재정렬되면 스크롤 앵커링 때문에 두 번째 카드가 보이는 걸 막는다 → 맨 위로
-  const firstId = games[0]?.id
+  const lives = Object.values(liveMap)
+  const games = input
+  const liveKey = lives.map((l) => l.gameId).join(',')
   useEffect(() => {
+    if (!liveKey) return
     if (feedRef.current) feedRef.current.scrollTo({ top: 0 })
     if (typeof window !== 'undefined' && window.scrollY < 200) window.scrollTo({ top: 0 })
-  }, [firstId])
+  }, [liveKey])
 
   const jump = (dir: 1 | -1) => {
     const el = feedRef.current
@@ -211,6 +213,7 @@ export default function GamesBrowse({ games: input }: { games: GameWithCreator[]
     <div>
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">
+        {lives.map((l) => <LiveCard key={`live-${l.gameId}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-mobile" />)}
         {games.map(game => (
           <FeedScreen key={game.id} game={game} />
         ))}
@@ -222,6 +225,7 @@ export default function GamesBrowse({ games: input }: { games: GameWithCreator[]
           ref={feedRef}
           className="h-[calc(100svh-3.75rem)] min-h-[540px] pt-1 pb-2 overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
+          {lives.map((l) => <LiveCard key={`live-${l.gameId}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-desktop" />)}
           {games.map((game, i) => (
             <DesktopFeedCard key={game.id} game={game} rank={i < 10 ? i + 1 : undefined} />
           ))}

@@ -19,7 +19,7 @@ export function parseBroadcast(raw: unknown): BroadcastSetting | undefined {
   }
 }
 
-export interface Embed { src: string; kind: 'youtube' | 'twitch' | 'iframe' }
+export interface Embed { src: string; kind: 'youtube' | 'twitch' | 'iframe'; aspect: number } // aspect = w/h (쇼츠 9:16, 그 외 16:9)
 
 /** 링크 → 임베드. 지원: youtube.com/watch?v=, youtu.be/, youtube.com/live/, /embed/, /shorts/, /channel/ID, twitch.tv/채널, 그 외 https URL */
 export function toEmbed(input: string, parentHost = 'vibrexcup.com'): Embed | null {
@@ -28,21 +28,22 @@ export function toEmbed(input: string, parentHost = 'vibrexcup.com'): Embed | nu
   let u: URL
   try { u = new URL(s.startsWith('http') ? s : `https://${s}`) } catch { return null }
   const host = u.hostname.replace(/^www\.|^m\./, '')
-  const yt = (id: string): Embed => ({ src: `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`, kind: 'youtube' })
+  const shorts = /\/shorts\//.test(u.pathname)
+  const yt = (id: string): Embed => ({ src: `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${id}`, kind: 'youtube', aspect: shorts ? 9 / 16 : 16 / 9 })
   if (host === 'youtu.be') { const id = u.pathname.slice(1).split('/')[0]; return id ? yt(id) : null }
   if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
     const v = u.searchParams.get('v'); if (v) return yt(v)
     const m = u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]{6,})/); if (m) return yt(m[1])
     const ch = u.pathname.match(/^\/channel\/([\w-]+)/)
-    if (ch) return { src: `https://www.youtube.com/embed/live_stream?channel=${ch[1]}&autoplay=1&mute=1&playsinline=1`, kind: 'youtube' }
+    if (ch) return { src: `https://www.youtube.com/embed/live_stream?channel=${ch[1]}&autoplay=1&mute=1&playsinline=1`, kind: 'youtube', aspect: 16 / 9 }
     return null
   }
   if (host === 'twitch.tv') {
     const ch = u.pathname.split('/').filter(Boolean)[0]
     if (!ch || ch === 'videos') return null
-    return { src: `https://player.twitch.tv/?channel=${encodeURIComponent(ch)}&parent=${parentHost}&muted=true&autoplay=true`, kind: 'twitch' }
+    return { src: `https://player.twitch.tv/?channel=${encodeURIComponent(ch)}&parent=${parentHost}&muted=true&autoplay=true`, kind: 'twitch', aspect: 16 / 9 }
   }
-  if (u.protocol === 'https:') return { src: u.toString(), kind: 'iframe' }
+  if (u.protocol === 'https:') return { src: u.toString(), kind: 'iframe', aspect: 16 / 9 }
   return null
 }
 
@@ -52,11 +53,11 @@ export function isLinkOn(b: BroadcastSetting | undefined | null): b is Broadcast
 }
 
 /** 카드/게임에서 쓰는 라이브 정보 */
-export type LiveInfo = { kind: 'camera'; hostId: string } | { kind: 'link'; hostId: string; src: string }
+export type LiveInfo = { kind: 'camera'; hostId: string } | { kind: 'link'; hostId: string; src: string; aspect: number }
 export function liveInfoOf(b: BroadcastSetting | undefined | null, hostId: string): LiveInfo | null {
   if (!b) return null
   if (b.mode === 'camera' && b.on) return { kind: 'camera', hostId }
-  if (b.mode === 'live' && b.on) { const e = toEmbed(b.url); if (e) return { kind: 'link', hostId, src: e.src } }
+  if (b.mode === 'live' && b.on) { const e = toEmbed(b.url); if (e) return { kind: 'link', hostId, src: e.src, aspect: e.aspect } }
   return null
 }
 
