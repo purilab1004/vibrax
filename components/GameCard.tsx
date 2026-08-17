@@ -315,15 +315,17 @@ export function playStartSound() {
 // 제작자 아바타 배지 — 동그란 원 안에 캐릭터 프리뷰
 function CreatorBadge({ url, name, size }: { url?: string | null; name?: string | null; size: number }) {
   return (
-    <span
-      className="avatar-wave relative shrink-0 rounded-full shadow-md overflow-hidden inline-flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
-      {url ? (
-        <Image src={url} alt={name ?? 'creator'} width={size} height={size} unoptimized className="avatar-bob w-full h-full object-cover object-center" />
-      ) : (
-        <span className="font-pixel text-[13px] text-white">{(name ?? '?').charAt(0).toUpperCase()}</span>
-      )}
+    <span className="avatar-ring shadow-md">
+      <span
+        className="avatar-wave relative shrink-0 rounded-full overflow-hidden inline-flex items-center justify-center"
+        style={{ width: size, height: size }}
+      >
+        {url ? (
+          <Image src={url} alt={name ?? 'creator'} width={size} height={size} unoptimized className="avatar-bob w-full h-full object-cover object-center" />
+        ) : (
+          <span className="font-pixel text-[13px] text-white">{(name ?? '?').charAt(0).toUpperCase()}</span>
+        )}
+      </span>
     </span>
   )
 }
@@ -643,7 +645,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
           {/* 정보 블록 — 아바타 + 2줄 제목 + 채널명 + 조회수·장르 (card 변형 전용) */}
           {variant === 'card' && (
           <div className="mt-4 flex items-start gap-3 px-0.5">
-            <div className="avatar-wave w-9 h-9 shrink-0 rounded-full overflow-hidden flex items-center justify-center">
+            <div className="avatar-ring"><div className="avatar-wave w-9 h-9 shrink-0 rounded-full overflow-hidden flex items-center justify-center">
               {creatorAvatarUrl ? (
                 <Image
                   src={creatorAvatarUrl}
@@ -654,9 +656,9 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorC
                   unoptimized
                 />
               ) : (
-                <span className="font-pixel text-[11px] text-[#857a68]">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
+                <span className="font-pixel text-[11px] text-white">{(creatorName ?? '?').charAt(0).toUpperCase()}</span>
               )}
-            </div>
+            </div></div>
             <div className="flex-1 min-w-0">
               <h3 className="text-[17px] font-semibold text-gray-100 line-clamp-2 leading-snug">
                 {game.title}

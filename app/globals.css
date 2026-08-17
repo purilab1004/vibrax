@@ -662,3 +662,24 @@ body {
   75%      { transform: translateY(-3%) rotate(3deg) scale(1.03); }
 }
 .avatar-bob { animation: avatar-bob 2.8s ease-in-out infinite; transform-origin: 50% 80%; }
+
+/* 아바타 원 둘레의 링 — 색이 링을 따라 계속 돈다 */
+@keyframes avatar-ring-spin { to { transform: rotate(360deg); } }
+.avatar-ring {
+  position: relative;
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 9999px;
+  overflow: hidden;
+  isolation: isolate;
+  flex-shrink: 0;
+}
+.avatar-ring::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  z-index: -1;
+  background: conic-gradient(from 0deg, #ff6b9d, #ffb347, #fff45c, #6ee7a1, #5ad0ff, #8b8bff, #e07bff, #ff6b9d);
+  animation: avatar-ring-spin 2.2s linear infinite;
+}
+.avatar-ring > * { border-radius: 9999px; }
