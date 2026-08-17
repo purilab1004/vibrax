@@ -197,6 +197,18 @@ export default function GamesBrowse({ games: input }: { games: GameWithCreator[]
   const liveMap = useLiveBroadcasts()
   const lives = Object.values(liveMap)
   const games = input
+  // 라이브 카드를 몰아넣지 않고 게임 사이에 고르게 끼워 넣는다 (첫 번째는 맨 앞, 이후 게임 2~3장 간격)
+  type Item = { kind: 'game'; game: GameWithCreator; rank?: number } | { kind: 'live'; live: (typeof lives)[number] }
+  const items: Item[] = []
+  {
+    const gap = Math.max(2, Math.min(4, Math.floor(games.length / Math.max(1, lives.length))))
+    let li = 0
+    games.forEach((g, i) => {
+      if (li < lives.length && i % gap === 0) items.push({ kind: 'live', live: lives[li++] })
+      items.push({ kind: 'game', game: g, rank: i < 10 ? i + 1 : undefined })
+    })
+    while (li < lives.length) items.push({ kind: 'live', live: lives[li++] })
+  }
   const liveKey = lives.map((l) => l.gameId).join(',')
   useEffect(() => {
     if (!liveKey) return
@@ -213,10 +225,9 @@ export default function GamesBrowse({ games: input }: { games: GameWithCreator[]
     <div>
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">
-        {lives.map((l) => <LiveCard key={`live-${l.hostId}-${l.gameId}-${l.kind === 'link' ? l.src : 'cam'}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-mobile" />)}
-        {games.map(game => (
-          <FeedScreen key={game.id} game={game} />
-        ))}
+        {items.map((it) => it.kind === 'live'
+          ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-mobile" />
+          : <FeedScreen key={it.game.id} game={it.game} />)}
       </div>
 
       {/* 데스크톱: 중앙 세로 카드 + 우측 레일 + 위/아래 내비 */}
@@ -225,10 +236,9 @@ export default function GamesBrowse({ games: input }: { games: GameWithCreator[]
           ref={feedRef}
           className="h-[calc(100svh-3.75rem)] min-h-[540px] pt-1 pb-2 overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          {lives.map((l) => <LiveCard key={`live-${l.hostId}-${l.gameId}-${l.kind === 'link' ? l.src : 'cam'}`} live={l} game={games.find((g) => g.id === l.gameId) ?? null} layout="feed-desktop" />)}
-          {games.map((game, i) => (
-            <DesktopFeedCard key={game.id} game={game} rank={i < 10 ? i + 1 : undefined} />
-          ))}
+          {items.map((it) => it.kind === 'live'
+            ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-desktop" />
+            : <DesktopFeedCard key={it.game.id} game={it.game} rank={it.rank} />)}
         </div>
         {/* 위/아래 화살표 — 다음/이전 게임 */}
         <div className="absolute right-2 lg:right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3">
