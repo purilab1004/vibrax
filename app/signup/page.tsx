@@ -8,7 +8,7 @@ import { useLang } from '@/lib/i18n/context'
 export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [message, setMessage] = useState<string | null>(null)
+  const [message] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const supabase = createClient()
@@ -19,17 +19,14 @@ export default function SignupPage() {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      const { data, error } = await supabase.auth.signUp({ email, password })
-      if (error) {
-        setError(error.status === 429 ? '잠시 후 다시 시도해 주세요 (인증 메일 발송 한도)' : error.message)
-        return
-      }
-      // Supabase 는 이미 가입된 이메일이면 보안상 "성공"처럼 응답하고 메일을 보내지 않는다 → identities 가 비어 있음
-      if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
-        setError('이미 가입된 이메일이에요. 로그인하거나 비밀번호 재설정을 이용해 주세요.')
-        return
-      }
-      setMessage(a.signupSuccess)
+      // 인증 메일 발송 문제로 임시로 서버에서 즉시 가입 처리 → 바로 로그인
+      const res = await fetch('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
+      const json = await res.json().catch(() => ({})) as { error?: string }
+      if (!res.ok) { setError(json.error ?? '가입에 실패했어요. 잠시 후 다시 시도해 주세요.'); return }
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) { setError(error.message); return }
+      const redirect = new URLSearchParams(window.location.search).get('redirect') || '/'
+      window.location.href = redirect
     })
   }
 
