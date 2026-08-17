@@ -614,16 +614,41 @@ body {
   .wink-closed { animation: none; opacity: 0; }
 }
 
-/* 아바타 배경 — 보라→핑크 그라데이션이 물결처럼 계속 흐른다 */
-@keyframes avatar-wave {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+/* 아바타 배경 — 뒤에서 무지개 빛이 천천히 돌며 빛난다 (파스텔 베이스 + 블러된 conic 무지개) */
+@keyframes avatar-glow-spin {
+  from { transform: rotate(0deg) scale(1.15); }
+  50%  { transform: rotate(180deg) scale(1.35); }
+  to   { transform: rotate(360deg) scale(1.15); }
+}
+@keyframes avatar-glow-pulse {
+  0%, 100% { opacity: .85; }
+  50%      { opacity: 1; }
 }
 .avatar-wave {
-  background: linear-gradient(120deg, #7f78e6 0%, #a77de9 30%, #e07ae0 60%, #f78bd6 80%, #8b7ce8 100%);
-  background-size: 300% 300%;
-  animation: avatar-wave 7s ease-in-out infinite;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(135deg, #b9a7f0 0%, #d9a2ec 50%, #f6a3d8 100%);
+}
+.avatar-wave::before {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    #ff8fa3, #ffb36b, #fff176, #9be79b, #7fd8f0, #8fa7ff, #d59bff, #ff8fd3, #ff8fa3);
+  filter: blur(18px) saturate(1.15);
+  animation: avatar-glow-spin 9s linear infinite, avatar-glow-pulse 4s ease-in-out infinite;
+}
+.avatar-wave::after {
+  /* 중앙을 살짝 밝혀 캐릭터가 뜨는 느낌 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse at 50% 55%, rgba(255,255,255,.35), rgba(255,255,255,0) 65%);
+  pointer-events: none;
 }
 
 /* 아바타 캐릭터가 살짝 까딱까딱 움직인다 */
