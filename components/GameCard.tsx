@@ -134,6 +134,58 @@ function FluffFigure({ delay, eyesRef, color = '#F05A28', shape = 0 }: {
   )
 }
 
+// 카드 속 제작자 점토 캐릭터 — 둥실·스퀴시 + 가끔 깡총/갸웃/두리번 + 말풍선으로 짧게 말한다.
+// 그림자는 캐릭터와 분리해 바닥에 고정하고, 뛰어오를 때 작아진다.
+const CLAY_LINES = ['안녕! 놀러 와~', '이 게임 재밌어!', '한 판 할래?', '같이 놀자!', '나 잘하지? 히히', '두근두근…', '오늘도 화이팅!', '기다리고 있었어!', '클리어 도전!', '눌러 봐 눌러 봐~']
+const CLAY_ACTS = ['clay-hop', 'clay-tilt', 'clay-look', 'clay-wiggle'] as const
+function ClayAvatarActor({ id, url }: { id: string; url: string }) {
+  const [line, setLine] = useState<string | null>(null)
+  const [act, setAct] = useState<string>('')
+  useEffect(() => {
+    let alive = true
+    let t1: ReturnType<typeof setTimeout>, t2: ReturnType<typeof setTimeout>
+    const seed = hashOf(id)
+    const loop = () => {
+      if (!alive) return
+      // 4~9초마다: 말하기(60%) 또는 귀여운 동작(40%)
+      const delay = 4000 + Math.random() * 5000
+      t1 = setTimeout(() => {
+        if (!alive) return
+        if (Math.random() < 0.6) {
+          setLine(CLAY_LINES[(seed + Math.floor(Math.random() * CLAY_LINES.length)) % CLAY_LINES.length])
+          setAct('clay-talk')
+          t2 = setTimeout(() => { setLine(null); setAct('') }, 2400)
+        } else {
+          setAct(CLAY_ACTS[Math.floor(Math.random() * CLAY_ACTS.length)])
+          t2 = setTimeout(() => setAct(''), 1400)
+        }
+        loop()
+      }, delay)
+    }
+    loop()
+    return () => { alive = false; clearTimeout(t1); clearTimeout(t2) }
+  }, [id])
+  const delay = `${(hashOf(id) % 30) / 10}s`
+  return (
+    <div className="absolute inset-0 flex items-end justify-center pointer-events-none" aria-hidden>
+      <div className="relative w-[70%] h-[86%]">
+        {/* 바닥 그림자 — 캐릭터와 분리, 둥실 리듬에 맞춰 커졌다 작아진다 */}
+        <div className="clay-shadow absolute left-1/2 bottom-[3%] -translate-x-1/2 w-[58%] h-[6%] rounded-[50%] bg-black/25 blur-[3px]" style={{ animationDelay: delay }} />
+        <div className={`clay-actor absolute inset-x-0 bottom-[5%] top-0 ${act}`} style={{ animationDelay: delay, transformOrigin: '50% 100%' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt="" className="w-full h-full object-contain object-bottom" draggable={false} />
+          {line && (
+            <div className="clay-bubble absolute left-1/2 -top-1 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-2xl bg-white/95 text-[#241f17] text-[11px] font-semibold px-2.5 py-1 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+              {line}
+              <span className="absolute left-1/2 -bottom-1.5 -translate-x-1/2 w-3 h-3 bg-white/95 rotate-45 rounded-[2px]" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // 빛 장면 — 오로라 배경 위 하얀 광휘 속 구름 캐릭터.
 // 조회수가 많을수록 빛의 범위·세기가 커져 카드 자체가 밝아 보인다.
 // avatarUrl: 제작자가 저장한 점토 캐릭터(투명 PNG)가 있으면 기본 클레이 대신 그 캐릭터를 보여준다
@@ -217,16 +269,7 @@ export function RoomScene({ id, views, avatarUrl }: { id: string; views: number;
         aria-hidden
       />
       {avatarUrl ? (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden>
-          <div className="critter-bob relative w-[68%] h-[80%]" style={{ animationDelay: `${(hashOf(id) % 30) / 10}s` }}>
-            {/* 바닥 그림자 */}
-            <div className="absolute left-1/2 bottom-[2%] -translate-x-1/2 w-[62%] h-[7%] rounded-full bg-black/15 blur-[2px]" />
-            <div className="critter-body absolute inset-0" style={{ transformOrigin: '50% 100%' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={avatarUrl} alt="" className="w-full h-full object-contain object-bottom drop-shadow-[0_6px_10px_rgba(0,0,0,0.18)]" draggable={false} />
-            </div>
-          </div>
-        </div>
+        <ClayAvatarActor id={id} url={avatarUrl} />
       ) : (
       <svg ref={svgRef} viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
         {/* 찰흙 캐릭터 — 게임마다 다른 클레이 색 */}

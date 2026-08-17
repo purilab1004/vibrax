@@ -684,3 +684,55 @@ body {
   animation: avatar-ring-spin 1.8s linear infinite;
 }
 .avatar-ring > * { border-radius: 9999px; }
+
+/* 카드 속 점토 캐릭터 — 둥실(기본) + 그림자 + 가끔 하는 동작들 */
+@keyframes clayFloat {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50%      { transform: translateY(-6%) scale(1.02, 0.98); }
+}
+@keyframes clayShadow {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: .9; }
+  50%      { transform: translateX(-50%) scale(.82); opacity: .55; }
+}
+@keyframes clayHop {
+  0%   { transform: translateY(0) scale(1, 1); }
+  20%  { transform: translateY(2%) scale(1.08, 0.9); }
+  50%  { transform: translateY(-22%) scale(0.96, 1.06); }
+  80%  { transform: translateY(0) scale(1.06, 0.94); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+@keyframes clayTilt {
+  0%, 100% { transform: rotate(0deg); }
+  30%      { transform: rotate(-9deg) translateY(-2%); }
+  70%      { transform: rotate(7deg) translateY(-1%); }
+}
+@keyframes clayLook {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  30%      { transform: translateX(-9%) rotate(-4deg); }
+  70%      { transform: translateX(9%) rotate(4deg); }
+}
+@keyframes clayWiggle {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(-6deg); } 30% { transform: rotate(6deg); } 45% { transform: rotate(-5deg); } 60% { transform: rotate(5deg); } 75% { transform: rotate(-3deg); }
+}
+@keyframes clayTalk {
+  0%, 100% { transform: scale(1, 1); }
+  25% { transform: scale(1.03, 0.97) translateY(1%); }
+  50% { transform: scale(0.98, 1.03) translateY(-2%); }
+  75% { transform: scale(1.02, 0.98); }
+}
+@keyframes clayBubble {
+  0%   { opacity: 0; transform: translate(-50%, -90%) scale(.85); }
+  15%  { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+  85%  { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -100%) scale(.95); }
+}
+.clay-actor  { animation: clayFloat 3.6s ease-in-out infinite; will-change: transform; }
+.clay-shadow { animation: clayShadow 3.6s ease-in-out infinite; }
+.clay-actor.clay-hop    { animation: clayHop 0.9s cubic-bezier(.4,0,.2,1) 1; }
+.clay-actor.clay-tilt   { animation: clayTilt 1.3s ease-in-out 1; }
+.clay-actor.clay-look   { animation: clayLook 1.4s ease-in-out 1; }
+.clay-actor.clay-wiggle { animation: clayWiggle 1.1s ease-in-out 1; }
+.clay-actor.clay-talk   { animation: clayTalk 0.5s ease-in-out 5; }
+.clay-bubble { animation: clayBubble 2.4s ease-in-out 1 both; }
+@media (prefers-reduced-motion: reduce) { .clay-actor, .clay-shadow, .clay-bubble { animation: none; } }
