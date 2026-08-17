@@ -9,6 +9,7 @@ import type { User } from '@supabase/supabase-js'
 import type { Game, Genre } from '@/lib/supabase/types'
 import { loadAvatarConfig, saveAvatarConfig, uploadPreview } from '@/lib/jeumto/storage'
 import { liveInfoOf } from '@/lib/broadcast'
+import MyCollections from '@/components/MyCollections'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 
 const JeumtoView = dynamic(() => import('@/lib/jeumto/JeumtoView'), { ssr: false })
@@ -547,6 +548,9 @@ export default function ProfilePage() {
           </div>
         )}
       </section>
+
+      {/* ── 좋아요한 / 공유한 게임 ── */}
+      {user && <div className="mt-14"><MyCollections userId={user.id} /></div>}
 
       {/* ── Edit Game Modal ── */}
       {editingGame && (

@@ -113,7 +113,7 @@ export default async function GameDetailPage({ params }: Props) {
         </div>
         <div className="flex gap-3 shrink-0 w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none">
           <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
-          <ShareButton title={game.title} />
+          <ShareButton title={game.title} gameId={game.id} />
         </div>
       </div>
     </div>

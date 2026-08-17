@@ -1,13 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { recordShare } from '@/lib/shares'
 
 // 게임 공유 — 모바일은 시스템 공유 시트, 데스크톱은 링크 복사
-export default function ShareButton({ title }: { title?: string }) {
+export default function ShareButton({ title, gameId }: { title?: string; gameId?: string }) {
   const [copied, setCopied] = useState(false)
 
   const share = async () => {
     const url = window.location.href
+    if (gameId) recordShare(gameId)
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({ title: title ?? 'Vibrexcup', url })

@@ -18,6 +18,7 @@ import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 import LiveCard from '@/components/LiveCard'
+import { recordShare } from '@/lib/shares'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
 function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number }) {
@@ -61,6 +62,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
 
   const share = async () => {
     const url = `${window.location.origin}/games/${game.id}`
+    recordShare(game.id)
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
