@@ -24,7 +24,7 @@ export default function JeumtoView({ config, interactive = true, className, onLo
   const viewerRef = useRef<JeumtoViewerHandle | null>(null)
   useJeumtoViewer(containerRef, viewerRef, { interactive })
   const onLoadedRef = useRef(onLoaded)
-  onLoadedRef.current = onLoaded
+  useEffect(() => { onLoadedRef.current = onLoaded })
 
   useEffect(() => {
     let cancelled = false
