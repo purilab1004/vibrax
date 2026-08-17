@@ -691,8 +691,8 @@ body {
   50%      { transform: translateY(-6%) scale(1.02, 0.98); }
 }
 @keyframes clayShadow {
-  0%, 100% { transform: translateX(-50%) scale(1); opacity: .9; }
-  50%      { transform: translateX(-50%) scale(.82); opacity: .55; }
+  0%, 100% { transform: scale(1); opacity: .9; }
+  50%      { transform: scale(.82); opacity: .55; }
 }
 @keyframes clayHop {
   0%   { transform: translateY(0) scale(1, 1); }

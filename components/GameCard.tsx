@@ -190,7 +190,8 @@ function ClayAvatarActor({ id, url, blinkUrl }: { id: string; url: string; blink
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden>
       {/* 프리뷰 PNG 는 정사각형이고 캐릭터 아래에 여백이 있다(약 8%) → 그림자를 그 발밑에 맞춘다 */}
       <div className="relative w-[72%] aspect-square">
-        <div className="clay-shadow absolute left-1/2 bottom-[6%] -translate-x-1/2 w-[56%] h-[7%] rounded-[50%] bg-black/25 blur-[3px]" style={{ animationDelay: delay }} />
+        {/* left/width 로 가운데 정렬 (translate 는 애니메이션 transform 과 겹쳐 밀리므로 쓰지 않는다) */}
+        <div className="clay-shadow absolute left-[22%] bottom-[11%] w-[56%] h-[7%] rounded-[50%] bg-black/25 blur-[3px]" style={{ animationDelay: delay, transformOrigin: '50% 50%' }} />
         <div className={`clay-actor absolute inset-0 ${act}`} style={{ animationDelay: delay, transformOrigin: '50% 92%' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={url} alt="" className="absolute inset-0 w-full h-full object-contain" draggable={false} style={{ opacity: blink ? 0 : 1 }} />
