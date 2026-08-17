@@ -51,7 +51,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
       </div>
       {/* 하단 — 추천 게임 + 코인 넣고 플레이 */}
       {/* 모바일 피드는 하단 내비에 가리지 않게 게임 카드와 같은 여백(pb-24) */}
-      <div className={`absolute inset-x-0 bottom-0 pt-14 bg-gradient-to-t from-black/85 via-black/40 to-transparent ${layout === 'feed-mobile' ? 'px-5 pb-24' : 'px-6 pb-6'}`}>
+      <div className={`absolute inset-x-0 bottom-0 pt-14 bg-gradient-to-t from-black/85 via-black/40 to-transparent ${layout === 'feed-mobile' ? 'px-5 pb-[51px]' : 'px-6 pb-6'}`}>
         {/* 게임 카드의 제작자 줄과 같은 높이의 한 줄 — 어떤 게임인지 */}
         <p className="flex items-center gap-2 text-[13px] font-semibold text-white/80 mb-3 min-h-[20px]">
           {game?.thumbnail_url && (
