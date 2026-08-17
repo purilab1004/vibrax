@@ -176,7 +176,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
                 </div>
               </>
             ) : (
-              <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={bjName} />
+              <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={bjName} bjHostId={game.user_id} />
             )}
           </div>
         </div>

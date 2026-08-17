@@ -49,9 +49,16 @@ export default function BroadcastSettings({ supabase, userId, config, onSaved }:
         </button>
         <button onClick={() => setB({ ...b, mode: 'live' })} disabled={saving}
           className={`${btn} ${b.mode === 'live' ? 'bg-[#e11d48] text-white border-[#e11d48]' : 'border-[#ddd3bf] text-[#6b6152] hover:border-[#e11d48]'}`}>
-          📹 라이브 방송
+          📹 링크 방송
         </button>
+        <a href="/broadcast"
+          className={`${btn} ${b.mode === 'camera' && b.on ? 'bg-[#e11d48] text-white border-[#e11d48] animate-pulse' : 'border-[#ddd3bf] text-[#6b6152] hover:border-[#e11d48]'}`}>
+          📱 폰 카메라 방송{b.mode === 'camera' && b.on ? ' · ON AIR' : ''}
+        </a>
       </div>
+      {b.mode === 'camera' && (
+        <p className="text-[11px] text-[#857a68] leading-relaxed">폰 카메라 방송은 <a href="/broadcast" className="underline text-[#e11d48]">방송 화면</a>을 켜 둔 동안만 나가요. 끄면 자동으로 아바타로 돌아갑니다.</p>
+      )}
       {b.mode === 'live' && (
         <div className="space-y-2 border border-[#ebe4d6] bg-white/60 p-3">
           <label className="block text-[11px] text-[#857a68]">방송 링크 (YouTube 라이브/영상, Twitch 채널)</label>

@@ -6,7 +6,8 @@ import Image from 'next/image'
 import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
 import type { AvatarConfig } from '@/lib/jeumto/config'
-import { isLiveOn, toEmbed } from '@/lib/broadcast'
+import { isLiveOn, isCameraOn, toEmbed } from '@/lib/broadcast'
+const CameraBjView = dynamic(() => import('@/components/CameraBjView'), { ssr: false })
 
 const JeumtoBjOverlay = dynamic(() => import('@/lib/jeumto/JeumtoBjOverlay'), { ssr: false })
 
@@ -33,6 +34,8 @@ interface Props {
   bjAvatarConfig?: AvatarConfig | null
   // 게임 제작자의 공개 표시명(에이전트 이름) — 하단 BJ 프로필에 AJ 페르소나 대신 노출
   bjName?: string | null
+  // 제작자 user id — 폰 카메라 방송(WebRTC) 채널 키
+  bjHostId?: string | null
 }
 
 const AUTO_COMMENTARY = [
@@ -45,11 +48,14 @@ const AUTO_COMMENTARY = [
   '플레이어가 잘하고 있는지 못하고 있는지 게임 맥락에 맞게 짧게 외쳐줘.',
 ]
 
-export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName }: Props) {
+export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName, bjHostId }: Props) {
   const persona = AJ_PERSONAS[genre]
   // 제작자가 라이브 방송(ON AIR)을 켜 두었으면 아바타 대신 영상이 BJ 자리에 나온다 (아바타 TTS 는 꺼짐)
   const live = isLiveOn(bjAvatarConfig?.broadcast) ? toEmbed(bjAvatarConfig!.broadcast!.url) : null
-  const bjAvatar = live ? (
+  const camera = isCameraOn(bjAvatarConfig?.broadcast) && bjHostId ? bjHostId : null
+  const bjAvatar = camera ? (
+    <CameraBjView hostId={camera} />
+  ) : live ? (
     <div className="relative w-full h-full bg-black">
       <iframe src={live.src} className="absolute inset-0 w-full h-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
       <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
@@ -392,8 +398,8 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         {/* Mobile: 3D AJ avatar, bottom-right */}
         {isMobile && (
           <div
-            className={`absolute right-2 z-10 overflow-hidden rounded-lg border border-[#ebe4d6] bg-[#f3ecdf] ${live ? 'pointer-events-auto' : 'pointer-events-none'}`}
-            style={live ? { bottom: '72px', width: 200, height: 112 } : { bottom: '72px', width: 116, height: 150 }}
+            className={`absolute right-2 z-10 overflow-hidden rounded-lg border border-[#ebe4d6] bg-[#f3ecdf] ${live || camera ? 'pointer-events-auto' : 'pointer-events-none'}`}
+            style={live || camera ? { bottom: '72px', width: 200, height: 112 } : { bottom: '72px', width: 116, height: 150 }}
           >
             {isMobile && bjAvatar}
           </div>
