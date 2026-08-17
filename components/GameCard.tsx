@@ -1,4 +1,5 @@
 'use client'
+import dynamic from 'next/dynamic'
 
 import Image from 'next/image'
 import Link from 'next/link'
@@ -11,6 +12,8 @@ import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
 import type { AvatarConfig, AvatarFrames } from '@/lib/jeumto/config'
 import { useImageBounds } from '@/lib/jeumto/useImageBounds'
+import { liveHostForGame } from '@/lib/broadcast'
+const CameraBjView = dynamic(() => import('@/components/CameraBjView'), { ssr: false })
 import { countryFlag } from '@/lib/country'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
@@ -253,7 +256,8 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
 // 빛 장면 — 오로라 배경 위 하얀 광휘 속 구름 캐릭터.
 // 조회수가 많을수록 빛의 범위·세기가 커져 카드 자체가 밝아 보인다.
 // avatarUrl: 제작자가 저장한 점토 캐릭터(투명 PNG)가 있으면 기본 클레이 대신 그 캐릭터를 보여준다
-export function RoomScene({ id, views, avatar }: { id: string; views: number; avatar?: AvatarFrames | null }) {
+// liveHost: 제작자가 이 게임을 추천 게임으로 방송 중이면 host user id → 캐릭터 대신 라이브 영상
+export function RoomScene({ id, views, avatar, liveHost }: { id: string; views: number; avatar?: AvatarFrames | null; liveHost?: string | null }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
 
@@ -332,7 +336,11 @@ export function RoomScene({ id, views, avatar }: { id: string; views: number; av
         }}
         aria-hidden
       />
-      {avatar ? (
+      {liveHost ? (
+        <div className="absolute inset-[6%] rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-2 ring-white/70">
+          <CameraBjView hostId={liveHost} />
+        </div>
+      ) : avatar ? (
         <ClayAvatarActor id={id} frames={avatar} />
       ) : (
       <svg ref={svgRef} viewBox="0 0 200 192" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden>
@@ -610,7 +618,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                   </h3>
                 </div>
                 <div className="absolute inset-x-1 top-[21%] bottom-[16%]">
-                  <RoomScene id={game.id} views={game.view_count ?? 0} avatar={creatorAvatar} />
+                  <RoomScene id={game.id} views={game.view_count ?? 0} avatar={creatorAvatar} liveHost={liveHostForGame(bjAvatarConfig?.broadcast, game.id, game.user_id)} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
                   <p className="flex items-center gap-2.5 text-[15px] font-bold tracking-[0.06em] text-white/85">

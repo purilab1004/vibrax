@@ -15,7 +15,8 @@ import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
-import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
+import { avatarPreviewUrl, avatarFrames, validateConfig } from '@/lib/jeumto/config'
+import { liveHostForGame } from '@/lib/broadcast'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
 export default function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; golden?: boolean; rank?: number }) {
@@ -79,7 +80,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       </div>
       {/* 방 디오라마 — 캐릭터는 중앙 */}
       <div className="absolute inset-x-1 top-[24%] bottom-[26%]">
-        <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />
+        <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} liveHost={liveHostForGame(validateConfig(game.profiles?.avatar_config)?.broadcast, game.id, game.user_id)} />
       </div>
       {/* 우측 액션 레일 — 틱톡 스타일 */}
       <div className="absolute right-3 bottom-[34%] z-10 flex flex-col items-center gap-4">

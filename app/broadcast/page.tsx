@@ -7,12 +7,15 @@ import { createClient } from '@/lib/supabase/client'
 import { loadAvatarConfig, saveAvatarConfig } from '@/lib/jeumto/storage'
 import { emptyConfig, type AvatarConfig } from '@/lib/jeumto/config'
 import { startHost, type HostHandle } from '@/lib/live/host'
+import type { Game } from '@/lib/supabase/types'
 
 export default function BroadcastPage() {
   const router = useRouter()
   const [supabase] = useState(() => createClient())
   const [user, setUser] = useState<User | null>(null)
   const [config, setConfig] = useState<AvatarConfig | null>(null)
+  const [games, setGames] = useState<Game[]>([])
+  const [gameId, setGameId] = useState<string>('')
   const [onAir, setOnAir] = useState(false)
   const [viewers, setViewers] = useState(0)
   const [facing, setFacing] = useState<'user' | 'environment'>('user')
@@ -26,7 +29,12 @@ export default function BroadcastPage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/login?redirect=/broadcast'); return }
       setUser(user)
-      setConfig(await loadAvatarConfig(supabase, user.id))
+      const cfg = await loadAvatarConfig(supabase, user.id)
+      setConfig(cfg)
+      const { data } = await supabase.from('games').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+      const list = (data ?? []) as Game[]
+      setGames(list)
+      setGameId(cfg?.broadcast?.gameId && list.some((g) => g.id === cfg.broadcast!.gameId) ? cfg.broadcast!.gameId! : (list[0]?.id ?? ''))
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -41,7 +49,7 @@ export default function BroadcastPage() {
   const setBroadcast = async (on: boolean) => {
     if (!user) return
     const base = config ?? emptyConfig()
-    const next: AvatarConfig = { ...base, broadcast: { mode: 'camera', url: base.broadcast?.url ?? '', on } }
+    const next: AvatarConfig = { ...base, broadcast: { mode: 'camera', url: base.broadcast?.url ?? '', on, gameId: gameId || null } }
     const { error } = await saveAvatarConfig(supabase, user.id, next)
     if (!error) setConfig(next)
     return error
@@ -79,7 +87,7 @@ export default function BroadcastPage() {
     if (!onAir || !user) return
     const h = () => {
       const base = config ?? emptyConfig()
-      const body = JSON.stringify({ avatar_config: { ...base, broadcast: { mode: 'camera', url: base.broadcast?.url ?? '', on: false } } })
+      const body = JSON.stringify({ avatar_config: { ...base, broadcast: { mode: 'camera', url: base.broadcast?.url ?? '', on: false, gameId: gameId || null } } })
       // sendBeacon 은 supabase-js 를 못 쓰니 REST 로 직접 (세션 토큰 필요) — 최선의 노력
       supabase.auth.getSession().then(({ data }) => {
         const token = data.session?.access_token
@@ -93,7 +101,7 @@ export default function BroadcastPage() {
     }
     window.addEventListener('pagehide', h)
     return () => window.removeEventListener('pagehide', h)
-  }, [onAir, user, config, supabase])
+  }, [onAir, user, config, supabase, gameId])
 
   const mmss = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`
 
@@ -113,16 +121,26 @@ export default function BroadcastPage() {
           </span>
         )}
         {!onAir && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center">
-            <p className="text-sm text-white/85 leading-relaxed">방송을 시작하면 내가 만든 게임을 플레이하는 사람에게 AJ 아바타 대신 <b>이 카메라 영상</b>이 BJ 자리에 나와요.<br />이 화면을 켜 둔 동안만 방송됩니다.</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
+            <p className="text-sm text-white/85 leading-relaxed">방송을 시작하면 <b>추천 게임 카드</b>에 이 카메라 영상이 나오고, 코인을 넣으면 그 게임을 바로 플레이해요.<br />게임 안에서도 AJ 아바타 대신 방송이 BJ 자리에 나와요. 이 화면을 켜 둔 동안만 방송됩니다.</p>
+            <label className="w-full max-w-sm text-left">
+              <span className="block font-pixel text-[10px] tracking-widest text-white/60 mb-1">추천 게임</span>
+              <select value={gameId} onChange={(e) => setGameId(e.target.value)} className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none">
+                {games.length === 0 && <option value="">등록한 게임이 없어요</option>}
+                {games.map((g) => <option key={g.id} value={g.id} className="text-black">{g.title}</option>)}
+              </select>
+            </label>
             {err && <p className="text-[12px] text-red-400">{err}</p>}
           </div>
+        )}
+        {onAir && gameId && (
+          <span className="absolute top-3 right-3 max-w-[60%] truncate rounded-full bg-black/55 text-white/90 text-[11px] px-2.5 py-1">🎮 {games.find((g) => g.id === gameId)?.title}</span>
         )}
       </div>
       <div className="shrink-0 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-center gap-3">
         <button onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} disabled={onAir} className="rounded-full bg-white/15 px-4 py-3 text-[12px] disabled:opacity-40">🔄 {facing === 'user' ? '전면' : '후면'}</button>
         {!onAir ? (
-          <button onClick={start} disabled={!user} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">● 방송 시작</button>
+          <button onClick={start} disabled={!user || !gameId} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">● 방송 시작</button>
         ) : (
           <button onClick={stop} className="rounded-full bg-white text-black px-8 py-3 font-pixel text-[12px] tracking-widest">■ 방송 종료</button>
         )}

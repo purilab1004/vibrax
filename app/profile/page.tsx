@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Game, Genre } from '@/lib/supabase/types'
 import { loadAvatarConfig, saveAvatarConfig, uploadPreview } from '@/lib/jeumto/storage'
-import BroadcastSettings from '@/components/BroadcastSettings'
+import { isCameraOn } from '@/lib/broadcast'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 
 const JeumtoView = dynamic(() => import('@/lib/jeumto/JeumtoView'), { ssr: false })
@@ -449,20 +449,29 @@ export default function ProfilePage() {
               🎨 아바타 설정
             </a>
             <p className="text-[11px] text-[#857a68] leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요. 게임 목록엔 아이디 대신 <span className="text-purple-400">에이전트 이름</span>이 표시됩니다.</p>
-            {user && (
-              <div className="pt-3 border-t border-[#ebe4d6]">
-                <BroadcastSettings supabase={supabase} userId={user.id} config={myAvatarConfig} onSaved={setMyAvatarConfig} />
-              </div>
-            )}
           </div>
         </div>
       </section>
 
       {/* ── My Games ── */}
       <section>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">MY GAMES <span className="text-[#2563eb]">({games.length})</span></h2>
-          {gameMsg && <p className={`text-xs font-pixel tracking-widest ${gameMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{gameMsg.text}</p>}
+          <div className="flex items-center gap-2">
+            {gameMsg && <p className={`text-xs font-pixel tracking-widest ${gameMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{gameMsg.text}</p>}
+            {/* 방송 추가 — 폰 카메라로 내 게임 BJ 방송 (켜져 있는 동안 아바타 대신 영상) */}
+            <a
+              href="/broadcast"
+              className={`font-pixel text-[11px] px-4 py-2 border tracking-widest transition-colors ${
+                isCameraOn(myAvatarConfig?.broadcast)
+                  ? 'bg-[#e11d48] text-white border-[#e11d48] animate-pulse'
+                  : 'border-[#e11d48] text-[#e11d48] hover:bg-[#e11d48] hover:text-white'
+              }`}
+            >
+              {isCameraOn(myAvatarConfig?.broadcast) ? '● ON AIR' : '📱 방송 추가'}
+            </a>
+            <a href="/submit" className="font-pixel text-[11px] px-4 py-2 border border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">+ 게임 추가</a>
+          </div>
         </div>
 
         {games.length === 0 ? (

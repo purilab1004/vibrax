@@ -15,7 +15,8 @@ import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
-import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
+import { avatarPreviewUrl, avatarFrames, validateConfig } from '@/lib/jeumto/config'
+import { liveHostForGame } from '@/lib/broadcast'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
 function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number }) {
@@ -89,7 +90,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         </div>
         {/* 방 장면 — 캐릭터는 중앙 */}
         <div className="absolute inset-x-1 top-[23%] bottom-[27%]">
-          <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />
+          <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} liveHost={liveHostForGame(validateConfig(game.profiles?.avatar_config)?.broadcast, game.id, game.user_id)} />
         </div>
         {/* 하단 — 아케이드 플로우 */}
         <div className="absolute inset-x-0 bottom-0 px-6 pb-6 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
