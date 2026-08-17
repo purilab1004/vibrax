@@ -13,7 +13,8 @@ import LiveTitleTicker from './LiveTitleTicker'
 import type { AvatarConfig, AvatarFrames } from '@/lib/jeumto/config'
 import { useImageBounds } from '@/lib/jeumto/useImageBounds'
 import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
-const CameraBjView = dynamic(() => import('@/components/CameraBjView'), { ssr: false })
+const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m.LiveView), { ssr: false })
+import type { LiveInfo } from '@/lib/broadcast'
 import { countryFlag } from '@/lib/country'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
@@ -257,7 +258,7 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
 // 조회수가 많을수록 빛의 범위·세기가 커져 카드 자체가 밝아 보인다.
 // avatarUrl: 제작자가 저장한 점토 캐릭터(투명 PNG)가 있으면 기본 클레이 대신 그 캐릭터를 보여준다
 // liveHost: 제작자가 이 게임을 추천 게임으로 방송 중이면 host user id → 캐릭터 대신 라이브 영상
-export function RoomScene({ id, views, avatar, liveHost }: { id: string; views: number; avatar?: AvatarFrames | null; liveHost?: string | null }) {
+export function RoomScene({ id, views, avatar, live }: { id: string; views: number; avatar?: AvatarFrames | null; live?: LiveInfo | null }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
 
@@ -336,9 +337,9 @@ export function RoomScene({ id, views, avatar, liveHost }: { id: string; views: 
         }}
         aria-hidden
       />
-      {liveHost ? (
+      {live ? (
         <div className="absolute inset-[6%] rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.35)] ring-2 ring-white/70">
-          <CameraBjView hostId={liveHost} />
+          <LiveView live={live} />
         </div>
       ) : avatar ? (
         <ClayAvatarActor id={id} frames={avatar} />
@@ -619,7 +620,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                   </h3>
                 </div>
                 <div className="absolute inset-x-1 top-[21%] bottom-[16%]">
-                  <RoomScene id={game.id} views={game.view_count ?? 0} avatar={creatorAvatar} liveHost={liveMap[game.id] ?? null} />
+                  <RoomScene id={game.id} views={game.view_count ?? 0} avatar={creatorAvatar} live={liveMap[game.id] ?? null} />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 px-5 pb-4">
                   <p className="flex items-center gap-2.5 text-[15px] font-bold tracking-[0.06em] text-white/85">
@@ -886,7 +887,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                 title={game.title}
               />
             </div>
-            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={creatorName} bjHostId={liveMap[game.id] ?? null} />
+            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={creatorName} bjLive={liveMap[game.id] ?? null} />
           </div>
         </div>
       )}

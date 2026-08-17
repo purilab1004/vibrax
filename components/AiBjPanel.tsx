@@ -6,7 +6,8 @@ import Image from 'next/image'
 import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
 import type { AvatarConfig } from '@/lib/jeumto/config'
-const CameraBjView = dynamic(() => import('@/components/CameraBjView'), { ssr: false })
+const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m.LiveView), { ssr: false })
+import type { LiveInfo } from '@/lib/broadcast'
 
 const JeumtoBjOverlay = dynamic(() => import('@/lib/jeumto/JeumtoBjOverlay'), { ssr: false })
 
@@ -33,8 +34,8 @@ interface Props {
   bjAvatarConfig?: AvatarConfig | null
   // 게임 제작자의 공개 표시명(에이전트 이름) — 하단 BJ 프로필에 AJ 페르소나 대신 노출
   bjName?: string | null
-  // 제작자 user id — 폰 카메라 방송(WebRTC) 채널 키
-  bjHostId?: string | null
+  // 지금 이 게임을 추천 게임으로 방송 중인 라이브(카메라/링크) — 있으면 아바타 대신 표시
+  bjLive?: LiveInfo | null
 }
 
 const AUTO_COMMENTARY = [
@@ -47,12 +48,11 @@ const AUTO_COMMENTARY = [
   '플레이어가 잘하고 있는지 못하고 있는지 게임 맥락에 맞게 짧게 외쳐줘.',
 ]
 
-export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName, bjHostId }: Props) {
+export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName, bjLive }: Props) {
   const persona = AJ_PERSONAS[genre]
   // 제작자가 라이브 방송(ON AIR)을 켜 두었으면 아바타 대신 영상이 BJ 자리에 나온다 (아바타 TTS 는 꺼짐)
-  // bjHostId 는 지금 이 게임을 추천 게임으로 방송 중인 사람(게임 주인이 아닐 수도) — 있으면 라이브
-  const camera = bjHostId ?? null
-  const bjAvatar = camera ? <CameraBjView hostId={camera} /> : <JeumtoBjOverlay config={bjAvatarConfig ?? null} />
+  const camera = bjLive ?? null
+  const bjAvatar = camera ? <LiveView live={camera} /> : <JeumtoBjOverlay config={bjAvatarConfig ?? null} />
   // 하단 BJ 프로필 — 제작자 에이전트 이름 + 아바타(없으면 AJ 페르소나 fallback)
   const bjLabel = bjName?.trim() || persona.name
   const bjPic = bjAvatarConfig?.previewUrl ?? null

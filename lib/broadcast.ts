@@ -1,7 +1,7 @@
 // lib/broadcast.ts — 제작자 라이브 방송 설정(아바타 대신 실제 영상으로 BJ). YouTube/Twitch 링크 → 임베드 URL.
 export interface BroadcastSetting {
-  mode: 'avatar' | 'camera' // camera = 폰 카메라 WebRTC (/broadcast)
-  url: string      // (예약) 링크 방송용 — 현재 미사용
+  mode: 'avatar' | 'camera' | 'live' // camera = 폰 카메라 WebRTC, live = 링크(YouTube/Twitch) 임베드
+  url: string      // 링크 방송 원본 링크
   on: boolean      // ON AIR — 켜져 있을 때만 게임에서 영상이 나온다
   gameId?: string | null // 추천 게임 — 이 게임 카드에 방송이 나오고, 코인을 넣으면 이 게임을 플레이
 }
@@ -12,11 +12,52 @@ export function parseBroadcast(raw: unknown): BroadcastSetting | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const r = raw as Record<string, unknown>
   return {
-    mode: r.mode === 'camera' ? 'camera' : 'avatar',
+    mode: r.mode === 'camera' ? 'camera' : r.mode === 'live' ? 'live' : 'avatar',
     url: typeof r.url === 'string' ? r.url.slice(0, 500) : '',
     on: r.on === true,
     gameId: typeof r.gameId === 'string' ? r.gameId : null,
   }
+}
+
+export interface Embed { src: string; kind: 'youtube' | 'twitch' | 'iframe' }
+
+/** 링크 → 임베드. 지원: youtube.com/watch?v=, youtu.be/, youtube.com/live/, /embed/, /shorts/, /channel/ID, twitch.tv/채널, 그 외 https URL */
+export function toEmbed(input: string, parentHost = 'vibrexcup.com'): Embed | null {
+  const s = (input ?? '').trim()
+  if (!s) return null
+  let u: URL
+  try { u = new URL(s.startsWith('http') ? s : `https://${s}`) } catch { return null }
+  const host = u.hostname.replace(/^www\.|^m\./, '')
+  const yt = (id: string): Embed => ({ src: `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`, kind: 'youtube' })
+  if (host === 'youtu.be') { const id = u.pathname.slice(1).split('/')[0]; return id ? yt(id) : null }
+  if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+    const v = u.searchParams.get('v'); if (v) return yt(v)
+    const m = u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]{6,})/); if (m) return yt(m[1])
+    const ch = u.pathname.match(/^\/channel\/([\w-]+)/)
+    if (ch) return { src: `https://www.youtube.com/embed/live_stream?channel=${ch[1]}&autoplay=1&mute=1&playsinline=1`, kind: 'youtube' }
+    return null
+  }
+  if (host === 'twitch.tv') {
+    const ch = u.pathname.split('/').filter(Boolean)[0]
+    if (!ch || ch === 'videos') return null
+    return { src: `https://player.twitch.tv/?channel=${encodeURIComponent(ch)}&parent=${parentHost}&muted=true&autoplay=true`, kind: 'twitch' }
+  }
+  if (u.protocol === 'https:') return { src: u.toString(), kind: 'iframe' }
+  return null
+}
+
+/** 링크 방송 중인지 */
+export function isLinkOn(b: BroadcastSetting | undefined | null): b is BroadcastSetting {
+  return !!b && b.mode === 'live' && b.on && !!toEmbed(b.url)
+}
+
+/** 카드/게임에서 쓰는 라이브 정보 */
+export type LiveInfo = { kind: 'camera'; hostId: string } | { kind: 'link'; hostId: string; src: string }
+export function liveInfoOf(b: BroadcastSetting | undefined | null, hostId: string): LiveInfo | null {
+  if (!b) return null
+  if (b.mode === 'camera' && b.on) return { kind: 'camera', hostId }
+  if (b.mode === 'live' && b.on) { const e = toEmbed(b.url); if (e) return { kind: 'link', hostId, src: e.src } }
+  return null
 }
 
 /** 폰 카메라(WebRTC) 방송 중인지 */
@@ -36,9 +77,3 @@ export type Signal =
   | { type: 'ice'; from: string; to: string; candidate: RTCIceCandidateInit }
   | { type: 'bye'; from: string }
 export const liveChannelName = (hostUserId: string) => `live:${hostUserId}`
-
-
-/** 이 게임 카드에 방송을 보여줘야 하면 호스트 user id, 아니면 null */
-export function liveHostForGame(b: BroadcastSetting | undefined | null, gameId: string, hostUserId: string): string | null {
-  return isCameraOn(b) && b.gameId === gameId ? hostUserId : null
-}

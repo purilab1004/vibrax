@@ -3,9 +3,9 @@
 // profiles.avatar_config.broadcast 를 훑어 한 번 받아 두고 30초마다 갱신. 모듈 캐시로 여러 카드가 공유.
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { parseBroadcast, isCameraOn } from '@/lib/broadcast'
+import { parseBroadcast, liveInfoOf, type LiveInfo } from '@/lib/broadcast'
 
-type LiveMap = Record<string, string>
+export type LiveMap = Record<string, LiveInfo>
 let cache: LiveMap = {}
 let fetchedAt = 0
 let inflight: Promise<LiveMap> | null = null
@@ -21,7 +21,8 @@ async function fetchLive(): Promise<LiveMap> {
   const m: LiveMap = {}
   for (const row of (data ?? []) as { id: string; avatar_config: { broadcast?: unknown } | null }[]) {
     const b = parseBroadcast(row.avatar_config?.broadcast)
-    if (isCameraOn(b) && b.gameId) m[b.gameId] = row.id
+    const info = liveInfoOf(b, row.id)
+    if (info && b?.gameId) m[b.gameId] = info
   }
   cache = m; fetchedAt = Date.now()
   listeners.forEach((l) => l(m))

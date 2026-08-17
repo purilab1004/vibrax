@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { loadAvatarConfig, saveAvatarConfig } from '@/lib/jeumto/storage'
 import { emptyConfig, type AvatarConfig } from '@/lib/jeumto/config'
 import { startHost, type HostHandle } from '@/lib/live/host'
+import { toEmbed } from '@/lib/broadcast'
 import type { Game } from '@/lib/supabase/types'
 
 export default function BroadcastPage() {
@@ -17,6 +18,10 @@ export default function BroadcastPage() {
   const [games, setGames] = useState<Game[]>([])
   const [gameId, setGameId] = useState<string>('')
   const [q, setQ] = useState('')
+  const [tab, setTab] = useState<'camera' | 'link'>('camera')
+  const [linkUrl, setLinkUrl] = useState('')
+  const [linkOn, setLinkOn] = useState(false)
+  const [linkMsg, setLinkMsg] = useState<string | null>(null)
   const [results, setResults] = useState<Game[]>([])
   const [onAir, setOnAir] = useState(false)
   const [viewers, setViewers] = useState(0)
@@ -33,6 +38,7 @@ export default function BroadcastPage() {
       setUser(user)
       const cfg = await loadAvatarConfig(supabase, user.id)
       setConfig(cfg)
+      if (cfg?.broadcast?.mode === 'live') { setTab('link'); setLinkUrl(cfg.broadcast.url); setLinkOn(cfg.broadcast.on) }
       // 기본 목록: 내 게임 + 인기 게임(조회수순). 검색으로 아무 게임이나 고를 수 있다
       const [{ data: mine }, { data: top }] = await Promise.all([
         supabase.from('games').select('id,title,user_id,view_count,thumbnail_url').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -59,6 +65,18 @@ export default function BroadcastPage() {
     return () => clearInterval(iv)
   }, [onAir])
 
+  const saveLink = async (on: boolean) => {
+    if (!user) return
+    if (on && !toEmbed(linkUrl)) { setLinkMsg('지원하지 않는 링크예요 (YouTube/Twitch)'); return }
+    if (on && !gameId) { setLinkMsg('추천 게임을 골라 주세요'); return }
+    const base = config ?? emptyConfig()
+    const next: AvatarConfig = { ...base, broadcast: { mode: 'live', url: linkUrl.trim(), on, gameId: gameId || null } }
+    const { error } = await saveAvatarConfig(supabase, user.id, next)
+    if (error) { setLinkMsg('저장 실패: ' + error); return }
+    setConfig(next); setLinkOn(on)
+    setLinkMsg(on ? '● ON AIR — 추천 게임 카드와 게임 안에 영상이 나와요' : '방송을 껐어요')
+    setTimeout(() => setLinkMsg(null), 3000)
+  }
   const setBroadcast = async (on: boolean) => {
     if (!user) return
     const base = config ?? emptyConfig()
@@ -142,7 +160,14 @@ export default function BroadcastPage() {
         <span className="font-pixel text-[11px] tracking-widest text-[#ff6b8a]">📱 폰 카메라 방송</span>
         <div className="flex-1" />
         {onAir && <span className="font-pixel text-[10px] tracking-widest text-white/80">👥 {viewers} · {mmss}</span>}
+        {!onAir && linkOn && <span className="font-pixel text-[10px] tracking-widest text-[#ff6b8a] animate-pulse">● 링크 ON AIR</span>}
       </div>
+      {!onAir && (
+        <div className="shrink-0 px-4 pb-2 flex gap-2">
+          <button onClick={() => setTab('camera')} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'camera' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>📱 폰 카메라</button>
+          <button onClick={() => setTab('link')} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'link' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>🔗 링크 (YouTube/Twitch)</button>
+        </div>
+      )}
       <div className="relative flex-1 min-h-0">
         <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" style={{ transform: facing === 'user' ? 'scaleX(-1)' : undefined }} />
         {onAir && (
@@ -151,8 +176,27 @@ export default function BroadcastPage() {
           </span>
         )}
         {!onAir && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
-            <p className="text-sm text-white/85 leading-relaxed">방송을 시작하면 <b>추천 게임 카드</b>에 이 카메라 영상이 나오고, 코인을 넣으면 그 게임을 바로 플레이해요.<br />게임 안에서도 AJ 아바타 대신 방송이 BJ 자리에 나와요. 이 화면을 켜 둔 동안만 방송됩니다.</p>
+          <div className="absolute inset-0 overflow-y-auto flex flex-col items-center justify-center gap-4 px-8 py-6 text-center">
+            {tab === 'camera' ? (
+              <p className="text-sm text-white/85 leading-relaxed">방송을 시작하면 <b>추천 게임 카드</b>에 이 카메라 영상이 나오고, 코인을 넣으면 그 게임을 바로 플레이해요.<br />게임 안에서도 AJ 아바타 대신 방송이 BJ 자리에 나와요. 이 화면을 켜 둔 동안만 방송됩니다.</p>
+            ) : (
+              <div className="w-full max-w-sm text-left space-y-2">
+                <p className="text-sm text-white/85 leading-relaxed text-center">YouTube 라이브/영상이나 Twitch 채널 링크를 걸면 <b>추천 게임 카드</b>와 게임 안 BJ 자리에 그 영상이 나와요. 이 화면을 닫아도 유지되고, 끌 때까지 계속 방송돼요.</p>
+                <input
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="https://youtube.com/live/… 또는 https://twitch.tv/채널"
+                  className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
+                />
+                {linkUrl && !toEmbed(linkUrl) && <p className="text-[11px] text-red-400">지원하지 않는 링크예요.</p>}
+                {toEmbed(linkUrl) && (
+                  <div className="aspect-video w-full rounded-lg overflow-hidden bg-black/60">
+                    <iframe src={toEmbed(linkUrl)!.src} className="w-full h-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+                  </div>
+                )}
+                {linkMsg && <p className="text-[11px] text-[#7fd0ff]">{linkMsg}</p>}
+              </div>
+            )}
             <div className="w-full max-w-sm text-left space-y-2">
               <span className="block font-pixel text-[10px] tracking-widest text-white/60">추천 게임 — 내 게임이 아니어도 돼요</span>
               <div className="relative">
@@ -190,8 +234,14 @@ export default function BroadcastPage() {
         )}
       </div>
       <div className="shrink-0 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-center gap-3">
-        <button onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} disabled={onAir} className="rounded-full bg-white/15 px-4 py-3 text-[12px] disabled:opacity-40">🔄 {facing === 'user' ? '전면' : '후면'}</button>
-        {!onAir ? (
+        {tab === 'camera' && <button onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} disabled={onAir} className="rounded-full bg-white/15 px-4 py-3 text-[12px] disabled:opacity-40">🔄 {facing === 'user' ? '전면' : '후면'}</button>}
+        {!onAir && tab === 'link' ? (
+          linkOn ? (
+            <button onClick={() => saveLink(false)} className="rounded-full bg-white text-black px-8 py-3 font-pixel text-[12px] tracking-widest">■ 링크 방송 끄기</button>
+          ) : (
+            <button onClick={() => saveLink(true)} disabled={!user || !gameId || !toEmbed(linkUrl)} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">● 링크로 방송 시작</button>
+          )
+        ) : !onAir ? (
           <button onClick={start} disabled={!user || !gameId} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">● 방송 시작</button>
         ) : (
           <button onClick={stop} className="rounded-full bg-white text-black px-8 py-3 font-pixel text-[12px] tracking-widest">■ 방송 종료</button>

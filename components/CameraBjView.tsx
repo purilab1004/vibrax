@@ -3,6 +3,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { startViewer, type ViewerState } from '@/lib/live/viewer'
+import type { LiveInfo } from '@/lib/broadcast'
+
+/** 링크(YouTube/Twitch) 방송 임베드 */
+export function LinkLiveView({ src }: { src: string }) {
+  return (
+    <div className="relative w-full h-full bg-black">
+      <iframe src={src} className="absolute inset-0 w-full h-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+      <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
+        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
+      </span>
+    </div>
+  )
+}
+
+/** 라이브 종류에 따라 카메라(WebRTC) 또는 링크 임베드 */
+export function LiveView({ live }: { live: LiveInfo }) {
+  return live.kind === 'camera' ? <CameraBjView hostId={live.hostId} /> : <LinkLiveView src={live.src} />
+}
 
 export default function CameraBjView({ hostId }: { hostId: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)

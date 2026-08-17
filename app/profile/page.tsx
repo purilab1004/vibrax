@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { Game, Genre } from '@/lib/supabase/types'
 import { loadAvatarConfig, saveAvatarConfig, uploadPreview } from '@/lib/jeumto/storage'
-import { isCameraOn } from '@/lib/broadcast'
+import { liveInfoOf } from '@/lib/broadcast'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 
 const JeumtoView = dynamic(() => import('@/lib/jeumto/JeumtoView'), { ssr: false })
@@ -463,12 +463,12 @@ export default function ProfilePage() {
             <a
               href="/broadcast"
               className={`font-pixel text-[11px] px-4 py-2 border tracking-widest transition-colors ${
-                isCameraOn(myAvatarConfig?.broadcast)
+                !!(user && liveInfoOf(myAvatarConfig?.broadcast, user.id))
                   ? 'bg-[#e11d48] text-white border-[#e11d48] animate-pulse'
                   : 'border-[#e11d48] text-[#e11d48] hover:bg-[#e11d48] hover:text-white'
               }`}
             >
-              {isCameraOn(myAvatarConfig?.broadcast) ? '● ON AIR' : '📱 방송 추가'}
+              {!!(user && liveInfoOf(myAvatarConfig?.broadcast, user.id)) ? '● ON AIR' : '📱 방송 추가'}
             </a>
             <a href="/submit" className="font-pixel text-[11px] px-4 py-2 border border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">+ 게임 추가</a>
           </div>
