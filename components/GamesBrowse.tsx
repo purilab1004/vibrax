@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -195,6 +195,12 @@ export default function GamesBrowse({ games: input }: { games: GameWithCreator[]
   // 방송 중인 게임을 맨 앞으로 — 라이브가 /games 첫 화면에 바로 보이도록
   const liveMap = useLiveBroadcasts()
   const games = [...input].sort((a, b) => Number(!!liveMap[b.id]) - Number(!!liveMap[a.id]))
+  // 라이브 카드가 앞으로 재정렬되면 스크롤 앵커링 때문에 두 번째 카드가 보이는 걸 막는다 → 맨 위로
+  const firstId = games[0]?.id
+  useEffect(() => {
+    if (feedRef.current) feedRef.current.scrollTo({ top: 0 })
+    if (typeof window !== 'undefined' && window.scrollY < 200) window.scrollTo({ top: 0 })
+  }, [firstId])
 
   const jump = (dir: 1 | -1) => {
     const el = feedRef.current
