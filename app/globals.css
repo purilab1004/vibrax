@@ -630,7 +630,7 @@ body {
   overflow: hidden;
   background: linear-gradient(135deg, #b9a7f0 0%, #d9a2ec 50%, #f6a3d8 100%);
 }
-@keyframes avatar-hue { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(360deg); } }
+@keyframes avatar-hue { from { filter: blur(14px) saturate(1.35) hue-rotate(0deg); } to { filter: blur(14px) saturate(1.35) hue-rotate(360deg); } }
 .avatar-wave::before {
   content: '';
   position: absolute;
