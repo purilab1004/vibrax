@@ -50,19 +50,15 @@ export default function LiveCard({ live, game: given, layout }: Props) {
       </div>
       {/* 하단 — 추천 게임 + 코인 넣고 플레이 */}
       {/* 모바일 피드는 하단 내비에 가리지 않게 게임 카드와 같은 여백(pb-24) */}
-      <div className={`absolute inset-x-0 bottom-0 px-5 pt-14 bg-gradient-to-t from-black/85 via-black/40 to-transparent ${layout === 'feed-mobile' ? 'pb-24' : 'pb-4'}`}>
-        {game && (
-          <div className="flex items-center gap-2.5 mb-3">
-            {game.thumbnail_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={game.thumbnail_url} alt="" className="w-12 h-8 rounded object-cover shrink-0 ring-1 ring-white/40" />
-            )}
-            <div className="min-w-0">
-              <p className="font-pixel text-[9px] text-white/60 tracking-widest">지금 방송 중인 게임</p>
-              <p className={`${titleFont.className} text-white text-[18px] leading-tight truncate`}>{game.title}</p>
-            </div>
-          </div>
-        )}
+      <div className={`absolute inset-x-0 bottom-0 pt-14 bg-gradient-to-t from-black/85 via-black/40 to-transparent ${layout === 'feed-mobile' ? 'px-5 pb-24' : 'px-6 pb-6'}`}>
+        {/* 게임 카드의 제작자 줄과 같은 높이의 한 줄 — 어떤 게임인지 */}
+        <p className="flex items-center gap-2 text-[13px] font-semibold text-white/80 mb-3 min-h-[20px]">
+          {game?.thumbnail_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={game.thumbnail_url} alt="" className="w-7 h-5 rounded object-cover shrink-0 ring-1 ring-white/40" />
+          )}
+          <span className="truncate">🎮 {game?.title ?? '방송 중인 게임'}</span>
+        </p>
         {/* 게임 카드와 같은 INSERT COIN + 코인 넣기 + 코인 통 — 누르면 코인 투입 연출 후 게임 페이지로 */}
         <p className={`arcade-blink font-pixel text-[14px] tracking-[0.3em] ${coin === 'ready' ? 'text-[#4cff6a] drop-shadow-[0_0_6px_rgba(76,255,106,0.7)]' : 'text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.7)]'}`}>
           {coin === 'ready' ? 'PRESS START' : 'INSERT COIN'}
