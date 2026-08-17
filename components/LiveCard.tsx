@@ -49,7 +49,8 @@ export default function LiveCard({ live, game: given, layout }: Props) {
         </span>
       </div>
       {/* 하단 — 추천 게임 + 코인 넣고 플레이 */}
-      <div className="absolute inset-x-0 bottom-0 p-4 pt-14 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
+      {/* 모바일 피드는 하단 내비에 가리지 않게 게임 카드와 같은 여백(pb-24) */}
+      <div className={`absolute inset-x-0 bottom-0 px-5 pt-14 bg-gradient-to-t from-black/85 via-black/40 to-transparent ${layout === 'feed-mobile' ? 'pb-24' : 'pb-4'}`}>
         {game && (
           <div className="flex items-center gap-2.5 mb-3">
             {game.thumbnail_url && (
