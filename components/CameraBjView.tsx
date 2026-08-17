@@ -59,7 +59,8 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
   }
   return (
     <div ref={(n) => { (ref as React.MutableRefObject<HTMLDivElement | null>).current = n; (boxRef as React.MutableRefObject<HTMLDivElement | null>).current = n }} className="relative w-full h-full bg-black overflow-hidden">
-      <iframe ref={iframeRef} src={liveSrc} className={cover && box ? '' : 'absolute inset-0 w-full h-full'} style={style} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+      {/* controls 모드(카드)에선 iframe 클릭/호버를 막아 유튜브 자체 UI 가 뜨지 않게 — 우리 스피커 버튼만 노출 */}
+      <iframe ref={iframeRef} src={liveSrc} className={`${cover && box ? '' : 'absolute inset-0 w-full h-full'} ${controls ? 'pointer-events-none' : ''}`} style={style} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
       {controls && (
         <div className="absolute top-3 right-3 z-10 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur px-2 py-1">
           <button onClick={toggleMute} aria-label={muted ? '소리 켜기' : '음소거'} className="text-white text-[15px] leading-none w-7 h-7 flex items-center justify-center">

@@ -41,13 +41,13 @@ export function toEmbed(input: string, parentHost = 'vibrexcup.com'): Embed | nu
   try { u = new URL(s.startsWith('http') ? s : `https://${s}`) } catch { return null }
   const host = u.hostname.replace(/^www\.|^m\./, '')
   const shorts = /\/shorts\//.test(u.pathname)
-  const yt = (id: string): Embed => ({ src: `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${id}&enablejsapi=1`, kind: 'youtube', aspect: shorts ? 9 / 16 : 16 / 9 })
+  const yt = (id: string): Embed => ({ src: `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${id}&enablejsapi=1&controls=0&disablekb=1&fs=0&iv_load_policy=3`, kind: 'youtube', aspect: shorts ? 9 / 16 : 16 / 9 })
   if (host === 'youtu.be') { const id = u.pathname.slice(1).split('/')[0]; return id ? yt(id) : null }
   if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
     const v = u.searchParams.get('v'); if (v) return yt(v)
     const m = u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]{6,})/); if (m) return yt(m[1])
     const ch = u.pathname.match(/^\/channel\/([\w-]+)/)
-    if (ch) return { src: `https://www.youtube.com/embed/live_stream?channel=${ch[1]}&autoplay=1&mute=1&playsinline=1&enablejsapi=1`, kind: 'youtube', aspect: 16 / 9 }
+    if (ch) return { src: `https://www.youtube.com/embed/live_stream?channel=${ch[1]}&autoplay=1&mute=1&playsinline=1&enablejsapi=1&controls=0&disablekb=1&fs=0&iv_load_policy=3`, kind: 'youtube', aspect: 16 / 9 }
     return null
   }
   if (host === 'twitch.tv') {
