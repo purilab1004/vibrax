@@ -14,7 +14,8 @@ export default function AdminRail() {
   const { T } = useLang()
   const a = T.admin
   useEffect(() => { document.documentElement.style.setProperty('--rail-w', '3.5rem'); return () => { document.documentElement.style.setProperty('--rail-w', '0rem') } }, [])
-  const items: [string, string, React.ReactNode][] = [
+  // [href, label, icon, accent?] — 엔진(AdPilot·TokenPilot)은 고유 색으로 구분
+  const items: [string, string, React.ReactNode, string?][] = [
     ['/admin/map', '지도보드', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18" /></svg>],
     ['/admin', a.navDashboard, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="4" y="4" width="7" height="9" rx="1" /><rect x="13" y="4" width="7" height="5" rx="1" /><rect x="13" y="11" width="7" height="9" rx="1" /><rect x="4" y="15" width="7" height="5" rx="1" /></svg>],
     ['/admin/games', a.navGames, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
@@ -23,9 +24,9 @@ export default function AdminRail() {
     ['/admin/members', a.navMembers, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="9" cy="8.5" r="3" /><path d="M3.5 19c1-3 3.2-4.5 5.5-4.5s4.5 1.5 5.5 4.5" /><circle cx="17" cy="9.5" r="2.3" /><path d="M16 14.7c2.5.2 4 1.6 4.5 4.3" /></svg>],
     ['/admin/applications', a.navApplications, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M8 4h8l2 2v14H6V6l2-2Z" /><path d="M9 4v3h6V4M9 12l2 2 4-4" /></svg>],
     ['/admin/aj', 'AJ 랭킹', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 19h16M6 19v-6M12 19V5M18 19v-9" /></svg>],
-    ['/admin/ads', 'AJ AdPilot', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 11v2a1 1 0 0 0 1 1h3l6 4V6L8 10H5a1 1 0 0 0-1 1Z" /><path d="M17 9a4 4 0 0 1 0 6" /></svg>],
+    ['/admin/ads', 'AJ AdPilot · 광고 엔진', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 11v2a1 1 0 0 0 1 1h3l6 4V6L8 10H5a1 1 0 0 0-1 1Z" /><path d="M17 9a4 4 0 0 1 0 6" /></svg>, '#a855f7'],
     ['/admin/payments', '결제 관리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></svg>],
-    ['/admin/costs', 'TokenPilot', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" /></svg>],
+    ['/admin/costs', 'TokenPilot · LLM 원가 엔진', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" /></svg>, '#22d3ee'],
     ['/admin/access', '접속 관리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 18V10M10 18V6M16 18v-4M22 18H2" /></svg>],
     ['/admin/logs', '에러 로그', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 9v4M12 17h.01M10.3 4.3 2.7 18a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z" /></svg>],
     ['/admin/settings', a.navSettings, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></svg>],
@@ -35,13 +36,19 @@ export default function AdminRail() {
     <aside className="hidden md:flex fixed top-0 left-0 bottom-0 z-[60] w-14 flex-col items-center bg-[#171b26] text-[#9aa3b5] border-r border-black/20" aria-label="admin rail">
       <Link href="/admin" className="h-14 w-full flex items-center justify-center hover:opacity-90" title="vibrexadmin"><LogoMark className="w-7 h-7" /></Link>
       <nav className="flex-1 w-full flex flex-col items-center gap-0.5 py-2 overflow-y-auto scrollbar-hide">
-        {items.map(([href, label, icon]) => {
+        {items.map(([href, label, icon, accent], idx) => {
           const on = active(href)
+          const isEngine = !!accent
+          const prevEngine = !!items[idx - 1]?.[3]
           return (
-            <Link key={href} href={href} className={`group relative w-10 h-10 rounded-md flex items-center justify-center transition-colors ${on ? 'bg-[#2563eb] text-white' : 'hover:bg-white/10 hover:text-white'}`} aria-label={label}>
+            <span key={href} className="contents">
+              {isEngine && !prevEngine && <span className="w-6 h-px bg-white/15 my-1.5" aria-hidden />}
+              {!isEngine && prevEngine && <span className="w-6 h-px bg-white/15 my-1.5" aria-hidden />}
+            <Link href={href} style={isEngine ? (on ? { background: accent, color: '#fff' } : { color: accent }) : undefined} className={`group relative w-10 h-10 rounded-md flex items-center justify-center transition-colors ${on ? (isEngine ? '' : 'bg-[#2563eb] text-white') : 'hover:bg-white/10 hover:text-white'} ${isEngine && !on ? 'ring-1 ring-inset ring-current/30' : ''}`} aria-label={label}>
               {icon}
               <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-[#1f2430] text-white text-[11.5px] font-semibold px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-50">{label}</span>
             </Link>
+            </span>
           )
         })}
       </nav>

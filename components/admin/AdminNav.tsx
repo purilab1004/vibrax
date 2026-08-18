@@ -8,6 +8,7 @@ export default function AdminNav() {
   const pathname = usePathname()
   const { T } = useLang()
   const a = T.admin
+  const ACCENT: Record<string, string> = { '/admin/ads': '#a855f7', '/admin/costs': '#0891b2' }
   const items: [string, string][] = [
     ['/admin/map', '지도보드'],
     ['/admin', a.navDashboard],
@@ -32,8 +33,9 @@ export default function AdminNav() {
         <Link
           key={href}
           href={href}
-          className={`text-[12px] font-semibold px-3 h-8 inline-flex items-center rounded-md whitespace-nowrap transition-colors ${
-            active(href) ? 'bg-[#2563eb] text-white' : 'bg-white border border-[#d9dde5] text-[#6b7280] hover:text-[#1f2430]'
+          style={ACCENT[href] ? (active(href) ? { background: ACCENT[href], borderColor: ACCENT[href], color: '#fff' } : { color: ACCENT[href], borderColor: ACCENT[href] }) : undefined}
+          className={`text-[12px] font-semibold px-3 h-8 inline-flex items-center rounded-md whitespace-nowrap transition-colors border ${
+            active(href) ? 'bg-[#2563eb] border-[#2563eb] text-white' : 'bg-white border-[#d9dde5] text-[#6b7280] hover:text-[#1f2430]'
           }`}
         >
           {label}

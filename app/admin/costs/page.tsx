@@ -53,7 +53,7 @@ export default function AdminCostsPage() {
   }, [days])
 
   const header = (
-    <PageHeader title="TokenPilot" desc={<>LLM 최저가 라우팅 · 원가 측정 · 가격 정책 엔진 — 작업마다 <b>품질 하한을 만족하는 가장 싼 모델</b>을 고르고, 실측 원가로 크레딧 가격과 마진을 계산해요. 외부 서비스도 <code>/api/tokenpilot/estimate</code> 로 사용할 수 있어요.</>}
+    <PageHeader title="TokenPilot" badge={<span className="inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-white" style={{ background: '#0891b2' }}>Cost Engine</span>} desc={<>LLM 최저가 라우팅 · 원가 측정 · 가격 정책 엔진 — 작업마다 <b>품질 하한을 만족하는 가장 싼 모델</b>을 고르고, 실측 원가로 크레딧 가격과 마진을 계산해요. 외부 서비스도 <code>/api/tokenpilot/estimate</code> 로 사용할 수 있어요.</>}
       actions={<Segmented value={days} onChange={setDays} options={[7, 30, 90, 365].map(d => ({ value: d, label: `${d}일` }))} />} />
   )
   if (err) return <div>{header}<p className="text-red-600 text-[13px] rounded-xl border border-red-200 bg-red-50 px-4 py-3">{err}</p></div>

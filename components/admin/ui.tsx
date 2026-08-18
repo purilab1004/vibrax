@@ -2,11 +2,11 @@
 // 관리자 UI 공통 조각 — 페이지 헤더 · 카드 · 배지 · 모달 · 버튼 (모던 대시보드 톤)
 import { useEffect } from 'react'
 
-export function PageHeader({ title, desc, actions }: { title: string; desc?: React.ReactNode; actions?: React.ReactNode }) {
+export function PageHeader({ title, desc, actions, badge }: { title: string; desc?: React.ReactNode; actions?: React.ReactNode; badge?: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
       <div>
-        <h1 className="text-[18px] font-bold tracking-tight text-[#1f2430]">{title}</h1>
+        <h1 className="text-[18px] font-bold tracking-tight text-[#1f2430] flex items-center gap-2">{title}{badge}</h1>
         {desc && <div className="text-[12.5px] text-[#6b7280] mt-0.5">{desc}</div>}
       </div>
       {actions && <div className="flex items-center gap-2 flex-wrap">{actions}</div>}
