@@ -27,6 +27,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
   }, [given, live.gameId])
 
   const [coin, setCoin] = useState<'idle' | 'drop' | 'ready'>('idle')
+  const [copied, setCopied] = useState(false)
   // 플레이어(iframe/WebRTC)는 카드가 화면 근처(±1화면)에 올 때만 마운트 — 모바일에서 iframe 여러 개로 튕기는 것 방지 + 보이는 것부터 빨리 로드
   const rootRef = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
@@ -119,6 +120,42 @@ export default function LiveCard({ live, game: given, layout }: Props) {
     return (
       <div ref={rootRef} className="h-full snap-start [scroll-snap-stop:always] flex items-center justify-center gap-5">
         <div className="relative h-[96%] aspect-[9/15] rounded-2xl overflow-hidden shadow-[0_18px_60px_rgba(36,31,23,0.22)] bg-black">{inner}</div>
+        {/* 우측 레일 — 게임 카드와 같은 폭/위치(방송자 · 게임 보기 · 공유)로 카드 정렬을 맞춘다 */}
+        <div className="flex flex-col items-center gap-5 self-end pb-8">
+          <div className="flex flex-col items-center gap-1.5" title={live.hostName}>
+            <span className="avatar-ring shadow-[0_2px_10px_rgba(36,31,23,0.15)]"><span className="avatar-wave w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
+              {live.hostAvatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={live.hostAvatarUrl} alt={live.hostName} className="avatar-bob w-full h-full object-cover object-top" />
+              ) : (
+                <span className="font-pixel text-sm text-white">{live.hostName.charAt(0).toUpperCase()}</span>
+              )}
+            </span></span>
+            <span className="text-[11px] font-semibold text-[#6b6152] max-w-[72px] truncate">{live.hostName}</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5 text-[#e11d48]">
+            <span className="w-12 h-12 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.1)] flex items-center justify-center">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#e11d48] animate-pulse" />
+            </span>
+            <span className="text-[11px] font-bold">LIVE</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5 text-[#6b6152]">
+            <button onClick={go} title="게임 보기" className="w-12 h-12 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.1)] flex items-center justify-center hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>
+            </button>
+            <span className="text-[11px] font-bold">게임</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5 text-[#6b6152]">
+            <button
+              onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/games/${live.gameId}`); setCopied(true); setTimeout(() => setCopied(false), 1600) } catch {} }}
+              title="링크 복사"
+              className="w-12 h-12 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.1)] flex items-center justify-center hover:border-[#ec4899] hover:text-[#ec4899] transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" /></svg>
+            </button>
+            <span className="text-[11px] font-bold">{copied ? '복사됨!' : '공유'}</span>
+          </div>
+        </div>
       </div>
     )
   }
