@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { PromptCreditBadge } from '@/components/CurrencyBadge'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { purgeEmptyProjects } from '@/lib/studio/cleanup'
 import { useLang } from '@/lib/i18n/context'
 import StudioChat, { type ChatMsg } from '@/components/studio/StudioChat'
 import GamePreview from '@/components/studio/GamePreview'
@@ -48,6 +49,21 @@ export default function StudioComposerPage() {
   const [dragging, setDragging] = useState(false)
   const splitRef = useRef<HTMLDivElement>(null)
 
+  // 빈 프로젝트 정리: 다른 빈 "새 게임"은 진입 시 삭제, 이 프로젝트도 대화 없이 떠나면 삭제
+  const messagesRef = useRef<ChatMsg[]>([])
+  useEffect(() => { messagesRef.current = messages }, [messages])
+  useEffect(() => {
+    let uid: string | null = null
+    const mountedAt = Date.now()
+    supabase.auth.getUser().then(({ data: { user } }) => { uid = user?.id ?? null; if (uid) purgeEmptyProjects(supabase, uid, id).catch(() => {}) })
+    const leave = () => {
+      if (!uid || messagesRef.current.length > 0 || Date.now() - mountedAt < 3000) return  // StrictMode 이중 실행/즉시 이탈 보호
+      // 서버 기준으로 아직 비어 있으면 삭제 (다른 탭에서 대화했을 수도 있으니 재확인)
+      supabase.from('studio_messages').select('id').eq('project_id', id).limit(1).then(({ data }) => { if (!data?.length) supabase.from('studio_projects').delete().eq('id', id).eq('user_id', uid!).then(() => {}) })
+    }
+    return () => { leave() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
   // 게시된 게임 id — AJ 대시보드 링크
   useEffect(() => {
     supabase.from('games').select('id').eq('studio_project_id', id).maybeSingle().then(({ data }) => setPublishedGameId((data as { id: string } | null)?.id ?? null))

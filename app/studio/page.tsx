@@ -6,6 +6,7 @@ import { PromptCreditBadge, PromptCreditIcon } from '@/components/CurrencyBadge'
 import EditInfoModal from '@/components/studio/EditInfoModal'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { purgeEmptyProjects } from '@/lib/studio/cleanup'
 import { useLang } from '@/lib/i18n/context'
 import type { StudioProject } from '@/lib/supabase/types'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
@@ -83,6 +84,8 @@ export default function StudioPage() {
         console.error('[studio]', autoError)
         setCreateError(true)
       }
+      // 빈 "새 게임"(대화·버전 없음)은 정리 — 목록을 어지럽히지 않게
+      try { await purgeEmptyProjects(supabase, user.id) } catch {}
       const { data, error: listError } = await supabase
         .from('studio_projects')
         .select('*')
