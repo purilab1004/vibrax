@@ -5,7 +5,14 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import GenreFilter from '@/components/GenreFilter'
 
-export default function MobileGamesTools() {
+interface Props {
+  /* 홈 등에서 카테고리 알약을 바꿔 끼울 때 */
+  categories?: React.ReactNode | ((close: () => void) => React.ReactNode)
+  /* false 면 버튼/패널을 숨긴다 (홈: 히어로 구간) */
+  visible?: boolean
+}
+
+export default function MobileGamesTools({ categories, visible = true }: Props) {
   const router = useRouter()
   const params = useSearchParams()
   // 열림 상태를 쿼리 문자열과 함께 기억 → 쿼리가 바뀌면(장르/검색 적용) 자동으로 닫힌 것으로 취급
@@ -27,6 +34,7 @@ export default function MobileGamesTools() {
     router.push(`/games${s ? `?${s}` : ''}`)
   }
 
+  if (!visible) return null
   return (
     <div className="md:hidden">
       {/* 토글 버튼 — 우상단 작은 원 */}
@@ -60,7 +68,7 @@ export default function MobileGamesTools() {
               <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
             </button>
           </form>
-          <div className="flex justify-center"><GenreFilter /></div>
+          <div className="flex justify-center">{typeof categories === 'function' ? categories(() => setOpen(false)) : (categories ?? <GenreFilter />)}</div>
         </div>
       </div>
       {open && <button aria-label="close" onClick={() => setOpen(false)} className="fixed inset-0 z-[63] bg-black/20" />}
