@@ -3,9 +3,12 @@
 import { useEffect, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
-import { PageHeader, Card, Segmented, Skeleton, th, td, trHover } from '@/components/admin/ui'
+import { PageHeader, Card, Segmented, Skeleton, Toast, Toggle, btn, input as inputCls, label as labelCls, th, td, trHover } from '@/components/admin/ui'
+import { MODEL_CATALOG, type RouterPolicy, type Task } from '@/lib/llm/router'
 
 interface Data {
+  savings: { baseline: number; actual: number; saved: number; templateSaved: number; routingSaved: number; ratio: number }
+  policy: RouterPolicy
   days: number
   pricing: { models: Record<string, { input: number; output: number; label: string }>; krwPerUsd: number; intro: { input: number; output: number; until: string }; generationCost: number; maxTokens: number }
   totals: { calls: number; genCalls: number; llmGenCalls: number; templateLoads: number; inputTokens: number; outputTokens: number; costUsd: number; credits: number; avgOutputPerGen: number; medianOutputPerGen: number; maxOutputPerGen: number; costPerGenCall: number; projects: number; avgCallsPerProject: number; avgCostPerProject: number }
@@ -29,6 +32,18 @@ export default function AdminCostsPage() {
   // 가격 정책 시뮬레이터 입력
   const [margin, setMargin] = useState(3)
   const [packCredits, setPackCredits] = useState(100)
+  // TokenPilot 정책 편집
+  const [pol, setPol] = useState<RouterPolicy | null>(null)
+  const [savingPol, setSavingPol] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const policy = pol ?? data?.policy ?? null
+  const savePolicy = async () => {
+    if (!policy) return
+    setSavingPol(true)
+    const r = await fetch('/api/admin/tokenpilot', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(policy) })
+    setSavingPol(false)
+    setToast(r.ok ? '라우팅 정책을 저장했어요. 다음 생성부터 적용돼요.' : '저장 실패'); setTimeout(() => setToast(null), 2600)
+  }
   useEffect(() => {
     let alive = true
     fetch(`/api/admin/costs?days=${days}`).then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.hint ?? j.error ?? String(r.status)); return j as Data })
@@ -38,7 +53,7 @@ export default function AdminCostsPage() {
   }, [days])
 
   const header = (
-    <PageHeader title="LLM 원가 · 가격 정책" desc="실측 토큰 사용량 기반 원가와 크레딧 가격 시뮬레이션"
+    <PageHeader title="TokenPilot" desc={<>LLM 최저가 라우팅 · 원가 측정 · 가격 정책 엔진 — 작업마다 <b>품질 하한을 만족하는 가장 싼 모델</b>을 고르고, 실측 원가로 크레딧 가격과 마진을 계산해요. 외부 서비스도 <code>/api/tokenpilot/estimate</code> 로 사용할 수 있어요.</>}
       actions={<Segmented value={days} onChange={setDays} options={[7, 30, 90, 365].map(d => ({ value: d, label: `${d}일` }))} />} />
   )
   if (err) return <div>{header}<p className="text-red-600 text-[13px] rounded-xl border border-red-200 bg-red-50 px-4 py-3">{err}</p></div>
@@ -62,6 +77,83 @@ export default function AdminCostsPage() {
         <StatCard label="게임(프로젝트) 수" value={t.projects} sub={`프로젝트당 평균 ${t.avgCallsPerProject.toFixed(1)}회 호출`} />
         <StatCard label="게임 1개 평균 원가" value={krw(t.avgCostPerProject, R)} sub={`${usd(t.avgCostPerProject)} · 인프라비 제외`} />
         <StatCard label="총 토큰" value={`${(t.inputTokens / 1000).toFixed(0)}k / ${(t.outputTokens / 1000).toFixed(0)}k`} sub="입력 / 출력" />
+      </div>
+
+      {/* 절감 효과 */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard label="TokenPilot 절감액" value={krw(data.savings.saved, R)} sub={`전부 Sonnet 으로 했을 때 ${krw(data.savings.baseline, R)} → 실제 ${krw(data.savings.actual, R)}`} accent="#059669" />
+        <StatCard label="절감률" value={`${Math.round(data.savings.ratio * 100)}%`} sub="기간 합계 기준" accent="#059669" />
+        <StatCard label="템플릿 엔진 절감" value={krw(data.savings.templateSaved, R)} sub="LLM 호출 없이 로드된 게임" accent="#0891b2" />
+        <StatCard label="모델 라우팅 절감" value={krw(data.savings.routingSaved, R)} sub="Haiku 등 저가 모델로 처리한 몫" accent="#0891b2" />
+      </div>
+
+      {/* 라우팅 정책 */}
+      {policy && (
+        <Card className="p-5">
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+            <div><h2 className="text-[14px] font-bold text-[#241f17]">라우팅 정책</h2><p className="text-[12px] text-[#857a68]">작업별 모델 고정 · 작은 수정 자동 다운그레이드 · 목표 마진. 저장 즉시 스튜디오 생성에 반영돼요.</p></div>
+            <button onClick={savePolicy} disabled={savingPol} className={btn.primary}>{savingPol ? '저장 중…' : '정책 저장'}</button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
+            <div className="overflow-x-auto">
+              <table className="w-full text-[12.5px]">
+                <thead><tr><th className={th}>작업</th><th className={th}>모델</th><th className={th}>최소 품질</th><th className={th}>메모</th></tr></thead>
+                <tbody>
+                  {([['create', '새 게임 생성', 4, '가장 무거움 — 품질 우선'], ['edit', '기존 게임 수정', 4, '작은 수정은 자동 다운그레이드 가능'], ['template_edit', '템플릿 + 수정', 4, '베이스가 있어 출력이 짧음'], ['explain', '학습 노트', 3, '설명·요약 — Haiku 충분'], ['bj_chat', 'AJ 중계/채팅', 3, '짧은 대화'], ['aj_report', 'AJ 리포트', 4, '지표 해석·제안']] as [Task, string, number, string][]).map(([t, l, tier, memo]) => (
+                    <tr key={t} className={`border-t border-[#f0eadf] ${trHover}`}>
+                      <td className={td}><span className="font-semibold text-[#241f17]">{l}</span><span className="text-[#9d9280] ml-1.5 font-mono text-[11px]">{t}</span></td>
+                      <td className={td}>
+                        <select value={policy.pins[t] ?? ''} onChange={e => setPol({ ...policy, pins: { ...policy.pins, [t]: e.target.value || undefined } })} className="h-8 rounded-md border border-[#ddd3bf] bg-white px-2 text-[12.5px] outline-none focus:border-[#2563eb]">
+                          <option value="">자동(최저가)</option>
+                          {Object.keys(MODEL_CATALOG).map(m => <option key={m} value={m}>{data.pricing.models[m]?.label ?? m} · ${data.pricing.models[m]?.output}/1M out</option>)}
+                        </select>
+                      </td>
+                      <td className={td}>등급 {tier}+</td>
+                      <td className={`${td} text-[#857a68]`}>{memo}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-xl bg-[#faf8f3] p-4 space-y-3">
+                <Toggle checked={policy.autoDowngradeSmallEdits} onChange={v => setPol({ ...policy, autoDowngradeSmallEdits: v })} label="작은 수정은 Haiku 로 자동 다운그레이드" />
+                <div><label className={labelCls}>작은 수정 기준 (HTML 글자 수 이하)</label><input type="number" value={policy.smallEditMaxHtmlChars} onChange={e => setPol({ ...policy, smallEditMaxHtmlChars: Number(e.target.value) })} className={inputCls} /></div>
+              </div>
+              <div className="rounded-xl bg-[#faf8f3] p-4 space-y-3">
+                <div><label className={labelCls}>목표 마진 배수</label><input type="number" step={0.5} value={policy.targetMargin} onChange={e => setPol({ ...policy, targetMargin: Number(e.target.value) })} className={inputCls} /></div>
+                <div><label className={labelCls}>크레딧 1개 목표 판매가 (₩)</label><input type="number" value={policy.krwPerCredit} onChange={e => setPol({ ...policy, krwPerCredit: Number(e.target.value) })} className={inputCls} /></div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* 모델 카탈로그 + 엔진 API */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <Card className="p-5">
+          <h2 className="text-[14px] font-bold text-[#241f17] mb-3">모델 카탈로그 · 품질 등급</h2>
+          <table className="w-full text-[12.5px]">
+            <thead><tr><th className={th}>모델</th><th className={th}>등급</th><th className={th}>단가 in/out ($/1M)</th><th className={th}>강점</th></tr></thead>
+            <tbody>
+              {Object.entries(MODEL_CATALOG).map(([m, c]) => (
+                <tr key={m} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td} font-semibold text-[#241f17]`}>{data.pricing.models[m]?.label ?? m}</td><td className={td}>{'★'.repeat(c.tier)}<span className="text-[#ddd3bf]">{'★'.repeat(5 - c.tier)}</span></td><td className={td}>${data.pricing.models[m]?.input} / ${data.pricing.models[m]?.output}</td><td className={`${td} text-[#857a68]`}>{c.strengths.join(' · ')}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+        <Card className="p-5">
+          <h2 className="text-[14px] font-bold text-[#241f17] mb-1">엔진 API — 다른 서비스도 사용</h2>
+          <p className="text-[12px] text-[#857a68] mb-3">환경변수 <code>TOKENPILOT_API_KEYS</code>(쉼표 구분)에 키를 넣으면 외부에서 호출할 수 있어요. 응답: 추천 모델·후보별 원가·권장 판매가·크레딧.</p>
+          <pre className="rounded-xl bg-[#241f17] text-[#e8e2d4] text-[11.5px] leading-relaxed p-4 overflow-x-auto">{`POST https://vibrexcup.com/api/tokenpilot/estimate
+Authorization: Bearer <YOUR_KEY>
+{ "task": "create", "output_tokens": 12000, "quality": "balanced" }
+
+→ { "recommended": "claude-sonnet-5",
+    "estimate": { "costKrw": 262, "sellKrw": 786, "credits": 16 },
+    "candidates": [ { "model": "claude-haiku-4-5", "eligible": false, ... }, ... ] }`}</pre>
+          <p className="text-[11.5px] text-[#9d9280] mt-2">GET 은 인증 없이 카탈로그·작업 목록을 돌려줘요.</p>
+        </Card>
       </div>
 
       {/* 가격 시뮬레이터 */}
@@ -155,6 +247,7 @@ export default function AdminCostsPage() {
           </table>
         </div>
       </Card>
+      <Toast msg={toast} kind="ok" />
     </div>
   )
 }

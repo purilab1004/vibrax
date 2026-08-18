@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { COUNTRIES } from '@/lib/countries'
@@ -50,7 +51,17 @@ interface EditingGame {
   newManual?: File | null
 }
 
+type Tab = 'profile' | 'password' | 'agent' | 'games' | 'collections'
+const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: '내 아바타·AJ', games: '내 게임', collections: '좋아요·컬렉션' }
+const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'games', 'collections'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
+
 export default function ProfilePage() {
+  // 사이드 메뉴 탭 — 해시(#games 등)에 따라 해당 섹션만 표시 (스크롤 아님)
+  const [tab, setTab] = useState<Tab>('profile')
+  useEffect(() => {
+    const sync = () => setTab(tabFromHash())
+    sync(); window.addEventListener('hashchange', sync); return () => window.removeEventListener('hashchange', sync)
+  }, [])
   const [user, setUser] = useState<User | null>(null)
   const [username, setUsername] = useState('')
   const [editingUsername, setEditingUsername] = useState(false)
@@ -241,18 +252,10 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10 space-y-12">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest">MY PAGE</h1>
-        {/* 섹션 이동 탭 */}
-        <nav className="flex items-center gap-1 rounded-full bg-[#f1ece2] p-1 overflow-x-auto scrollbar-hide max-w-full" aria-label="my page sections">
-          {([['#profile', '프로필'], ['#password', '비밀번호'], ['#agent', '내 아바타·AJ'], ['#games', '내 게임'], ['#collections', '컬렉션']] as const).map(([h, l]) => (
-            <a key={h} href={h} className="h-8 px-3.5 rounded-full text-[12.5px] font-semibold text-[#6b6152] hover:bg-white hover:text-[#241f17] whitespace-nowrap transition-colors flex items-center">{l}</a>
-          ))}
-        </nav>
-      </div>
+      <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest">MY PAGE <span className="text-[#9d9280]">· {TAB_LABEL[tab]}</span></h1>
 
       {/* ── Profile ── */}
-      <section id="profile" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6 space-y-6">
+      {tab === 'profile' && <section id="profile" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6 space-y-6">
         <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">PROFILE</h2>
 
         {/* Email */}
@@ -295,10 +298,10 @@ export default function ProfilePage() {
         </div>
 
         {profileMsg && <p className={`text-xs font-pixel tracking-widest ${profileMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{profileMsg.text}</p>}
-      </section>
+      </section>}
 
       {/* ── Password ── */}
-      <section id="password" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6 space-y-4">
+      {tab === 'password' && <section id="password" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6 space-y-4">
         <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">CHANGE PASSWORD</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
           <div>
@@ -314,10 +317,10 @@ export default function ProfilePage() {
         <button onClick={handleChangePassword} disabled={isPending || !newPassword || !confirmPassword} className="font-pixel text-[11px] bg-[#2563eb] text-white px-6 py-2.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 tracking-widest">
           CHANGE PASSWORD
         </button>
-      </section>
+      </section>}
 
       {/* ── My Agent ── */}
-      <section id="agent" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6 space-y-5">
+      {tab === 'agent' && <section id="agent" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6 space-y-5">
         <div>
           <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">MY AGENT</h2>
           <p className="text-xs text-[#857a68] mt-1.5 leading-relaxed">
@@ -448,10 +451,10 @@ export default function ProfilePage() {
             <p className="text-[11px] text-[#857a68] leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요. 게임 목록엔 아이디 대신 <span className="text-purple-400">에이전트 이름</span>이 표시됩니다.</p>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ── My Games ── */}
-      <section id="games" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6">
+      {tab === 'games' && <section id="games" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6">
         <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">MY GAMES <span className="text-[#2563eb]">({games.length})</span></h2>
           <div className="flex items-center gap-2">
@@ -467,7 +470,7 @@ export default function ProfilePage() {
             >
               {!!(user && (liveInfoOf(myAvatarConfig?.broadcast, user.id) || myAvatarConfig?.broadcasts?.some((b) => b.on))) ? '● ON AIR · 방송 추가/관리' : '📱 방송 추가'}
             </a>
-            <a href="/studio" className="font-pixel text-[11px] px-4 py-2 border border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">+ 게임 추가</a>
+            <Link href="/studio" className="font-pixel text-[11px] px-4 py-2 border border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">+ 게임 추가</Link>
           </div>
         </div>
 
@@ -533,10 +536,10 @@ export default function ProfilePage() {
             ))}
           </div>
         )}
-      </section>
+      </section>}
 
       {/* ── 좋아요한 / 공유한 게임 ── */}
-      {user && <section id="collections" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6"><MyCollections userId={user.id} /></section>}
+      {tab === 'collections' && user && <section id="collections" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6"><MyCollections userId={user.id} /></section>}
 
       {/* ── Edit Game Modal ── */}
       {editingGame && (

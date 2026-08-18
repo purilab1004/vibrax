@@ -18,7 +18,7 @@ export default function AdminNav() {
     ['/admin/aj', 'AJ 랭킹'],
     ['/admin/map', '지도보드'],
     ['/admin/payments', '결제 관리'],
-    ['/admin/costs', 'LLM 원가'],
+    ['/admin/costs', 'TokenPilot'],
     ['/admin/settings', a.navSettings],
   ]
   const active = (href: string) =>

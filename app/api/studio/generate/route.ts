@@ -9,6 +9,8 @@ import { hardenHtml } from '@/lib/studio/harden'
 import { logUsage } from '@/lib/llm/usage'
 import { GENERATION_MAX_TOKENS } from '@/lib/llm/pricing'
 import { trackGeo } from '@/lib/geo/track'
+import { route as routeModel } from '@/lib/llm/router'
+import { loadPolicy } from '@/lib/tokenpilot/policy'
 
 export const maxDuration = 300
 
@@ -135,11 +137,15 @@ export async function POST(req: Request) {
 
   // 차감은 이미 성공했다 — 여기서 동기적으로 던지면(예: ANTHROPIC_API_KEY 누락)
   // 환불 없이 크레딧만 사라지므로 반드시 감싼다.
+  // TokenPilot 라우팅 — 작업 종류·크기에 따라 모델 선택 (기본: Sonnet 5)
+  const routeTask = tmatch ? 'template_edit' : latest ? 'edit' : 'create'
+  const routed = routeModel({ task: routeTask, promptChars: prompt.length, htmlChars: baseHtml?.length ?? 0 }, await loadPolicy())
+  const chosenModel = images.length > 0 ? 'claude-sonnet-5' : routed.model  // 이미지 입력은 Sonnet 고정
   let stream: ReturnType<Anthropic['messages']['stream']>
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     stream = client.messages.stream({
-      model: 'claude-sonnet-5',
+      model: chosenModel,
       max_tokens: GENERATION_MAX_TOKENS,
       system: SYSTEM_PROMPT,
       messages: buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml, history, images }) as never,
@@ -191,7 +197,7 @@ export async function POST(req: Request) {
             await logUsage({
               userId: user.id, projectId, versionId: (vIns as { id: string } | null)?.id ?? null,
               kind: tmatch ? 'template_edit' : latest ? 'edit' : 'create',
-              model: 'claude-sonnet-5', inputTokens: usedIn, outputTokens: usedOut, credits: isAdminUser ? 0 : cost,
+              model: chosenModel, inputTokens: usedIn, outputTokens: usedOut, credits: isAdminUser ? 0 : cost,
               templateSlug: tmatch?.template.slug ?? null,
             })
             try {

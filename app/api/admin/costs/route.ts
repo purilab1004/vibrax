@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { MODEL_PRICES, KRW_PER_USD, SONNET5_INTRO, GENERATION_MAX_TOKENS } from '@/lib/llm/pricing'
 import { GENERATION_COST } from '@/lib/studio/constants'
+import { savingsOf, DEFAULT_POLICY, type RouterPolicy } from '@/lib/llm/router'
 
 export const runtime = 'nodejs'
 
@@ -55,8 +56,15 @@ export async function GET(req: Request) {
   const { data: profs } = await admin.from('profiles').select('id,username,agent_name').in('id', topUsers.map(([id]) => id))
   const nameOf = new Map(((profs ?? []) as { id: string; username: string | null; agent_name: string | null }[]).map((p) => [p.id, p.agent_name ?? p.username ?? p.id.slice(0, 8)]))
 
+  // TokenPilot: 절감액(전부 Sonnet 대비) + 현재 라우팅 정책
+  const createRows = llmGen.filter((r) => r.kind === 'create')
+  const avgCreateCost = createRows.length ? sum(createRows, (r) => Number(r.cost_usd)) / createRows.length : 0.06
+  const savings = savingsOf(rows, avgCreateCost)
+  const { data: polRow } = await admin.from('site_settings').select('value').eq('key', 'tokenpilot_policy').maybeSingle()
+  const policy: RouterPolicy = { ...DEFAULT_POLICY, ...(((polRow as { value?: Partial<RouterPolicy> } | null)?.value) ?? {}) }
+
   return Response.json({
-    days, since,
+    days, since, savings, policy,
     pricing: { models: MODEL_PRICES, krwPerUsd: KRW_PER_USD, intro: SONNET5_INTRO, generationCost: GENERATION_COST, maxTokens: GENERATION_MAX_TOKENS },
     totals: {
       calls: rows.length, genCalls, llmGenCalls: llmGen.length, templateLoads: byKind.template?.calls ?? 0,

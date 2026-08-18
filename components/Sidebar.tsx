@@ -54,6 +54,12 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   const inStudio = pathname.startsWith('/studio')
   // 마이페이지에서는 프로필 섹션 메뉴만 보여준다
   const inProfile = pathname.startsWith('/profile')
+  const [profileHash, setProfileHash] = useState('#profile')
+  useEffect(() => {
+    if (!inProfile) return
+    const sync = () => setProfileHash(window.location.hash || '#profile')
+    sync(); window.addEventListener('hashchange', sync); return () => window.removeEventListener('hashchange', sync)
+  }, [inProfile])
   // 관리자에서는 관리자 메뉴(대시보드/게임/블로그/공지/회원/신청/설정)를 보여준다
   const inAdmin = pathname.startsWith('/admin')
   const [projects, setProjects] = useState<StudioProject[]>([])
@@ -245,11 +251,13 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           {inProfile && (
             <>
               {([
-                ['#profile', 'PROFILE', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" /></svg>],
-                ['#password', 'CHANGE PASSWORD', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>],
-                ['#agent', 'MY AGENT', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="7" width="14" height="11" rx="2" /><path d="M12 7V4M9 12h.01M15 12h.01M9.5 15.5c.8.7 4.2.7 5 0" /></svg>],
+                ['#profile', '프로필', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" /></svg>],
+                ['#password', '비밀번호', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>],
+                ['#agent', '내 아바타 · AJ', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="7" width="14" height="11" rx="2" /><path d="M12 7V4M9 12h.01M15 12h.01M9.5 15.5c.8.7 4.2.7 5 0" /></svg>],
+                ['#games', '내 게임', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
+                ['#collections', '좋아요 · 컬렉션', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10Z" /></svg>],
               ] as [string, string, React.ReactNode][]).map(([hash, label2, icon]) => (
-                <a key={hash} href={`/profile${hash}`} className={row(false)} title={label2}>
+                <a key={hash} href={`/profile${hash}`} className={row(profileHash === hash)} title={label2}>
                   <span className={iconCol}>{icon}</span>
                   <span className={label}>{label2}</span>
                 </a>
@@ -269,7 +277,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
                 ['/admin/aj', 'AJ 랭킹', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 19h16M6 19v-6M12 19V5M18 19v-9" /></svg>],
                 ['/admin/map', '지도보드', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18" /></svg>],
                 ['/admin/payments', '결제 관리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></svg>],
-                ['/admin/costs', 'LLM 원가', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" /></svg>],
+                ['/admin/costs', 'TokenPilot', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" /></svg>],
                 ['/admin/settings', T.admin.navSettings, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></svg>],
               ] as [string, string, React.ReactNode][]).map(([href, label2, icon]) => {
                 const active = href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
