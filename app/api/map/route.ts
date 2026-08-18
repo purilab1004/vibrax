@@ -1,5 +1,6 @@
 // 지도보드 데이터 — geo_events 집계 (도시 클러스터 · 국가 랭킹 · 최근 이벤트 · 종류별 합계)
 import { createAdminClient } from '@/lib/supabase/admin'
+import { COUNTRY_CENTROIDS } from '@/lib/geo/centroids'
 
 export const revalidate = 60
 
@@ -19,9 +20,18 @@ export async function GET(req: Request) {
     demo.sort((a, b) => b.created_at.localeCompare(a.created_at))
     return Response.json(aggregate(demo, days))
   }
+  // 게임 국가 설정 → 국가 중심점에 'game' 포인트로 (설정한 국가가 곧 지도에 보이게)
+  const { data: gameRows } = await admin.from('games').select('id,title,country,created_at,profiles(country)').limit(2000)
+  const gameEvs: Ev[] = []
+  for (const g of (gameRows ?? []) as unknown as { id: string; title: string; country: string | null; created_at: string; profiles: { country: string | null } | null }[]) {
+    const cc = (g.country ?? g.profiles?.country ?? '').toUpperCase()
+    const c = COUNTRY_CENTROIDS[cc]
+    if (!c) continue
+    gameEvs.push({ kind: 'game', country: cc, region: null, city: null, lat: c[0], lon: c[1], created_at: g.created_at })
+  }
   const { data, error } = await admin.from('geo_events').select('kind,country,region,city,lat,lon,created_at').gte('created_at', since).order('created_at', { ascending: false }).limit(50000)
   if (error) return Response.json({ error: error.message, missing: /does not exist|schema cache/i.test(error.message) }, { status: 500 })
-  return Response.json(aggregate((data ?? []) as Ev[], days))
+  return Response.json(aggregate([...((data ?? []) as Ev[]), ...gameEvs], days))
 }
 
 function aggregate(rows: Ev[], days: number) {
@@ -48,6 +58,6 @@ function aggregate(rows: Ev[], days: number) {
     days, total: rows.length, kinds,
     points: [...points.values()].sort((a, b) => b.total - a.total),
     countries: [...countries.values()].map(c => ({ ...c, cities: c.cities.size })).sort((a, b) => b.total - a.total),
-    recent: rows.slice(0, 40).map(r => ({ kind: r.kind, city: r.city, country: r.country, at: r.created_at })),
+    recent: rows.filter(r => r.kind !== 'game').slice(0, 40).map(r => ({ kind: r.kind, city: r.city, country: r.country, at: r.created_at })),
   }
 }

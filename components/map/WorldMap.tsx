@@ -20,8 +20,8 @@ function geomPath(g: Geometry): string {
   return ''
 }
 
-const KIND_COLOR: Record<string, string> = { generate: '#2563eb', publish: '#7c3aed', play: '#f59e0b', signup: '#059669', visit: '#94a3b8' }
-export const KIND_LABEL: Record<string, string> = { generate: '개발(생성)', publish: '게임 게시', play: '플레이', signup: '가입', visit: '방문' }
+const KIND_COLOR: Record<string, string> = { generate: '#2563eb', publish: '#7c3aed', play: '#f59e0b', signup: '#059669', visit: '#94a3b8', game: '#0891b2' }
+export const KIND_LABEL: Record<string, string> = { generate: '개발(생성)', publish: '게임 게시', play: '플레이', signup: '가입', visit: '방문', game: '게시 게임(국가 설정)' }
 export const flagOf = (code: string | null) => code && code.length === 2 ? String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt(0))) : '🌐'
 const names = typeof Intl !== 'undefined' && 'DisplayNames' in Intl ? new Intl.DisplayNames(['ko'], { type: 'region' }) : null
 export const countryName = (code: string | null) => { if (!code) return '알 수 없음'; try { return names?.of(code) ?? code } catch { return code } }
