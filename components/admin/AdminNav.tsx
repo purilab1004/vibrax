@@ -18,12 +18,12 @@ export default function AdminNav() {
     ['/admin/members', a.navMembers],
     ['/admin/applications', a.navApplications],
     ['/admin/aj', 'AJ 랭킹'],
-    ['/admin/ads', 'AJ AdPilot'],
     ['/admin/payments', '결제 관리'],
-    ['/admin/costs', 'TokenPilot'],
     ['/admin/access', '접속 관리'],
     ['/admin/logs', '에러 로그'],
     ['/admin/settings', a.navSettings],
+    ['/admin/ads', 'AJ AdPilot'],
+    ['/admin/costs', 'TokenPilot'],
   ]
   const active = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
