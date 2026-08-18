@@ -45,7 +45,7 @@ export default function GamePreview({
         <button
           onClick={() => setFrameKey(k => k + 1)}
           disabled={!html}
-          className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] transition-colors disabled:opacity-40 tracking-widest"
+          className="h-8 px-2.5 rounded-md text-[12px] font-semibold text-[#6b6152] hover:text-[#2563eb] hover:bg-[#2563eb]/8 transition-colors disabled:opacity-40"
         >
           {s.refresh}
         </button>
@@ -53,7 +53,7 @@ export default function GamePreview({
           <select
             value={currentVersionId ?? ''}
             onChange={e => onSelectVersion(e.target.value)}
-            className="bg-[#ffffff] border border-[#ebe4d6] text-[#4a4337] text-[11px] px-2 py-1 outline-none"
+            className="h-8 bg-white border border-[#ddd3bf] rounded-md text-[#4a4337] text-[12px] px-2 outline-none"
             aria-label={s.versions}
           >
             {versions.map(v => (
@@ -64,7 +64,7 @@ export default function GamePreview({
           </select>
         )}
         {/* 디바이스 뷰포트 전환 — PC / 태블릿 / 모바일 */}
-        <div className="flex items-center border border-[#ebe4d6] rounded-md overflow-hidden">
+        <div className="flex items-center h-8 border border-[#ddd3bf] rounded-md overflow-hidden bg-white">
           {(['pc', 'tablet', 'mobile'] as Viewport[]).map(v => (
             <button
               key={v}
@@ -72,7 +72,7 @@ export default function GamePreview({
               disabled={!html}
               aria-label={v}
               title={v.toUpperCase()}
-              className={`px-2.5 py-1.5 transition-colors disabled:opacity-40 ${
+              className={`h-full px-2.5 transition-colors disabled:opacity-40 ${
                 viewport === v
                   ? 'bg-[#2563eb]/15 text-[#2563eb]'
                   : 'text-[#857a68] hover:text-[#241f17]'
@@ -83,17 +83,18 @@ export default function GamePreview({
           ))}
         </div>
         <div className="flex-1" />
-        {/* 학습 노트 — 시나리오 / 코드 보기 */}
+        {/* 학습 노트 — 시나리오 / 코드 (세그먼트) */}
         {onStudy && (
-          <div className="flex items-center gap-1">
-            <button onClick={() => onStudy('scenario')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="프롬프트가 어떻게 게임 시나리오가 됐는지" className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] rounded-full px-3 py-1.5 tracking-widest transition-colors disabled:opacity-40">📖 시나리오</button>
-            <button onClick={() => onStudy('code')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="코드가 어떻게 짜였는지" className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] rounded-full px-3 py-1.5 tracking-widest transition-colors disabled:opacity-40">🧩 코드</button>
+          <div className="flex items-center h-8 border border-[#ddd3bf] rounded-md overflow-hidden bg-white text-[12px] font-semibold">
+            <button onClick={() => onStudy('scenario')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="프롬프트가 어떻게 게임 시나리오가 됐는지" className="h-full px-3.5 text-[#4a4337] hover:bg-[#2563eb]/8 hover:text-[#2563eb] transition-colors disabled:opacity-40">시나리오</button>
+            <span className="w-px h-4 bg-[#ddd3bf]" />
+            <button onClick={() => onStudy('code')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="코드가 어떻게 짜였는지" className="h-full px-3.5 text-[#4a4337] hover:bg-[#2563eb]/8 hover:text-[#2563eb] transition-colors disabled:opacity-40">코드</button>
           </div>
         )}
         <button
           onClick={onPublish}
           disabled={!html || busy}
-          className="bg-[#2563eb] text-white font-pixel text-[11px] px-4 py-1.5 hover:bg-[#1d4ed8] transition-colors disabled:opacity-40 tracking-widest"
+          className="h-8 rounded-md px-4 text-[12px] font-bold text-white bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af] shadow-[0_2px_8px_rgba(37,99,235,0.3)] transition-all disabled:opacity-40 disabled:shadow-none"
         >
           {s.publish}
         </button>
