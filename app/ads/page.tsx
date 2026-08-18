@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import { titleFont } from '@/lib/fonts'
+import { GameCoinBadge } from '@/components/CurrencyBadge'
 
 interface Campaign { id: string; game_id: string; title: string | null; creative: { headline?: string; hook?: string; badge?: string; by?: string; fun_score?: number | null }; budget_coins: number; spent_coins: number; cpc_coins: number; status: string; targeting: { genres?: string[]; countries?: string[] }; auto: boolean; impressions: number; clicks: number; plays: number; coins_earned: number; created_at: string; games: { id: string; title: string; thumbnail_url: string; genre: string } | null }
 
@@ -42,6 +43,7 @@ function AdsInner() {
     const t0 = setTimeout(() => supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { window.location.href = '/login?redirect=/ads'; return }
       setMe(user.id)
+      supabase.from('profiles').select('vcoin').eq('id', user.id).maybeSingle().then(({ data }) => setVcoin((data as { vcoin?: number } | null)?.vcoin ?? 0))
       const { data } = await supabase.from('games').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
       setMyGames((data as Game[] | null) ?? [])
       load()
@@ -94,7 +96,7 @@ function AdsInner() {
           <p className="mt-2 text-[13px] text-[#6b6152] max-w-2xl">AJ가 게임의 지표(재미 점수·체류·수익)로 광고 문구를 만들고, 홈·게임 피드에 <b>AJ PICK</b> 카드로 노출해요. 코인으로 예산을 걸면 클릭당 과금되고, 유입된 플레이가 벌어들인 코인까지 추적합니다. 내 게임뿐 아니라 다른 게임 홍보 <b>의뢰</b>도 가능해요.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-[#ebe4d6] bg-white px-4 py-2 text-[13px]"><span className="text-[#857a68]">내 코인</span> <b className="text-[#241f17]">{vcoin.toLocaleString()}</b></div>
+          <GameCoinBadge amount={vcoin} />
           <button onClick={() => setOpen(true)} className="h-10 px-5 rounded-lg bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-[13px] font-bold shadow-[0_6px_18px_rgba(37,99,235,0.3)]">캠페인 만들기</button>
         </div>
       </div>

@@ -145,11 +145,11 @@ export default function CreditsPage() {
                 {popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#241f17] text-white text-[11px] font-bold px-3 py-1 tracking-wide">가장 인기</span>}
                 <div className="rounded-[22.5px] bg-white p-6 md:p-7 h-full flex flex-col">
                   <p className="text-[12px] font-semibold text-[#857a68] tracking-wide uppercase">{p.key === 'small' ? 'Starter' : p.key === 'medium' ? 'Creator' : 'Studio'}</p>
-                  <div className="mt-2 flex items-end gap-1"><span className="text-[40px] leading-none font-extrabold tracking-tight text-[#241f17]">${p.usd}</span><span className="text-[13px] text-[#9d9280] mb-1.5">/ 1회</span></div>
+                  <div className="mt-2 flex items-end gap-1"><span className="text-[40px] leading-none font-extrabold tracking-tight text-[#241f17]">${p.usd}</span><span className="text-[13px] text-[#9d9280] mb-1.5">1회 결제</span></div>
                   <p className="mt-3 text-[18px] font-bold text-[#2563eb]">{p.credits.toLocaleString()} 크레딧{bonus > 0 && <span className="ml-2 align-middle rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold px-2 py-0.5">+{bonus}% 보너스</span>}</p>
                   <ul className="mt-4 space-y-2 text-[13px] text-[#4a4337]">
                     <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />생성·수정 <b>{gens(p)}회</b> (1회 {genCost} 크레딧)</li>
-                    <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />완성 게임 약 <b>{gamesOf(p)}개</b> <span className="text-[#9d9280]">(생성 1회 + 수정 4회 기준)</span></li>
+                    <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />완성 게임 약 <b>{gamesOf(p)}개</b> <span className="text-[#9d9280] text-[11.5px]">(생성1+수정4)</span></li>
                     <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />크레딧당 {perCredit(p)}¢</li>
                     <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />유효기간 없음 · 실패 시 자동 환불</li>
                   </ul>
