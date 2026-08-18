@@ -527,6 +527,7 @@ export default function ProfilePage() {
                     <p className="text-xs text-[#857a68] truncate mt-0.5">{game.play_url}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <a href={`/aj/${game.id}`} title="AJ 대시보드 — 지표·분석·업데이트 제안" className="font-pixel text-[11px] border border-[#2563eb]/40 text-[#2563eb] hover:bg-[#2563eb] hover:text-white px-3 py-1.5 transition-colors tracking-widest">🧠 AJ</a>
                     <button
                       onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, teaser: game.teaser ?? '', newThumbnail: null, newManual: null })}
                       className="font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] px-3 py-1.5 transition-colors tracking-widest"

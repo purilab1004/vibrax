@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import StudioChat, { type ChatMsg } from '@/components/studio/StudioChat'
@@ -18,6 +18,7 @@ import { loadAvatarConfig } from '@/lib/jeumto/storage'
 export default function StudioComposerPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const { T } = useLang()
   const s = T.studio
@@ -35,7 +36,8 @@ export default function StudioComposerPage() {
   const [showEdit, setShowEdit] = useState(false)
   const [study, setStudy] = useState<'code' | 'scenario' | null>(null) // 학습 노트 패널
   const [aj, setAj] = useState<{ url: string | null; name: string | null }>({ url: null, name: null }) // 채팅의 AJ = 내 점토 아바타
-  const [draftPrompt, setDraftPrompt] = useState<string | null>(null) // 학습 노트의 '다음 도전' → 채팅 입력에 채우기
+  const [draftPrompt, setDraftPrompt] = useState<string | null>(() => searchParams.get('prompt')) // 학습 노트/AJ 제안 → 채팅 입력에 채우기
+  const [publishedGameId, setPublishedGameId] = useState<string | null>(null)
   // 채팅 접기/펼치기 — 접으면 프리뷰가 전체를 쓴다
   const [chatCollapsed, setChatCollapsed] = useState(false)
   // 좌측 사이드바 — 최근 프로젝트 (클로드 스타일)
@@ -45,6 +47,11 @@ export default function StudioComposerPage() {
   const [dragging, setDragging] = useState(false)
   const splitRef = useRef<HTMLDivElement>(null)
 
+  // 게시된 게임 id — AJ 대시보드 링크
+  useEffect(() => {
+    supabase.from('games').select('id').eq('studio_project_id', id).maybeSingle().then(({ data }) => setPublishedGameId((data as { id: string } | null)?.id ?? null))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
   useEffect(() => {
     try {
       const v = localStorage.getItem('studio_preview_pct')
@@ -401,6 +408,7 @@ export default function StudioComposerPage() {
                 onPublish={() => setShowPublish(true)}
                 busy={streaming !== null}
                 onStudy={(t) => setStudy(t)}
+                ajHref={publishedGameId ? `/aj/${publishedGameId}` : null}
               />
             </div>
           </div>

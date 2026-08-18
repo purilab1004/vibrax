@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { hardenHtml } from '@/lib/studio/harden'
 
 // 게시된 스튜디오 게임의 최신 버전 HTML을 서빙한다.
 // studio_versions는 RLS로 소유자만 읽을 수 있으므로 admin 클라이언트를 쓰되,
@@ -20,7 +21,7 @@ export async function GET(
     .limit(1).maybeSingle()
   if (!version) return new Response('Not Found', { status: 404 })
 
-  return new Response((version as { html: string }).html, {
+  return new Response(hardenHtml((version as { html: string }).html), {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       // 최상위 문서로 열려도 스크립트 격리 유지

@@ -24,7 +24,7 @@ const VIEWPORT_ICON: Record<Viewport, React.ReactNode> = {
 }
 
 export default function GamePreview({
-  html, versions, currentVersionId, onSelectVersion, onPublish, busy, onStudy,
+  html, versions, currentVersionId, onSelectVersion, onPublish, busy, onStudy, ajHref,
 }: {
   html: string | null
   versions: StudioVersionMeta[]
@@ -33,6 +33,7 @@ export default function GamePreview({
   onPublish: () => void
   busy: boolean
   onStudy?: (tab: 'code' | 'scenario') => void
+  ajHref?: string | null
 }) {
   const [frameKey, setFrameKey] = useState(0)
   const [viewport, setViewport] = useState<Viewport>('pc')
@@ -91,6 +92,9 @@ export default function GamePreview({
             <span className="w-px h-4 bg-[#ddd3bf]" />
             <button onClick={() => onStudy('code')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="코드가 어떻게 짜였는지" className="h-full px-3.5 text-[#4a4337] hover:bg-[#2563eb]/8 hover:text-[#2563eb] transition-colors disabled:opacity-40">코드</button>
           </div>
+        )}
+        {ajHref && (
+          <a href={ajHref} target="_blank" rel="noreferrer" title="AJ 대시보드 — 지표·분석·업데이트 제안" className="h-8 px-3.5 rounded-md border border-[#ddd3bf] bg-white text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center gap-1.5">🧠 AJ</a>
         )}
         <button
           onClick={onPublish}

@@ -200,6 +200,12 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
             <span className={iconCol}><HomeIcon /></span>
             <span className={label}>{T.nav.home}</span>
           </Link>
+          {!inStudio && !inProfile && !inAdmin && (
+            <Link href="/aj" className={row(pathname.startsWith('/aj'))} title="AJ RANKING">
+              <span className={iconCol}><svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 3a6 6 0 0 0-6 6c0 2.2 1 3.4 2 4.5V17h8v-3.5c1-1.1 2-2.3 2-4.5a6 6 0 0 0-6-6Z" /><path d="M9.5 20h5M10 17v3M14 17v3" /></svg></span>
+              <span className={label}>AJ RANKING</span>
+            </Link>
+          )}
 
           <div className="my-1 mx-3 border-t border-[#ebe4d6]/70" />
 

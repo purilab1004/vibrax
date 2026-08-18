@@ -13,6 +13,7 @@ import LiveTitleTicker from './LiveTitleTicker'
 import type { AvatarConfig, AvatarFrames } from '@/lib/jeumto/config'
 import { useImageBounds } from '@/lib/jeumto/useImageBounds'
 import { useLiveBroadcasts, liveForGame } from '@/lib/live/useLiveBroadcasts'
+import { useGameTelemetry } from '@/lib/aj/telemetry'
 const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m.LiveView), { ssr: false })
 import type { LiveInfo } from '@/lib/broadcast'
 import { countryFlag } from '@/lib/country'
@@ -466,6 +467,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
   const flag = countryFlag(creatorCountry)
   const { T, lang } = useLang()
   const [open, setOpen] = useState(false)
+  useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록
   // 호버 말풍선 — 구름처럼 튀어나오는 랜덤 멘트
   const [bubble, setBubble] = useState<string | null>(null)
   // 터치 기기(호버 없음): 첫 탭 = 뽑기 플립, 두 번째 탭 = 플레이

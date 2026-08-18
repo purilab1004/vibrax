@@ -8,6 +8,7 @@ import type { Game } from '@/lib/supabase/types'
 import { useLang } from '@/lib/i18n/context'
 import { loadAvatarConfig } from '@/lib/jeumto/storage'
 import { useLiveBroadcasts, liveForGame } from '@/lib/live/useLiveBroadcasts'
+import { useGameTelemetry } from '@/lib/aj/telemetry'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 import AiBjPanel from './AiBjPanel'
 import LiveTitleTicker from './LiveTitleTicker'
@@ -25,6 +26,7 @@ interface AgentConfig { name: string; persona: string; avatarUrl?: string }
 
 export default function GamePlayButton({ game, genreColor, genreLabel, bjName }: Props) {
   const [open, setOpen] = useState(false)
+  useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
   const [bjAvatarConfig, setBjAvatarConfig] = useState<AvatarConfig | null>(null)
