@@ -223,19 +223,24 @@ export default function StudioPage() {
       <section className="max-w-6xl mx-auto px-6 pb-20">
         <div className="flex items-end justify-between mb-5">
           <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">MY PROJECTS <span className="text-[#2563eb]">({projects.length})</span></h2>
-          <button onClick={() => createProject()} disabled={creating} className="font-pixel text-[11px] border border-[#2563eb] text-[#2563eb] px-4 py-2 hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest disabled:opacity-50">{s.newProject}</button>
         </div>
 
         {loadError ? (
           <p className="text-red-500 text-xs border border-red-200 bg-red-50 px-3 py-2">{s.listError}</p>
-        ) : projects.length === 0 ? (
-          <div className="border border-dashed border-[#ddd3bf] rounded-2xl p-12 text-center bg-white/50">
-            <p className="text-3xl mb-3">🧱</p>
-            <p className="text-[#6b6152] text-sm">{s.empty}</p>
-            <p className="text-[#a1957f] text-[12px] mt-1">위 입력창에 아이디어를 적고 BUILD 를 눌러 보세요.</p>
-          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {/* 첫 카드 — 새 게임 추가 (+) */}
+            <button
+              onClick={() => createProject()}
+              disabled={creating}
+              className="group relative rounded-2xl overflow-hidden border-2 border-dashed border-[#cfc4ab] bg-white/60 hover:border-[#2563eb] hover:bg-white transition-colors flex flex-col items-center justify-center gap-3 min-h-[280px] disabled:opacity-50"
+            >
+              <span className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center shadow-[0_8px_24px_rgba(37,99,235,0.35)] group-hover:scale-105 transition-transform">
+                <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+              </span>
+              <span className="font-pixel text-[11px] text-[#241f17] tracking-widest">{creating ? '만드는 중…' : '새 게임 추가'}</span>
+              <span className="text-[12px] text-[#a1957f] px-6 text-center">빈 프로젝트를 만들고 프롬프트로 시작해요</span>
+            </button>
             {projects.map((p) => {
               const pub = published[p.id]
               const title = p.title || s.untitled
