@@ -33,29 +33,29 @@ export default function AdminRail() {
   ]
   const active = (href: string) => href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
   return (
-    <aside className="hidden md:flex fixed top-0 left-0 bottom-0 z-[60] w-14 flex-col items-center bg-[#171b26] text-[#9aa3b5] border-r border-black/20" aria-label="admin rail">
-      <Link href="/admin" className="h-14 w-full flex items-center justify-center hover:opacity-90" title="vibrexadmin"><LogoMark className="w-7 h-7" /></Link>
-      <nav className="flex-1 w-full flex flex-col items-center gap-0.5 py-2 overflow-y-auto scrollbar-hide">
+    <aside className="group/rail hidden md:flex fixed top-0 left-0 bottom-0 z-[60] w-14 hover:w-56 transition-[width] duration-200 flex-col bg-[#171b26] text-[#9aa3b5] border-r border-black/20 shadow-[8px_0_24px_-12px_rgba(0,0,0,0)] hover:shadow-[8px_0_24px_-12px_rgba(0,0,0,0.5)] overflow-hidden" aria-label="admin rail">
+      <Link href="/admin" className="h-14 w-full flex items-center gap-3 px-3.5 hover:opacity-90" title="vibrexadmin"><LogoMark className="w-7 h-7 shrink-0" /><span className="text-white text-[15px] font-extrabold tracking-tight whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-opacity">vibrex<span className="text-[#60a5fa]">admin</span></span></Link>
+      <nav className="flex-1 w-full flex flex-col gap-0.5 py-2 px-2 overflow-y-auto scrollbar-hide">
         {items.map(([href, label, icon, accent], idx) => {
           const on = active(href)
           const isEngine = !!accent
           const prevEngine = !!items[idx - 1]?.[3]
           return (
             <span key={href} className="contents">
-              {isEngine && !prevEngine && <span className="w-6 h-px bg-white/15 my-1.5" aria-hidden />}
-              {!isEngine && prevEngine && <span className="w-6 h-px bg-white/15 my-1.5" aria-hidden />}
-            <Link href={href} style={isEngine ? (on ? { background: accent, color: '#fff' } : { color: accent }) : undefined} className={`group relative w-10 h-10 rounded-md flex items-center justify-center transition-colors ${on ? (isEngine ? '' : 'bg-[#2563eb] text-white') : 'hover:bg-white/10 hover:text-white'} ${isEngine && !on ? 'ring-1 ring-inset ring-current/30' : ''}`} aria-label={label}>
-              {icon}
-              <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-[#1f2430] text-white text-[11.5px] font-semibold px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-50">{label}</span>
+              {isEngine && !prevEngine && <span className="mx-2 h-px bg-white/15 my-1.5" aria-hidden />}
+              {!isEngine && prevEngine && <span className="mx-2 h-px bg-white/15 my-1.5" aria-hidden />}
+            <Link href={href} style={isEngine ? (on ? { background: accent, color: '#fff' } : { color: accent }) : undefined} className={`relative h-10 w-full rounded-md flex items-center gap-3 px-[11px] transition-colors ${on ? (isEngine ? '' : 'bg-[#2563eb] text-white') : 'hover:bg-white/10 hover:text-white'} ${isEngine && !on ? 'ring-1 ring-inset ring-current/30' : ''}`} aria-label={label}>
+              <span className="shrink-0">{icon}</span>
+              <span className="text-[12.5px] font-semibold whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-opacity">{label}</span>
             </Link>
             </span>
           )
         })}
       </nav>
-      <div className="w-full flex flex-col items-center gap-0.5 pb-3">
-        <Link href="/" className="group relative w-10 h-10 rounded-md flex items-center justify-center hover:bg-white/10 hover:text-white" aria-label="사이트로">
-          <svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M3 11.5 12 4l9 7.5M5.5 10v10h13V10" /></svg>
-          <span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-[#1f2430] text-white text-[11.5px] font-semibold px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-50">사이트로 돌아가기</span>
+      <div className="w-full flex flex-col gap-0.5 pb-3 px-2">
+        <Link href="/" className="h-10 w-full rounded-md flex items-center gap-3 px-[11px] hover:bg-white/10 hover:text-white" aria-label="사이트로">
+          <span className="shrink-0"><svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M3 11.5 12 4l9 7.5M5.5 10v10h13V10" /></svg></span>
+          <span className="text-[12.5px] font-semibold whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-opacity">사이트로 돌아가기</span>
         </Link>
       </div>
     </aside>

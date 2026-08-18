@@ -140,10 +140,6 @@ export default function NavBar() {
             <span className="md:hidden"><LogoMark /></span>
             <span>vibrex<span className="text-[#2563eb]">admin</span></span>
           </Link>
-          <form onSubmit={(e) => { e.preventDefault(); const q = (new FormData(e.currentTarget).get('q') as string).trim(); if (q) router.push(`/admin/members?q=${encodeURIComponent(q)}`) }} className="hidden sm:flex items-center h-8 w-64 rounded-md border border-[#d9dde5] bg-[#f7f8fa] px-2.5 gap-2 focus-within:border-[#2563eb] focus-within:bg-white transition-colors">
-            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-[#9aa1ad]" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            <input name="q" placeholder="회원 · 이메일 검색" className="flex-1 bg-transparent text-[12.5px] outline-none placeholder-[#9aa1ad] text-[#1f2430]" />
-          </form>
           <div className="flex-1" />
           <Link href="/" className="hidden sm:inline-flex items-center h-8 px-3 rounded-md border border-[#d9dde5] bg-white text-[12.5px] font-medium text-[#1f2430] hover:bg-[#f3f5f8] transition-colors">
             {T.nav.backToSite}
