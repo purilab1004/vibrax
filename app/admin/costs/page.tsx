@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
+import { PageHeader, Card, Segmented, Skeleton, th, td, trHover } from '@/components/admin/ui'
 
 interface Data {
   days: number
@@ -36,26 +37,23 @@ export default function AdminCostsPage() {
     return () => { alive = false }
   }, [days])
 
-  if (err) return <p className="text-red-500 text-sm border border-red-200 bg-red-50 px-3 py-2">{err}</p>
-  if (!data) return <p className="font-pixel text-xs text-[#6b6152] tracking-widest">LOADING...</p>
+  const header = (
+    <PageHeader title="LLM 원가 · 가격 정책" desc="실측 토큰 사용량 기반 원가와 크레딧 가격 시뮬레이션"
+      actions={<Segmented value={days} onChange={setDays} options={[7, 30, 90, 365].map(d => ({ value: d, label: `${d}일` }))} />} />
+  )
+  if (err) return <div>{header}<p className="text-red-600 text-[13px] rounded-xl border border-red-200 bg-red-50 px-4 py-3">{err}</p></div>
+  if (!data) return <div>{header}<Skeleton rows={6} /></div>
   const t = data.totals, R = data.pricing.krwPerUsd
   const perCallKrw = t.costPerGenCall * R
   const sellPerCall = perCallKrw * margin
   const packPrice = sellPerCall * (packCredits / data.pricing.generationCost)
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center gap-4 flex-wrap">
-        <h1 className="font-pixel text-[#2563eb] text-base tracking-widest">LLM 원가 · 가격 정책</h1>
-        <div className="flex items-center gap-1 ml-auto">
-          {[7, 30, 90, 365].map((d) => (
-            <button key={d} onClick={() => setDays(d)} className={`font-pixel text-[10px] px-3 py-1.5 border tracking-widest ${days === d ? 'border-[#2563eb] text-[#2563eb] bg-[#2563eb]/5' : 'border-[#ebe4d6] text-[#6b6152]'}`}>{d}일</button>
-          ))}
-        </div>
-      </div>
+    <div className="space-y-6">
+      {header}
 
       {/* 핵심 지표 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="API 원가 (기간 합계)" value={usd(t.costUsd)} sub={`${krw(t.costUsd, R)} · 정가 기준`} />
         <StatCard label="생성/수정 호출" value={t.genCalls} sub={`LLM ${t.llmGenCalls} · 템플릿 로드 ${t.templateLoads}`} />
         <StatCard label="호출 1회 평균 원가" value={krw(t.costPerGenCall, R)} sub={`${usd(t.costPerGenCall)} · 템플릿 로드 포함 평균`} />
@@ -67,96 +65,96 @@ export default function AdminCostsPage() {
       </div>
 
       {/* 가격 시뮬레이터 */}
-      <section className="border border-[#ebe4d6] bg-white p-5">
+      <Card className="p-5">
         <div className="flex items-center gap-4 flex-wrap mb-4">
-          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">가격 정책 시뮬레이터</h2>
-          <label className="text-[12px] text-[#6b6152] flex items-center gap-2">마진 배수 <input type="number" step={0.5} min={1} value={margin} onChange={(e) => setMargin(Number(e.target.value))} className="w-16 border border-[#ddd3bf] px-2 py-1 text-sm" /></label>
-          <label className="text-[12px] text-[#6b6152] flex items-center gap-2">팩 크레딧 <input type="number" step={10} min={10} value={packCredits} onChange={(e) => setPackCredits(Number(e.target.value))} className="w-20 border border-[#ddd3bf] px-2 py-1 text-sm" /></label>
+          <h2 className="text-[14px] font-bold text-[#241f17]">가격 정책 시뮬레이터</h2>
+          <label className="text-[12px] text-[#6b6152] flex items-center gap-2">마진 배수 <input type="number" step={0.5} min={1} value={margin} onChange={(e) => setMargin(Number(e.target.value))} className="w-16 h-8 rounded-md border border-[#ddd3bf] px-2 text-sm outline-none focus:border-[#2563eb]" /></label>
+          <label className="text-[12px] text-[#6b6152] flex items-center gap-2">팩 크레딧 <input type="number" step={10} min={10} value={packCredits} onChange={(e) => setPackCredits(Number(e.target.value))} className="w-20 h-8 rounded-md border border-[#ddd3bf] px-2 text-sm outline-none focus:border-[#2563eb]" /></label>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard label="호출 1회 원가(실측)" value={`₩${Math.round(perCallKrw).toLocaleString()}`} sub="템플릿 로드(₩0) 포함 평균" />
           <StatCard label={`판매가/회 (×${margin})`} value={`₩${Math.round(sellPerCall).toLocaleString()}`} sub={`${data.pricing.generationCost}크레딧`} />
           <StatCard label={`${packCredits}크레딧 팩 권장가`} value={`₩${Math.round(packPrice / 100) * 100 >= 0 ? (Math.round(packPrice / 100) * 100).toLocaleString() : 0}`} sub={`= ${packCredits / data.pricing.generationCost}회`} />
           <StatCard label="9월 정가 전환 영향" value={`+${Math.round(((data.pricing.models['claude-sonnet-5'].output / data.pricing.intro.output) - 1) * 100)}%`} sub={`인트로 $${data.pricing.intro.input}/$${data.pricing.intro.output} → 정가 $${data.pricing.models['claude-sonnet-5'].input}/$${data.pricing.models['claude-sonnet-5'].output} (${data.pricing.intro.until}까지)`} />
         </div>
         <p className="text-[11px] text-[#9d9280] mt-3">위 원가는 정가 기준(₩{R}/$). 게임 1개는 보통 첫 생성 1회 + 수정 3~5회. 인프라(Vercel·Supabase·TTS)는 별도이므로 실질 원가는 게임당 +₩300~500 정도로 보세요.</p>
-      </section>
+      </Card>
 
       {/* 추이 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TrendChart label="일별 API 원가 (USD ×100)" sub={`최근 ${data.days}일`} values={data.byDay.map((d) => Math.round(d.cost * 100))} color="#e11d48" />
-        <TrendChart label="일별 호출 수" sub={`최근 ${data.days}일`} values={data.byDay.map((d) => d.calls)} color="#4da3ff" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <TrendChart label="일별 API 원가 (USD ×100)" sub={`최근 ${data.days}일`} values={data.byDay.map((d) => Math.round(d.cost * 100))} labels={data.byDay.map((d) => d.day.slice(5))} color="#e11d48" />
+        <TrendChart label="일별 호출 수" sub={`최근 ${data.days}일`} values={data.byDay.map((d) => d.calls)} labels={data.byDay.map((d) => d.day.slice(5))} color="#0891b2" />
       </div>
 
       {/* 종류별 / 모델별 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="border border-[#ebe4d6] bg-white p-5">
-          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">종류별</h2>
-          <table className="w-full text-[12px]">
-            <thead><tr className="text-[#9d9280] text-left"><th className="py-1">종류</th><th>호출</th><th>평균 출력</th><th>원가</th><th>크레딧</th></tr></thead>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <Card className="p-5">
+          <h2 className="text-[14px] font-bold text-[#241f17] mb-3">종류별</h2>
+          <table className="w-full text-[12.5px]">
+            <thead><tr><th className={th}>종류</th><th className={th}>호출</th><th className={th}>평균 출력</th><th className={th}>원가</th><th className={th}>크레딧</th></tr></thead>
             <tbody>
               {Object.entries(data.byKind).sort((a, b) => b[1].cost - a[1].cost).map(([k, v]) => (
-                <tr key={k} className="border-t border-[#f1ece2]"><td className="py-1.5">{KIND_LABEL[k] ?? k}</td><td>{v.calls}</td><td>{v.calls ? Math.round(v.output / v.calls).toLocaleString() : 0}</td><td>{usd(v.cost)} <span className="text-[#9d9280]">({krw(v.cost, R)})</span></td><td>{v.credits}</td></tr>
+                <tr key={k} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td}`}>{KIND_LABEL[k] ?? k}</td><td className={td}>{v.calls}</td><td className={td}>{v.calls ? Math.round(v.output / v.calls).toLocaleString() : 0}</td><td className={td}>{usd(v.cost)} <span className="text-[#9d9280]">({krw(v.cost, R)})</span></td><td className={td}>{v.credits}</td></tr>
               ))}
             </tbody>
           </table>
-        </section>
-        <section className="border border-[#ebe4d6] bg-white p-5">
-          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">모델별 · 단가</h2>
-          <table className="w-full text-[12px]">
-            <thead><tr className="text-[#9d9280] text-left"><th className="py-1">모델</th><th>호출</th><th>입력/출력 토큰</th><th>원가</th><th>단가(in/out $/1M)</th></tr></thead>
+        </Card>
+        <Card className="p-5">
+          <h2 className="text-[14px] font-bold text-[#241f17] mb-3">모델별 · 단가</h2>
+          <table className="w-full text-[12.5px]">
+            <thead><tr><th className={th}>모델</th><th className={th}>호출</th><th className={th}>입력/출력 토큰</th><th className={th}>원가</th><th className={th}>단가(in/out $/1M)</th></tr></thead>
             <tbody>
               {Object.entries(data.byModel).sort((a, b) => b[1].cost - a[1].cost).map(([m, v]) => (
-                <tr key={m} className="border-t border-[#f1ece2]"><td className="py-1.5">{data.pricing.models[m]?.label ?? m}</td><td>{v.calls}</td><td>{(v.input / 1000).toFixed(1)}k / {(v.output / 1000).toFixed(1)}k</td><td>{usd(v.cost)}</td><td>${data.pricing.models[m]?.input ?? '-'} / ${data.pricing.models[m]?.output ?? '-'}</td></tr>
+                <tr key={m} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td}`}>{data.pricing.models[m]?.label ?? m}</td><td className={td}>{v.calls}</td><td className={td}>{(v.input / 1000).toFixed(1)}k / {(v.output / 1000).toFixed(1)}k</td><td className={td}>{usd(v.cost)}</td><td className={td}>${data.pricing.models[m]?.input ?? '-'} / ${data.pricing.models[m]?.output ?? '-'}</td></tr>
               ))}
             </tbody>
           </table>
-        </section>
+        </Card>
       </div>
 
       {/* 무거운 호출 / 상위 사용자 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="border border-[#ebe4d6] bg-white p-5">
-          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">가장 무거운 호출 TOP 10 (출력 토큰)</h2>
-          <table className="w-full text-[12px]">
-            <thead><tr className="text-[#9d9280] text-left"><th className="py-1">일시</th><th>종류</th><th>출력</th><th>원가</th></tr></thead>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <Card className="p-5">
+          <h2 className="text-[14px] font-bold text-[#241f17] mb-3">가장 무거운 호출 TOP 10 (출력 토큰)</h2>
+          <table className="w-full text-[12.5px]">
+            <thead><tr><th className={th}>일시</th><th className={th}>종류</th><th className={th}>출력</th><th className={th}>원가</th></tr></thead>
             <tbody>
               {data.heaviest.map((r) => (
-                <tr key={r.id} className="border-t border-[#f1ece2]"><td className="py-1.5">{new Date(r.created_at).toLocaleString()}</td><td>{KIND_LABEL[r.kind] ?? r.kind}{r.template_slug ? ` · ${r.template_slug}` : ''}</td><td className={r.output_tokens > 20000 ? 'text-red-500 font-bold' : ''}>{r.output_tokens.toLocaleString()}</td><td>{krw(Number(r.cost_usd), R)}</td></tr>
+                <tr key={r.id} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td}`}>{new Date(r.created_at).toLocaleString()}</td><td className={td}>{KIND_LABEL[r.kind] ?? r.kind}{r.template_slug ? ` · ${r.template_slug}` : ''}</td><td className={`${td} ${r.output_tokens > 20000 ? 'text-red-500 font-bold' : ''}`}>{r.output_tokens.toLocaleString()}</td><td className={td}>{krw(Number(r.cost_usd), R)}</td></tr>
               ))}
-              {data.heaviest.length === 0 && <tr><td colSpan={4} className="py-3 text-[#9d9280]">아직 기록이 없어요</td></tr>}
+              {data.heaviest.length === 0 && <tr><td colSpan={4} className={`${td} text-[#9d9280]`}>아직 기록이 없어요</td></tr>}
             </tbody>
           </table>
-        </section>
-        <section className="border border-[#ebe4d6] bg-white p-5">
-          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">원가 상위 사용자</h2>
-          <table className="w-full text-[12px]">
-            <thead><tr className="text-[#9d9280] text-left"><th className="py-1">사용자</th><th>호출</th><th>원가</th><th>차감 크레딧</th><th>마진</th></tr></thead>
+        </Card>
+        <Card className="p-5">
+          <h2 className="text-[14px] font-bold text-[#241f17] mb-3">원가 상위 사용자</h2>
+          <table className="w-full text-[12.5px]">
+            <thead><tr><th className={th}>사용자</th><th className={th}>호출</th><th className={th}>원가</th><th className={th}>차감 크레딧</th><th className={th}>마진</th></tr></thead>
             <tbody>
               {data.topUsers.map((u) => {
                 const rev = u.credits * (sellPerCall / data.pricing.generationCost)
-                return <tr key={u.id} className="border-t border-[#f1ece2]"><td className="py-1.5">{u.name}</td><td>{u.calls}</td><td>{krw(u.cost, R)}</td><td>{u.credits}</td><td className={u.cost * R > rev ? 'text-red-500' : 'text-[#16a34a]'}>{u.cost > 0 ? `${(rev / (u.cost * R)).toFixed(1)}×` : '-'}</td></tr>
+                return <tr key={u.id} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td}`}>{u.name}</td><td className={td}>{u.calls}</td><td className={td}>{krw(u.cost, R)}</td><td className={td}>{u.credits}</td><td className={`${td} font-semibold ${u.cost * R > rev ? '!text-red-500' : '!text-[#16a34a]'}`}>{u.cost > 0 ? `${(rev / (u.cost * R)).toFixed(1)}×` : '-'}</td></tr>
               })}
-              {data.topUsers.length === 0 && <tr><td colSpan={5} className="py-3 text-[#9d9280]">아직 기록이 없어요</td></tr>}
+              {data.topUsers.length === 0 && <tr><td colSpan={5} className={`${td} text-[#9d9280]`}>아직 기록이 없어요</td></tr>}
             </tbody>
           </table>
-        </section>
+        </Card>
       </div>
 
       {/* 최근 호출 */}
-      <section className="border border-[#ebe4d6] bg-white p-5">
-        <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">최근 호출 50건</h2>
+      <Card className="p-5">
+        <h2 className="text-[14px] font-bold text-[#241f17] mb-3">최근 호출 50건</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-[12px] min-w-[640px]">
-            <thead><tr className="text-[#9d9280] text-left"><th className="py-1">일시</th><th>종류</th><th>모델</th><th>입력</th><th>출력</th><th>원가</th><th>크레딧</th></tr></thead>
+          <table className="w-full text-[12.5px] min-w-[640px]">
+            <thead><tr><th className={th}>일시</th><th className={th}>종류</th><th className={th}>모델</th><th className={th}>입력</th><th className={th}>출력</th><th className={th}>원가</th><th className={th}>크레딧</th></tr></thead>
             <tbody>
               {data.recent.map((r) => (
-                <tr key={r.id} className="border-t border-[#f1ece2]"><td className="py-1.5 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td><td>{KIND_LABEL[r.kind] ?? r.kind}{r.template_slug ? ` · ${r.template_slug}` : ''}</td><td>{data.pricing.models[r.model]?.label ?? r.model}</td><td>{r.input_tokens.toLocaleString()}</td><td>{r.output_tokens.toLocaleString()}</td><td>{usd(Number(r.cost_usd))}</td><td>{r.credits}</td></tr>
+                <tr key={r.id} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td} whitespace-nowrap`}>{new Date(r.created_at).toLocaleString()}</td><td className={td}>{KIND_LABEL[r.kind] ?? r.kind}{r.template_slug ? ` · ${r.template_slug}` : ''}</td><td className={td}>{data.pricing.models[r.model]?.label ?? r.model}</td><td className={td}>{r.input_tokens.toLocaleString()}</td><td className={td}>{r.output_tokens.toLocaleString()}</td><td className={td}>{usd(Number(r.cost_usd))}</td><td className={td}>{r.credits}</td></tr>
               ))}
             </tbody>
           </table>
         </div>
-      </section>
+      </Card>
     </div>
   )
 }

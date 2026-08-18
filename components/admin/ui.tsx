@@ -2,12 +2,12 @@
 // 관리자 UI 공통 조각 — 페이지 헤더 · 카드 · 배지 · 모달 · 버튼 (모던 대시보드 톤)
 import { useEffect } from 'react'
 
-export function PageHeader({ title, desc, actions }: { title: string; desc?: string; actions?: React.ReactNode }) {
+export function PageHeader({ title, desc, actions }: { title: string; desc?: React.ReactNode; actions?: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
       <div>
         <h1 className="text-[22px] md:text-[26px] font-extrabold tracking-tight text-[#241f17]">{title}</h1>
-        {desc && <p className="text-[13px] text-[#857a68] mt-1">{desc}</p>}
+        {desc && <div className="text-[13px] text-[#857a68] mt-1">{desc}</div>}
       </div>
       {actions && <div className="flex items-center gap-2 flex-wrap">{actions}</div>}
     </div>
@@ -71,5 +71,71 @@ export function Avatar({ url, name, size = 36 }: { url?: string | null; name: st
         <img src={url} alt="" className="w-full h-full object-cover object-top" />
       ) : <span className="text-[13px] font-bold text-[#2563eb]">{name.charAt(0).toUpperCase()}</span>}
     </span>
+  )
+}
+
+// ── 추가 조각 ────────────────────────────────────────────────
+export const th = 'text-left text-[11.5px] font-semibold text-[#857a68] px-4 py-2.5 bg-[#faf8f3] whitespace-nowrap'
+export const td = 'px-4 py-3 text-[13px] text-[#4a4337] align-middle'
+export const trHover = 'hover:bg-[#faf8f3] transition-colors'
+
+export function Segmented<T extends string | number>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: React.ReactNode }[] }) {
+  return (
+    <div className="inline-flex items-center rounded-lg bg-[#f1ece2] p-1 gap-0.5">
+      {options.map(o => (
+        <button key={String(o.value)} onClick={() => onChange(o.value)}
+          className={`h-8 px-3 rounded-md text-[12.5px] font-semibold whitespace-nowrap transition-all ${value === o.value ? 'bg-white text-[#241f17] shadow-[0_1px_3px_rgba(36,31,23,0.12)]' : 'text-[#857a68] hover:text-[#241f17]'}`}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export function EmptyState({ icon = '🗂️', title, desc, action }: { icon?: string; title: string; desc?: string; action?: React.ReactNode }) {
+  return (
+    <div className="py-14 px-6 text-center">
+      <p className="text-3xl mb-2">{icon}</p>
+      <p className="text-[14px] font-semibold text-[#241f17]">{title}</p>
+      {desc && <p className="text-[12.5px] text-[#857a68] mt-1">{desc}</p>}
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
+    </div>
+  )
+}
+
+export function SectionTitle({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-[#ebe4d6]">
+      <p className="text-[14px] font-bold text-[#241f17]">{children}</p>
+      {right && <div className="text-[12px] text-[#857a68] flex items-center gap-2">{right}</div>}
+    </div>
+  )
+}
+
+export function ConfirmModal({ open, onClose, onConfirm, title, desc, confirmLabel = '삭제', busy }: { open: boolean; onClose: () => void; onConfirm: () => void; title: string; desc?: React.ReactNode; confirmLabel?: string; busy?: boolean }) {
+  return (
+    <Modal open={open} onClose={onClose} title={title} width="max-w-sm">
+      {desc && <div className="text-[13.5px] text-[#4a4337]">{desc}</div>}
+      <div className="flex justify-end gap-2 pt-5"><button onClick={onClose} className={btn.ghost}>취소</button><button onClick={onConfirm} disabled={busy} className={btn.danger}>{confirmLabel}</button></div>
+    </Modal>
+  )
+}
+
+export function Skeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div className="p-4 space-y-3 animate-pulse">
+      {Array.from({ length: rows }).map((_, i) => <div key={i} className="h-10 rounded-lg bg-[#f1ece2]" style={{ opacity: 1 - i * 0.12 }} />)}
+    </div>
+  )
+}
+
+export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label?: string }) {
+  return (
+    <label className="inline-flex items-center gap-2 text-[13px] text-[#4a4337] cursor-pointer select-none">
+      <span role="switch" aria-checked={checked} onClick={() => onChange(!checked)} className={`relative inline-flex w-10 h-6 rounded-full transition-colors ${checked ? 'bg-[#2563eb]' : 'bg-[#ddd3bf]'}`}>
+        <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${checked ? 'left-[18px]' : 'left-0.5'}`} />
+      </span>
+      {label && <span>{label}</span>}
+    </label>
   )
 }

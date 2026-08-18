@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import type { BlogCategory } from '@/lib/supabase/types'
+import { Card, btn, input } from '@/components/admin/ui'
 
 // name → slug: 한글 유지, 공백/특수문자를 하이픈으로
 export function slugify(name: string): string {
@@ -20,50 +21,38 @@ export default function CategoryManager({ onChanged }: { onChanged?: () => void 
   const load = () =>
     supabase.from('blog_categories').select('*').order('sort_order').order('created_at')
       .then(({ data }) => setCats((data as BlogCategory[] | null) ?? []))
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [])
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
-    const { error } = await supabase.from('blog_categories')
-      .insert([{ name: name.trim(), slug: slugify(name), sort_order: cats.length }] as never)
+    const { error } = await supabase.from('blog_categories').insert([{ name: name.trim(), slug: slugify(name), sort_order: cats.length }] as never)
     if (error) console.error('[admin]', error)
-    setName('')
-    await load()
-    onChanged?.()
+    setName(''); await load(); onChanged?.()
   }
-
   const remove = async (id: string) => {
     if (!confirm(a.deleteConfirm)) return
     const { error } = await supabase.from('blog_categories').delete().eq('id', id)
     if (error) console.error('[admin]', error)
-    await load()
-    onChanged?.()
+    await load(); onChanged?.()
   }
 
   return (
-    <div className="border border-[#ebe4d6] bg-[#ffffff] p-5">
-      <h2 className="font-pixel text-xs text-[#6b6152] tracking-widest mb-4">{a.categories}</h2>
-      <div className="flex flex-wrap gap-2 mb-4">
+    <Card className="p-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <p className="text-[13px] font-bold text-[#241f17] mr-1">{a.categories}</p>
         {cats.map(c => (
-          <span key={c.id} className="flex items-center gap-2 border border-[#ddd3bf] px-3 py-1.5 text-sm text-[#4a4337]">
+          <span key={c.id} className="inline-flex items-center gap-1.5 rounded-full border border-[#ebe4d6] bg-[#faf8f3] pl-3 pr-1.5 h-8 text-[12.5px] font-medium text-[#4a4337]">
             {c.name}
-            <button onClick={() => remove(c.id)} className="text-[#9d9280] hover:text-red-400">✕</button>
+            <button onClick={() => remove(c.id)} className="w-5 h-5 rounded-full text-[#9d9280] hover:bg-[#e11d48] hover:text-white text-[11px] transition-colors" aria-label="삭제">✕</button>
           </span>
         ))}
+        <form onSubmit={add} className="flex gap-2 ml-auto">
+          <input value={name} onChange={e => setName(e.target.value)} placeholder={a.categoryName} className={`${input} !h-8 w-40 text-[13px]`} />
+          <button type="submit" className={btn.ghost + ' !h-8'}>＋ {a.addCategory}</button>
+        </form>
       </div>
-      <form onSubmit={add} className="flex gap-2">
-        <input
-          value={name}
-          onChange={e => setName(e.target.value)}
-          placeholder={a.categoryName}
-          className="flex-1 bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-3 py-2 text-sm outline-none text-[#241f17] placeholder-[#a1957f]"
-        />
-        <button type="submit" className="font-pixel text-xs bg-[#2563eb] text-white px-4 hover:bg-[#1d4ed8] transition-colors">
-          {a.addCategory}
-        </button>
-      </form>
-    </div>
+    </Card>
   )
 }

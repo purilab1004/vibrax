@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
+import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, btn, th, td, trHover } from '@/components/admin/ui'
 
 interface TournamentApp {
   id: string
@@ -50,12 +51,7 @@ const ORG_TYPE_LABEL: Record<string, { ko: string; en: string }> = {
   other: { ko: '기타', en: 'Other' },
 }
 
-const DIVISION_COLOR: Record<string, string> = {
-  individual: 'border-[#2563eb]/60 text-[#2563eb]',
-  school: 'border-sky-400/60 text-sky-400',
-  world: 'border-[#c9940c]/60 text-[#c9940c]',
-  company: 'border-fuchsia-400/60 text-fuchsia-400',
-}
+const DIVISION_COLOR: Record<string, string> = { individual: '#2563eb', school: '#0891b2', world: '#c9940c', company: '#c026d3' }
 
 function downloadCsv(filename: string, header: string[], rows: (string | null)[][]) {
   const esc = (v: string | null) => `"${(v ?? '').replace(/"/g, '""')}"`
@@ -116,102 +112,77 @@ export default function AdminApplicationsPage() {
 
   return (
     <div>
-      <h1 className="font-pixel text-[#2563eb] text-base tracking-widest mb-6">{a.appsHeading}</h1>
-
-      <div className="flex items-center gap-1 mb-6 flex-wrap">
-        {(['tournament', 'partner'] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`font-pixel text-[11px] tracking-widest px-4 py-2.5 border transition-colors ${
-              tab === t ? 'border-[#2563eb] text-[#2563eb] bg-[#2563eb]/5' : 'border-[#ebe4d6] text-[#857a68] hover:text-[#241f17]'
-            }`}
-          >
-            {t === 'tournament' ? `🏆 ${a.tabTournament}` : `🤝 ${a.tabPartner}`}
-            <span className="ml-2 text-[#857a68]">
-              {(t === 'tournament' ? tournament : partner)?.length ?? '…'}
-            </span>
-          </button>
-        ))}
-        <div className="ml-auto flex items-center gap-3">
-          {current !== null && (
-            <span className="text-xs text-[#857a68]">{a.totalCount(current.length)}</span>
-          )}
-          <button
-            onClick={exportCurrent}
-            disabled={!current?.length}
-            className="font-pixel text-[10px] tracking-widest border border-[#ddd3bf] text-[#6b6152] px-3 py-2 hover:border-[#2563eb] hover:text-[#2563eb] transition-colors disabled:opacity-40 disabled:pointer-events-none"
-          >
-            ⬇ {a.exportCsv}
-          </button>
-        </div>
+      <PageHeader title={a.appsHeading} desc="토너먼트·파트너 신청 내역을 확인하고 CSV로 내려받아요."
+        actions={<button onClick={exportCurrent} disabled={!current?.length} className={btn.ghost}>⬇ {a.exportCsv}</button>} />
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <Segmented value={tab} onChange={setTab} options={[
+          { value: 'tournament', label: <>🏆 {a.tabTournament} <span className="opacity-60 ml-1">{tournament?.length ?? '…'}</span></> },
+          { value: 'partner', label: <>🤝 {a.tabPartner} <span className="opacity-60 ml-1">{partner?.length ?? '…'}</span></> },
+        ]} />
+        {current !== null && <span className="text-[12.5px] text-[#857a68]">{a.totalCount(current.length)}</span>}
       </div>
-
+      <Card>
       {current === null ? (
-        <p className="font-pixel text-xs text-[#6b6152] tracking-widest">{a.loading}</p>
+        <Skeleton />
       ) : current.length === 0 ? (
-        <p className="text-sm text-[#857a68] border border-[#ebe4d6] px-6 py-12 text-center">{a.noApplications}</p>
+        <EmptyState icon="📮" title={a.noApplications} />
       ) : tab === 'tournament' ? (
-        <div className="overflow-x-auto border border-[#ebe4d6]">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full">
             <thead>
-              <tr className="bg-[#ffffff] text-[#857a68] font-pixel text-[11px] tracking-widest">
-                <th className="text-left px-4 py-3">{a.colDivision}</th>
-                <th className="text-left px-4 py-3">{a.colName}</th>
-                <th className="text-left px-4 py-3">{a.colEmail}</th>
-                <th className="text-left px-4 py-3">{a.colAffiliation}</th>
-                <th className="text-left px-4 py-3">{a.colNote}</th>
-                <th className="text-left px-4 py-3">{a.colApplied}</th>
+              <tr>
+                <th className={th}>{a.colDivision}</th>
+                <th className={th}>{a.colName}</th>
+                <th className={th}>{a.colEmail}</th>
+                <th className={th}>{a.colAffiliation}</th>
+                <th className={th}>{a.colNote}</th>
+                <th className={th}>{a.colApplied}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#ebe4d6]">
+            <tbody className="divide-y divide-[#f0eadf]">
               {(tournament ?? []).map(t => (
-                <tr key={t.id}>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block border px-2 py-0.5 text-xs font-semibold ${DIVISION_COLOR[t.division] ?? 'border-[#ddd3bf] text-[#6b6152]'}`}>
-                      {DIVISION_LABEL[t.division]?.[lang] ?? t.division}
-                    </span>
+                <tr key={t.id} className={trHover}>
+                  <td className={`${td}`}>
+                    <Badge color={DIVISION_COLOR[t.division] ?? '#857a68'}>{DIVISION_LABEL[t.division]?.[lang] ?? t.division}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-[#241f17]">{t.name}</td>
-                  <td className="px-4 py-3">
+                  <td className={`${td} text-[#241f17]`}>{t.name}</td>
+                  <td className={`${td}`}>
                     <a href={`mailto:${t.email}`} className="text-[#6b6152] hover:text-[#2563eb] transition-colors">{t.email}</a>
                   </td>
-                  <td className="px-4 py-3 text-[#6b6152]">{affiliation(t)}</td>
+                  <td className={`${td} text-[#6b6152]`}>{affiliation(t)}</td>
                   <td className="px-4 py-3 text-[#857a68] max-w-[280px] truncate" title={t.note ?? ''}>{t.note || '-'}</td>
-                  <td className="px-4 py-3 text-[#857a68] whitespace-nowrap">{new Date(t.created_at).toLocaleDateString()}</td>
+                  <td className={`${td} text-[#857a68] whitespace-nowrap`}>{new Date(t.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-[#ebe4d6]">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full">
             <thead>
-              <tr className="bg-[#ffffff] text-[#857a68] font-pixel text-[11px] tracking-widest">
-                <th className="text-left px-4 py-3">{a.colOrgType}</th>
-                <th className="text-left px-4 py-3">{a.colOrg}</th>
-                <th className="text-left px-4 py-3">{a.colContact}</th>
-                <th className="text-left px-4 py-3">{a.colEmail}</th>
-                <th className="text-left px-4 py-3">{a.colWebsite}</th>
-                <th className="text-left px-4 py-3">{a.colNote}</th>
-                <th className="text-left px-4 py-3">{a.colApplied}</th>
+              <tr>
+                <th className={th}>{a.colOrgType}</th>
+                <th className={th}>{a.colOrg}</th>
+                <th className={th}>{a.colContact}</th>
+                <th className={th}>{a.colEmail}</th>
+                <th className={th}>{a.colWebsite}</th>
+                <th className={th}>{a.colNote}</th>
+                <th className={th}>{a.colApplied}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#ebe4d6]">
+            <tbody className="divide-y divide-[#f0eadf]">
               {(partner ?? []).map(p => (
-                <tr key={p.id}>
-                  <td className="px-4 py-3">
-                    <span className="inline-block border border-[#ddd3bf] text-[#4a4337] px-2 py-0.5 text-xs">
-                      {ORG_TYPE_LABEL[p.org_type]?.[lang] ?? p.org_type}
-                    </span>
+                <tr key={p.id} className={trHover}>
+                  <td className={`${td}`}>
+                    <Badge color="#4b5563">{ORG_TYPE_LABEL[p.org_type]?.[lang] ?? p.org_type}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-[#241f17]">{p.org_name}</td>
-                  <td className="px-4 py-3 text-[#6b6152]">{p.contact_name}</td>
-                  <td className="px-4 py-3">
+                  <td className={`${td} text-[#241f17]`}>{p.org_name}</td>
+                  <td className={`${td} text-[#6b6152]`}>{p.contact_name}</td>
+                  <td className={`${td}`}>
                     <a href={`mailto:${p.email}`} className="text-[#6b6152] hover:text-[#2563eb] transition-colors">{p.email}</a>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className={`${td}`}>
                     {p.website ? (
                       <a href={p.website.startsWith('http') ? p.website : `https://${p.website}`} target="_blank" rel="noreferrer" className="text-[#6b6152] hover:text-[#2563eb] transition-colors max-w-[180px] truncate inline-block align-bottom">
                         {p.website}
@@ -219,13 +190,14 @@ export default function AdminApplicationsPage() {
                     ) : '-'}
                   </td>
                   <td className="px-4 py-3 text-[#857a68] max-w-[280px] truncate" title={p.message ?? ''}>{p.message || '-'}</td>
-                  <td className="px-4 py-3 text-[#857a68] whitespace-nowrap">{new Date(p.created_at).toLocaleDateString()}</td>
+                  <td className={`${td} text-[#857a68] whitespace-nowrap`}>{new Date(p.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+      </Card>
     </div>
   )
 }
