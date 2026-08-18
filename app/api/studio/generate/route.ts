@@ -67,37 +67,6 @@ export async function POST(req: Request) {
   const latest = latestRes.data as { html: string; version: number } | null
   const history = (historyRes.data ?? []) as ChatTurn[]
 
-  // ── 템플릿 엔진: 첫 생성이고 알려진 장르면 ──
-  //   (a) 장르 이름뿐 → 템플릿을 그대로 1버전으로 저장 (LLM 호출·크레딧 없음)
-  //   (b) 추가 요구가 있으면 → 템플릿을 베이스 HTML 로 두고 "수정" 만 생성 (from-scratch 보다 저렴)
-  const tmatch = !latest && images.length === 0 ? matchTemplate(prompt) : null
-  let baseHtml: string | null = latest?.html ?? null
-  let effectivePrompt = prompt
-  let templateNote = ''
-  if (tmatch) {
-    if (templateOnly(prompt, tmatch.keyword)) {
-      const html = tmatch.template.html
-      const { error: vErr } = await supabase.from('studio_versions').insert([
-        { project_id: projectId, version: 1, html },
-      ] as never)
-      if (vErr) return new Response('save failed', { status: 500 })
-      const desc = `기본 셋팅된 「${tmatch.template.name}」을 불러왔어요 (크레딧 0). 이어서 "배경을 우주로", "속도를 더 빠르게" 처럼 말하면 그 위에 바꿔 드릴게요.`
-      await supabase.from('studio_messages').insert([
-        { project_id: projectId, role: 'user', content: prompt },
-        { project_id: projectId, role: 'assistant', content: desc },
-      ] as never)
-      const title = extractTitle(html)
-      if (title) await supabase.from('studio_projects').update({ title } as never).eq('id', projectId)
-      return new Response(`${desc}\n<game>${html}</game>\n[[USAGE:0:0]]\n[[TEMPLATE:${tmatch.template.slug}]]`, {
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-      })
-    }
-    baseHtml = tmatch.template.html
-    const extras = extrasOf(prompt, tmatch.keyword)
-    effectivePrompt = `이 게임은 기본 「${tmatch.template.name}」 템플릿이야. 다음 요구를 반영해 수정한 전체 완성본을 만들어줘: ${extras || prompt}`
-    templateNote = `기본 「${tmatch.template.name}」 템플릿 위에 요청을 반영했어요. `
-  }
-
   // 크레딧 원자적 차감 — 실패 경로에서 이 ref로 환불 (관리자는 차감 없음)
   const spendRef = `gen:${projectId}:${crypto.randomUUID()}`
   if (!isAdminUser) {
@@ -124,6 +93,37 @@ export async function POST(req: Request) {
       p_ref: spendRef,
     } as never)
     if (error) console.error('[studio/generate] refund failed', error)
+  }
+
+  // ── 템플릿 엔진: 첫 생성이고 알려진 장르면 ──
+  //   (a) 장르 이름뿐 → 템플릿을 그대로 1버전으로 저장 (LLM 호출 없음 — 크레딧은 동일하게 차감: 서비스 비용/유지)
+  //   (b) 추가 요구가 있으면 → 템플릿을 베이스 HTML 로 두고 "수정" 만 생성 (from-scratch 보다 저렴)
+  const tmatch = !latest && images.length === 0 ? matchTemplate(prompt) : null
+  let baseHtml: string | null = latest?.html ?? null
+  let effectivePrompt = prompt
+  let templateNote = ''
+  if (tmatch) {
+    if (templateOnly(prompt, tmatch.keyword)) {
+      const html = tmatch.template.html
+      const { error: vErr } = await supabase.from('studio_versions').insert([
+        { project_id: projectId, version: 1, html },
+      ] as never)
+      if (vErr) { await refund(); return new Response('save failed', { status: 500 }) }
+      const desc = `기본 셋팅된 「${tmatch.template.name}」을 불러왔어요. 이어서 "배경을 우주로", "속도를 더 빠르게" 처럼 말하면 그 위에 바꿔 드릴게요.`
+      await supabase.from('studio_messages').insert([
+        { project_id: projectId, role: 'user', content: prompt },
+        { project_id: projectId, role: 'assistant', content: desc },
+      ] as never)
+      const title = extractTitle(html)
+      if (title) await supabase.from('studio_projects').update({ title } as never).eq('id', projectId)
+      return new Response(`${desc}\n<game>${html}</game>\n[[USAGE:0:0]]\n[[TEMPLATE:${tmatch.template.slug}]]`, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      })
+    }
+    baseHtml = tmatch.template.html
+    const extras = extrasOf(prompt, tmatch.keyword)
+    effectivePrompt = `이 게임은 기본 「${tmatch.template.name}」 템플릿이야. 다음 요구를 반영해 수정한 전체 완성본을 만들어줘: ${extras || prompt}`
+    templateNote = `기본 「${tmatch.template.name}」 템플릿 위에 요청을 반영했어요. `
   }
 
   // 차감은 이미 성공했다 — 여기서 동기적으로 던지면(예: ANTHROPIC_API_KEY 누락)
