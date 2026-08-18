@@ -15,7 +15,7 @@ const paddleConfigured =
 export default function CreditsPage() {
   const [balance, setBalance] = useState<number | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done'>('idle')
+  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle')
   const paddleRef = useRef<Paddle | null>(null)
   const router = useRouter()
   const supabase = createClient()
@@ -59,6 +59,7 @@ export default function CreditsPage() {
         process.env.NEXT_PUBLIC_PADDLE_ENV === 'production' ? 'production' : 'sandbox',
       token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
       eventCallback: event => {
+        if (event.name === 'checkout.error') setStatus('error')
         if (event.name === 'checkout.completed') {
           setStatus('processing')
           // 웹훅 지급이 반영될 때까지 짧게 폴링 (중복 이벤트 시 기존 타이머 교체)
@@ -134,6 +135,7 @@ export default function CreditsPage() {
         {!paddleConfigured && <p className="mb-6 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-[13px] px-4 py-3">{c.notReady}</p>}
         {status === 'processing' && <p className="mb-6 rounded-xl border border-[#2563eb]/30 bg-[#2563eb]/5 text-[#2563eb] text-[13px] px-4 py-3 animate-pulse">{c.processing}</p>}
         {status === 'done' && <p className="mb-6 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 text-[13px] px-4 py-3">{c.done}</p>}
+        {status === 'error' && <p className="mb-6 rounded-xl border border-rose-300 bg-rose-50 text-rose-700 text-[13px] px-4 py-3">결제창을 여는 중 문제가 생겼어요. 잠시 후 다시 시도하거나 dev@puritechlab.com 으로 알려주세요.</p>}
 
         {/* 팩 카드 */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
