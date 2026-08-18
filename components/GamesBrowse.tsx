@@ -196,7 +196,7 @@ export type FeedFilter = 'all' | 'video' | 'game'
 
 // filter: all = 게임 사이에 라이브를 끼워 넣기, video = 라이브만, game = 게임만. shuffleLives = 라이브 순서를 랜덤으로
 // pageScroll: 데스크톱에서 별도 스크롤 박스 대신 페이지 스크롤로 한 장씩 스냅 (홈 — 프롬프트 섹션을 넘기면 쇼츠 섹션으로 이어진다)
-export default function GamesBrowse({ games: input, filter = 'all', shuffleLives = false, pageScroll = false }: { games: GameWithCreator[]; filter?: FeedFilter; shuffleLives?: boolean; pageScroll?: boolean }) {
+export default function GamesBrowse({ games: input, filter = 'all', shuffleLives = false, pageScroll = false, onOverscrollTop }: { games: GameWithCreator[]; filter?: FeedFilter; shuffleLives?: boolean; pageScroll?: boolean; onOverscrollTop?: () => void }) {
   const feedRef = useRef<HTMLDivElement>(null)
   // 방송 카드 — 게임 카드와 별개로 피드에 끼워 넣는다
   const liveMap = useLiveBroadcasts()
@@ -228,8 +228,21 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
   const jump = (dir: 1 | -1) => {
     if (pageScroll) { window.scrollBy({ top: dir * window.innerHeight, behavior: 'smooth' }); return }
     const el = feedRef.current
-    if (el) el.scrollBy({ top: dir * el.clientHeight, behavior: 'smooth' })
+    if (!el) return
+    if (dir === -1 && el.scrollTop <= 2 && onOverscrollTop) { onOverscrollTop(); return }
+    el.scrollBy({ top: dir * el.clientHeight, behavior: 'smooth' })
   }
+  // 첫 카드에서 위로 스크롤(휠/트랙패드)하면 위 섹션(홈: 프롬프트)으로 — 중첩 스크롤 박스에선 위로 잘 안 빠져나가는 문제 보완
+  useEffect(() => {
+    const el = feedRef.current
+    if (!el || !onOverscrollTop) return
+    let armed = true
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY < -12 && el.scrollTop <= 2 && armed) { armed = false; onOverscrollTop(); setTimeout(() => { armed = true }, 900) }
+    }
+    el.addEventListener('wheel', onWheel, { passive: true })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [onOverscrollTop])
 
   return (
     <div>

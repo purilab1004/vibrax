@@ -59,7 +59,7 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
           </nav>
         </aside>
         <div className="flex-1 min-w-0">
-          <GamesBrowse games={sorted} filter={filter} shuffleLives />
+          <GamesBrowse games={sorted} filter={filter} shuffleLives onOverscrollTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
         </div>
       </div>
     </div>
