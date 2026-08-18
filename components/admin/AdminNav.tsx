@@ -22,7 +22,7 @@ export default function AdminNav() {
     ['/admin/access', '접속 관리'],
     ['/admin/logs', '에러 로그'],
     ['/admin/settings', a.navSettings],
-    ['/admin/ads', 'AJ AdPilot'],
+    ['/admin/ads', 'AdPilot'],
     ['/admin/costs', 'TokenPilot'],
   ]
   const active = (href: string) =>
