@@ -7,6 +7,8 @@ import FooterLinks from '@/components/FooterLinks'
 export default function SiteFooter() {
   const pathname = usePathname()
   if (pathname.startsWith('/studio')) return null
+  // 홈은 페이지 푸터 대신 피드 좌측 사이드 메뉴 하단에 축약 푸터를 둔다
+  if (pathname === '/') return null
   // /games(쇼츠 피드)에서는 모바일 푸터를 숨긴다 — 데스크톱만 표시
   const mobileHidden = pathname === '/games' || /^\/games\/[^/]+$/.test(pathname) || pathname.startsWith('/profile')
   return (
