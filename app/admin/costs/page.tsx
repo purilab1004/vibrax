@@ -1,0 +1,162 @@
+'use client'
+// 관리자 — LLM 원가 대시보드 (llm_usage 집계). 문서 "LLM 토큰 원가 분석 및 크레딧 가격 정책"의 실측치 버전.
+import { useEffect, useState } from 'react'
+import StatCard from '@/components/admin/StatCard'
+import TrendChart from '@/components/admin/TrendChart'
+
+interface Data {
+  days: number
+  pricing: { models: Record<string, { input: number; output: number; label: string }>; krwPerUsd: number; intro: { input: number; output: number; until: string }; generationCost: number; maxTokens: number }
+  totals: { calls: number; genCalls: number; llmGenCalls: number; templateLoads: number; inputTokens: number; outputTokens: number; costUsd: number; credits: number; avgOutputPerGen: number; medianOutputPerGen: number; maxOutputPerGen: number; costPerGenCall: number; projects: number; avgCallsPerProject: number; avgCostPerProject: number }
+  byKind: Record<string, { calls: number; input: number; output: number; cost: number; credits: number }>
+  byModel: Record<string, { calls: number; input: number; output: number; cost: number }>
+  byDay: { day: string; calls: number; cost: number; credits: number }[]
+  topUsers: { id: string; name: string; calls: number; cost: number; credits: number }[]
+  heaviest: { id: string; kind: string; output_tokens: number; input_tokens: number; cost_usd: number; created_at: string; template_slug: string | null }[]
+  recent: { id: string; kind: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; credits: number; template_slug: string | null; created_at: string }[]
+}
+
+const KIND_LABEL: Record<string, string> = { create: '새 게임 생성', edit: '기존 게임 수정', template: '템플릿 로드', template_edit: '템플릿+수정', explain: '학습 노트', from_image: '사진→레시피', bj_chat: 'AJ 중계' }
+const krw = (usd: number, rate: number) => `₩${Math.round(usd * rate).toLocaleString()}`
+const usd = (v: number) => `$${v.toFixed(v < 1 ? 3 : 2)}`
+
+export default function AdminCostsPage() {
+  const [days, setDays] = useState(30)
+  const [state, setState] = useState<{ days: number; data: Data | null; err: string | null }>({ days: 0, data: null, err: null })
+  const data = state.days === days ? state.data : null
+  const err = state.days === days ? state.err : null
+  // 가격 정책 시뮬레이터 입력
+  const [margin, setMargin] = useState(3)
+  const [packCredits, setPackCredits] = useState(100)
+  useEffect(() => {
+    let alive = true
+    fetch(`/api/admin/costs?days=${days}`).then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.hint ?? j.error ?? String(r.status)); return j as Data })
+      .then((d) => { if (alive) setState({ days, data: d, err: null }) })
+      .catch((e) => { if (alive) setState({ days, data: null, err: e.message }) })
+    return () => { alive = false }
+  }, [days])
+
+  if (err) return <p className="text-red-500 text-sm border border-red-200 bg-red-50 px-3 py-2">{err}</p>
+  if (!data) return <p className="font-pixel text-xs text-[#6b6152] tracking-widest">LOADING...</p>
+  const t = data.totals, R = data.pricing.krwPerUsd
+  const perCallKrw = t.costPerGenCall * R
+  const sellPerCall = perCallKrw * margin
+  const packPrice = sellPerCall * (packCredits / data.pricing.generationCost)
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-4 flex-wrap">
+        <h1 className="font-pixel text-[#2563eb] text-base tracking-widest">LLM 원가 · 가격 정책</h1>
+        <div className="flex items-center gap-1 ml-auto">
+          {[7, 30, 90, 365].map((d) => (
+            <button key={d} onClick={() => setDays(d)} className={`font-pixel text-[10px] px-3 py-1.5 border tracking-widest ${days === d ? 'border-[#2563eb] text-[#2563eb] bg-[#2563eb]/5' : 'border-[#ebe4d6] text-[#6b6152]'}`}>{d}일</button>
+          ))}
+        </div>
+      </div>
+
+      {/* 핵심 지표 */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="API 원가 (기간 합계)" value={usd(t.costUsd)} sub={`${krw(t.costUsd, R)} · 정가 기준`} />
+        <StatCard label="생성/수정 호출" value={t.genCalls} sub={`LLM ${t.llmGenCalls} · 템플릿 로드 ${t.templateLoads}`} />
+        <StatCard label="호출 1회 평균 원가" value={krw(t.costPerGenCall, R)} sub={`${usd(t.costPerGenCall)} · 템플릿 로드 포함 평균`} />
+        <StatCard label="차감 크레딧 합계" value={t.credits} sub={`≈ ${Math.round(t.credits / data.pricing.generationCost)}회 · 회당 ${data.pricing.generationCost}크레딧`} />
+        <StatCard label="출력 토큰 평균/생성" value={Math.round(t.avgOutputPerGen)} sub={`중앙값 ${t.medianOutputPerGen.toLocaleString()} · 최대 ${t.maxOutputPerGen.toLocaleString()} · 상한 ${data.pricing.maxTokens.toLocaleString()}`} />
+        <StatCard label="게임(프로젝트) 수" value={t.projects} sub={`프로젝트당 평균 ${t.avgCallsPerProject.toFixed(1)}회 호출`} />
+        <StatCard label="게임 1개 평균 원가" value={krw(t.avgCostPerProject, R)} sub={`${usd(t.avgCostPerProject)} · 인프라비 제외`} />
+        <StatCard label="총 토큰" value={`${(t.inputTokens / 1000).toFixed(0)}k / ${(t.outputTokens / 1000).toFixed(0)}k`} sub="입력 / 출력" />
+      </div>
+
+      {/* 가격 시뮬레이터 */}
+      <section className="border border-[#ebe4d6] bg-white p-5">
+        <div className="flex items-center gap-4 flex-wrap mb-4">
+          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">가격 정책 시뮬레이터</h2>
+          <label className="text-[12px] text-[#6b6152] flex items-center gap-2">마진 배수 <input type="number" step={0.5} min={1} value={margin} onChange={(e) => setMargin(Number(e.target.value))} className="w-16 border border-[#ddd3bf] px-2 py-1 text-sm" /></label>
+          <label className="text-[12px] text-[#6b6152] flex items-center gap-2">팩 크레딧 <input type="number" step={10} min={10} value={packCredits} onChange={(e) => setPackCredits(Number(e.target.value))} className="w-20 border border-[#ddd3bf] px-2 py-1 text-sm" /></label>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="호출 1회 원가(실측)" value={`₩${Math.round(perCallKrw).toLocaleString()}`} sub="템플릿 로드(₩0) 포함 평균" />
+          <StatCard label={`판매가/회 (×${margin})`} value={`₩${Math.round(sellPerCall).toLocaleString()}`} sub={`${data.pricing.generationCost}크레딧`} />
+          <StatCard label={`${packCredits}크레딧 팩 권장가`} value={`₩${Math.round(packPrice / 100) * 100 >= 0 ? (Math.round(packPrice / 100) * 100).toLocaleString() : 0}`} sub={`= ${packCredits / data.pricing.generationCost}회`} />
+          <StatCard label="9월 정가 전환 영향" value={`+${Math.round(((data.pricing.models['claude-sonnet-5'].output / data.pricing.intro.output) - 1) * 100)}%`} sub={`인트로 $${data.pricing.intro.input}/$${data.pricing.intro.output} → 정가 $${data.pricing.models['claude-sonnet-5'].input}/$${data.pricing.models['claude-sonnet-5'].output} (${data.pricing.intro.until}까지)`} />
+        </div>
+        <p className="text-[11px] text-[#9d9280] mt-3">위 원가는 정가 기준(₩{R}/$). 게임 1개는 보통 첫 생성 1회 + 수정 3~5회. 인프라(Vercel·Supabase·TTS)는 별도이므로 실질 원가는 게임당 +₩300~500 정도로 보세요.</p>
+      </section>
+
+      {/* 추이 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TrendChart label="일별 API 원가 (USD ×100)" sub={`최근 ${data.days}일`} values={data.byDay.map((d) => Math.round(d.cost * 100))} color="#e11d48" />
+        <TrendChart label="일별 호출 수" sub={`최근 ${data.days}일`} values={data.byDay.map((d) => d.calls)} color="#4da3ff" />
+      </div>
+
+      {/* 종류별 / 모델별 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <section className="border border-[#ebe4d6] bg-white p-5">
+          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">종류별</h2>
+          <table className="w-full text-[12px]">
+            <thead><tr className="text-[#9d9280] text-left"><th className="py-1">종류</th><th>호출</th><th>평균 출력</th><th>원가</th><th>크레딧</th></tr></thead>
+            <tbody>
+              {Object.entries(data.byKind).sort((a, b) => b[1].cost - a[1].cost).map(([k, v]) => (
+                <tr key={k} className="border-t border-[#f1ece2]"><td className="py-1.5">{KIND_LABEL[k] ?? k}</td><td>{v.calls}</td><td>{v.calls ? Math.round(v.output / v.calls).toLocaleString() : 0}</td><td>{usd(v.cost)} <span className="text-[#9d9280]">({krw(v.cost, R)})</span></td><td>{v.credits}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+        <section className="border border-[#ebe4d6] bg-white p-5">
+          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">모델별 · 단가</h2>
+          <table className="w-full text-[12px]">
+            <thead><tr className="text-[#9d9280] text-left"><th className="py-1">모델</th><th>호출</th><th>입력/출력 토큰</th><th>원가</th><th>단가(in/out $/1M)</th></tr></thead>
+            <tbody>
+              {Object.entries(data.byModel).sort((a, b) => b[1].cost - a[1].cost).map(([m, v]) => (
+                <tr key={m} className="border-t border-[#f1ece2]"><td className="py-1.5">{data.pricing.models[m]?.label ?? m}</td><td>{v.calls}</td><td>{(v.input / 1000).toFixed(1)}k / {(v.output / 1000).toFixed(1)}k</td><td>{usd(v.cost)}</td><td>${data.pricing.models[m]?.input ?? '-'} / ${data.pricing.models[m]?.output ?? '-'}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      {/* 무거운 호출 / 상위 사용자 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <section className="border border-[#ebe4d6] bg-white p-5">
+          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">가장 무거운 호출 TOP 10 (출력 토큰)</h2>
+          <table className="w-full text-[12px]">
+            <thead><tr className="text-[#9d9280] text-left"><th className="py-1">일시</th><th>종류</th><th>출력</th><th>원가</th></tr></thead>
+            <tbody>
+              {data.heaviest.map((r) => (
+                <tr key={r.id} className="border-t border-[#f1ece2]"><td className="py-1.5">{new Date(r.created_at).toLocaleString()}</td><td>{KIND_LABEL[r.kind] ?? r.kind}{r.template_slug ? ` · ${r.template_slug}` : ''}</td><td className={r.output_tokens > 20000 ? 'text-red-500 font-bold' : ''}>{r.output_tokens.toLocaleString()}</td><td>{krw(Number(r.cost_usd), R)}</td></tr>
+              ))}
+              {data.heaviest.length === 0 && <tr><td colSpan={4} className="py-3 text-[#9d9280]">아직 기록이 없어요</td></tr>}
+            </tbody>
+          </table>
+        </section>
+        <section className="border border-[#ebe4d6] bg-white p-5">
+          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">원가 상위 사용자</h2>
+          <table className="w-full text-[12px]">
+            <thead><tr className="text-[#9d9280] text-left"><th className="py-1">사용자</th><th>호출</th><th>원가</th><th>차감 크레딧</th><th>마진</th></tr></thead>
+            <tbody>
+              {data.topUsers.map((u) => {
+                const rev = u.credits * (sellPerCall / data.pricing.generationCost)
+                return <tr key={u.id} className="border-t border-[#f1ece2]"><td className="py-1.5">{u.name}</td><td>{u.calls}</td><td>{krw(u.cost, R)}</td><td>{u.credits}</td><td className={u.cost * R > rev ? 'text-red-500' : 'text-[#16a34a]'}>{u.cost > 0 ? `${(rev / (u.cost * R)).toFixed(1)}×` : '-'}</td></tr>
+              })}
+              {data.topUsers.length === 0 && <tr><td colSpan={5} className="py-3 text-[#9d9280]">아직 기록이 없어요</td></tr>}
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      {/* 최근 호출 */}
+      <section className="border border-[#ebe4d6] bg-white p-5">
+        <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">최근 호출 50건</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12px] min-w-[640px]">
+            <thead><tr className="text-[#9d9280] text-left"><th className="py-1">일시</th><th>종류</th><th>모델</th><th>입력</th><th>출력</th><th>원가</th><th>크레딧</th></tr></thead>
+            <tbody>
+              {data.recent.map((r) => (
+                <tr key={r.id} className="border-t border-[#f1ece2]"><td className="py-1.5 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td><td>{KIND_LABEL[r.kind] ?? r.kind}{r.template_slug ? ` · ${r.template_slug}` : ''}</td><td>{data.pricing.models[r.model]?.label ?? r.model}</td><td>{r.input_tokens.toLocaleString()}</td><td>{r.output_tokens.toLocaleString()}</td><td>{usd(Number(r.cost_usd))}</td><td>{r.credits}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  )
+}

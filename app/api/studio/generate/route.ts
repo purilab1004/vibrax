@@ -6,6 +6,8 @@ import { SYSTEM_PROMPT, buildMessages, type ChatTurn } from '@/lib/studio/prompt
 import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER } from '@/lib/studio/parse'
 import { matchTemplate, templateOnly, extrasOf } from '@/lib/studio/templates'
 import { hardenHtml } from '@/lib/studio/harden'
+import { logUsage } from '@/lib/llm/usage'
+import { GENERATION_MAX_TOKENS } from '@/lib/llm/pricing'
 
 export const maxDuration = 300
 
@@ -116,6 +118,8 @@ export async function POST(req: Request) {
       ] as never)
       const title = extractTitle(html)
       if (title) await supabase.from('studio_projects').update({ title } as never).eq('id', projectId)
+      const { data: vrow } = await supabase.from('studio_versions').select('id').eq('project_id', projectId).eq('version', 1).maybeSingle()
+      await logUsage({ userId: user.id, projectId, versionId: (vrow as { id: string } | null)?.id ?? null, kind: 'template', model: 'none', credits: isAdminUser ? 0 : cost, templateSlug: tmatch.template.slug })
       return new Response(`${desc}\n<game>${html}</game>\n[[USAGE:0:0]]\n[[TEMPLATE:${tmatch.template.slug}]]`, {
         headers: { 'Content-Type': 'text/plain; charset=utf-8' },
       })
@@ -133,7 +137,7 @@ export async function POST(req: Request) {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     stream = client.messages.stream({
       model: 'claude-sonnet-5',
-      max_tokens: 64000,
+      max_tokens: GENERATION_MAX_TOKENS,
       system: SYSTEM_PROMPT,
       messages: buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml, history, images }) as never,
     })
@@ -157,11 +161,11 @@ export async function POST(req: Request) {
           }
         }
         // 실제 토큰 사용량을 마커로 전달 — 클라이언트가 파싱해 표시하고 본문에선 제외
+        let usedIn = 0, usedOut = 0
         try {
           const fin = await stream.finalMessage()
-          controller.enqueue(encoder.encode(
-            `\n[[USAGE:${fin.usage?.input_tokens ?? 0}:${fin.usage?.output_tokens ?? 0}]]`,
-          ))
+          usedIn = fin.usage?.input_tokens ?? 0; usedOut = fin.usage?.output_tokens ?? 0
+          controller.enqueue(encoder.encode(`\n[[USAGE:${usedIn}:${usedOut}]]`))
         } catch { /* usage 실패는 무시 — 생성 자체엔 영향 없음 */ }
         const parsed = parseGeneration(full)
         if (!parsed.html) {
@@ -172,15 +176,21 @@ export async function POST(req: Request) {
           ))
         } else {
           const nextVersion = (latest?.version ?? 0) + 1
-          const { error: vErr } = await supabase.from('studio_versions').insert([
+          const { data: vIns, error: vErr } = await supabase.from('studio_versions').insert([
             { project_id: projectId, version: nextVersion, html: hardenHtml(parsed.html) },
-          ] as never)
+          ] as never).select('id').maybeSingle()
           if (vErr) {
             await refund()
             controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
           } else {
             // 버전이 저장된 이상 생성은 성공이다 — 이후 실패는 환불도, 에러 마커도 없다.
             versionPersisted = true
+            await logUsage({
+              userId: user.id, projectId, versionId: (vIns as { id: string } | null)?.id ?? null,
+              kind: tmatch ? 'template_edit' : latest ? 'edit' : 'create',
+              model: 'claude-sonnet-5', inputTokens: usedIn, outputTokens: usedOut, credits: isAdminUser ? 0 : cost,
+              templateSlug: tmatch?.template.slug ?? null,
+            })
             try {
               const { error: mErr } = await supabase.from('studio_messages').insert([
                 { project_id: projectId, role: 'user', content: prompt },

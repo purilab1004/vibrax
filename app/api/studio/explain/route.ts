@@ -4,6 +4,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { logUsage } from '@/lib/llm/usage'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
     system: SYSTEM,
     messages: [{ role: 'user', content: `사용자 프롬프트(시간순):\n${prompts.map((p, i) => `${i + 1}. ${p}`).join('\n') || '(없음)'}\n\n게임 HTML:\n${html}` }],
   })
+  await logUsage({ userId: user.id, projectId: ver.project_id, versionId, kind: 'explain', model: 'claude-haiku-4-5-20251001', inputTokens: res.usage?.input_tokens ?? 0, outputTokens: res.usage?.output_tokens ?? 0 })
   const text = res.content.map((c) => (c.type === 'text' ? c.text : '')).join('')
   const m = text.match(/\{[\s\S]*\}/)
   if (!m) return Response.json({ error: 'no notes' }, { status: 502 })

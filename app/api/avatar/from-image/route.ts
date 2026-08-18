@@ -3,6 +3,7 @@
 // 픽셀 단위 조각이 아니라 시작점을 만들어 주는 용도 — 사용자가 이어서 손으로 다듬는다.
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { logUsage } from '@/lib/llm/usage'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -61,6 +62,7 @@ export async function POST(req: Request) {
       ],
     }],
   })
+  await logUsage({ userId: user.id, kind: 'from_image', model: 'claude-sonnet-5', inputTokens: res.usage?.input_tokens ?? 0, outputTokens: res.usage?.output_tokens ?? 0 })
   const text = res.content.map((c) => (c.type === 'text' ? c.text : '')).join('')
   const m = text.match(/\{[\s\S]*\}/)
   if (!m) return Response.json({ error: 'no recipe' }, { status: 502 })
