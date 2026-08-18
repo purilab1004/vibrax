@@ -13,6 +13,7 @@ export interface StudyNotes {
   scenario: { title: string; body: string }[]                     // 프롬프트 → 시나리오 (목표/규칙/조작/난이도/캐릭터)
   glossary: { term: string; meaning: string }[]                   // 어린이용 용어 사전
   challenge: string[]                                             // 다음에 해볼 것 (프롬프트 예시)
+  prompt: { improved: string; tips: string[] }                    // 다음에 똑같이/더 정확히 만들려면 — 정리된 완성 프롬프트 + 작성 요령
 }
 
 const SYSTEM = `너는 어린이(초등 고학년~중학생)에게 게임 만들기를 가르치는 친절한 선생님이야. 주어진 HTML5 게임 코드와, 그 게임을 만들 때 사용자가 쓴 프롬프트를 보고 학습 노트를 JSON 으로 만든다.
@@ -21,7 +22,11 @@ const SYSTEM = `너는 어린이(초등 고학년~중학생)에게 게임 만들
   "code": [ { "title": "…", "body": "쉬운 한국어 2~4문장", "snippet": "핵심 코드 5~12줄(선택)" } ],   // 5~7개: 화면 만들기, 그리기(canvas), 조작(키/터치), 게임 규칙·점수, 충돌/판정, 게임오버·재시작, 반응형 등 실제 코드 구조 순서대로
   "scenario": [ { "title": "…", "body": "…" } ],   // 5~6개: 프롬프트가 무엇을 원했나, 게임 목표, 규칙, 조작 방법, 난이도/속도, 캐릭터·배경(왜 이렇게 정했는지)
   "glossary": [ { "term": "…", "meaning": "…" } ], // 6~8개: canvas, requestAnimationFrame, 변수, 함수, 조건문, 충돌 판정, 이벤트 등 이 코드에 나오는 것 위주
-  "challenge": [ "…" ]                             // 3~4개: 아이가 다음에 시도해볼 수정 프롬프트 (예: "적을 두 배로 늘려줘")
+  "challenge": [ "…" ],                            // 3~4개: 아이가 다음에 시도해볼 수정 프롬프트 (예: "적을 두 배로 늘려줘")
+  "prompt": {
+    "improved": "…",   // 이 게임을 다음에 한 번에 똑같이(또는 더 정확히) 만들 수 있는 완성 프롬프트 1개(4~8문장): 장르·목표·조작·규칙·점수·난이도·화면 스타일·모바일 조작을 빠짐없이
+    "tips": [ "…" ]    // 4~5개: 프롬프트 작성 요령 — 사용자가 실제로 쓴 프롬프트에서 빠졌던 것/애매했던 것을 짚어주고 어떻게 쓰면 좋은지 (예: "조작키를 정확히 적어요: '←→로 이동, 스페이스로 점프'")
+  }
 }
 snippet 은 코드에서 실제로 발췌한다. 어려운 말은 비유로 풀어 쓰고, 이모지는 제목에 하나 정도만.`
 
@@ -37,7 +42,7 @@ export async function POST(req: Request) {
   const { data: v } = await supabase.from('studio_versions').select('id, project_id, html, notes').eq('id', versionId).maybeSingle()
   const ver = v as { id: string; project_id: string; html: string; notes?: StudyNotes | null } | null
   if (!ver) return Response.json({ error: 'not found' }, { status: 404 })
-  if (ver.notes && Array.isArray(ver.notes.code)) return Response.json({ notes: ver.notes, cached: true })
+  if (ver.notes && Array.isArray(ver.notes.code) && ver.notes.prompt?.improved) return Response.json({ notes: ver.notes, cached: true })
 
   // 이 버전을 만든 프롬프트 — 마지막 user 메시지들 (최근 3개)
   const { data: msgs } = await supabase.from('studio_messages').select('role, content').eq('project_id', ver.project_id).order('created_at', { ascending: false }).limit(6)
@@ -47,7 +52,7 @@ export async function POST(req: Request) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const res = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 4000,
+    max_tokens: 5000,
     system: SYSTEM,
     messages: [{ role: 'user', content: `사용자 프롬프트(시간순):\n${prompts.map((p, i) => `${i + 1}. ${p}`).join('\n') || '(없음)'}\n\n게임 HTML:\n${html}` }],
   })
@@ -61,6 +66,10 @@ export async function POST(req: Request) {
     scenario: Array.isArray(notes.scenario) ? notes.scenario.slice(0, 8) : [],
     glossary: Array.isArray(notes.glossary) ? notes.glossary.slice(0, 10) : [],
     challenge: Array.isArray(notes.challenge) ? notes.challenge.slice(0, 5) : [],
+    prompt: {
+      improved: typeof notes.prompt?.improved === 'string' ? notes.prompt.improved : '',
+      tips: Array.isArray(notes.prompt?.tips) ? notes.prompt.tips.slice(0, 6) : [],
+    },
   }
   // 캐시 저장 — studio_versions 엔 update 정책이 없어 사용자 세션으론 0행 갱신됨 → 소유권은 위 select(RLS)로 확인했으니 admin 으로 기록
   const { error: cacheErr } = await createAdminClient().from('studio_versions').update({ notes: clean } as never).eq('id', versionId)

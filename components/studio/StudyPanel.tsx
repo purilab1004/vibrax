@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { StudyNotes } from '@/app/api/studio/explain/route'
 
-type Tab = 'code' | 'scenario' | 'source'
+type Tab = 'code' | 'scenario' | 'prompt' | 'source'
 
 // 버전별 학습 노트 클라이언트 캐시 — 패널을 닫았다 열어도, 버튼에 마우스만 올려도(prefetch) 즉시 뜬다
 const notesCache = new Map<string, Promise<StudyNotes>>()
@@ -56,6 +56,7 @@ export default function StudyPanel({ versionId, html, initialTab = 'code', onClo
           <div className="flex items-center gap-1 rounded-lg bg-[#f3ecdf] p-1">
             {tabBtn('scenario', '시나리오')}
             {tabBtn('code', '코드')}
+            {tabBtn('prompt', '프롬프트')}
             {tabBtn('source', '전체 소스')}
           </div>
           <button onClick={onClose} aria-label="닫기" className="w-9 h-9 rounded-md border border-[#ddd3bf] hover:border-[#241f17] text-[#6b6152] hover:text-[#241f17] flex items-center justify-center transition-colors">
@@ -114,6 +115,33 @@ export default function StudyPanel({ versionId, html, initialTab = 'code', onClo
                   </dl>
                 </div>
               )}
+            </div>
+          )}
+
+          {tab === 'prompt' && notes && (
+            <div className="space-y-4">
+              <p className="text-[13px] text-[#857a68]">다음에 이 게임을 한 번에 똑같이(또는 더 정확히) 만들고 싶다면 이렇게 써 보세요.</p>
+              <div className="rounded-2xl bg-white border border-[#ebe4d6] p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-pixel text-[10px] text-[#2563eb] tracking-widest">완성 프롬프트</p>
+                  <div className="flex gap-2">
+                    <button onClick={async () => { try { await navigator.clipboard.writeText(notes.prompt.improved); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch {} }} className="text-[11px] border border-[#ddd3bf] px-3 py-1.5 rounded-md text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb]">{copied ? '복사됨!' : '복사'}</button>
+                    {onTryPrompt && <button onClick={() => { onTryPrompt(notes.prompt.improved); onClose() }} className="text-[11px] px-3 py-1.5 rounded-md bg-[#2563eb] text-white hover:bg-[#1d4ed8]">채팅에 넣기</button>}
+                  </div>
+                </div>
+                <p className="text-[14px] text-[#241f17] leading-relaxed whitespace-pre-wrap">{notes.prompt.improved}</p>
+              </div>
+              {notes.prompt.tips.length > 0 && (
+                <div className="rounded-2xl bg-white border border-[#ebe4d6] p-4">
+                  <p className="font-pixel text-[10px] text-[#9d9280] tracking-widest mb-2">프롬프트 잘 쓰는 법</p>
+                  <ul className="space-y-2">
+                    {notes.prompt.tips.map((t, i) => (<li key={i} className="flex gap-2 text-[13.5px] text-[#4a4337] leading-relaxed"><span className="text-[#2563eb] font-bold">✓</span><span>{t}</span></li>))}
+                  </ul>
+                </div>
+              )}
+              <div className="rounded-2xl border border-dashed border-[#ddd3bf] p-4 text-[12.5px] text-[#6b6152] leading-relaxed">
+                <b className="text-[#241f17]">기본 공식</b> — ① 어떤 게임(장르) ② 목표(이기는 조건) ③ 조작(키/터치) ④ 규칙·점수 ⑤ 난이도(속도·적 수) ⑥ 화면 스타일(색·분위기) ⑦ 모바일 버튼. 이 7가지를 적으면 거의 원하는 대로 나와요.
+              </div>
             </div>
           )}
 
