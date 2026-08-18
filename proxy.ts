@@ -8,7 +8,7 @@ const AI_BLOCK_UA =
 
 // ── 점검 모드 — 허용 IP만 접속, 나머지는 점검 페이지 ──
 // 끄려면 MAINTENANCE_MODE를 false로 바꾸고 배포
-const MAINTENANCE_MODE = true
+const MAINTENANCE_MODE = false
 const ALLOWED_IPS = ['222.111.202.123', '73.74.84.143', '106.101.139.192']
 
 function clientIp(request: NextRequest): string {
