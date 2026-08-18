@@ -11,6 +11,8 @@ export default function SiteFooter() {
   if (pathname === '/') return null
   // 관리자는 사이드바 하단 축약 푸터로 대체
   if (pathname.startsWith('/admin')) return null
+  // 지도보드는 다크 풀스크린 보드 — 푸터 없음
+  if (pathname === '/map') return null
   // /games(쇼츠 피드)에서는 모바일 푸터를 숨긴다 — 데스크톱만 표시
   const mobileHidden = pathname === '/games' || /^\/games\/[^/]+$/.test(pathname) || pathname.startsWith('/profile')
   return (

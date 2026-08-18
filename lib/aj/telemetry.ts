@@ -16,6 +16,8 @@ export function useGameTelemetry(gameId: string, active: boolean) {
     let alive = true
     let userId: string | null = null
     const device = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop'
+    // 지도보드용 지오 핑 (로그인 여부 무관, 서버가 헤더에서만 위치를 읽는다)
+    fetch('/api/geo/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'play', ref: gameId }), keepalive: true }).catch(() => {})
 
     const flush = async (final = false) => {
       if (!alive && !final) return

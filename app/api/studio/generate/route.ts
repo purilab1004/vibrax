@@ -8,6 +8,7 @@ import { matchTemplate, templateOnly, extrasOf } from '@/lib/studio/templates'
 import { hardenHtml } from '@/lib/studio/harden'
 import { logUsage } from '@/lib/llm/usage'
 import { GENERATION_MAX_TOKENS } from '@/lib/llm/pricing'
+import { trackGeo } from '@/lib/geo/track'
 
 export const maxDuration = 300
 
@@ -48,6 +49,8 @@ export async function POST(req: Request) {
   const isAdminUser = profile?.role === 'admin'
   const parsedCost = Number((costRow as { value?: unknown } | null)?.value)
   const cost = Number.isFinite(parsedCost) && parsedCost >= 1 ? parsedCost : GENERATION_COST
+
+  void trackGeo(req.headers, 'generate', user.id, projectId)
 
   // RLS로 본인 프로젝트만 조회됨 — 없으면 404
   const { data: project } = await supabase

@@ -108,6 +108,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
       // 게임 출시 소개 블로그 글 자동 생성 (fire-and-forget)
       const newId = (inserted as { id: string } | null)?.id
       if (newId) {
+        fetch('/api/geo/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'publish', ref: newId }), keepalive: true }).catch(() => {})
         fetch('/api/blog/game-post', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
