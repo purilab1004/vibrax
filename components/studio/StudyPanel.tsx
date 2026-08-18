@@ -40,20 +40,27 @@ export default function StudyPanel({ versionId, html, initialTab = 'code', onClo
 
   const lines = html.split('\n')
   const tabBtn = (t: Tab, label: string) => (
-    <button onClick={() => setTab(t)} className={`font-pixel text-[11px] tracking-widest px-4 py-2 rounded-full transition-colors ${tab === t ? 'bg-[#2563eb] text-white' : 'text-[#6b6152] hover:bg-[#241f17]/5'}`}>{label}</button>
+    <button onClick={() => setTab(t)} className={`h-8 px-4 text-[12px] font-semibold rounded-md transition-colors ${tab === t ? 'bg-white text-[#2563eb] shadow-[0_1px_3px_rgba(36,31,23,0.12)]' : 'text-[#6b6152] hover:text-[#241f17]'}`}>{label}</button>
   )
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 md:p-8" onClick={onClose}>
       <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
       <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-4xl h-[88vh] bg-[#fcfaf5] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#ebe4d6] bg-white/70">
-          <span className="font-pixel text-[11px] text-[#2563eb] tracking-widest mr-2">STUDY NOTE</span>
-          {tabBtn('scenario', '📖 시나리오')}
-          {tabBtn('code', '🧩 코드는 어떻게?')}
-          {tabBtn('source', '</> 전체 소스')}
+        <div className="flex items-center gap-4 px-5 h-14 border-b border-[#ebe4d6] bg-white">
+          <div className="min-w-0">
+            <p className="font-pixel text-[10px] text-[#9d9280] tracking-[0.25em]">STUDY NOTE</p>
+            <p className="text-[13px] font-semibold text-[#241f17] truncate">이 게임은 어떻게 만들어졌을까?</p>
+          </div>
           <div className="flex-1" />
-          <button onClick={onClose} aria-label="닫기" className="w-8 h-8 rounded-full hover:bg-[#241f17]/5 text-[#6b6152]">✕</button>
+          <div className="flex items-center gap-1 rounded-lg bg-[#f3ecdf] p-1">
+            {tabBtn('scenario', '시나리오')}
+            {tabBtn('code', '코드')}
+            {tabBtn('source', '전체 소스')}
+          </div>
+          <button onClick={onClose} aria-label="닫기" className="w-9 h-9 rounded-md border border-[#ddd3bf] hover:border-[#241f17] text-[#6b6152] hover:text-[#241f17] flex items-center justify-center transition-colors">
+            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto p-5 md:p-7">

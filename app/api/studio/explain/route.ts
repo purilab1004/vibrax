@@ -3,6 +3,7 @@
 // 아이도 이해할 수 있게 설명. 버전별로 한 번만 생성해 studio_versions.notes 에 캐시(컬럼 없으면 매번 생성).
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -61,7 +62,8 @@ export async function POST(req: Request) {
     glossary: Array.isArray(notes.glossary) ? notes.glossary.slice(0, 10) : [],
     challenge: Array.isArray(notes.challenge) ? notes.challenge.slice(0, 5) : [],
   }
-  // 캐시 (notes 컬럼이 없으면 조용히 실패)
-  await supabase.from('studio_versions').update({ notes: clean } as never).eq('id', versionId)
+  // 캐시 저장 — studio_versions 엔 update 정책이 없어 사용자 세션으론 0행 갱신됨 → 소유권은 위 select(RLS)로 확인했으니 admin 으로 기록
+  const { error: cacheErr } = await createAdminClient().from('studio_versions').update({ notes: clean } as never).eq('id', versionId)
+  if (cacheErr) console.error('[studio/explain] cache save failed', cacheErr)
   return Response.json({ notes: clean, cached: false })
 }
