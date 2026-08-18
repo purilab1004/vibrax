@@ -20,6 +20,7 @@ export default function StudioPage() {
   // 게시된 게임 (프로젝트 id → 게임) — 카드에 썸네일·게시 상태·플레이 링크
   const [published, setPublished] = useState<Record<string, { id: string; thumbnail_url: string | null; view_count: number | null }>>({})
   const [prompt, setPrompt] = useState('')
+  const [query, setQuery] = useState('') // 내 프로젝트 검색(제목·훅 문구)
 
   // 프로젝트 삭제 — 퍼블리싱된 게임이 있으면 게임까지 함께 삭제 (안내 후)
   const deleteProject = async (p: StudioProject) => {
@@ -221,8 +222,12 @@ export default function StudioPage() {
 
       {/* 내 프로젝트 */}
       <section className="max-w-6xl mx-auto px-6 pb-20">
-        <div className="flex items-end justify-between mb-5">
-          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">MY PROJECTS <span className="text-[#2563eb]">({projects.length})</span></h2>
+        <div className="flex items-center justify-between gap-4 mb-5">
+          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest shrink-0">MY PROJECTS <span className="text-[#2563eb]">({projects.length})</span></h2>
+          <div className="flex items-center rounded-full border border-[#ddd3bf] bg-white/95 shadow-[0_2px_10px_rgba(36,31,23,0.06)] focus-within:border-[#2563eb] transition-colors overflow-hidden w-full max-w-xs">
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="내 게임 검색…" className="flex-1 min-w-0 bg-transparent px-4 py-2 text-sm text-[#241f17] placeholder-[#a1957f] outline-none" />
+            <span className="px-3 text-[#857a68]"><svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg></span>
+          </div>
         </div>
 
         {loadError ? (
@@ -241,7 +246,11 @@ export default function StudioPage() {
               <span className="font-pixel text-[11px] text-[#241f17] tracking-widest">{creating ? '만드는 중…' : '새 게임 추가'}</span>
               <span className="text-[12px] text-[#a1957f] px-6 text-center">빈 프로젝트를 만들고 프롬프트로 시작해요</span>
             </button>
-            {projects.map((p) => {
+            {projects.filter((p) => {
+              const q = query.trim().toLowerCase()
+              if (!q) return true
+              return (p.title || s.untitled).toLowerCase().includes(q) || (teasers[p.id] ?? '').toLowerCase().includes(q)
+            }).map((p) => {
               const pub = published[p.id]
               const title = p.title || s.untitled
               return (
