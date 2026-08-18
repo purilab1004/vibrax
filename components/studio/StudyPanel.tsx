@@ -5,6 +5,19 @@ import type { StudyNotes } from '@/app/api/studio/explain/route'
 
 type Tab = 'code' | 'scenario' | 'source'
 
+// 버전별 학습 노트 클라이언트 캐시 — 패널을 닫았다 열어도, 버튼에 마우스만 올려도(prefetch) 즉시 뜬다
+const notesCache = new Map<string, Promise<StudyNotes>>()
+export function prefetchStudyNotes(versionId: string): Promise<StudyNotes> {
+  let p = notesCache.get(versionId)
+  if (!p) {
+    p = fetch('/api/studio/explain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ versionId }) })
+      .then(async (r) => { if (!r.ok) throw new Error(String(r.status)); return (await r.json()).notes as StudyNotes })
+    notesCache.set(versionId, p)
+    p.catch(() => notesCache.delete(versionId)) // 실패는 캐시하지 않는다
+  }
+  return p
+}
+
 export default function StudyPanel({ versionId, html, initialTab = 'code', onClose, onTryPrompt }: {
   versionId: string
   html: string
@@ -19,9 +32,8 @@ export default function StudyPanel({ versionId, html, initialTab = 'code', onClo
 
   useEffect(() => {
     let alive = true
-    fetch('/api/studio/explain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ versionId }) })
-      .then(async (r) => { if (!r.ok) throw new Error(String(r.status)); return r.json() })
-      .then((j) => { if (alive) setNotes(j.notes) })
+    prefetchStudyNotes(versionId)
+      .then((n) => { if (alive) setNotes(n) })
       .catch(() => { if (alive) setErr('학습 노트를 만들지 못했어요. 잠시 후 다시 열어 주세요.') })
     return () => { alive = false }
   }, [versionId])

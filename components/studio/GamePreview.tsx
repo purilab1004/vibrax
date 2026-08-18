@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useLang } from '@/lib/i18n/context'
 import type { StudioVersionMeta } from '@/lib/supabase/types'
+import { prefetchStudyNotes } from '@/components/studio/StudyPanel'
 
 type Viewport = 'pc' | 'tablet' | 'mobile'
 
@@ -85,8 +86,8 @@ export default function GamePreview({
         {/* 학습 노트 — 시나리오 / 코드 보기 */}
         {onStudy && (
           <div className="flex items-center gap-1">
-            <button onClick={() => onStudy('scenario')} disabled={!html || !currentVersionId} title="프롬프트가 어떻게 게임 시나리오가 됐는지" className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] rounded-full px-3 py-1.5 tracking-widest transition-colors disabled:opacity-40">📖 시나리오</button>
-            <button onClick={() => onStudy('code')} disabled={!html || !currentVersionId} title="코드가 어떻게 짜였는지" className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] rounded-full px-3 py-1.5 tracking-widest transition-colors disabled:opacity-40">🧩 코드</button>
+            <button onClick={() => onStudy('scenario')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="프롬프트가 어떻게 게임 시나리오가 됐는지" className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] rounded-full px-3 py-1.5 tracking-widest transition-colors disabled:opacity-40">📖 시나리오</button>
+            <button onClick={() => onStudy('code')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="코드가 어떻게 짜였는지" className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] rounded-full px-3 py-1.5 tracking-widest transition-colors disabled:opacity-40">🧩 코드</button>
           </div>
         )}
         <button
