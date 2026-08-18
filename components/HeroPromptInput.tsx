@@ -6,7 +6,7 @@ import { useLang } from '@/lib/i18n/context'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 
 // 프롬프트 카드 — 그라디언트 보더 + 멀티라인 입력 + 카드 안 하단 바(예시 칩 / BUILD 버튼)
-export default function HeroPromptInput() {
+export default function HeroPromptInput({ onSubmit }: { onSubmit?: (prompt: string) => void } = {}) {
   const [value, setValue] = useState('')
   const [focused, setFocused] = useState(false)
   // 아무것도 안 치고 있으면 예시 프롬프트가 자동 타이핑된다 (포커스하면 사라지고 새로 입력)
@@ -47,6 +47,7 @@ export default function HeroPromptInput() {
     e.preventDefault()
     const prompt = value.trim()
     if (!prompt) return
+    if (onSubmit) { onSubmit(prompt); return }
     try {
       sessionStorage.setItem(INITIAL_PROMPT_KEY, prompt)
     } catch {}

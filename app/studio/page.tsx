@@ -10,6 +10,7 @@ import type { StudioProject } from '@/lib/supabase/types'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import { auroraOf } from '@/components/GameCard'
 import { titleFont } from '@/lib/fonts'
+import HeroPromptInput from '@/components/HeroPromptInput'
 
 export default function StudioPage() {
   const [projects, setProjects] = useState<StudioProject[] | null>(null)
@@ -19,7 +20,6 @@ export default function StudioPage() {
   const [teasers, setTeasers] = useState<Record<string, string | null>>({})
   // 게시된 게임 (프로젝트 id → 게임) — 카드에 썸네일·게시 상태·플레이 링크
   const [published, setPublished] = useState<Record<string, { id: string; thumbnail_url: string | null; view_count: number | null }>>({})
-  const [prompt, setPrompt] = useState('')
   const [query, setQuery] = useState('') // 내 프로젝트 검색(제목·훅 문구)
 
   // 프로젝트 삭제 — 퍼블리싱된 게임이 있으면 게임까지 함께 삭제 (안내 후)
@@ -148,7 +148,6 @@ export default function StudioPage() {
   }
 
   const publishedCount = Object.keys(published).length
-  const chips = ['🧱 화살표로 조작하는 벽돌깨기', '🦖 장애물 점프 공룡 러너', '🚀 운석 피하는 우주선 슈팅', '🐟 낚시로 물고기 모으기']
 
   return (
     <div className="min-h-[100svh]">
@@ -162,55 +161,33 @@ export default function StudioPage() {
         </Link>
       </div>
 
-      {/* 히어로 — 프롬프트 바로 시작 */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 opacity-70" style={auroraOf('studio-hero')} aria-hidden />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-[#fcfaf5]/60 to-[#fcfaf5]" aria-hidden />
-        <div className="max-w-5xl mx-auto px-6 pt-12 pb-10 flex flex-col items-center text-center">
-          <p className="font-pixel text-[11px] tracking-[0.3em] text-[#2563eb] mb-3">PROMPT → GAME · AI STREAMED</p>
-          <h1 className={`${titleFont.className} text-[38px] md:text-[52px] leading-[1.15] text-[#241f17]`}>
-            프롬프트 한 줄로<br className="md:hidden" /> <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">게임을 빚어요</span>
+      {/* 히어로 — 홈 첫 화면과 같은 느낌 (배경 영상 + 헤드라인 + 프롬프트 카드) */}
+      <section className="relative overflow-hidden min-h-[78svh] flex flex-col bg-white">
+        <video className="absolute inset-0 w-full h-full object-cover opacity-55" autoPlay muted loop playsInline preload="auto" aria-hidden>
+          <source src="/hero-bg-2.mp4" type="video/mp4" />
+        </video>
+        <div className="hero-shield absolute inset-0" aria-hidden />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#fcfaf5]" aria-hidden />
+        <div className="hero-glow hero-glow-blue" aria-hidden />
+        <div className="hero-glow hero-glow-green" aria-hidden />
+        <div className="hero-glow hero-glow-yellow" aria-hidden />
+
+        <div className="relative flex-1 w-full max-w-7xl mx-auto px-6 flex flex-col items-center justify-center text-center py-12">
+          <h1 className="hero-chat-in text-3xl md:text-5xl leading-[1.15] tracking-tight font-extrabold text-[#241f17] mb-5">
+            {T.hero.promptHeading.split('\n')[0]}
+            <br />
+            <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">{T.hero.promptHeading.split('\n')[1]}</span>
           </h1>
-          <p className="mt-3 text-[14px] text-[#6b6152]">만들면 바로 실행되고, 게시하면 AJ가 방송해줘요 · 생성 1회 = 10크레딧</p>
-
-          <form onSubmit={(e) => { e.preventDefault(); if (prompt.trim()) createProject(prompt) }} className="w-full max-w-2xl mt-7">
-            <div className="prompt-ring rounded-2xl p-[1.5px] shadow-[0_12px_40px_rgba(37,99,235,0.16)] focus-within:shadow-[0_16px_52px_rgba(37,99,235,0.28)] transition-shadow">
-              <div className="rounded-[14.5px] bg-white overflow-hidden">
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (prompt.trim()) createProject(prompt) } }}
-                  rows={3}
-                  placeholder="어떤 게임을 만들까요? 예: 화살표로 조작하는 벽돌깨기, 점프로 장애물을 피하는 러너…"
-                  className="w-full resize-none bg-transparent px-5 pt-4 pb-1 text-sm md:text-base text-[#241f17] placeholder-[#a1957f] outline-none text-left"
-                />
-                <div className="flex items-center justify-between px-3 pb-3 gap-3">
-                  <button type="button" onClick={() => createProject()} disabled={creating} className="text-[12px] text-[#857a68] hover:text-[#2563eb] px-2 disabled:opacity-50">
-                    빈 프로젝트로 시작 →
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={creating || !prompt.trim()}
-                    className="shrink-0 rounded-full text-[13px] font-bold text-white px-6 py-2.5 bg-gradient-to-r from-[#2563eb] to-[#06b6d4] shadow-[0_0_0_2px_#ffffff,0_0_0_3.5px_rgba(37,99,235,0.22),0_6px_20px_rgba(37,99,235,0.35)] hover:shadow-[0_0_0_2px_#ffffff,0_0_0_3.5px_rgba(37,99,235,0.4),0_8px_26px_rgba(37,99,235,0.45)] active:scale-[0.98] transition-all disabled:opacity-50"
-                  >
-                    {creating ? '만드는 중…' : 'BUILD'}
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2">
-              {chips.map((chip) => (
-                <button key={chip} type="button" onClick={() => setPrompt(chip.replace(/^\S+\s/, ''))}
-                  className="rounded-full border border-[#ddd3bf] bg-white/70 backdrop-blur-sm px-3.5 py-1.5 text-[12px] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] hover:bg-white transition-colors whitespace-nowrap">
-                  {chip}
-                </button>
-              ))}
-            </div>
-            {createError && <p className="mt-3 text-red-500 text-xs">{s.createError}</p>}
-          </form>
-
+          <div className="flex items-center gap-3 mb-9 w-full max-w-md">
+            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#cfc4ab]" />
+            <span className="text-[11px] font-semibold tracking-[0.22em] text-[#857a68] whitespace-nowrap">{T.hero.tagline}</span>
+            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#cfc4ab]" />
+          </div>
+          <HeroPromptInput onSubmit={(p) => createProject(p)} />
+          {createError && <p className="mt-3 text-red-500 text-xs">{s.createError}</p>}
+          <p className="mt-5 text-[12px] text-[#857a68]">{T.hero.promptHint}</p>
           {/* 스탯 */}
-          <div className="mt-8 flex items-center gap-6 text-[12px] text-[#857a68]">
+          <div className="mt-6 flex items-center gap-6 text-[12px] text-[#857a68]">
             <span><b className="text-[#241f17] text-[15px] mr-1">{projects.length}</b>프로젝트</span>
             <span className="w-px h-4 bg-[#ddd3bf]" />
             <span><b className="text-[#241f17] text-[15px] mr-1">{publishedCount}</b>게시됨</span>
