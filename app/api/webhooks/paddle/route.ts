@@ -3,6 +3,7 @@
 //   adjustment.created/updated (refund/chargeback, approved) → 환불 상태 + 크레딧 회수
 //   transaction.payment_failed / canceled → 상태 기록
 import { createAdminClient } from '@/lib/supabase/admin'
+import { logServerError } from '@/lib/log/server'
 import { verifyPaddleSignature } from '@/lib/paddle/verify'
 import { applyCompleted, applyRefund, normalizeTransaction } from '@/lib/paddle/sync'
 import { getCustomer, paddleConfigured, type PaddleTransaction } from '@/lib/paddle/api'
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
       let email: string | null = null
       if (tx.customer_id && paddleConfigured()) { try { email = (await getCustomer(tx.customer_id)).data.email ?? null } catch { /* 이메일은 부가 정보 */ } }
       const row = await applyCompleted(admin, tx, email)
-      if (!row.user_id || row.credits <= 0) console.error('[webhook/paddle] unmapped transaction', { txId: tx.id, userId: row.user_id, credits: row.credits })
+      if (!row.user_id || row.credits <= 0) { console.error('[webhook/paddle] unmapped transaction', { txId: tx.id, userId: row.user_id, credits: row.credits }); void logServerError('webhook', new Error('unmapped transaction'), { path: '/api/webhooks/paddle', level: 'warn', meta: { txId: tx.id, userId: row.user_id, credits: row.credits } }) }
       else console.log('[webhook/paddle] granted', { txId: tx.id, userId: row.user_id, credits: row.credits })
     } else if (type === 'transaction.updated' || type === 'transaction.paid' || type === 'transaction.billed') {
       // 완료 전/후 부가 정보 갱신 (이미 저장된 결제만)
@@ -68,6 +69,7 @@ export async function POST(req: Request) {
     return new Response('ok', { status: 200 })
   } catch (e) {
     console.error('[webhook/paddle] failed', type, e)
+    void logServerError('webhook', e, { path: '/api/webhooks/paddle', meta: { type, txId } })
     await finish(false, e instanceof Error ? e.message : String(e))
     return new Response('error', { status: 500 })
   }

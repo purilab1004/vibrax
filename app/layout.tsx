@@ -5,6 +5,7 @@ import './globals.css'
 import NavBar from '@/components/NavBar'
 import MobileNav from '@/components/MobileNav'
 import SiteFooter from '@/components/SiteFooter'
+import Telemetry from '@/components/Telemetry'
 import Sidebar, { type SidebarChannel } from '@/components/Sidebar'
 import { Suspense } from 'react'
 import { LangProvider } from '@/lib/i18n/context'
@@ -216,6 +217,7 @@ export default async function RootLayout({
           </Suspense>
           <main className="flex-1 md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">{children}</main>
           <SiteFooter />
+          <Telemetry />
           <MobileNav />
         </LangProvider>
       </body>

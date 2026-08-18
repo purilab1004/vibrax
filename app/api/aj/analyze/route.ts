@@ -3,6 +3,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { logServerError } from '@/lib/log/server'
 import { collectGameMetrics } from '@/lib/aj/metrics'
 import { logUsage } from '@/lib/llm/usage'
 

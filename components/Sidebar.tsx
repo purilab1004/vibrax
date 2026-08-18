@@ -279,6 +279,8 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
                 ['/admin/ads', 'AJ AdPilot', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 11v2a1 1 0 0 0 1 1h3l6 4V6L8 10H5a1 1 0 0 0-1 1Z" /><path d="M17 9a4 4 0 0 1 0 6" /></svg>],
                 ['/admin/payments', '결제 관리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></svg>],
                 ['/admin/costs', 'TokenPilot', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" /></svg>],
+                ['/admin/access', '접속 관리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 18V10M10 18V6M16 18v-4M22 18H2" /></svg>],
+                ['/admin/logs', '에러 로그', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 9v4M12 17h.01M10.3 4.3 2.7 18a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z" /></svg>],
                 ['/admin/settings', T.admin.navSettings, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></svg>],
               ] as [string, string, React.ReactNode][]).map(([href, label2, icon]) => {
                 const active = href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)

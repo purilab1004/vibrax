@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { logServerError } from '@/lib/log/server'
 import { GENERATION_COST } from '@/lib/studio/constants'
 import { SYSTEM_PROMPT, buildMessages, type ChatTurn } from '@/lib/studio/prompt'
 import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER } from '@/lib/studio/parse'
@@ -153,6 +154,7 @@ export async function POST(req: Request) {
   } catch (e) {
     await refund()
     console.error('[studio/generate]', e)
+    void logServerError('api', e, { path: '/api/studio/generate' })
     return new Response('generation failed', { status: 500 })
   }
 
@@ -216,6 +218,7 @@ export async function POST(req: Request) {
               }
             } catch (postErr) {
               console.error('[studio/generate] post-save step failed', postErr)
+              void logServerError('api', postErr, { path: '/api/studio/generate' })
             }
           }
         }
@@ -225,6 +228,7 @@ export async function POST(req: Request) {
           controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
         } else {
           console.error('[studio/generate] error after version persisted', err)
+          void logServerError('api', err, { path: '/api/studio/generate' })
         }
       }
       controller.close()
