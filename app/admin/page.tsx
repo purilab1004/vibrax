@@ -65,7 +65,7 @@ export default function AdminDashboardPage() {
         actions={<>
           <Link href="/admin/blog/new" className={btn.ghost}>새 글</Link>
           <Link href="/admin/notices" className={btn.ghost}>공지</Link>
-          <Link href="/aj" className={btn.primary}>AJ 랭킹</Link>
+          <Link href="/admin/aj" className={btn.primary}>AJ 랭킹</Link>
         </>} />
 
       {!stats ? <Skeleton rows={4} /> : (
@@ -103,7 +103,7 @@ export default function AdminDashboardPage() {
                     <p className="text-[13.5px] font-semibold text-[#241f17] truncate">{g.title}</p>
                     <p className="text-[12px] text-[#9d9280] truncate">{g.profiles?.agent_name ?? g.profiles?.username ?? 'unknown'} · {T.genres[g.genre]} · {rel(g.created_at)}</p>
                   </div>
-                  <span className="text-[12px] text-[#857a68] tabular-nums shrink-0">👁 {fmt(g.view_count ?? 0)}</span>
+                  <span className="text-[12px] text-[#857a68] tabular-nums shrink-0">조회 {fmt(g.view_count ?? 0)}</span>
                   <Link href={`/aj/${g.id}`} className="text-[11.5px] font-semibold text-[#2563eb] hover:underline shrink-0">AJ</Link>
                 </li>
               ))}
@@ -143,7 +143,7 @@ export default function AdminDashboardPage() {
                     <span className={`absolute top-1.5 left-1.5 text-[10px] font-extrabold rounded-full w-5 h-5 flex items-center justify-center ${i === 0 ? 'bg-[#f59e0b] text-white' : 'bg-white/90 text-[#241f17]'}`}>{i + 1}</span>
                   </div>
                   <p className="text-[13px] font-semibold text-[#241f17] truncate">{g.title}</p>
-                  <p className="text-[11.5px] text-[#9d9280]">👁 {fmt(g.view_count ?? 0)} · {T.genres[g.genre]}</p>
+                  <p className="text-[11.5px] text-[#9d9280]">조회 {fmt(g.view_count ?? 0)} · {T.genres[g.genre]}</p>
                 </Link>
               ))}
             </div>

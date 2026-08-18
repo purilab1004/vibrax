@@ -30,7 +30,7 @@ export default async function AjGamePage({ params }: { params: Promise<{ gameId:
   const creator = g.profiles?.agent_name ?? g.profiles?.username ?? 'unknown'
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
-      <Link href="/aj" className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest">← AJ RANKING</Link>
+      <Link href="/profile" className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest">← MY PAGE</Link>
       <div className="mt-4 flex items-center gap-4">
         <div className="relative w-24 h-16 rounded-lg overflow-hidden bg-gray-900 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}

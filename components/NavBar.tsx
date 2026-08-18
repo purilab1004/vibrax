@@ -257,7 +257,7 @@ export default function NavBar() {
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
                         <div className="absolute right-0 top-11 z-50 w-44 bg-white border border-[#ebe4d6] rounded-xl shadow-[0_10px_36px_rgba(36,31,23,0.14)] py-1.5 overflow-hidden">
-                          <Link href="/submit" className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#4a4337] hover:bg-[#2563eb]/5 hover:text-[#2563eb] transition-colors"><svg viewBox="0 0 24 24" className="w-4 h-4 text-[#9d9280]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>{lang === 'en' ? 'Submit' : '등록'}</Link>
+                          <Link href="/studio" className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#4a4337] hover:bg-[#2563eb]/5 hover:text-[#2563eb] transition-colors"><svg viewBox="0 0 24 24" className="w-4 h-4 text-[#9d9280]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>{lang === 'en' ? 'Submit' : '등록'}</Link>
                           <Link href="/profile" className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#4a4337] hover:bg-[#2563eb]/5 hover:text-[#2563eb] transition-colors"><svg viewBox="0 0 24 24" className="w-4 h-4 text-[#9d9280]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" /></svg>{lang === 'en' ? 'My Page' : '내 정보'}</Link>
                           {isAdmin && (
                             <Link href="/admin" className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#4a4337] hover:bg-[#2563eb]/5 hover:text-[#2563eb] transition-colors"><svg viewBox="0 0 24 24" className="w-4 h-4 text-[#9d9280]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></svg>{lang === 'en' ? 'Admin' : '관리자'}</Link>
@@ -369,7 +369,7 @@ export default function NavBar() {
             {navLinkMobile('/about', T.nav.about)}
             {user ? (
               <>
-                {navLinkMobile('/submit', T.nav.submit)}
+                {navLinkMobile('/studio', T.nav.submit)}
                 {navLinkMobile('/profile', T.nav.mypage)}
                 <button
                   onClick={handleSignOut}

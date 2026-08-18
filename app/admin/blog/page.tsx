@@ -52,7 +52,7 @@ export default function AdminBlogPage() {
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="제목 검색" className={`${input} max-w-xs`} />
           <div className="ml-auto"><Segmented value={filter} onChange={setFilter} options={[{ value: 'all', label: '전체' }, { value: 'published', label: a.published }, { value: 'draft', label: a.draft }]} /></div>
         </div>
-        {posts === null ? <Skeleton /> : list.length === 0 ? <EmptyState icon="📝" title={a.noPosts} action={<Link href="/admin/blog/new" className={btn.primary}>{a.newPost}</Link>} /> : (
+        {posts === null ? <Skeleton /> : list.length === 0 ? <EmptyState title={a.noPosts} action={<Link href="/admin/blog/new" className={btn.primary}>{a.newPost}</Link>} /> : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead><tr><th className={th}>글</th><th className={th}>카테고리</th><th className={th}>상태</th><th className={`${th} text-right`}>조회</th><th className={th}>작성일</th><th className={th} /></tr></thead>
@@ -65,7 +65,7 @@ export default function AdminBlogPage() {
                           {p.thumbnail_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={p.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                          ) : '📄'}
+                          ) : null}
                         </span>
                         <Link href={`/admin/blog/${p.id}`} className="font-semibold text-[#241f17] hover:text-[#2563eb] truncate max-w-[380px]">{p.title || '—'}</Link>
                       </div>

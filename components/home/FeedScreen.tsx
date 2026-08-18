@@ -16,6 +16,7 @@ import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
+import { countryFlag } from '@/lib/country'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
 export default function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; golden?: boolean; rank?: number }) {
@@ -105,7 +106,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
               <span className="font-pixel text-[10px] text-white">{creatorName.charAt(0).toUpperCase()}</span>
             )}
           </span></span>
-          {creatorName}
+          {creatorName}{countryFlag(game.country ?? game.profiles?.country) && <span className="ml-1">{countryFlag(game.country ?? game.profiles?.country)}</span>}
         </p>
         {/* 점멸 상태 라벨 */}
         <p className={`arcade-blink mt-3 font-pixel text-[14px] tracking-[0.3em] ${

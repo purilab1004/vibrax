@@ -17,6 +17,7 @@ import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
+import { countryFlag } from '@/lib/country'
 import LiveCard from '@/components/LiveCard'
 import { recordShare } from '@/lib/shares'
 
@@ -159,7 +160,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
               <span className="font-pixel text-sm text-white">{creatorName.charAt(0).toUpperCase()}</span>
             )}
           </span></span>
-          <span className="text-[11px] font-semibold text-[#6b6152] max-w-[72px] truncate">{creatorName}</span>
+          <span className="text-[11px] font-semibold text-[#6b6152] max-w-[72px] truncate">{countryFlag(game.country ?? game.profiles?.country) && <span className="mr-0.5">{countryFlag(game.country ?? game.profiles?.country)}</span>}{creatorName}</span>
         </div>
         {/* 좋아요 */}
         <div className="w-12 h-12 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.1)] flex items-center justify-center">

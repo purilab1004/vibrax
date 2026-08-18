@@ -39,7 +39,7 @@ export default function AjDashboard({ gameId, projectId, canRun, initialMetrics,
           <StatCard label="플레이 세션" value={m.sessions} sub={`플레이어 ${m.players}명 · 모바일 ${pct(m.mobileRate)}`} />
           <StatCard label="평균 체류" value={fmtDur(m.avgDurationSec)} sub={`중앙값 ${fmtDur(m.medianDurationSec)}`} />
           <StatCard label="30초 내 이탈" value={pct(m.under30sRate)} sub="초반 훅 지표 (낮을수록 좋음)" />
-          <StatCard label="코인 수익" value={`🪙 ${m.coinsPeriod}`} sub={`오늘 ${m.coinsToday} · 7일 ${m.coins7d}`} />
+          <StatCard label="코인 수익" value={`${m.coinsPeriod}`} sub={`오늘 ${m.coinsToday} · 7일 ${m.coins7d}`} />
           <StatCard label="평균 점수" value={m.avgScore ?? '-'} sub={m.telemetrySessions ? `텔레메트리 세션 ${m.telemetrySessions}` : '게임이 AJ.score 를 아직 안 보내요'} />
           <StatCard label="첫 게임오버까지" value={m.avgFirstOverSec != null ? fmtDur(m.avgFirstOverSec) : '-'} sub="난이도 지표" />
           <StatCard label="다시하기 비율" value={m.restartRate != null ? pct(m.restartRate) : '-'} sub="게임오버 후 계속한 비율" />
@@ -51,7 +51,6 @@ export default function AjDashboard({ gameId, projectId, canRun, initialMetrics,
 
       {!report ? (
         <div className="border border-dashed border-[#ddd3bf] rounded-2xl p-10 text-center bg-white/60">
-          <p className="text-3xl mb-2">🧠</p>
           <p className="text-[#241f17] font-semibold">아직 AJ 리포트가 없어요</p>
           <p className="text-[12px] text-[#857a68] mt-1">AJ가 지표·코드·프롬프트를 읽고 재미 점수, 이탈 구간, 업데이트 제안, 방송 대본, 수익 아이디어를 만들어 줍니다.</p>
         </div>
@@ -84,13 +83,13 @@ export default function AjDashboard({ gameId, projectId, canRun, initialMetrics,
           {/* 인사이트 + 제안 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <section className="rounded-2xl border border-[#ebe4d6] bg-white p-5">
-              <h3 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">🎮 PLAY AGENT · 재미 분석</h3>
+              <h3 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">PLAY AGENT · 재미 분석</h3>
               <ul className="space-y-3">
                 {(report.insights ?? []).map((it, i) => (<li key={i}><p className="text-[14px] font-semibold text-[#241f17]">{it.title}</p><p className="text-[13px] text-[#4a4337]">{it.body}</p><p className="text-[11px] text-[#9d9280] mt-0.5">근거: {it.evidence}</p></li>))}
               </ul>
             </section>
             <section className="rounded-2xl border border-[#ebe4d6] bg-white p-5">
-              <h3 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">🧠 GAME DESIGN AGENT · 업데이트 제안</h3>
+              <h3 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">GAME DESIGN AGENT · 업데이트 제안</h3>
               <ul className="space-y-3">
                 {(report.suggestions ?? []).map((sg, i) => (
                   <li key={i} className="rounded-xl border border-[#ebe4d6] p-3">
@@ -107,7 +106,7 @@ export default function AjDashboard({ gameId, projectId, canRun, initialMetrics,
           {/* 방송 + 수익 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <section className="rounded-2xl border border-[#ebe4d6] bg-white p-5">
-              <h3 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">🎙️ BJ AGENT + 📈 GROWTH AGENT</h3>
+              <h3 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">BJ AGENT + GROWTH AGENT</h3>
               <p className="text-[13px] text-[#241f17]"><b>오프닝:</b> {report.broadcast?.opening}</p>
               <ul className="mt-2 space-y-1">{(report.broadcast?.hooks ?? []).map((h, i) => <li key={i} className="text-[13px] text-[#4a4337]">• {h}</li>)}</ul>
               <p className="text-[12px] text-[#9d9280] mt-3 font-pixel tracking-widest">SHORTS SCRIPT</p>
@@ -116,7 +115,7 @@ export default function AjDashboard({ gameId, projectId, canRun, initialMetrics,
               <p className="text-[18px] font-black text-[#241f17]">{report.broadcast?.thumbnail_title}</p>
             </section>
             <section className="rounded-2xl border border-[#ebe4d6] bg-white p-5">
-              <h3 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">💰 MONETIZATION AGENT</h3>
+              <h3 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-3">MONETIZATION AGENT</h3>
               <ul className="space-y-2">{(report.monetization?.ideas ?? []).map((it, i) => (<li key={i}><p className="text-[14px] font-semibold text-[#241f17]">{it.title}</p><p className="text-[13px] text-[#4a4337]">{it.body}</p></li>))}</ul>
             </section>
           </div>

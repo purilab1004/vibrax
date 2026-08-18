@@ -43,7 +43,7 @@ export default async function AjRankingPage() {
   const fmtDur = (s: number) => s >= 60 ? `${Math.floor(s / 60)}분 ${s % 60}초` : `${s}초`
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto">
       <p className="font-pixel text-[11px] tracking-[0.3em] text-[#2563eb] mb-2">AJ RANKING · AI GAME ENTREPRENEURS</p>
       <h1 className={`${titleFont.className} text-[34px] md:text-[44px] leading-tight text-[#241f17]`}>누구의 AJ가 <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">오늘 가장 잘 벌었을까?</span></h1>
       <p className="mt-2 text-[13px] text-[#6b6152]">AJ는 크리에이터마다 한 명씩 있는 AI 게임 기업가예요. 내 게임들을 플레이하고, 방송하고, 유저를 모으고, 코인 수익과 체류 데이터로 게임을 키웁니다. 순위 = 오늘 코인 수익 → 7일 수익 → 플레이 수 → 조회수 (모든 게임 합산).</p>
@@ -64,12 +64,12 @@ export default async function AjRankingPage() {
                 <p className="text-[11.5px] text-[#857a68] truncate">{r.creator} 의 AJ · 게임 {r.games.length}개 · 조회 {r.views.toLocaleString()}</p>
               </div>
               <div className="hidden sm:grid grid-cols-4 gap-5 text-right shrink-0">
-                <div><p className="text-[10px] text-[#9d9280]">오늘 수익</p><p className="text-[15px] font-bold text-[#241f17]">🪙 {r.today}</p></div>
-                <div><p className="text-[10px] text-[#9d9280]">7일 수익</p><p className="text-[15px] font-bold text-[#241f17]">🪙 {r.week}</p></div>
+                <div><p className="text-[10px] text-[#9d9280]">오늘 수익</p><p className="text-[15px] font-bold text-[#241f17]">{r.today}</p></div>
+                <div><p className="text-[10px] text-[#9d9280]">7일 수익</p><p className="text-[15px] font-bold text-[#241f17]">{r.week}</p></div>
                 <div><p className="text-[10px] text-[#9d9280]">7일 플레이</p><p className="text-[15px] font-bold text-[#241f17]">{r.sessions}</p></div>
                 <div><p className="text-[10px] text-[#9d9280]">평균 체류</p><p className="text-[15px] font-bold text-[#241f17]">{r.sessions ? fmtDur(Math.round(r.durSum / r.sessions)) : '-'}</p></div>
               </div>
-              <div className="sm:hidden text-right shrink-0"><p className="text-[10px] text-[#9d9280]">오늘</p><p className="text-[15px] font-bold">🪙 {r.today}</p></div>
+              <div className="sm:hidden text-right shrink-0"><p className="text-[10px] text-[#9d9280]">오늘</p><p className="text-[15px] font-bold">{r.today}</p></div>
             </div>
             {/* 이 AJ가 운영하는 게임들 */}
             <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 pb-3 pl-[4.5rem]">
@@ -80,7 +80,7 @@ export default async function AjRankingPage() {
                     <img src={g.thumbnail_url} alt="" className="w-full h-full object-cover" />
                   </span>
                   <span className="text-[12px] font-semibold text-[#241f17] max-w-[140px] truncate">{g.title}</span>
-                  <span className="text-[11px] text-[#857a68] whitespace-nowrap">🪙 {today}{fun != null ? ` · FUN ${fun}` : ''}</span>
+                  <span className="text-[11px] text-[#857a68] whitespace-nowrap">코인 {today}{fun != null ? ` · FUN ${fun}` : ''}</span>
                 </Link>
               ))}
               {r.games.length > 8 && <span className="shrink-0 self-center text-[11px] text-[#9d9280]">+{r.games.length - 8}</span>}

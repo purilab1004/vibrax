@@ -112,6 +112,7 @@ export default function StudioPage() {
     })
   }, [])
 
+  const [chooser, setChooser] = useState(false) // 새 게임 추가 — 직접(프롬프트) vs 외부 링크/파일
   const createProject = async (initialPrompt?: string) => {
     if (creating) return
     setCreating(true)
@@ -213,7 +214,7 @@ export default function StudioPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {/* 첫 카드 — 새 게임 추가 (+) */}
             <button
-              onClick={() => createProject()}
+              onClick={() => setChooser(true)}
               disabled={creating}
               className="group relative rounded-2xl overflow-hidden border-2 border-dashed border-[#cfc4ab] bg-white/60 hover:border-[#2563eb] hover:bg-white transition-colors flex flex-col items-center justify-center gap-3 min-h-[280px] disabled:opacity-50"
             >
@@ -221,7 +222,7 @@ export default function StudioPage() {
                 <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
               </span>
               <span className="font-pixel text-[11px] text-[#241f17] tracking-widest">{creating ? '만드는 중…' : '새 게임 추가'}</span>
-              <span className="text-[12px] text-[#a1957f] px-6 text-center">빈 프로젝트를 만들고 프롬프트로 시작해요</span>
+              <span className="text-[12px] text-[#a1957f] px-6 text-center">프롬프트로 직접 만들거나, 외부 링크/파일로 등록해요</span>
             </button>
             {projects.filter((p) => {
               const q = query.trim().toLowerCase()
@@ -279,6 +280,27 @@ export default function StudioPage() {
             setTeasers(prev => ({ ...prev, [editing.id]: tz ?? null }))
           }}
         />
+      )}
+      {/* 새 게임 추가 — 방식 선택 */}
+      {chooser && (
+        <div className="fixed inset-0 z-[80] bg-[#241f17]/45 backdrop-blur-[2px] flex items-center justify-center p-4" onClick={() => setChooser(false)}>
+          <div className="w-full max-w-lg rounded-2xl bg-white border border-[#ebe4d6] shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+            <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest">새 게임 추가</p>
+            <h3 className="text-[20px] font-extrabold text-[#241f17] mt-1">어떻게 만들까요?</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+              <button onClick={() => { setChooser(false); createProject() }} disabled={creating} className="group text-left rounded-2xl border-2 border-[#2563eb]/30 bg-[#2563eb]/5 hover:border-[#2563eb] p-5 transition-colors disabled:opacity-50">
+                <span className="w-11 h-11 rounded-full bg-gradient-to-br from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center shadow-[0_6px_18px_rgba(37,99,235,0.35)]"><svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg></span>
+                <p className="mt-3 text-[15px] font-bold text-[#241f17]">직접 만들기</p>
+                <p className="text-[12.5px] text-[#6b6152] mt-1">프롬프트로 AI 스튜디오에서 바로 제작해요. 템플릿·수정·게시까지 한 번에.</p>
+              </button>
+              <a href="/submit" className="group text-left rounded-2xl border-2 border-[#e0d8c6] hover:border-[#2563eb] bg-white p-5 transition-colors">
+                <span className="w-11 h-11 rounded-full bg-white border border-[#ddd3bf] text-[#4a4337] flex items-center justify-center group-hover:border-[#2563eb] group-hover:text-[#2563eb] transition-colors"><svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" /></svg></span>
+                <p className="mt-3 text-[15px] font-bold text-[#241f17]">외부 링크 / 파일로 등록</p>
+                <p className="text-[12.5px] text-[#6b6152] mt-1">이미 만든 게임을 URL이나 HTML 파일로 등록해요 (기존 방식).</p>
+              </a>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

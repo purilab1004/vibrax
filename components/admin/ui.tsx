@@ -92,10 +92,10 @@ export function Segmented<T extends string | number>({ value, onChange, options 
   )
 }
 
-export function EmptyState({ icon = '🗂️', title, desc, action }: { icon?: string; title: string; desc?: string; action?: React.ReactNode }) {
+export function EmptyState({ icon, title, desc, action }: { icon?: string; title: string; desc?: string; action?: React.ReactNode }) {
   return (
     <div className="py-14 px-6 text-center">
-      <p className="text-3xl mb-2">{icon}</p>
+      {icon && <p className="text-3xl mb-2">{icon}</p>}
       <p className="text-[14px] font-semibold text-[#241f17]">{title}</p>
       {desc && <p className="text-[12.5px] text-[#857a68] mt-1">{desc}</p>}
       {action && <div className="mt-4 flex justify-center">{action}</div>}

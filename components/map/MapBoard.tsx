@@ -44,8 +44,8 @@ export default function MapBoard() {
   const maxCountry = Math.max(1, ...(filtered?.cs.slice(0, 10).map(c => c.total) ?? [1]))
 
   return (
-    <div className="min-h-[calc(100svh-3.5rem)] bg-[#070b17] text-white">
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 md:py-8 pb-24 md:pb-10">
+    <div className="rounded-3xl bg-[#070b17] text-white overflow-hidden">
+      <div className="px-4 md:px-8 py-6 md:py-8 pb-24 md:pb-10">
         {/* 헤더 */}
         <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
           <div>
@@ -101,7 +101,7 @@ export default function MapBoard() {
           {/* 사이드 패널 */}
           <div className="space-y-4">
             <section className="rounded-2xl bg-white/[0.06] border border-white/10 p-4">
-              <p className="text-[12px] font-bold text-white/80 mb-3">🔥 핫한 도시 TOP 10</p>
+              <p className="text-[12px] font-bold text-white/80 mb-3">핫한 도시 TOP 10</p>
               <ol className="space-y-2">
                 {(filtered?.pts ?? []).slice(0, 10).map((p, i) => (
                   <li key={p.key} onMouseEnter={() => setFocus(p.key)} onMouseLeave={() => setFocus(null)} className="cursor-default">
@@ -117,7 +117,7 @@ export default function MapBoard() {
               </ol>
             </section>
             <section className="rounded-2xl bg-white/[0.06] border border-white/10 p-4">
-              <p className="text-[12px] font-bold text-white/80 mb-3">🌍 국가별</p>
+              <p className="text-[12px] font-bold text-white/80 mb-3">국가별</p>
               <ol className="space-y-1.5">
                 {(filtered?.cs ?? []).slice(0, 10).map(c => (
                   <li key={c.code} className="flex items-center gap-2 text-[13px]">
@@ -131,7 +131,7 @@ export default function MapBoard() {
               </ol>
             </section>
             <section className="rounded-2xl bg-white/[0.06] border border-white/10 p-4">
-              <p className="text-[12px] font-bold text-white/80 mb-3">⚡ 실시간</p>
+              <p className="text-[12px] font-bold text-white/80 mb-3">실시간</p>
               <ul className="space-y-1.5 max-h-64 overflow-y-auto scrollbar-hide">
                 {(filtered?.recent ?? []).slice(0, 25).map((r, i) => (
                   <li key={i} className="flex items-center gap-2 text-[12.5px]">

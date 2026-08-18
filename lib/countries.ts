@@ -1,0 +1,28 @@
+// 국가 선택 목록 (프로필·게임 국가 설정 공용)
+export const COUNTRIES: { code: string; flag: string; name: string }[] = [
+  { code: 'KR', flag: '🇰🇷', name: '대한민국' },
+  { code: 'US', flag: '🇺🇸', name: 'United States' },
+  { code: 'JP', flag: '🇯🇵', name: 'Japan' },
+  { code: 'CN', flag: '🇨🇳', name: 'China' },
+  { code: 'TW', flag: '🇹🇼', name: 'Taiwan' },
+  { code: 'HK', flag: '🇭🇰', name: 'Hong Kong' },
+  { code: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
+  { code: 'DE', flag: '🇩🇪', name: 'Germany' },
+  { code: 'FR', flag: '🇫🇷', name: 'France' },
+  { code: 'ES', flag: '🇪🇸', name: 'Spain' },
+  { code: 'IT', flag: '🇮🇹', name: 'Italy' },
+  { code: 'NL', flag: '🇳🇱', name: 'Netherlands' },
+  { code: 'CA', flag: '🇨🇦', name: 'Canada' },
+  { code: 'AU', flag: '🇦🇺', name: 'Australia' },
+  { code: 'BR', flag: '🇧🇷', name: 'Brazil' },
+  { code: 'MX', flag: '🇲🇽', name: 'Mexico' },
+  { code: 'IN', flag: '🇮🇳', name: 'India' },
+  { code: 'ID', flag: '🇮🇩', name: 'Indonesia' },
+  { code: 'VN', flag: '🇻🇳', name: 'Vietnam' },
+  { code: 'TH', flag: '🇹🇭', name: 'Thailand' },
+  { code: 'PH', flag: '🇵🇭', name: 'Philippines' },
+  { code: 'SG', flag: '🇸🇬', name: 'Singapore' },
+  { code: 'TR', flag: '🇹🇷', name: 'Türkiye' },
+  { code: 'RU', flag: '🇷🇺', name: 'Russia' },
+]
+export const countryNameOf = (code?: string | null) => COUNTRIES.find(c => c.code === code)?.name ?? code ?? ''

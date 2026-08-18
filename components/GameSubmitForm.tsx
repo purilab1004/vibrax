@@ -1,5 +1,7 @@
 'use client'
 
+import { COUNTRIES } from '@/lib/countries'
+
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -23,6 +25,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
   const [description, setDescription] = useState('')
   const [genre, setGenre] = useState<Genre>('action')
   const [language, setLanguage] = useState('ko')
+  const [country, setCountry] = useState('')
   const [manualFile, setManualFile] = useState<File | null>(null)
   const [playUrl, setPlayUrl] = useState('')
   const [coinCost, setCoinCost] = useState(1)
@@ -85,6 +88,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
         genre,
         description: description.trim() || null,
         language,
+        country: country || null,
         game_manual: gameManual,
         play_url: playUrl,
         thumbnail_url: publicUrl,
@@ -152,6 +156,16 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
           {LANGUAGES.map(l => (
             <option key={l.value} value={l.value}>{l.label}</option>
           ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
+          게임 국가 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(선택 — 카드에 국기 표시)</span>
+        </label>
+        <select value={country} onChange={e => setCountry(e.target.value)} className={inputClass}>
+          <option value="">선택 안 함</option>
+          {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
         </select>
       </div>
 

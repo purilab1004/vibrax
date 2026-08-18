@@ -125,7 +125,7 @@ export default function AdminApplicationsPage() {
       {current === null ? (
         <Skeleton />
       ) : current.length === 0 ? (
-        <EmptyState icon="📮" title={a.noApplications} />
+        <EmptyState title={a.noApplications} />
       ) : tab === 'tournament' ? (
         <div className="overflow-x-auto">
           <table className="w-full">

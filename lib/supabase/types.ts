@@ -8,6 +8,7 @@ export interface Game {
   genre: Genre
   description?: string | null
   language?: string | null
+  country?: string | null   // 게임 국가 (ISO alpha-2) — 없으면 제작자 국가
   game_manual?: string | null
   play_url: string
   thumbnail_url: string

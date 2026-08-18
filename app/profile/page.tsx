@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import { COUNTRIES } from '@/lib/countries'
 import type { Game, Genre } from '@/lib/supabase/types'
 import { loadAvatarConfig, saveAvatarConfig, uploadPreview } from '@/lib/jeumto/storage'
 import { liveInfoOf } from '@/lib/broadcast'
@@ -19,32 +20,6 @@ const LANGUAGES = [
   { value: 'en', label: 'English' },
 ]
 
-const COUNTRIES: { code: string; flag: string; name: string }[] = [
-  { code: 'KR', flag: '🇰🇷', name: '대한민국' },
-  { code: 'US', flag: '🇺🇸', name: 'United States' },
-  { code: 'JP', flag: '🇯🇵', name: 'Japan' },
-  { code: 'CN', flag: '🇨🇳', name: 'China' },
-  { code: 'TW', flag: '🇹🇼', name: 'Taiwan' },
-  { code: 'HK', flag: '🇭🇰', name: 'Hong Kong' },
-  { code: 'GB', flag: '🇬🇧', name: 'United Kingdom' },
-  { code: 'DE', flag: '🇩🇪', name: 'Germany' },
-  { code: 'FR', flag: '🇫🇷', name: 'France' },
-  { code: 'ES', flag: '🇪🇸', name: 'Spain' },
-  { code: 'IT', flag: '🇮🇹', name: 'Italy' },
-  { code: 'NL', flag: '🇳🇱', name: 'Netherlands' },
-  { code: 'CA', flag: '🇨🇦', name: 'Canada' },
-  { code: 'AU', flag: '🇦🇺', name: 'Australia' },
-  { code: 'BR', flag: '🇧🇷', name: 'Brazil' },
-  { code: 'MX', flag: '🇲🇽', name: 'Mexico' },
-  { code: 'IN', flag: '🇮🇳', name: 'India' },
-  { code: 'ID', flag: '🇮🇩', name: 'Indonesia' },
-  { code: 'VN', flag: '🇻🇳', name: 'Vietnam' },
-  { code: 'TH', flag: '🇹🇭', name: 'Thailand' },
-  { code: 'PH', flag: '🇵🇭', name: 'Philippines' },
-  { code: 'SG', flag: '🇸🇬', name: 'Singapore' },
-  { code: 'TR', flag: '🇹🇷', name: 'Türkiye' },
-  { code: 'RU', flag: '🇷🇺', name: 'Russia' },
-]
 
 const GENRES: { value: Genre; label: string }[] = [
   { value: 'action', label: 'ACTION' },
@@ -66,6 +41,7 @@ interface EditingGame {
   genre: Genre
   description: string
   language: string
+  country: string
   game_manual: string
   play_url: string
   thumbnail_url: string
@@ -231,6 +207,7 @@ export default function ProfilePage() {
         genre: editingGame.genre,
         description: editingGame.description.trim() || null,
         language: editingGame.language || null,
+        country: editingGame.country || null,
         game_manual: gameManual,
         play_url: editingGame.play_url,
         thumbnail_url: thumbnailUrl,
@@ -238,7 +215,7 @@ export default function ProfilePage() {
       } as never).eq('id', editingGame.id)
 
       if (error) { flash(setGameMsg, '저장 실패: ' + error.message, false); return }
-      setGames(prev => prev.map(g => g.id === editingGame.id ? { ...g, title: editingGame.title, genre: editingGame.genre, description: editingGame.description.trim() || null, language: editingGame.language || null, game_manual: gameManual, play_url: editingGame.play_url, thumbnail_url: thumbnailUrl, teaser: editingGame.teaser.trim() || null } : g))
+      setGames(prev => prev.map(g => g.id === editingGame.id ? { ...g, title: editingGame.title, genre: editingGame.genre, description: editingGame.description.trim() || null, language: editingGame.language || null, country: editingGame.country || null, game_manual: gameManual, play_url: editingGame.play_url, thumbnail_url: thumbnailUrl, teaser: editingGame.teaser.trim() || null } : g))
       setEditingGame(null)
       flash(setGameMsg, '수정되었습니다.', true)
     })
@@ -264,7 +241,15 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10 space-y-12">
-      <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest">MY PAGE</h1>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h1 className="font-pixel text-[#2563eb] text-sm tracking-widest">MY PAGE</h1>
+        {/* 섹션 이동 탭 */}
+        <nav className="flex items-center gap-1 rounded-full bg-[#f1ece2] p-1 overflow-x-auto scrollbar-hide max-w-full" aria-label="my page sections">
+          {([['#profile', '프로필'], ['#password', '비밀번호'], ['#agent', '내 아바타·AJ'], ['#games', '내 게임'], ['#collections', '컬렉션']] as const).map(([h, l]) => (
+            <a key={h} href={h} className="h-8 px-3.5 rounded-full text-[12.5px] font-semibold text-[#6b6152] hover:bg-white hover:text-[#241f17] whitespace-nowrap transition-colors flex items-center">{l}</a>
+          ))}
+        </nav>
+      </div>
 
       {/* ── Profile ── */}
       <section id="profile" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6 space-y-6">
@@ -466,7 +451,7 @@ export default function ProfilePage() {
       </section>
 
       {/* ── My Games ── */}
-      <section>
+      <section id="games" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6">
         <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">MY GAMES <span className="text-[#2563eb]">({games.length})</span></h2>
           <div className="flex items-center gap-2">
@@ -482,7 +467,7 @@ export default function ProfilePage() {
             >
               {!!(user && (liveInfoOf(myAvatarConfig?.broadcast, user.id) || myAvatarConfig?.broadcasts?.some((b) => b.on))) ? '● ON AIR · 방송 추가/관리' : '📱 방송 추가'}
             </a>
-            <a href="/submit" className="font-pixel text-[11px] px-4 py-2 border border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">+ 게임 추가</a>
+            <a href="/studio" className="font-pixel text-[11px] px-4 py-2 border border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors tracking-widest">+ 게임 추가</a>
           </div>
         </div>
 
@@ -529,7 +514,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <a href={`/aj/${game.id}`} title="AJ 대시보드 — 지표·분석·업데이트 제안" className="font-pixel text-[11px] border border-[#2563eb]/40 text-[#2563eb] hover:bg-[#2563eb] hover:text-white px-3 py-1.5 transition-colors tracking-widest">AJ</a>
                     <button
-                      onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, teaser: game.teaser ?? '', newThumbnail: null, newManual: null })}
+                      onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', country: game.country ?? country ?? '', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, teaser: game.teaser ?? '', newThumbnail: null, newManual: null })}
                       className="font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] px-3 py-1.5 transition-colors tracking-widest"
                     >
                       EDIT
@@ -551,7 +536,7 @@ export default function ProfilePage() {
       </section>
 
       {/* ── 좋아요한 / 공유한 게임 ── */}
-      {user && <div className="mt-14"><MyCollections userId={user.id} /></div>}
+      {user && <section id="collections" className="scroll-mt-20 border border-[#ebe4d6] bg-[#ffffff] p-6"><MyCollections userId={user.id} /></section>}
 
       {/* ── Edit Game Modal ── */}
       {editingGame && (
@@ -605,6 +590,13 @@ export default function ProfilePage() {
                 <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">게임 언어</label>
                 <select className={inputClass} value={editingGame.language} onChange={e => setEditingGame(prev => prev ? { ...prev, language: e.target.value } : null)}>
                   {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block font-pixel text-[11px] text-[#857a68] tracking-widest mb-2">게임 국가</label>
+                <select className={inputClass} value={editingGame.country} onChange={e => setEditingGame(prev => prev ? { ...prev, country: e.target.value } : null)}>
+                  <option value="">선택 안 함</option>
+                  {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
                 </select>
               </div>
               <div>

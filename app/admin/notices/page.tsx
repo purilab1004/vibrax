@@ -73,7 +73,7 @@ export default function AdminNoticesPage() {
             <p className="text-[13px] font-bold text-[#241f17]">게시 옵션</p>
             <Toggle checked={published} onChange={setPublished} label={a.publishedLabel} />
             <Toggle checked={pinned} onChange={setPinned} label={a.pinnedLabel} />
-            <p className="text-[11.5px] text-[#9d9280]">고정 공지는 목록 맨 위에 📌 표시로 노출돼요.</p>
+            <p className="text-[11.5px] text-[#9d9280]">고정 공지는 목록 맨 위에 노출돼요.</p>
           </Card>
         </div>
       </div>
@@ -85,11 +85,11 @@ export default function AdminNoticesPage() {
       <PageHeader title={a.noticesHeading} desc="사이트 공지를 작성하고 고정·공개 여부를 바로 바꿀 수 있어요."
         actions={<button onClick={() => open('new')} className={btn.primary}>{a.newNotice}</button>} />
       <Card>
-        {notices === null ? <Skeleton /> : notices.length === 0 ? <EmptyState icon="📣" title="공지가 없어요" action={<button onClick={() => open('new')} className={btn.primary}>{a.newNotice}</button>} /> : (
+        {notices === null ? <Skeleton /> : notices.length === 0 ? <EmptyState title="공지가 없어요" action={<button onClick={() => open('new')} className={btn.primary}>{a.newNotice}</button>} /> : (
           <ul className="divide-y divide-[#f0eadf]">
             {notices.map(n => (
               <li key={n.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#faf8f3] transition-colors">
-                <button onClick={() => quickToggle(n, { pinned: !n.pinned })} title={a.pinnedLabel} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${n.pinned ? 'bg-[#2563eb]/10 text-[#2563eb]' : 'text-[#c4b9a2] hover:bg-[#f1ece2]'}`}>📌</button>
+                <button onClick={() => quickToggle(n, { pinned: !n.pinned })} title={a.pinnedLabel} className={`h-7 px-2 rounded-md text-[11px] font-semibold flex items-center justify-center transition-colors ${n.pinned ? 'bg-[#2563eb]/10 text-[#2563eb]' : 'text-[#c4b9a2] hover:bg-[#f1ece2]'}`}>고정</button>
                 <button onClick={() => open(n)} className="min-w-0 flex-1 text-left">
                   <p className={`text-[14px] font-semibold truncate ${n.published ? 'text-[#241f17]' : 'text-[#9d9280]'}`}>{n.title || '—'}</p>
                   <p className="text-[11.5px] text-[#9d9280]">{new Date(n.created_at).toLocaleDateString()} · 수정 {new Date(n.updated_at ?? n.created_at).toLocaleDateString()}</p>

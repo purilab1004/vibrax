@@ -133,7 +133,7 @@ export default function AdminPaymentsPage() {
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="이메일 · 회원 · 트랜잭션/인보이스 번호" className={`${input} max-w-sm`} />
           <div className="ml-auto"><Segmented value={filter} onChange={setFilter} options={[{ value: 'all', label: `전체 ${data.rows.length}` }, { value: 'completed', label: '완료' }, { value: 'pending', label: '환불 검토' }, { value: 'refunded', label: '환불/차지백' }]} /></div>
         </div>
-        {rows.length === 0 ? <EmptyState icon="💳" title="결제 내역이 없어요" desc="기간을 늘리거나 Paddle 동기화를 실행해 보세요." /> : (
+        {rows.length === 0 ? <EmptyState title="결제 내역이 없어요" desc="기간을 늘리거나 Paddle 동기화를 실행해 보세요." /> : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead><tr><th className={th}>일시</th><th className={th}>회원</th><th className={th}>상품</th><th className={`${th} text-right`}>금액</th><th className={th}>결제수단</th><th className={th}>상태</th><th className={th}>Paddle</th><th className={th} /></tr></thead>
