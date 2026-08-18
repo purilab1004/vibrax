@@ -53,7 +53,7 @@ export default function RoleManager({ onToast }: { onToast: (msg: string, kind?:
           <p className="text-[15px] font-bold text-[#241f17]">관리자 종류</p>
           <p className="text-[12px] text-[#857a68] mt-0.5">종류를 만들고 회원 관리에서 회원에게 배정하세요. 슈퍼관리자(puridev1155@gmail.com)는 항상 관리자예요.</p>
         </div>
-        <button onClick={() => setEditing({ ...empty })} className={btn.primary} disabled={missing}>＋ 종류 추가</button>
+        <button onClick={() => setEditing({ ...empty })} className={btn.primary + " shrink-0 whitespace-nowrap"} disabled={missing}>＋ 추가</button>
       </div>
       {missing && <p className="rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-[13px] px-4 py-3">테이블이 없어요. <code>db/migrations/2026-08-18-admin-roles.sql</code> 을 Supabase SQL Editor 에서 실행하세요.</p>}
       {roles === null ? <p className="text-[13px] text-[#857a68]">불러오는 중…</p> : (
