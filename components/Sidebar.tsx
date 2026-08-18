@@ -132,16 +132,22 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
     }
     return (
       <div className="hidden md:block fixed top-2 left-3 z-[60]">
-        <button
-          onClick={() => setOpen(true)}
-          aria-label="open menu"
-          className="sand-float sand-button flex items-center gap-2.5 h-9 px-3 text-[#241f17]"
-        >
-          <LogoMark className="w-6 h-6 shrink-0" />
-          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+        <div className="sand-float sand-button flex items-center h-9 text-[#241f17] overflow-hidden">
+          {/* 로고 = 홈(이미 홈이면 프롬프트 첫 화면으로) */}
+          <Link
+            href="/"
+            aria-label="home"
+            onClick={(e) => { if (pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) } }}
+            className="flex items-center h-full pl-3 pr-2 hover:opacity-80"
+          >
+            <LogoMark className="w-6 h-6 shrink-0" />
+          </Link>
+          <button onClick={() => setOpen(true)} aria-label="open menu" className="flex items-center h-full pl-1 pr-3 hover:text-[#2563eb]">
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
       </div>
     )
   }
@@ -153,7 +159,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
     >
       {/* 로고 헤더 — 로고 + ← 닫기 버튼 */}
       <div className="flex items-center h-14 shrink-0">
-        <Link href="/" className="flex items-center min-w-0 hover:opacity-80 transition-opacity" title="Vibrexcup">
+        <Link href="/" onClick={(e) => { if (pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) } }} className="flex items-center min-w-0 hover:opacity-80 transition-opacity" title="Vibrexcup">
           <span className={iconCol}><LogoMark /></span>
           <span className="text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap">
             vibrex<span className="text-[#2563eb]">cup</span>

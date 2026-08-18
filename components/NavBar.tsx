@@ -182,6 +182,7 @@ export default function NavBar() {
           {/* 데스크톱은 사이드바 상단에 로고가 있으므로 모바일에서만 표시 */}
           <Link
             href="/"
+            onClick={(e) => { if (pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) } }}
             className="md:hidden group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0"
           >
             <LogoMark />
@@ -318,7 +319,7 @@ export default function NavBar() {
         <div className="flex items-center justify-between px-6 h-14 border-b border-[#ebe4d6] shrink-0">
           <Link
             href="/"
-            onClick={() => setMenuOpen(false)}
+            onClick={(e) => { setMenuOpen(false); if (pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) } }}
             className="flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight"
           >
             <LogoMark />
