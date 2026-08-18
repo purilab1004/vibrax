@@ -131,6 +131,23 @@ export interface AdminMember {
   created_at: string
   balance: number
   games_count: number
+  admin_role_id?: string | null
+  admin_role_name?: string | null
+  admin_role_color?: string | null
+  last_sign_in_at?: string | null
+  avatar_url?: string | null
+}
+
+// admin_roles 테이블 — 관리자 종류
+export interface AdminRole {
+  id: string
+  name: string
+  color: string
+  description: string | null
+  permissions: Record<string, boolean>
+  is_system: boolean
+  sort_order: number
+  created_at: string
 }
 
 // admin_dashboard_stats() RPC 반환

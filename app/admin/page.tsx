@@ -6,6 +6,7 @@ import { useLang } from '@/lib/i18n/context'
 import type { DashboardStats } from '@/lib/supabase/types'
 import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
+import { PageHeader } from '@/components/admin/ui'
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -32,7 +33,7 @@ export default function AdminDashboardPage() {
   const daily = stats.daily
   return (
     <div>
-      <h1 className="font-pixel text-[#2563eb] text-base tracking-widest mb-8">{a.dashHeading}</h1>
+      <PageHeader title={a.dashHeading} desc="서비스 핵심 지표 · 최근 30일 추이" />
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <StatCard label={a.statMembers} value={t.members} />
         <StatCard label={a.statGames} value={t.games} />

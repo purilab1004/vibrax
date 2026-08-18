@@ -21,22 +21,18 @@ export default function AdminNav() {
   const active = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
   return (
-    <aside className="md:w-48 shrink-0">
-      <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible">
-        {items.map(([href, label]) => (
-          <Link
-            key={href}
-            href={href}
-            className={`font-pixel text-xs tracking-widest px-4 py-3 border transition-colors whitespace-nowrap ${
-              active(href)
-                ? 'border-[#2563eb] text-[#2563eb] bg-[#2563eb]/5'
-                : 'border-[#ebe4d6] text-[#6b6152] hover:border-[#cfc4ab] hover:text-[#241f17]'
-            }`}
-          >
-            {label}
-          </Link>
-        ))}
-      </nav>
-    </aside>
+    <nav className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-6 px-6 pb-1">
+      {items.map(([href, label]) => (
+        <Link
+          key={href}
+          href={href}
+          className={`text-[12.5px] font-semibold px-3.5 h-9 inline-flex items-center rounded-full whitespace-nowrap transition-colors ${
+            active(href) ? 'bg-[#241f17] text-white' : 'bg-white border border-[#ebe4d6] text-[#6b6152] hover:border-[#cfc4ab] hover:text-[#241f17]'
+          }`}
+        >
+          {label}
+        </Link>
+      ))}
+    </nav>
   )
 }
