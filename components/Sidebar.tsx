@@ -313,7 +313,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           })}
         </nav>
 
-        {!inStudio && !inProfile && !inAdmin && channels.length > 0 && (
+        {false && !inStudio && !inProfile && !inAdmin && channels.length > 0 && (
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (
@@ -349,7 +349,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           </>
         )}
 
-        {!inStudio && !inProfile && !inAdmin && tournament.length > 0 && (
+        {false && !inStudio && !inProfile && !inAdmin && tournament.length > 0 && (
           <>
             <div className="mt-2 mb-1 px-4 h-6 flex items-center">
               {open ? (
