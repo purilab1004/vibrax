@@ -54,7 +54,7 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
   if (cover && box) {
     const boxAspect = box.w / box.h
     // 유튜브는 재생 중 위(제목)/아래(공유·로고) 띠가 뜨므로 조금 더 키워(overscan) 그 부분을 카드 밖으로 잘라낸다
-    const over = isYT ? 1.28 : 1
+    const over = isYT ? 1.16 : 1
     const w = (boxAspect > aspect ? box.w : box.h * aspect) * over
     const h = (boxAspect > aspect ? box.w / aspect : box.h) * over
     style = { width: w, height: h, left: (box.w - w) / 2, top: (box.h - h) / 2, position: 'absolute' }
