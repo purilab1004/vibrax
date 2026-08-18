@@ -20,7 +20,7 @@ export default function MapBoard() {
   const [showCity, setShowCity] = useState(true)
   const [showCountry, setShowCountry] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const MAP_H = 640
+  const MAP_H = 720
   // 처음엔 한반도(가운데)가 보이도록 가로 스크롤을 중앙으로
   const data = state.days === days ? state.data : null
   useEffect(() => { const el = scrollRef.current; if (!el) return; const center = () => { el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2 }; center(); const t = setTimeout(center, 300); return () => clearTimeout(t) }, [data])

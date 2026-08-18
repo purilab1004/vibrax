@@ -13,9 +13,13 @@ const CENTER_LON = 127.8  // 한반도가 가운데
 const project = (lon: number, lat: number): [number, number] => [((((lon - CENTER_LON + 180) % 360) + 360) % 360 / 360) * W, ((90 - lat) / 180) * H]
 
 function ringPath(ring: Position[]) {
-  // 회전 투영으로 생긴 경계선(안티메리디안)을 넘는 구간은 서브패스를 끊는다
+  // 회전 투영: 경계선을 넘는 점은 ±W 로 풀어(unwrap) 연속된 폴리곤으로 그리고, 렌더 시 ±W 만큼 복제해 감싼다
   let d = ''; let px = NaN
-  ring.forEach((c, i) => { const [x, y] = project(c[0], c[1]); const jump = i > 0 && Math.abs(x - px) > W / 2; d += `${i === 0 || jump ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`; px = x })
+  ring.forEach((c, i) => {
+    let [x, y] = project(c[0], c[1])
+    if (i > 0) { if (x - px > W / 2) x -= W; else if (px - x > W / 2) x += W }
+    d += `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`; px = x
+  })
   return d + 'Z'
 }
 function geomPath(g: Geometry): string {
@@ -55,7 +59,7 @@ export default function WorldMap({ points, focus, onHover, cover = false, height
         {[-120, -60, 0, 60, 120].map(lon => <line key={lon} x1={project(lon, 0)[0]} x2={project(lon, 0)[0]} y1="0" y2={H} stroke="#1f2430" strokeOpacity="0.06" />)}
         {[-60, -30, 0, 30, 60].map(lat => <line key={lat} y1={project(0, lat)[1]} y2={project(0, lat)[1]} x1="0" x2={W} stroke="#1f2430" strokeOpacity="0.06" />)}
         {/* 육지 */}
-        <path d={landPath} fill="#d9dce2" stroke="#c3c8d1" strokeWidth="0.6" />
+        {[-W, 0, W].map(dx => <path key={dx} d={landPath} transform={`translate(${dx} 0)`} fill="#d9dce2" stroke="#c3c8d1" strokeWidth="0.6" />)}
         {/* 핫스팟 */}
         {[...points].sort((a, b) => b.total - a.total).map(p => {
           const [x, y] = project(p.lon, p.lat); const rad = r(p.total); const col = KIND_COLOR[dominant(p)]
