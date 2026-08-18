@@ -20,7 +20,8 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
     return () => document.documentElement.classList.remove('home-snap')
   }, [])
   return (
-    <div className="w-full">
+    // 데스크톱: 히어로 다음 한 화면짜리 스냅 섹션 안에 /games 와 똑같은 피드 박스(헤더 높이만큼 뺀 높이)를 둔다
+    <div className="w-full md:h-[100svh] md:pt-[3.75rem] md:box-border feed-snap">
       {/* 모바일 — 상단 알약 필터 */}
       <div className="md:hidden sticky top-2 z-40 mb-2 px-4 flex justify-center">
         <div className="inline-flex items-center gap-1 rounded-full bg-white/80 backdrop-blur-xl border border-[#ebe4d6] p-1 shadow-[0_4px_20px_rgba(36,31,23,0.08)]">
@@ -46,7 +47,7 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
           </nav>
         </aside>
         <div className="flex-1 min-w-0">
-          <GamesBrowse games={sorted} filter={filter} shuffleLives pageScroll />
+          <GamesBrowse games={sorted} filter={filter} shuffleLives />
         </div>
       </div>
     </div>

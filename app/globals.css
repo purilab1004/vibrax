@@ -750,5 +750,5 @@ body {
 /* 홈 데스크톱 — 페이지 스크롤로 한 장씩: 각 카드가 화면 높이만큼 차지하고 스냅 */
 @media (min-width: 768px) {
   html.home-snap { scroll-snap-type: y proximity; }
-  .md-page-feed > * { height: 100svh; scroll-snap-align: start; }
+  html.home-snap .feed-snap { scroll-snap-align: start; }
 }
