@@ -9,6 +9,7 @@ import StudioChat, { type ChatMsg } from '@/components/studio/StudioChat'
 import GamePreview from '@/components/studio/GamePreview'
 import PublishModal from '@/components/studio/PublishModal'
 import EditInfoModal from '@/components/studio/EditInfoModal'
+import StudyPanel from '@/components/studio/StudyPanel'
 import { parseGeneration, hasGenError, hasOffTopic } from '@/lib/studio/parse'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import type { StudioProject, StudioVersionMeta } from '@/lib/supabase/types'
@@ -31,6 +32,8 @@ export default function StudioComposerPage() {
   const [error, setError] = useState<string | null>(null)
   const [showPublish, setShowPublish] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [study, setStudy] = useState<'code' | 'scenario' | null>(null) // 학습 노트 패널
+  const [draftPrompt, setDraftPrompt] = useState<string | null>(null) // 학습 노트의 '다음 도전' → 채팅 입력에 채우기
   // 채팅 접기/펼치기 — 접으면 프리뷰가 전체를 쓴다
   const [chatCollapsed, setChatCollapsed] = useState(false)
   // 좌측 사이드바 — 최근 프로젝트 (클로드 스타일)
@@ -362,6 +365,8 @@ export default function StudioComposerPage() {
                   error={error}
                   onSend={send}
                   busy={streaming !== null}
+                  draft={draftPrompt}
+                  onDraftConsumed={() => setDraftPrompt(null)}
                 />
               </div>
             )}
@@ -385,11 +390,15 @@ export default function StudioComposerPage() {
                 onSelectVersion={loadVersionHtml}
                 onPublish={() => setShowPublish(true)}
                 busy={streaming !== null}
+                onStudy={(t) => setStudy(t)}
               />
             </div>
           </div>
         )}
       </div>
+      {study && html && currentVersionId && (
+        <StudyPanel versionId={currentVersionId} html={html} initialTab={study} onClose={() => setStudy(null)} onTryPrompt={(p) => setDraftPrompt(p)} />
+      )}
       {showPublish && (
         <PublishModal
           projectId={id}

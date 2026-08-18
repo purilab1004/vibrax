@@ -1,0 +1,67 @@
+// app/api/studio/explain/route.ts
+// 학습 노트 — 이 게임의 코드가 어떻게 짜였는지(코드 보기) / 프롬프트에서 어떤 시나리오가 나왔는지(시나리오 보기)를
+// 아이도 이해할 수 있게 설명. 버전별로 한 번만 생성해 studio_versions.notes 에 캐시(컬럼 없으면 매번 생성).
+import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@/lib/supabase/server'
+
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
+export interface StudyNotes {
+  code: { title: string; body: string; snippet?: string }[]      // 코드 구조 설명 (단계별)
+  scenario: { title: string; body: string }[]                     // 프롬프트 → 시나리오 (목표/규칙/조작/난이도/캐릭터)
+  glossary: { term: string; meaning: string }[]                   // 어린이용 용어 사전
+  challenge: string[]                                             // 다음에 해볼 것 (프롬프트 예시)
+}
+
+const SYSTEM = `너는 어린이(초등 고학년~중학생)에게 게임 만들기를 가르치는 친절한 선생님이야. 주어진 HTML5 게임 코드와, 그 게임을 만들 때 사용자가 쓴 프롬프트를 보고 학습 노트를 JSON 으로 만든다.
+반드시 JSON 만 출력. 스키마:
+{
+  "code": [ { "title": "…", "body": "쉬운 한국어 2~4문장", "snippet": "핵심 코드 5~12줄(선택)" } ],   // 5~7개: 화면 만들기, 그리기(canvas), 조작(키/터치), 게임 규칙·점수, 충돌/판정, 게임오버·재시작, 반응형 등 실제 코드 구조 순서대로
+  "scenario": [ { "title": "…", "body": "…" } ],   // 5~6개: 프롬프트가 무엇을 원했나, 게임 목표, 규칙, 조작 방법, 난이도/속도, 캐릭터·배경(왜 이렇게 정했는지)
+  "glossary": [ { "term": "…", "meaning": "…" } ], // 6~8개: canvas, requestAnimationFrame, 변수, 함수, 조건문, 충돌 판정, 이벤트 등 이 코드에 나오는 것 위주
+  "challenge": [ "…" ]                             // 3~4개: 아이가 다음에 시도해볼 수정 프롬프트 (예: "적을 두 배로 늘려줘")
+}
+snippet 은 코드에서 실제로 발췌한다. 어려운 말은 비유로 풀어 쓰고, 이모지는 제목에 하나 정도만.`
+
+export async function POST(req: Request) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 })
+  const body = await req.json().catch(() => null) as { versionId?: string } | null
+  const versionId = body?.versionId
+  if (!versionId) return Response.json({ error: 'bad request' }, { status: 400 })
+
+  // RLS: 내 프로젝트의 버전만 읽힌다
+  const { data: v } = await supabase.from('studio_versions').select('id, project_id, html, notes').eq('id', versionId).maybeSingle()
+  const ver = v as { id: string; project_id: string; html: string; notes?: StudyNotes | null } | null
+  if (!ver) return Response.json({ error: 'not found' }, { status: 404 })
+  if (ver.notes && Array.isArray(ver.notes.code)) return Response.json({ notes: ver.notes, cached: true })
+
+  // 이 버전을 만든 프롬프트 — 마지막 user 메시지들 (최근 3개)
+  const { data: msgs } = await supabase.from('studio_messages').select('role, content').eq('project_id', ver.project_id).order('created_at', { ascending: false }).limit(6)
+  const prompts = ((msgs ?? []) as { role: string; content: string }[]).filter((m) => m.role === 'user').slice(0, 3).reverse().map((m) => m.content)
+
+  const html = ver.html.length > 60_000 ? ver.html.slice(0, 60_000) + '\n<!-- …(생략) -->' : ver.html
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const res = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 4000,
+    system: SYSTEM,
+    messages: [{ role: 'user', content: `사용자 프롬프트(시간순):\n${prompts.map((p, i) => `${i + 1}. ${p}`).join('\n') || '(없음)'}\n\n게임 HTML:\n${html}` }],
+  })
+  const text = res.content.map((c) => (c.type === 'text' ? c.text : '')).join('')
+  const m = text.match(/\{[\s\S]*\}/)
+  if (!m) return Response.json({ error: 'no notes' }, { status: 502 })
+  let notes: StudyNotes
+  try { notes = JSON.parse(m[0]) } catch { return Response.json({ error: 'bad notes' }, { status: 502 }) }
+  const clean: StudyNotes = {
+    code: Array.isArray(notes.code) ? notes.code.slice(0, 8) : [],
+    scenario: Array.isArray(notes.scenario) ? notes.scenario.slice(0, 8) : [],
+    glossary: Array.isArray(notes.glossary) ? notes.glossary.slice(0, 10) : [],
+    challenge: Array.isArray(notes.challenge) ? notes.challenge.slice(0, 5) : [],
+  }
+  // 캐시 (notes 컬럼이 없으면 조용히 실패)
+  await supabase.from('studio_versions').update({ notes: clean } as never).eq('id', versionId)
+  return Response.json({ notes: clean, cached: false })
+}

@@ -10,7 +10,7 @@ export interface ChatMsg {
 }
 
 export default function StudioChat({
-  messages, streaming, usage, error, onSend, busy,
+  messages, streaming, usage, error, onSend, busy, draft, onDraftConsumed,
 }: {
   messages: ChatMsg[]
   streaming: { description: string; htmlBytes: number; codeTail: string } | null
@@ -18,8 +18,13 @@ export default function StudioChat({
   error: string | null
   onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[]) => void
   busy: boolean
+  /* 외부(학습 노트 '다음 도전')에서 입력창에 채워 넣을 문장 */
+  draft?: string | null
+  onDraftConsumed?: () => void
 }) {
   const [input, setInput] = useState('')
+  const [seenDraft, setSeenDraft] = useState<string | null>(null)
+  if (draft && draft !== seenDraft) { setSeenDraft(draft); setInput(draft); onDraftConsumed?.() }
   // 첨부 이미지 — 레퍼런스를 보여주면 AI가 보고 만든다 (최대 3장, 각 5MB)
   const [attachments, setAttachments] = useState<{ media_type: string; data: string; previewUrl: string }[]>([])
   const fileRef = useRef<HTMLInputElement>(null)

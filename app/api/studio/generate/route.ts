@@ -4,6 +4,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { GENERATION_COST } from '@/lib/studio/constants'
 import { SYSTEM_PROMPT, buildMessages, type ChatTurn } from '@/lib/studio/prompt'
 import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER } from '@/lib/studio/parse'
+import { matchTemplate, templateOnly, extrasOf } from '@/lib/studio/templates'
+import { hardenHtml } from '@/lib/studio/harden'
 
 export const maxDuration = 300
 
@@ -50,6 +52,52 @@ export async function POST(req: Request) {
     .from('studio_projects').select('id, title').eq('id', projectId).maybeSingle()
   if (!project) return new Response('not found', { status: 404 })
 
+  // 컨텍스트(최신 버전·대화) 먼저 — 첫 생성이면 템플릿(기본 셋팅 게임)을 1차로 확인한다
+  const [latestRes, historyRes] = await Promise.all([
+    supabase.from('studio_versions').select('html, version')
+      .eq('project_id', projectId).order('version', { ascending: false })
+      .limit(1).maybeSingle(),
+    supabase.from('studio_messages').select('role, content')
+      .eq('project_id', projectId).order('created_at', { ascending: true }),
+  ])
+  if (latestRes.error || historyRes.error) {
+    console.error('[studio/generate] context fetch failed', latestRes.error, historyRes.error)
+    return new Response('context fetch failed', { status: 500 })
+  }
+  const latest = latestRes.data as { html: string; version: number } | null
+  const history = (historyRes.data ?? []) as ChatTurn[]
+
+  // ── 템플릿 엔진: 첫 생성이고 알려진 장르면 ──
+  //   (a) 장르 이름뿐 → 템플릿을 그대로 1버전으로 저장 (LLM 호출·크레딧 없음)
+  //   (b) 추가 요구가 있으면 → 템플릿을 베이스 HTML 로 두고 "수정" 만 생성 (from-scratch 보다 저렴)
+  const tmatch = !latest && images.length === 0 ? matchTemplate(prompt) : null
+  let baseHtml: string | null = latest?.html ?? null
+  let effectivePrompt = prompt
+  let templateNote = ''
+  if (tmatch) {
+    if (templateOnly(prompt, tmatch.keyword)) {
+      const html = tmatch.template.html
+      const { error: vErr } = await supabase.from('studio_versions').insert([
+        { project_id: projectId, version: 1, html },
+      ] as never)
+      if (vErr) return new Response('save failed', { status: 500 })
+      const desc = `기본 셋팅된 「${tmatch.template.name}」을 불러왔어요 (크레딧 0). 이어서 "배경을 우주로", "속도를 더 빠르게" 처럼 말하면 그 위에 바꿔 드릴게요.`
+      await supabase.from('studio_messages').insert([
+        { project_id: projectId, role: 'user', content: prompt },
+        { project_id: projectId, role: 'assistant', content: desc },
+      ] as never)
+      const title = extractTitle(html)
+      if (title) await supabase.from('studio_projects').update({ title } as never).eq('id', projectId)
+      return new Response(`${desc}\n<game>${html}</game>\n[[USAGE:0:0]]\n[[TEMPLATE:${tmatch.template.slug}]]`, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      })
+    }
+    baseHtml = tmatch.template.html
+    const extras = extrasOf(prompt, tmatch.keyword)
+    effectivePrompt = `이 게임은 기본 「${tmatch.template.name}」 템플릿이야. 다음 요구를 반영해 수정한 전체 완성본을 만들어줘: ${extras || prompt}`
+    templateNote = `기본 「${tmatch.template.name}」 템플릿 위에 요청을 반영했어요. `
+  }
+
   // 크레딧 원자적 차감 — 실패 경로에서 이 ref로 환불 (관리자는 차감 없음)
   const spendRef = `gen:${projectId}:${crypto.randomUUID()}`
   if (!isAdminUser) {
@@ -78,21 +126,6 @@ export async function POST(req: Request) {
     if (error) console.error('[studio/generate] refund failed', error)
   }
 
-  const [latestRes, historyRes] = await Promise.all([
-    supabase.from('studio_versions').select('html, version')
-      .eq('project_id', projectId).order('version', { ascending: false })
-      .limit(1).maybeSingle(),
-    supabase.from('studio_messages').select('role, content')
-      .eq('project_id', projectId).order('created_at', { ascending: true }),
-  ])
-  if (latestRes.error || historyRes.error) {
-    console.error('[studio/generate] context fetch failed', latestRes.error, historyRes.error)
-    await refund()
-    return new Response('context fetch failed', { status: 500 })
-  }
-  const latest = latestRes.data as { html: string; version: number } | null
-  const history = (historyRes.data ?? []) as ChatTurn[]
-
   // 차감은 이미 성공했다 — 여기서 동기적으로 던지면(예: ANTHROPIC_API_KEY 누락)
   // 환불 없이 크레딧만 사라지므로 반드시 감싼다.
   let stream: ReturnType<Anthropic['messages']['stream']>
@@ -102,7 +135,7 @@ export async function POST(req: Request) {
       model: 'claude-sonnet-5',
       max_tokens: 64000,
       system: SYSTEM_PROMPT,
-      messages: buildMessages({ prompt, currentHtml: latest?.html ?? null, history, images }) as never,
+      messages: buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml, history, images }) as never,
     })
   } catch (e) {
     await refund()
@@ -116,6 +149,7 @@ export async function POST(req: Request) {
       let full = ''
       let versionPersisted = false
       try {
+        if (templateNote) { full += templateNote; controller.enqueue(encoder.encode(templateNote)) }
         for await (const chunk of stream) {
           if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
             full += chunk.delta.text
@@ -139,7 +173,7 @@ export async function POST(req: Request) {
         } else {
           const nextVersion = (latest?.version ?? 0) + 1
           const { error: vErr } = await supabase.from('studio_versions').insert([
-            { project_id: projectId, version: nextVersion, html: parsed.html },
+            { project_id: projectId, version: nextVersion, html: hardenHtml(parsed.html) },
           ] as never)
           if (vErr) {
             await refund()

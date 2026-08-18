@@ -23,7 +23,7 @@ const VIEWPORT_ICON: Record<Viewport, React.ReactNode> = {
 }
 
 export default function GamePreview({
-  html, versions, currentVersionId, onSelectVersion, onPublish, busy,
+  html, versions, currentVersionId, onSelectVersion, onPublish, busy, onStudy,
 }: {
   html: string | null
   versions: StudioVersionMeta[]
@@ -31,6 +31,7 @@ export default function GamePreview({
   onSelectVersion: (id: string) => void
   onPublish: () => void
   busy: boolean
+  onStudy?: (tab: 'code' | 'scenario') => void
 }) {
   const [frameKey, setFrameKey] = useState(0)
   const [viewport, setViewport] = useState<Viewport>('pc')
@@ -81,6 +82,13 @@ export default function GamePreview({
           ))}
         </div>
         <div className="flex-1" />
+        {/* 학습 노트 — 시나리오 / 코드 보기 */}
+        {onStudy && (
+          <div className="flex items-center gap-1">
+            <button onClick={() => onStudy('scenario')} disabled={!html || !currentVersionId} title="프롬프트가 어떻게 게임 시나리오가 됐는지" className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] rounded-full px-3 py-1.5 tracking-widest transition-colors disabled:opacity-40">📖 시나리오</button>
+            <button onClick={() => onStudy('code')} disabled={!html || !currentVersionId} title="코드가 어떻게 짜였는지" className="font-pixel text-[10px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] rounded-full px-3 py-1.5 tracking-widest transition-colors disabled:opacity-40">🧩 코드</button>
+          </div>
+        )}
         <button
           onClick={onPublish}
           disabled={!html || busy}
