@@ -17,6 +17,7 @@ export default function NavBar() {
   const [scrolled, setScrolled] = useState(false)
   const [vcoin, setVcoin] = useState<number | null>(null)
   const [hideMobile, setHideMobile] = useState(false)
+  const [pastHero, setPastHero] = useState(false) // 홈 — 프롬프트(히어로) 섹션을 지나면 /games 헤더처럼 검색바
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -40,6 +41,7 @@ export default function NavBar() {
     const onScroll = () => {
       setScrolled(window.scrollY > 8)
       setHideMobile(pathname === '/' && window.scrollY > window.innerHeight * 0.6)
+      setPastHero(pathname === '/' && window.scrollY > window.innerHeight * 0.6)
     }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -194,8 +196,8 @@ export default function NavBar() {
           {/* ── Desktop: 3분할 그리드 — 메뉴는 중앙, 로그인/언어는 우측 ── */}
           <div className="hidden md:grid flex-1 grid-cols-[1fr_auto_1fr] items-center">
             <div />
-            {pathname === '/games' ? (
-              /* /games — 유튜브식 중앙 검색바 */
+            {pathname === '/games' || pastHero ? (
+              /* /games (그리고 홈에서 히어로를 지난 뒤) — 유튜브식 중앙 검색바 */
               <form onSubmit={handleSearch} className="w-[min(620px,50vw)] translate-x-[4.625rem]">
                 <div className="flex items-center rounded-full border border-[#ddd3bf] bg-white/95 shadow-[0_2px_10px_rgba(36,31,23,0.06)] focus-within:border-[#2563eb] transition-colors overflow-hidden">
                   <input

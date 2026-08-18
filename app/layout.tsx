@@ -184,6 +184,10 @@ export default async function RootLayout({
   return (
     <html lang={lang} className={`${pressStart.variable} h-full`}>
       <head>
+        {/* 라이브 카드 유튜브 임베드 로딩 단축 */}
+        <link rel="preconnect" href="https://www.youtube.com" />
+        <link rel="preconnect" href="https://i.ytimg.com" />
+        <link rel="dns-prefetch" href="https://www.youtube.com" />
         {/* Google Tag Manager */}
         <script
           dangerouslySetInnerHTML={{

@@ -1,7 +1,7 @@
 'use client'
 // 방송 카드 — 게임 카드와 별개로 피드에 끼어드는 LIVE 카드. 영상이 크게 재생되고,
 // "코인 넣고 플레이"를 누르면 추천 게임 페이지로 간다.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -27,6 +27,16 @@ export default function LiveCard({ live, game: given, layout }: Props) {
   }, [given, live.gameId])
 
   const [coin, setCoin] = useState<'idle' | 'drop' | 'ready'>('idle')
+  // 플레이어(iframe/WebRTC)는 카드가 화면 근처(±1화면)에 올 때만 마운트 — 모바일에서 iframe 여러 개로 튕기는 것 방지 + 보이는 것부터 빨리 로드
+  const rootRef = useRef<HTMLDivElement>(null)
+  const [near, setNear] = useState(false)
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    const io = new IntersectionObserver((es) => setNear(es.some((e) => e.isIntersecting)), { rootMargin: '100% 0px 100% 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
   const go = () => router.push(`/games/${live.gameId}`)
   // 코인 투입 연출 → START → 게임 페이지 (실제 코인 차감은 게임 페이지의 기존 흐름에서)
   const insert = () => { if (coin !== 'idle') return; setCoin('drop'); setTimeout(() => setCoin('ready'), 900) }
@@ -36,7 +46,11 @@ export default function LiveCard({ live, game: given, layout }: Props) {
       {/* 영상 — 카드 가득 */}
       <div className="absolute inset-0 bg-black">
         {/* 모바일 /games 는 우상단에 검색 아이콘이 떠 있으니 스피커를 그 아래로 */}
-        <LiveView live={live} cover badge={false} controls controlsClass={layout === 'feed-mobile' ? 'top-16 right-3' : 'top-3 right-3'} />
+        {near ? (
+          <LiveView live={live} cover badge={false} controls controlsClass={layout === 'feed-mobile' ? 'top-16 right-3' : 'top-3 right-3'} />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-white/40 font-pixel text-[10px] tracking-widest">LIVE</div>
+        )}
       </div>
       {/* 상단 — 방송자 */}
       <div className="absolute top-3 left-3 right-3 flex items-center gap-2 pointer-events-none">
@@ -99,14 +113,14 @@ export default function LiveCard({ live, game: given, layout }: Props) {
   )
 
   if (layout === 'feed-mobile') {
-    return <div className="feed-snap relative h-[100svh] overflow-hidden bg-black">{inner}</div>
+    return <div ref={rootRef} className="feed-snap relative h-[100svh] overflow-hidden bg-black">{inner}</div>
   }
   if (layout === 'feed-desktop') {
     return (
-      <div className="h-full snap-start [scroll-snap-stop:always] flex items-center justify-center gap-5">
+      <div ref={rootRef} className="h-full snap-start [scroll-snap-stop:always] flex items-center justify-center gap-5">
         <div className="relative h-[96%] aspect-[9/15] rounded-2xl overflow-hidden shadow-[0_18px_60px_rgba(36,31,23,0.22)] bg-black">{inner}</div>
       </div>
     )
   }
-  return <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(36,31,23,0.18)] bg-black">{inner}</div>
+  return <div ref={rootRef} className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(36,31,23,0.18)] bg-black">{inner}</div>
 }
