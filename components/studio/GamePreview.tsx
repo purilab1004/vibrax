@@ -45,8 +45,9 @@ export default function GamePreview({
         <button
           onClick={() => setFrameKey(k => k + 1)}
           disabled={!html}
-          className="h-8 px-2.5 rounded-md text-[12px] font-semibold text-[#6b6152] hover:text-[#2563eb] hover:bg-[#2563eb]/8 transition-colors disabled:opacity-40"
+          className="h-8 px-2.5 rounded-md text-[12px] font-semibold text-[#6b6152] hover:text-[#2563eb] hover:bg-[#2563eb]/8 transition-colors disabled:opacity-40 flex items-center gap-1.5"
         >
+          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
           {s.refresh}
         </button>
         {versions.length > 0 && (
