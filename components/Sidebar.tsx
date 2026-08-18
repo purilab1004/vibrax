@@ -66,8 +66,9 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
 
   // 본문(main/footer) 여백을 사이드바 폭과 동기화 — 접힘: 플로팅 버튼만 남으므로 0
   useEffect(() => {
+    if (inAdmin) return  // 관리자는 AdminRail 이 --rail-w 를 관리
     document.documentElement.style.setProperty('--rail-w', open ? '14rem' : '0rem')
-  }, [open])
+  }, [open, inAdmin])
 
   useEffect(() => {
     if (!inStudio) return
@@ -116,6 +117,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   const label = `text-[13px] font-medium tracking-wider whitespace-nowrap pr-2 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`
 
   // 접힘 — 좌상단 플로팅 'Menu' 버튼만
+  if (inAdmin) return null  // 관리자는 다크 아이콘 레일(AdminRail) 사용
   if (!open) {
     // 스튜디오에서는 플로팅 메뉴 버튼도 숨긴다 — 자체 상단 바만 사용
     if (pathname.startsWith('/studio')) return null

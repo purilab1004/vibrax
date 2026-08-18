@@ -17,13 +17,13 @@ function Kpi({ label, value, series, accent = '#2563eb', href }: { label: string
   const prev7 = series ? series.slice(-14, -7).reduce((a, b) => a + b, 0) : null
   const delta = last7 != null && prev7 != null && last7 + prev7 >= 5 ? (prev7 > 0 ? Math.round(((last7 - prev7) / prev7) * 100) : last7 > 0 ? 100 : 0) : null
   const inner = (
-    <div className="rounded-2xl border border-[#ebe4d6] bg-white p-5 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)] h-full hover:border-[#cfc4ab] transition-colors">
+    <div className="rounded-lg border border-[#e3e6ec] bg-white px-4 py-3 h-full hover:border-[#c5cad4] transition-colors">
       <div className="flex items-center justify-between">
-        <p className="text-[12px] font-semibold text-[#857a68]">{label}</p>
-        {delta != null && <span className={`text-[11px] font-semibold rounded-full px-2 py-0.5 ${delta >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{delta >= 0 ? '+' : ''}{delta}%</span>}
+        <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[#6b7280]">{label}</p>
+        {delta != null && <span className={`text-[10.5px] font-semibold rounded px-1.5 py-0.5 ${delta >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{delta >= 0 ? '+' : ''}{delta}%</span>}
       </div>
-      <p className="text-[28px] leading-none font-extrabold tracking-tight mt-3" style={{ color: accent }}>{fmt(value)}</p>
-      {last7 != null && <p className="text-[11.5px] text-[#9d9280] mt-2">최근 7일 +{fmt(last7)}</p>}
+      <p className="text-[22px] leading-none font-bold tracking-tight mt-1.5" style={{ color: accent }}>{fmt(value)}</p>
+      {last7 != null && <p className="text-[11px] text-[#9aa1ad] mt-1.5">최근 7일 +{fmt(last7)}</p>}
     </div>
   )
   return href ? <Link href={href} className="block h-full">{inner}</Link> : inner
@@ -70,7 +70,7 @@ export default function AdminDashboardPage() {
 
       {!stats ? <Skeleton rows={4} /> : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 mb-3">
             <Kpi label={a.statMembers} value={t!.members} series={daily.map(d => d.signups)} href="/admin/members" />
             <Kpi label={a.statGames} value={t!.games} series={daily.map(d => d.games)} accent="#059669" href="/admin/games" />
             <Kpi label={a.statViews} value={t!.game_views} accent="#7c3aed" />
@@ -78,7 +78,7 @@ export default function AdminDashboardPage() {
             <Kpi label={a.statPurchased} value={t!.credits_purchased} accent="#f59e0b" />
             <Kpi label={a.statSpent} value={t!.credits_spent} accent="#e11d48" />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2 mb-3">
             <TrendChart label={a.chartSignups} sub={a.last30} values={daily.map(d => d.signups)} labels={labels} />
             <TrendChart label={a.chartGames} sub={a.last30} values={daily.map(d => d.games)} labels={labels} color="#059669" />
             <TrendChart label={a.chartGenerations} sub={a.last30} values={daily.map(d => d.generations)} labels={labels} color="#0891b2" />
@@ -87,23 +87,23 @@ export default function AdminDashboardPage() {
         </>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
         {/* 최근 등록 게임 */}
         <Card className="xl:col-span-2 overflow-hidden">
           <SectionTitle right={<Link href="/admin/games" className="hover:text-[#2563eb]">전체 보기 →</Link>}>최근 등록 게임</SectionTitle>
-          {recentGames === null ? <Skeleton rows={4} /> : recentGames.length === 0 ? <p className="p-6 text-[13px] text-[#857a68]">아직 게임이 없어요.</p> : (
-            <ul className="divide-y divide-[#f0eadf]">
+          {recentGames === null ? <Skeleton rows={4} /> : recentGames.length === 0 ? <p className="p-6 text-[13px] text-[#6b7280]">아직 게임이 없어요.</p> : (
+            <ul className="divide-y divide-[#eef0f4]">
               {recentGames.map(g => (
-                <li key={g.id} className="flex items-center gap-3 px-5 py-3 hover:bg-[#faf8f3] transition-colors">
+                <li key={g.id} className="flex items-center gap-3 px-5 py-3 hover:bg-[#f7f8fa] transition-colors">
                   <span className="relative w-16 h-10 rounded-md overflow-hidden bg-gray-900 shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={g.thumbnail_url} alt="" className="w-full h-full object-cover" />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13.5px] font-semibold text-[#241f17] truncate">{g.title}</p>
-                    <p className="text-[12px] text-[#9d9280] truncate">{g.profiles?.agent_name ?? g.profiles?.username ?? 'unknown'} · {T.genres[g.genre]} · {rel(g.created_at)}</p>
+                    <p className="text-[13.5px] font-semibold text-[#1f2430] truncate">{g.title}</p>
+                    <p className="text-[12px] text-[#9aa1ad] truncate">{g.profiles?.agent_name ?? g.profiles?.username ?? 'unknown'} · {T.genres[g.genre]} · {rel(g.created_at)}</p>
                   </div>
-                  <span className="text-[12px] text-[#857a68] tabular-nums shrink-0">조회 {fmt(g.view_count ?? 0)}</span>
+                  <span className="text-[12px] text-[#6b7280] tabular-nums shrink-0">조회 {fmt(g.view_count ?? 0)}</span>
                   <Link href={`/aj/${g.id}`} className="text-[11.5px] font-semibold text-[#2563eb] hover:underline shrink-0">AJ</Link>
                 </li>
               ))}
@@ -115,15 +115,15 @@ export default function AdminDashboardPage() {
         <Card className="overflow-hidden">
           <SectionTitle right={<Link href="/admin/members" className="hover:text-[#2563eb]">전체 보기 →</Link>}>최근 가입 회원</SectionTitle>
           {recentMembers === null ? <Skeleton rows={4} /> : (
-            <ul className="divide-y divide-[#f0eadf]">
+            <ul className="divide-y divide-[#eef0f4]">
               {recentMembers.map(m => (
                 <li key={m.id} className="flex items-center gap-3 px-5 py-3">
                   <Avatar url={m.avatar_url} name={m.username || m.email} size={32} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-[#241f17] truncate">{m.username}</p>
-                    <p className="text-[11.5px] text-[#9d9280] truncate">{m.email}</p>
+                    <p className="text-[13px] font-semibold text-[#1f2430] truncate">{m.username}</p>
+                    <p className="text-[11.5px] text-[#9aa1ad] truncate">{m.email}</p>
                   </div>
-                  {m.role === 'admin' ? <Badge color={m.admin_role_color ?? '#2563eb'}>{m.admin_role_name ?? a.roleAdmin}</Badge> : <span className="text-[11px] text-[#9d9280]">{rel(m.created_at)}</span>}
+                  {m.role === 'admin' ? <Badge color={m.admin_role_color ?? '#2563eb'}>{m.admin_role_name ?? a.roleAdmin}</Badge> : <span className="text-[11px] text-[#9aa1ad]">{rel(m.created_at)}</span>}
                 </li>
               ))}
             </ul>
@@ -136,14 +136,14 @@ export default function AdminDashboardPage() {
           {topGames === null ? <Skeleton rows={3} /> : (
             <div className="grid grid-cols-2 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-[#f0eadf]">
               {topGames.map((g, i) => (
-                <Link key={g.id} href={`/games/${g.id}`} className="p-4 hover:bg-[#faf8f3] transition-colors">
+                <Link key={g.id} href={`/games/${g.id}`} className="p-4 hover:bg-[#f7f8fa] transition-colors">
                   <div className="relative rounded-lg overflow-hidden aspect-video bg-gray-900 mb-2">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={g.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                    <span className={`absolute top-1.5 left-1.5 text-[10px] font-extrabold rounded-full w-5 h-5 flex items-center justify-center ${i === 0 ? 'bg-[#f59e0b] text-white' : 'bg-white/90 text-[#241f17]'}`}>{i + 1}</span>
+                    <span className={`absolute top-1.5 left-1.5 text-[10px] font-extrabold rounded-full w-5 h-5 flex items-center justify-center ${i === 0 ? 'bg-[#f59e0b] text-white' : 'bg-white/90 text-[#1f2430]'}`}>{i + 1}</span>
                   </div>
-                  <p className="text-[13px] font-semibold text-[#241f17] truncate">{g.title}</p>
-                  <p className="text-[11.5px] text-[#9d9280]">조회 {fmt(g.view_count ?? 0)} · {T.genres[g.genre]}</p>
+                  <p className="text-[13px] font-semibold text-[#1f2430] truncate">{g.title}</p>
+                  <p className="text-[11.5px] text-[#9aa1ad]">조회 {fmt(g.view_count ?? 0)} · {T.genres[g.genre]}</p>
                 </Link>
               ))}
             </div>

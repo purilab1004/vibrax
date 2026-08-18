@@ -119,7 +119,7 @@ export default function AdminApplicationsPage() {
           { value: 'tournament', label: <>{a.tabTournament} <span className="opacity-60 ml-1">{tournament?.length ?? '…'}</span></> },
           { value: 'partner', label: <>{a.tabPartner} <span className="opacity-60 ml-1">{partner?.length ?? '…'}</span></> },
         ]} />
-        {current !== null && <span className="text-[12.5px] text-[#857a68]">{a.totalCount(current.length)}</span>}
+        {current !== null && <span className="text-[12.5px] text-[#6b7280]">{a.totalCount(current.length)}</span>}
       </div>
       <Card>
       {current === null ? (
@@ -139,19 +139,19 @@ export default function AdminApplicationsPage() {
                 <th className={th}>{a.colApplied}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f0eadf]">
+            <tbody className="divide-y divide-[#eef0f4]">
               {(tournament ?? []).map(t => (
                 <tr key={t.id} className={trHover}>
                   <td className={`${td}`}>
                     <Badge color={DIVISION_COLOR[t.division] ?? '#857a68'}>{DIVISION_LABEL[t.division]?.[lang] ?? t.division}</Badge>
                   </td>
-                  <td className={`${td} text-[#241f17]`}>{t.name}</td>
+                  <td className={`${td} text-[#1f2430]`}>{t.name}</td>
                   <td className={`${td}`}>
-                    <a href={`mailto:${t.email}`} className="text-[#6b6152] hover:text-[#2563eb] transition-colors">{t.email}</a>
+                    <a href={`mailto:${t.email}`} className="text-[#6b7280] hover:text-[#2563eb] transition-colors">{t.email}</a>
                   </td>
-                  <td className={`${td} text-[#6b6152]`}>{affiliation(t)}</td>
-                  <td className="px-4 py-3 text-[#857a68] max-w-[280px] truncate" title={t.note ?? ''}>{t.note || '-'}</td>
-                  <td className={`${td} text-[#857a68] whitespace-nowrap`}>{new Date(t.created_at).toLocaleDateString()}</td>
+                  <td className={`${td} text-[#6b7280]`}>{affiliation(t)}</td>
+                  <td className="px-4 py-3 text-[#6b7280] max-w-[280px] truncate" title={t.note ?? ''}>{t.note || '-'}</td>
+                  <td className={`${td} text-[#6b7280] whitespace-nowrap`}>{new Date(t.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -171,26 +171,26 @@ export default function AdminApplicationsPage() {
                 <th className={th}>{a.colApplied}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f0eadf]">
+            <tbody className="divide-y divide-[#eef0f4]">
               {(partner ?? []).map(p => (
                 <tr key={p.id} className={trHover}>
                   <td className={`${td}`}>
                     <Badge color="#4b5563">{ORG_TYPE_LABEL[p.org_type]?.[lang] ?? p.org_type}</Badge>
                   </td>
-                  <td className={`${td} text-[#241f17]`}>{p.org_name}</td>
-                  <td className={`${td} text-[#6b6152]`}>{p.contact_name}</td>
+                  <td className={`${td} text-[#1f2430]`}>{p.org_name}</td>
+                  <td className={`${td} text-[#6b7280]`}>{p.contact_name}</td>
                   <td className={`${td}`}>
-                    <a href={`mailto:${p.email}`} className="text-[#6b6152] hover:text-[#2563eb] transition-colors">{p.email}</a>
+                    <a href={`mailto:${p.email}`} className="text-[#6b7280] hover:text-[#2563eb] transition-colors">{p.email}</a>
                   </td>
                   <td className={`${td}`}>
                     {p.website ? (
-                      <a href={p.website.startsWith('http') ? p.website : `https://${p.website}`} target="_blank" rel="noreferrer" className="text-[#6b6152] hover:text-[#2563eb] transition-colors max-w-[180px] truncate inline-block align-bottom">
+                      <a href={p.website.startsWith('http') ? p.website : `https://${p.website}`} target="_blank" rel="noreferrer" className="text-[#6b7280] hover:text-[#2563eb] transition-colors max-w-[180px] truncate inline-block align-bottom">
                         {p.website}
                       </a>
                     ) : '-'}
                   </td>
-                  <td className="px-4 py-3 text-[#857a68] max-w-[280px] truncate" title={p.message ?? ''}>{p.message || '-'}</td>
-                  <td className={`${td} text-[#857a68] whitespace-nowrap`}>{new Date(p.created_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-[#6b7280] max-w-[280px] truncate" title={p.message ?? ''}>{p.message || '-'}</td>
+                  <td className={`${td} text-[#6b7280] whitespace-nowrap`}>{new Date(p.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>

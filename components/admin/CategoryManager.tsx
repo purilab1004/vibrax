@@ -41,11 +41,11 @@ export default function CategoryManager({ onChanged }: { onChanged?: () => void 
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3 flex-wrap">
-        <p className="text-[13px] font-bold text-[#241f17] mr-1">{a.categories}</p>
+        <p className="text-[13px] font-bold text-[#1f2430] mr-1">{a.categories}</p>
         {cats.map(c => (
-          <span key={c.id} className="inline-flex items-center gap-1.5 rounded-full border border-[#ebe4d6] bg-[#faf8f3] pl-3 pr-1.5 h-8 text-[12.5px] font-medium text-[#4a4337]">
+          <span key={c.id} className="inline-flex items-center gap-1.5 rounded-full border border-[#e3e6ec] bg-[#f7f8fa] pl-3 pr-1.5 h-8 text-[12.5px] font-medium text-[#374151]">
             {c.name}
-            <button onClick={() => remove(c.id)} className="w-5 h-5 rounded-full text-[#9d9280] hover:bg-[#e11d48] hover:text-white text-[11px] transition-colors" aria-label="삭제">✕</button>
+            <button onClick={() => remove(c.id)} className="w-5 h-5 rounded-full text-[#9aa1ad] hover:bg-[#e11d48] hover:text-white text-[11px] transition-colors" aria-label="삭제">✕</button>
           </span>
         ))}
         <form onSubmit={add} className="flex gap-2 ml-auto">

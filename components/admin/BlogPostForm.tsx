@@ -100,29 +100,29 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
         </>} />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 items-start">
         <Card className="p-5 space-y-4">
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder={a.postTitle} className="w-full text-[22px] font-extrabold tracking-tight text-[#241f17] placeholder-[#c4b9a2] outline-none bg-transparent border-b border-[#ebe4d6] focus:border-[#2563eb] pb-2 transition-colors" />
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder={a.postTitle} className="w-full text-[22px] font-extrabold tracking-tight text-[#1f2430] placeholder-[#c4b9a2] outline-none bg-transparent border-b border-[#e3e6ec] focus:border-[#2563eb] pb-2 transition-colors" />
           <RichTextEditor value={content} onChange={setContent} onUploadImage={f => uploadBlogImage(supabase, f)} />
         </Card>
         <div className="space-y-4">
           <Card className="p-5 space-y-4">
-            <p className="text-[13px] font-bold text-[#241f17]">게시 설정</p>
+            <p className="text-[13px] font-bold text-[#1f2430]">게시 설정</p>
             <div><label className={labelCls}>{a.postCategory}</label>
               <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className={input}>
                 <option value="">{a.noCategory}</option>
                 {cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select></div>
             <div><label className={labelCls}>{a.postThumb}</label>
-              <label className="block cursor-pointer rounded-xl border border-dashed border-[#cfc4ab] hover:border-[#2563eb] bg-[#faf8f3] overflow-hidden transition-colors">
+              <label className="block cursor-pointer rounded-xl border border-dashed border-[#cfc4ab] hover:border-[#2563eb] bg-[#f7f8fa] overflow-hidden transition-colors">
                 {thumbnailUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={thumbnailUrl} alt="" className="w-full aspect-video object-cover" />
-                ) : <div className="aspect-video flex flex-col items-center justify-center text-[#9d9280] text-[12.5px]"><span className="text-2xl mb-1">🖼</span>클릭해서 업로드</div>}
+                ) : <div className="aspect-video flex flex-col items-center justify-center text-[#9aa1ad] text-[12.5px]"><span className="text-2xl mb-1">🖼</span>클릭해서 업로드</div>}
                 <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={uploadThumb} className="hidden" />
               </label>
-              {thumbnailUrl && <button onClick={() => setThumbnailUrl(null)} className="mt-1.5 text-[11.5px] text-[#9d9280] hover:text-[#e11d48]">썸네일 제거</button>}
+              {thumbnailUrl && <button onClick={() => setThumbnailUrl(null)} className="mt-1.5 text-[11.5px] text-[#9aa1ad] hover:text-[#e11d48]">썸네일 제거</button>}
             </div>
           </Card>
-          {postId && <Card className="p-5 text-[12px] text-[#857a68]"><p>글 ID · <span className="font-mono text-[11px]">{postId}</span></p>{published && <a href={`/blog/${postId}`} target="_blank" rel="noreferrer" className="inline-block mt-2 text-[#2563eb] hover:underline">공개 페이지 보기 →</a>}</Card>}
+          {postId && <Card className="p-5 text-[12px] text-[#6b7280]"><p>글 ID · <span className="font-mono text-[11px]">{postId}</span></p>{published && <a href={`/blog/${postId}`} target="_blank" rel="noreferrer" className="inline-block mt-2 text-[#2563eb] hover:underline">공개 페이지 보기 →</a>}</Card>}
         </div>
       </div>
       <Toast msg={msg === 'saved' ? a.saved : msg === 'failed' ? a.saveFailed : null} kind={msg === 'failed' ? 'err' : 'ok'} />

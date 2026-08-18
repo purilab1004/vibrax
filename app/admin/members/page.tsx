@@ -41,7 +41,7 @@ export default function AdminMembersPage() {
     const r = await fetch('/api/admin/roles'); const j = await r.json()
     if (r.ok) setRoles(j.roles); else if (j.missing) setRolesMissing(true)
   }, [])
-  useEffect(() => { const t = setTimeout(() => { load(); loadRoles() }, 0); return () => clearTimeout(t) }, [load, loadRoles])
+  useEffect(() => { const t = setTimeout(() => { const q = new URLSearchParams(window.location.search).get('q'); if (q) { setQuery(q); load(q) } else load(); loadRoles() }, 0); return () => clearTimeout(t) }, [load, loadRoles])
 
   const api = async (method: 'POST' | 'PATCH' | 'DELETE', body: unknown) => {
     setBusy(true)
@@ -84,7 +84,7 @@ export default function AdminMembersPage() {
 
   const roleColorOf = (m: AdminMember) => m.admin_role_color ?? '#2563eb'
   const chip = (f: Filter, text: string, n: number) => (
-    <button key={f} onClick={() => setFilter(f)} className={`h-8 px-3 rounded-full text-[12px] font-semibold transition-colors ${filter === f ? 'bg-[#241f17] text-white' : 'bg-white border border-[#ebe4d6] text-[#6b6152] hover:border-[#cfc4ab]'}`}>{text} <span className="opacity-60">{n}</span></button>
+    <button key={f} onClick={() => setFilter(f)} className={`h-7 px-2.5 rounded text-[12px] font-semibold transition-colors ${filter === f ? 'bg-[#eef2ff] text-[#2563eb]' : 'text-[#6b7280] hover:text-[#1f2430]'}`}>{text} <span className="opacity-60">{n}</span></button>
   )
 
   return (
@@ -92,7 +92,7 @@ export default function AdminMembersPage() {
       <PageHeader title={a.membersHeading} desc="회원을 검색하고 관리자 종류를 배정하거나, 정지·삭제할 수 있어요."
         actions={<button onClick={() => setAdding(true)} className={btn.primary}>회원 추가</button>} />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
         <StatCard label="전체 회원" value={stats.total} />
         <StatCard label="관리자" value={stats.admins} accent="#e11d48" />
         <StatCard label="정지" value={stats.banned} accent="#857a68" />
@@ -102,24 +102,24 @@ export default function AdminMembersPage() {
       {rolesMissing && <p className="mb-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-[13px] px-4 py-3">관리자 종류 테이블이 아직 없어요. <code>db/migrations/2026-08-18-admin-roles.sql</code> 을 Supabase SQL Editor 에서 실행하세요.</p>}
 
       <Card>
-        <div className="flex items-center gap-3 flex-wrap p-4 border-b border-[#ebe4d6]">
+        <div className="flex items-center gap-3 flex-wrap p-3 border-b border-[#e3e6ec]">
           <form onSubmit={e => { e.preventDefault(); load(query.trim() || undefined) }} className="relative flex-1 min-w-[220px] max-w-sm">
             <svg viewBox="0 0 24 24" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a1957f]" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
             <input value={query} onChange={e => setQuery(e.target.value)} placeholder={a.searchMembers} className={`${input} pl-9`} />
           </form>
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="inline-flex items-center rounded-md border border-[#d9dde5] bg-white p-0.5 gap-0.5">
             {chip('all', '전체', stats.total)}{chip('admin', '관리자', stats.admins)}{chip('banned', '정지', stats.banned)}{chip('new', '신규', stats.fresh)}
           </div>
         </div>
         {members === null ? (
-          <p className="p-8 text-[13px] text-[#857a68]">{a.loading}</p>
+          <p className="p-8 text-[13px] text-[#6b7280]">{a.loading}</p>
         ) : list.length === 0 ? (
-          <p className="p-10 text-center text-[13px] text-[#857a68]">회원이 없어요.</p>
+          <p className="p-10 text-center text-[13px] text-[#6b7280]">회원이 없어요.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
-                <tr className="text-[11.5px] font-semibold text-[#857a68] bg-[#faf8f3]">
+                <tr className="text-[11.5px] font-semibold text-[#6b7280] bg-[#f7f8fa]">
                   <th className="text-left px-4 py-2.5">{a.colMember}</th>
                   <th className="text-left px-4 py-2.5">{a.colRole}</th>
                   <th className="text-left px-4 py-2.5">{a.colJoined}</th>
@@ -129,39 +129,39 @@ export default function AdminMembersPage() {
                   <th className="px-4 py-2.5" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#f0eadf]">
+              <tbody className="divide-y divide-[#eef0f4]">
                 {list.map(m => {
                   const isSuper = SUPER.includes(m.email)
                   return (
-                    <tr key={m.id} className={`hover:bg-[#faf8f3] transition-colors ${m.banned_at ? 'opacity-55' : ''}`}>
+                    <tr key={m.id} className={`hover:bg-[#f7f8fa] transition-colors ${m.banned_at ? 'opacity-55' : ''}`}>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <Avatar url={m.avatar_url} name={m.username || m.email} />
                           <div className="min-w-0">
-                            <p className="font-semibold text-[#241f17] truncate">{m.username}{m.agent_name ? <span className="text-[#9d9280] font-normal"> · {m.agent_name}</span> : null}{isSuper && <span className="ml-1.5 text-[10px] font-bold text-[#e11d48] align-middle">SUPER</span>}</p>
-                            <p className="text-[12px] text-[#9d9280] truncate">{m.email}</p>
+                            <p className="font-semibold text-[#1f2430] truncate">{m.username}{m.agent_name ? <span className="text-[#9aa1ad] font-normal"> · {m.agent_name}</span> : null}{isSuper && <span className="ml-1.5 text-[10px] font-bold text-[#e11d48] align-middle">SUPER</span>}</p>
+                            <p className="text-[12px] text-[#9aa1ad] truncate">{m.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          {m.role === 'admin' ? <Badge color={roleColorOf(m)}>{m.admin_role_name ?? a.roleAdmin}</Badge> : <span className="text-[12px] text-[#9d9280]">{a.roleUser}</span>}
+                          {m.role === 'admin' ? <Badge color={roleColorOf(m)}>{m.admin_role_name ?? a.roleAdmin}</Badge> : <span className="text-[12px] text-[#9aa1ad]">{a.roleUser}</span>}
                           {m.banned_at && <Badge color="#857a68">{a.bannedTag}</Badge>}
                           <select
                             value={m.admin_role_id ?? ''}
                             disabled={busy || isSuper}
                             onChange={e => api('PATCH', { userId: m.id, adminRoleId: e.target.value || null }).then(ok => ok && say('관리자 종류를 변경했어요.'))}
-                            className="h-7 rounded-md border border-[#ebe4d6] bg-white text-[11.5px] text-[#4a4337] px-1.5 outline-none focus:border-[#2563eb] disabled:opacity-50"
+                            className="h-7 rounded-md border border-[#e3e6ec] bg-white text-[11.5px] text-[#374151] px-1.5 outline-none focus:border-[#2563eb] disabled:opacity-50"
                             title="관리자 종류 배정">
                             <option value="">일반 회원</option>
                             {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                           </select>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-[#857a68] whitespace-nowrap">{new Date(m.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 text-[#857a68] whitespace-nowrap">{m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleDateString() : '-'}</td>
+                      <td className="px-4 py-3 text-[#6b7280] whitespace-nowrap">{new Date(m.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-[#6b7280] whitespace-nowrap">{m.last_sign_in_at ? new Date(m.last_sign_in_at).toLocaleDateString() : '-'}</td>
                       <td className="px-4 py-3 text-right font-semibold text-[#2563eb] tabular-nums">{m.balance.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right text-[#6b6152] tabular-nums">{m.games_count}</td>
+                      <td className="px-4 py-3 text-right text-[#6b7280] tabular-nums">{m.games_count}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1.5 justify-end">
                           <button onClick={() => setAdjusting(m)} className={btn.ghost + ' !h-8 !px-2.5'} title={a.adjustCredits}>±</button>
@@ -171,7 +171,7 @@ export default function AdminMembersPage() {
                             </button>
                           )}
                           {!isSuper && (
-                            <button onClick={() => { setDeleting(m); setConfirmText('') }} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#ebe4d6] text-[12.5px] font-medium text-[#857a68] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">삭제</button>
+                            <button onClick={() => { setDeleting(m); setConfirmText('') }} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] font-medium text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">삭제</button>
                           )}
                         </div>
                       </td>
@@ -194,14 +194,14 @@ export default function AdminMembersPage() {
             <select value={form.roleId} onChange={e => setForm({ ...form, roleId: e.target.value })} className={input}>
               <option value="">일반 회원</option>{roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select></div>
-          <p className="text-[12px] text-[#9d9280]">이메일 인증 없이 바로 로그인 가능한 계정이 만들어져요. 비밀번호를 본인에게 전달하세요.</p>
+          <p className="text-[12px] text-[#9aa1ad]">이메일 인증 없이 바로 로그인 가능한 계정이 만들어져요. 비밀번호를 본인에게 전달하세요.</p>
           <div className="flex justify-end gap-2 pt-1"><button onClick={() => setAdding(false)} className={btn.ghost}>취소</button><button onClick={addMember} disabled={busy || !form.email || form.password.length < 6} className={btn.primary}>추가</button></div>
         </div>
       </Modal>
 
       {/* 크레딧 조정 */}
       <Modal open={!!adjusting} onClose={() => setAdjusting(null)} title={a.adjustCredits}>
-        <p className="text-[13px] text-[#857a68] mb-4">{adjusting?.email}</p>
+        <p className="text-[13px] text-[#6b7280] mb-4">{adjusting?.email}</p>
         <div className="space-y-3">
           <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder={a.adjustAmount} className={input} autoFocus />
           <input value={note} onChange={e => setNote(e.target.value)} placeholder={a.adjustNote} className={input} />
@@ -211,8 +211,8 @@ export default function AdminMembersPage() {
 
       {/* 삭제 확인 */}
       <Modal open={!!deleting} onClose={() => setDeleting(null)} title="회원 삭제">
-        <p className="text-[13.5px] text-[#241f17]"><b>{deleting?.username}</b> ({deleting?.email}) 계정과 게임·스튜디오·크레딧 기록이 <b className="text-[#e11d48]">모두 영구 삭제</b>돼요. 되돌릴 수 없어요.</p>
-        <p className="text-[12.5px] text-[#857a68] mt-3 mb-1.5">확인을 위해 이메일을 그대로 입력하세요.</p>
+        <p className="text-[13.5px] text-[#1f2430]"><b>{deleting?.username}</b> ({deleting?.email}) 계정과 게임·스튜디오·크레딧 기록이 <b className="text-[#e11d48]">모두 영구 삭제</b>돼요. 되돌릴 수 없어요.</p>
+        <p className="text-[12.5px] text-[#6b7280] mt-3 mb-1.5">확인을 위해 이메일을 그대로 입력하세요.</p>
         <input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder={deleting?.email} className={input} autoFocus />
         <div className="flex justify-end gap-2 pt-4"><button onClick={() => setDeleting(null)} className={btn.ghost}>취소</button><button onClick={deleteMember} disabled={busy || confirmText !== deleting?.email} className={btn.danger}>영구 삭제</button></div>
       </Modal>

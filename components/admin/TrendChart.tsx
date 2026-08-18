@@ -29,11 +29,11 @@ export default function TrendChart({ label, sub, values, labels, color = '#2563e
   const hv = hover != null ? values[hover] : null
 
   return (
-    <div className="rounded-2xl border border-[#ebe4d6] bg-white p-5 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]">
+    <div className="rounded-lg border border-[#e3e6ec] bg-white px-4 py-3">
       <div className="flex items-start justify-between mb-2 gap-3">
         <div>
-          <p className="text-[12px] font-semibold text-[#857a68]">{label}</p>
-          <p className="text-[22px] font-extrabold tracking-tight text-[#241f17] mt-0.5">{hv != null ? format(hv) : format(total)}<span className="text-[11px] font-medium text-[#9d9280] ml-1.5">{hv != null && labels?.[hover!] ? labels[hover!] : sub}</span></p>
+          <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[#6b7280]">{label}</p>
+          <p className="text-[20px] font-bold tracking-tight text-[#1f2430] mt-0.5">{hv != null ? format(hv) : format(total)}<span className="text-[11px] font-medium text-[#9aa1ad] ml-1.5">{hv != null && labels?.[hover!] ? labels[hover!] : sub}</span></p>
         </div>
         {n >= 14 && last7 + prev7 >= 5 && (
           <span className={`text-[11.5px] font-semibold rounded-full px-2 py-0.5 ${delta >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}% <span className="font-normal opacity-70">7일</span></span>

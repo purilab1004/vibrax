@@ -70,10 +70,10 @@ export default function AdminNoticesPage() {
             <div><label className={labelCls}>내용</label><RichTextEditor value={content} onChange={setContent} onUploadImage={f => uploadBlogImage(supabase, f)} /></div>
           </Card>
           <Card className="p-5 space-y-4">
-            <p className="text-[13px] font-bold text-[#241f17]">게시 옵션</p>
+            <p className="text-[13px] font-bold text-[#1f2430]">게시 옵션</p>
             <Toggle checked={published} onChange={setPublished} label={a.publishedLabel} />
             <Toggle checked={pinned} onChange={setPinned} label={a.pinnedLabel} />
-            <p className="text-[11.5px] text-[#9d9280]">고정 공지는 목록 맨 위에 노출돼요.</p>
+            <p className="text-[11.5px] text-[#9aa1ad]">고정 공지는 목록 맨 위에 노출돼요.</p>
           </Card>
         </div>
       </div>
@@ -86,18 +86,18 @@ export default function AdminNoticesPage() {
         actions={<button onClick={() => open('new')} className={btn.primary}>{a.newNotice}</button>} />
       <Card>
         {notices === null ? <Skeleton /> : notices.length === 0 ? <EmptyState title="공지가 없어요" action={<button onClick={() => open('new')} className={btn.primary}>{a.newNotice}</button>} /> : (
-          <ul className="divide-y divide-[#f0eadf]">
+          <ul className="divide-y divide-[#eef0f4]">
             {notices.map(n => (
-              <li key={n.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#faf8f3] transition-colors">
-                <button onClick={() => quickToggle(n, { pinned: !n.pinned })} title={a.pinnedLabel} className={`h-7 px-2 rounded-md text-[11px] font-semibold flex items-center justify-center transition-colors ${n.pinned ? 'bg-[#2563eb]/10 text-[#2563eb]' : 'text-[#c4b9a2] hover:bg-[#f1ece2]'}`}>고정</button>
+              <li key={n.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#f7f8fa] transition-colors">
+                <button onClick={() => quickToggle(n, { pinned: !n.pinned })} title={a.pinnedLabel} className={`h-7 px-2 rounded-md text-[11px] font-semibold flex items-center justify-center transition-colors ${n.pinned ? 'bg-[#2563eb]/10 text-[#2563eb]' : 'text-[#c4b9a2] hover:bg-[#eef0f4]'}`}>고정</button>
                 <button onClick={() => open(n)} className="min-w-0 flex-1 text-left">
-                  <p className={`text-[14px] font-semibold truncate ${n.published ? 'text-[#241f17]' : 'text-[#9d9280]'}`}>{n.title || '—'}</p>
-                  <p className="text-[11.5px] text-[#9d9280]">{new Date(n.created_at).toLocaleDateString()} · 수정 {new Date(n.updated_at ?? n.created_at).toLocaleDateString()}</p>
+                  <p className={`text-[14px] font-semibold truncate ${n.published ? 'text-[#1f2430]' : 'text-[#9aa1ad]'}`}>{n.title || '—'}</p>
+                  <p className="text-[11.5px] text-[#9aa1ad]">{new Date(n.created_at).toLocaleDateString()} · 수정 {new Date(n.updated_at ?? n.created_at).toLocaleDateString()}</p>
                 </button>
                 {n.published ? <Badge color="#059669">공개</Badge> : <Badge color="#857a68">비공개</Badge>}
                 <Toggle checked={n.published} onChange={v => quickToggle(n, { published: v })} />
                 <button onClick={() => open(n)} className={btn.ghost + ' !h-8 !px-2.5'}>{a.edit}</button>
-                <button onClick={() => setDeleting(n)} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#ebe4d6] text-[12.5px] font-medium text-[#857a68] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">{a.delete}</button>
+                <button onClick={() => setDeleting(n)} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] font-medium text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">{a.delete}</button>
               </li>
             ))}
           </ul>

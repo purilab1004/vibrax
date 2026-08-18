@@ -133,36 +133,31 @@ export default function NavBar() {
   // 관리자 — 큰 메뉴 없이 로고 + 관리자 홈 + 복귀/로그아웃만 있는 미니 헤더 (Notion풍)
   if (pathname.startsWith('/admin')) {
     return (
-      <header className="sticky top-0 z-50 border-b border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">
-        <nav className="w-full px-5 h-14 flex items-center gap-5">
-          {/* 데스크톱은 사이드바 상단에 로고가 있으므로 모바일에서만 표시 */}
-          <Link href="/admin" className="md:hidden group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
-            <LogoMark />
+      <header className="sticky top-0 z-50 border-b border-[#e3e6ec] bg-white md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">
+        <nav className="w-full px-4 h-12 flex items-center gap-4">
+          {/* 좌: 워드마크 + 관리자 검색 */}
+          <Link href="/admin" className="flex items-center gap-2 text-[#1f2430] text-[15px] font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
+            <span className="md:hidden"><LogoMark /></span>
             <span>vibrex<span className="text-[#2563eb]">admin</span></span>
           </Link>
+          <form onSubmit={(e) => { e.preventDefault(); const q = (new FormData(e.currentTarget).get('q') as string).trim(); if (q) router.push(`/admin/members?q=${encodeURIComponent(q)}`) }} className="hidden sm:flex items-center h-8 w-64 rounded-md border border-[#d9dde5] bg-[#f7f8fa] px-2.5 gap-2 focus-within:border-[#2563eb] focus-within:bg-white transition-colors">
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-[#9aa1ad]" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            <input name="q" placeholder="회원 · 이메일 검색" className="flex-1 bg-transparent text-[12.5px] outline-none placeholder-[#9aa1ad] text-[#1f2430]" />
+          </form>
           <div className="flex-1" />
-          <span className="hidden md:inline text-[15px] font-extrabold tracking-tight text-[#241f17] mr-2">vibrex<span className="text-[#2563eb]">admin</span></span>
-          <Link
-            href="/admin"
-            className={`text-[13px] font-medium transition-colors hover:text-[#2563eb] ${
-              pathname === '/admin' ? 'text-[#2563eb]' : 'text-[#4a4337]'
-            }`}
-          >
-            {T.nav.adminHome}
-          </Link>
-          <Link href="/" className="text-[13px] font-medium text-[#6b6152] hover:text-[#241f17] transition-colors">
+          <Link href="/" className="hidden sm:inline-flex items-center h-8 px-3 rounded-md border border-[#d9dde5] bg-white text-[12.5px] font-medium text-[#1f2430] hover:bg-[#f3f5f8] transition-colors">
             {T.nav.backToSite}
           </Link>
           {user && (
-            <button
-              onClick={handleSignOut}
-              className="text-[13px] font-medium text-[#6b6152] hover:text-[#2563eb] transition-colors"
-            >
+            <button onClick={handleSignOut} className="inline-flex items-center h-8 px-3 rounded-md text-[12.5px] font-medium text-[#6b7280] hover:text-[#1f2430] hover:bg-[#f3f5f8] transition-colors">
               {T.nav.logout}
             </button>
           )}
-          <div className="flex items-center gap-1 border-l border-[#ebe4d6] pl-4">
-            <LangSwitch />
+          <div className="flex items-center gap-2 border-l border-[#e3e6ec] pl-3">
+            <div className="inline-flex items-center rounded-md border border-[#d9dde5] p-0.5">
+              {(['ko', 'en'] as const).map(l => <button key={l} onClick={() => setLang(l)} className={`h-6 px-2 rounded text-[11px] font-bold ${lang === l ? 'bg-[#eef2ff] text-[#2563eb]' : 'text-[#6b7280] hover:text-[#1f2430]'}`}>{l.toUpperCase()}</button>)}
+            </div>
+            {user && <span className="hidden sm:inline-flex items-center gap-2 h-8 pl-1 pr-2.5 rounded-md border border-[#d9dde5] text-[12.5px] font-semibold text-[#1f2430]"><span className="w-6 h-6 rounded-md bg-[#2563eb] text-white flex items-center justify-center text-[11px] font-bold">{(user.email ?? 'A').charAt(0).toUpperCase()}</span>{user.email?.split('@')[0]}</span>}
           </div>
         </nav>
       </header>

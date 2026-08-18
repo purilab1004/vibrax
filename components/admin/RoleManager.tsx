@@ -48,25 +48,25 @@ export default function RoleManager({ onToast }: { onToast: (msg: string, kind?:
 
   return (
     <Card className="p-5">
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="flex items-center justify-between gap-2 mb-3">
         <div>
-          <p className="text-[15px] font-bold text-[#241f17]">관리자 종류</p>
-          <p className="text-[12px] text-[#857a68] mt-0.5">종류를 만들고 회원 관리에서 회원에게 배정하세요. 슈퍼관리자(puridev1155@gmail.com)는 항상 관리자예요.</p>
+          <p className="text-[15px] font-bold text-[#1f2430]">관리자 종류</p>
+          <p className="text-[12px] text-[#6b7280] mt-0.5">종류를 만들고 회원 관리에서 회원에게 배정하세요. 슈퍼관리자(puridev1155@gmail.com)는 항상 관리자예요.</p>
         </div>
         <button onClick={() => setEditing({ ...empty })} className={btn.primary + " shrink-0 whitespace-nowrap"} disabled={missing}>추가</button>
       </div>
       {missing && <p className="rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-[13px] px-4 py-3">테이블이 없어요. <code>db/migrations/2026-08-18-admin-roles.sql</code> 을 Supabase SQL Editor 에서 실행하세요.</p>}
-      {roles === null ? <p className="text-[13px] text-[#857a68]">불러오는 중…</p> : (
-        <ul className="divide-y divide-[#f0eadf]">
+      {roles === null ? <p className="text-[13px] text-[#6b7280]">불러오는 중…</p> : (
+        <ul className="divide-y divide-[#eef0f4]">
           {roles.map(r => (
             <li key={r.id} className="flex items-center gap-3 py-3">
               <span className="w-3 h-3 rounded-full shrink-0" style={{ background: r.color }} />
               <div className="flex-1 min-w-0">
-                <p className="flex items-center gap-2 text-[14px] font-semibold text-[#241f17]">{r.name}{r.is_system && <Badge color="#e11d48">SYSTEM</Badge>}</p>
-                <p className="text-[12px] text-[#857a68] truncate">{r.description || '설명 없음'} · 권한: {r.permissions?.all ? '전체' : PERMS.filter(([k]) => r.permissions?.[k]).map(([, l]) => l).join(', ') || '없음'}</p>
+                <p className="flex items-center gap-2 text-[14px] font-semibold text-[#1f2430]">{r.name}{r.is_system && <Badge color="#e11d48">SYSTEM</Badge>}</p>
+                <p className="text-[12px] text-[#6b7280] truncate">{r.description || '설명 없음'} · 권한: {r.permissions?.all ? '전체' : PERMS.filter(([k]) => r.permissions?.[k]).map(([, l]) => l).join(', ') || '없음'}</p>
               </div>
               <button onClick={() => setEditing({ id: r.id, is_system: r.is_system, name: r.name, color: r.color, description: r.description ?? '', permissions: r.permissions ?? {} })} className={btn.ghost + ' !h-8'}>수정</button>
-              {!r.is_system && <button onClick={() => { setDeleting(r); setReassign('') }} className="inline-flex items-center h-8 px-3 rounded-lg border border-[#ebe4d6] text-[12.5px] text-[#857a68] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">삭제</button>}
+              {!r.is_system && <button onClick={() => { setDeleting(r); setReassign('') }} className="inline-flex items-center h-8 px-3 rounded-lg border border-[#e3e6ec] text-[12.5px] text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">삭제</button>}
             </li>
           ))}
         </ul>
@@ -79,20 +79,20 @@ export default function RoleManager({ onToast }: { onToast: (msg: string, kind?:
             <div><label className={labelCls}>색상</label>
               <div className="flex items-center gap-2 flex-wrap">
                 {COLORS.map(c => <button key={c} onClick={() => setEditing({ ...editing, color: c })} className={`w-7 h-7 rounded-full transition-transform ${editing.color === c ? 'ring-2 ring-offset-2 ring-[#241f17] scale-110' : ''}`} style={{ background: c }} aria-label={c} />)}
-                <input type="color" value={editing.color} onChange={e => setEditing({ ...editing, color: e.target.value })} className="w-8 h-8 rounded-md border border-[#ddd3bf] p-0.5 bg-white" />
+                <input type="color" value={editing.color} onChange={e => setEditing({ ...editing, color: e.target.value })} className="w-8 h-8 rounded-md border border-[#d9dde5] p-0.5 bg-white" />
               </div></div>
             <div><label className={labelCls}>설명</label><input value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} className={input} placeholder="어떤 일을 하는 관리자인지" /></div>
             <div><label className={labelCls}>권한</label>
-              {editing.is_system ? <p className="text-[13px] text-[#857a68]">전체 권한 (변경 불가)</p> : (
+              {editing.is_system ? <p className="text-[13px] text-[#6b7280]">전체 권한 (변경 불가)</p> : (
                 <div className="grid grid-cols-2 gap-2">
                   {PERMS.map(([k, l]) => (
-                    <label key={k} className={`flex items-center gap-2 h-9 px-3 rounded-lg border text-[13px] cursor-pointer transition-colors ${editing.permissions[k] ? 'border-[#2563eb] bg-[#2563eb]/5 text-[#2563eb] font-semibold' : 'border-[#ebe4d6] text-[#4a4337]'}`}>
+                    <label key={k} className={`flex items-center gap-2 h-9 px-3 rounded-lg border text-[13px] cursor-pointer transition-colors ${editing.permissions[k] ? 'border-[#2563eb] bg-[#2563eb]/5 text-[#2563eb] font-semibold' : 'border-[#e3e6ec] text-[#374151]'}`}>
                       <input type="checkbox" checked={!!editing.permissions[k]} onChange={e => setEditing({ ...editing, permissions: { ...editing.permissions, [k]: e.target.checked } })} className="accent-[#2563eb]" />{l}
                     </label>
                   ))}
                 </div>
               )}
-              <p className="text-[11.5px] text-[#9d9280] mt-1.5">※ 권한은 표시·구분용이며, 현재는 모든 관리자 종류가 관리자 화면 전체에 접근할 수 있어요.</p>
+              <p className="text-[11.5px] text-[#9aa1ad] mt-1.5">※ 권한은 표시·구분용이며, 현재는 모든 관리자 종류가 관리자 화면 전체에 접근할 수 있어요.</p>
             </div>
             <div className="flex justify-end gap-2 pt-1"><button onClick={() => setEditing(null)} className={btn.ghost}>취소</button><button onClick={save} disabled={busy || !editing.name.trim()} className={btn.primary}>저장</button></div>
           </div>
@@ -100,7 +100,7 @@ export default function RoleManager({ onToast }: { onToast: (msg: string, kind?:
       </Modal>
 
       <Modal open={!!deleting} onClose={() => setDeleting(null)} title="관리자 종류 삭제">
-        <p className="text-[13.5px] text-[#241f17]"><b>{deleting?.name}</b> 종류를 삭제해요. 이 종류의 관리자들은 어디로 옮길까요?</p>
+        <p className="text-[13.5px] text-[#1f2430]"><b>{deleting?.name}</b> 종류를 삭제해요. 이 종류의 관리자들은 어디로 옮길까요?</p>
         <select value={reassign} onChange={e => setReassign(e.target.value)} className={input + ' mt-3'}>
           <option value="">일반 회원으로 (관리자 해제)</option>
           {(roles ?? []).filter(r => r.id !== deleting?.id).map(r => <option key={r.id} value={r.id}>{r.name} 으로 이동</option>)}

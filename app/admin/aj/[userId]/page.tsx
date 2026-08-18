@@ -24,7 +24,7 @@ export default async function AdminAjDetail({ params }: { params: Promise<{ user
     admin.from('payments').select('id,credits,amount_minor,currency,status,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(20),
   ])
   const p = prof as { id: string; username: string | null; agent_name: string | null; country: string | null; avatar_config: unknown; role: string; created_at: string; vcoin: number } | null
-  if (!p) return <p className="text-[13px] text-[#857a68]">회원을 찾을 수 없어요.</p>
+  if (!p) return <p className="text-[13px] text-[#6b7280]">회원을 찾을 수 없어요.</p>
   const gs = (games ?? []) as { id: string; title: string; genre: string; thumbnail_url: string; view_count: number | null; created_at: string; studio_project_id: string | null; coin_cost: number | null; country: string | null }[]
   const gameIds = gs.map(g => g.id)
   const [{ data: sess }, { data: coins }, { data: versions }] = await Promise.all([
@@ -54,15 +54,15 @@ export default async function AdminAjDetail({ params }: { params: Promise<{ user
 
   return (
     <div>
-      <Link href="/admin/aj" className="text-[12px] text-[#857a68] hover:text-[#2563eb]">← AJ 랭킹</Link>
-      <div className="mt-3 flex items-center gap-4 mb-6">
+      <Link href="/admin/aj" className="text-[12px] text-[#6b7280] hover:text-[#2563eb]">← AJ 랭킹</Link>
+      <div className="mt-3 flex items-center gap-3 mb-4">
         <span className="avatar-ring"><span className="avatar-wave w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-white"><Avatar url={avatarPreviewUrl(p.avatar_config)} name={p.username ?? '?'} size={64} /></span></span>
         <div>
           <PageHeader title={name} desc={<>{countryFlag(p.country)} {p.username} · 가입 {new Date(p.created_at).toLocaleDateString()} · 게임 코인 {p.vcoin?.toLocaleString()} {p.role === 'admin' && <Badge color="#e11d48">ADMIN</Badge>}</>} />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-3">
         <StatCard label="게시 게임" value={gs.length} />
         <StatCard label="스튜디오 프로젝트" value={(projects ?? []).length} sub={`버전 ${verRows.length}개`} accent="#0891b2" />
         <StatCard label="총 조회" value={totalViews} accent="#7c3aed" />
@@ -73,21 +73,21 @@ export default async function AdminAjDetail({ params }: { params: Promise<{ user
 
       {/* 구현/사용한 서비스 */}
       <Card className="p-5 mb-4">
-        <p className="text-[14px] font-bold text-[#241f17] mb-3">사용한 서비스</p>
+        <p className="text-[14px] font-bold text-[#1f2430] mb-3">사용한 서비스</p>
         <div className="flex flex-wrap gap-2">
-          {FEATURES.map(([k, l]) => <span key={k} className={`inline-flex items-center gap-1.5 rounded-full px-3 h-8 text-[12.5px] font-semibold border ${featureUse[k] ? 'border-[#2563eb]/40 bg-[#2563eb]/5 text-[#1e40af]' : 'border-[#ebe4d6] text-[#c4b9a2]'}`}><span className={`w-1.5 h-1.5 rounded-full ${featureUse[k] ? 'bg-[#2563eb]' : 'bg-[#ddd3bf]'}`} />{l}</span>)}
+          {FEATURES.map(([k, l]) => <span key={k} className={`inline-flex items-center gap-1.5 rounded-full px-3 h-8 text-[12.5px] font-semibold border ${featureUse[k] ? 'border-[#2563eb]/40 bg-[#2563eb]/5 text-[#1e40af]' : 'border-[#e3e6ec] text-[#c4b9a2]'}`}><span className={`w-1.5 h-1.5 rounded-full ${featureUse[k] ? 'bg-[#2563eb]' : 'bg-[#ddd3bf]'}`} />{l}</span>)}
         </div>
       </Card>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Card className="overflow-hidden">
           <SectionTitle right={<span>{gs.length}개</span>}>게시한 게임</SectionTitle>
-          {gs.length === 0 ? <p className="p-5 text-[13px] text-[#9d9280]">없음</p> : (
+          {gs.length === 0 ? <p className="p-5 text-[13px] text-[#9aa1ad]">없음</p> : (
             <table className="w-full"><thead><tr><th className={th}>게임</th><th className={`${th} text-right`}>조회</th><th className={`${th} text-right`}>코인</th><th className={`${th} text-right`}>7일 플레이</th><th className={th}>FUN</th><th className={th} /></tr></thead>
-              <tbody className="divide-y divide-[#f0eadf]">
+              <tbody className="divide-y divide-[#eef0f4]">
                 {gs.map(g => { const r = reps.find(x => x.game_id === g.id); return (
                   <tr key={g.id} className={trHover}>
-                    <td className={td}><div className="flex items-center gap-2.5"><span className="w-12 h-8 rounded overflow-hidden bg-gray-900 shrink-0">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={g.thumbnail_url} alt="" className="w-full h-full object-cover" /></span><div className="min-w-0"><p className="font-semibold text-[#241f17] truncate max-w-[220px]">{g.title}</p><p className="text-[11px] text-[#9d9280]">{g.genre.toUpperCase()} · {g.studio_project_id ? '스튜디오' : '업로드'} · {new Date(g.created_at).toLocaleDateString()}</p></div></div></td>
+                    <td className={td}><div className="flex items-center gap-2.5"><span className="w-12 h-8 rounded overflow-hidden bg-gray-900 shrink-0">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={g.thumbnail_url} alt="" className="w-full h-full object-cover" /></span><div className="min-w-0"><p className="font-semibold text-[#1f2430] truncate max-w-[220px]">{g.title}</p><p className="text-[11px] text-[#9aa1ad]">{g.genre.toUpperCase()} · {g.studio_project_id ? '스튜디오' : '업로드'} · {new Date(g.created_at).toLocaleDateString()}</p></div></div></td>
                     <td className={`${td} text-right tabular-nums`}>{(g.view_count ?? 0).toLocaleString()}</td>
                     <td className={`${td} text-right tabular-nums`}>{coinRows.filter(c => c.game_id === g.id).reduce((a, c) => a + c.coins, 0)}</td>
                     <td className={`${td} text-right tabular-nums`}>{sessRows.filter(s => s.game_id === g.id).length}</td>
@@ -100,12 +100,12 @@ export default async function AdminAjDetail({ params }: { params: Promise<{ user
 
         <Card className="overflow-hidden">
           <SectionTitle right={<span>{(projects ?? []).length}개</span>}>스튜디오 프로젝트</SectionTitle>
-          {(projects ?? []).length === 0 ? <p className="p-5 text-[13px] text-[#9d9280]">없음</p> : (
-            <ul className="divide-y divide-[#f0eadf] max-h-[420px] overflow-y-auto">
+          {(projects ?? []).length === 0 ? <p className="p-5 text-[13px] text-[#9aa1ad]">없음</p> : (
+            <ul className="divide-y divide-[#eef0f4] max-h-[420px] overflow-y-auto">
               {((projects ?? []) as { id: string; title: string | null; created_at: string; updated_at: string }[]).map(pr => { const v = verRows.filter(x => x.project_id === pr.id).length; const pub = gs.find(g => g.studio_project_id === pr.id); return (
                 <li key={pr.id} className="flex items-center gap-3 px-5 py-2.5 text-[13px]">
-                  <div className="flex-1 min-w-0"><p className="font-semibold text-[#241f17] truncate">{pr.title || '제목 없음'}</p><p className="text-[11px] text-[#9d9280]">버전 {v} · 수정 {new Date(pr.updated_at).toLocaleDateString()}</p></div>
-                  {pub ? <Badge color="#059669">게시됨</Badge> : <span className="text-[11px] text-[#9d9280]">미게시</span>}
+                  <div className="flex-1 min-w-0"><p className="font-semibold text-[#1f2430] truncate">{pr.title || '제목 없음'}</p><p className="text-[11px] text-[#9aa1ad]">버전 {v} · 수정 {new Date(pr.updated_at).toLocaleDateString()}</p></div>
+                  {pub ? <Badge color="#059669">게시됨</Badge> : <span className="text-[11px] text-[#9aa1ad]">미게시</span>}
                   <Link href={`/studio/${pr.id}`} className="text-[12px] text-[#2563eb] hover:underline">열기</Link>
                 </li>) })}
             </ul>
@@ -114,10 +114,10 @@ export default async function AdminAjDetail({ params }: { params: Promise<{ user
 
         <Card className="overflow-hidden">
           <SectionTitle right={<span>{cs.length}개</span>}>AJ AdPilot 캠페인</SectionTitle>
-          {cs.length === 0 ? <p className="p-5 text-[13px] text-[#9d9280]">없음</p> : (
+          {cs.length === 0 ? <p className="p-5 text-[13px] text-[#9aa1ad]">없음</p> : (
             <table className="w-full"><thead><tr><th className={th}>캠페인</th><th className={th}>상태</th><th className={`${th} text-right`}>예산</th><th className={`${th} text-right`}>노출/클릭</th><th className={`${th} text-right`}>플레이</th><th className={`${th} text-right`}>획득</th></tr></thead>
-              <tbody className="divide-y divide-[#f0eadf]">{cs.map(c => (
-                <tr key={c.id} className={trHover}><td className={td}><p className="font-semibold text-[#241f17] truncate max-w-[200px]">{c.creative?.headline ?? c.title ?? '-'}</p><p className="text-[11px] text-[#9d9280]">{gs.find(g => g.id === c.game_id)?.title ?? c.game_id.slice(0, 8)}</p></td><td className={td}><Badge color={c.status === 'active' ? '#059669' : c.status === 'paused' ? '#f59e0b' : '#857a68'}>{c.status}</Badge></td><td className={`${td} text-right tabular-nums`}>{c.spent_coins}/{c.budget_coins}</td><td className={`${td} text-right tabular-nums`}>{c.impressions}/{c.clicks}</td><td className={`${td} text-right tabular-nums`}>{c.plays}</td><td className={`${td} text-right tabular-nums`}>{c.coins_earned}</td></tr>
+              <tbody className="divide-y divide-[#eef0f4]">{cs.map(c => (
+                <tr key={c.id} className={trHover}><td className={td}><p className="font-semibold text-[#1f2430] truncate max-w-[200px]">{c.creative?.headline ?? c.title ?? '-'}</p><p className="text-[11px] text-[#9aa1ad]">{gs.find(g => g.id === c.game_id)?.title ?? c.game_id.slice(0, 8)}</p></td><td className={td}><Badge color={c.status === 'active' ? '#059669' : c.status === 'paused' ? '#f59e0b' : '#857a68'}>{c.status}</Badge></td><td className={`${td} text-right tabular-nums`}>{c.spent_coins}/{c.budget_coins}</td><td className={`${td} text-right tabular-nums`}>{c.impressions}/{c.clicks}</td><td className={`${td} text-right tabular-nums`}>{c.plays}</td><td className={`${td} text-right tabular-nums`}>{c.coins_earned}</td></tr>
               ))}</tbody></table>
           )}
         </Card>
@@ -126,25 +126,25 @@ export default async function AdminAjDetail({ params }: { params: Promise<{ user
           <SectionTitle right={<span>{reps.length}건</span>}>AJ 리포트 · 방송 · 결제</SectionTitle>
           <div className="p-5 space-y-4 text-[13px]">
             <div>
-              <p className="text-[12px] font-semibold text-[#857a68] mb-1.5">최근 AJ 리포트</p>
-              {reps.length === 0 ? <p className="text-[#9d9280]">없음</p> : <ul className="space-y-1">{reps.slice(0, 5).map((r, i) => <li key={i} className="flex items-center gap-2"><Badge color="#2563eb">FUN {r.report?.fun_score ?? '-'}</Badge><span className="truncate text-[#241f17]">{r.report?.headline ?? gs.find(g => g.id === r.game_id)?.title}</span><span className="ml-auto text-[11px] text-[#9d9280] whitespace-nowrap">{new Date(r.created_at).toLocaleDateString()}</span></li>)}</ul>}
+              <p className="text-[12px] font-semibold text-[#6b7280] mb-1.5">최근 AJ 리포트</p>
+              {reps.length === 0 ? <p className="text-[#9aa1ad]">없음</p> : <ul className="space-y-1">{reps.slice(0, 5).map((r, i) => <li key={i} className="flex items-center gap-2"><Badge color="#2563eb">FUN {r.report?.fun_score ?? '-'}</Badge><span className="truncate text-[#1f2430]">{r.report?.headline ?? gs.find(g => g.id === r.game_id)?.title}</span><span className="ml-auto text-[11px] text-[#9aa1ad] whitespace-nowrap">{new Date(r.created_at).toLocaleDateString()}</span></li>)}</ul>}
             </div>
             <div>
-              <p className="text-[12px] font-semibold text-[#857a68] mb-1.5">방송 설정</p>
+              <p className="text-[12px] font-semibold text-[#6b7280] mb-1.5">방송 설정</p>
               {cfg?.broadcast?.on || cfg?.broadcasts?.length ? (
                 <ul className="space-y-1">
-                  {cfg.broadcast?.on && <li className="text-[#241f17]">카메라 방송 · {cfg.broadcast.mode} · {gs.find(g => g.id === cfg.broadcast?.gameId)?.title ?? cfg.broadcast.gameId ?? '-'} <Badge color="#e11d48">ON AIR</Badge></li>}
-                  {(cfg.broadcasts ?? []).map((b, i) => <li key={i} className="text-[#241f17] truncate">링크 방송 · {gs.find(g => g.id === b.gameId)?.title ?? '-'} · <span className="text-[#857a68]">{b.url}</span> {b.on ? <Badge color="#e11d48">ON</Badge> : <span className="text-[11px] text-[#9d9280]">off</span>}</li>)}
+                  {cfg.broadcast?.on && <li className="text-[#1f2430]">카메라 방송 · {cfg.broadcast.mode} · {gs.find(g => g.id === cfg.broadcast?.gameId)?.title ?? cfg.broadcast.gameId ?? '-'} <Badge color="#e11d48">ON AIR</Badge></li>}
+                  {(cfg.broadcasts ?? []).map((b, i) => <li key={i} className="text-[#1f2430] truncate">링크 방송 · {gs.find(g => g.id === b.gameId)?.title ?? '-'} · <span className="text-[#6b7280]">{b.url}</span> {b.on ? <Badge color="#e11d48">ON</Badge> : <span className="text-[11px] text-[#9aa1ad]">off</span>}</li>)}
                 </ul>
-              ) : <p className="text-[#9d9280]">없음</p>}
+              ) : <p className="text-[#9aa1ad]">없음</p>}
             </div>
             <div>
-              <p className="text-[12px] font-semibold text-[#857a68] mb-1.5">크레딧 결제</p>
-              {pay.length === 0 ? <p className="text-[#9d9280]">없음</p> : <ul className="space-y-1">{pay.map(x => <li key={x.id} className="flex items-center gap-2"><span className="text-[#241f17]">+{x.credits} 크레딧</span><span className="text-[#857a68]">{x.amount_minor != null ? `${(x.amount_minor / 100).toFixed(2)} ${x.currency}` : ''}</span><Badge color={x.status === 'completed' ? '#059669' : '#e11d48'}>{x.status}</Badge><span className="ml-auto text-[11px] text-[#9d9280]">{new Date(x.created_at).toLocaleDateString()}</span></li>)}</ul>}
+              <p className="text-[12px] font-semibold text-[#6b7280] mb-1.5">크레딧 결제</p>
+              {pay.length === 0 ? <p className="text-[#9aa1ad]">없음</p> : <ul className="space-y-1">{pay.map(x => <li key={x.id} className="flex items-center gap-2"><span className="text-[#1f2430]">+{x.credits} 크레딧</span><span className="text-[#6b7280]">{x.amount_minor != null ? `${(x.amount_minor / 100).toFixed(2)} ${x.currency}` : ''}</span><Badge color={x.status === 'completed' ? '#059669' : '#e11d48'}>{x.status}</Badge><span className="ml-auto text-[11px] text-[#9aa1ad]">{new Date(x.created_at).toLocaleDateString()}</span></li>)}</ul>}
             </div>
             <div>
-              <p className="text-[12px] font-semibold text-[#857a68] mb-1.5">LLM 사용 (종류별)</p>
-              <div className="flex flex-wrap gap-1.5">{Object.entries(use.reduce<Record<string, number>>((a, u) => { a[u.kind] = (a[u.kind] ?? 0) + 1; return a }, {})).map(([k, n]) => <span key={k} className="rounded-full bg-[#faf8f3] border border-[#ebe4d6] px-2.5 h-7 inline-flex items-center text-[12px]">{k} <b className="ml-1">{n}</b></span>)}{use.length === 0 && <span className="text-[#9d9280]">없음</span>}</div>
+              <p className="text-[12px] font-semibold text-[#6b7280] mb-1.5">LLM 사용 (종류별)</p>
+              <div className="flex flex-wrap gap-1.5">{Object.entries(use.reduce<Record<string, number>>((a, u) => { a[u.kind] = (a[u.kind] ?? 0) + 1; return a }, {})).map(([k, n]) => <span key={k} className="rounded-full bg-[#f7f8fa] border border-[#e3e6ec] px-2.5 h-7 inline-flex items-center text-[12px]">{k} <b className="ml-1">{n}</b></span>)}{use.length === 0 && <span className="text-[#9aa1ad]">없음</span>}</div>
             </div>
           </div>
         </Card>

@@ -64,7 +64,7 @@ export default function AdminGamesPage() {
       <PageHeader title={a.gamesHeading} desc="게시된 게임을 검색·수정·삭제하고 AJ 대시보드로 이동할 수 있어요."
         actions={<Link href="/submit" className={btn.primary}>게임 등록</Link>} />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
         <StatCard label="게시된 게임" value={games?.length ?? '-'} />
         <StatCard label="총 조회수" value={totalViews} accent="#7c3aed" />
         <StatCard label="최근 7일 등록" value={(games ?? []).filter(g => new Date(g.created_at).getTime() > weekAgo).length} accent="#059669" />
@@ -72,7 +72,7 @@ export default function AdminGamesPage() {
       </div>
 
       <Card>
-        <div className="flex items-center gap-3 flex-wrap p-4 border-b border-[#ebe4d6]">
+        <div className="flex items-center gap-3 flex-wrap p-3 border-b border-[#e3e6ec]">
           <form onSubmit={e => { e.preventDefault(); load() }} className="relative flex-1 min-w-[220px] max-w-sm">
             <svg viewBox="0 0 24 24" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a1957f]" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
             <input value={query} onChange={e => setQuery(e.target.value)} placeholder={a.searchGames} className={`${input} pl-9`} />
@@ -84,7 +84,7 @@ export default function AdminGamesPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead><tr><th className={th}>{a.colGame}</th><th className={th}>제작자</th><th className={th}>{a.colGenre}</th><th className={`${th} text-right`}>{a.colViews}</th><th className={`${th} text-right`}>코인</th><th className={th}>{a.colCreated}</th><th className={th} /></tr></thead>
-              <tbody className="divide-y divide-[#f0eadf]">
+              <tbody className="divide-y divide-[#eef0f4]">
                 {list.map(g => (
                   <tr key={g.id} className={trHover}>
                     <td className={td}>
@@ -94,21 +94,21 @@ export default function AdminGamesPage() {
                           <img src={g.thumbnail_url} alt="" className="w-full h-full object-cover" />
                         </span>
                         <div className="min-w-0">
-                          <Link href={`/games/${g.id}`} className="block font-semibold text-[#241f17] hover:text-[#2563eb] truncate max-w-[320px]">{g.title}</Link>
-                          <p className="text-[11.5px] text-[#9d9280] truncate max-w-[320px]">{g.studio_project_id ? '스튜디오' : '업로드'}{g.teaser ? ` · ${g.teaser}` : ''}</p>
+                          <Link href={`/games/${g.id}`} className="block font-semibold text-[#1f2430] hover:text-[#2563eb] truncate max-w-[320px]">{g.title}</Link>
+                          <p className="text-[11.5px] text-[#9aa1ad] truncate max-w-[320px]">{g.studio_project_id ? '스튜디오' : '업로드'}{g.teaser ? ` · ${g.teaser}` : ''}</p>
                         </div>
                       </div>
                     </td>
-                    <td className={td}><span className="text-[#4a4337]">{countryFlag(g.country ?? g.profiles?.country)} {g.profiles?.agent_name ?? g.profiles?.username ?? '-'}</span></td>
+                    <td className={td}><span className="text-[#374151]">{countryFlag(g.country ?? g.profiles?.country)} {g.profiles?.agent_name ?? g.profiles?.username ?? '-'}</span></td>
                     <td className={td}><Badge color={GENRE_COLOR[g.genre] ?? '#2563eb'}>{T.genres[g.genre]}</Badge></td>
-                    <td className={`${td} text-right tabular-nums font-semibold text-[#241f17]`}>{(g.view_count ?? 0).toLocaleString()}</td>
+                    <td className={`${td} text-right tabular-nums font-semibold text-[#1f2430]`}>{(g.view_count ?? 0).toLocaleString()}</td>
                     <td className={`${td} text-right tabular-nums`}>{g.coin_cost ?? 1}</td>
-                    <td className={`${td} whitespace-nowrap text-[#857a68]`}>{new Date(g.created_at).toLocaleDateString()}</td>
+                    <td className={`${td} whitespace-nowrap text-[#6b7280]`}>{new Date(g.created_at).toLocaleDateString()}</td>
                     <td className={td}>
                       <div className="flex gap-1.5 justify-end">
                         <Link href={`/aj/${g.id}`} className={btn.ghost + ' !h-8 !px-2.5'}>AJ</Link>
                         <button onClick={() => openEdit(g)} className={btn.ghost + ' !h-8 !px-2.5'}>{a.edit}</button>
-                        <button onClick={() => setDeleting(g)} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#ebe4d6] text-[12.5px] font-medium text-[#857a68] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">{a.delete}</button>
+                        <button onClick={() => setDeleting(g)} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] font-medium text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">{a.delete}</button>
                       </div>
                     </td>
                   </tr>

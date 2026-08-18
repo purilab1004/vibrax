@@ -41,14 +41,14 @@ export default function AdminBlogPage() {
     <div>
       <PageHeader title={a.blogHeading} desc="글을 작성·발행하고 카테고리를 관리해요."
         actions={<Link href="/admin/blog/new" className={btn.primary}>{a.newPost}</Link>} />
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-3 gap-2 mb-3">
         <StatCard label="전체 글" value={posts?.length ?? '-'} />
         <StatCard label="발행됨" value={pub} accent="#059669" sub={`임시저장 ${(posts?.length ?? 0) - pub}`} />
         <StatCard label="총 조회수" value={views} accent="#7c3aed" />
       </div>
       <div className="mb-4"><CategoryManager onChanged={load} /></div>
       <Card>
-        <div className="flex items-center gap-3 flex-wrap p-4 border-b border-[#ebe4d6]">
+        <div className="flex items-center gap-3 flex-wrap p-3 border-b border-[#e3e6ec]">
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="제목 검색" className={`${input} max-w-xs`} />
           <div className="ml-auto"><Segmented value={filter} onChange={setFilter} options={[{ value: 'all', label: '전체' }, { value: 'published', label: a.published }, { value: 'draft', label: a.draft }]} /></div>
         </div>
@@ -56,29 +56,29 @@ export default function AdminBlogPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead><tr><th className={th}>글</th><th className={th}>카테고리</th><th className={th}>상태</th><th className={`${th} text-right`}>조회</th><th className={th}>작성일</th><th className={th} /></tr></thead>
-              <tbody className="divide-y divide-[#f0eadf]">
+              <tbody className="divide-y divide-[#eef0f4]">
                 {list.map(p => (
                   <tr key={p.id} className={trHover}>
                     <td className={td}>
                       <div className="flex items-center gap-3 min-w-[260px]">
-                        <span className="w-14 h-10 rounded-md overflow-hidden bg-[#f1ece2] shrink-0 flex items-center justify-center text-[#b3a78f]">
+                        <span className="w-14 h-10 rounded-md overflow-hidden bg-[#eef0f4] shrink-0 flex items-center justify-center text-[#b3a78f]">
                           {p.thumbnail_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={p.thumbnail_url} alt="" className="w-full h-full object-cover" />
                           ) : null}
                         </span>
-                        <Link href={`/admin/blog/${p.id}`} className="font-semibold text-[#241f17] hover:text-[#2563eb] truncate max-w-[380px]">{p.title || '—'}</Link>
+                        <Link href={`/admin/blog/${p.id}`} className="font-semibold text-[#1f2430] hover:text-[#2563eb] truncate max-w-[380px]">{p.title || '—'}</Link>
                       </div>
                     </td>
                     <td className={td}>{catName(p.category_id)}</td>
                     <td className={td}>{p.published ? <Badge color="#059669">{a.published}</Badge> : <Badge color="#857a68">{a.draft}</Badge>}</td>
                     <td className={`${td} text-right tabular-nums`}>{(p.view_count ?? 0).toLocaleString()}</td>
-                    <td className={`${td} whitespace-nowrap text-[#857a68]`}>{new Date(p.created_at).toLocaleDateString()}</td>
+                    <td className={`${td} whitespace-nowrap text-[#6b7280]`}>{new Date(p.created_at).toLocaleDateString()}</td>
                     <td className={td}>
                       <div className="flex gap-1.5 justify-end">
                         {p.published && <a href={`/blog/${p.id}`} target="_blank" rel="noreferrer" className={btn.ghost + ' !h-8 !px-2.5'}>보기</a>}
                         <Link href={`/admin/blog/${p.id}`} className={btn.ghost + ' !h-8 !px-2.5'}>{a.edit}</Link>
-                        <button onClick={() => setDeleting(p)} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#ebe4d6] text-[12.5px] font-medium text-[#857a68] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">{a.delete}</button>
+                        <button onClick={() => setDeleting(p)} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] font-medium text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">{a.delete}</button>
                       </div>
                     </td>
                   </tr>

@@ -45,14 +45,14 @@ export default async function AjRankingPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <p className="font-pixel text-[11px] tracking-[0.3em] text-[#2563eb] mb-2">AJ RANKING · AI GAME ENTREPRENEURS</p>
-      <h1 className={`${titleFont.className} text-[34px] md:text-[44px] leading-tight text-[#241f17]`}>누구의 AJ가 <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">오늘 가장 잘 벌었을까?</span></h1>
-      <p className="mt-2 text-[13px] text-[#6b6152]">AJ는 크리에이터마다 한 명씩 있는 AI 게임 기업가예요. 내 게임들을 플레이하고, 방송하고, 유저를 모으고, 코인 수익과 체류 데이터로 게임을 키웁니다. 순위 = 오늘 코인 수익 → 7일 수익 → 플레이 수 → 조회수 (모든 게임 합산).</p>
+      <h1 className={`${titleFont.className} text-[34px] md:text-[44px] leading-tight text-[#1f2430]`}>누구의 AJ가 <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">오늘 가장 잘 벌었을까?</span></h1>
+      <p className="mt-2 text-[13px] text-[#6b7280]">AJ는 크리에이터마다 한 명씩 있는 AI 게임 기업가예요. 내 게임들을 플레이하고, 방송하고, 유저를 모으고, 코인 수익과 체류 데이터로 게임을 키웁니다. 순위 = 오늘 코인 수익 → 7일 수익 → 플레이 수 → 조회수 (모든 게임 합산).</p>
 
       <ol className="mt-8 space-y-3">
         {rows.map((r, i) => (
-          <li key={r.userId} className="rounded-2xl border border-[#ebe4d6] bg-white overflow-hidden hover:border-[#2563eb]/50 hover:shadow-[0_8px_24px_rgba(37,99,235,0.08)] transition-all">
+          <li key={r.userId} className="rounded-2xl border border-[#e3e6ec] bg-white overflow-hidden hover:border-[#2563eb]/50 hover:shadow-[0_8px_24px_rgba(37,99,235,0.08)] transition-all">
             <div className="flex items-center gap-4 p-3 md:p-4">
-              <span className={`font-pixel text-[13px] w-8 text-center ${i === 0 ? 'text-[#c9940c]' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-600' : 'text-[#9d9280]'}`}>#{i + 1}</span>
+              <span className={`font-pixel text-[13px] w-8 text-center ${i === 0 ? 'text-[#c9940c]' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-600' : 'text-[#9aa1ad]'}`}>#{i + 1}</span>
               <span className="avatar-ring shrink-0"><span className="avatar-wave w-14 h-14 rounded-full overflow-hidden flex items-center justify-center">
                 {r.avatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -60,35 +60,35 @@ export default async function AjRankingPage() {
                 ) : <span className="font-pixel text-sm text-white">{r.creator.charAt(0).toUpperCase()}</span>}
               </span></span>
               <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-2 min-w-0"><Link href={`/admin/aj/${r.userId}`} className="text-[16px] text-[#241f17] font-bold truncate hover:text-[#2563eb]">{r.name}</Link>{r.bestFun != null && <span className="font-pixel text-[9px] px-1.5 py-0.5 rounded-full bg-[#2563eb]/10 text-[#2563eb] shrink-0">FUN {r.bestFun}</span>}</p>
-                <p className="text-[11.5px] text-[#857a68] truncate">{r.creator} 의 AJ · 게임 {r.games.length}개 · 조회 {r.views.toLocaleString()} · <Link href={`/admin/aj/${r.userId}`} className="text-[#2563eb] hover:underline">상세 보기</Link></p>
+                <p className="flex items-center gap-2 min-w-0"><Link href={`/admin/aj/${r.userId}`} className="text-[16px] text-[#1f2430] font-bold truncate hover:text-[#2563eb]">{r.name}</Link>{r.bestFun != null && <span className="font-pixel text-[9px] px-1.5 py-0.5 rounded-full bg-[#2563eb]/10 text-[#2563eb] shrink-0">FUN {r.bestFun}</span>}</p>
+                <p className="text-[11.5px] text-[#6b7280] truncate">{r.creator} 의 AJ · 게임 {r.games.length}개 · 조회 {r.views.toLocaleString()} · <Link href={`/admin/aj/${r.userId}`} className="text-[#2563eb] hover:underline">상세 보기</Link></p>
               </div>
               <div className="hidden sm:grid grid-cols-4 gap-5 text-right shrink-0">
-                <div><p className="text-[10px] text-[#9d9280]">오늘 수익</p><p className="text-[15px] font-bold text-[#241f17]">{r.today}</p></div>
-                <div><p className="text-[10px] text-[#9d9280]">7일 수익</p><p className="text-[15px] font-bold text-[#241f17]">{r.week}</p></div>
-                <div><p className="text-[10px] text-[#9d9280]">7일 플레이</p><p className="text-[15px] font-bold text-[#241f17]">{r.sessions}</p></div>
-                <div><p className="text-[10px] text-[#9d9280]">평균 체류</p><p className="text-[15px] font-bold text-[#241f17]">{r.sessions ? fmtDur(Math.round(r.durSum / r.sessions)) : '-'}</p></div>
+                <div><p className="text-[10px] text-[#9aa1ad]">오늘 수익</p><p className="text-[15px] font-bold text-[#1f2430]">{r.today}</p></div>
+                <div><p className="text-[10px] text-[#9aa1ad]">7일 수익</p><p className="text-[15px] font-bold text-[#1f2430]">{r.week}</p></div>
+                <div><p className="text-[10px] text-[#9aa1ad]">7일 플레이</p><p className="text-[15px] font-bold text-[#1f2430]">{r.sessions}</p></div>
+                <div><p className="text-[10px] text-[#9aa1ad]">평균 체류</p><p className="text-[15px] font-bold text-[#1f2430]">{r.sessions ? fmtDur(Math.round(r.durSum / r.sessions)) : '-'}</p></div>
               </div>
-              <div className="sm:hidden text-right shrink-0"><p className="text-[10px] text-[#9d9280]">오늘</p><p className="text-[15px] font-bold">{r.today}</p></div>
+              <div className="sm:hidden text-right shrink-0"><p className="text-[10px] text-[#9aa1ad]">오늘</p><p className="text-[15px] font-bold">{r.today}</p></div>
             </div>
             {/* 이 AJ가 운영하는 게임들 */}
             <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 pb-3 pl-[4.5rem]">
               {r.games.slice(0, 8).map(({ g, today, fun }) => (
-                <Link key={g.id} href={`/aj/${g.id}`} className="shrink-0 flex items-center gap-2 rounded-lg border border-[#ebe4d6] bg-[#faf8f3] pr-3 hover:border-[#2563eb] hover:bg-white transition-colors">
+                <Link key={g.id} href={`/aj/${g.id}`} className="shrink-0 flex items-center gap-2 rounded-lg border border-[#e3e6ec] bg-[#f7f8fa] pr-3 hover:border-[#2563eb] hover:bg-white transition-colors">
                   <span className="relative w-12 h-8 rounded-l-lg overflow-hidden bg-gray-900">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={g.thumbnail_url} alt="" className="w-full h-full object-cover" />
                   </span>
-                  <span className="text-[12px] font-semibold text-[#241f17] max-w-[140px] truncate">{g.title}</span>
-                  <span className="text-[11px] text-[#857a68] whitespace-nowrap">코인 {today}{fun != null ? ` · FUN ${fun}` : ''}</span>
+                  <span className="text-[12px] font-semibold text-[#1f2430] max-w-[140px] truncate">{g.title}</span>
+                  <span className="text-[11px] text-[#6b7280] whitespace-nowrap">코인 {today}{fun != null ? ` · FUN ${fun}` : ''}</span>
                 </Link>
               ))}
-              {r.games.length > 8 && <span className="shrink-0 self-center text-[11px] text-[#9d9280]">+{r.games.length - 8}</span>}
+              {r.games.length > 8 && <span className="shrink-0 self-center text-[11px] text-[#9aa1ad]">+{r.games.length - 8}</span>}
             </div>
           </li>
         ))}
       </ol>
-      {rows.length === 0 && <p className="text-[#857a68] text-sm mt-8">아직 게시된 게임이 없어요.</p>}
+      {rows.length === 0 && <p className="text-[#6b7280] text-sm mt-8">아직 게시된 게임이 없어요.</p>}
     </div>
   )
 }

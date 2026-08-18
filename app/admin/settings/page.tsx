@@ -53,7 +53,7 @@ export default function AdminSettingsPage() {
     setSaving(false)
   }
 
-  if (!loaded) return <p className="text-[13px] text-[#857a68]">{a.loading}</p>
+  if (!loaded) return <p className="text-[13px] text-[#6b7280]">{a.loading}</p>
 
   return (
     <div>
@@ -62,7 +62,7 @@ export default function AdminSettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         <div className="space-y-4">
           <Card className="p-5">
-            <p className="text-[15px] font-bold text-[#241f17] mb-4">크레딧 · 토너먼트</p>
+            <p className="text-[15px] font-bold text-[#1f2430] mb-4">크레딧 · 토너먼트</p>
             <div className="space-y-4">
               <div><label className={labelClass}>{a.setSignupBonus}</label><input type="number" min={0} value={signupBonus} onChange={e => setSignupBonus(e.target.value)} className={inputClass} /></div>
               <div><label className={labelClass}>{a.setGenerationCost}</label><input type="number" min={1} value={generationCost} onChange={e => setGenerationCost(e.target.value)} className={inputClass} /></div>
@@ -71,8 +71,8 @@ export default function AdminSettingsPage() {
           </Card>
           <Card className="p-5">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[15px] font-bold text-[#241f17]">{a.setBanner}</p>
-              <label className="flex items-center gap-2 text-[13px] text-[#4a4337] cursor-pointer">
+              <p className="text-[15px] font-bold text-[#1f2430]">{a.setBanner}</p>
+              <label className="flex items-center gap-2 text-[13px] text-[#374151] cursor-pointer">
                 <span>{a.setBannerEnabled}</span>
                 <span className={`relative inline-flex w-10 h-6 rounded-full transition-colors ${bannerEnabled ? 'bg-[#2563eb]' : 'bg-[#ddd3bf]'}`} onClick={() => setBannerEnabled(v => !v)}>
                   <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${bannerEnabled ? 'left-[18px]' : 'left-0.5'}`} />

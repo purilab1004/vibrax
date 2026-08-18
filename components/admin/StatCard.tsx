@@ -1,9 +1,9 @@
-export default function StatCard({ label, value, sub, accent = '#2563eb' }: { label: string; value: string | number; sub?: string; accent?: string }) {
+export default function StatCard({ label, value, sub, accent = '#1f2430' }: { label: string; value: string | number; sub?: string; accent?: string }) {
   return (
-    <div className="rounded-2xl border border-[#ebe4d6] bg-white p-5 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]">
-      <p className="text-[12px] font-semibold text-[#857a68] tracking-wide mb-2">{label}</p>
-      <p className="text-[26px] leading-none font-extrabold tracking-tight" style={{ color: accent }}>{typeof value === 'number' ? value.toLocaleString() : value}</p>
-      {sub && <p className="text-[11.5px] text-[#9d9280] mt-2">{sub}</p>}
+    <div className="rounded-lg border border-[#e3e6ec] bg-white px-4 py-3">
+      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[#6b7280] mb-1.5">{label}</p>
+      <p className="text-[22px] leading-none font-bold tracking-tight" style={{ color: accent }}>{typeof value === 'number' ? value.toLocaleString() : value}</p>
+      {sub && <p className="text-[11px] text-[#9aa1ad] mt-1.5">{sub}</p>}
     </div>
   )
 }

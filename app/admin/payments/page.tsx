@@ -85,8 +85,8 @@ export default function AdminPaymentsPage() {
   if (state.days === days && state.err) return (
     <div>{header}
       <Card className="p-6">
-        <p className="text-[14px] font-semibold text-[#241f17]">{state.missing ? '결제 테이블이 아직 없어요' : '불러오지 못했어요'}</p>
-        <p className="text-[13px] text-[#857a68] mt-1">{state.missing ? <>Supabase SQL Editor 에서 <code>db/migrations/2026-08-18-payments.sql</code> 을 실행하세요. 기존 구매 기록(credit_ledger)은 자동으로 백필돼요.</> : state.err}</p>
+        <p className="text-[14px] font-semibold text-[#1f2430]">{state.missing ? '결제 테이블이 아직 없어요' : '불러오지 못했어요'}</p>
+        <p className="text-[13px] text-[#6b7280] mt-1">{state.missing ? <>Supabase SQL Editor 에서 <code>db/migrations/2026-08-18-payments.sql</code> 을 실행하세요. 기존 구매 기록(credit_ledger)은 자동으로 백필돼요.</> : state.err}</p>
       </Card>
     </div>
   )
@@ -112,24 +112,24 @@ export default function AdminPaymentsPage() {
         <TrendChart label={`일별 매출 (${cur})`} sub={`최근 ${data.days}일`} values={data.byDay.map(d => d.gross)} labels={data.byDay.map(d => d.day.slice(5))} format={v => money(v, cur)} />
         <TrendChart label="일별 결제 건수" sub={`최근 ${data.days}일`} values={data.byDay.map(d => d.count)} labels={data.byDay.map(d => d.day.slice(5))} color="#0891b2" />
         <Card className="p-5">
-          <p className="text-[12px] font-semibold text-[#857a68] mb-3">팩별 판매</p>
+          <p className="text-[12px] font-semibold text-[#6b7280] mb-3">팩별 판매</p>
           <ul className="space-y-2.5">
             {Object.entries(data.byPack).sort((a, b) => b[1].gross - a[1].gross).map(([k, v]) => {
               const share = t.count ? Math.round((v.count / t.count) * 100) : 0
               return (
                 <li key={k}>
-                  <div className="flex items-center justify-between text-[13px]"><span className="font-semibold text-[#241f17]">{PACK[k] ?? k}</span><span className="text-[#4a4337] tabular-nums">{v.count}건 · {money(v.gross, cur)}</span></div>
-                  <div className="h-1.5 rounded-full bg-[#f1ece2] mt-1"><div className="h-full rounded-full bg-[#2563eb]" style={{ width: `${share}%` }} /></div>
+                  <div className="flex items-center justify-between text-[13px]"><span className="font-semibold text-[#1f2430]">{PACK[k] ?? k}</span><span className="text-[#374151] tabular-nums">{v.count}건 · {money(v.gross, cur)}</span></div>
+                  <div className="h-1.5 rounded-full bg-[#eef0f4] mt-1"><div className="h-full rounded-full bg-[#2563eb]" style={{ width: `${share}%` }} /></div>
                 </li>
               )
             })}
-            {Object.keys(data.byPack).length === 0 && <li className="text-[13px] text-[#9d9280]">아직 결제가 없어요.</li>}
+            {Object.keys(data.byPack).length === 0 && <li className="text-[13px] text-[#9aa1ad]">아직 결제가 없어요.</li>}
           </ul>
         </Card>
       </div>
 
       <Card>
-        <div className="flex items-center gap-3 flex-wrap p-4 border-b border-[#ebe4d6]">
+        <div className="flex items-center gap-3 flex-wrap p-3 border-b border-[#e3e6ec]">
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="이메일 · 회원 · 트랜잭션/인보이스 번호" className={`${input} max-w-sm`} />
           <div className="ml-auto"><Segmented value={filter} onChange={setFilter} options={[{ value: 'all', label: `전체 ${data.rows.length}` }, { value: 'completed', label: '완료' }, { value: 'pending', label: '환불 검토' }, { value: 'refunded', label: '환불/차지백' }]} /></div>
         </div>
@@ -137,26 +137,26 @@ export default function AdminPaymentsPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead><tr><th className={th}>일시</th><th className={th}>회원</th><th className={th}>상품</th><th className={`${th} text-right`}>금액</th><th className={th}>결제수단</th><th className={th}>상태</th><th className={th}>Paddle</th><th className={th} /></tr></thead>
-              <tbody className="divide-y divide-[#f0eadf]">
+              <tbody className="divide-y divide-[#eef0f4]">
                 {rows.map(r => {
                   const st = STATUS[r.status] ?? { label: r.status, color: '#857a68' }
                   return (
                     <tr key={r.id} className={`${trHover} cursor-pointer`} onClick={() => openDetail(r)}>
-                      <td className={`${td} whitespace-nowrap`}><p className="text-[#241f17]">{new Date(r.billed_at ?? r.created_at).toLocaleDateString()}</p><p className="text-[11px] text-[#9d9280]">{new Date(r.billed_at ?? r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p></td>
+                      <td className={`${td} whitespace-nowrap`}><p className="text-[#1f2430]">{new Date(r.billed_at ?? r.created_at).toLocaleDateString()}</p><p className="text-[11px] text-[#9aa1ad]">{new Date(r.billed_at ?? r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p></td>
                       <td className={td}>
                         <div className="flex items-center gap-2.5 min-w-[180px]">
                           <Avatar url={r.profiles?.avatar_config?.previewUrl} name={r.profiles?.username || r.customer_email || '?'} size={30} />
-                          <div className="min-w-0"><p className="font-semibold text-[#241f17] truncate">{r.profiles?.agent_name ?? r.profiles?.username ?? '(회원 미매핑)'}</p><p className="text-[11.5px] text-[#9d9280] truncate">{r.customer_email ?? r.user_id?.slice(0, 8) ?? '-'}</p></div>
+                          <div className="min-w-0"><p className="font-semibold text-[#1f2430] truncate">{r.profiles?.agent_name ?? r.profiles?.username ?? '(회원 미매핑)'}</p><p className="text-[11.5px] text-[#9aa1ad] truncate">{r.customer_email ?? r.user_id?.slice(0, 8) ?? '-'}</p></div>
                         </div>
                       </td>
-                      <td className={td}><p className="text-[#241f17]">{PACK[r.pack_key ?? ''] ?? (r.pack_key ?? '크레딧')}</p><p className="text-[11.5px] text-[#9d9280]">+{r.credits.toLocaleString()} 크레딧{r.credits_revoked ? ' · 회수됨' : ''}</p></td>
-                      <td className={`${td} text-right tabular-nums`}><p className="font-semibold text-[#241f17]">{money(r.amount_minor, r.currency)}</p>{r.refunded_minor > 0 && <p className="text-[11px] text-[#e11d48]">−{money(r.refunded_minor, r.currency)}</p>}</td>
+                      <td className={td}><p className="text-[#1f2430]">{PACK[r.pack_key ?? ''] ?? (r.pack_key ?? '크레딧')}</p><p className="text-[11.5px] text-[#9aa1ad]">+{r.credits.toLocaleString()} 크레딧{r.credits_revoked ? ' · 회수됨' : ''}</p></td>
+                      <td className={`${td} text-right tabular-nums`}><p className="font-semibold text-[#1f2430]">{money(r.amount_minor, r.currency)}</p>{r.refunded_minor > 0 && <p className="text-[11px] text-[#e11d48]">−{money(r.refunded_minor, r.currency)}</p>}</td>
                       <td className={`${td} whitespace-nowrap`}>{r.payment_method ? <span className="capitalize">{r.card_brand ?? r.payment_method}{r.card_last4 ? ` ••${r.card_last4}` : ''}</span> : <span className="text-[#c4b9a2]">—</span>}</td>
                       <td className={td}><Badge color={st.color}>{st.label}</Badge></td>
-                      <td className={td}><a href={r.dashboard_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="font-mono text-[11px] text-[#2563eb] hover:underline">{r.id.slice(0, 12)}…</a>{r.invoice_number && <p className="text-[11px] text-[#9d9280]">{r.invoice_number}</p>}</td>
+                      <td className={td}><a href={r.dashboard_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="font-mono text-[11px] text-[#2563eb] hover:underline">{r.id.slice(0, 12)}…</a>{r.invoice_number && <p className="text-[11px] text-[#9aa1ad]">{r.invoice_number}</p>}</td>
                       <td className={td} onClick={e => e.stopPropagation()}>
                         <div className="flex gap-1.5 justify-end">
-                          {r.status === 'completed' && <button onClick={() => { setRefunding(r); setReason('') }} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#ebe4d6] text-[12.5px] font-medium text-[#857a68] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">환불</button>}
+                          {r.status === 'completed' && <button onClick={() => { setRefunding(r); setReason('') }} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] font-medium text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">환불</button>}
                           <button onClick={() => openDetail(r)} className={btn.ghost + ' !h-8 !px-2.5'}>상세</button>
                         </div>
                       </td>
@@ -173,9 +173,9 @@ export default function AdminPaymentsPage() {
       <Modal open={!!refunding} onClose={() => setRefunding(null)} title="환불 처리">
         {refunding && (
           <div className="space-y-4">
-            <div className="rounded-xl bg-[#faf8f3] p-4 text-[13px] text-[#4a4337]">
+            <div className="rounded-xl bg-[#f7f8fa] p-4 text-[13px] text-[#374151]">
               <p><b>{refunding.profiles?.agent_name ?? refunding.profiles?.username ?? refunding.customer_email}</b> · {PACK[refunding.pack_key ?? ''] ?? '크레딧'} · <b>{money(refunding.amount_minor, refunding.currency)}</b></p>
-              <p className="text-[12px] text-[#857a68] mt-1">환불되면 지급한 <b>{refunding.credits}</b> 크레딧을 자동 회수해요 (이미 써서 잔액이 부족하면 마이너스로 기록).</p>
+              <p className="text-[12px] text-[#6b7280] mt-1">환불되면 지급한 <b>{refunding.credits}</b> 크레딧을 자동 회수해요 (이미 써서 잔액이 부족하면 마이너스로 기록).</p>
             </div>
             <div><label className={labelCls}>사유</label><input value={reason} onChange={e => setReason(e.target.value)} placeholder="예: 고객 요청 / 중복 결제 / 서비스 불만" className={input} autoFocus /></div>
             <div className="grid gap-2">
@@ -200,21 +200,21 @@ export default function AdminPaymentsPage() {
                 ['결제수단', detail.payment_method ? `${detail.card_brand ?? detail.payment_method}${detail.card_last4 ? ` ••${detail.card_last4}` : ''}` : '—'], ['인보이스', detail.invoice_number ?? '—'],
                 ['결제 일시', new Date(detail.billed_at ?? detail.created_at).toLocaleString()], ['환불 일시', detail.refunded_at ? new Date(detail.refunded_at).toLocaleString() : '—'],
                 ['환불 사유', detail.refund_reason ?? '—'], ['국가', detail.country ?? '—'],
-              ].map(([k, v], i) => <div key={i}><p className="text-[11px] font-semibold text-[#9d9280]">{k as string}</p><div className="text-[#241f17] mt-0.5">{v as React.ReactNode}</div></div>)}
+              ].map(([k, v], i) => <div key={i}><p className="text-[11px] font-semibold text-[#9aa1ad]">{k as string}</p><div className="text-[#1f2430] mt-0.5">{v as React.ReactNode}</div></div>)}
             </div>
             <div className="flex gap-2 flex-wrap">
               {data.configured && <button disabled={busy} onClick={async () => { const j = await act('sync_one', detail.id); if (j) say('Paddle 에서 최신 정보를 가져왔어요.') }} className={btn.ghost + ' !h-8'}>Paddle 에서 새로고침</button>}
               {(detail.status === 'refunded' || detail.status === 'chargeback') && <button disabled={busy} onClick={async () => { if (!confirm('환불 상태를 취소하고 회수한 크레딧을 다시 지급할까요?')) return; const j = await act('unrefund', detail.id); if (j) { say('환불을 철회했어요.'); setDetail(null) } }} className={btn.ghost + ' !h-8'}>환불 철회 (크레딧 재지급)</button>}
             </div>
             <div>
-              <p className="text-[12px] font-bold text-[#241f17] mb-2">이벤트 타임라인</p>
-              {events === null ? <Skeleton rows={2} /> : events.length === 0 ? <p className="text-[12px] text-[#9d9280]">기록된 이벤트가 없어요 (백필된 과거 결제).</p> : (
-                <ul className="relative border-l border-[#ebe4d6] ml-1.5 space-y-2.5">
+              <p className="text-[12px] font-bold text-[#1f2430] mb-2">이벤트 타임라인</p>
+              {events === null ? <Skeleton rows={2} /> : events.length === 0 ? <p className="text-[12px] text-[#9aa1ad]">기록된 이벤트가 없어요 (백필된 과거 결제).</p> : (
+                <ul className="relative border-l border-[#e3e6ec] ml-1.5 space-y-2.5">
                   {events.map(ev => (
                     <li key={ev.id} className="pl-4 relative">
                       <span className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${ev.error ? 'bg-[#e11d48]' : ev.processed ? 'bg-[#059669]' : 'bg-[#c4b9a2]'}`} />
-                      <p className="font-mono text-[12px] text-[#241f17]">{ev.event_type}</p>
-                      <p className="text-[11px] text-[#9d9280]">{new Date(ev.created_at).toLocaleString()}{ev.error ? ` · 오류: ${ev.error}` : ''}</p>
+                      <p className="font-mono text-[12px] text-[#1f2430]">{ev.event_type}</p>
+                      <p className="text-[11px] text-[#9aa1ad]">{new Date(ev.created_at).toLocaleString()}{ev.error ? ` · 오류: ${ev.error}` : ''}</p>
                     </li>
                   ))}
                 </ul>

@@ -91,7 +91,7 @@ export default function AdminCostsPage() {
       {policy && (
         <Card className="p-5">
           <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-            <div><h2 className="text-[14px] font-bold text-[#241f17]">라우팅 정책</h2><p className="text-[12px] text-[#857a68]">작업별 모델 고정 · 작은 수정 자동 다운그레이드 · 목표 마진. 저장 즉시 스튜디오 생성에 반영돼요.</p></div>
+            <div><h2 className="text-[14px] font-bold text-[#1f2430]">라우팅 정책</h2><p className="text-[12px] text-[#6b7280]">작업별 모델 고정 · 작은 수정 자동 다운그레이드 · 목표 마진. 저장 즉시 스튜디오 생성에 반영돼요.</p></div>
             <button onClick={savePolicy} disabled={savingPol} className={btn.primary}>{savingPol ? '저장 중…' : '정책 저장'}</button>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
@@ -101,26 +101,26 @@ export default function AdminCostsPage() {
                 <tbody>
                   {([['create', '새 게임 생성', 4, '가장 무거움 — 품질 우선'], ['edit', '기존 게임 수정', 4, '작은 수정은 자동 다운그레이드 가능'], ['template_edit', '템플릿 + 수정', 4, '베이스가 있어 출력이 짧음'], ['explain', '학습 노트', 3, '설명·요약 — Haiku 충분'], ['bj_chat', 'AJ 중계/채팅', 3, '짧은 대화'], ['aj_report', 'AJ 리포트', 4, '지표 해석·제안']] as [Task, string, number, string][]).map(([t, l, tier, memo]) => (
                     <tr key={t} className={`border-t border-[#f0eadf] ${trHover}`}>
-                      <td className={td}><span className="font-semibold text-[#241f17]">{l}</span><span className="text-[#9d9280] ml-1.5 font-mono text-[11px]">{t}</span></td>
+                      <td className={td}><span className="font-semibold text-[#1f2430]">{l}</span><span className="text-[#9aa1ad] ml-1.5 font-mono text-[11px]">{t}</span></td>
                       <td className={td}>
-                        <select value={policy.pins[t] ?? ''} onChange={e => setPol({ ...policy, pins: { ...policy.pins, [t]: e.target.value || undefined } })} className="h-8 rounded-md border border-[#ddd3bf] bg-white px-2 text-[12.5px] outline-none focus:border-[#2563eb]">
+                        <select value={policy.pins[t] ?? ''} onChange={e => setPol({ ...policy, pins: { ...policy.pins, [t]: e.target.value || undefined } })} className="h-8 rounded-md border border-[#d9dde5] bg-white px-2 text-[12.5px] outline-none focus:border-[#2563eb]">
                           <option value="">자동(최저가)</option>
                           {Object.keys(MODEL_CATALOG).map(m => <option key={m} value={m}>{data.pricing.models[m]?.label ?? m} · ${data.pricing.models[m]?.output}/1M out</option>)}
                         </select>
                       </td>
                       <td className={td}>등급 {tier}+</td>
-                      <td className={`${td} text-[#857a68]`}>{memo}</td>
+                      <td className={`${td} text-[#6b7280]`}>{memo}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             <div className="space-y-4">
-              <div className="rounded-xl bg-[#faf8f3] p-4 space-y-3">
+              <div className="rounded-xl bg-[#f7f8fa] p-4 space-y-3">
                 <Toggle checked={policy.autoDowngradeSmallEdits} onChange={v => setPol({ ...policy, autoDowngradeSmallEdits: v })} label="작은 수정은 Haiku 로 자동 다운그레이드" />
                 <div><label className={labelCls}>작은 수정 기준 (HTML 글자 수 이하)</label><input type="number" value={policy.smallEditMaxHtmlChars} onChange={e => setPol({ ...policy, smallEditMaxHtmlChars: Number(e.target.value) })} className={inputCls} /></div>
               </div>
-              <div className="rounded-xl bg-[#faf8f3] p-4 space-y-3">
+              <div className="rounded-xl bg-[#f7f8fa] p-4 space-y-3">
                 <div><label className={labelCls}>목표 마진 배수</label><input type="number" step={0.5} value={policy.targetMargin} onChange={e => setPol({ ...policy, targetMargin: Number(e.target.value) })} className={inputCls} /></div>
                 <div><label className={labelCls}>크레딧 1개 목표 판매가 (₩)</label><input type="number" value={policy.krwPerCredit} onChange={e => setPol({ ...policy, krwPerCredit: Number(e.target.value) })} className={inputCls} /></div>
               </div>
@@ -132,19 +132,19 @@ export default function AdminCostsPage() {
       {/* 모델 카탈로그 + 엔진 API */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Card className="p-5">
-          <h2 className="text-[14px] font-bold text-[#241f17] mb-3">모델 카탈로그 · 품질 등급</h2>
+          <h2 className="text-[14px] font-bold text-[#1f2430] mb-3">모델 카탈로그 · 품질 등급</h2>
           <table className="w-full text-[12.5px]">
             <thead><tr><th className={th}>모델</th><th className={th}>등급</th><th className={th}>단가 in/out ($/1M)</th><th className={th}>강점</th></tr></thead>
             <tbody>
               {Object.entries(MODEL_CATALOG).map(([m, c]) => (
-                <tr key={m} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td} font-semibold text-[#241f17]`}>{data.pricing.models[m]?.label ?? m}</td><td className={td}>{'★'.repeat(c.tier)}<span className="text-[#ddd3bf]">{'★'.repeat(5 - c.tier)}</span></td><td className={td}>${data.pricing.models[m]?.input} / ${data.pricing.models[m]?.output}</td><td className={`${td} text-[#857a68]`}>{c.strengths.join(' · ')}</td></tr>
+                <tr key={m} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td} font-semibold text-[#1f2430]`}>{data.pricing.models[m]?.label ?? m}</td><td className={td}>{'★'.repeat(c.tier)}<span className="text-[#ddd3bf]">{'★'.repeat(5 - c.tier)}</span></td><td className={td}>${data.pricing.models[m]?.input} / ${data.pricing.models[m]?.output}</td><td className={`${td} text-[#6b7280]`}>{c.strengths.join(' · ')}</td></tr>
               ))}
             </tbody>
           </table>
         </Card>
         <Card className="p-5">
-          <h2 className="text-[14px] font-bold text-[#241f17] mb-1">엔진 API — 다른 서비스도 사용</h2>
-          <p className="text-[12px] text-[#857a68] mb-3">환경변수 <code>TOKENPILOT_API_KEYS</code>(쉼표 구분)에 키를 넣으면 외부에서 호출할 수 있어요. 응답: 추천 모델·후보별 원가·권장 판매가·크레딧.</p>
+          <h2 className="text-[14px] font-bold text-[#1f2430] mb-1">엔진 API — 다른 서비스도 사용</h2>
+          <p className="text-[12px] text-[#6b7280] mb-3">환경변수 <code>TOKENPILOT_API_KEYS</code>(쉼표 구분)에 키를 넣으면 외부에서 호출할 수 있어요. 응답: 추천 모델·후보별 원가·권장 판매가·크레딧.</p>
           <pre className="rounded-xl bg-[#241f17] text-[#e8e2d4] text-[11.5px] leading-relaxed p-4 overflow-x-auto">{`POST https://vibrexcup.com/api/tokenpilot/estimate
 Authorization: Bearer <YOUR_KEY>
 { "task": "create", "output_tokens": 12000, "quality": "balanced" }
@@ -152,16 +152,16 @@ Authorization: Bearer <YOUR_KEY>
 → { "recommended": "claude-sonnet-5",
     "estimate": { "costKrw": 262, "sellKrw": 786, "credits": 16 },
     "candidates": [ { "model": "claude-haiku-4-5", "eligible": false, ... }, ... ] }`}</pre>
-          <p className="text-[11.5px] text-[#9d9280] mt-2">GET 은 인증 없이 카탈로그·작업 목록을 돌려줘요.</p>
+          <p className="text-[11.5px] text-[#9aa1ad] mt-2">GET 은 인증 없이 카탈로그·작업 목록을 돌려줘요.</p>
         </Card>
       </div>
 
       {/* 가격 시뮬레이터 */}
       <Card className="p-5">
         <div className="flex items-center gap-4 flex-wrap mb-4">
-          <h2 className="text-[14px] font-bold text-[#241f17]">가격 정책 시뮬레이터</h2>
-          <label className="text-[12px] text-[#6b6152] flex items-center gap-2">마진 배수 <input type="number" step={0.5} min={1} value={margin} onChange={(e) => setMargin(Number(e.target.value))} className="w-16 h-8 rounded-md border border-[#ddd3bf] px-2 text-sm outline-none focus:border-[#2563eb]" /></label>
-          <label className="text-[12px] text-[#6b6152] flex items-center gap-2">팩 크레딧 <input type="number" step={10} min={10} value={packCredits} onChange={(e) => setPackCredits(Number(e.target.value))} className="w-20 h-8 rounded-md border border-[#ddd3bf] px-2 text-sm outline-none focus:border-[#2563eb]" /></label>
+          <h2 className="text-[14px] font-bold text-[#1f2430]">가격 정책 시뮬레이터</h2>
+          <label className="text-[12px] text-[#6b7280] flex items-center gap-2">마진 배수 <input type="number" step={0.5} min={1} value={margin} onChange={(e) => setMargin(Number(e.target.value))} className="w-16 h-8 rounded-md border border-[#d9dde5] px-2 text-sm outline-none focus:border-[#2563eb]" /></label>
+          <label className="text-[12px] text-[#6b7280] flex items-center gap-2">팩 크레딧 <input type="number" step={10} min={10} value={packCredits} onChange={(e) => setPackCredits(Number(e.target.value))} className="w-20 h-8 rounded-md border border-[#d9dde5] px-2 text-sm outline-none focus:border-[#2563eb]" /></label>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard label="호출 1회 원가(실측)" value={`₩${Math.round(perCallKrw).toLocaleString()}`} sub="템플릿 로드(₩0) 포함 평균" />
@@ -169,7 +169,7 @@ Authorization: Bearer <YOUR_KEY>
           <StatCard label={`${packCredits}크레딧 팩 권장가`} value={`₩${Math.round(packPrice / 100) * 100 >= 0 ? (Math.round(packPrice / 100) * 100).toLocaleString() : 0}`} sub={`= ${packCredits / data.pricing.generationCost}회`} />
           <StatCard label="9월 정가 전환 영향" value={`+${Math.round(((data.pricing.models['claude-sonnet-5'].output / data.pricing.intro.output) - 1) * 100)}%`} sub={`인트로 $${data.pricing.intro.input}/$${data.pricing.intro.output} → 정가 $${data.pricing.models['claude-sonnet-5'].input}/$${data.pricing.models['claude-sonnet-5'].output} (${data.pricing.intro.until}까지)`} />
         </div>
-        <p className="text-[11px] text-[#9d9280] mt-3">위 원가는 정가 기준(₩{R}/$). 게임 1개는 보통 첫 생성 1회 + 수정 3~5회. 인프라(Vercel·Supabase·TTS)는 별도이므로 실질 원가는 게임당 +₩300~500 정도로 보세요.</p>
+        <p className="text-[11px] text-[#9aa1ad] mt-3">위 원가는 정가 기준(₩{R}/$). 게임 1개는 보통 첫 생성 1회 + 수정 3~5회. 인프라(Vercel·Supabase·TTS)는 별도이므로 실질 원가는 게임당 +₩300~500 정도로 보세요.</p>
       </Card>
 
       {/* 추이 */}
@@ -181,18 +181,18 @@ Authorization: Bearer <YOUR_KEY>
       {/* 종류별 / 모델별 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Card className="p-5">
-          <h2 className="text-[14px] font-bold text-[#241f17] mb-3">종류별</h2>
+          <h2 className="text-[14px] font-bold text-[#1f2430] mb-3">종류별</h2>
           <table className="w-full text-[12.5px]">
             <thead><tr><th className={th}>종류</th><th className={th}>호출</th><th className={th}>평균 출력</th><th className={th}>원가</th><th className={th}>크레딧</th></tr></thead>
             <tbody>
               {Object.entries(data.byKind).sort((a, b) => b[1].cost - a[1].cost).map(([k, v]) => (
-                <tr key={k} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td}`}>{KIND_LABEL[k] ?? k}</td><td className={td}>{v.calls}</td><td className={td}>{v.calls ? Math.round(v.output / v.calls).toLocaleString() : 0}</td><td className={td}>{usd(v.cost)} <span className="text-[#9d9280]">({krw(v.cost, R)})</span></td><td className={td}>{v.credits}</td></tr>
+                <tr key={k} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td}`}>{KIND_LABEL[k] ?? k}</td><td className={td}>{v.calls}</td><td className={td}>{v.calls ? Math.round(v.output / v.calls).toLocaleString() : 0}</td><td className={td}>{usd(v.cost)} <span className="text-[#9aa1ad]">({krw(v.cost, R)})</span></td><td className={td}>{v.credits}</td></tr>
               ))}
             </tbody>
           </table>
         </Card>
         <Card className="p-5">
-          <h2 className="text-[14px] font-bold text-[#241f17] mb-3">모델별 · 단가</h2>
+          <h2 className="text-[14px] font-bold text-[#1f2430] mb-3">모델별 · 단가</h2>
           <table className="w-full text-[12.5px]">
             <thead><tr><th className={th}>모델</th><th className={th}>호출</th><th className={th}>입력/출력 토큰</th><th className={th}>원가</th><th className={th}>단가(in/out $/1M)</th></tr></thead>
             <tbody>
@@ -207,19 +207,19 @@ Authorization: Bearer <YOUR_KEY>
       {/* 무거운 호출 / 상위 사용자 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Card className="p-5">
-          <h2 className="text-[14px] font-bold text-[#241f17] mb-3">가장 무거운 호출 TOP 10 (출력 토큰)</h2>
+          <h2 className="text-[14px] font-bold text-[#1f2430] mb-3">가장 무거운 호출 TOP 10 (출력 토큰)</h2>
           <table className="w-full text-[12.5px]">
             <thead><tr><th className={th}>일시</th><th className={th}>종류</th><th className={th}>출력</th><th className={th}>원가</th></tr></thead>
             <tbody>
               {data.heaviest.map((r) => (
                 <tr key={r.id} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td}`}>{new Date(r.created_at).toLocaleString()}</td><td className={td}>{KIND_LABEL[r.kind] ?? r.kind}{r.template_slug ? ` · ${r.template_slug}` : ''}</td><td className={`${td} ${r.output_tokens > 20000 ? 'text-red-500 font-bold' : ''}`}>{r.output_tokens.toLocaleString()}</td><td className={td}>{krw(Number(r.cost_usd), R)}</td></tr>
               ))}
-              {data.heaviest.length === 0 && <tr><td colSpan={4} className={`${td} text-[#9d9280]`}>아직 기록이 없어요</td></tr>}
+              {data.heaviest.length === 0 && <tr><td colSpan={4} className={`${td} text-[#9aa1ad]`}>아직 기록이 없어요</td></tr>}
             </tbody>
           </table>
         </Card>
         <Card className="p-5">
-          <h2 className="text-[14px] font-bold text-[#241f17] mb-3">원가 상위 사용자</h2>
+          <h2 className="text-[14px] font-bold text-[#1f2430] mb-3">원가 상위 사용자</h2>
           <table className="w-full text-[12.5px]">
             <thead><tr><th className={th}>사용자</th><th className={th}>호출</th><th className={th}>원가</th><th className={th}>차감 크레딧</th><th className={th}>마진</th></tr></thead>
             <tbody>
@@ -227,7 +227,7 @@ Authorization: Bearer <YOUR_KEY>
                 const rev = u.credits * (sellPerCall / data.pricing.generationCost)
                 return <tr key={u.id} className={`border-t border-[#f0eadf] ${trHover}`}><td className={`${td}`}>{u.name}</td><td className={td}>{u.calls}</td><td className={td}>{krw(u.cost, R)}</td><td className={td}>{u.credits}</td><td className={`${td} font-semibold ${u.cost * R > rev ? '!text-red-500' : '!text-[#16a34a]'}`}>{u.cost > 0 ? `${(rev / (u.cost * R)).toFixed(1)}×` : '-'}</td></tr>
               })}
-              {data.topUsers.length === 0 && <tr><td colSpan={5} className={`${td} text-[#9d9280]`}>아직 기록이 없어요</td></tr>}
+              {data.topUsers.length === 0 && <tr><td colSpan={5} className={`${td} text-[#9aa1ad]`}>아직 기록이 없어요</td></tr>}
             </tbody>
           </table>
         </Card>
@@ -235,7 +235,7 @@ Authorization: Bearer <YOUR_KEY>
 
       {/* 최근 호출 */}
       <Card className="p-5">
-        <h2 className="text-[14px] font-bold text-[#241f17] mb-3">최근 호출 50건</h2>
+        <h2 className="text-[14px] font-bold text-[#1f2430] mb-3">최근 호출 50건</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px] min-w-[640px]">
             <thead><tr><th className={th}>일시</th><th className={th}>종류</th><th className={th}>모델</th><th className={th}>입력</th><th className={th}>출력</th><th className={th}>원가</th><th className={th}>크레딧</th></tr></thead>
