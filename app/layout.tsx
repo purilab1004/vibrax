@@ -6,6 +6,7 @@ import NavBar from '@/components/NavBar'
 import MobileNav from '@/components/MobileNav'
 import SiteFooter from '@/components/SiteFooter'
 import Telemetry from '@/components/Telemetry'
+import BlockedGate from '@/components/BlockedGate'
 import Sidebar, { type SidebarChannel } from '@/components/Sidebar'
 import { Suspense } from 'react'
 import { LangProvider } from '@/lib/i18n/context'
@@ -126,6 +127,10 @@ export default async function RootLayout({
 
   // 사이드바 데이터 — NEW 장르 표기 + 라이브 채널 목록(조회수 상위)을 한 쿼리로
   const supabase = await createClient()
+  // 차단된 회원은 사이트 대신 안내 화면 (관리자가 회원 관리에서 차단/해제)
+  const { data: { user: me } } = await supabase.auth.getUser()
+  let blocked: string | null = null
+  if (me) { const { data: bp } = await supabase.from('profiles').select('banned_at').eq('id', me.id).maybeSingle(); if ((bp as { banned_at?: string | null } | null)?.banned_at) blocked = me.email ?? '' }
   // 서버 컴포넌트(요청당 1회 실행) — Date.now 사용 정상
   // eslint-disable-next-line react-hooks/purity
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -215,7 +220,7 @@ export default async function RootLayout({
           <Suspense fallback={null}>
             <Sidebar newGenres={newGenres} channels={channels} tournament={tournament} />
           </Suspense>
-          <main className="flex-1 md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">{children}</main>
+          <main className="flex-1 md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">{blocked !== null ? <BlockedGate email={blocked} /> : children}</main>
           <SiteFooter />
           <Telemetry />
           <MobileNav />

@@ -89,13 +89,13 @@ export default function AdminMembersPage() {
 
   return (
     <div>
-      <PageHeader title={a.membersHeading} desc="회원을 검색하고 관리자 종류를 배정하거나, 정지·삭제할 수 있어요."
+      <PageHeader title={a.membersHeading} desc="회원을 검색하고 관리자 종류를 배정하거나, 차단(사이트 이용 불가)·해제·삭제할 수 있어요."
         actions={<button onClick={() => setAdding(true)} className={btn.primary}>회원 추가</button>} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
         <StatCard label="전체 회원" value={stats.total} />
         <StatCard label="관리자" value={stats.admins} accent="#e11d48" />
-        <StatCard label="정지" value={stats.banned} accent="#857a68" />
+        <StatCard label="차단" value={stats.banned} accent="#857a68" />
         <StatCard label="최근 7일 가입" value={stats.fresh} accent="#059669" />
       </div>
 
@@ -108,7 +108,7 @@ export default function AdminMembersPage() {
             <input value={query} onChange={e => setQuery(e.target.value)} placeholder={a.searchMembers} className={`${input} pl-9`} />
           </form>
           <div className="inline-flex items-center rounded-md border border-[#d9dde5] bg-white p-0.5 gap-0.5">
-            {chip('all', '전체', stats.total)}{chip('admin', '관리자', stats.admins)}{chip('banned', '정지', stats.banned)}{chip('new', '신규', stats.fresh)}
+            {chip('all', '전체', stats.total)}{chip('admin', '관리자', stats.admins)}{chip('banned', '차단', stats.banned)}{chip('new', '신규', stats.fresh)}
           </div>
         </div>
         {members === null ? (
@@ -166,7 +166,7 @@ export default function AdminMembersPage() {
                         <div className="flex gap-1.5 justify-end">
                           <button onClick={() => setAdjusting(m)} className={btn.ghost + ' !h-8 !px-2.5'} title={a.adjustCredits}>±</button>
                           {!isSuper && (
-                            <button onClick={() => api('PATCH', { userId: m.id, banned: !m.banned_at }).then(ok => ok && say(m.banned_at ? '정지를 해제했어요.' : '정지했어요.'))} disabled={busy} className={btn.ghost + ' !h-8 !px-2.5'}>
+                            <button onClick={() => api('PATCH', { userId: m.id, banned: !m.banned_at }).then(ok => ok && say(m.banned_at ? '차단을 해제했어요.' : '차단했어요. 이 회원은 사이트를 이용할 수 없어요.'))} disabled={busy} className={`inline-flex items-center h-8 px-2.5 rounded-md border text-[12.5px] font-medium transition-colors ${m.banned_at ? 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'border-[#d9dde5] text-[#374151] hover:border-[#dc2626] hover:text-[#dc2626]'}`}>
                               {m.banned_at ? a.unban : a.ban}
                             </button>
                           )}

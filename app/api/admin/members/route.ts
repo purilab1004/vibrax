@@ -39,7 +39,8 @@ export async function PATCH(req: Request) {
     patch.role = body.adminRoleId ? 'admin' : 'user'
   }
   if (typeof body.banned === 'boolean') {
-    if (isProtected(email) && body.banned) return Response.json({ error: '슈퍼관리자 계정은 정지할 수 없어요.' }, { status: 400 })
+    if (isProtected(email) && body.banned) return Response.json({ error: '슈퍼관리자 계정은 차단할 수 없어요.' }, { status: 400 })
+    if (body.userId === g.user.id && body.banned) return Response.json({ error: '자기 자신은 차단할 수 없어요.' }, { status: 400 })
     patch.banned_at = body.banned ? new Date().toISOString() : null
   }
   if (!Object.keys(patch).length) return Response.json({ error: 'nothing to do' }, { status: 400 })
