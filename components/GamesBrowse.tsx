@@ -192,13 +192,19 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
 }
 
 // 게임 목록 — 모바일: 쇼츠 풀스크린 피드 / 데스크톱: 틱톡 웹형 중앙 카드 피드
-export default function GamesBrowse({ games: input }: { games: GameWithCreator[] }) {
+export type FeedFilter = 'all' | 'video' | 'game'
+
+// filter: all = 게임 사이에 라이브를 끼워 넣기, video = 라이브만, game = 게임만. shuffleLives = 라이브 순서를 랜덤으로
+export default function GamesBrowse({ games: input, filter = 'all', shuffleLives = false }: { games: GameWithCreator[]; filter?: FeedFilter; shuffleLives?: boolean }) {
   const feedRef = useRef<HTMLDivElement>(null)
-  // 방송 중인 게임을 맨 앞으로 — 라이브가 /games 첫 화면에 바로 보이도록
-  // 방송 카드 — 게임 카드와 별개로 피드 맨 앞에 끼워 넣는다
+  // 방송 카드 — 게임 카드와 별개로 피드에 끼워 넣는다
   const liveMap = useLiveBroadcasts()
-  const lives = Object.values(liveMap)
-  const games = input
+  const [seed] = useState(() => String(Math.random()))
+  const livesAll = Object.values(liveMap)
+  const lives = filter === 'game' ? [] : shuffleLives
+    ? [...livesAll].sort((a, b) => hashOf(a.gameId + a.hostId + seed) - hashOf(b.gameId + b.hostId + seed))
+    : livesAll
+  const games = filter === 'video' ? [] : input
   // 라이브 카드를 몰아넣지 않고 게임 사이에 고르게 끼워 넣는다 (첫 번째는 맨 앞, 이후 게임 2~3장 간격)
   type Item = { kind: 'game'; game: GameWithCreator; rank?: number } | { kind: 'live'; live: (typeof lives)[number] }
   const items: Item[] = []
@@ -225,6 +231,9 @@ export default function GamesBrowse({ games: input }: { games: GameWithCreator[]
 
   return (
     <div>
+      {items.length === 0 && (
+        <div className="py-24 text-center text-[#857a68] text-sm">{filter === 'video' ? '지금 방송 중인 영상이 없어요.' : '표시할 게임이 없어요.'}</div>
+      )}
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">
         {items.map((it) => it.kind === 'live'

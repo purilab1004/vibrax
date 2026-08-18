@@ -3,7 +3,7 @@ import { createClient as createAnonClient } from '@supabase/supabase-js'
 import HeroSection from '@/components/HeroSection'
 import ScrollTopOnMount from '@/components/ScrollTopOnMount'
 import HomeBanner from '@/components/HomeBanner'
-import HomeMosaic from '@/components/home/HomeMosaic'
+import HomeFeed from '@/components/home/HomeFeed'
 import Link from 'next/link'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
@@ -35,10 +35,10 @@ export default async function HomePage() {
       <ScrollTopOnMount />
       <HomeBanner />
       <HeroSection games={games ?? []} />
-      {/* 모바일은 쇼츠 피드가 전체 화면을 쓰므로 여백 없음, 데스크톱은 매소너리 여백 */}
-      <div className="w-full md:px-8 md:py-14">
+      {/* 프롬프트 섹션 아래 — /games 처럼 한 장씩 넘기는 피드 (전체/영상/게임) */}
+      <div className="w-full md:py-6">
         {hasAnyGame ? (
-          <HomeMosaic games={games ?? []} />
+          <HomeFeed games={games ?? []} />
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center">
             <p className="font-pixel text-[11px] text-[#2563eb] tracking-widest mb-4">
