@@ -113,11 +113,11 @@ export default function AdminApplicationsPage() {
   return (
     <div>
       <PageHeader title={a.appsHeading} desc="토너먼트·파트너 신청 내역을 확인하고 CSV로 내려받아요."
-        actions={<button onClick={exportCurrent} disabled={!current?.length} className={btn.ghost}>⬇ {a.exportCsv}</button>} />
+        actions={<button onClick={exportCurrent} disabled={!current?.length} className={btn.ghost}>{a.exportCsv}</button>} />
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <Segmented value={tab} onChange={setTab} options={[
-          { value: 'tournament', label: <>🏆 {a.tabTournament} <span className="opacity-60 ml-1">{tournament?.length ?? '…'}</span></> },
-          { value: 'partner', label: <>🤝 {a.tabPartner} <span className="opacity-60 ml-1">{partner?.length ?? '…'}</span></> },
+          { value: 'tournament', label: <>{a.tabTournament} <span className="opacity-60 ml-1">{tournament?.length ?? '…'}</span></> },
+          { value: 'partner', label: <>{a.tabPartner} <span className="opacity-60 ml-1">{partner?.length ?? '…'}</span></> },
         ]} />
         {current !== null && <span className="text-[12.5px] text-[#857a68]">{a.totalCount(current.length)}</span>}
       </div>

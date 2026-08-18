@@ -83,7 +83,7 @@ export default function AdminNoticesPage() {
   return (
     <div>
       <PageHeader title={a.noticesHeading} desc="사이트 공지를 작성하고 고정·공개 여부를 바로 바꿀 수 있어요."
-        actions={<button onClick={() => open('new')} className={btn.primary}>＋ {a.newNotice}</button>} />
+        actions={<button onClick={() => open('new')} className={btn.primary}>{a.newNotice}</button>} />
       <Card>
         {notices === null ? <Skeleton /> : notices.length === 0 ? <EmptyState icon="📣" title="공지가 없어요" action={<button onClick={() => open('new')} className={btn.primary}>{a.newNotice}</button>} /> : (
           <ul className="divide-y divide-[#f0eadf]">

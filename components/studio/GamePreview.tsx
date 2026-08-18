@@ -94,7 +94,7 @@ export default function GamePreview({
           </div>
         )}
         {ajHref && (
-          <a href={ajHref} target="_blank" rel="noreferrer" title="AJ 대시보드 — 지표·분석·업데이트 제안" className="h-8 px-3.5 rounded-md border border-[#ddd3bf] bg-white text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center gap-1.5">🧠 AJ</a>
+          <a href={ajHref} target="_blank" rel="noreferrer" title="AJ 대시보드 — 지표·분석·업데이트 제안" className="h-8 px-3.5 rounded-md border border-[#ddd3bf] bg-white text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center gap-1.5">AJ</a>
         )}
         <button
           onClick={onPublish}

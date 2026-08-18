@@ -135,14 +135,12 @@ export default function NavBar() {
       <header className="sticky top-0 z-50 border-b border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">
         <nav className="w-full px-5 h-14 flex items-center gap-5">
           {/* 데스크톱은 사이드바 상단에 로고가 있으므로 모바일에서만 표시 */}
-          <Link href="/" className="md:hidden group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
+          <Link href="/admin" className="md:hidden group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
             <LogoMark />
-            <span>vibrex<span className="text-[#2563eb]">cup</span></span>
+            <span>vibrex<span className="text-[#2563eb]">admin</span></span>
           </Link>
-          <span className="text-[13px] font-semibold text-[#857a68] border border-[#ebe4d6] rounded px-2 py-0.5">
-            ⚙ {T.nav.admin}
-          </span>
           <div className="flex-1" />
+          <span className="hidden md:inline text-[15px] font-extrabold tracking-tight text-[#241f17] mr-2">vibrex<span className="text-[#2563eb]">admin</span></span>
           <Link
             href="/admin"
             className={`text-[13px] font-medium transition-colors hover:text-[#2563eb] ${

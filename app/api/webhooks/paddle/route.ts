@@ -1,6 +1,13 @@
+// Paddle 웹훅 — 모든 이벤트를 payment_events 에 기록하고,
+//   transaction.completed → 결제 저장 + 크레딧 지급
+//   adjustment.created/updated (refund/chargeback, approved) → 환불 상태 + 크레딧 회수
+//   transaction.payment_failed / canceled → 상태 기록
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyPaddleSignature } from '@/lib/paddle/verify'
-import { creditsForPriceId } from '@/lib/studio/constants'
+import { applyCompleted, applyRefund, normalizeTransaction } from '@/lib/paddle/sync'
+import { getCustomer, paddleConfigured, type PaddleTransaction } from '@/lib/paddle/api'
+
+interface Adjustment { id: string; action: string; status: string; transaction_id: string; reason?: string; totals?: { total?: string }; type?: string; items?: unknown[] }
 
 export async function POST(req: Request) {
   const raw = await req.text()
@@ -8,40 +15,60 @@ export async function POST(req: Request) {
   if (!verifyPaddleSignature(raw, sig, process.env.PADDLE_WEBHOOK_SECRET ?? '')) {
     return new Response('invalid signature', { status: 401 })
   }
-
-  let event: { event_type?: string; data?: { id?: string; custom_data?: { user_id?: string }; items?: unknown } }
-  try {
-    event = JSON.parse(raw)
-  } catch {
-    console.error('[webhook/paddle] malformed JSON')
-    return new Response('ignored', { status: 200 })
-  }
-  if (event.event_type !== 'transaction.completed') {
-    return new Response('ignored', { status: 200 })
-  }
-
-  const userId: string | undefined = event.data?.custom_data?.user_id
-  const txId: string | undefined = event.data?.id
-  const items = Array.isArray(event.data?.items) ? event.data.items : []
-  let credits = 0
-  for (const item of items) {
-    credits += creditsForPriceId(item.price?.id) * (item.quantity ?? 1)
-  }
-  if (!userId || !txId || credits <= 0) {
-    // 매핑 불가 이벤트 — 재시도해도 결과가 같으므로 200
-    console.error('[webhook/paddle] unmapped transaction', { txId, userId, credits })
-    return new Response('ignored', { status: 200 })
-  }
-
+  let event: { event_id?: string; event_type?: string; data?: unknown }
+  try { event = JSON.parse(raw) } catch { console.error('[webhook/paddle] malformed JSON'); return new Response('ignored', { status: 200 }) }
+  const type = event.event_type ?? 'unknown'
+  const data = (event.data ?? {}) as Record<string, unknown>
+  const txId = (typeof data.transaction_id === 'string' ? data.transaction_id : typeof data.id === 'string' && String(data.id).startsWith('txn_') ? data.id : null) as string | null
   const admin = createAdminClient()
-  const { error } = await admin.from('credit_ledger').insert([
-    { user_id: userId, amount: credits, reason: 'purchase', ref_id: txId },
-  ] as never)
-  // unique 위반(23505) = 이미 지급(중복 웹훅) → 정상 처리
-  if (error && error.code !== '23505') {
-    console.error('[webhook/paddle] grant failed', error)
+
+  // 1) 이벤트 로그 (중복 이벤트는 무시)
+  const { data: logged, error: logErr } = await admin.from('payment_events')
+    .insert([{ event_id: event.event_id ?? null, event_type: type, transaction_id: txId, payload: event as never }] as never).select('id').maybeSingle()
+  if (logErr && logErr.code === '23505') return new Response('duplicate', { status: 200 })
+  const logId = (logged as { id: string } | null)?.id
+  const finish = async (ok: boolean, err?: string) => {
+    if (logId) await admin.from('payment_events').update({ processed: ok, error: err ?? null } as never).eq('id', logId)
+  }
+
+  try {
+    if (type === 'transaction.completed') {
+      const tx = data as unknown as PaddleTransaction
+      let email: string | null = null
+      if (tx.customer_id && paddleConfigured()) { try { email = (await getCustomer(tx.customer_id)).data.email ?? null } catch { /* 이메일은 부가 정보 */ } }
+      const row = await applyCompleted(admin, tx, email)
+      if (!row.user_id || row.credits <= 0) console.error('[webhook/paddle] unmapped transaction', { txId: tx.id, userId: row.user_id, credits: row.credits })
+      else console.log('[webhook/paddle] granted', { txId: tx.id, userId: row.user_id, credits: row.credits })
+    } else if (type === 'transaction.updated' || type === 'transaction.paid' || type === 'transaction.billed') {
+      // 완료 전/후 부가 정보 갱신 (이미 저장된 결제만)
+      const tx = data as unknown as PaddleTransaction
+      const { data: exists } = await admin.from('payments').select('id').eq('id', tx.id).maybeSingle()
+      if (exists) await admin.from('payments').update(normalizeTransaction(tx) as never).eq('id', tx.id)
+    } else if (type === 'transaction.payment_failed' || type === 'transaction.canceled') {
+      const tx = data as unknown as PaddleTransaction
+      const { data: exists } = await admin.from('payments').select('id,status').eq('id', tx.id).maybeSingle()
+      if (exists && (exists as { status: string }).status !== 'completed') await admin.from('payments').update({ status: type.endsWith('failed') ? 'failed' : 'canceled', updated_at: new Date().toISOString() } as never).eq('id', tx.id)
+    } else if (type === 'adjustment.created' || type === 'adjustment.updated') {
+      const adj = data as unknown as Adjustment
+      if (adj.transaction_id) {
+        if (adj.action === 'refund' && adj.status === 'pending_approval') {
+          await admin.from('payments').update({ status: 'refund_pending', refund_reason: adj.reason ?? null, updated_at: new Date().toISOString() } as never).eq('id', adj.transaction_id).neq('status', 'refunded')
+        } else if (adj.action === 'refund' && adj.status === 'approved') {
+          await applyRefund(admin, adj.transaction_id, { amountMinor: adj.totals?.total != null ? Number(adj.totals.total) : null, reason: adj.reason ?? null, kind: 'refund', partial: adj.type === 'partial' })
+        } else if (adj.action === 'refund' && adj.status === 'rejected') {
+          await admin.from('payments').update({ status: 'completed', updated_at: new Date().toISOString() } as never).eq('id', adj.transaction_id).eq('status', 'refund_pending')
+        } else if (adj.action === 'chargeback' || adj.action === 'chargeback_warning') {
+          await applyRefund(admin, adj.transaction_id, { amountMinor: adj.totals?.total != null ? Number(adj.totals.total) : null, reason: adj.reason ?? 'chargeback', kind: 'chargeback' })
+        } else if (adj.action === 'chargeback_reverse') {
+          await admin.from('payments').update({ status: 'completed', updated_at: new Date().toISOString() } as never).eq('id', adj.transaction_id)
+        }
+      }
+    }
+    await finish(true)
+    return new Response('ok', { status: 200 })
+  } catch (e) {
+    console.error('[webhook/paddle] failed', type, e)
+    await finish(false, e instanceof Error ? e.message : String(e))
     return new Response('error', { status: 500 })
   }
-  console.log('[webhook/paddle] granted', { txId, userId, credits })
-  return new Response('ok', { status: 200 })
 }

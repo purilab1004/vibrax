@@ -33,7 +33,7 @@ export default function AjDashboard({ gameId, projectId, canRun, initialMetrics,
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">최근 30일 지표</h2>
-          {canRun && <button onClick={run} disabled={running} className="font-pixel text-[11px] bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white px-4 py-2 rounded-md tracking-widest disabled:opacity-50">{running ? 'AJ가 분석 중…' : report ? '↻ AJ 다시 분석' : '▶ AJ 분석 실행'}</button>}
+          {canRun && <button onClick={run} disabled={running} className="font-pixel text-[11px] bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white px-4 py-2 rounded-md tracking-widest disabled:opacity-50">{running ? 'AJ가 분석 중…' : report ? 'AJ 다시 분석' : 'AJ 분석 실행'}</button>}
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard label="플레이 세션" value={m.sessions} sub={`플레이어 ${m.players}명 · 모바일 ${pct(m.mobileRate)}`} />

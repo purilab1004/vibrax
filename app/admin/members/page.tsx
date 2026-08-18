@@ -90,7 +90,7 @@ export default function AdminMembersPage() {
   return (
     <div>
       <PageHeader title={a.membersHeading} desc="회원을 검색하고 관리자 종류를 배정하거나, 정지·삭제할 수 있어요."
-        actions={<button onClick={() => setAdding(true)} className={btn.primary}>＋ 회원 추가</button>} />
+        actions={<button onClick={() => setAdding(true)} className={btn.primary}>회원 추가</button>} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard label="전체 회원" value={stats.total} />

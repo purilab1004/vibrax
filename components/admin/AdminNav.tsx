@@ -15,6 +15,7 @@ export default function AdminNav() {
     ['/admin/notices', a.navNotices],
     ['/admin/members', a.navMembers],
     ['/admin/applications', a.navApplications],
+    ['/admin/payments', '결제 관리'],
     ['/admin/costs', 'LLM 원가'],
     ['/admin/settings', a.navSettings],
   ]

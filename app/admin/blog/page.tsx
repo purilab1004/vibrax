@@ -40,7 +40,7 @@ export default function AdminBlogPage() {
   return (
     <div>
       <PageHeader title={a.blogHeading} desc="글을 작성·발행하고 카테고리를 관리해요."
-        actions={<Link href="/admin/blog/new" className={btn.primary}>✎ {a.newPost}</Link>} />
+        actions={<Link href="/admin/blog/new" className={btn.primary}>{a.newPost}</Link>} />
       <div className="grid grid-cols-3 gap-3 mb-4">
         <StatCard label="전체 글" value={posts?.length ?? '-'} />
         <StatCard label="발행됨" value={pub} accent="#059669" sub={`임시저장 ${(posts?.length ?? 0) - pub}`} />

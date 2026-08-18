@@ -60,7 +60,7 @@ export default function AdminGamesPage() {
   return (
     <div>
       <PageHeader title={a.gamesHeading} desc="게시된 게임을 검색·수정·삭제하고 AJ 대시보드로 이동할 수 있어요."
-        actions={<Link href="/submit" className={btn.primary}>＋ 게임 등록</Link>} />
+        actions={<Link href="/submit" className={btn.primary}>게임 등록</Link>} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard label="게시된 게임" value={games?.length ?? '-'} />
@@ -104,7 +104,7 @@ export default function AdminGamesPage() {
                     <td className={`${td} whitespace-nowrap text-[#857a68]`}>{new Date(g.created_at).toLocaleDateString()}</td>
                     <td className={td}>
                       <div className="flex gap-1.5 justify-end">
-                        <Link href={`/aj/${g.id}`} className={btn.ghost + ' !h-8 !px-2.5'}>🧠 AJ</Link>
+                        <Link href={`/aj/${g.id}`} className={btn.ghost + ' !h-8 !px-2.5'}>AJ</Link>
                         <button onClick={() => openEdit(g)} className={btn.ghost + ' !h-8 !px-2.5'}>{a.edit}</button>
                         <button onClick={() => setDeleting(g)} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#ebe4d6] text-[12.5px] font-medium text-[#857a68] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">{a.delete}</button>
                       </div>

@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { collectGameMetrics } from '@/lib/aj/metrics'
-import { ajNameOf } from '@/components/aj/AjBadge'
 import AjDashboard from '@/components/aj/AjDashboard'
 import type { AjReport } from '@/app/api/aj/analyze/route'
 import { titleFont } from '@/lib/fonts'
@@ -38,7 +37,7 @@ export default async function AjGamePage({ params }: { params: Promise<{ gameId:
           <img src={g.thumbnail_url} alt="" className="w-full h-full object-cover" />
         </div>
         <div className="min-w-0">
-          <p className="font-pixel text-[11px] tracking-[0.3em] text-[#2563eb]">{ajNameOf(g.title)} · AI GAME ENTREPRENEUR</p>
+          <p className="font-pixel text-[11px] tracking-[0.3em] text-[#2563eb]">{(g.profiles?.agent_name ?? `AJ ${creator}`).toUpperCase()} · AI GAME ENTREPRENEUR</p>
           <h1 className={`${titleFont.className} text-[28px] md:text-[36px] leading-tight text-[#241f17] truncate`}>{g.title}</h1>
           <p className="text-[12px] text-[#857a68]">by {creator} · {g.genre.toUpperCase()} · <Link href={`/games/${g.id}`} className="text-[#2563eb] hover:underline">게임 보기</Link>{g.studio_project_id && canRun && <> · <Link href={`/studio/${g.studio_project_id}`} className="text-[#2563eb] hover:underline">스튜디오</Link></>}</p>
         </div>
