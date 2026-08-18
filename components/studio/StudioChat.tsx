@@ -10,7 +10,7 @@ export interface ChatMsg {
 }
 
 export default function StudioChat({
-  messages, streaming, usage, error, onSend, busy, draft, onDraftConsumed,
+  messages, streaming, usage, error, onSend, busy, draft, onDraftConsumed, ajAvatarUrl, ajName,
 }: {
   messages: ChatMsg[]
   streaming: { description: string; htmlBytes: number; codeTail: string } | null
@@ -21,6 +21,9 @@ export default function StudioChat({
   /* 외부(학습 노트 '다음 도전')에서 입력창에 채워 넣을 문장 */
   draft?: string | null
   onDraftConsumed?: () => void
+  /* AJ 아바타 — 내 점토 캐릭터 프리뷰 (없으면 기본) */
+  ajAvatarUrl?: string | null
+  ajName?: string | null
 }) {
   const [input, setInput] = useState('')
   const [seenDraft, setSeenDraft] = useState<string | null>(null)
@@ -82,7 +85,7 @@ export default function StudioChat({
       <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.length === 0 && !streaming && (
           <div className="pt-10 text-center max-w-md mx-auto">
-            <span className="avatar-wave w-14 h-14 rounded-full inline-flex items-center justify-center text-2xl shadow-md" aria-hidden>🧸</span>
+            <span className="avatar-wave w-14 h-14 rounded-full inline-flex items-center justify-center text-2xl shadow-md overflow-hidden" aria-hidden>{ajAvatarUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={ajAvatarUrl} alt="" className="w-full h-full object-cover" /> : '🧸'}</span>
             <p className="mt-3 text-[15px] font-semibold text-[#241f17]">{s.emptyPreview}</p>
             <p className="mt-1 text-[12px] text-[#9d9280]">{s.emptyPreviewDesc}</p>
             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
@@ -113,9 +116,9 @@ export default function StudioChat({
           ) : (
             /* AJ — 왼쪽, 아바타 + 이름 + 흰 말풍선 (왼쪽 위 모서리만 각지게) */
             <div key={i} className="flex items-start gap-2.5">
-              <span className="avatar-wave w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] shadow-sm" aria-hidden>🧸</span>
+              <span className="avatar-wave w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] shadow-sm overflow-hidden" aria-hidden>{ajAvatarUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={ajAvatarUrl} alt="" className="w-full h-full object-cover" /> : '🧸'}</span>
               <div className="min-w-0 max-w-[85%]">
-                <p className="text-[11px] font-semibold text-[#9d9280] mb-1 ml-1">AJ</p>
+                <p className="text-[11px] font-semibold text-[#9d9280] mb-1 ml-1">{ajName || 'AJ'}</p>
                 <div className="px-4 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap text-[#241f17] bg-white border border-[#ebe4d6] rounded-2xl rounded-tl-md shadow-[0_2px_10px_rgba(36,31,23,0.05)]">
                   {m.content}
                 </div>
@@ -125,7 +128,7 @@ export default function StudioChat({
         ))}
         {streaming && (
           <div className="flex items-start gap-2.5">
-            <span className="avatar-wave w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] shadow-sm" aria-hidden>🧸</span>
+            <span className="avatar-wave w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] shadow-sm overflow-hidden" aria-hidden>{ajAvatarUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={ajAvatarUrl} alt="" className="w-full h-full object-cover" /> : '🧸'}</span>
             <div className="w-full max-w-[90%] px-4 py-2.5 text-[14px] leading-relaxed bg-white border border-[#ebe4d6] text-[#241f17] whitespace-pre-wrap rounded-2xl rounded-tl-md shadow-[0_2px_10px_rgba(36,31,23,0.05)]">
               {streaming.description || s.thinking}
               {/* 코드가 오기 전 단계 — 시스템 상태 로그 */}

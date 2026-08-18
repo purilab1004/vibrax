@@ -13,6 +13,7 @@ import StudyPanel from '@/components/studio/StudyPanel'
 import { parseGeneration, hasGenError, hasOffTopic } from '@/lib/studio/parse'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import type { StudioProject, StudioVersionMeta } from '@/lib/supabase/types'
+import { loadAvatarConfig } from '@/lib/jeumto/storage'
 
 export default function StudioComposerPage() {
   const { id } = useParams<{ id: string }>()
@@ -33,6 +34,7 @@ export default function StudioComposerPage() {
   const [showPublish, setShowPublish] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [study, setStudy] = useState<'code' | 'scenario' | null>(null) // 학습 노트 패널
+  const [aj, setAj] = useState<{ url: string | null; name: string | null }>({ url: null, name: null }) // 채팅의 AJ = 내 점토 아바타
   const [draftPrompt, setDraftPrompt] = useState<string | null>(null) // 학습 노트의 '다음 도전' → 채팅 입력에 채우기
   // 채팅 접기/펼치기 — 접으면 프리뷰가 전체를 쓴다
   const [chatCollapsed, setChatCollapsed] = useState(false)
@@ -233,6 +235,7 @@ export default function StudioComposerPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) loadAvatarConfig(supabase, user.id).then((c) => { if (c) setAj({ url: c.previewUrl, name: c.name }) }).catch(() => {})
       if (!user) {
         router.push(`/login?redirect=/studio/${id}`)
         return
@@ -278,39 +281,40 @@ export default function StudioComposerPage() {
 
   return (
     <div className="flex flex-col" style={{ height: '100svh' }}>
-      <div className="flex items-center gap-4 border-b border-[#ebe4d6] px-4 py-2 shrink-0">
+      {/* 상단 바 — 뒤로 · 프로젝트 제목(편집) · 우측: 채팅 토글 / 크레딧 코인 */}
+      <div className="flex items-center gap-3 h-12 px-3 border-b border-[#ebe4d6] bg-white/70 backdrop-blur-xl shrink-0">
         <Link
           href="/studio"
-          className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest transition-colors shrink-0"
+          aria-label={s.backToStudio}
+          className="w-8 h-8 rounded-md flex items-center justify-center text-[#6b6152] hover:text-[#241f17] hover:bg-[#241f17]/5 transition-colors shrink-0"
         >
-          {s.backToStudio}
+          <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
         </Link>
-        <h1 className="text-[#241f17] text-sm truncate">{project.title}</h1>
-        {/* 제목/훅 문구 수정 */}
+        <span className="font-pixel text-[10px] text-[#9d9280] tracking-[0.25em] hidden sm:inline">STUDIO</span>
+        <span className="hidden sm:inline text-[#ddd3bf]">/</span>
         <button
           onClick={() => setShowEdit(true)}
-          title="게임 정보 수정"
-          className="shrink-0 text-[#9d9280] hover:text-[#2563eb] transition-colors"
+          title="제목·훅 문구 수정"
+          className="group flex items-center gap-1.5 min-w-0 rounded-md px-2 py-1 hover:bg-[#241f17]/5 transition-colors"
         >
-          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-          </svg>
+          <span className="text-[14px] font-semibold text-[#241f17] truncate max-w-[40vw]">{project.title}</span>
+          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-[#b3a78f] group-hover:text-[#2563eb] shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
         </button>
         <div className="flex-1" />
-        {/* 채팅 접기/펼치기 — 게임이 있을 때만 */}
         {(html || versions.length > 0) && (
           <button
             onClick={() => setChatCollapsed(v => !v)}
-            className="shrink-0 font-pixel text-[10px] text-[#6b6152] hover:text-[#2563eb] border border-[#ddd3bf] hover:border-[#2563eb] rounded px-2.5 py-1 tracking-widest transition-colors"
+            className="h-8 px-3 rounded-md border border-[#ddd3bf] bg-white text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center gap-1.5"
           >
-            {chatCollapsed ? '💬 채팅 펼치기' : '◀ 채팅 접기'}
+            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /></svg>
+            {chatCollapsed ? '채팅 펼치기' : '채팅 접기'}
           </button>
         )}
         <Link
           href="/credits"
-          className="font-pixel text-[11px] text-[#2563eb] tracking-widest shrink-0 hover:underline"
+          className="h-8 flex items-center gap-1.5 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.06)] px-3 text-[12px] font-bold text-[#241f17] hover:border-[#2563eb] transition-colors"
         >
-          {s.balance(balance ?? 0)}
+          🪙 {s.balance(balance ?? 0)}
         </Link>
       </div>
       <div className="flex-1 flex min-h-0">
@@ -351,6 +355,10 @@ export default function StudioComposerPage() {
               error={error}
               onSend={send}
               busy={streaming !== null}
+              draft={draftPrompt}
+              onDraftConsumed={() => setDraftPrompt(null)}
+              ajAvatarUrl={aj.url}
+              ajName={aj.name}
             />
           </div>
         ) : (
@@ -367,6 +375,8 @@ export default function StudioComposerPage() {
                   busy={streaming !== null}
                   draft={draftPrompt}
                   onDraftConsumed={() => setDraftPrompt(null)}
+                  ajAvatarUrl={aj.url}
+                  ajName={aj.name}
                 />
               </div>
             )}
