@@ -376,6 +376,18 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           </>
         )}
       </div>
+      {/* 관리자: 축약 푸터를 사이드바 맨 아래에 (홈과 동일, 페이지 푸터는 숨김) */}
+      {inAdmin && open && (
+        <div className="shrink-0 border-t border-[#ebe4d6] pt-4 px-4 pb-3 flex flex-col gap-1.5">
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            <a href="/terms" className="text-[11px] text-[#9d9280] hover:text-[#2563eb]">이용약관</a>
+            <a href="/privacy" className="text-[11px] text-[#9d9280] hover:text-[#2563eb]">개인정보처리방침</a>
+            <a href="/refund" className="text-[11px] text-[#9d9280] hover:text-[#2563eb]">환불정책</a>
+          </div>
+          <a href="mailto:dev@puritechlab.com" className="text-[11px] text-[#9d9280] hover:text-[#2563eb]">dev@puritechlab.com</a>
+          <p className="font-pixel text-[9px] text-[#b3a78f] tracking-widest mt-1">© {new Date().getFullYear()} VIBREXCUP · <a href="https://puritechlab.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#2563eb]">PuriTechLab</a></p>
+        </div>
+      )}
     </aside>
   )
 }
