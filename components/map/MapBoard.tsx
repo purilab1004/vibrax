@@ -58,10 +58,8 @@ export default function MapBoard() {
 
       {/* 지도 전면 + 데이터 박스 오버레이 */}
       <Card className="relative overflow-hidden">
-        <div className="relative bg-[#fbf9f4] min-h-[560px] xl:min-h-[640px] flex items-center">
-          <div className="w-full">
-            {filtered ? <WorldMap points={filtered.pts} focus={focus} /> : <div className="aspect-[1000/400] flex items-center justify-center text-[#9d9280] text-[13px]">불러오는 중…</div>}
-          </div>
+        <div className="relative bg-[#fbf9f4] h-[560px] xl:h-[680px]">
+          {filtered ? <WorldMap points={filtered.pts} focus={focus} cover /> : <div className="absolute inset-0 flex items-center justify-center text-[#9d9280] text-[13px]">불러오는 중…</div>}
           {filtered && filtered.pts.length === 0 && !state.err && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><p className="rounded-lg bg-white/90 border border-[#ebe4d6] px-4 py-2 text-[13px] text-[#6b6152]">이 기간에 기록된 활동이 없습니다.</p></div>
           )}

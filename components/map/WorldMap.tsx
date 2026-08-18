@@ -26,8 +26,9 @@ export const flagOf = (code: string | null) => code && code.length === 2 ? Strin
 const names = typeof Intl !== 'undefined' && 'DisplayNames' in Intl ? new Intl.DisplayNames(['ko'], { type: 'region' }) : null
 export const countryName = (code: string | null) => { if (!code) return '알 수 없음'; try { return names?.of(code) ?? code } catch { return code } }
 
-export default function WorldMap({ points, focus, onHover }: { points: HotPoint[]; focus?: string | null; onHover?: (p: HotPoint | null) => void }) {
+export default function WorldMap({ points, focus, onHover, cover = false }: { points: HotPoint[]; focus?: string | null; onHover?: (p: HotPoint | null) => void; cover?: boolean }) {
   const [hover, setHover] = useState<HotPoint | null>(null)
+  const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const landPath = useMemo(() => {
     const topo = land as unknown as Topology<{ land: GeometryCollection }>
     const fc = feature(topo, topo.objects.land) as unknown as FeatureCollection
@@ -39,10 +40,10 @@ export default function WorldMap({ points, focus, onHover }: { points: HotPoint[
   const set = (p: HotPoint | null) => { setHover(p); onHover?.(p) }
 
   return (
-    <div className="relative w-full">
-      <svg viewBox={`0 14 ${W} 400`} className="w-full h-auto block" role="img" aria-label="개발 활동 지도">
+    <div className={cover ? "absolute inset-0" : "relative w-full"}>
+      <svg viewBox={`0 14 ${W} 400`} preserveAspectRatio={cover ? "xMidYMid slice" : "xMidYMid meet"} className={cover ? "w-full h-full block" : "w-full h-auto block"} role="img" aria-label="개발 활동 지도">
         <defs>
-          <radialGradient id="glow"><stop offset="0%" stopColor="currentColor" stopOpacity="0.55" /><stop offset="60%" stopColor="currentColor" stopOpacity="0.18" /><stop offset="100%" stopColor="currentColor" stopOpacity="0" /></radialGradient>
+          {Object.entries(KIND_COLOR).map(([k, c]) => <radialGradient key={k} id={`glow-${k}`}><stop offset="0%" stopColor={c} stopOpacity="0.55" /><stop offset="60%" stopColor={c} stopOpacity="0.18" /><stop offset="100%" stopColor={c} stopOpacity="0" /></radialGradient>)}
           <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.6" fill="#241f17" fillOpacity="0.05" /></pattern>
         </defs>
         <rect x="0" y="0" width={W} height={H} fill="url(#dots)" />
@@ -56,16 +57,16 @@ export default function WorldMap({ points, focus, onHover }: { points: HotPoint[
           const [x, y] = project(p.lon, p.lat); const rad = r(p.total); const col = KIND_COLOR[dominant(p)]
           const isFocus = focus === p.key || hover?.key === p.key
           return (
-            <g key={p.key} style={{ color: col }} onMouseEnter={() => set(p)} onMouseLeave={() => set(null)} className="cursor-pointer">
+            <g key={p.key} style={{ color: col }} onMouseEnter={(e) => { const r = (e.currentTarget.ownerSVGElement?.parentElement as HTMLElement).getBoundingClientRect(); setPos({ x: e.clientX - r.left, y: e.clientY - r.top }); set(p) }} onMouseLeave={() => set(null)} className="cursor-pointer">
               {p.recent > 0 && <circle cx={x} cy={y} r={rad} fill="none" stroke={col} strokeWidth="1.2" className="map-pulse" />}
-              <circle cx={x} cy={y} r={rad * 1.6} fill="url(#glow)" opacity={isFocus ? 1 : 0.8} />
+              <circle cx={x} cy={y} r={rad * 1.6} fill={`url(#glow-${dominant(p)})`} opacity={isFocus ? 1 : 0.8} />
               <circle cx={x} cy={y} r={Math.max(2.2, rad * 0.35)} fill="#fff" stroke={col} strokeWidth="1.5" />
             </g>
           )
         })}
       </svg>
-      {hover && (() => { const [x, y] = project(hover.lon, hover.lat); return (
-        <div className="pointer-events-none absolute z-10 rounded-xl bg-white border border-[#ebe4d6] px-3 py-2 text-[#241f17] shadow-xl" style={{ left: `${(x / W) * 100}%`, top: `${((y - 14) / 400) * 100}%`, transform: 'translate(-50%, calc(-100% - 12px))', minWidth: 160 }}>
+      {hover && (() => { return (
+        <div className="pointer-events-none absolute z-10 rounded-xl bg-white border border-[#ebe4d6] px-3 py-2 text-[#241f17] shadow-xl" style={{ left: pos.x, top: pos.y, transform: 'translate(-50%, calc(-100% - 14px))', minWidth: 160 }}>
           <p className="text-[13px] font-bold">{flagOf(hover.country)} {hover.city ?? countryName(hover.country)}{hover.region && hover.city ? <span className="text-[#9d9280] font-normal"> · {hover.region}</span> : null}</p>
           <p className="text-[11px] text-[#857a68]">{countryName(hover.country)} · 총 {hover.total.toLocaleString()}회{hover.recent ? ` · 24h ${hover.recent}` : ''}</p>
           <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-0.5">{Object.entries(hover.kinds).sort((a, b) => b[1] - a[1]).map(([k, v]) => <span key={k} className="text-[11px]" style={{ color: KIND_COLOR[k] }}>● {KIND_LABEL[k] ?? k} {v}</span>)}</div>
