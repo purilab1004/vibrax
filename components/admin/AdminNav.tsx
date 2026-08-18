@@ -9,6 +9,7 @@ export default function AdminNav() {
   const { T } = useLang()
   const a = T.admin
   const items: [string, string][] = [
+    ['/admin/map', '지도보드'],
     ['/admin', a.navDashboard],
     ['/admin/games', a.navGames],
     ['/admin/blog', a.navBlog],
@@ -16,7 +17,7 @@ export default function AdminNav() {
     ['/admin/members', a.navMembers],
     ['/admin/applications', a.navApplications],
     ['/admin/aj', 'AJ 랭킹'],
-    ['/admin/map', '지도보드'],
+    ['/admin/ads', 'AJ AdPilot'],
     ['/admin/payments', '결제 관리'],
     ['/admin/costs', 'TokenPilot'],
     ['/admin/settings', a.navSettings],

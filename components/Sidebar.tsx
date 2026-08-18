@@ -268,6 +268,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           {inAdmin && (
             <>
               {([
+                ['/admin/map', '지도보드', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18" /></svg>],
                 ['/admin', T.admin.navDashboard, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="4" y="4" width="7" height="9" rx="1" /><rect x="13" y="4" width="7" height="5" rx="1" /><rect x="13" y="11" width="7" height="9" rx="1" /><rect x="4" y="15" width="7" height="5" rx="1" /></svg>],
                 ['/admin/games', T.admin.navGames, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
                 ['/admin/blog', T.admin.navBlog, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M5 4h11l3 3v13H5Z" /><path d="M9 9h6M9 13h6M9 17h4" /></svg>],
@@ -275,7 +276,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
                 ['/admin/members', T.admin.navMembers, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="9" cy="8.5" r="3" /><path d="M3.5 19c1-3 3.2-4.5 5.5-4.5s4.5 1.5 5.5 4.5" /><circle cx="17" cy="9.5" r="2.3" /><path d="M16 14.7c2.5.2 4 1.6 4.5 4.3" /></svg>],
                 ['/admin/applications', T.admin.navApplications, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M8 4h8l2 2v14H6V6l2-2Z" /><path d="M9 4v3h6V4M9 12l2 2 4-4" /></svg>],
                 ['/admin/aj', 'AJ 랭킹', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 19h16M6 19v-6M12 19V5M18 19v-9" /></svg>],
-                ['/admin/map', '지도보드', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18" /></svg>],
+                ['/admin/ads', 'AJ AdPilot', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 11v2a1 1 0 0 0 1 1h3l6 4V6L8 10H5a1 1 0 0 0-1 1Z" /><path d="M17 9a4 4 0 0 1 0 6" /></svg>],
                 ['/admin/payments', '결제 관리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></svg>],
                 ['/admin/costs', 'TokenPilot', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" /></svg>],
                 ['/admin/settings', T.admin.navSettings, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" /></svg>],

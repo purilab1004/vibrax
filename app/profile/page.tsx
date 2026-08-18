@@ -516,6 +516,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <a href={`/aj/${game.id}`} title="AJ 대시보드 — 지표·분석·업데이트 제안" className="font-pixel text-[11px] border border-[#2563eb]/40 text-[#2563eb] hover:bg-[#2563eb] hover:text-white px-3 py-1.5 transition-colors tracking-widest">AJ</a>
+                    <a href={`/ads?game=${game.id}`} title="AJ AdPilot — 홍보 캠페인" className="font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] px-3 py-1.5 transition-colors tracking-widest">홍보</a>
                     <button
                       onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', country: game.country ?? country ?? '', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, teaser: game.teaser ?? '', newThumbnail: null, newManual: null })}
                       className="font-pixel text-[11px] border border-[#ddd3bf] text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] px-3 py-1.5 transition-colors tracking-widest"

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { PromptCreditBadge } from '@/components/CurrencyBadge'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
@@ -317,12 +318,7 @@ export default function StudioComposerPage() {
             {chatCollapsed ? '채팅 펼치기' : '채팅 접기'}
           </button>
         )}
-        <Link
-          href="/credits"
-          className="h-8 flex items-center gap-1.5 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.06)] px-3 text-[12px] font-bold text-[#241f17] hover:border-[#2563eb] transition-colors"
-        >
-          🪙 {s.balance(balance ?? 0)}
-        </Link>
+        <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬프트 크레딧 충전"><PromptCreditBadge amount={balance ?? 0} size="sm" /></Link>
       </div>
       <div className="flex-1 flex min-h-0">
         {/* 좌측 — 최근 프로젝트 사이드바 (클로드 스타일, 데스크톱) */}

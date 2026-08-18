@@ -6,6 +6,7 @@ import { initializePaddle, type Paddle } from '@paddle/paddle-js'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import { CREDIT_PACKS, packPriceId } from '@/lib/studio/constants'
+import { PromptCreditIcon } from '@/components/CurrencyBadge'
 
 // Paddle 미설정(키/가격 ID 없음)이면 구매 버튼 대신 준비 중 안내를 보여준다
 const paddleConfigured =
@@ -94,7 +95,12 @@ export default function CreditsPage() {
   const perCredit = (p: { usd: number; credits: number }) => (p.usd / p.credits * 100).toFixed(1)  // ¢/credit
   const base = CREDIT_PACKS[0]
   const bonusPct = (p: { usd: number; credits: number }) => Math.round((p.credits / (p.usd * (base.credits / base.usd)) - 1) * 100)
-  const gens = (p: { credits: number }) => Math.floor(p.credits / 10)
+  const [genCost, setGenCost] = useState(10)
+  useEffect(() => { supabase.from('site_settings').select('value').eq('key', 'generation_cost').maybeSingle().then(({ data }) => { const v = Number((data as { value?: unknown } | null)?.value); if (Number.isFinite(v) && v >= 1) setGenCost(v) })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const gens = (p: { credits: number }) => Math.floor(p.credits / genCost)
+  const gamesOf = (p: { credits: number }) => Math.max(1, Math.floor(p.credits / (genCost * 5)))  // 게임 1개 ≈ 생성 1회 + 수정 4회
   const [history, setHistory] = useState<{ id: string; created_at: string; amount_minor: number | null; currency: string | null; credits: number; status: string }[] | null>(null)
   useEffect(() => {
     if (!userId) return
@@ -114,13 +120,13 @@ export default function CreditsPage() {
           <div>
             <p className="font-pixel text-[11px] tracking-[0.3em] text-[#2563eb]">CREDITS</p>
             <h1 className="mt-2 text-[32px] md:text-[42px] font-extrabold tracking-tight text-[#241f17] leading-tight">크레딧을 충전하고<br className="hidden md:block" /> <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">아이디어를 게임으로</span></h1>
-            <p className="mt-3 text-[14px] text-[#6b6152]">게임 생성·수정 1회 = 10 크레딧. 템플릿 로드도 10 크레딧이에요. 실패한 생성은 자동 환불됩니다.</p>
+            <p className="mt-3 text-[14px] text-[#6b6152]"><PromptCreditIcon className="inline w-4 h-4 align-[-2px] mr-1" /><b>프롬프트 크레딧</b>은 스튜디오에서 게임을 만들 때 써요 — 생성·수정 1회 = {genCost} 크레딧, 템플릿 로드도 {genCost}. 실패한 생성은 자동 환불. (게임을 플레이할 때 쓰는 <b className="text-[#8a5a00]">게임 코인</b>과는 별개예요.)</p>
           </div>
           <div className="shrink-0 rounded-2xl p-[1.5px] bg-gradient-to-br from-[#2563eb] to-[#06b6d4] shadow-[0_16px_40px_-16px_rgba(37,99,235,0.45)]">
             <div className="rounded-[14.5px] bg-white px-6 py-5 min-w-[220px]">
-              <p className="text-[11px] font-semibold text-[#857a68] tracking-wide">보유 크레딧</p>
+              <p className="text-[11px] font-semibold text-[#3b6fd8] tracking-wide flex items-center gap-1.5"><PromptCreditIcon className="w-3.5 h-3.5" />보유 프롬프트 크레딧</p>
               <p className="mt-1 text-[36px] leading-none font-extrabold tracking-tight text-[#241f17]">{balance ?? '—'}</p>
-              <p className="mt-2 text-[11.5px] text-[#9d9280]">≈ 게임 {balance != null ? Math.floor(balance / 10) : '—'}회 생성 가능</p>
+              <p className="mt-2 text-[11.5px] text-[#9d9280]">≈ 생성·수정 {balance != null ? Math.floor(balance / genCost) : '—'}회 · 완성 게임 약 {balance != null ? Math.floor(balance / (genCost * 5)) : '—'}개</p>
             </div>
           </div>
         </div>
@@ -142,7 +148,8 @@ export default function CreditsPage() {
                   <div className="mt-2 flex items-end gap-1"><span className="text-[40px] leading-none font-extrabold tracking-tight text-[#241f17]">${p.usd}</span><span className="text-[13px] text-[#9d9280] mb-1.5">/ 1회</span></div>
                   <p className="mt-3 text-[18px] font-bold text-[#2563eb]">{p.credits.toLocaleString()} 크레딧{bonus > 0 && <span className="ml-2 align-middle rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold px-2 py-0.5">+{bonus}% 보너스</span>}</p>
                   <ul className="mt-4 space-y-2 text-[13px] text-[#4a4337]">
-                    <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />게임 생성·수정 약 <b>{gens(p)}회</b></li>
+                    <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />생성·수정 <b>{gens(p)}회</b> (1회 {genCost} 크레딧)</li>
+                    <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />완성 게임 약 <b>{gamesOf(p)}개</b> <span className="text-[#9d9280]">(생성 1회 + 수정 4회 기준)</span></li>
                     <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />크레딧당 {perCredit(p)}¢</li>
                     <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />유효기간 없음 · 실패 시 자동 환불</li>
                   </ul>

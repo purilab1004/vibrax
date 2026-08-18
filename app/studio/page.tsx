@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { PromptCreditBadge, PromptCreditIcon } from '@/components/CurrencyBadge'
 import EditInfoModal from '@/components/studio/EditInfoModal'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -157,9 +158,7 @@ export default function StudioPage() {
         <Link href="/" className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest transition-colors shrink-0">← 홈</Link>
         <span className="font-pixel text-[11px] text-[#2563eb] tracking-widest">{s.heading}</span>
         <div className="flex-1" />
-        <Link href="/credits" className="flex items-center gap-1.5 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.06)] px-3 py-1.5 font-pixel text-[11px] text-[#241f17] tracking-widest hover:border-[#2563eb] transition-colors">
-          🪙 {balance === null ? '—' : s.balance(balance)}
-        </Link>
+        <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬프트 크레딧 충전"><PromptCreditBadge amount={balance} size="sm" /></Link>
       </div>
 
       {/* 히어로 — 홈 첫 화면과 같은 느낌 (배경 영상 + 헤드라인 + 프롬프트 카드) */}
@@ -193,7 +192,7 @@ export default function StudioPage() {
             <span className="w-px h-4 bg-[#ddd3bf]" />
             <span><b className="text-[#241f17] text-[15px] mr-1">{publishedCount}</b>게시됨</span>
             <span className="w-px h-4 bg-[#ddd3bf]" />
-            <span><b className="text-[#241f17] text-[15px] mr-1">{balance ?? '—'}</b>크레딧</span>
+            <span className="inline-flex items-center gap-1.5"><PromptCreditIcon className="w-4 h-4" /><b className="text-[#241f17] text-[15px]">{balance ?? '—'}</b>프롬프트 크레딧</span>
           </div>
         </div>
       </section>
@@ -222,7 +221,7 @@ export default function StudioPage() {
                 <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
               </span>
               <span className="font-pixel text-[11px] text-[#241f17] tracking-widest">{creating ? '만드는 중…' : '새 게임 추가'}</span>
-              <span className="text-[12px] text-[#a1957f] px-6 text-center">프롬프트로 직접 만들거나, 외부 링크/파일로 등록해요</span>
+              <span className="text-[12px] text-[#a1957f] px-6 text-center">프롬프트 제작 · 외부 링크 등록 · 방송 추가</span>
             </button>
             {projects.filter((p) => {
               const q = query.trim().toLowerCase()
@@ -284,19 +283,24 @@ export default function StudioPage() {
       {/* 새 게임 추가 — 방식 선택 */}
       {chooser && (
         <div className="fixed inset-0 z-[80] bg-[#241f17]/45 backdrop-blur-[2px] flex items-center justify-center p-4" onClick={() => setChooser(false)}>
-          <div className="w-full max-w-lg rounded-2xl bg-white border border-[#ebe4d6] shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-2xl rounded-2xl bg-white border border-[#ebe4d6] shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
             <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest">새 게임 추가</p>
-            <h3 className="text-[20px] font-extrabold text-[#241f17] mt-1">어떻게 만들까요?</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+            <h3 className="text-[20px] font-extrabold text-[#241f17] mt-1">무엇을 추가할까요?</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
               <button onClick={() => { setChooser(false); createProject() }} disabled={creating} className="group text-left rounded-2xl border-2 border-[#2563eb]/30 bg-[#2563eb]/5 hover:border-[#2563eb] p-5 transition-colors disabled:opacity-50">
-                <span className="w-11 h-11 rounded-full bg-gradient-to-br from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center shadow-[0_6px_18px_rgba(37,99,235,0.35)]"><svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg></span>
-                <p className="mt-3 text-[15px] font-bold text-[#241f17]">직접 만들기</p>
-                <p className="text-[12.5px] text-[#6b6152] mt-1">프롬프트로 AI 스튜디오에서 바로 제작해요. 템플릿·수정·게시까지 한 번에.</p>
+                <span className="w-11 h-11 rounded-full bg-gradient-to-br from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center shadow-[0_6px_18px_rgba(37,99,235,0.35)]"><svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z" /></svg></span>
+                <p className="mt-3 text-[15px] font-bold text-[#241f17]">프롬프트로 제작</p>
+                <p className="text-[12.5px] text-[#6b6152] mt-1">한 줄만 적으면 AI가 게임을 만들어요. 템플릿·수정·게시까지 여기서 끝.</p>
               </button>
               <a href="/submit" className="group text-left rounded-2xl border-2 border-[#e0d8c6] hover:border-[#2563eb] bg-white p-5 transition-colors">
                 <span className="w-11 h-11 rounded-full bg-white border border-[#ddd3bf] text-[#4a4337] flex items-center justify-center group-hover:border-[#2563eb] group-hover:text-[#2563eb] transition-colors"><svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" /></svg></span>
-                <p className="mt-3 text-[15px] font-bold text-[#241f17]">외부 링크 / 파일로 등록</p>
-                <p className="text-[12.5px] text-[#6b6152] mt-1">이미 만든 게임을 URL이나 HTML 파일로 등록해요 (기존 방식).</p>
+                <p className="mt-3 text-[15px] font-bold text-[#241f17]">외부 링크로 등록</p>
+                <p className="text-[12.5px] text-[#6b6152] mt-1">이미 만든 게임이 있다면 URL이나 HTML 파일로 바로 등록해요.</p>
+              </a>
+              <a href="/broadcast" className="group text-left rounded-2xl border-2 border-[#e11d48]/25 hover:border-[#e11d48] bg-[#fff5f7] p-5 transition-colors">
+                <span className="w-11 h-11 rounded-full bg-[#e11d48] text-white flex items-center justify-center shadow-[0_6px_18px_rgba(225,29,72,0.3)]"><svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><rect x="3" y="7" width="13" height="10" rx="2" /><path d="m16 10 5-2v8l-5-2" /></svg></span>
+                <p className="mt-3 text-[15px] font-bold text-[#241f17]">방송 추가</p>
+                <p className="text-[12.5px] text-[#6b6152] mt-1">폰 카메라나 유튜브·트위치 링크로 게임 방송을 켜요. 피드에 LIVE 카드로 노출.</p>
               </a>
             </div>
           </div>

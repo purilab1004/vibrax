@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { useLang } from '@/lib/i18n/context'
 import type { Lang } from '@/lib/i18n/translations'
+import { GameCoinBadge } from '@/components/CurrencyBadge'
 import LogoMark from '@/components/LogoMark'
 
 export default function NavBar() {
@@ -233,11 +234,7 @@ export default function NavBar() {
             <div className="flex items-center justify-end gap-5">
               {user ? (
                 <>
-                  {vcoin !== null && (
-                    <span className="flex items-center gap-1 text-[13px] font-bold text-[#c9940c] whitespace-nowrap" title="VCOIN">
-                      🪙 {vcoin.toLocaleString()}
-                    </span>
-                  )}
+                  {vcoin !== null && <GameCoinBadge amount={vcoin} size="sm" label={false} />}
                   {/* 계정 드롭다운 — 등록/마이페이지/관리자/로그아웃을 하나로 정리 */}
                   <div className="relative">
                     <button

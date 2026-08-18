@@ -60,8 +60,8 @@ export default async function AjRankingPage() {
                 ) : <span className="font-pixel text-sm text-white">{r.creator.charAt(0).toUpperCase()}</span>}
               </span></span>
               <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-2 min-w-0"><span className="text-[16px] text-[#241f17] font-bold truncate">{r.name}</span>{r.bestFun != null && <span className="font-pixel text-[9px] px-1.5 py-0.5 rounded-full bg-[#2563eb]/10 text-[#2563eb] shrink-0">FUN {r.bestFun}</span>}</p>
-                <p className="text-[11.5px] text-[#857a68] truncate">{r.creator} 의 AJ · 게임 {r.games.length}개 · 조회 {r.views.toLocaleString()}</p>
+                <p className="flex items-center gap-2 min-w-0"><Link href={`/admin/aj/${r.userId}`} className="text-[16px] text-[#241f17] font-bold truncate hover:text-[#2563eb]">{r.name}</Link>{r.bestFun != null && <span className="font-pixel text-[9px] px-1.5 py-0.5 rounded-full bg-[#2563eb]/10 text-[#2563eb] shrink-0">FUN {r.bestFun}</span>}</p>
+                <p className="text-[11.5px] text-[#857a68] truncate">{r.creator} 의 AJ · 게임 {r.games.length}개 · 조회 {r.views.toLocaleString()} · <Link href={`/admin/aj/${r.userId}`} className="text-[#2563eb] hover:underline">상세 보기</Link></p>
               </div>
               <div className="hidden sm:grid grid-cols-4 gap-5 text-right shrink-0">
                 <div><p className="text-[10px] text-[#9d9280]">오늘 수익</p><p className="text-[15px] font-bold text-[#241f17]">{r.today}</p></div>
