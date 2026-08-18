@@ -8,11 +8,15 @@ import land from 'world-atlas/land-110m.json'
 
 export interface HotPoint { key: string; lat: number; lon: number; city: string | null; region: string | null; country: string | null; total: number; kinds: Record<string, number>; last: string; recent: number }
 
-const W = 1000, H = 500  // 경도 -180..180 → 0..1000, 위도 90..-90 → 0..500 (남극 잘라내려면 H 축소)
-const project = (lon: number, lat: number): [number, number] => [((lon + 180) / 360) * W, ((90 - lat) / 180) * H]
+const W = 1000, H = 500  // 경도 → 0..1000 (중심 경도 CENTER_LON), 위도 90..-90 → 0..500
+const CENTER_LON = 127.8  // 한반도가 가운데
+const project = (lon: number, lat: number): [number, number] => [((((lon - CENTER_LON + 180) % 360) + 360) % 360 / 360) * W, ((90 - lat) / 180) * H]
 
 function ringPath(ring: Position[]) {
-  return ring.map((c, i) => { const [x, y] = project(c[0], c[1]); return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}` }).join('') + 'Z'
+  // 회전 투영으로 생긴 경계선(안티메리디안)을 넘는 구간은 서브패스를 끊는다
+  let d = ''; let px = NaN
+  ring.forEach((c, i) => { const [x, y] = project(c[0], c[1]); const jump = i > 0 && Math.abs(x - px) > W / 2; d += `${i === 0 || jump ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`; px = x })
+  return d + 'Z'
 }
 function geomPath(g: Geometry): string {
   if (g.type === 'Polygon') return g.coordinates.map(ringPath).join('')
@@ -26,7 +30,7 @@ export const flagOf = (code: string | null) => code && code.length === 2 ? Strin
 const names = typeof Intl !== 'undefined' && 'DisplayNames' in Intl ? new Intl.DisplayNames(['ko'], { type: 'region' }) : null
 export const countryName = (code: string | null) => { if (!code) return '알 수 없음'; try { return names?.of(code) ?? code } catch { return code } }
 
-export default function WorldMap({ points, focus, onHover, cover = false }: { points: HotPoint[]; focus?: string | null; onHover?: (p: HotPoint | null) => void; cover?: boolean }) {
+export default function WorldMap({ points, focus, onHover, cover = false, heightPx }: { points: HotPoint[]; focus?: string | null; onHover?: (p: HotPoint | null) => void; cover?: boolean; heightPx?: number }) {
   const [hover, setHover] = useState<HotPoint | null>(null)
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const landPath = useMemo(() => {
@@ -40,18 +44,18 @@ export default function WorldMap({ points, focus, onHover, cover = false }: { po
   const set = (p: HotPoint | null) => { setHover(p); onHover?.(p) }
 
   return (
-    <div className={cover ? "absolute inset-0" : "relative w-full"}>
-      <svg viewBox={`0 14 ${W} 400`} preserveAspectRatio={cover ? "xMidYMid slice" : "xMidYMid meet"} className={cover ? "w-full h-full block" : "w-full h-auto block"} role="img" aria-label="개발 활동 지도">
+    <div className={cover ? "absolute inset-0" : heightPx ? "relative" : "relative w-full"} style={heightPx ? { width: Math.round(heightPx * (W / 400)), height: heightPx } : undefined}>
+      <svg viewBox={`0 14 ${W} 400`} preserveAspectRatio={cover ? "xMidYMid slice" : "xMidYMid meet"} className={cover || heightPx ? "w-full h-full block" : "w-full h-auto block"} role="img" aria-label="개발 활동 지도">
         <defs>
           {Object.entries(KIND_COLOR).map(([k, c]) => <radialGradient key={k} id={`glow-${k}`}><stop offset="0%" stopColor={c} stopOpacity="0.55" /><stop offset="60%" stopColor={c} stopOpacity="0.18" /><stop offset="100%" stopColor={c} stopOpacity="0" /></radialGradient>)}
-          <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.6" fill="#241f17" fillOpacity="0.05" /></pattern>
+          <pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.6" fill="#1f2430" fillOpacity="0.05" /></pattern>
         </defs>
         <rect x="0" y="0" width={W} height={H} fill="url(#dots)" />
         {/* 경위선 */}
-        {[-120, -60, 0, 60, 120].map(lon => <line key={lon} x1={project(lon, 0)[0]} x2={project(lon, 0)[0]} y1="0" y2={H} stroke="#241f17" strokeOpacity="0.05" />)}
-        {[-60, -30, 0, 30, 60].map(lat => <line key={lat} y1={project(0, lat)[1]} y2={project(0, lat)[1]} x1="0" x2={W} stroke="#241f17" strokeOpacity="0.05" />)}
+        {[-120, -60, 0, 60, 120].map(lon => <line key={lon} x1={project(lon, 0)[0]} x2={project(lon, 0)[0]} y1="0" y2={H} stroke="#1f2430" strokeOpacity="0.06" />)}
+        {[-60, -30, 0, 30, 60].map(lat => <line key={lat} y1={project(0, lat)[1]} y2={project(0, lat)[1]} x1="0" x2={W} stroke="#1f2430" strokeOpacity="0.06" />)}
         {/* 육지 */}
-        <path d={landPath} fill="#e9e2d3" stroke="#d3c9b4" strokeWidth="0.6" />
+        <path d={landPath} fill="#d9dce2" stroke="#c3c8d1" strokeWidth="0.6" />
         {/* 핫스팟 */}
         {[...points].sort((a, b) => b.total - a.total).map(p => {
           const [x, y] = project(p.lon, p.lat); const rad = r(p.total); const col = KIND_COLOR[dominant(p)]

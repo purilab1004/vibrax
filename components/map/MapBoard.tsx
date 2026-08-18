@@ -1,6 +1,6 @@
 'use client'
 // 지도보드 — 어디에서 개발·플레이가 뜨거운지: 세계 지도 핫스팟 + 도시/국가 랭킹 + 실시간 티커
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import WorldMap, { KIND_LABEL, countryName, flagOf, type HotPoint } from '@/components/map/WorldMap'
 import { PageHeader, Card, Segmented, SectionTitle } from '@/components/admin/ui'
 
@@ -17,7 +17,13 @@ export default function MapBoard() {
   const [kind, setKind] = useState<'all' | 'dev' | 'play' | 'games'>('all')
   const [state, setState] = useState<{ days: number; data: Data | null; err: string | null; missing?: boolean }>({ days: 0, data: null, err: null })
   const [focus, setFocus] = useState<string | null>(null)
+  const [showCity, setShowCity] = useState(true)
+  const [showCountry, setShowCountry] = useState(true)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const MAP_H = 640
+  // 처음엔 한반도(가운데)가 보이도록 가로 스크롤을 중앙으로
   const data = state.days === days ? state.data : null
+  useEffect(() => { const el = scrollRef.current; if (!el) return; const center = () => { el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2 }; center(); const t = setTimeout(center, 300); return () => clearTimeout(t) }, [data])
 
   useEffect(() => {
     let alive = true
@@ -56,55 +62,56 @@ export default function MapBoard() {
         </div>
       )}
 
-      {/* 지도 전면 + 데이터 박스 오버레이 */}
-      <Card className="relative overflow-hidden">
-        <div className="relative bg-[#fbf9f4] h-[560px] xl:h-[680px]">
-          {filtered ? <WorldMap points={filtered.pts} focus={focus} cover /> : <div className="absolute inset-0 flex items-center justify-center text-[#9d9280] text-[13px]">불러오는 중…</div>}
-          {filtered && filtered.pts.length === 0 && !state.err && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><p className="rounded-lg bg-white/90 border border-[#ebe4d6] px-4 py-2 text-[13px] text-[#6b6152]">이 기간에 기록된 활동이 없습니다.</p></div>
-          )}
+      {/* 지도 전면(좌우 여백 없음) + 가로 스크롤 + 데이터 박스 오버레이 */}
+      <div className="relative left-1/2 -translate-x-1/2 w-[calc(100vw-var(--rail-w,0rem))] md:w-[calc(100vw-var(--rail-w,0rem)-2px)] border-y border-[#e3e6ec] bg-[#f4f5f8]">
+        <div ref={scrollRef} className="relative overflow-x-auto overflow-y-hidden scrollbar-hide" style={{ height: MAP_H }}>
+          {filtered ? <WorldMap points={filtered.pts} focus={focus} heightPx={MAP_H} /> : <div className="absolute inset-0 flex items-center justify-center text-[#9aa1ad] text-[13px]">불러오는 중…</div>}
+        </div>
+        {filtered && filtered.pts.length === 0 && !state.err && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><p className="rounded-md bg-white/90 border border-[#e3e6ec] px-4 py-2 text-[13px] text-[#6b7280]">이 기간에 기록된 활동이 없습니다.</p></div>
+        )}
 
-          {/* 좌상단 — KPI 칩 */}
-          <div className="absolute top-4 left-4 right-4 xl:right-auto flex flex-wrap gap-2 pointer-events-none">
-            {[['총 활동', filtered?.total ?? data?.total ?? 0, '#241f17'], ['개발(생성)', data?.kinds.generate ?? 0, KIND_COLOR.generate], ['게임 게시', data?.kinds.publish ?? 0, KIND_COLOR.publish], ['플레이', data?.kinds.play ?? 0, KIND_COLOR.play], ['가입', data?.kinds.signup ?? 0, KIND_COLOR.signup], ['게시 게임', data?.kinds.game ?? 0, KIND_COLOR.game], ['활동 도시', filtered?.pts.length ?? 0, '#241f17']].map(([l, v, c]) => (
-              <div key={l as string} className="rounded-xl bg-white/90 backdrop-blur border border-[#ebe4d6] px-3.5 py-2 shadow-[0_4px_14px_-6px_rgba(36,31,23,0.2)]">
-                <p className="text-[10.5px] font-semibold text-[#857a68]">{l}</p>
-                <p className="text-[18px] leading-none font-extrabold tracking-tight mt-0.5" style={{ color: c as string }}>{(v as number).toLocaleString()}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* 좌하단 — 범례 */}
-          <div className="absolute bottom-4 left-4 flex flex-wrap gap-3 rounded-lg bg-white/85 backdrop-blur border border-[#ebe4d6] px-3 py-1.5 text-[11px] text-[#6b6152]">
-            {Object.entries(KIND_LABEL).filter(([k]) => k !== 'visit').map(([k, l]) => <span key={k} className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: KIND_COLOR[k] }} />{l}</span>)}
-          </div>
-
-          {/* 우측 — 도시/국가 패널 (데스크톱) */}
-          <div className="hidden xl:flex absolute top-4 right-4 bottom-4 w-[300px] flex-col gap-3">
-            <div className="rounded-2xl bg-white/92 backdrop-blur border border-[#ebe4d6] shadow-[0_8px_24px_-12px_rgba(36,31,23,0.25)] overflow-hidden flex-1 min-h-0 flex flex-col">
-              <p className="px-4 py-2.5 text-[12.5px] font-bold text-[#241f17] border-b border-[#ebe4d6]">도시 TOP 10</p>
-              <ol className="p-3 space-y-2 overflow-y-auto scrollbar-hide">
-                {(filtered?.pts ?? []).slice(0, 10).map((p, i) => (
-                  <li key={p.key} onMouseEnter={() => setFocus(p.key)} onMouseLeave={() => setFocus(null)} className="cursor-default">
-                    <div className="flex items-center gap-2 text-[12.5px]"><span className="w-4 text-[10.5px] font-bold text-[#9d9280]">{i + 1}</span><span className="flex-1 truncate text-[#241f17]">{flagOf(p.country)} {p.city ?? countryName(p.country)}{p.recent ? <span className="ml-1 text-[9.5px] font-semibold text-emerald-600">24h</span> : null}</span><span className="text-[#6b6152] tabular-nums">{p.total.toLocaleString()}</span></div>
-                    <div className="h-1 rounded-full bg-[#f1ece2] mt-0.5 ml-6 overflow-hidden"><div className="h-full rounded-full bg-[#2563eb]" style={{ width: `${(p.total / maxCity) * 100}%` }} /></div>
-                  </li>
-                ))}
-                {filtered && filtered.pts.length === 0 && <li className="text-[12px] text-[#9d9280]">데이터 없음</li>}
-              </ol>
+        {/* 좌상단 — KPI 칩 */}
+        <div className="absolute top-3 left-4 right-4 xl:right-auto flex flex-wrap gap-1.5 pointer-events-none">
+          {[['총 활동', filtered?.total ?? data?.total ?? 0, '#1f2430'], ['개발(생성)', data?.kinds.generate ?? 0, KIND_COLOR.generate], ['게임 게시', data?.kinds.publish ?? 0, KIND_COLOR.publish], ['플레이', data?.kinds.play ?? 0, KIND_COLOR.play], ['가입', data?.kinds.signup ?? 0, KIND_COLOR.signup], ['게시 게임', data?.kinds.game ?? 0, KIND_COLOR.game], ['활동 도시', filtered?.pts.length ?? 0, '#1f2430']].map(([l, v, c]) => (
+            <div key={l as string} className="rounded-md bg-white/92 backdrop-blur border border-[#e3e6ec] px-3 py-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6b7280]">{l}</p>
+              <p className="text-[16px] leading-none font-bold tracking-tight mt-0.5" style={{ color: c as string }}>{(v as number).toLocaleString()}</p>
             </div>
-            <div className="rounded-2xl bg-white/92 backdrop-blur border border-[#ebe4d6] shadow-[0_8px_24px_-12px_rgba(36,31,23,0.25)] overflow-hidden max-h-[46%] flex flex-col">
-              <p className="px-4 py-2.5 text-[12.5px] font-bold text-[#241f17] border-b border-[#ebe4d6]">국가별</p>
-              <ol className="p-3 space-y-1.5 overflow-y-auto scrollbar-hide">
-                {(filtered?.cs ?? []).slice(0, 10).map(c => (
-                  <li key={c.code} className="flex items-center gap-2 text-[12.5px]"><span className="text-[14px] leading-none">{flagOf(c.code)}</span><span className="flex-1 truncate text-[#241f17]">{countryName(c.code)}</span><span className="w-14 h-1 rounded-full bg-[#f1ece2] overflow-hidden"><span className="block h-full bg-[#f59e0b]" style={{ width: `${(c.total / maxCountry) * 100}%` }} /></span><span className="text-[#6b6152] tabular-nums w-8 text-right">{c.total.toLocaleString()}</span></li>
-                ))}
-                {filtered && filtered.cs.length === 0 && <li className="text-[12px] text-[#9d9280]">데이터 없음</li>}
-              </ol>
-            </div>
+          ))}
+        </div>
+
+        {/* 좌하단 — 범례 + 스크롤 안내 */}
+        <div className="absolute bottom-3 left-4 flex items-center flex-wrap gap-3 rounded-md bg-white/85 backdrop-blur border border-[#e3e6ec] px-3 py-1.5 text-[11px] text-[#6b7280]">
+          {Object.entries(KIND_LABEL).filter(([k]) => k !== 'visit').map(([k, l]) => <span key={k} className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: KIND_COLOR[k] }} />{l}</span>)}
+          <span className="text-[#9aa1ad]">· 좌우로 스크롤해 전체 지도 보기</span>
+        </div>
+
+        {/* 우측 — 도시/국가 패널 (접기 가능, 데스크톱) */}
+        <div className="hidden xl:flex absolute top-3 right-4 bottom-3 w-[290px] flex-col gap-2 pointer-events-none">
+          <div className={`pointer-events-auto rounded-lg bg-white/95 backdrop-blur border border-[#e3e6ec] overflow-hidden flex flex-col ${showCity ? 'flex-1 min-h-0' : ''}`}>
+            <button onClick={() => setShowCity(v => !v)} className="flex items-center justify-between px-3.5 py-2 text-[11px] font-bold uppercase tracking-wide text-[#1f2430] hover:bg-[#f7f8fa]"><span>도시 TOP 10</span><span className="text-[#9aa1ad]">{showCity ? '−' : '+'}</span></button>
+            {showCity && <ol className="px-3 pb-3 space-y-2 overflow-y-auto scrollbar-hide border-t border-[#e3e6ec] pt-2">
+              {(filtered?.pts ?? []).slice(0, 10).map((p, i) => (
+                <li key={p.key} onMouseEnter={() => setFocus(p.key)} onMouseLeave={() => setFocus(null)} className="cursor-default">
+                  <div className="flex items-center gap-2 text-[12.5px]"><span className="w-4 text-[10.5px] font-bold text-[#9aa1ad]">{i + 1}</span><span className="flex-1 truncate text-[#1f2430]">{flagOf(p.country)} {p.city ?? countryName(p.country)}{p.recent ? <span className="ml-1 text-[9.5px] font-semibold text-emerald-600">24h</span> : null}</span><span className="text-[#6b7280] tabular-nums">{p.total.toLocaleString()}</span></div>
+                  <div className="h-1 rounded-full bg-[#eef0f4] mt-0.5 ml-6 overflow-hidden"><div className="h-full rounded-full bg-[#2563eb]" style={{ width: `${(p.total / maxCity) * 100}%` }} /></div>
+                </li>
+              ))}
+              {filtered && filtered.pts.length === 0 && <li className="text-[12px] text-[#9aa1ad]">데이터 없음</li>}
+            </ol>}
+          </div>
+          <div className={`pointer-events-auto rounded-lg bg-white/95 backdrop-blur border border-[#e3e6ec] overflow-hidden flex flex-col ${showCountry ? 'max-h-[46%]' : ''}`}>
+            <button onClick={() => setShowCountry(v => !v)} className="flex items-center justify-between px-3.5 py-2 text-[11px] font-bold uppercase tracking-wide text-[#1f2430] hover:bg-[#f7f8fa]"><span>국가별</span><span className="text-[#9aa1ad]">{showCountry ? '−' : '+'}</span></button>
+            {showCountry && <ol className="px-3 pb-3 space-y-1.5 overflow-y-auto scrollbar-hide border-t border-[#e3e6ec] pt-2">
+              {(filtered?.cs ?? []).slice(0, 10).map(c => (
+                <li key={c.code} className="flex items-center gap-2 text-[12.5px]"><span className="text-[14px] leading-none">{flagOf(c.code)}</span><span className="flex-1 truncate text-[#1f2430]">{countryName(c.code)}</span><span className="w-14 h-1 rounded-full bg-[#eef0f4] overflow-hidden"><span className="block h-full bg-[#f59e0b]" style={{ width: `${(c.total / maxCountry) * 100}%` }} /></span><span className="text-[#6b7280] tabular-nums w-8 text-right">{c.total.toLocaleString()}</span></li>
+              ))}
+              {filtered && filtered.cs.length === 0 && <li className="text-[12px] text-[#9aa1ad]">데이터 없음</li>}
+            </ol>}
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* 모바일/태블릿: 패널을 아래에 */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:hidden gap-3 mt-4">
