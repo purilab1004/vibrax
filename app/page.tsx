@@ -36,7 +36,7 @@ export default async function HomePage() {
       <HomeBanner />
       <HeroSection games={games ?? []} />
       {/* 프롬프트 섹션 아래 — /games 처럼 한 장씩 넘기는 피드 (전체/영상/게임) */}
-      <div className="w-full md:py-6">
+      <div className="w-full">
         {hasAnyGame ? (
           <HomeFeed games={games ?? []} />
         ) : (

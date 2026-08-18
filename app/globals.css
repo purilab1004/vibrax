@@ -746,3 +746,9 @@ body {
 }
 .clay-enter { animation: clayEnter 0.85s cubic-bezier(.22,.9,.3,1) both; }
 @media (prefers-reduced-motion: reduce) { .clay-enter { animation: none; opacity: 1; } }
+
+/* 홈 데스크톱 — 페이지 스크롤로 한 장씩: 각 카드가 화면 높이만큼 차지하고 스냅 */
+@media (min-width: 768px) {
+  html.home-snap { scroll-snap-type: y proximity; }
+  .md-page-feed > * { height: 100svh; scroll-snap-align: start; }
+}

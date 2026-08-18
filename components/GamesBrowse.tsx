@@ -195,7 +195,8 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
 export type FeedFilter = 'all' | 'video' | 'game'
 
 // filter: all = 게임 사이에 라이브를 끼워 넣기, video = 라이브만, game = 게임만. shuffleLives = 라이브 순서를 랜덤으로
-export default function GamesBrowse({ games: input, filter = 'all', shuffleLives = false }: { games: GameWithCreator[]; filter?: FeedFilter; shuffleLives?: boolean }) {
+// pageScroll: 데스크톱에서 별도 스크롤 박스 대신 페이지 스크롤로 한 장씩 스냅 (홈 — 프롬프트 섹션을 넘기면 쇼츠 섹션으로 이어진다)
+export default function GamesBrowse({ games: input, filter = 'all', shuffleLives = false, pageScroll = false }: { games: GameWithCreator[]; filter?: FeedFilter; shuffleLives?: boolean; pageScroll?: boolean }) {
   const feedRef = useRef<HTMLDivElement>(null)
   // 방송 카드 — 게임 카드와 별개로 피드에 끼워 넣는다
   const liveMap = useLiveBroadcasts()
@@ -225,6 +226,7 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
   }, [liveKey])
 
   const jump = (dir: 1 | -1) => {
+    if (pageScroll) { window.scrollBy({ top: dir * window.innerHeight, behavior: 'smooth' }); return }
     const el = feedRef.current
     if (el) el.scrollBy({ top: dir * el.clientHeight, behavior: 'smooth' })
   }
@@ -245,14 +247,16 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
       <div className="hidden md:block relative">
         <div
           ref={feedRef}
-          className="h-[calc(100svh-3.75rem)] min-h-[540px] pt-1 pb-2 overflow-y-auto snap-y snap-mandatory scrollbar-hide"
+          className={pageScroll
+            ? 'md-page-feed'
+            : 'h-[calc(100svh-3.75rem)] min-h-[540px] pt-1 pb-2 overflow-y-auto snap-y snap-mandatory scrollbar-hide'}
         >
           {items.map((it) => it.kind === 'live'
             ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-desktop" />
             : <DesktopFeedCard key={it.game.id} game={it.game} rank={it.rank} />)}
         </div>
         {/* 위/아래 화살표 — 다음/이전 게임 */}
-        <div className="absolute right-2 lg:right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3">
+        <div className={`${pageScroll ? 'fixed' : 'absolute'} right-2 lg:right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30`}>
           {([[-1, 'M6 15l6-6 6 6'], [1, 'M6 9l6 6 6-6']] as const).map(([dir, d]) => (
             <button
               key={dir}
