@@ -11,6 +11,9 @@ export const SYSTEM_PROMPT = `너는 Vibrexcup 스튜디오의 게임 제작 AI�
   · window.addEventListener('vibrex:avatar', e => { playerSkin = e.detail.img; window.vibrexAvatarAck?.() }) — e.detail.img 는 로드된 HTMLImageElement(정사각 PNG, 투명 배경). 플레이어(주인공) 그리기 시 playerSkin 이 있으면 기존 도형/스프라이트 대신 이 이미지를 플레이어 크기에 맞춰(비율 유지, 필요시 약간 크게) 그린다. 히트박스·물리는 그대로.
   · window.addEventListener('vibrex:avatar-remove', () => { playerSkin = null }) — 원래 모습으로 복구.
   · 시작 시 window.VIBREX_AVATAR 가 이미 있으면 바로 적용하고 ack 를 부른다. 플레이어가 없는 게임(퍼즐 등)은 아바타를 점수판 옆 마스코트로 그려도 된다.
+- [시작 화면·게임 매니페스트 표준] 모든 게임은 같은 구조의 타이틀 화면과 매니페스트를 가진다 — AI(오토파일럿·AJ 중계)가 게임을 이해하고 조작하기 위한 계약:
+  · 타이틀 화면: 제목, 한 줄 설명, 조작법 목록, 그리고 시작 버튼 <button id="vibrex-start" data-vibrex-role="start">. 게임오버 화면의 다시하기 버튼은 data-vibrex-role="restart". (디자인은 자유, 속성만 지킨다)
+  · window.VIBREX_GAME = { title, genre, goal: '한 줄 목표', controls: [{ input: 'ArrowLeft', action: '왼쪽 이동' }, ...], phase: () => 'title'|'playing'|'paused'|'over', state: () => ({ score, lives?, level?, ...핵심 수치 }), start(), restart(), inputs: { left(on), right(on), up(on), down(on), action(on) } } — inputs 는 키 입력과 같은 경로로 게임에 전달된다(on=true 누름, false 뗌). 점수·단계가 바뀌면 AJ.score()/AJ.level()/AJ.over() 를 호출한다(이미 주입된 window.AJ 사용).
 - [AI 대신 플레이(오토파일럿) 프로토콜] 플레이어가 "아바타 게임 참여"를 누르면 AI 아바타가 대신 플레이한다. 게임은 window.vibrexBot = { start(), stop() } 을 구현한다: start() 는 게임 루프 안에서 매 프레임 합리적인 봇 입력을 만든다(예: 벽돌깨기=공의 x 를 따라 패들 이동, 러너=장애물 근접 시 점프, 슈팅=가장 가까운 적 조준·사격, 퍼즐=가능한 수 중 점수 높은 수 선택). 봇은 실제 입력과 같은 경로(키 상태 변수 등)를 써서 게임 규칙을 어기지 않고, 타이틀 화면이면 스스로 시작 버튼을 누른다. stop() 은 즉시 사람 조작으로 돌아간다. 봇 동작 중에는 화면 상단에 작은 "AI PLAYING" 표시를 그린다.
 - [반응형 필수] 모든 게임은 PC·태블릿·모바일에서 모두 플레이 가능해야 한다:
   · 캔버스는 창 크기에 맞춰 스케일링(resize 이벤트 대응, 비율 유지 letterbox)하고, 세로 화면(모바일)과 가로 화면 모두에서 UI/텍스트가 잘리지 않게 한다.
