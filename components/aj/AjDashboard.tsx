@@ -4,10 +4,19 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { GameMetrics } from '@/lib/aj/metrics'
 import type { AjReport } from '@/app/api/aj/analyze/route'
-import StatCard from '@/components/admin/StatCard'
 
 const fmtDur = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}분 ${s % 60}초` : `${s}초`)
 const pct = (v: number) => `${Math.round(v * 100)}%`
+// 사용자 화면용 지표 타일 (관리자 StatCard 와 분리 — 트렌디한 카드)
+function Tile({ label, value, sub, accent = '#2563eb', icon }: { label: string; value: string | number; sub?: string; accent?: string; icon: string }) {
+  return (
+    <div className="rounded-2xl border border-[#ebe4d6] bg-white p-4 md:p-5 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_10px_30px_-18px_rgba(36,31,23,0.25)] hover:-translate-y-0.5 transition-transform">
+      <div className="flex items-center justify-between"><p className="text-[12px] font-semibold text-[#857a68]">{label}</p><span className="w-7 h-7 rounded-lg flex items-center justify-center text-[13px]" style={{ background: `${accent}14`, color: accent }}>{icon}</span></div>
+      <p className="mt-2 text-[24px] md:text-[26px] leading-none font-extrabold tracking-tight text-[#241f17]">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+      {sub && <p className="mt-1.5 text-[11.5px] text-[#9d9280]">{sub}</p>}
+    </div>
+  )
+}
 
 export default function AjDashboard({ gameId, projectId, canRun, initialMetrics, initialReport, reportAt }: {
   gameId: string; projectId: string | null; canRun: boolean; initialMetrics: GameMetrics; initialReport: AjReport | null; reportAt: string | null
@@ -31,29 +40,36 @@ export default function AjDashboard({ gameId, projectId, canRun, initialMetrics,
     <div className="space-y-8">
       {/* 지표 */}
       <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest">최근 30일 지표</h2>
-          {canRun && <Link href={`/ads?game=${gameId}`} className="font-pixel text-[11px] border border-[#2563eb] text-[#2563eb] px-4 py-2 rounded-md tracking-widest hover:bg-[#2563eb] hover:text-white mr-2">AJ에게 홍보 맡기기</Link>}
-          {canRun && <button onClick={run} disabled={running} className="font-pixel text-[11px] bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white px-4 py-2 rounded-md tracking-widest disabled:opacity-50">{running ? 'AJ가 분석 중…' : report ? 'AJ 다시 분석' : 'AJ 분석 실행'}</button>}
+        <div className="flex items-end justify-between gap-3 flex-wrap mb-4">
+          <div><h2 className="text-[18px] font-extrabold tracking-tight text-[#241f17]">최근 30일 지표</h2><p className="text-[12.5px] text-[#857a68] mt-0.5">플레이·체류·수익 데이터로 AJ가 게임을 키워요.</p></div>
+          {canRun && <button onClick={run} disabled={running} className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-[13px] font-bold shadow-[0_8px_22px_rgba(37,99,235,0.35)] hover:shadow-[0_10px_28px_rgba(37,99,235,0.45)] disabled:opacity-50 transition-shadow">{running ? <><span className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />AJ가 분석 중…</> : report ? 'AJ 다시 분석' : 'AJ 분석 실행'}</button>}
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="플레이 세션" value={m.sessions} sub={`플레이어 ${m.players}명 · 모바일 ${pct(m.mobileRate)}`} />
-          <StatCard label="평균 체류" value={fmtDur(m.avgDurationSec)} sub={`중앙값 ${fmtDur(m.medianDurationSec)}`} />
-          <StatCard label="30초 내 이탈" value={pct(m.under30sRate)} sub="초반 훅 지표 (낮을수록 좋음)" />
-          <StatCard label="코인 수익" value={`${m.coinsPeriod}`} sub={`오늘 ${m.coinsToday} · 7일 ${m.coins7d}`} />
-          <StatCard label="평균 점수" value={m.avgScore ?? '-'} sub={m.telemetrySessions ? `텔레메트리 세션 ${m.telemetrySessions}` : '게임이 AJ.score 를 아직 안 보내요'} />
-          <StatCard label="첫 게임오버까지" value={m.avgFirstOverSec != null ? fmtDur(m.avgFirstOverSec) : '-'} sub="난이도 지표" />
-          <StatCard label="다시하기 비율" value={m.restartRate != null ? pct(m.restartRate) : '-'} sub="게임오버 후 계속한 비율" />
-          <StatCard label="조회 · 좋아요 · 공유" value={`${m.views} · ${m.likes} · ${m.shares}`} sub="누적" />
+          <Tile icon="▶" label="플레이 세션" value={m.sessions} sub={`플레이어 ${m.players}명 · 모바일 ${pct(m.mobileRate)}`} />
+          <Tile icon="◷" label="평균 체류" value={fmtDur(m.avgDurationSec)} sub={`중앙값 ${fmtDur(m.medianDurationSec)}`} accent="#0891b2" />
+          <Tile icon="↯" label="30초 내 이탈" value={pct(m.under30sRate)} sub="초반 훅 지표 (낮을수록 좋음)" accent="#e11d48" />
+          <Tile icon="¤" label="코인 수익" value={m.coinsPeriod} sub={`오늘 ${m.coinsToday} · 7일 ${m.coins7d}`} accent="#f59e0b" />
+          <Tile icon="★" label="평균 점수" value={m.avgScore ?? '-'} sub={m.telemetrySessions ? `텔레메트리 세션 ${m.telemetrySessions}` : '게임이 AJ.score 를 아직 안 보내요'} accent="#7c3aed" />
+          <Tile icon="✕" label="첫 게임오버까지" value={m.avgFirstOverSec != null ? fmtDur(m.avgFirstOverSec) : '-'} sub="난이도 지표" accent="#6b6152" />
+          <Tile icon="↺" label="다시하기 비율" value={m.restartRate != null ? pct(m.restartRate) : '-'} sub="게임오버 후 계속한 비율" accent="#059669" />
+          <Tile icon="♥" label="조회 · 좋아요 · 공유" value={`${m.views} · ${m.likes} · ${m.shares}`} sub="누적" accent="#db2777" />
         </div>
       </section>
 
       {err && <p className="text-red-500 text-sm">{err}</p>}
 
       {!report ? (
-        <div className="border border-dashed border-[#ddd3bf] rounded-2xl p-10 text-center bg-white/60">
-          <p className="text-[#241f17] font-semibold">아직 AJ 리포트가 없어요</p>
-          <p className="text-[12px] text-[#857a68] mt-1">AJ가 지표·코드·프롬프트를 읽고 재미 점수, 이탈 구간, 업데이트 제안, 방송 대본, 수익 아이디어를 만들어 줍니다.</p>
+        <div className="relative overflow-hidden rounded-3xl border border-[#ebe4d6] bg-white p-8 md:p-10">
+          <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.18),transparent)]" />
+          <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-center">
+            <div>
+              <p className="font-pixel text-[10px] tracking-[0.3em] text-[#2563eb]">AJ BRAIN</p>
+              <h3 className="mt-1 text-[22px] md:text-[26px] font-extrabold tracking-tight text-[#241f17]">아직 AJ 리포트가 없어요</h3>
+              <p className="mt-2 text-[13.5px] text-[#6b6152] max-w-xl">AJ가 지표·코드·프롬프트를 읽고 <b>재미 점수</b>, <b>이탈 구간</b>, <b>업데이트 제안 프롬프트</b>, <b>방송 대본</b>, <b>수익 아이디어</b>를 만들어 줍니다. 플레이 데이터가 적어도 코드와 기획을 바탕으로 첫 리포트를 만들 수 있어요.</p>
+              <div className="mt-4 flex flex-wrap gap-2 text-[12px]">{['PLAY', 'DESIGN', 'BJ', 'GROWTH', 'MONETIZATION'].map(t => <span key={t} className="rounded-full border border-[#ebe4d6] bg-[#faf8f3] px-3 h-7 inline-flex items-center font-semibold text-[#6b6152]">{t} AGENT</span>)}</div>
+            </div>
+            {canRun && <button onClick={run} disabled={running} className="h-12 px-6 rounded-xl bg-[#241f17] text-white text-[14px] font-bold hover:bg-[#3a332a] disabled:opacity-50 whitespace-nowrap">{running ? 'AJ가 분석 중…' : '첫 리포트 만들기'}</button>}
+          </div>
         </div>
       ) : (
         <>

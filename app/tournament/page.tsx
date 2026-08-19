@@ -178,6 +178,8 @@ export default function TournamentPage() {
   const supabase = createClient()
 
   const [division, setDivision] = useState<Division>('individual')
+  const [sponsorOpen, setSponsorOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [name, setName] = useState('')
   const [country, setCountry] = useState('')
   const [schoolLevel, setSchoolLevel] = useState<SchoolLevel>('university')
@@ -381,12 +383,32 @@ export default function TournamentPage() {
             <p className="mt-3 text-base md:text-xl font-extrabold text-white">
               {c.sponsorPledge}
             </p>
-            <a
-              href={`mailto:dev@puritechlab.com?subject=${encodeURIComponent(c.sponsorMailSubject)}`}
+            <button
+              onClick={() => setSponsorOpen(true)}
               className="inline-block mt-5 bg-[#ffd24d] text-white font-pixel text-[12px] px-10 py-4 rounded-lg hover:bg-[#ffe9a8] transition-colors tracking-widest"
             >
               {c.sponsorCta}
-            </a>
+            </button>
+            {/* 후원 안내 — 계좌 입금 */}
+            {sponsorOpen && (
+              <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-[2px] flex items-center justify-center p-4" onClick={() => setSponsorOpen(false)}>
+                <div className="w-full max-w-md rounded-2xl bg-white text-[#241f17] p-7 text-left shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                  <p className="font-pixel text-[11px] tracking-[0.3em] text-[#c9940c]">SPONSOR</p>
+                  <h3 className="mt-1 text-[22px] font-extrabold">{lang === 'en' ? 'Sponsor the prize pool' : '상금 후원하기'}</h3>
+                  <p className="mt-2 text-[13px] text-[#6b6152]">{lang === 'en' ? 'Sponsorships are accepted by bank transfer. 70% of every sponsorship goes straight into the prize pool.' : '후원금은 계좌 입금으로 받습니다. 후원금의 70%는 그대로 상금이 됩니다.'}</p>
+                  <div className="mt-5 rounded-xl border border-[#ebe4d6] bg-[#faf8f3] p-4">
+                    <p className="text-[11px] font-semibold text-[#9d9280]">{lang === 'en' ? 'Bank' : '은행'}</p>
+                    <p className="text-[15px] font-bold">{lang === 'en' ? 'Woori Bank' : '우리은행'}</p>
+                    <p className="mt-2 text-[11px] font-semibold text-[#9d9280]">{lang === 'en' ? 'Account number' : '계좌번호'}</p>
+                    <div className="flex items-center gap-2"><p className="text-[22px] font-extrabold tracking-wide tabular-nums">1005-004-678381</p><button onClick={() => { navigator.clipboard?.writeText('1005004678381'); setCopied(true); setTimeout(() => setCopied(false), 1500) }} className="h-7 px-2.5 rounded-md border border-[#ddd3bf] text-[11.5px] font-semibold hover:border-[#c9940c]">{copied ? (lang === 'en' ? 'Copied' : '복사됨') : (lang === 'en' ? 'Copy' : '복사')}</button></div>
+                    <p className="mt-2 text-[11px] font-semibold text-[#9d9280]">{lang === 'en' ? 'Account holder' : '예금주'}</p>
+                    <p className="text-[15px] font-bold">퓨리테크{lang === 'en' ? ' (PuriTech)' : ''}</p>
+                  </div>
+                  <p className="mt-4 text-[12px] text-[#857a68]">{lang === 'en' ? 'After transferring, email us your name/organization and amount so we can add you to the sponsor list and update the prize pool.' : '입금 후 이름/단체명과 금액을 메일로 알려주시면 후원사 명단과 상금에 반영해 드려요.'} <a href={`mailto:dev@puritechlab.com?subject=${encodeURIComponent(c.sponsorMailSubject)}`} className="text-[#2563eb] underline">dev@puritechlab.com</a></p>
+                  <button onClick={() => setSponsorOpen(false)} className="mt-5 w-full h-11 rounded-xl bg-[#241f17] text-white text-[14px] font-bold">{lang === 'en' ? 'Close' : '닫기'}</button>
+                </div>
+              </div>
+            )}
             <p className="text-[13px] text-gray-500 mt-7">{c.schedule}</p>
           </div>
           {/* 좌측: 참가 신청 폼 */}

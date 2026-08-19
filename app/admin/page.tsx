@@ -35,6 +35,7 @@ export default function AdminDashboardPage() {
   const [recentGames, setRecentGames] = useState<GameWithCreator[] | null>(null)
   const [topGames, setTopGames] = useState<GameWithCreator[] | null>(null)
   const [recentMembers, setRecentMembers] = useState<AdminMember[] | null>(null)
+  const [visits, setVisits] = useState<{ today: number; todaySessions: number; online: number; byDay: { day: string; sessions: number; pv: number }[] } | null>(null)
   const supabase = createClient()
   const { T } = useLang()
   const a = T.admin
@@ -48,6 +49,7 @@ export default function AdminDashboardPage() {
     supabase.from('games').select('*, profiles(username, agent_name, avatar_config)').order('view_count', { ascending: false }).limit(5)
       .then(({ data }) => setTopGames((data as unknown as GameWithCreator[] | null) ?? []))
     supabase.rpc('admin_list_members' as never, { p_query: null } as never).then(({ data }) => setRecentMembers(((data as unknown as AdminMember[] | null) ?? []).slice(0, 6)))
+    fetch('/api/admin/access?days=30').then(r => r.ok ? r.json() : null).then(j => { if (!j) return; const today = j.byDay[j.byDay.length - 1]; setVisits({ today: today?.pv ?? 0, todaySessions: today?.sessions ?? 0, online: j.online, byDay: j.byDay }) }).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -70,7 +72,8 @@ export default function AdminDashboardPage() {
 
       {!stats ? <Skeleton rows={4} /> : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 mb-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 mb-3">
+            <Kpi label="오늘 방문자" value={visits?.todaySessions ?? 0} series={visits?.byDay.map(d => d.sessions)} accent="#059669" href="/admin/access" />
             <Kpi label={a.statMembers} value={t!.members} series={daily.map(d => d.signups)} href="/admin/members" />
             <Kpi label={a.statGames} value={t!.games} series={daily.map(d => d.games)} accent="#059669" href="/admin/games" />
             <Kpi label={a.statViews} value={t!.game_views} accent="#7c3aed" />
@@ -78,7 +81,8 @@ export default function AdminDashboardPage() {
             <Kpi label={a.statPurchased} value={t!.credits_purchased} accent="#f59e0b" />
             <Kpi label={a.statSpent} value={t!.credits_spent} accent="#e11d48" />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2 mb-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-2 mb-3">
+            <TrendChart label="일별 방문자(세션)" sub={a.last30} values={(visits?.byDay ?? []).map(d => d.sessions)} labels={(visits?.byDay ?? []).map(d => d.day.slice(5))} color="#059669" />
             <TrendChart label={a.chartSignups} sub={a.last30} values={daily.map(d => d.signups)} labels={labels} />
             <TrendChart label={a.chartGames} sub={a.last30} values={daily.map(d => d.games)} labels={labels} color="#059669" />
             <TrendChart label={a.chartGenerations} sub={a.last30} values={daily.map(d => d.generations)} labels={labels} color="#0891b2" />
