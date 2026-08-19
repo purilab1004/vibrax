@@ -808,7 +808,7 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
 }
 .aj-halo::before { z-index: -1; } /* 후광은 빛줄기 위, 캐릭터 아래 */
 /* PC: 캐릭터를 무대 아래쪽(네임 배지 바로 위)으로 내린다 */
-.aj-stage-desk .aj-halo { transform: translateY(26%); }
+.aj-stage-desk .aj-halo { transform: translateY(20%); }
 
 /* 아바타 드래그 이동 */
 .aj-drag { cursor: grab; touch-action: none; }
