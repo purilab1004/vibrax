@@ -17,7 +17,7 @@ export default function JeumtoBjOverlay({ config }: { config: AvatarConfig | nul
   const voice = config?.voice ?? 'female'
   const loaded = dataUrl ? loadedUrl === dataUrl : true
   const [bubble, setBubble] = useState<string | null>(null)
-  useJeumtoViewer(containerRef, viewerRef, { interactive: false })
+  useJeumtoViewer(containerRef, viewerRef, { interactive: false, zoom: 1.55 })
 
   useEffect(() => {
     let cancelled = false
@@ -57,7 +57,7 @@ export default function JeumtoBjOverlay({ config }: { config: AvatarConfig | nul
   }, [voice])
 
   return (
-    <div className="avatar-wave" style={{ width: '100%', height: '100%', position: 'relative' }}>
+    <div className="aj-halo" style={{ width: '100%', height: '100%', position: 'relative' }}>
       <div ref={containerRef} className="absolute inset-0" />
       {!loaded && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none">

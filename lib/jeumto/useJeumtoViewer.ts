@@ -15,14 +15,14 @@ export interface JeumtoViewerHandle {
 export function useJeumtoViewer(
   containerRef: RefObject<HTMLDivElement | null>,
   viewerRef: { current: JeumtoViewerHandle | null },
-  opts: { interactive?: boolean; shadows?: boolean },
+  opts: { interactive?: boolean; shadows?: boolean; zoom?: number },
 ): void {
-  const { interactive = false, shadows = false } = opts
+  const { interactive = false, shadows = false, zoom = 1 } = opts
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const v = createJeumtoViewer(el, { interactive, shadows }) as unknown as JeumtoViewerHandle
+    const v = createJeumtoViewer(el, { interactive, shadows, zoom }) as unknown as JeumtoViewerHandle
     viewerRef.current = v
     return () => { viewerRef.current = null; v.dispose() }
-  }, [containerRef, viewerRef, interactive, shadows])
+  }, [containerRef, viewerRef, interactive, shadows, zoom])
 }

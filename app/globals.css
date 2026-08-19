@@ -761,8 +761,8 @@ body {
 /* AJ 아바타 무대 — 둥근 사각 프레임, 하단이 부드럽게 어둠으로 녹아드는 비네트. 말할 때만 떠오르고 끝나면 서서히 사라진다 */
 .aj-stage {
   position: relative; overflow: hidden; border-radius: 28px;
-  background: radial-gradient(120% 90% at 50% 30%, rgba(40, 44, 60, 0.9), rgba(8, 10, 16, 0.95) 75%);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  /* 박스 테두리·배경 없이 — 아바타만 게임 화면 위에 자연스럽게 */
+  background: transparent; box-shadow: none;
   transition: opacity 0.9s ease, transform 0.9s cubic-bezier(.2,.8,.2,1), filter 0.9s ease;
   will-change: opacity, transform;
 }
@@ -771,14 +771,17 @@ body {
   mask-image: linear-gradient(to bottom, #000 0%, #000 62%, rgba(0,0,0,0.6) 82%, transparent 100%), radial-gradient(ellipse 70% 60% at 50% 40%, #000 60%, transparent 100%);
   -webkit-mask-composite: source-in; mask-composite: intersect;
 }
-.aj-stage::after { /* 하단의 은은한 원형 글로우 */
-  content: ''; position: absolute; left: 50%; bottom: -38%; width: 120%; height: 70%; transform: translateX(-50%);
-  border-radius: 9999px; background: radial-gradient(closest-side, rgba(255,255,255,0.10), transparent); pointer-events: none;
+.aj-stage::after { /* 하단의 은은한 원형 글로우 (아바타 발치) */
+  content: ''; position: absolute; left: 50%; bottom: -30%; width: 110%; height: 60%; transform: translateX(-50%);
+  border-radius: 9999px; background: radial-gradient(closest-side, rgba(255,255,255,0.07), transparent); pointer-events: none;
 }
 .aj-stage-on { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
 .aj-stage-off { opacity: 0; transform: translateY(10px) scale(0.94); filter: blur(2px); pointer-events: none; }
-.aj-stage-cam { border-radius: 16px; }
+.aj-stage-cam { border-radius: 16px; background: #0b0b0c; box-shadow: 0 8px 28px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.15); }
 .aj-stage-cam > * { -webkit-mask-image: none; mask-image: none; }
 
 /* Tailwind v4 프리플라이트는 버튼 커서를 default 로 둔다 — 클릭 가능한 요소는 손가락 포인터 */
 button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], select, summary { cursor: pointer; }
+/* 아바타 뒤 은은한 후광 — 박스 없이 게임 화면 위에 떠 있는 느낌 */
+.aj-halo { isolation: isolate; }
+.aj-halo::before { content: ''; position: absolute; inset: 8% 6% 4%; z-index: -1; border-radius: 9999px; background: radial-gradient(closest-side, rgba(255, 214, 170, 0.28), rgba(255, 180, 220, 0.12) 55%, transparent); filter: blur(10px); pointer-events: none; }
