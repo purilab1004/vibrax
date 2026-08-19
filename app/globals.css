@@ -749,6 +749,7 @@ body {
 
 /* 홈 데스크톱 — 페이지 스크롤로 한 장씩: 각 카드가 화면 높이만큼 차지하고 스냅 */
 @media (min-width: 768px) {
-  html.home-snap { scroll-snap-type: y proximity; }
-  html.home-snap .feed-snap { scroll-snap-align: start; }
+  /* Safari 는 proximity 에서 섹션 사이에 멈추는 경우가 있어 mandatory 로 — 홈은 히어로 + 카드뿐이라 안전 */
+  html.home-snap { scroll-snap-type: y mandatory; }
+  html.home-snap .feed-snap { scroll-snap-align: start; scroll-snap-stop: normal; }
 }
