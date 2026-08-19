@@ -2,7 +2,8 @@
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { avatarPreviewUrl } from '@/lib/jeumto/config'
-import { PageHeader, Card, SectionTitle, Badge, Avatar, th, td, trHover } from '@/components/admin/ui'
+import { PageHeader, Card, SectionTitle, Badge, Avatar } from '@/components/admin/ui'
+import { th, td, trHover } from '@/components/admin/tokens'
 import StatCard from '@/components/admin/StatCard'
 import { countryFlag } from '@/lib/country'
 

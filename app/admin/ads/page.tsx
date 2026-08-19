@@ -1,7 +1,8 @@
 // 관리자 — AJ AdPilot 캠페인 전체 현황 (플랫폼 광고 수익 = 소진 코인)
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { PageHeader, Card, Badge, SectionTitle, EmptyState, th, td, trHover } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, SectionTitle, EmptyState } from '@/components/admin/ui'
+import { th, td, trHover } from '@/components/admin/tokens'
 import StatCard from '@/components/admin/StatCard'
 
 export const dynamic = 'force-dynamic'
