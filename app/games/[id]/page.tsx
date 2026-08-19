@@ -34,17 +34,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient()
   const { data: rawGame } = await supabase
     .from('games')
-    .select('title, genre, thumbnail_url')
+    .select('title, genre, thumbnail_url, description, teaser')
     .eq('id', id)
     .single()
-  const game = rawGame as Pick<Game, 'title' | 'genre' | 'thumbnail_url'> | null
+  const game = rawGame as Pick<Game, 'title' | 'genre' | 'thumbnail_url' | 'description' | 'teaser'> | null
 
   if (!game) return { title: 'Game — Vibrexcup' }
 
   const genreLabel = GENRE_LABELS[game.genre] ?? game.genre
+  const desc = (game.description?.trim() || game.teaser?.trim() || '') 
   return {
     title: `${game.title} — Vibrexcup`,
-    description: `${game.title}은(는) AI 바이브코딩으로 만들어진 ${genreLabel} 게임입니다. Vibrexcup에서 지금 바로 플레이하세요.`,
+    description: desc ? `${game.title} — ${desc.slice(0, 140)} (${genreLabel} · 무료 웹 게임, 설치 없이 브라우저에서 바로 플레이)` : `${game.title}은(는) AI 바이브코딩으로 만들어진 ${genreLabel} 게임입니다. Vibrexcup에서 설치 없이 바로 플레이하세요.`,
+    alternates: { canonical: `https://vibrexcup.com/games/${id}` },
     openGraph: {
       title: `${game.title} — Vibrexcup`,
       description: `AI 바이브코딩 ${genreLabel} 게임 — ${game.title}`,
@@ -73,8 +75,21 @@ export default async function GameDetailPage({ params }: Props) {
   const genreLabel = GENRE_LABELS[game.genre] ?? game.genre.toUpperCase()
   const genreColor = GENRE_COLORS[game.genre] ?? 'bg-gray-700'
 
+  const gameJsonLd = {
+    '@context': 'https://schema.org', '@type': 'VideoGame', name: game.title, url: `https://vibrexcup.com/games/${game.id}`, image: game.thumbnail_url,
+    description: game.description || game.teaser || `${game.title} — AI 바이브코딩으로 만든 ${genreLabel} 웹 게임`,
+    genre: genreLabel, gamePlatform: ['Web browser', 'Mobile web'], applicationCategory: 'Game', operatingSystem: 'Any', playMode: 'SinglePlayer', inLanguage: game.language === 'en' ? 'en' : 'ko',
+    author: { '@type': 'Person', name: author }, publisher: { '@type': 'Organization', name: 'Vibrexcup', url: 'https://vibrexcup.com' },
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD', availability: 'https://schema.org/InStock' },
+    interactionStatistic: { '@type': 'InteractionCounter', interactionType: 'https://schema.org/PlayAction', userInteractionCount: game.view_count ?? 0 },
+    datePublished: game.created_at, isAccessibleForFree: true,
+  }
+  const crumbs = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Vibrexcup', item: 'https://vibrexcup.com' }, { '@type': 'ListItem', position: 2, name: 'Games', item: 'https://vibrexcup.com/games' }, { '@type': 'ListItem', position: 3, name: game.title, item: `https://vibrexcup.com/games/${game.id}` } ] }
   return (
     <div className="max-w-5xl mx-auto px-6 pt-16 pb-10 md:pt-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(gameJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }} />
 
       <div className="relative aspect-video w-full mb-8 overflow-hidden bg-gray-900 border border-[#ebe4d6]">
         <Image

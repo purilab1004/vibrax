@@ -8,7 +8,7 @@ export default function AdminNav() {
   const pathname = usePathname()
   const { T } = useLang()
   const a = T.admin
-  const ACCENT: Record<string, string> = { '/admin/ads': '#a855f7', '/admin/costs': '#0891b2' }
+  const ACCENT: Record<string, string> = { '/admin/ads': '#a855f7', '/admin/costs': '#0891b2', '/admin/llmpilot': '#10b981' }
   const items: [string, string][] = [
     ['/admin/map', '지도보드'],
     ['/admin', a.navDashboard],
@@ -25,6 +25,7 @@ export default function AdminNav() {
     ['/admin/logs', '에러 로그'],
     ['/admin/settings', a.navSettings],
     ['/admin/ads', 'AdPilot'],
+    ['/admin/llmpilot', 'LLMPilot'],
     ['/admin/costs', 'TokenPilot'],
   ]
   const active = (href: string) =>

@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // LLM 학습·브라우징 봇 서버 차원 차단 — robots.txt를 무시해도 403으로 강제.
 // 검색 인덱서(Googlebot/Yeti/OAI-SearchBot/Claude-SearchBot/PerplexityBot)는 여기 없음 = 허용.
+// (LLMPilot) 사용자 질문에 답하려고 페이지를 읽는 봇(ChatGPT-User/Claude-User/Perplexity-User)은 AI 검색 노출을 위해 허용, 학습 크롤러만 차단
 const AI_BLOCK_UA =
-  /GPTBot|ChatGPT-User|ClaudeBot|Claude-User|Claude-Web|anthropic-ai|Google-Extended|CCBot|Bytespider|meta-externalagent|cohere-ai|Perplexity-User|Diffbot|Google-CloudVertexBot|GoogleOther|Amazonbot|omgili|TimpiBot|YouBot|AI2Bot|img2dataset/i
+  /GPTBot|ClaudeBot|anthropic-ai|Google-Extended|CCBot|Bytespider|meta-externalagent|cohere-ai|Diffbot|GoogleOther|Amazonbot|omgili|TimpiBot|YouBot|AI2Bot|img2dataset/i
 
 // ── 점검 모드 — 허용 IP만 접속, 나머지는 점검 페이지 ──
 // 끄려면 MAINTENANCE_MODE를 false로 바꾸고 배포

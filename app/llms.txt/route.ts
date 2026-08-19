@@ -1,44 +1,17 @@
-// AI 크롤러(ChatGPT, Claude, Perplexity 등)용 사이트 설명 — https://llmstxt.org 규격
-export const dynamic = 'force-static'
-
-const CONTENT = `# Vibrexcup
-
-> Vibrexcup (https://vibrexcup.com) is an AI game creation and sharing platform.
-> Users build playable HTML5 games with vibe coding via the built-in prompt builder,
-> publish and share them, and "AJ" — the AI DJ streamer — hosts gameplay live with
-> entertaining commentary. When advertisers sponsor a stream, AJ can deliver the ads —
-> a new kind of AI service. Korean/English bilingual, operated by Purilab.
-> Keywords: vibrexcup, 바이브렉스컵, vibe coding, 바이브 코딩, AI DJ, AJ, AI streamer,
-> prompt build, AI game platform, AI advertising.
-
-## What you can do
-
-- Create a game from one prompt in Studio (https://vibrexcup.com/studio) — AI writes a complete HTML5 game
-- Play AI-made games with live AI commentary by AJ (https://vibrexcup.com/games)
-- Create a personal AI Agent that chats with AJ while you play
-- Buy credits to generate games (https://vibrexcup.com/credits)
-
-## Key pages
-
-- Home: https://vibrexcup.com
-- Games: https://vibrexcup.com/games
-- Studio (prompt-to-game): https://vibrexcup.com/studio
-- Blog (guides, updates, columns on vibe coding & AI games): https://vibrexcup.com/blog
-- Notices: https://vibrexcup.com/notices
-- About: https://vibrexcup.com/about
-
-## Topics
-
-vibe coding, AI game generation, prompt-to-game, HTML5 games, AI streamer,
-AI game platform, Claude games, ChatGPT games, indie game creation, retro games
-
-## Contact
-
-dev@puritechlab.com
-`
-
-export function GET() {
-  return new Response(CONTENT, {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-  })
+// /llms.txt — LLM 검색·에이전트용 사이트 요약 (llmstxt.org 규격)
+import { createAdminClient } from '@/lib/supabase/admin'
+import { loadLlmPilot } from '@/lib/llmpilot/settings'
+export const revalidate = 600
+export async function GET() {
+  const admin = createAdminClient(); const s = await loadLlmPilot()
+  const { data } = await admin.from('games').select('id,title,genre,teaser,description,view_count').order('view_count', { ascending: false }).limit(60)
+  const games = (data ?? []) as { id: string; title: string; genre: string; teaser: string | null; description: string | null; view_count: number | null }[]
+  const lines = [
+    '# Vibrexcup', '', `> ${s.siteSummary}`, '', `대상: ${s.audience}`, '',
+    '## 핵심 페이지', '- [게임 목록](https://vibrexcup.com/games): 브라우저에서 바로 하는 무료 HTML5 게임', '- [AI 스튜디오](https://vibrexcup.com/studio): 프롬프트로 게임 만들기 (프롬코인 10 = 생성 1회)', '- [토너먼트](https://vibrexcup.com/tournament)', '- [블로그](https://vibrexcup.com/blog): 게임 출시 노트·제작 뒷이야기', '- [크레딧 안내](https://vibrexcup.com/credits)', '- [이용약관](https://vibrexcup.com/terms) · [개인정보](https://vibrexcup.com/privacy) · [환불](https://vibrexcup.com/refund)', '',
+    '## 게임 (인기순)',
+    ...games.map(g => `- [${g.title}](https://vibrexcup.com/games/${g.id}): ${g.genre} · ${(g.description || g.teaser || '').replace(/\s+/g, ' ').slice(0, 140)}`),
+    '', '## 전체 목록', '- [llms-full.txt](https://vibrexcup.com/llms-full.txt)', '- [JSON 카탈로그](https://vibrexcup.com/api/catalog)', '- [사이트맵](https://vibrexcup.com/sitemap.xml)', '', '문의: dev@puritechlab.com',
+  ]
+  return new Response(lines.join('\n'), { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=600' } })
 }

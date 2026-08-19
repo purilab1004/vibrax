@@ -1,9 +1,13 @@
 import type { MetadataRoute } from 'next'
+import { loadLlmPilot } from '@/lib/llmpilot/settings'
 
 // 정책: AI "검색" 봇(출처 링크로 유입을 만들어주는 인덱서)은 허용,
 // AI "학습·실시간 브라우징" 봇(사이트 통복사에 쓰이는 것)은 차단.
 // robots.txt는 신사협정이므로 실제 강제는 proxy.ts의 UA 403이 담당한다.
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const s = await loadLlmPilot()
+  const userBots = ['ChatGPT-User', 'Claude-User', 'Claude-Web', 'Perplexity-User', 'Gemini-Deep-Research', 'Google-CloudVertexBot']
+  const trainBots = ['GPTBot', 'ClaudeBot', 'anthropic-ai', 'Google-Extended', 'Applebot-Extended', 'CCBot', 'Bytespider', 'meta-externalagent', 'cohere-ai']
   return {
     rules: [
       {
@@ -20,21 +24,9 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'OAI-SearchBot', allow: '/' },     // ChatGPT 검색 인덱스
       { userAgent: 'Claude-SearchBot', allow: '/' },  // Claude 검색 인덱스
       { userAgent: 'PerplexityBot', allow: '/' },     // Perplexity 검색 인덱스
-      // ── 차단: LLM 학습 크롤러 (사이트 내용이 모델에 흡수되는 경로) ──
-      { userAgent: 'GPTBot', disallow: '/' },
-      { userAgent: 'ClaudeBot', disallow: '/' },
-      { userAgent: 'anthropic-ai', disallow: '/' },
-      { userAgent: 'Google-Extended', disallow: '/' }, // Gemini 학습 옵트아웃
-      { userAgent: 'Applebot-Extended', disallow: '/' },
-      { userAgent: 'CCBot', disallow: '/' },           // Common Crawl (학습 데이터셋)
-      { userAgent: 'Bytespider', disallow: '/' },
-      { userAgent: 'meta-externalagent', disallow: '/' },
-      { userAgent: 'cohere-ai', disallow: '/' },
-      // ── 차단: 사용자 지시 실시간 브라우징 ("이 사이트 복사해줘"의 통로) ──
-      { userAgent: 'ChatGPT-User', disallow: '/' },
-      { userAgent: 'Claude-User', disallow: '/' },
-      { userAgent: 'Claude-Web', disallow: '/' },
-      { userAgent: 'Perplexity-User', disallow: '/' },
+      // ── LLMPilot 설정에 따라: 학습 크롤러 / 사용자 지시 브라우징 봇 ──
+      ...trainBots.map(userAgent => ({ userAgent, [s.allowTraining ? 'allow' : 'disallow']: '/' })),
+      ...userBots.map(userAgent => ({ userAgent, [s.allowUserBrowsing ? 'allow' : 'disallow']: '/' })),
     ],
     sitemap: 'https://vibrexcup.com/sitemap.xml',
   }
