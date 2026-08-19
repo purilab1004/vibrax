@@ -142,11 +142,21 @@ export async function POST(req: Request) {
       const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
       const stream = new ReadableStream({
         async start(controller) {
-          const words = desc.split(/(?<=[.。!?] )/)
-          for (const w of words) { controller.enqueue(enc.encode(w)); await sleep(140 + Math.random() * 160) }
+          // 실제 생성처럼 — 생각하는 시간(1.5~2.5초) → 설명을 어절 단위로 타이핑 → 코드를 12~18초에 걸쳐 스트리밍
+          await sleep(1500 + Math.random() * 1000)
+          const words = desc.split(/(?<=\s)/)
+          for (const w of words) { controller.enqueue(enc.encode(w)); await sleep(45 + Math.random() * 70) }
+          await sleep(600)
           controller.enqueue(enc.encode('\n<game>'))
-          const CH = 700
-          for (let i = 0; i < html.length; i += CH) { controller.enqueue(enc.encode(html.slice(i, i + CH))); await sleep(60 + Math.random() * 60) }
+          const totalMs = 12000 + Math.random() * 6000
+          const CH = 180
+          const chunks = Math.ceil(html.length / CH)
+          const per = totalMs / chunks
+          for (let i = 0; i < html.length; i += CH) {
+            controller.enqueue(enc.encode(html.slice(i, i + CH)))
+            // 중간중간 잠깐 멈칫 (사람이 타이핑하듯)
+            await sleep(per * (0.6 + Math.random() * 0.8) + (Math.random() < 0.04 ? 400 : 0))
+          }
           controller.enqueue(enc.encode('</game>\n'))
           controller.enqueue(enc.encode(`[[USAGE:${estIn}:${estOut}]]`))
           controller.close()
