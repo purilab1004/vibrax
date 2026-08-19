@@ -157,6 +157,13 @@ export default function StudioChat({
                         </span>
                       </span>
                     </div>
+                    {/* 빠르게 진행되는 느낌 — 단계 칩이 착착 체크되고 진행 바가 차오른다 */}
+                    {(() => { const PH = ['설계', '렌더링', '조작·물리', '점수·레벨', '모바일', '검수']; const done = Math.min(PH.length, Math.floor(elapsed / 2.2) + (streaming.htmlBytes > 3000 ? 1 : 0)); const pct = Math.min(96, 8 + elapsed * 7 + Math.min(40, streaming.htmlBytes / 400)); return (
+                      <div className="px-3 pt-2">
+                        <div className="flex items-center gap-1.5 flex-wrap text-[10px]">{PH.map((ph, i) => <span key={ph} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 border ${i < done ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : i === done ? 'border-[#2563eb]/40 bg-[#2563eb]/5 text-[#2563eb] animate-pulse' : 'border-[#e5dcc8] text-[#b3a78f]'}`}>{i < done ? '✓' : i === done ? '●' : '○'} {ph}</span>)}</div>
+                        <div className="mt-1.5 h-1 rounded-full bg-[#e5dcc8] overflow-hidden"><div className="h-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] transition-[width] duration-300" style={{ width: `${pct}%` }} /></div>
+                      </div>
+                    ) })()}
                     <pre className="px-3 py-2 h-28 overflow-hidden flex flex-col justify-end font-mono text-[11.5px] leading-relaxed text-[#1d4ed8] whitespace-pre-wrap break-all">
                       {streaming.codeTail}
                       <span className="inline-block w-2 h-3.5 bg-[#2563eb] animate-pulse align-text-bottom" />

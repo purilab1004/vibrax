@@ -157,10 +157,13 @@ export async function POST(req: Request) {
           const CH = 180
           const chunks = Math.ceil(html.length / CH)
           const per = totalMs / chunks
+          // 빠르게 쏟아지는 버스트(5조각 연속) + 짧은 생각 정지 — 총 시간은 동일하게
+          let k = 0
           for (let i = 0; i < html.length; i += CH) {
             controller.enqueue(enc.encode(html.slice(i, i + CH)))
-            // 중간중간 잠깐 멈칫 (사람이 타이핑하듯)
-            await sleep(per * (0.6 + Math.random() * 0.8) + (Math.random() < 0.04 ? 400 : 0))
+            k++
+            if (k % 5 === 0) await sleep(per * 5 * (0.9 + Math.random() * 0.4))
+            else await sleep(8 + Math.random() * 12)
           }
           controller.enqueue(enc.encode('</game>\n'))
           controller.enqueue(enc.encode(`[[USAGE:${estIn}:${estOut}]]`))
