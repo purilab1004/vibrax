@@ -7,10 +7,15 @@ import { logServerError } from '@/lib/log/server'
 import { verifyPaddleSignature } from '@/lib/paddle/verify'
 import { applyCompleted, applyFailed, applyRefund, normalizeTransaction } from '@/lib/paddle/sync'
 import { getCustomer, paddleConfigured, type PaddleTransaction } from '@/lib/paddle/api'
+import { paddleWebhookIps, requestIp } from '@/lib/paddle/ips'
 
 interface Adjustment { id: string; action: string; status: string; transaction_id: string; reason?: string; totals?: { total?: string }; type?: string; items?: unknown[] }
 
 export async function POST(req: Request) {
+  // 1차 방어: Paddle 발신 IP 허용목록 (런타임 조회) — 목록을 못 받으면 서명 검증만으로 진행
+  const allow = await paddleWebhookIps()
+  const ip = requestIp(req.headers)
+  if (allow && ip && !allow.has(ip)) return new Response('forbidden ip', { status: 403 })
   const raw = await req.text()
   const sig = req.headers.get('paddle-signature') ?? ''
   if (!verifyPaddleSignature(raw, sig, process.env.PADDLE_WEBHOOK_SECRET ?? '')) {
