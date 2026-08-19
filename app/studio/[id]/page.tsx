@@ -32,7 +32,8 @@ export default function StudioComposerPage() {
   const [html, setHtml] = useState<string | null>(null)
   const [balance, setBalance] = useState<number | null>(null)
   const [streaming, setStreaming] = useState<{ description: string; htmlBytes: number; codeTail: string } | null>(null)
-  const [usage, setUsage] = useState<{ input: number; output: number } | null>(null)
+  const [usage, setUsage] = useState<{ input: number; output: number; credits?: number; balance?: number } | null>(null)
+  const balanceBeforeRef = useRef<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showPublish, setShowPublish] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -125,7 +126,9 @@ export default function StudioComposerPage() {
 
   const refreshBalance = async () => {
     const { data } = await supabase.rpc('credit_balance' as never)
-    setBalance(typeof data === 'number' ? data : 0)
+    const b = typeof data === 'number' ? data : 0
+    setBalance(b)
+    return b
   }
 
   const refreshVersions = async () => {
@@ -155,6 +158,7 @@ export default function StudioComposerPage() {
   const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[]) => {
     setError(null)
     setMessages(m => [...m, { role: 'user', content: prompt, images: images?.map(i => i.previewUrl) }])
+    balanceBeforeRef.current = balance
     // 낙관적 user 메시지가 아직 롤백 대상인지 추적 (성공/GEN_ERROR 처리 후에는 롤백 금지)
     let optimisticPending = true
     setStreaming({ description: '', htmlBytes: 0, codeTail: '' })
@@ -206,7 +210,12 @@ export default function StudioComposerPage() {
       full += decoder.decode()
       // 서버가 붙여준 실제 토큰 사용량 마커 파싱
       const um = full.match(/\[\[USAGE:(\d+):(\d+)\]\]/)
-      if (um) setUsage({ input: Number(um[1]), output: Number(um[2]) })
+      if (um) {
+        // 사용자에겐 LLM 토큰 대신 프롬코인 기준으로 표시 (토큰 사용량은 관리자 TokenPilot 에서)
+        const after = await refreshBalance()
+        const before = balanceBeforeRef.current
+        setUsage({ input: Number(um[1]), output: Number(um[2]), credits: before != null ? Math.max(0, before - after) : undefined, balance: after })
+      }
       setStreaming(null)
 
       if (hasOffTopic(full)) {

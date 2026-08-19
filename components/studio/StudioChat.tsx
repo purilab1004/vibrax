@@ -14,7 +14,7 @@ export default function StudioChat({
 }: {
   messages: ChatMsg[]
   streaming: { description: string; htmlBytes: number; codeTail: string } | null
-  usage?: { input: number; output: number } | null
+  usage?: { input: number; output: number; credits?: number; balance?: number } | null
   error: string | null
   onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[]) => void
   busy: boolean
@@ -169,7 +169,7 @@ export default function StudioChat({
         {/* 완료된 마지막 생성의 실제 토큰 사용량 */}
         {!streaming && usage && (
           <p className="text-[11px] text-[#9d9280] text-center">
-            {s.usageLine(usage.input.toLocaleString(), usage.output.toLocaleString())}
+            {usage.credits != null && usage.credits > 0 ? `이번 생성 — 프롬코인 ${usage.credits.toLocaleString()} 사용 · 잔액 ${(usage.balance ?? 0).toLocaleString()}` : `이번 생성 — 프롬코인 차감 없음 · 잔액 ${(usage.balance ?? 0).toLocaleString()}`}
           </p>
         )}
         {error && (
