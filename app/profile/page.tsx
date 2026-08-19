@@ -52,9 +52,9 @@ interface EditingGame {
   newManual?: File | null
 }
 
-type Tab = 'profile' | 'password' | 'agent' | 'games' | 'collections'
-const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: '내 아바타·AJ', games: '내 게임', collections: '좋아요·컬렉션' }
-const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'games', 'collections'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
+type Tab = 'profile' | 'password' | 'agent' | 'games' | 'collections' | 'billing'
+const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: '내 아바타·AJ', games: '내 게임', collections: '좋아요·컬렉션', billing: '결제 내역' }
+const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'games', 'collections', 'billing'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
 
 export default function ProfilePage() {
   // 사이드 메뉴 탭 — 해시(#games 등)에 따라 해당 섹션만 표시 (스크롤 아님)
@@ -569,6 +569,7 @@ export default function ProfilePage() {
       </section>}
 
       {/* ── 좋아요한 / 공유한 게임 ── */}
+      {tab === 'billing' && user && <BillingSection userId={user.id} />}
       {tab === 'collections' && user && <section id="collections" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]"><MyCollections userId={user.id} /></section>}
 
       {/* ── Edit Game Modal ── */}
@@ -684,5 +685,58 @@ export default function ProfilePage() {
         </div>
       )}
     </div>
+  )
+}
+
+
+// ── 결제 내역 · 크레딧 사용 내역 ──
+function BillingSection({ userId }: { userId: string }) {
+  const supabase = createClient()
+  const [pays, setPays] = useState<{ id: string; created_at: string; amount_minor: number | null; currency: string | null; credits: number; status: string; pack_key: string | null; card_brand: string | null; card_last4: string | null; refund_reason: string | null }[] | null>(null)
+  const [ledger, setLedger] = useState<{ id: string; amount: number; reason: string; created_at: string }[] | null>(null)
+  useEffect(() => {
+    supabase.from('payments').select('id,created_at,amount_minor,currency,credits,status,pack_key,card_brand,card_last4,refund_reason').eq('user_id', userId).order('created_at', { ascending: false }).limit(50).then(({ data }) => setPays((data as typeof pays) ?? []))
+    supabase.from('credit_ledger').select('id,amount,reason,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(50).then(({ data }) => setLedger((data as typeof ledger) ?? []))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
+  const money = (m: number | null, c: string | null) => m == null ? '—' : new Intl.NumberFormat('en-US', { style: 'currency', currency: c ?? 'USD' }).format(m / 100)
+  const PACK: Record<string, string> = { small: 'Starter · 100', medium: 'Creator · 450', large: 'Studio · 1,250' }
+  const ST: Record<string, [string, string]> = { completed: ['완료', 'bg-emerald-50 text-emerald-600'], refunded: ['환불', 'bg-rose-50 text-rose-600'], partially_refunded: ['부분 환불', 'bg-rose-50 text-rose-600'], refund_pending: ['환불 검토', 'bg-amber-50 text-amber-600'], failed: ['실패', 'bg-rose-50 text-rose-600'], canceled: ['취소', 'bg-[#f1ece2] text-[#6b6152]'], chargeback: ['차지백', 'bg-rose-50 text-rose-600'] }
+  const REASON: Record<string, string> = { purchase: '크레딧 구매', generation: '게임 생성·수정', refund: '생성 실패 환불', signup_bonus: '가입 보너스', admin_adjust: '관리자 조정', purchase_refund: '결제 환불 회수', chargeback: '차지백 회수' }
+  return (
+    <section id="billing" className="space-y-6">
+      <div className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]">
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+          <div><h2 className="text-[17px] font-bold text-[#241f17]">결제 내역</h2><p className="text-[12.5px] text-[#857a68] mt-0.5">프롬프트 크레딧 구매 기록이에요. 완료된 결제는 영수증(PDF)을 받을 수 있어요.</p></div>
+          <Link href="/credits" className="inline-flex items-center h-9 px-4 rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8]">크레딧 충전</Link>
+        </div>
+        {pays === null ? <p className="text-[13px] text-[#9d9280]">불러오는 중…</p> : pays.length === 0 ? <p className="rounded-xl bg-[#faf8f3] p-8 text-center text-[13px] text-[#857a68]">아직 결제 내역이 없어요.</p> : (
+          <ul className="divide-y divide-[#f0eadf]">
+            {pays.map(h => { const [l, c] = ST[h.status] ?? [h.status, 'bg-[#f1ece2] text-[#6b6152]']; return (
+              <li key={h.id} className="flex items-center gap-4 py-3 text-[13px]">
+                <span className="text-[#857a68] whitespace-nowrap w-24">{new Date(h.created_at).toLocaleDateString()}</span>
+                <div className="flex-1 min-w-0"><p className="font-semibold text-[#241f17] truncate">{PACK[h.pack_key ?? ''] ?? '크레딧'} · +{h.credits.toLocaleString()} 크레딧</p><p className="text-[11.5px] text-[#9d9280] truncate">{h.card_brand ? `${h.card_brand} ••${h.card_last4}` : ''}{h.status === 'failed' && h.refund_reason ? ` · ${h.refund_reason}` : ''}</p></div>
+                <span className="tabular-nums text-[#4a4337]">{money(h.amount_minor, h.currency)}</span>
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${c}`}>{l}</span>
+                {h.status === 'completed' && <a href={`/api/payments/receipt?id=${h.id}`} target="_blank" rel="noreferrer" className="text-[11.5px] text-[#2563eb] hover:underline whitespace-nowrap">영수증</a>}
+              </li>) })}
+          </ul>
+        )}
+      </div>
+      <div className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]">
+        <h2 className="text-[17px] font-bold text-[#241f17] mb-4">크레딧 사용 내역</h2>
+        {ledger === null ? <p className="text-[13px] text-[#9d9280]">불러오는 중…</p> : ledger.length === 0 ? <p className="text-[13px] text-[#857a68]">기록이 없어요.</p> : (
+          <ul className="divide-y divide-[#f0eadf]">
+            {ledger.map(l => (
+              <li key={l.id} className="flex items-center gap-4 py-2.5 text-[13px]">
+                <span className="text-[#857a68] whitespace-nowrap w-24">{new Date(l.created_at).toLocaleDateString()}</span>
+                <span className="flex-1 text-[#241f17]">{REASON[l.reason] ?? l.reason}</span>
+                <span className={`tabular-nums font-semibold ${l.amount >= 0 ? 'text-emerald-600' : 'text-[#e11d48]'}`}>{l.amount >= 0 ? '+' : ''}{l.amount.toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
   )
 }
