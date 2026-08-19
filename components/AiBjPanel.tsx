@@ -412,20 +412,21 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
               </div>
             )}
           </div>
-          <div className="aj-drag relative mt-2 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
+          <div className="aj-drag relative mt-2 flex items-center gap-2.5 bg-black/60 backdrop-blur-md rounded-full pl-1.5 pr-1.5 py-1.5 border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.45)]" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
             <div className="relative shrink-0">
-              <div className="avatar-ring"><div className="avatar-wave w-7 h-7 rounded-full overflow-hidden shrink-0">
-                <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={28} height={28} className={`w-full h-full object-cover ${bjPic ? 'avatar-bob object-top' : ''}`} unoptimized />
+              <div className="avatar-ring"><div className="avatar-wave w-8 h-8 rounded-full overflow-hidden shrink-0">
+                <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={32} height={32} className={`w-full h-full object-cover ${bjPic ? 'avatar-bob object-top' : ''}`} unoptimized />
               </div></div>
-              {/* LIVE — 프로필 바로 아래 아주 작게 */}
-              <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-0.5 h-3 px-1 rounded-full bg-[#ef4444] text-white text-[7px] font-extrabold tracking-wider leading-none shadow-[0_1px_4px_rgba(239,68,68,0.6)]">
-                <span className="w-1 h-1 rounded-full bg-white animate-pulse inline-block" />LIVE
-              </span>
+              {/* 온라인 점 — 라이브 상태 */}
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#ef4444] ring-2 ring-black/80 shadow-[0_0_0_3px_rgba(239,68,68,0.25)] animate-pulse" aria-hidden />
             </div>
-            <span className="font-pixel text-[10px] text-white truncate">{bjLabel}</span>
+            <div className="min-w-0 flex-1 leading-tight">
+              <p className="font-pixel text-[10px] text-white truncate">{bjLabel}</p>
+              <p className="text-[9px] font-bold tracking-[0.14em] text-[#ff6b6b] mt-0.5">LIVE</p>
+            </div>
             {canJoin && (
               <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()}
-                className={`ml-auto h-6 px-2.5 rounded-full text-[11px] font-bold tracking-wide shrink-0 transition ${joined ? 'bg-white/15 text-white hover:bg-white/25' : 'bg-gradient-to-r from-[#3b82f6] to-[#06b6d4] text-white hover:brightness-110 shadow-[0_2px_8px_rgba(37,99,235,0.45)]'}`}>
+                className={`h-7 px-3 rounded-full text-[11px] font-bold tracking-wide shrink-0 transition ${joined ? 'bg-white/15 text-white hover:bg-white/25' : 'bg-white text-[#111] hover:bg-[#e8f1ff]'}`}>
                 {joined ? '복귀' : '게임 참여'}
               </button>
             )}
