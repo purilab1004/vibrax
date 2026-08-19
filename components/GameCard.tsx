@@ -869,7 +869,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                 title={game.title}
               />
             </div>
-            <AiBjPanel genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={creatorName} bjLive={liveForGame(liveMap, game.id)} />
+            <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={creatorName} bjLive={liveForGame(liveMap, game.id)} />
           </div>
         </div>
       )}

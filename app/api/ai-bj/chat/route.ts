@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
+import { buildTalkContext, logTalk } from '@/lib/mlpilot/talk'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -14,6 +15,9 @@ interface RequestBody {
   message: string
   history: ChatMessage[]
   isAutoCommentary?: boolean
+  situation?: string        // MLPilot: intro | commentary | reply | agent_reply | event_* ...
+  gameId?: string | null
+  viewerText?: string | null
 }
 
 export async function POST(req: Request) {
@@ -29,10 +33,15 @@ export async function POST(req: Request) {
     ? `지금 방송 중인 게임: "${gameTitle}"\n게임 설명: ${gameDescription}`
     : `지금 방송 중인 게임: "${gameTitle}" — 제목과 장르로 게임 방식을 추론해서 중계해.`
 
+  // MLPilot v2 — 학습된 규칙·예시·상대 말투를 프롬프트에 주입
+  const situation = body.situation ?? (body.isAutoCommentary ? 'commentary' : 'reply')
+  const talk = await buildTalkContext({ genre, gameId: body.gameId ?? null, situation, viewerText: body.viewerText ?? (situation === 'reply' ? message : null) }).catch(() => ({ text: '', exampleIds: [] as string[], ruleIds: [] as string[], style: null, emotion: null as string | null }))
   const systemPrompt = `${persona.systemPrompt}
 
 ${gameContext}
-
+${talk.text ? `
+${talk.text}
+` : ''}
 Rule: Keep it under 10 words. One short punchy phrase only.`
 
   // Claude requires messages to start with 'user' and strictly alternate roles
@@ -59,12 +68,15 @@ Rule: Keep it under 10 words. One short punchy phrase only.`
   const encoder = new TextEncoder()
   const readable = new ReadableStream({
     async start(controller) {
+      let full = ''
       for await (const chunk of stream) {
         if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          full += chunk.delta.text
           controller.enqueue(encoder.encode(chunk.delta.text))
         }
       }
       controller.close()
+      if (full.trim()) void logTalk({ gameId: body.gameId ?? null, genre, situation, emotion: (talk as { emotion?: string | null }).emotion ?? null, viewerText: body.viewerText ?? (situation === 'reply' ? message : null), utterance: full.trim(), exampleIds: talk.exampleIds, ruleIds: talk.ruleIds })
     },
   })
 

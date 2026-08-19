@@ -27,6 +27,7 @@ interface AgentConfig {
 }
 
 interface Props {
+  gameId?: string
   genre: Genre
   gameTitle: string
   gameDescription?: string | null
@@ -49,7 +50,7 @@ const AUTO_COMMENTARY = [
   '플레이어가 잘하고 있는지 못하고 있는지 게임 맥락에 맞게 짧게 외쳐줘.',
 ]
 
-export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName, bjLive }: Props) {
+export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName, bjLive }: Props) {
   const persona = AJ_PERSONAS[genre]
   // 제작자가 라이브 방송(ON AIR)을 켜 두었으면 아바타 대신 영상이 BJ 자리에 나온다 (아바타 TTS 는 꺼짐)
   const camera = bjLive ?? null
@@ -76,12 +77,30 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
   const gameFrame = () => Array.from(document.querySelectorAll('iframe')).find(f => { try { return new URL(f.src, location.href).pathname.startsWith('/play/') } catch { return false } }) ?? null
   useEffect(() => { const t = setTimeout(() => setCanJoin(!camera && !!gameFrame()), 800); return () => clearTimeout(t) }, [camera])
   useEffect(() => {
-    const onSnap = (e: Event) => { const image = (e as CustomEvent<{ image: string }>).detail?.image; const f = gameFrame(); if (!image || !f?.contentWindow) return; f.contentWindow.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*'); setJoined(true) }
+    const onSnap = (e: Event) => {
+      const image = (e as CustomEvent<{ image: string }>).detail?.image; const f = gameFrame(); if (!image || !f?.contentWindow) return
+      // 전환 연출 — 아바타 스냅샷이 무대에서 게임 화면 중앙으로 날아가 빨려 들어간다
+      try {
+        const stage = document.querySelector('.aj-stage-desk') as HTMLElement | null
+        const from = stage?.getBoundingClientRect(), to = f.getBoundingClientRect()
+        if (from && to) {
+          const img = document.createElement('img'); img.src = image; img.alt = ''
+          const size = Math.min(from.width, from.height) * 0.8
+          img.style.cssText = `position:fixed;left:${from.left + from.width / 2 - size / 2}px;top:${from.top + from.height / 2 - size / 2}px;width:${size}px;height:${size}px;object-fit:contain;z-index:100000;pointer-events:none;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));transition:transform .85s cubic-bezier(.4,0,.2,1),opacity .85s ease;`
+          document.body.appendChild(img)
+          requestAnimationFrame(() => requestAnimationFrame(() => { const dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top + to.height / 2 - (from.top + from.height / 2); img.style.transform = `translate(${dx}px, ${dy}px) scale(.25) rotate(360deg)`; img.style.opacity = '0' }))
+          setTimeout(() => img.remove(), 950)
+        }
+      } catch { /* ignore */ }
+      const win = f.contentWindow
+      setTimeout(() => { win.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*'); win.postMessage({ type: 'vibrex:autopilot', on: true }, '*') }, 700)
+      setJoined(true)
+    }
     window.addEventListener('avatar:snapshot', onSnap)
     return () => window.removeEventListener('avatar:snapshot', onSnap)
   }, [bjLabel])
   const joinGame = () => window.dispatchEvent(new CustomEvent('avatar:snapshot-request'))
-  const leaveGame = () => { gameFrame()?.contentWindow?.postMessage({ type: 'vibrex:avatar-remove' }, '*'); setJoined(false) }
+  const leaveGame = () => { const w = gameFrame()?.contentWindow; w?.postMessage({ type: 'vibrex:autopilot', on: false }, '*'); w?.postMessage({ type: 'vibrex:avatar-remove' }, '*'); setJoined(false) }
   const avatarVisible = (!!camera || speaking) && !joined
   // PC 채팅 접기 — 게임 버튼을 가릴 때 왼쪽으로 밀어 넣는다 (기억)
   const [chatOpen, setChatOpen] = useState(() => { try { return localStorage.getItem('aj-chat-open') !== '0' } catch { return true } })
@@ -179,6 +198,10 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
           message: prompt,
           history,
           isAutoCommentary: isAuto,
+          // MLPilot v2 — 상황 라벨: 인트로/자동 중계/시청자 답변/에이전트 답변
+          situation: isAuto ? 'commentary' : agentName ? 'agent_reply' : addAsUserMsg ? 'reply' : 'intro',
+          gameId: gameId ?? null,
+          viewerText: addAsUserMsg ? prompt : null,
         }),
       })
       if (!res.ok || !res.body) throw new Error()
@@ -208,7 +231,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
     } finally {
       setIsStreaming(false)
     }
-  }, [genre, gameTitle])
+  }, [genre, gameTitle, gameId])
 
   // Agent turn: generate agent message → AJ responds
   const runAgentTurn = useCallback(async () => {
