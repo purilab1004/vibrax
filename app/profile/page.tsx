@@ -55,7 +55,7 @@ interface EditingGame {
 }
 
 type Tab = 'profile' | 'password' | 'agent' | 'learning' | 'games' | 'collections' | 'billing' | 'notices'
-const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: '내 아바타', learning: 'AJ 학습', games: '내 게임', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
+const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', games: '내 게임', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
 const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'games', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
 
 export default function ProfilePage() {
@@ -352,7 +352,7 @@ export default function ProfilePage() {
       {/* ── My Agent ── */}
       {tab === 'agent' && <section id="agent" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)] space-y-5">
         <div>
-          <h2 className="text-[17px] font-bold text-[#241f17]">내 아바타 · AJ</h2>
+          <h2 className="text-[17px] font-bold text-[#241f17]">AJ 외모</h2>
           <p className="text-xs text-[#857a68] mt-1.5 leading-relaxed">
             게임을 플레이하는 동안 <span className="text-[#2563eb] font-semibold">나 대신 AI 스트리머 AJ와 실시간으로 대화</span>해주는 나만의 AI 에이전트예요.<br />
             당신이 게임에 집중하는 사이, 에이전트가 AJ와 채팅하며 방송의 흥을 이어가줍니다.

@@ -67,8 +67,9 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   // 본문(main/footer) 여백을 사이드바 폭과 동기화 — 접힘: 플로팅 버튼만 남으므로 0
   useEffect(() => {
     if (inAdmin) return  // 관리자는 AdminRail 이 --rail-w 를 관리
-    document.documentElement.style.setProperty('--rail-w', open ? '14rem' : '0rem')
-  }, [open, inAdmin])
+    // 내정보는 관리자처럼 접이식 아이콘 레일(3.5rem, 호버 시 펼침)
+    document.documentElement.style.setProperty('--rail-w', inProfile ? '3.5rem' : open ? '14rem' : '0rem')
+  }, [open, inAdmin, inProfile])
 
   useEffect(() => {
     if (!inStudio) return
@@ -114,11 +115,11 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
     }`
   // 아이콘은 접힌 폭(w-14)과 같은 고정 컬럼에 가운데 정렬 → 접힌 상태에서 중앙에 보임
   const iconCol = 'w-14 shrink-0 flex items-center justify-center'
-  const label = `text-[13px] font-medium tracking-wider whitespace-nowrap pr-2 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`
+  const label = `text-[13px] font-medium tracking-wider whitespace-nowrap pr-2 transition-opacity duration-200 ${inProfile ? 'opacity-0 group-hover/rail:opacity-100' : open ? 'opacity-100' : 'opacity-0'}`
 
   // 접힘 — 좌상단 플로팅 'Menu' 버튼만
   if (inAdmin) return null  // 관리자는 다크 아이콘 레일(AdminRail) 사용
-  if (!open) {
+  if (!open && !inProfile) {
     // 스튜디오에서는 플로팅 메뉴 버튼도 숨긴다 — 자체 상단 바만 사용
     if (pathname.startsWith('/studio')) return null
     // 게임 상세 페이지 — 메뉴 대신 뒤로가기 버튼
@@ -162,14 +163,14 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
 
   return (
     <aside
-      className="hidden md:flex fixed top-0 left-0 bottom-0 z-[60] w-56 flex-col overflow-hidden border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm"
+      className={`hidden md:flex fixed top-0 left-0 bottom-0 z-[60] flex-col overflow-hidden border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm ${inProfile ? 'group/rail w-14 hover:w-56 transition-[width] duration-200 hover:shadow-[8px_0_24px_-12px_rgba(36,31,23,0.25)]' : 'w-56'}`}
       aria-label="sidebar"
     >
       {/* 로고 헤더 — 로고 + ← 닫기 버튼 */}
       <div className="flex items-center h-14 shrink-0">
         <Link href="/" onClick={(e) => { if (pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) } }} className="flex items-center min-w-0 hover:opacity-80 transition-opacity" title="Vibrexcup">
           <span className={iconCol}><LogoMark /></span>
-          <span className="text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap">
+          <span className={`text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap ${inProfile ? 'opacity-0 group-hover/rail:opacity-100 transition-opacity' : ''}`}>
             {inAdmin ? <>vibrex<span className="text-[#2563eb]">admin</span></> : <>
               vibrex<span className="text-[#2563eb]">cup</span>
               <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
@@ -178,13 +179,13 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
             </>}
           </span>
         </Link>
-        <button
+        {!inProfile && <button
           onClick={() => setOpen(false)}
           aria-label="close menu"
           className="ml-auto mr-3 w-7 h-7 flex items-center justify-center rounded-md bg-[#241f17]/5 hover:bg-[#241f17]/10 text-[#4a4337] hover:text-[#2563eb] transition-colors"
         >
           <svg viewBox="0 0 24 24" className="w-4 h-4" {...stroke}><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
-        </button>
+        </button>}
       </div>
 
       {/* 그라디언트 CTA — 프롬프트로 게임 시작 (펼침 + 일반 페이지에서만) */}
@@ -204,7 +205,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
       )}
 
       {/* 메뉴 본문 — 접힌 상태에서는 완전히 숨긴다 (로고 + 화살표만 남음) */}
-      <div className={`flex-1 overflow-y-auto scrollbar-hide ${open ? '' : 'hidden'}`}>
+      <div className={`flex-1 overflow-y-auto scrollbar-hide ${open || inProfile ? '' : 'hidden'}`}>
         <nav className="flex flex-col py-1">
           <Link href="/" className={row(isHome)} title={T.nav.home}>
             <span className={iconCol}><HomeIcon /></span>
@@ -255,7 +256,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
               {([
                 ['#profile', '프로필', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" /></svg>],
                 ['#password', '비밀번호', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>],
-                ['#agent', '내 아바타', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="7" width="14" height="11" rx="2" /><path d="M12 7V4M9 12h.01M15 12h.01M9.5 15.5c.8.7 4.2.7 5 0" /></svg>],
+                ['#agent', 'AJ 외모', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="7" width="14" height="11" rx="2" /><path d="M12 7V4M9 12h.01M15 12h.01M9.5 15.5c.8.7 4.2.7 5 0" /></svg>],
                 ['#learning', 'AJ 학습', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 3l8 4-8 4-8-4 8-4Z" /><path d="M4 11l8 4 8-4M4 15l8 4 8-4" /></svg>],
                 ['#games', '내 게임', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
                 ['#billing', '결제 내역', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></svg>],
