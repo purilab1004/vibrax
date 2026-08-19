@@ -161,7 +161,7 @@ export default function StudioPage() {
         <Link href="/" className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest transition-colors shrink-0">← 홈</Link>
         <span className="font-pixel text-[11px] text-[#2563eb] tracking-widest">{s.heading}</span>
         <div className="flex-1" />
-        <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬프트 크레딧 충전"><PromptCreditBadge amount={balance} size="sm" /></Link>
+        <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" /></Link>
       </div>
 
       {/* 히어로 — 홈 첫 화면과 같은 느낌 (배경 영상 + 헤드라인 + 프롬프트 카드) */}
@@ -195,7 +195,7 @@ export default function StudioPage() {
             <span className="w-px h-4 bg-[#ddd3bf]" />
             <span><b className="text-[#241f17] text-[15px] mr-1">{publishedCount}</b>게시됨</span>
             <span className="w-px h-4 bg-[#ddd3bf]" />
-            <span className="inline-flex items-center gap-1.5"><PromptCreditIcon className="w-4 h-4" /><b className="text-[#241f17] text-[15px]">{balance ?? '—'}</b>프롬프트 크레딧</span>
+            <span className="inline-flex items-center gap-1.5"><PromptCreditIcon className="w-4 h-4" /><b className="text-[#241f17] text-[15px]">{balance ?? '—'}</b>프롬코인</span>
           </div>
         </div>
       </section>

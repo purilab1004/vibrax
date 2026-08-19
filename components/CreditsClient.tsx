@@ -135,11 +135,11 @@ export default function CreditsClient({ countryCode }: { countryCode: string | n
           <div>
             <p className="font-pixel text-[11px] tracking-[0.3em] text-[#2563eb]">CREDITS</p>
             <h1 className="mt-2 text-[32px] md:text-[42px] font-extrabold tracking-tight text-[#241f17] leading-tight">크레딧을 충전하고<br className="hidden md:block" /> <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">아이디어를 게임으로</span></h1>
-            <p className="mt-3 text-[14px] text-[#6b6152]"><PromptCreditIcon className="inline w-4 h-4 align-[-2px] mr-1" /><b>프롬프트 크레딧</b>은 스튜디오에서 게임을 만들 때 써요 — 생성·수정 1회 = {genCost} 크레딧, 템플릿 로드도 {genCost}. 실패한 생성은 자동 환불. (게임을 플레이할 때 쓰는 <b className="text-[#8a5a00]">게임 코인</b>과는 별개예요.)</p>
+            <p className="mt-3 text-[14px] text-[#6b6152]"><PromptCreditIcon className="inline w-4 h-4 align-[-2px] mr-1" /><b>프롬코인</b>은 스튜디오에서 게임을 만들 때 써요 — 생성·수정 1회 = {genCost} 크레딧, 템플릿 로드도 {genCost}. 실패한 생성은 자동 환불. (게임을 플레이할 때 쓰는 <b className="text-[#8a5a00]">게임 코인</b>과는 별개예요.)</p>
           </div>
           <div className="shrink-0 rounded-2xl p-[1.5px] bg-gradient-to-br from-[#2563eb] to-[#06b6d4] shadow-[0_16px_40px_-16px_rgba(37,99,235,0.45)]">
             <div className="rounded-[14.5px] bg-white px-6 py-5 min-w-[220px]">
-              <p className="text-[11px] font-semibold text-[#3b6fd8] tracking-wide flex items-center gap-1.5"><PromptCreditIcon className="w-3.5 h-3.5" />보유 프롬프트 크레딧</p>
+              <p className="text-[11px] font-semibold text-[#3b6fd8] tracking-wide flex items-center gap-1.5"><PromptCreditIcon className="w-3.5 h-3.5" />보유 프롬코인</p>
               <p className="mt-1 text-[36px] leading-none font-extrabold tracking-tight text-[#241f17]">{balance ?? '—'}</p>
               <p className="mt-2 text-[11.5px] text-[#9d9280]">≈ 생성·수정 {balance != null ? Math.floor(balance / genCost) : '—'}회 · 완성 게임 약 {balance != null ? Math.floor(balance / (genCost * 5)) : '—'}개</p>
             </div>

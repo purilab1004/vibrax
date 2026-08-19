@@ -334,7 +334,7 @@ export default function StudioComposerPage() {
             {chatCollapsed ? '채팅 펼치기' : '채팅 접기'}
           </button>
         )}
-        <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬프트 크레딧 충전"><PromptCreditBadge amount={balance ?? 0} size="sm" /></Link>
+        <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬코인 충전"><PromptCreditBadge amount={balance ?? 0} size="sm" /></Link>
       </div>
       <div className="flex-1 flex min-h-0">
         {/* 좌측 — 최근 프로젝트 사이드바 (클로드 스타일, 데스크톱) */}

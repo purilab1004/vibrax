@@ -1,4 +1,4 @@
-// 두 가지 재화 표시 — 게임 코인(플레이용, 골드) vs 프롬프트 크레딧(스튜디오 생성용, 블루). 색·아이콘·이름으로 구분.
+// 두 가지 재화 표시 — 게임 코인(플레이용, 골드) vs 프롬코인(스튜디오 생성용, 블루). 색·아이콘·이름으로 구분.
 export function GameCoinIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
@@ -25,11 +25,11 @@ export function GameCoinBadge({ amount, size = 'md', label = true }: { amount: n
     </span>
   )
 }
-/** 프롬프트 크레딧 배지 — 블루 */
+/** 프롬코인 배지 — 블루 */
 export function PromptCreditBadge({ amount, size = 'md', label = true }: { amount: number | null | undefined; size?: 'sm' | 'md'; label?: boolean }) {
   return (
-    <span title="프롬프트 크레딧 — 스튜디오에서 게임 생성·수정(1회 10)에 쓰는 크레딧" className={`inline-flex items-center gap-1.5 rounded-full border border-[#2563eb]/30 bg-[#eaf1ff] text-[#1e40af] font-bold whitespace-nowrap ${size === 'sm' ? 'h-7 px-2.5 text-[12px]' : 'h-8 px-3 text-[13px]'}`}>
-      <PromptCreditIcon className={size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4'} />{amount == null ? '—' : amount.toLocaleString()}{label && <span className="font-medium text-[#3b6fd8] text-[11px]">프롬프트 크레딧</span>}
+    <span title="프롬코인 — 스튜디오에서 게임 생성·수정(1회 10)에 쓰는 크레딧" className={`inline-flex items-center gap-1.5 rounded-full border border-[#2563eb]/30 bg-[#eaf1ff] text-[#1e40af] font-bold whitespace-nowrap ${size === 'sm' ? 'h-7 px-2.5 text-[12px]' : 'h-8 px-3 text-[13px]'}`}>
+      <PromptCreditIcon className={size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4'} />{amount == null ? '—' : amount.toLocaleString()}{label && <span className="font-medium text-[#3b6fd8] text-[11px]">프롬코인</span>}
     </span>
   )
 }

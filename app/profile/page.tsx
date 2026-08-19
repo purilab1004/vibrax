@@ -707,7 +707,7 @@ function BillingSection({ userId }: { userId: string }) {
     <section id="billing" className="space-y-6">
       <div className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-          <div><h2 className="text-[17px] font-bold text-[#241f17]">결제 내역</h2><p className="text-[12.5px] text-[#857a68] mt-0.5">프롬프트 크레딧 구매 기록이에요. 완료된 결제는 영수증(PDF)을 받을 수 있어요.</p></div>
+          <div><h2 className="text-[17px] font-bold text-[#241f17]">결제 내역</h2><p className="text-[12.5px] text-[#857a68] mt-0.5">프롬코인 구매 기록이에요. 완료된 결제는 영수증(PDF)을 받을 수 있어요.</p></div>
           <Link href="/credits" className="inline-flex items-center h-9 px-4 rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8]">크레딧 충전</Link>
         </div>
         {pays === null ? <p className="text-[13px] text-[#9d9280]">불러오는 중…</p> : pays.length === 0 ? <p className="rounded-xl bg-[#faf8f3] p-8 text-center text-[13px] text-[#857a68]">아직 결제 내역이 없어요.</p> : (
