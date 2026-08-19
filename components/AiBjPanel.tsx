@@ -84,7 +84,15 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const joinedRef = useRef(false); useEffect(() => { joinedRef.current = joined }, [joined])
   const policyRef = useRef<{ version: number; rules: unknown[]; summary: string | null } | null>(null)
   const manifestRef = useRef<Record<string, unknown> | null>(null)
-  useEffect(() => { const h = (e: MessageEvent) => { const d = e.data as { type?: string; manifest?: Record<string, unknown> } | null; if (d?.type === 'vibrex:manifest') manifestRef.current = d.manifest ?? null }; window.addEventListener('message', h); return () => window.removeEventListener('message', h) }, [])
+  useEffect(() => {
+    const h = (e: MessageEvent) => {
+      const d = e.data as { type?: string; manifest?: Record<string, unknown>; samples?: unknown[] } | null
+      if (d?.type === 'vibrex:manifest') manifestRef.current = d.manifest ?? null
+      // 인간 플레이 데모 — 사람이 직접 플레이하는 동안 (상태, 입력) 샘플이 25개씩 온다 → 서버에 저장(모방 학습 재료)
+      if (d?.type === 'vibrex:demo' && Array.isArray(d.samples) && gameId && !joinedRef.current) fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'demo', gameId, samples: d.samples }), keepalive: true }).catch(() => {})
+    }
+    window.addEventListener('message', h); return () => window.removeEventListener('message', h)
+  }, [gameId])
   const [canJoin, setCanJoin] = useState(false)
   const gameFrame = () => Array.from(document.querySelectorAll('iframe')).find(f => { try { return new URL(f.src, location.href).pathname.startsWith('/play/') } catch { return false } }) ?? null
   useEffect(() => { const t = setTimeout(() => setCanJoin(!camera && !!gameFrame()), 800); return () => clearTimeout(t) }, [camera])

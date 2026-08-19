@@ -20,10 +20,12 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const { data: { user } } = await (await createClient()).auth.getUser()
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 })
-  const b = await req.json().catch(() => null) as { gameId?: string; message?: string; manifest?: Manifest | null; genre?: string; gameTitle?: string; action?: 'coach' | 'episode'; score?: number; cleared?: boolean; durationSec?: number } | null
+  const b = await req.json().catch(() => null) as { gameId?: string; message?: string; manifest?: Manifest | null; genre?: string; gameTitle?: string; action?: 'coach' | 'episode' | 'demo' | 'learnFromDemo'; score?: number; cleared?: boolean; durationSec?: number; samples?: { s: Record<string, number>; k: string[] }[] } | null
   if (!b?.gameId) return Response.json({ error: 'bad request' }, { status: 400 })
   const admin = createAdminClient()
   if (b.action === 'episode') { if (!rateLimit(`ep:${user.id}`, 120, 3600_000).ok) return tooMany(); return await autoLearn(admin, user.id, b) }
+  if (b.action === 'demo') { if (!rateLimit(`demo:${user.id}`, 120, 3600_000).ok) return tooMany(); return await saveDemo(admin, user.id, b.gameId, b.samples ?? []) }
+  if (b.action === 'learnFromDemo') { if (!rateLimit(`coach:${user.id}`, 40, 3600_000).ok) return tooMany(); b.message = '내가 직접 플레이한 기록(데모 요약)을 보고, 내 플레이 스타일을 따라하는 규칙을 만들어줘.' }
   if (!b.message?.trim()) return Response.json({ error: 'bad request' }, { status: 400 })
   if (b.message.length > 500) return Response.json({ error: '너무 길어요 (500자 이내)' }, { status: 400 })
   if (!rateLimit(`coach:${user.id}`, 40, 3600_000).ok) return tooMany()
@@ -40,6 +42,7 @@ export async function POST(req: Request) {
 사용 가능한 입력(action): ${inputs.join(', ')}  (봇은 action 을 hold ms 동안 누른다)
 state() 키: ${stateKeys.join(', ') || '(없음 — 규칙은 만들지 말고 params 와 tips 만)'}  예시 값: ${m.sample ? JSON.stringify(m.sample).slice(0, 400) : '-'}
 현재 정책: ${prev ? JSON.stringify({ rules: prev.rules, params: prev.params, tips: prev.tips }).slice(0, 1500) : '없음'}
+${demoSummary((prev as unknown as { demos?: Demo[] } | null)?.demos)}
 출력 JSON 한 개만: {"rules":[{"cond":"s.ballX > s.paddleX + 8","action":"right","hold":80,"why":"공 따라가기"}],"params":{"reactionMs":60,"randomness":0.05},"tips":["사용자 조언 요약"],"summary":"AJ 가 사용자에게 하는 한 문장 답(반말, 10~25자, 무엇을 배웠는지)"}
 규칙: cond 는 변수 s(state 객체)만 쓰는 JS 불리언 식, 위에서 아래로 첫 참인 규칙을 실행. 기존 규칙을 유지·수정하며 조언을 반영한다(최대 12개). state 키가 없으면 rules 는 빈 배열. 위험한 코드·함수 호출 금지.`
   let out: Policy
@@ -111,6 +114,7 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
 state() 키: ${stateKeys.join(', ')}  예시: ${m.sample ? JSON.stringify(m.sample).slice(0, 400) : '-'}
 현재 규칙: ${JSON.stringify(row.rules).slice(0, 1500)} / params: ${JSON.stringify(row.params)}
 사용자 조언(지켜야 함): ${(row.tips ?? []).slice(-8).join(' | ') || '없음'}
+${demoSummary((row as unknown as { demos?: Demo[] }).demos)}
 최근 판: ${cur.map(e => `${e.score}점/${e.sec}s${e.cleared ? '/클리어' : ''}`).join(', ')}
 출력 JSON 한 개만: {"rules":[{"cond":"s.x > s.y","action":"right","hold":80,"why":"..."}],"params":{"reactionMs":60,"randomness":0.02},"summary":"AJ 가 사용자에게 하는 한 문장(반말, 무엇을 바꿨는지, 25자 이내)"}
 규칙: cond 는 s(state) 만 쓰는 JS 불리언 식. 작게 한두 가지만 바꾼다(탐색은 점진적으로). 최대 12개.`
@@ -129,4 +133,35 @@ state() 키: ${stateKeys.join(', ')}  예시: ${m.sample ? JSON.stringify(m.samp
   }
   await admin.from('aj_play_policies').update(patch as never).eq('id', row.id)
   return Response.json({ ok: true, policy: changed?.policy ?? null, note: changed?.note ?? null, episodes: cur.length })
+}
+
+// ── 인간 플레이 데모(모방 학습) ──────────────────────────────────────────────
+// 사람이 직접 플레이할 때 게임이 0.2초마다 (상태 수치, 눌린 입력)을 보낸다 → 정책 행에 최근 600샘플 보관.
+// 코칭/자동 학습 프롬프트에 "입력별로 어떤 상태일 때 눌렀는지" 통계 요약을 넣어 Haiku 가 사람 스타일의 규칙을 만들게 한다.
+type Demo = { s: Record<string, number>; k: string[] }
+async function saveDemo(admin: ReturnType<typeof createAdminClient>, userId: string, gameId: string, samples: Demo[]) {
+  const clean = samples.filter(x => x && typeof x === 'object' && x.s && Array.isArray(x.k)).slice(0, 100).map(x => ({ s: Object.fromEntries(Object.entries(x.s).filter(([k, v]) => /^\w{1,24}$/.test(k) && typeof v === 'number' && Number.isFinite(v)).slice(0, 16)), k: x.k.filter(k => typeof k === 'string').slice(0, 6) }))
+  if (!clean.length) return Response.json({ ok: true, kept: 0 })
+  const { data } = await admin.from('aj_play_policies').select('id,demos').eq('game_id', gameId).eq('user_id', userId).maybeSingle()
+  const row = data as { id: string; demos: Demo[] | null } | null
+  const demos = [...((row?.demos as Demo[] | null) ?? []), ...clean].slice(-600)
+  if (row) await admin.from('aj_play_policies').update({ demos, updated_at: new Date().toISOString() } as never).eq('id', row.id)
+  else await admin.from('aj_play_policies').insert([{ game_id: gameId, user_id: userId, version: 1, tips: [], rules: [], params: {}, demos }] as never)
+  return Response.json({ ok: true, kept: demos.length })
+}
+function demoSummary(demos: Demo[] | null | undefined): string {
+  if (!demos || demos.length < 20) return ''
+  const feats = new Set<string>(); for (const d of demos) for (const k of Object.keys(d.s)) feats.add(k)
+  const mean = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
+  const lines: string[] = []
+  const actions = new Set<string>(); for (const d of demos) for (const k of d.k) actions.add(k)
+  for (const a of actions) {
+    const on = demos.filter(d => d.k.includes(a)), off = demos.filter(d => !d.k.includes(a))
+    if (on.length < 5) continue
+    const num = (arr: Demo[], f: string) => mean(arr.map(x => x.s[f]).filter((v): v is number => typeof v === 'number'))
+    const diffs = [...feats].map(f => { const mo = num(on, f); const mf = num(off, f); return { f, mo, mf, d: Math.abs(mo - mf) } }).sort((x, y) => y.d - x.d).slice(0, 3)
+    lines.push(`- ${a} 누름(${on.length}/${demos.length} 샘플): ` + diffs.map(x => `${x.f} 평균 ${x.mo.toFixed(1)} (안 누를 때 ${x.mf.toFixed(1)})`).join(', '))
+  }
+  if (!lines.length) return ''
+  return `[인간 플레이 데모 요약 — 사람이 어떤 상태에서 어떤 입력을 눌렀는지] 이 통계를 참고해 사람 스타일을 따라하는 규칙을 우선 만든다:\n${lines.join('\n')}`
 }
