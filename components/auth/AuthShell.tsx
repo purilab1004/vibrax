@@ -51,7 +51,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children, footer }
       <main className="relative flex items-center justify-center px-5 py-10 bg-[#f4efe6] overflow-hidden">
         <div aria-hidden className="pointer-events-none absolute -top-32 right-[-120px] w-[420px] h-[420px] rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.18),transparent)] blur-2xl" />
         <div aria-hidden className="pointer-events-none absolute bottom-[-140px] left-[-100px] w-[380px] h-[380px] rounded-full bg-[radial-gradient(closest-side,rgba(245,158,11,0.18),transparent)] blur-2xl" />
-        <div className="relative w-full max-w-[440px] rounded-3xl bg-white border border-white/70 shadow-[0_30px_80px_-30px_rgba(36,31,23,0.35),0_2px_6px_rgba(36,31,23,0.06)] p-7 md:p-9">
+        <div className="relative w-full max-w-[560px] rounded-3xl bg-white border border-white/70 shadow-[0_30px_80px_-30px_rgba(36,31,23,0.35),0_2px_6px_rgba(36,31,23,0.06)] p-8 md:p-12">
           <div className="lg:hidden flex items-center gap-2 mb-6"><LogoMark className="w-8 h-8" /><span className="text-[18px] font-extrabold tracking-tight text-[#241f17]">vibrex<span className="text-[#2563eb]">cup</span></span></div>
           <p className="font-pixel text-[10px] tracking-[0.3em] text-[#2563eb]">{eyebrow}</p>
           <h1 className="mt-2 text-[30px] font-extrabold tracking-tight text-[#241f17] leading-tight">{title}</h1>
