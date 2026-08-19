@@ -822,6 +822,6 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
 /* 말하는 중 "…" 말풍선 — 아바타 머리 우측 위, 통통 튀는 점 3개 */
 @keyframes aj-typing-in { from { opacity: 0; transform: translateY(6px) scale(.6); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes aj-dot-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: .55; } 30% { transform: translateY(-4px); opacity: 1; } }
-.aj-typing { position: absolute; top: 46%; right: 0; width: 52px; height: 46px; /* 입 높이, 얼굴 우측 — 입에서 나오는 말 */ z-index: 2; transform-origin: 20% 100%; animation: aj-typing-in .35s cubic-bezier(.2,.9,.3,1.4) both; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); pointer-events: none; }
+.aj-typing { position: absolute; top: 47%; right: 4%; width: 38px; height: 34px; /* 입 높이, 얼굴 우측 — 입에서 나오는 말 */ z-index: 2; transform-origin: 20% 100%; animation: aj-typing-in .35s cubic-bezier(.2,.9,.3,1.4) both; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); pointer-events: none; }
 .aj-dot { transform-box: fill-box; transform-origin: center; animation: aj-dot-bounce 1.1s ease-in-out infinite; }
 .aj-stage > .aj-typing { -webkit-mask-image: none; mask-image: none; }
