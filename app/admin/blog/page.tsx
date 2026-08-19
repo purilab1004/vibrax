@@ -7,7 +7,7 @@ import { useLang } from '@/lib/i18n/context'
 import type { BlogCategory, BlogPost } from '@/lib/supabase/types'
 import CategoryManager from '@/components/admin/CategoryManager'
 import StatCard from '@/components/admin/StatCard'
-import { PageHeader, Card, Badge, ConfirmModal, Toast, Skeleton, EmptyState, Segmented, btn, input, th, td, trHover } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, ConfirmModal, Toast, Skeleton, EmptyState, Segmented, Pager, usePager, btn, input, th, td, trHover } from '@/components/admin/ui'
 
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<BlogPost[] | null>(null)
@@ -34,6 +34,7 @@ export default function AdminBlogPage() {
   }
   const catName = (id: string | null) => cats.find(c => c.id === id)?.name ?? '—'
   const list = useMemo(() => (posts ?? []).filter(p => (filter === 'all' || (filter === 'published') === p.published) && (!query.trim() || p.title.toLowerCase().includes(query.trim().toLowerCase()))), [posts, filter, query])
+  const pager = usePager(list, 25)
   const pub = (posts ?? []).filter(p => p.published).length
   const views = (posts ?? []).reduce((s, p) => s + (p.view_count ?? 0), 0)
 
@@ -57,7 +58,7 @@ export default function AdminBlogPage() {
             <table className="w-full">
               <thead><tr><th className={th}>글</th><th className={th}>카테고리</th><th className={th}>상태</th><th className={`${th} text-right`}>조회</th><th className={th}>작성일</th><th className={th} /></tr></thead>
               <tbody className="divide-y divide-[#eef0f4]">
-                {list.map(p => (
+                {pager.slice.map(p => (
                   <tr key={p.id} className={trHover}>
                     <td className={td}>
                       <div className="flex items-center gap-3 min-w-[260px]">
@@ -85,6 +86,7 @@ export default function AdminBlogPage() {
                 ))}
               </tbody>
             </table>
+            <Pager {...pager} />
           </div>
         )}
       </Card>

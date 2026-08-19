@@ -131,3 +131,34 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
     </label>
   )
 }
+
+// ── 페이지네이션 (클라이언트, 목록이 길어질 때) ──
+import { useMemo, useState as useStateP } from 'react'
+export function usePager<T>(items: T[], pageSize = 25) {
+  const [page, setPage] = useStateP(1)
+  const total = items.length
+  const pages = Math.max(1, Math.ceil(total / pageSize))
+  const cur = Math.min(page, pages)
+  const slice = useMemo(() => items.slice((cur - 1) * pageSize, cur * pageSize), [items, cur, pageSize])
+  return { page: cur, pages, total, slice, setPage, pageSize }
+}
+export function Pager({ page, pages, total, setPage, pageSize }: { page: number; pages: number; total: number; setPage: (p: number) => void; pageSize: number }) {
+  if (total <= pageSize) return <div className="px-3 py-2 text-[11.5px] text-[#9aa1ad] border-t border-[#e3e6ec]">총 {total.toLocaleString()}건</div>
+  const from = (page - 1) * pageSize + 1, to = Math.min(total, page * pageSize)
+  const nums: number[] = []
+  for (let p = Math.max(1, page - 2); p <= Math.min(pages, page + 2); p++) nums.push(p)
+  return (
+    <div className="flex items-center justify-between gap-3 px-3 py-2 border-t border-[#e3e6ec] text-[12px] text-[#6b7280] flex-wrap">
+      <span>{from.toLocaleString()}–{to.toLocaleString()} / 총 {total.toLocaleString()}건</span>
+      <div className="inline-flex items-center gap-1">
+        <button onClick={() => setPage(1)} disabled={page === 1} className="h-7 px-2 rounded-md border border-[#d9dde5] bg-white disabled:opacity-40 hover:bg-[#f3f5f8]">«</button>
+        <button onClick={() => setPage(page - 1)} disabled={page === 1} className="h-7 px-2 rounded-md border border-[#d9dde5] bg-white disabled:opacity-40 hover:bg-[#f3f5f8]">‹</button>
+        {nums[0] > 1 && <span className="px-1">…</span>}
+        {nums.map(n => <button key={n} onClick={() => setPage(n)} className={`h-7 min-w-7 px-2 rounded-md border text-[12px] font-semibold ${n === page ? 'bg-[#2563eb] border-[#2563eb] text-white' : 'border-[#d9dde5] bg-white hover:bg-[#f3f5f8]'}`}>{n}</button>)}
+        {nums[nums.length - 1] < pages && <span className="px-1">…</span>}
+        <button onClick={() => setPage(page + 1)} disabled={page === pages} className="h-7 px-2 rounded-md border border-[#d9dde5] bg-white disabled:opacity-40 hover:bg-[#f3f5f8]">›</button>
+        <button onClick={() => setPage(pages)} disabled={page === pages} className="h-7 px-2 rounded-md border border-[#d9dde5] bg-white disabled:opacity-40 hover:bg-[#f3f5f8]">»</button>
+      </div>
+    </div>
+  )
+}

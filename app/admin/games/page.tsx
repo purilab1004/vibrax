@@ -8,7 +8,7 @@ import type { Genre, GameWithCreator } from '@/lib/supabase/types'
 import StatCard from '@/components/admin/StatCard'
 import { COUNTRIES } from '@/lib/countries'
 import { countryFlag } from '@/lib/country'
-import { PageHeader, Card, Badge, Modal, ConfirmModal, Toast, Skeleton, EmptyState, Segmented, btn, input, label as labelCls, th, td, trHover } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, Modal, ConfirmModal, Toast, Skeleton, EmptyState, Segmented, Pager, usePager, btn, input, label as labelCls, th, td, trHover } from '@/components/admin/ui'
 
 const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 const GENRE_COLOR: Record<string, string> = { action: '#e11d48', adventure: '#059669', strategy: '#7c3aed', sports: '#f59e0b' }
@@ -40,6 +40,7 @@ export default function AdminGamesPage() {
   const list = useMemo(() => (games ?? []).filter(g => genre === 'all' || g.genre === genre), [games, genre])
   const totalViews = useMemo(() => (games ?? []).reduce((s, g) => s + (g.view_count ?? 0), 0), [games])
   const [weekAgo] = useState(() => Date.now() - 7 * 864e5)
+  const pager = usePager(list, 25)
 
   const openEdit = (g: GameWithCreator) => { setEditing(g); setForm({ title: g.title, genre: g.genre, coin_cost: g.coin_cost ?? 1, teaser: g.teaser ?? '', country: g.country ?? '' }) }
   const saveEdit = async () => {
@@ -85,7 +86,7 @@ export default function AdminGamesPage() {
             <table className="w-full">
               <thead><tr><th className={th}>{a.colGame}</th><th className={th}>제작자</th><th className={th}>{a.colGenre}</th><th className={`${th} text-right`}>{a.colViews}</th><th className={`${th} text-right`}>코인</th><th className={th}>{a.colCreated}</th><th className={th} /></tr></thead>
               <tbody className="divide-y divide-[#eef0f4]">
-                {list.map(g => (
+                {pager.slice.map(g => (
                   <tr key={g.id} className={trHover}>
                     <td className={td}>
                       <div className="flex items-center gap-3 min-w-[240px]">
@@ -115,6 +116,7 @@ export default function AdminGamesPage() {
                 ))}
               </tbody>
             </table>
+            <Pager {...pager} />
           </div>
         )}
       </Card>

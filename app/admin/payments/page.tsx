@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
-import { PageHeader, Card, Badge, Modal, Toast, Skeleton, EmptyState, Segmented, Avatar, btn, input, label as labelCls, th, td, trHover } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, Modal, Toast, Skeleton, EmptyState, Segmented, Avatar, Pager, usePager, btn, input, label as labelCls, th, td, trHover } from '@/components/admin/ui'
 
 interface PayRow {
   id: string; user_id: string | null; status: string; amount_minor: number | null; currency: string | null; credits: number; pack_key: string | null
@@ -83,6 +83,7 @@ export default function AdminPaymentsPage() {
     (!query.trim() || [r.id, r.customer_email, r.invoice_number, r.profiles?.username, r.profiles?.agent_name].some(v => v?.toLowerCase().includes(query.trim().toLowerCase())))
   ), [data, filter, query])
 
+  const pager = usePager(rows, 25)
   const header = (
     <PageHeader title="결제 관리" desc={<>PG: <b>Paddle</b> (Merchant of Record — 카드·PayPal·현지 결제·세금 처리 대행) · 환경 <span className="font-mono">{data?.env ?? '…'}</span></>}
       actions={<>
@@ -147,7 +148,7 @@ export default function AdminPaymentsPage() {
             <table className="w-full">
               <thead><tr><th className={th}>일시</th><th className={th}>회원</th><th className={th}>상품</th><th className={`${th} text-right`}>금액</th><th className={th}>결제수단</th><th className={th}>상태</th><th className={th}>Paddle</th><th className={th} /></tr></thead>
               <tbody className="divide-y divide-[#eef0f4]">
-                {rows.map(r => {
+                {pager.slice.map(r => {
                   const st = STATUS[r.status] ?? { label: r.status, color: '#857a68' }
                   return (
                     <tr key={r.id} className={`${trHover} cursor-pointer`} onClick={() => openDetail(r)}>
@@ -175,6 +176,7 @@ export default function AdminPaymentsPage() {
                 })}
               </tbody>
             </table>
+            <Pager {...pager} />
           </div>
         )}
       </Card>

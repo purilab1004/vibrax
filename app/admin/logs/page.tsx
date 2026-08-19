@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
-import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, ConfirmModal, Toast, btn, input, th, td, trHover } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, ConfirmModal, Toast, Pager, usePager, btn, input, th, td, trHover } from '@/components/admin/ui'
 
 interface Grp { fingerprint: string; message: string; source: string; level: string; path: string | null; count: number; count24h: number; users: number; first: string; last: string; resolved: boolean; sample: { stack: string | null; user_agent: string | null; user_id: string | null; meta: unknown; created_at: string } }
 interface Data { days: number; total: number; last24h: number; unresolved: number; bySource: Record<string, number>; byDay: { day: string; n: number }[]; groups: Grp[] }
@@ -28,6 +28,7 @@ export default function AdminLogsPage() {
   const resolve = async (fp: string, resolved: boolean) => { await fetch('/api/admin/logs', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint: fp, resolved }) }); say(resolved ? '해결 처리했어요.' : '다시 열었어요.'); load(days) }
   const del = async () => { if (!confirm) return; await fetch('/api/admin/logs', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(confirm.all ? { all: true } : { fingerprint: confirm.fp }) }); setConfirm(null); say('삭제했어요.'); load(days) }
   const groups = useMemo(() => (data?.groups ?? []).filter(x => (filter === 'all' || (filter === 'resolved') === x.resolved) && (source === 'all' || x.source === source) && (!q.trim() || x.message.toLowerCase().includes(q.toLowerCase()) || (x.path ?? '').includes(q))), [data, filter, source, q])
+  const pager = usePager(groups, 25)
   const header = <PageHeader title="에러 로그" desc="브라우저(window.onerror·unhandledrejection)와 서버 API·웹훅에서 발생한 에러를 같은 원인끼리 묶어 보여줍니다."
     actions={<><Segmented value={days} onChange={setDays} options={[{ value: 1, label: '24h' }, { value: 7, label: '7일' }, { value: 30, label: '30일' }, { value: 90, label: '90일' }]} /><button onClick={() => setConfirm({ all: true })} className={btn.ghost}>전체 비우기</button></>} />
   if (state.days === days && state.err) return <div>{header}<Card className="p-6 text-[13px] text-[#6b7280]">{state.missing ? <>로그 테이블이 없어요. <code>db/migrations/2026-08-18-logs.sql</code> 을 실행하세요.</> : state.err}</Card></div>
@@ -51,7 +52,7 @@ export default function AdminLogsPage() {
           <div className="overflow-x-auto"><table className="w-full">
             <thead><tr><th className={th}>에러</th><th className={th}>출처</th><th className={`${th} text-right`}>건수</th><th className={`${th} text-right`}>24h</th><th className={`${th} text-right`}>사용자</th><th className={th}>마지막</th><th className={th} /></tr></thead>
             <tbody className="divide-y divide-[#eef0f4]">
-              {groups.map(x => (
+              {pager.slice.map(x => (
                 <>
                   <tr key={x.fingerprint} className={`${trHover} cursor-pointer ${x.resolved ? 'opacity-50' : ''}`} onClick={() => setOpenFp(openFp === x.fingerprint ? null : x.fingerprint)}>
                     <td className={td}><p className="font-semibold text-[#1f2430] max-w-[520px] truncate font-mono text-[12.5px]">{x.message}</p><p className="text-[11px] text-[#9aa1ad] truncate max-w-[520px]">{x.path ?? '-'}{x.level === 'warn' ? ' · warn' : ''}</p></td>
@@ -82,7 +83,7 @@ export default function AdminLogsPage() {
                 </>
               ))}
             </tbody>
-          </table></div>
+          </table><Pager {...pager} /></div>
         )}
       </Card>
       <ConfirmModal open={!!confirm} onClose={() => setConfirm(null)} onConfirm={del} title={confirm?.all ? '모든 에러 로그 삭제' : '에러 그룹 삭제'} desc={confirm?.all ? '기록된 에러 로그를 전부 삭제해요.' : '이 지문의 모든 기록을 삭제해요.'} />

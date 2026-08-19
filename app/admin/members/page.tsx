@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import type { AdminMember, AdminRole } from '@/lib/supabase/types'
 import StatCard from '@/components/admin/StatCard'
-import { PageHeader, Card, Badge, Modal, Toast, Avatar, btn, input, label as labelCls } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, Modal, Toast, Avatar, Pager, usePager, btn, input, label as labelCls } from '@/components/admin/ui'
 
 const SUPER = ['puridev1155@gmail.com']
 type Filter = 'all' | 'admin' | 'banned' | 'new'
@@ -82,6 +82,7 @@ export default function AdminMembersPage() {
     return { total: ms.length, admins: ms.filter(m => m.role === 'admin').length, banned: ms.filter(m => m.banned_at).length, fresh: ms.filter(m => new Date(m.created_at).getTime() > weekAgo).length }
   }, [members, now])
 
+  const pager = usePager(list, 25)
   const roleColorOf = (m: AdminMember) => m.admin_role_color ?? '#2563eb'
   const chip = (f: Filter, text: string, n: number) => (
     <button key={f} onClick={() => setFilter(f)} className={`h-7 px-2.5 rounded text-[12px] font-semibold transition-colors ${filter === f ? 'bg-[#eef2ff] text-[#2563eb]' : 'text-[#6b7280] hover:text-[#1f2430]'}`}>{text} <span className="opacity-60">{n}</span></button>
@@ -130,7 +131,7 @@ export default function AdminMembersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#eef0f4]">
-                {list.map(m => {
+                {pager.slice.map(m => {
                   const isSuper = SUPER.includes(m.email)
                   return (
                     <tr key={m.id} className={`hover:bg-[#f7f8fa] transition-colors ${m.banned_at ? 'opacity-55' : ''}`}>
@@ -180,6 +181,7 @@ export default function AdminMembersPage() {
                 })}
               </tbody>
             </table>
+            <Pager {...pager} />
           </div>
         )}
       </Card>
