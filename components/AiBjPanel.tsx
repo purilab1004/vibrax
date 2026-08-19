@@ -400,7 +400,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
         />
         <button
           onClick={() => sendMessage(input)}
-          disabled={isStreaming || !input.trim()}
+          disabled={!input.trim()}
           className="font-pixel text-[11px] px-3 py-2 bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
         >▶</button>
       </div>
@@ -454,7 +454,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
             />
             <button
               onClick={() => sendMessage(input)}
-              disabled={isStreaming || !input.trim()}
+              disabled={!input.trim()}
               className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#06b6d4] text-white flex items-center justify-center shadow-[0_2px_10px_rgba(37,99,235,0.45)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none shrink-0" aria-label="보내기"
             ><svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button>
           </div>
