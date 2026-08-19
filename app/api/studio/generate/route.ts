@@ -171,7 +171,7 @@ export async function POST(req: Request) {
     }
     baseHtml = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`).html
     const extras = extrasOf(prompt, tmatch.keyword)
-    effectivePrompt = `이 게임은 기본 「${tmatch.template.name}」 템플릿이야. 다음 요구를 반영해 수정한 전체 완성본을 만들어줘: ${extras || prompt}`
+    effectivePrompt = `이 게임은 「${tmatch.template.name}」 이야. 반드시 이 장르와 핵심 규칙(조작·목표·진행)을 그대로 유지한 채, 아래 요구만 반영해 수정한 전체 완성본을 만들어줘. 다른 장르의 게임으로 바꾸거나 처음부터 새로 만들지 마. 요구: ${extras || prompt}`
     templateNote = `「${tmatch.template.name}」 게임을 만들면서 요청하신 내용을 함께 반영했어요. `
   }
 
