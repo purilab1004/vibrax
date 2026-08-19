@@ -5,7 +5,7 @@ import LogoMark from '@/components/LogoMark'
 
 export const authInput = 'w-full h-11 rounded-xl border border-[#ddd3bf] bg-white px-4 text-[14px] text-[#241f17] placeholder-[#a1957f] outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10 transition'
 export const authLabel = 'block text-[12px] font-semibold text-[#6b6152] mb-1.5'
-export const authPrimary = 'w-full h-11 rounded-xl bg-[#241f17] text-white text-[14px] font-bold hover:bg-[#3a332a] disabled:opacity-50 transition-colors'
+export const authPrimary = 'w-full h-12 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-[15px] font-bold shadow-[0_10px_26px_-8px_rgba(37,99,235,0.6)] hover:shadow-[0_14px_32px_-8px_rgba(37,99,235,0.7)] hover:brightness-105 disabled:opacity-50 transition-all'
 
 export function GoogleIcon({ className = 'w-4.5 h-4.5' }: { className?: string }) {
   return (
@@ -48,14 +48,16 @@ export default function AuthShell({ eyebrow, title, subtitle, children, footer }
         <p className="relative text-[11px] text-white/35">VIBREX © COPYRIGHT {new Date().getFullYear()} · Sponsored by Purilab</p>
       </aside>
       {/* 우측 — 카드 */}
-      <main className="flex items-center justify-center px-5 py-10">
-        <div className="w-full max-w-[400px]">
-          <div className="lg:hidden flex items-center gap-2 mb-8"><LogoMark className="w-8 h-8" /><span className="text-[18px] font-extrabold tracking-tight text-[#241f17]">vibrex<span className="text-[#2563eb]">cup</span></span></div>
+      <main className="relative flex items-center justify-center px-5 py-10 bg-[#f4efe6] overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute -top-32 right-[-120px] w-[420px] h-[420px] rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.18),transparent)] blur-2xl" />
+        <div aria-hidden className="pointer-events-none absolute bottom-[-140px] left-[-100px] w-[380px] h-[380px] rounded-full bg-[radial-gradient(closest-side,rgba(245,158,11,0.18),transparent)] blur-2xl" />
+        <div className="relative w-full max-w-[440px] rounded-3xl bg-white border border-white/70 shadow-[0_30px_80px_-30px_rgba(36,31,23,0.35),0_2px_6px_rgba(36,31,23,0.06)] p-7 md:p-9">
+          <div className="lg:hidden flex items-center gap-2 mb-6"><LogoMark className="w-8 h-8" /><span className="text-[18px] font-extrabold tracking-tight text-[#241f17]">vibrex<span className="text-[#2563eb]">cup</span></span></div>
           <p className="font-pixel text-[10px] tracking-[0.3em] text-[#2563eb]">{eyebrow}</p>
-          <h1 className="mt-2 text-[28px] font-extrabold tracking-tight text-[#241f17]">{title}</h1>
-          {subtitle && <p className="mt-1.5 text-[13.5px] text-[#6b6152]">{subtitle}</p>}
+          <h1 className="mt-2 text-[30px] font-extrabold tracking-tight text-[#241f17] leading-tight">{title}</h1>
+          {subtitle && <p className="mt-2 text-[13.5px] text-[#6b6152]">{subtitle}</p>}
           <div className="mt-7">{children}</div>
-          {footer && <div className="mt-8 text-[13px] text-[#6b6152]">{footer}</div>}
+          {footer && <div className="mt-7 pt-5 border-t border-[#f0eadf] text-[13px] text-[#6b6152]">{footer}</div>}
         </div>
       </main>
     </div>
