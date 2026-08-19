@@ -787,9 +787,10 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
 .aj-halo::before { content: ''; position: absolute; inset: 8% 6% 4%; z-index: -1; border-radius: 9999px; background: radial-gradient(closest-side, rgba(255, 214, 170, 0.28), rgba(255, 180, 220, 0.12) 55%, transparent); filter: blur(10px); pointer-events: none; }
 /* 캐릭터 뒤 — 중앙에서 무지개 빛줄기가 쫙 뻗어나가는 효과 (천천히 회전 + 숨쉬듯 맥동) */
 @keyframes aj-rays-spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-@keyframes aj-rays-pulse { 0%, 100% { opacity: .55; } 50% { opacity: .95; } }
+@keyframes aj-rays-pulse { 0%, 100% { opacity: .3; } 50% { opacity: .55; } }
 .aj-halo::after {
-  content: ''; position: absolute; left: 50%; top: 46%; width: 230%; aspect-ratio: 1; z-index: -2;
+  /* 컨테이너(사각) 경계에 닿기 전에 완전히 사라지도록 크기를 줄이고, 회전은 아주 느리게 */
+  content: ''; position: absolute; left: 50%; top: 46%; width: 118%; aspect-ratio: 1; z-index: -2;
   transform: translate(-50%, -50%) rotate(0deg); transform-origin: center; border-radius: 9999px; pointer-events: none;
   background: repeating-conic-gradient(from 0deg,
     rgba(255,120,150,.85) 0deg 6deg, rgba(255,255,255,0) 6deg 14deg,
@@ -799,9 +800,9 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
     rgba(120,215,245,.85) 56deg 62deg, rgba(255,255,255,0) 62deg 70deg,
     rgba(150,170,255,.85) 70deg 76deg, rgba(255,255,255,0) 76deg 84deg,
     rgba(215,150,255,.85) 84deg 90deg, rgba(255,255,255,0) 90deg 98deg);
-  -webkit-mask-image: radial-gradient(closest-side, #000 0%, rgba(0,0,0,.9) 22%, rgba(0,0,0,.35) 52%, transparent 72%);
-  mask-image: radial-gradient(closest-side, #000 0%, rgba(0,0,0,.9) 22%, rgba(0,0,0,.35) 52%, transparent 72%);
-  filter: blur(1.5px) saturate(1.2);
-  animation: aj-rays-spin 14s linear infinite, aj-rays-pulse 2.6s ease-in-out infinite;
+  -webkit-mask-image: radial-gradient(closest-side, #000 0%, rgba(0,0,0,.8) 18%, rgba(0,0,0,.25) 45%, transparent 68%);
+  mask-image: radial-gradient(closest-side, #000 0%, rgba(0,0,0,.8) 18%, rgba(0,0,0,.25) 45%, transparent 68%);
+  filter: blur(2.5px) saturate(1.1);
+  animation: aj-rays-spin 70s linear infinite, aj-rays-pulse 3.2s ease-in-out infinite;
 }
 .aj-halo::before { z-index: -1; } /* 후광은 빛줄기 위, 캐릭터 아래 */
