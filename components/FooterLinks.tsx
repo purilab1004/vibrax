@@ -57,7 +57,7 @@ export default function FooterLinks() {
           rel="noopener noreferrer"
           className="text-[12px] text-[#857a68] hover:text-[#2563eb] transition-colors"
         >
-          Operated by <span className="font-semibold">PuriTechLab</span> ↗
+          Sponsored by <span className="font-semibold">Purilab</span> ↗
         </a>
       </div>
     </div>

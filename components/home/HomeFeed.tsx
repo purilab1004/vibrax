@@ -65,7 +65,7 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
               <a href="/refund" className="text-[11px] text-[#9d9280] hover:text-[#2563eb]">환불정책</a>
             </div>
             <a href="mailto:dev@puritechlab.com" className="text-[11px] text-[#9d9280] hover:text-[#2563eb]">dev@puritechlab.com</a>
-            <p className="font-pixel text-[9px] text-[#b3a78f] tracking-widest mt-1">© {new Date().getFullYear()} VIBREXCUP · <a href="https://puritechlab.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#2563eb]">PuriTechLab</a></p>
+            <p className="font-pixel text-[9px] text-[#b3a78f] tracking-widest mt-1">VIBREX © COPYRIGHT {new Date().getFullYear()} · Sponsored by <a href="https://puritechlab.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#2563eb]">Purilab</a></p>
           </div>
         </aside>
         <div className="flex-1 min-w-0">
