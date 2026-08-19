@@ -13,6 +13,11 @@ const GENRE: Record<string, { label: string; color: string; difficulty: number; 
   strategy: { label: 'STRATEGY', color: '#2563eb', difficulty: 4, why: '수읽기·자원 관리 — 가장 오래 걸림' },
 }
 const XP_PER_LEVEL = 40
+// 리워드 뱃지 — 총 20단계. 누적 XP(전 장르 합)로 올라간다. 단계가 올라갈수록 필요 XP 가 커진다.
+const TIERS = ['새싹', '견습', '초보', '연습생', '루키', '플레이어', '도전자', '숙련', '베테랑', '프로', '에이스', '엘리트', '마스터', '그랜드마스터', '챔피언', '전설', '신화', '오라클', '초월', '비브렉스'] as const
+const TIER_COLORS = ['#9ca3af', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#fbbf24', '#fde047', '#ffffff']
+const tierNeed = (i: number) => Math.round(60 * Math.pow(1.28, i))   // 1→2 단계 60XP … 19→20 약 4,300XP
+const tierOf = (xp: number) => { let t = 0, acc = 0; while (t < TIERS.length - 1 && xp >= acc + tierNeed(t)) { acc += tierNeed(t); t++ } return { tier: t, into: xp - acc, need: tierNeed(t), maxed: t === TIERS.length - 1 } }
 const xpOf = (r: Row) => r.version * 10 + (Array.isArray(r.rules) ? r.rules.length : 0) * 6 + (r.best_score && r.best_score > 0 ? 12 : 0)
 
 export default function AiLearningSection() {
@@ -43,6 +48,22 @@ export default function AiLearningSection() {
         <input type="checkbox" checked={allAuto} onChange={e => toggleAuto(e.target.checked)} className="mt-0.5" />
         <span className="text-[12.5px] text-[#374151]"><b className="text-[#241f17]">자동 학습</b> — 아바타가 대신 플레이하는 동안 3판마다 결과를 스스로 돌아보고 규칙을 조금씩 고쳐요(점수가 떨어지면 잘되던 방식으로 자동 복귀). 내가 채팅으로 가르친 내용은 항상 우선 지켜요.</span>
       </label>
+      {/* 리워드 뱃지 — 20단계 */}
+      {(() => { const t = tierOf(totalXp); const c = TIER_COLORS[t.tier]; return (
+        <div className="rounded-lg bg-white border border-[#ebe4d6] p-3.5">
+          <div className="flex items-center gap-3">
+            <TierBadge tier={t.tier} size={56} />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold tracking-[0.2em] text-[#9d9280] uppercase">Reward Badge · {t.tier + 1} / 20</p>
+              <p className="text-[16px] font-extrabold text-[#241f17] leading-tight">{TIERS[t.tier]} <span className="text-[12px] font-semibold text-[#857a68]">· 누적 {totalXp} XP</span></p>
+              {t.maxed ? <p className="text-[11.5px] text-[#857a68] mt-0.5">최고 단계 달성!</p> : <><div className="mt-1.5 h-2 rounded-full bg-[#f1ece2] overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.round(t.into / t.need * 100)}%`, background: c }} /></div><p className="text-[11px] text-[#9d9280] mt-1 tabular-nums">다음 &ldquo;{TIERS[t.tier + 1]}&rdquo; 까지 {t.need - t.into} XP</p></>}
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-10 gap-1.5">
+            {TIERS.map((name, i) => <div key={name} className="flex flex-col items-center gap-0.5" title={`${i + 1}단계 ${name}`}><TierBadge tier={i} size={26} locked={i > t.tier} /><span className={`text-[8.5px] leading-none ${i <= t.tier ? 'text-[#4a4337] font-semibold' : 'text-[#c9c0ad]'}`}>{name}</span></div>)}
+          </div>
+        </div>
+      ) })()}
       {/* 장르별 레벨 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {Object.entries(GENRE).map(([g, meta]) => {
@@ -76,5 +97,22 @@ export default function AiLearningSection() {
         </ul>
       )}
     </div>
+  )
+}
+
+/** 단계 뱃지 — SVG 메달. 단계가 오를수록 색·광택·별 개수가 늘어난다 */
+function TierBadge({ tier, size = 40, locked = false }: { tier: number; size?: number; locked?: boolean }) {
+  const c = locked ? '#d9d2c3' : TIER_COLORS[tier]
+  const stars = Math.min(5, Math.floor(tier / 4) + 1)
+  const id = `tb${tier}${locked ? 'l' : ''}`
+  return (
+    <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden style={{ filter: locked ? 'grayscale(1) opacity(.55)' : `drop-shadow(0 2px 6px ${c}66)` }}>
+      <defs><linearGradient id={id} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".85" /><stop offset=".35" stopColor={c} /><stop offset="1" stopColor={c} stopOpacity=".7" /></linearGradient></defs>
+      {tier >= 8 && !locked && <circle cx="32" cy="32" r="30" fill="none" stroke={c} strokeWidth="1.5" strokeDasharray="3 4" opacity=".8" />}
+      <path d="M32 4l6.5 5.2 8.2-1 3.1 7.7 7.7 3.1-1 8.2L62 32l-5.5 4.8 1 8.2-7.7 3.1-3.1 7.7-8.2-1L32 60l-6.5-5.2-8.2 1-3.1-7.7-7.7-3.1 1-8.2L2 32l5.5-4.8-1-8.2 7.7-3.1 3.1-7.7 8.2 1Z" fill={`url(#${id})`} stroke={locked ? '#cfc6b4' : '#ffffffaa'} strokeWidth="1.2" />
+      <circle cx="32" cy="32" r="17" fill={locked ? '#e9e3d6' : '#ffffff'} opacity=".92" />
+      <text x="32" y="37" textAnchor="middle" fontSize="15" fontWeight="800" fill={locked ? '#b9b0a0' : c} fontFamily="-apple-system,system-ui,sans-serif">{tier + 1}</text>
+      {Array.from({ length: stars }).map((_, i) => <circle key={i} cx={32 + (i - (stars - 1) / 2) * 6} cy="48" r="1.8" fill={locked ? '#c9c0ad' : c} />)}
+    </svg>
   )
 }
