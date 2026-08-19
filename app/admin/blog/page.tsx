@@ -1,5 +1,6 @@
 'use client'
 // 블로그 관리 — 카테고리 · 상태 필터 · 글 목록(썸네일/조회수) · 삭제 확인
+import AutoPanel from '@/components/admin/AutoPanel'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -42,6 +43,7 @@ export default function AdminBlogPage() {
     <div>
       <PageHeader title={a.blogHeading} desc="글을 작성·발행하고 카테고리를 관리해요."
         actions={<Link href="/admin/blog/new" className={btn.primary}>{a.newPost}</Link>} />
+      <AutoPanel module="blog" />
       <div className="grid grid-cols-3 gap-2 mb-3">
         <StatCard label="전체 글" value={posts?.length ?? '-'} />
         <StatCard label="발행됨" value={pub} accent="#059669" sub={`임시저장 ${(posts?.length ?? 0) - pub}`} />

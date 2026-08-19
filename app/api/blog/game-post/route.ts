@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Game } from '@/lib/supabase/types'
+import { loadAutomation, logAutomation } from '@/lib/automation'
 
 // 게임 출시 → 자동 소개 블로그 글 생성 (게임당 1회, fire-and-forget 호출용)
 export async function POST(req: Request) {
@@ -11,6 +12,7 @@ export async function POST(req: Request) {
     }
 
     const admin = createAdminClient()
+    const autoPost = (await loadAutomation())['blog.autoPost']
 
     // 이미 이 게임의 소개글이 있으면 스킵 (멱등)
     const { data: existing } = await admin
@@ -70,13 +72,14 @@ export async function POST(req: Request) {
       title: post.title.slice(0, 120),
       content: post.html,
       excerpt: (post.excerpt ?? '').slice(0, 160),
-      published: true,
-      published_at: new Date().toISOString(),
+      published: autoPost,
+      published_at: autoPost ? new Date().toISOString() : null,
       author_id: authorId,
       thumbnail_url: game.thumbnail_url ?? null,
       source: 'game',
       game_id: game.id,
     }] as never)
+    void logAutomation({ module: 'blog', action: autoPost ? '게임 출시 노트 자동 발행' : '게임 출시 노트 초안 저장(사람 검토)', target: game.id, status: insertError ? 'error' : autoPost ? 'ok' : 'needs_review', detail: { title: post.title, error: insertError?.message } })
     if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
 
     return NextResponse.json({ ok: true })

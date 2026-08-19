@@ -10,6 +10,7 @@ export default function AdminNav() {
   const a = T.admin
   const ACCENT: Record<string, string> = { '/admin/ads': '#a855f7', '/admin/costs': '#0891b2', '/admin/llmpilot': '#10b981', '/admin/mlpilot': '#c084fc' }
   const items: [string, string][] = [
+    ['/admin-ops', 'AI 대시보드'],
     ['/admin/map', '지도보드'],
     ['/admin', a.navDashboard],
     ['/admin/games', a.navGames],

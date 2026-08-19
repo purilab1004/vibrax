@@ -753,3 +753,7 @@ body {
   html.home-snap { scroll-snap-type: y mandatory; }
   html.home-snap .feed-snap { scroll-snap-align: start; scroll-snap-stop: always; } /* 한 번에 한 장씩 — 카드가 완전히 올라온 뒤 다음으로 */
 }
+
+/* 가로 스크롤 탭 — 스크롤바 숨김 */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

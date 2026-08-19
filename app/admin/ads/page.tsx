@@ -1,4 +1,5 @@
 // 관리자 — AJ AdPilot 캠페인 전체 현황 (플랫폼 광고 수익 = 소진 코인)
+import AutoPanel from '@/components/admin/AutoPanel'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { PageHeader, Card, Badge, SectionTitle, EmptyState } from '@/components/admin/ui'
@@ -16,6 +17,7 @@ export default async function AdminAdsPage() {
   return (
     <div>
       <PageHeader title="AJ AdPilot" badge={<span className="inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-white" style={{ background: '#a855f7' }}>Ad Engine</span>} desc="AJ가 운영하는 홍보 캠페인(의뢰) 현황. 클릭당 코인이 소진되고, 소진 코인이 플랫폼 광고 수익입니다." actions={<Link href="/ads" className="inline-flex items-center h-9 px-3.5 rounded-lg border border-[#d9dde5] bg-white text-[13px] font-medium text-[#374151] hover:border-[#2563eb] hover:text-[#2563eb]">캠페인 만들기 화면</Link>} />
+      <AutoPanel module="adpilot" />
       {error && <p className="mb-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-[13px] px-4 py-3">{/does not exist|schema cache/i.test(error.message) ? <>광고 테이블이 없어요. <code>db/migrations/2026-08-18-ads.sql</code> 을 실행하세요.</> : error.message}</p>}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-3">
         <StatCard label="캠페인" value={rows.length} sub={`진행 중 ${rows.filter(r => r.status === 'active').length}`} />

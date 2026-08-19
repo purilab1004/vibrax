@@ -1,5 +1,6 @@
 'use client'
 // MLPilot — 프롬프트 → 템플릿 매핑(LLM 없이 자체 처리) 현황·학습. v1 = 키워드 + 문자 n-gram 유사도, ML 모델은 같은 슬롯에 교체 예정.
+import AutoPanel from '@/components/admin/AutoPanel'
 import { useCallback, useEffect, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
@@ -27,6 +28,7 @@ export default function MlPilotPage() {
   return (
     <div>
       {header}
+      <AutoPanel module="mlpilot" />
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-3">
         <StatCard label="LLM 없이 처리율" value={`${Math.round(d.ratio * 100)}%`} sub={`${d.free}/${d.total} 프롬프트`} accent={d.ratio >= 0.5 ? '#059669' : '#f59e0b'} />
         <StatCard label="키워드 매핑" value={d.byMethod.keyword ?? 0} accent="#2563eb" />

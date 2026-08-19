@@ -12,6 +12,7 @@ import { effectiveStaticTemplates } from '@/lib/studio/template-overrides'
 import { rankTemplates } from '@/lib/studio/similarity'
 import { loadMl, logMapping, learnKeyword } from '@/lib/studio/mlpilot'
 import { aiJudgeTemplate } from '@/lib/studio/ai-judge'
+import { loadAutomation, logAutomation } from '@/lib/automation'
 import { hardenHtml } from '@/lib/studio/harden'
 import { personalizeTemplate } from '@/lib/studio/personalize'
 import { logUsage } from '@/lib/llm/usage'
@@ -121,6 +122,7 @@ export async function POST(req: Request) {
   //   (b) 추가 요구가 있으면 → 템플릿을 베이스 HTML 로 두고 "수정" 만 생성 (from-scratch 보다 저렴)
   // 정적 템플릿 + 관리자 승인 DB 템플릿(처음 만들어진 게임들) 모두 매칭 대상
   const staticList = await effectiveStaticTemplates()
+  const auto = await loadAutomation()
   const dbList = !latest && images.length === 0 ? await loadDbTemplates() : []
   let tmatch = !latest && images.length === 0 ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(dbList, prompt)) : null
   let mapMethod: 'keyword' | 'similarity' | 'ml' | 'none' = tmatch ? 'keyword' : 'none'
@@ -128,6 +130,7 @@ export async function POST(req: Request) {
   // MLPilot: 키워드로 못 잡으면 유사도 매퍼(문자 n-gram, LLM 없음)로 가장 가까운 템플릿을 고른다
   if (!tmatch && !latest && images.length === 0) {
     const ml = await loadMl()
+    ml.aiJudge = ml.aiJudge && auto['mlpilot.aiJudge']; ml.autoLearn = ml.autoLearn && auto['mlpilot.autoLearn']
     if (ml.enabled) {
       const all = [...staticList, ...dbList]
       const ranked = rankTemplates(prompt, all.map(t => ({ slug: t.slug, text: `${t.name} ${t.keywords.join(' ')} ${t.prompt} ${t.description}` })))
@@ -139,12 +142,13 @@ export async function POST(req: Request) {
         const j = await aiJudgeTemplate(prompt, all.map(t => ({ slug: t.slug, name: t.name, keywords: t.keywords })), user.id, projectId)
         if (j.slug && j.confidence >= 0.7) {
           const t = all.find(x => x.slug === j.slug)!; tmatch = { template: t, keyword: t.keywords[0] ?? t.name }; mapMethod = 'ml'; mapConf = j.confidence
-          if (ml.autoLearn && j.keyword) void learnKeyword(t.slug, j.keyword)
+          if (ml.autoLearn && j.keyword) { void learnKeyword(t.slug, j.keyword); void logAutomation({ module: 'mlpilot', action: '키워드 자동 학습', target: t.slug, detail: { keyword: j.keyword, prompt: prompt.slice(0, 120) } }) }
+          void logAutomation({ module: 'mlpilot', action: 'AI 자동 판단 매핑', target: t.slug, detail: { confidence: j.confidence, prompt: prompt.slice(0, 120) } })
         }
       }
       // 유사도 매핑이 확신도 높으면 프롬프트 핵심 토큰을 키워드로 자동 학습
       if (tmatch && mapMethod === 'similarity' && ml.autoLearn && (mapConf ?? 0) >= ml.threshold + 0.15) {
-        const { extractKeywords } = await import('@/lib/studio/db-templates'); const k = extractKeywords(prompt)[0]; if (k) void learnKeyword(tmatch.template.slug, k)
+        const { extractKeywords } = await import('@/lib/studio/db-templates'); const k = extractKeywords(prompt)[0]; if (k) { void learnKeyword(tmatch.template.slug, k); void logAutomation({ module: 'mlpilot', action: '유사도 매핑 키워드 학습', target: tmatch.template.slug, detail: { keyword: k } }) }
       }
     }
   }
@@ -284,7 +288,7 @@ export async function POST(req: Request) {
               if (mErr) console.error('[studio/generate] messages insert failed', mErr)
               if (nextVersion === 1 && !tmatch && images.length === 0) {
                 // 처음 만들어진 게임 → 템플릿 후보로 저장 (관리자 승인 후 재사용 → 다음부턴 LLM 비용 0)
-                void saveTemplateCandidate({ prompt, title: extractTitle(parsed.html), description: parsed.description, html: hardenHtml(parsed.html), projectId, userId: user.id })
+                void saveTemplateCandidate({ prompt, title: extractTitle(parsed.html), description: parsed.description, html: hardenHtml(parsed.html), projectId, userId: user.id, autoApprove: auto['templates.autoApprove'] })
               }
               if (nextVersion === 1) {
                 const title = extractTitle(parsed.html)

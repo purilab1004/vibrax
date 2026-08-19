@@ -39,6 +39,7 @@ export async function guardStatus(force = false): Promise<{ guard: CostGuard; st
   if (!force && cache && Date.now() - cache.at < 60_000) return { guard: cache.guard, stats: cache.stats }
   const admin = createAdminClient()
   const guard = await loadGuard()
+  try { const { loadAutomation } = await import('@/lib/automation'); const a = await loadAutomation(); if (!a['tokenpilot.guard'] && guard.mode === 'auto') guard.mode = 'manual' } catch { /* ignore */ }
   const now = new Date()
   const since = guard.window === 'day' ? new Date(now.getFullYear(), now.getMonth(), now.getDate()) : new Date(now.getFullYear(), now.getMonth(), 1)
   const [{ data: costRows }, { data: payRows }] = await Promise.all([
@@ -57,6 +58,7 @@ export async function guardStatus(force = false): Promise<{ guard: CostGuard; st
     const cap = Math.max(revenueUsd, guard.minRevenueUsd) * guard.maxRatio
     blocked = costUsd > cap
     reason = blocked ? `LLM 원가가 매출의 ${Math.round(guard.maxRatio * 100)}% 한도를 넘어 자동으로 생성을 멈췄어요.` : null
+    if (blocked && !(cache?.stats.blocked)) { try { const { logAutomation } = await import('@/lib/automation'); void logAutomation({ module: 'tokenpilot', action: '원가 한도 초과 → 생성 자동 중지', status: 'needs_review', detail: { costUsd, revenueUsd, ratio } }) } catch { /* ignore */ } }
   }
   const stats: GuardStats = { costUsd, revenueUsd, ratio, blocked, reason, since: since.toISOString() }
   cache = { at: Date.now(), guard, stats }

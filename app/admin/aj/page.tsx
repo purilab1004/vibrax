@@ -1,4 +1,5 @@
 // /aj — AJ 랭킹: 크리에이터마다 하나씩 있는 AJ(AI 게임 기업가)의 순위. 자기 게임들의 수익·플레이·체류를 합산한다.
+import AutoPanel from '@/components/admin/AutoPanel'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { avatarPreviewUrl } from '@/lib/jeumto/config'

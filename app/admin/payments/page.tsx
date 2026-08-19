@@ -1,5 +1,6 @@
 'use client'
 // 결제 관리 (Paddle) — 매출·환불 통계, 결제 내역, 환불 요청/수동 처리, 이벤트 타임라인, Paddle 동기화
+import AutoPanel from '@/components/admin/AutoPanel'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import StatCard from '@/components/admin/StatCard'
@@ -107,6 +108,7 @@ export default function AdminPaymentsPage() {
   return (
     <div className="space-y-6">
       {header}
+      <AutoPanel module="payments" />
       {!data.configured && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-[13px] px-4 py-3">
           <b>PADDLE_API_KEY</b> 가 없어 결제 금액·카드 정보 자동 채움, API 환불 요청, 동기화가 꺼져 있어요. Paddle 대시보드 → Developer Tools → Authentication 에서 API 키를 만들어 Vercel 환경변수 <code>PADDLE_API_KEY</code> 로 추가하면 켜져요. 그 전까지는 웹훅으로 들어오는 새 결제만 금액이 기록되고, 환불은 Paddle 에서 처리 후 여기서 <b>수동 환불 처리</b>로 반영하세요.

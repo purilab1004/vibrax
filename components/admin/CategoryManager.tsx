@@ -50,7 +50,7 @@ export default function CategoryManager({ onChanged }: { onChanged?: () => void 
         ))}
         <form onSubmit={add} className="flex gap-2 ml-auto">
           <input value={name} onChange={e => setName(e.target.value)} placeholder={a.categoryName} className={`${input} !h-8 w-40 text-[13px]`} />
-          <button type="submit" className={btn.ghost + ' !h-8'}>{a.addCategory}</button>
+          <button type="submit" className={btn.ghost + ' !h-8 whitespace-nowrap shrink-0'}>{a.addCategory}</button>
         </form>
       </div>
     </Card>

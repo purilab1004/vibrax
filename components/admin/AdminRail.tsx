@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { useLang } from '@/lib/i18n/context'
 import LogoMark from '@/components/LogoMark'
+import { AutoDot, useAutoHealth } from '@/components/admin/AutoStatusDot'
 
 const ICON = 'w-[18px] h-[18px]'
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
@@ -12,11 +13,13 @@ const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeL
 export default function AdminRail() {
   const pathname = usePathname()
   const { T } = useLang()
+  const auto = useAutoHealth()
   const a = T.admin
   useEffect(() => { document.documentElement.style.setProperty('--rail-w', '3.5rem'); return () => { document.documentElement.style.setProperty('--rail-w', '0rem') } }, [])
   // [href, label, icon, accent?] — 엔진(AdPilot·TokenPilot)은 고유 색으로 구분
   const groups: { title: string; items: [string, string, React.ReactNode, string?][] }[] = [
     { title: '개요', items: [
+      ['/admin-ops', 'AI 대시보드', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>],
       ['/admin/map', '지도보드', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18" /></svg>],
       ['/admin', a.navDashboard, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="4" y="4" width="7" height="9" rx="1" /><rect x="13" y="4" width="7" height="5" rx="1" /><rect x="13" y="11" width="7" height="9" rx="1" /><rect x="4" y="15" width="7" height="5" rx="1" /></svg>],
     ] },
@@ -24,7 +27,7 @@ export default function AdminRail() {
       ['/admin/games', a.navGames, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
       ['/admin/blog', a.navBlog, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M5 4h11l3 3v13H5Z" /><path d="M9 9h6M9 13h6M9 17h4" /></svg>],
       ['/admin/notices', a.navNotices, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 10v4l10 4V6L4 10Z" /><path d="M14 8.5a3.5 3.5 0 0 1 0 7M6.5 14.5V19" /></svg>],
-      ['/admin/templates', '템플릿 라이브러리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="4" width="7" height="7" rx="1.5" /><rect x="14" y="4" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><path d="M17.5 14v7M14 17.5h7" /></svg>],
+      ['/admin/templates', '템플릿', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="4" width="7" height="7" rx="1.5" /><rect x="14" y="4" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><path d="M17.5 14v7M14 17.5h7" /></svg>],
     ] },
     { title: '사람·활동', items: [
       ['/admin/members', a.navMembers, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="9" cy="8.5" r="3" /><path d="M3.5 19c1-3 3.2-4.5 5.5-4.5s4.5 1.5 5.5 4.5" /><circle cx="17" cy="9.5" r="2.3" /><path d="M16 14.7c2.5.2 4 1.6 4.5 4.3" /></svg>],
@@ -63,8 +66,8 @@ export default function AdminRail() {
               const isEngine = !!accent
               return (
                 <Link key={href} href={href} style={isEngine ? (on ? { background: accent, color: '#fff' } : { color: accent }) : undefined} className={`relative h-9 w-full rounded-md flex items-center gap-3 px-[11px] transition-colors ${on ? (isEngine ? '' : 'bg-[#2563eb] text-white') : 'hover:bg-white/10 hover:text-white'}`} aria-label={label}>
-                  <span className="shrink-0">{icon}</span>
-                  <span className="text-[12.5px] font-semibold whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-opacity">{label}</span>
+                  <span className="relative shrink-0">{icon}{auto?.menuModule[href] && <span className="absolute -top-1 -right-1.5 group-hover/rail:hidden"><AutoDot state={auto.health[auto.menuModule[href]]?.state ?? 'off'} size={7} /></span>}</span>
+                  <span className="text-[12.5px] font-semibold whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-opacity flex items-center gap-2">{label}{auto?.menuModule[href] && <AutoDot state={auto.health[auto.menuModule[href]]?.state ?? 'off'} />}</span>
                 </Link>
               )
             })}

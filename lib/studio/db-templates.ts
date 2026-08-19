@@ -24,12 +24,15 @@ export async function loadDbTemplates(): Promise<GameTemplate[]> {
 export function invalidateDbTemplates() { cache = null }
 
 /** 첫 생성 결과를 템플릿 후보로 저장 (관리자 승인 전까지는 매칭에 안 씀) */
-export async function saveTemplateCandidate(p: { prompt: string; title: string | null; description: string; html: string; projectId: string; userId: string }) {
+export async function saveTemplateCandidate(p: { prompt: string; title: string | null; description: string; html: string; projectId: string; userId: string; autoApprove?: boolean }) {
   try {
     const admin = createAdminClient()
     const keywords = extractKeywords(p.prompt, p.title)
     const slug = (p.title ?? keywords[0] ?? 'game').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 40) + '-' + Math.random().toString(36).slice(2, 6)
-    await admin.from('studio_templates').insert([{ slug, name: p.title ?? keywords[0] ?? '새 게임', keywords, prompt: p.prompt, description: p.description, html: p.html, source_project_id: p.projectId, created_by: p.userId }] as never)
+    await admin.from('studio_templates').insert([{ slug, name: p.title ?? keywords[0] ?? '새 게임', keywords, prompt: p.prompt, description: p.description, html: p.html, source_project_id: p.projectId, created_by: p.userId, approved: !!p.autoApprove }] as never)
+    const { logAutomation } = await import('@/lib/automation')
+    void logAutomation({ module: 'templates', action: p.autoApprove ? '새 게임을 템플릿으로 자동 승인' : '템플릿 후보 저장(승인 대기)', target: slug, status: p.autoApprove ? 'ok' : 'needs_review', detail: { keywords, prompt: p.prompt.slice(0, 120) } })
+    if (p.autoApprove) invalidateDbTemplates()
   } catch (e) { console.warn('[templates] candidate save failed', e) }
 }
 export async function bumpTemplateUse(slug: string) {

@@ -1,5 +1,6 @@
 'use client'
 // 방송 관리 — 회원들의 카메라/링크 방송 현황, 강제 종료·삭제
+import AutoPanel from '@/components/admin/AutoPanel'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import StatCard from '@/components/admin/StatCard'
@@ -27,6 +28,7 @@ export default function AdminBroadcastsPage() {
   return (
     <div>
       {header}
+      <AutoPanel module="broadcasts" />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
         <StatCard label="ON AIR" value={data.live} accent="#dc2626" />
         <StatCard label="카메라 방송" value={data.items.filter(i => i.kind === 'camera').length} accent="#7c3aed" />

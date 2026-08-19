@@ -1,5 +1,6 @@
 'use client'
 // 관리자 — LLM 원가 대시보드 (llm_usage 집계). 문서 "LLM 토큰 원가 분석 및 크레딧 가격 정책"의 실측치 버전.
+import AutoPanel from '@/components/admin/AutoPanel'
 import { useEffect, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
@@ -71,6 +72,7 @@ export default function AdminCostsPage() {
   return (
     <div className="space-y-6">
       {header}
+      <AutoPanel module="tokenpilot" />
 
       {/* 핵심 지표 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

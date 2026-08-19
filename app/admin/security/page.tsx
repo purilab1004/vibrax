@@ -1,5 +1,6 @@
 'use client'
 // 보안 · 서버 현황 — 트래픽/에러/LLM 시간대별, 이상 트래픽, 보안 이벤트, 웹훅 실패, 코인 원장(해시체인) 무결성, 보안 모듈 체크리스트
+import AutoPanel from '@/components/admin/AutoPanel'
 import { useCallback, useEffect, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
@@ -20,6 +21,7 @@ export default function AdminSecurityPage() {
   return (
     <div>
       {header}
+      <AutoPanel module="security" />
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-3">
         <StatCard label="24h 페이지뷰" value={t.pv24} sub={`세션 ${t.sessions24}`} />
         <StatCard label="24h 에러" value={t.errors24} sub={`에러율 ${(t.errorRate * 100).toFixed(2)}%`} accent={t.errors24 > 50 ? '#dc2626' : '#1f2430'} />

@@ -1,5 +1,6 @@
 'use client'
 // 템플릿 라이브러리 — 정적 템플릿 + 처음 만들어진 게임(후보). 승인하면 같은 요청은 LLM 없이 재사용.
+import AutoPanel from '@/components/admin/AutoPanel'
 import { useCallback, useEffect, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
 import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, ConfirmModal, Toast, Modal, btn, input, label as labelCls, th, td, trHover, Pager, usePager } from '@/components/admin/ui'
@@ -19,6 +20,18 @@ export default function AdminTemplatesPage() {
   const [del, setDel] = useState<DbT | null>(null)
   const [preview, setPreview] = useState<{ id: string; name: string } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  // 직접 추가 — 프롬프트(Claude 생성, 기본 사양 권장) 또는 HTML 붙여넣기
+  const [add, setAdd] = useState(false)
+  const [aName, setAName] = useState(''); const [aKw, setAKw] = useState(''); const [aPrompt, setAPrompt] = useState(''); const [aHtml, setAHtml] = useState(''); const [aMode, setAMode] = useState<'prompt' | 'html'>('prompt'); const [aBasic, setABasic] = useState(true); const [adding, setAdding] = useState(false); const [aErr, setAErr] = useState<string | null>(null)
+  const BASIC_SPEC = '시작 화면 · 키보드+터치 조작 · 점수 · 게임오버/재시작만 있는 기본 버전. 단색 배경, 단순 도형, 브랜드·상표 없음.'
+  const submitAdd = async () => {
+    setAErr(null); if (!aName.trim() || !aKw.trim()) { setAErr('이름과 키워드는 필수예요.'); return }
+    setAdding(true)
+    const r = await fetch('/api/admin/templates', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: aName, keywords: aKw.split(',').map(x => x.trim()).filter(Boolean), prompt: aPrompt, html: aMode === 'html' ? aHtml : '', basicSpec: aBasic }) })
+    const j = await r.json().catch(() => ({})); setAdding(false)
+    if (!r.ok) { setAErr(j.error ?? '실패'); return }
+    setAdd(false); setAName(''); setAKw(''); setAPrompt(''); setAHtml(''); say(j.generated ? 'AI 가 생성해 템플릿으로 추가했어요 (승인됨).' : '템플릿을 추가했어요 (승인됨).'); setFilter('approved'); load()
+  }
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2400) }
   const load = useCallback(async () => { const r = await fetch('/api/admin/templates'); const j = await r.json(); if (!r.ok) setErr({ msg: j.error, missing: j.missing }); else setData(j) }, [])
   useEffect(() => { const t = setTimeout(load, 0); return () => clearTimeout(t) }, [load])
@@ -27,12 +40,13 @@ export default function AdminTemplatesPage() {
   const list = (data?.db ?? []).filter(t => filter === 'all' || (filter === 'approved') === t.approved)
   const pager = usePager(list, 25)
   const header = <PageHeader title="템플릿 라이브러리" desc="처음 만들어진 게임은 자동으로 후보에 들어와요. 승인하면 같은 키워드 요청은 LLM 호출 없이(원가 0) 이 게임을 개인화해서 제공해요."
-    actions={<Segmented value={filter} onChange={setFilter} options={[{ value: 'pending', label: `승인 대기 ${(data?.db ?? []).filter(t => !t.approved).length}` }, { value: 'approved', label: `승인됨 ${(data?.db ?? []).filter(t => t.approved).length}` }, { value: 'all', label: '전체' }]} />} />
+    actions={<div className="flex items-center gap-2"><button onClick={() => setAdd(true)} className={btn.primary}>템플릿 추가</button><Segmented value={filter} onChange={setFilter} options={[{ value: 'pending', label: `승인 대기 ${(data?.db ?? []).filter(t => !t.approved).length}` }, { value: 'approved', label: `승인됨 ${(data?.db ?? []).filter(t => t.approved).length}` }, { value: 'all', label: '전체' }]} /></div>} />
   if (err && !err.missing) return <div>{header}<Card className="p-6 text-[13px] text-[#6b7280]">{err.msg}</Card></div>
   if (!data) return <div>{header}<Skeleton /></div>
   return (
     <div>
       {header}
+      <AutoPanel module="templates" />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
         <StatCard label="정적 템플릿" value={data.static.length} sub="코드에 내장 (7종)" />
         <StatCard label="승인된 DB 템플릿" value={data.db.filter(t => t.approved).length} accent="#059669" />
@@ -98,6 +112,24 @@ export default function AdminTemplatesPage() {
       </Modal>
       <Modal open={!!preview} onClose={() => setPreview(null)} title={`미리보기 · ${preview?.name ?? ''}`} width="max-w-4xl">
         {preview && <iframe src={`/api/admin/templates?preview=${encodeURIComponent(preview.id)}`} className="w-full aspect-video rounded-lg border border-[#e3e6ec] bg-black" sandbox="allow-scripts allow-pointer-lock" />}
+      </Modal>
+      <Modal open={add} onClose={() => !adding && setAdd(false)} title="템플릿 추가" width="max-w-2xl">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label className={labelCls}>이름</label><input value={aName} onChange={e => setAName(e.target.value)} className={input} placeholder="예: 벽돌깨기" /></div>
+            <div><label className={labelCls}>매칭 키워드 (쉼표 구분)</label><input value={aKw} onChange={e => setAKw(e.target.value)} className={input} placeholder="예: 벽돌깨기, 브레이크아웃, breakout" /></div>
+          </div>
+          <Segmented value={aMode} onChange={setAMode} options={[{ value: 'prompt', label: '프롬프트로 생성 (Claude)' }, { value: 'html', label: 'HTML 직접 붙여넣기' }]} />
+          {aMode === 'prompt' ? <>
+            <div><label className={labelCls}>프롬프트</label><textarea value={aPrompt} onChange={e => setAPrompt(e.target.value)} rows={4} className={input + ' !h-auto py-2'} placeholder="예: 벽돌깨기 게임. 패들로 공을 튕겨 벽돌을 모두 깨면 클리어." /></div>
+            <label className="flex items-start gap-2 rounded-md border border-[#e3e6ec] bg-[#f8f9fb] px-3 py-2.5 cursor-pointer">
+              <input type="checkbox" checked={aBasic} onChange={e => setABasic(e.target.checked)} className="mt-0.5" />
+              <span className="text-[12.5px] text-[#374151]"><b className="text-[#1f2430]">기본 사양만 (권장)</b> — {BASIC_SPEC}<br /><span className="text-[#9aa1ad]">템플릿은 뼈대만 있으면 충분해요. 회원이 수정 요청으로 살을 붙이고, 제목·색은 자동 개인화돼요. 생성에 30초~2분 걸려요.</span></span>
+            </label>
+          </> : <div><label className={labelCls}>게임 HTML (단일 파일)</label><textarea value={aHtml} onChange={e => setAHtml(e.target.value)} rows={8} className={input + ' !h-auto py-2 font-mono text-[11.5px]'} placeholder="<!doctype html> ..." /></div>}
+          {aErr && <p className="text-[12.5px] text-red-600">{aErr}</p>}
+          <div className="flex justify-end gap-2"><button onClick={() => setAdd(false)} disabled={adding} className={btn.ghost}>취소</button><button onClick={submitAdd} disabled={adding} className={btn.primary}>{adding ? (aMode === 'prompt' ? 'AI 생성 중…' : '저장 중…') : '추가 (바로 승인)'}</button></div>
+        </div>
       </Modal>
       <ConfirmModal open={!!del} onClose={() => setDel(null)} onConfirm={async () => { await fetch('/api/admin/templates', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: del!.id }) }); setDel(null); say('삭제했어요.'); load() }} title="템플릿 삭제" desc={<><b>{del?.name}</b> 후보를 삭제할까요?</>} />
       <Toast msg={toast} kind="ok" />

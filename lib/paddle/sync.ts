@@ -62,8 +62,10 @@ export async function applyRefund(admin: SupabaseClient, txId: string, opts: { a
   const full = !opts.partial || (pay.amount_minor != null && refunded >= pay.amount_minor)
   const status = opts.kind === 'chargeback' ? 'chargeback' : full ? 'refunded' : 'partially_refunded'
   await admin.from('payments').update({ status, refunded_minor: refunded, refund_reason: opts.reason ?? null, refunded_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never).eq('id', txId)
-  // 크레딧 회수 — 전액 환불/차지백일 때 지급분 전부 회수
-  if (full && pay.user_id && pay.credits > 0 && !pay.credits_revoked) {
+  // 크레딧 회수 — 전액 환불/차지백일 때 지급분 전부 회수 (자동화 off 면 사람 확인 대기)
+  let autoRevoke = true
+  try { const { loadAutomation, logAutomation } = await import('@/lib/automation'); autoRevoke = (await loadAutomation())['payments.autoRevoke']; void logAutomation({ module: 'payments', action: autoRevoke ? `환불 반영 + 크레딧 자동 회수 (${opts.kind})` : `환불 반영 — 크레딧 회수 사람 확인 필요`, target: txId, status: autoRevoke ? 'ok' : 'needs_review', detail: { credits: pay.credits, status } }) } catch { /* ignore */ }
+  if (autoRevoke && full && pay.user_id && pay.credits > 0 && !pay.credits_revoked) {
     const { error } = await admin.from('credit_ledger').insert([{ user_id: pay.user_id, amount: -pay.credits, reason: opts.kind === 'chargeback' ? 'chargeback' : 'purchase_refund', ref_id: txId }] as never)
     if (error && error.code !== '23505') throw error
     await admin.from('payments').update({ credits_revoked: true } as never).eq('id', txId)
