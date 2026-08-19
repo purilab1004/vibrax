@@ -34,6 +34,8 @@ interface Props {
   agentConfig?: AgentConfig | null
   // 게임 제작자의 저장된 점토 아바타 — 없으면 기본 점토 얼굴
   bjAvatarConfig?: AvatarConfig | null
+  // 시청자(나)의 아바타 — 있으면 무대에 내 아바타가 서고, 게임 참여도 내 아바타가 한다
+  myAvatarConfig?: AvatarConfig | null
   // 게임 제작자의 공개 표시명(에이전트 이름) — 하단 BJ 프로필에 AJ 페르소나 대신 노출
   bjName?: string | null
   // 지금 이 게임을 추천 게임으로 방송 중인 라이브(카메라/링크) — 있으면 아바타 대신 표시
@@ -50,14 +52,15 @@ const AUTO_COMMENTARY = [
   '플레이어가 잘하고 있는지 못하고 있는지 게임 맥락에 맞게 짧게 외쳐줘.',
 ]
 
-export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, bjName, bjLive }: Props) {
+export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, myAvatarConfig, bjName, bjLive }: Props) {
   const persona = AJ_PERSONAS[genre]
   // 제작자가 라이브 방송(ON AIR)을 켜 두었으면 아바타 대신 영상이 BJ 자리에 나온다 (아바타 TTS 는 꺼짐)
   const camera = bjLive ?? null
-  const bjAvatar = camera ? <LiveView live={camera} /> : <JeumtoBjOverlay config={bjAvatarConfig ?? null} />
+  const stageConfig = myAvatarConfig ?? bjAvatarConfig ?? null
+  const bjAvatar = camera ? <LiveView live={camera} /> : <JeumtoBjOverlay config={stageConfig} />
   // 하단 BJ 프로필 — 제작자 에이전트 이름 + 아바타(없으면 AJ 페르소나 fallback)
-  const bjLabel = bjName?.trim() || persona.name
-  const bjPic = bjAvatarConfig?.previewUrl ?? null
+  const bjLabel = myAvatarConfig ? (agentConfig?.name?.trim() || bjName?.trim() || persona.name) : (bjName?.trim() || persona.name)
+  const bjPic = stageConfig?.previewUrl ?? null
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)

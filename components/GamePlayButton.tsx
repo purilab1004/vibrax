@@ -29,6 +29,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
   const [bjAvatarConfig, setBjAvatarConfig] = useState<AvatarConfig | null>(null)
+  const [myAvatarConfig, setMyAvatarConfig] = useState<AvatarConfig | null>(null)  // 시청자(나)의 아바타 — 무대에 서고 게임에 참여한다
   const liveMap = useLiveBroadcasts()
   const [isGuest, setIsGuest] = useState(false)
   const { T } = useLang()
@@ -75,8 +76,9 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
     const persona = user.user_metadata?.agent_persona?.trim()
     const avatarUrl = user.user_metadata?.agent_avatar_url ?? ''
     setAgentConfig({ name, persona: persona ?? '', avatarUrl })
-    // 게임 제작자의 저장된 아바타를 BJ 로 사용 (없으면 AiBjPanel 이 기본 아바타 fallback)
+    // 게임 제작자의 저장된 아바타를 BJ 로 사용 (없으면 AiBjPanel 이 기본 아바타 fallback) + 내 아바타
     loadAvatarConfig(supabase, game.user_id).then(setBjAvatarConfig).catch(() => {})
+    loadAvatarConfig(supabase, user.id).then(setMyAvatarConfig).catch(() => {})
     setOpen(true)
     supabase.rpc('increment_view_count', { game_id: game.id }).then(() => {})
   }
@@ -163,7 +165,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
                 </div>
               </>
             ) : (
-              <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={bjName} bjLive={liveForGame(liveMap, game.id)} />
+              <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} myAvatarConfig={myAvatarConfig} bjName={bjName} bjLive={liveForGame(liveMap, game.id)} />
             )}
           </div>
         </div>

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import LikeButton from './LikeButton'
+import { loadAvatarConfig } from '@/lib/jeumto/storage'
 import AiBjPanel from './AiBjPanel'
 import PlayHeader from './PlayHeader'
 import type { AvatarConfig, AvatarFrames } from '@/lib/jeumto/config'
@@ -497,6 +498,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
   useEffect(() => () => { if (hoverTimer.current) clearTimeout(hoverTimer.current) }, [])
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
+  const [myAvatarConfig, setMyAvatarConfig] = useState<AvatarConfig | null>(null)
   const supabase = createClient()
   const router = useRouter()
 
@@ -557,6 +559,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
     const persona = user.user_metadata?.agent_persona?.trim()
     const avatarUrl = user.user_metadata?.agent_avatar_url ?? ''
     setAgentConfig({ name, persona: persona ?? '', avatarUrl })
+    loadAvatarConfig(supabase, user.id).then(setMyAvatarConfig).catch(() => {})
     setOpen(true)
     supabase.rpc('increment_view_count', { game_id: game.id }).then(() => {})
   }
@@ -869,7 +872,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                 title={game.title}
               />
             </div>
-            <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} bjName={creatorName} bjLive={liveForGame(liveMap, game.id)} />
+            <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} myAvatarConfig={myAvatarConfig} bjName={creatorName} bjLive={liveForGame(liveMap, game.id)} />
           </div>
         </div>
       )}
