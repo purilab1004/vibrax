@@ -37,20 +37,20 @@ export default function AiLearningSection() {
   const allAuto = rows.length === 0 || rows.every(r => r.auto_learn !== false)
   const toggleAuto = async (on: boolean) => { setRows(rs => (rs ?? []).map(r => ({ ...r, auto_learn: on }))); await createClient().from('aj_play_policies').update({ auto_learn: on } as never).in('game_id', rows.map(r => r.game_id)); try { localStorage.setItem('aj-auto-learn', on ? '1' : '0') } catch { /* ignore */ } }
   return (
-    <div className="rounded-xl border border-[#ebe4d6] bg-[#fcfaf5] p-4 md:p-5 space-y-4">
+    <div className="space-y-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div><p className="font-pixel text-[9px] tracking-[0.3em] text-[#2563eb]">AI PLAY LEARNING</p><h3 className="text-[15px] font-bold text-[#241f17] mt-1">내 아바타 플레이 학습 현황</h3><p className="text-[12px] text-[#857a68] mt-0.5">게임에 아바타를 참여시키고 채팅으로 가르치면 게임별로 규칙이 쌓여요. 장르마다 학습 난이도가 달라 레벨이 오르는 속도가 다릅니다.</p></div>
         <div className="flex gap-2">
-          {[['가르친 횟수', totalLessons], ['자동 학습', totalAuto], ['학습된 규칙', totalRules], ['학습한 게임', rows.length]].map(([l, v]) => <div key={l as string} className="rounded-lg bg-white border border-[#ebe4d6] px-3 py-2 min-w-[78px] text-center"><p className="text-[10px] text-[#857a68] font-semibold">{l}</p><p className="text-[18px] font-extrabold text-[#241f17] leading-none mt-0.5 tabular-nums">{v as number}</p></div>)}
+          {[['가르친 횟수', totalLessons], ['자동 학습', totalAuto], ['학습된 규칙', totalRules], ['학습한 게임', rows.length]].map(([l, v]) => <div key={l as string} className="rounded-xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_8px_24px_-18px_rgba(36,31,23,0.25)] px-3 py-2 min-w-[78px] text-center"><p className="text-[10px] text-[#857a68] font-semibold">{l}</p><p className="text-[18px] font-extrabold text-[#241f17] leading-none mt-0.5 tabular-nums">{v as number}</p></div>)}
         </div>
       </div>
-      <label className="flex items-start gap-2.5 rounded-lg bg-white border border-[#ebe4d6] px-3.5 py-3 cursor-pointer">
+      <label className="flex items-start gap-2.5 rounded-xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_8px_24px_-18px_rgba(36,31,23,0.25)] px-3.5 py-3 cursor-pointer">
         <input type="checkbox" checked={allAuto} onChange={e => toggleAuto(e.target.checked)} className="mt-0.5" />
         <span className="text-[12.5px] text-[#374151]"><b className="text-[#241f17]">자동 학습</b> — 아바타가 대신 플레이하는 동안 3판마다 결과를 스스로 돌아보고 규칙을 조금씩 고쳐요(점수가 떨어지면 잘되던 방식으로 자동 복귀). 내가 채팅으로 가르친 내용은 항상 우선 지켜요.</span>
       </label>
       {/* 리워드 뱃지 — 20단계 */}
       {(() => { const t = tierOf(totalXp); const c = TIER_COLORS[t.tier]; return (
-        <div className="rounded-lg bg-white border border-[#ebe4d6] p-3.5">
+        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
           <div className="flex items-center gap-3">
             <TierBadge tier={t.tier} size={56} />
             <div className="min-w-0 flex-1">
@@ -71,7 +71,7 @@ export default function AiLearningSection() {
           const need = XP_PER_LEVEL * meta.difficulty
           const level = Math.floor(b.xp / need) + 1, into = b.xp % need, pct = Math.round(into / need * 100)
           return (
-            <div key={g} className="rounded-lg bg-white border border-[#ebe4d6] px-3.5 py-3">
+            <div key={g} className="rounded-xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_8px_24px_-18px_rgba(36,31,23,0.25)] px-3.5 py-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2"><span className="font-pixel text-[9px] px-1.5 py-0.5 rounded text-white" style={{ background: meta.color }}>{meta.label}</span><span className="text-[12px] text-[#857a68]">난이도 {'★'.repeat(meta.difficulty)}{'☆'.repeat(4 - meta.difficulty)}</span></div>
                 <span className="text-[13px] font-extrabold text-[#241f17]">Lv.{level}</span>
@@ -86,7 +86,7 @@ export default function AiLearningSection() {
       {missing ? <p className="text-[12px] text-[#9d9280]">학습 테이블이 아직 준비되지 않았어요.</p> : rows.length === 0 ? (
         <p className="text-[12.5px] text-[#857a68] rounded-lg border border-dashed border-[#e6dfd0] px-4 py-5 text-center">아직 학습한 게임이 없어요. 게임을 열고 <b>게임 참여</b> → 채팅으로 &ldquo;공이 오른쪽이면 미리 오른쪽으로&rdquo;처럼 가르쳐 보세요. <Link href="/games" className="text-[#2563eb] font-semibold hover:underline">게임 보러 가기 →</Link></p>
       ) : (
-        <ul className="divide-y divide-[#ebe4d6] border-y border-[#ebe4d6]">
+        <ul className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] px-4 divide-y divide-[#f1ece2]">
           {rows.map(r => { const g = GENRE[r.games?.genre ?? 'action'] ?? GENRE.action; const n = Array.isArray(r.rules) ? r.rules.length : 0; return (
             <li key={r.game_id} className="flex items-center gap-3 py-2.5">
               <div className="w-12 h-8 rounded-md overflow-hidden bg-[#f1ece2] shrink-0">{r.games?.thumbnail_url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={r.games.thumbnail_url} alt="" className="w-full h-full object-cover" />}</div>

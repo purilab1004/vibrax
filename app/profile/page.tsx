@@ -259,8 +259,9 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-10 space-y-12">
       {/* 헤더 — 아바타 · 이름 · 이메일 · 국가 · 재화 */}
-      <div className="rounded-3xl p-[1.5px] bg-gradient-to-r from-[#2563eb]/40 via-[#06b6d4]/40 to-[#f59e0b]/30">
-        <div className="rounded-[22.5px] bg-white px-6 md:px-8 py-6 flex items-center gap-5 flex-wrap">
+      <div className="relative overflow-hidden rounded-3xl bg-[#171b26] text-white shadow-[0_24px_60px_-28px_rgba(23,27,38,0.6)]">
+        <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-24 -left-10 w-72 h-72 rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.55),transparent)] blur-2xl" /><div className="absolute -bottom-28 right-10 w-80 h-80 rounded-full bg-[radial-gradient(closest-side,rgba(245,158,11,0.35),transparent)] blur-2xl" /><div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '18px 18px' }} /></div>
+        <div className="relative px-6 md:px-8 py-6 flex items-center gap-5 flex-wrap">
           <span className="avatar-ring shrink-0"><span className="avatar-wave w-20 h-20 rounded-full overflow-hidden flex items-center justify-center bg-white">
             {myAvatarConfig?.previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -268,14 +269,14 @@ export default function ProfilePage() {
             ) : <span className="text-[24px] font-extrabold text-[#2563eb]">{(username || user?.email || '?').charAt(0).toUpperCase()}</span>}
           </span></span>
           <div className="min-w-0 flex-1">
-            <p className="font-pixel text-[10px] tracking-[0.3em] text-[#2563eb]">MY PAGE · {TAB_LABEL[tab]}</p>
-            <h1 className="text-[24px] md:text-[28px] font-extrabold tracking-tight text-[#241f17] leading-tight truncate">{agentName || username || '내 계정'}</h1>
-            <p className="text-[13px] text-[#857a68] truncate">{username && agentName ? `@${username} · ` : ''}{user?.email}{country ? ` · ${COUNTRIES.find(c => c.code === country)?.flag ?? ''} ${COUNTRIES.find(c => c.code === country)?.name ?? country}` : ''}</p>
+            <p className="font-pixel text-[10px] tracking-[0.3em] text-[#60a5fa]">MY PAGE · {TAB_LABEL[tab]}</p>
+            <h1 className="text-[24px] md:text-[28px] font-extrabold tracking-tight text-white leading-tight truncate">{agentName || username || '내 계정'}</h1>
+            <p className="text-[13px] text-white/60 truncate">{username && agentName ? `@${username} · ` : ''}{user?.email}{country ? ` · ${COUNTRIES.find(c => c.code === country)?.flag ?? ''} ${COUNTRIES.find(c => c.code === country)?.name ?? country}` : ''}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <a href="/credits" className="hover:opacity-80 transition-opacity"><PromptCreditBadge amount={creditBalance} /></a>
             <GameCoinBadge amount={vcoinBalance} />
-            <Link href="/studio" className="inline-flex items-center h-9 px-4 rounded-lg bg-[#241f17] text-white text-[13px] font-semibold hover:bg-[#3a332a] transition-colors">게임 만들기</Link>
+            <Link href="/studio" className="inline-flex items-center h-9 px-4 rounded-lg bg-white text-[#171b26] text-[13px] font-semibold hover:bg-[#e8f1ff] transition-colors">게임 만들기</Link>
           </div>
         </div>
       </div>
@@ -482,7 +483,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </section>}
-      {tab === 'learning' && <section id="learning" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]"><AiLearningSection /></section>}
+      {tab === 'learning' && <section id="learning"><AiLearningSection /></section>}
 
       {/* ── My Games ── */}
       {tab === 'games' && <section id="games" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]">
