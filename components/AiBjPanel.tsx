@@ -446,7 +446,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       <div className="md:hidden absolute inset-0 pointer-events-none z-10">
         {/* 채팅 스택 + 입력 — 접으면 왼쪽으로 슬라이드 */}
         <div className="absolute inset-0 transition-transform duration-400 ease-[cubic-bezier(.2,.8,.2,1)]" style={{ transform: mChatOpen ? 'translateX(0)' : 'translateX(-110%)' }}>
-          <div className="chat-fade absolute left-8 right-[136px] bottom-[60px] max-h-[40%] flex flex-col justify-end overflow-hidden">
+          <div className="chat-fade absolute left-2 right-[136px] bottom-[58px] max-h-[42%] flex flex-col justify-end overflow-hidden">
             <div className="space-y-1">
               {messages.slice(-10).map((msg, i) => (
                 <div key={i} className="flex transition-opacity duration-1000" style={{ opacity: ageOpacity(msg.ts) }}>
@@ -457,7 +457,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
               ))}
             </div>
           </div>
-          <div className="absolute left-2 right-2 bottom-2.5 pointer-events-auto">
+          <div className="absolute left-2 right-[150px] bottom-2.5 pointer-events-auto">
             <div className="flex items-center gap-1.5 bg-black/55 backdrop-blur-md rounded-full pl-3.5 pr-1 py-1 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
               <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
                 placeholder={joined ? 'AI에게 가르치기…' : 'AJ에게 말걸기...'} className="flex-1 min-w-0 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none" />
@@ -465,14 +465,15 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
             </div>
           </div>
         </div>
-        {/* 채팅 접기/펼치기 탭 — 입력창 위 왼쪽 가장자리 (채팅 스택·입력창을 왼쪽으로 밀어 넣는다) */}
+        {/* 채팅 접기/펼치기 탭 */}
         <button onClick={() => setMChatOpen(v => !v)} aria-label={mChatOpen ? '채팅 접기' : '채팅 펼치기'}
-          className="pointer-events-auto absolute left-0 bottom-[66px] h-8 w-6 rounded-r-md bg-black/55 backdrop-blur-md border border-l-0 border-white/15 text-white/80 flex items-center justify-center">
+          className="pointer-events-auto absolute bottom-[18px] h-8 w-6 rounded-r-md bg-black/55 backdrop-blur-md border border-l-0 border-white/15 text-white/80 flex items-center justify-center transition-all duration-400"
+          style={{ left: mChatOpen ? 'calc(100% - 148px)' : 0 }}>
           <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 transition-transform duration-400 ${mChatOpen ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
           {!mChatOpen && unread > 0 && <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[10px] font-extrabold flex items-center justify-center animate-pulse">{unread > 99 ? '99+' : unread}</span>}
         </button>
         {/* 우하단 — 아바타(드래그 이동, 배지 탭으로 숨기기/보이기) + 네임 배지 */}
-        <div className="absolute right-2 bottom-[58px] w-[116px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
+        <div className="absolute right-2 bottom-2.5 w-[116px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
           <div className={`relative aj-stage aj-stage-desk aj-drag ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible && !mAvatarHidden ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: camera ? 90 : 132 }}
             onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
             {isMobile && bjAvatar}
