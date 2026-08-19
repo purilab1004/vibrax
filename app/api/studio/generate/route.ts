@@ -50,8 +50,9 @@ export async function POST(req: Request) {
   if (profile?.banned_at) {
     return new Response('banned', { status: 403 })
   }
-  // 관리자는 크레딧 없이 생성 가능 (운영·테스트 용도)
+  // 관리자도 동일하게 크레딧 차감 (플랫폼 사용 = 과금 원칙). 원가 가드만 관리자 예외.
   const isAdminUser = profile?.role === 'admin'
+  const chargeUser = true
   // TokenPilot 원가 가드 — 적자 구간이면 일반 사용자 생성 차단 (관리자는 통과)
   if (!isAdminUser) {
     try { const { stats } = await guardStatus(); if (stats.blocked) return new Response(`paused: ${stats.reason ?? ''}`, { status: 503 }) } catch { /* 가드 조회 실패는 생성 막지 않음 */ }
@@ -83,7 +84,7 @@ export async function POST(req: Request) {
 
   // 크레딧 원자적 차감 — 실패 경로에서 이 ref로 환불 (관리자는 차감 없음)
   const spendRef = `gen:${projectId}:${crypto.randomUUID()}`
-  if (!isAdminUser) {
+  if (chargeUser) {
     const { error: spendError } = await supabase.rpc('spend_credits', {
       p_amount: cost,
       p_ref: spendRef,
@@ -100,7 +101,7 @@ export async function POST(req: Request) {
   // 직접 RPC를 호출해 성공 건을 임의로 환불하는 것을 막기 위함) — admin
   // 클라이언트로 호출하고, 검증된 user.id를 p_user_id로 넘긴다.
   const refund = async () => {
-    if (isAdminUser) return // 차감이 없었으니 환불도 없다
+    if (!chargeUser) return // 차감이 없었으니 환불도 없다
     const { error } = await createAdminClient().rpc('refund_credits', {
       p_user_id: user.id,
       p_amount: cost,
@@ -135,7 +136,7 @@ export async function POST(req: Request) {
       const title = extractTitle(html)
       if (title) await supabase.from('studio_projects').update({ title } as never).eq('id', projectId)
       const { data: vrow } = await supabase.from('studio_versions').select('id').eq('project_id', projectId).eq('version', 1).maybeSingle()
-      await logUsage({ userId: user.id, projectId, versionId: (vrow as { id: string } | null)?.id ?? null, kind: 'template', model: 'none', credits: isAdminUser ? 0 : cost, templateSlug: tmatch.template.slug })
+      await logUsage({ userId: user.id, projectId, versionId: (vrow as { id: string } | null)?.id ?? null, kind: 'template', model: 'none', credits: chargeUser ? cost : 0, templateSlug: tmatch.template.slug })
       const estIn = 1400 + Math.round(prompt.length / 2)
       const estOut = Math.round(html.length / 3.6) + Math.round(desc.length / 2)
       const enc = new TextEncoder()
@@ -233,7 +234,7 @@ export async function POST(req: Request) {
             await logUsage({
               userId: user.id, projectId, versionId: (vIns as { id: string } | null)?.id ?? null,
               kind: tmatch ? 'template_edit' : latest ? 'edit' : 'create',
-              model: chosenModel, inputTokens: usedIn, outputTokens: usedOut, credits: isAdminUser ? 0 : cost,
+              model: chosenModel, inputTokens: usedIn, outputTokens: usedOut, credits: chargeUser ? cost : 0,
               templateSlug: tmatch?.template.slug ?? null,
             })
             try {

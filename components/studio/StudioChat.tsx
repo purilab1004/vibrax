@@ -10,11 +10,12 @@ export interface ChatMsg {
 }
 
 export default function StudioChat({
-  messages, streaming, usage, error, onSend, busy, draft, onDraftConsumed, ajAvatarUrl, ajName,
+  messages, streaming, usage, error, onSend, busy, draft, onDraftConsumed, ajAvatarUrl, ajName, generationCost = 10,
 }: {
   messages: ChatMsg[]
   streaming: { description: string; htmlBytes: number; codeTail: string } | null
   usage?: { input: number; output: number; credits?: number; balance?: number } | null
+  generationCost?: number
   error: string | null
   onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[]) => void
   busy: boolean
@@ -150,9 +151,9 @@ export default function StudioChat({
                         <span className="w-2 h-2 rounded-full bg-[#2563eb]/80" />
                       </span>
                       <span className="flex items-center gap-2">
-                        <span className="text-[10px] text-[#857a68]">{s.elapsed(elapsed)} · {s.tokensApprox(Math.round(streaming.htmlBytes / 4).toLocaleString())}</span>
+                        <span className="text-[10px] text-[#857a68]">{s.elapsed(elapsed)} · 이번 생성 프롬코인 {generationCost}</span>
                         <span className="font-pixel text-[10px] text-[#2563eb] tracking-widest animate-pulse">
-                          {s.writingCode((streaming.htmlBytes / 1024).toFixed(1))}
+                          코드 작성 중… {Math.max(1, Math.round(streaming.htmlBytes / 38)).toLocaleString()}줄
                         </span>
                       </span>
                     </div>
