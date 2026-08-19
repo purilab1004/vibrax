@@ -3,10 +3,10 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { rateLimit, tooMany, isSafeCond } from '@/lib/security/ratelimit'
 
 interface Manifest { title?: string; goal?: string; clearCondition?: string; controls?: { input: string; action: string }[]; inputs?: string[]; stateKeys?: string[]; sample?: Record<string, unknown> }
 interface Policy { version: number; tips: string[]; rules: { cond: string; action: string; hold?: number; why?: string }[]; params: Record<string, number>; summary: string | null }
-const SAFE = /^[\w\s.<>=!&|()+\-*/%?:'"\[\],]*$/  // cond 에 허용되는 문자(식별자·비교·산술·논리만)
 
 export async function GET(req: Request) {
   const { data: { user } } = await (await createClient()).auth.getUser()
@@ -23,8 +23,10 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => null) as { gameId?: string; message?: string; manifest?: Manifest | null; genre?: string; gameTitle?: string; action?: 'coach' | 'episode'; score?: number; cleared?: boolean; durationSec?: number } | null
   if (!b?.gameId) return Response.json({ error: 'bad request' }, { status: 400 })
   const admin = createAdminClient()
-  if (b.action === 'episode') return await autoLearn(admin, user.id, b)
+  if (b.action === 'episode') { if (!rateLimit(`ep:${user.id}`, 120, 3600_000).ok) return tooMany(); return await autoLearn(admin, user.id, b) }
   if (!b.message?.trim()) return Response.json({ error: 'bad request' }, { status: 400 })
+  if (b.message.length > 500) return Response.json({ error: '너무 길어요 (500자 이내)' }, { status: 400 })
+  if (!rateLimit(`coach:${user.id}`, 40, 3600_000).ok) return tooMany()
   const { data: cur } = await admin.from('aj_play_policies').select('*').eq('game_id', b.gameId).eq('user_id', user.id).maybeSingle()
   const prev = cur as (Policy & { id: string; best_score: number | null }) | null
   const m = b.manifest ?? {}
@@ -45,7 +47,7 @@ state() 키: ${stateKeys.join(', ') || '(없음 — 규칙은 만들지 말고 p
     const msg = await client.messages.create({ model: 'claude-haiku-4-5', max_tokens: 1200, system: sys, messages: [{ role: 'user', content: b.message.trim() }] })
     const t = msg.content.map(c => (c.type === 'text' ? c.text : '')).join('')
     const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)) as Partial<Policy>
-    const rules = (Array.isArray(j.rules) ? j.rules : []).filter(r => r && typeof r.cond === 'string' && typeof r.action === 'string' && SAFE.test(r.cond) && !/\b(window|document|fetch|eval|Function|import|require|constructor|__proto__|prototype)\b/.test(r.cond) && inputs.includes(r.action)).slice(0, 12).map(r => ({ cond: r.cond.slice(0, 200), action: r.action, hold: Math.max(30, Math.min(1500, Number(r.hold ?? 100))), why: String(r.why ?? '').slice(0, 80) }))
+    const rules = (Array.isArray(j.rules) ? j.rules : []).filter(r => r && typeof r.cond === 'string' && typeof r.action === 'string' && isSafeCond(r.cond) && inputs.includes(r.action)).slice(0, 12).map(r => ({ cond: r.cond.slice(0, 200), action: r.action, hold: Math.max(30, Math.min(1500, Number(r.hold ?? 100))), why: String(r.why ?? '').slice(0, 80) }))
     const params: Record<string, number> = {}; for (const [k, v] of Object.entries(j.params ?? {})) if (/^\w{1,24}$/.test(k) && typeof v === 'number' && Number.isFinite(v)) params[k] = v
     out = { version: (prev?.version ?? 0) + 1, tips: [...(prev?.tips ?? []), ...(Array.isArray(j.tips) ? j.tips.map(String) : [b.message.trim()])].slice(-30), rules, params, summary: typeof j.summary === 'string' ? j.summary.slice(0, 120) : '알았어, 반영했어!' }
   } catch (e) { return Response.json({ error: `coach failed: ${(e as Error).message}` }, { status: 500 }) }
@@ -115,7 +117,7 @@ state() 키: ${stateKeys.join(', ')}  예시: ${m.sample ? JSON.stringify(m.samp
         const msg = await client.messages.create({ model: 'claude-haiku-4-5', max_tokens: 1200, system: sys, messages: [{ role: 'user', content: '개선안을 내줘.' }] })
         const t = msg.content.map(c => (c.type === 'text' ? c.text : '')).join('')
         const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)) as Partial<Policy>
-        const rules = (Array.isArray(j.rules) ? j.rules : []).filter(r => r && typeof r.cond === 'string' && typeof r.action === 'string' && SAFE.test(r.cond) && !/\b(window|document|fetch|eval|Function|import|require|constructor|__proto__|prototype)\b/.test(r.cond) && inputs.includes(r.action)).slice(0, 12).map(r => ({ cond: r.cond.slice(0, 200), action: r.action, hold: Math.max(30, Math.min(1500, Number(r.hold ?? 100))), why: String(r.why ?? '').slice(0, 80) }))
+        const rules = (Array.isArray(j.rules) ? j.rules : []).filter(r => r && typeof r.cond === 'string' && typeof r.action === 'string' && isSafeCond(r.cond) && inputs.includes(r.action)).slice(0, 12).map(r => ({ cond: r.cond.slice(0, 200), action: r.action, hold: Math.max(30, Math.min(1500, Number(r.hold ?? 100))), why: String(r.why ?? '').slice(0, 80) }))
         if (rules.length) {
           const params: Record<string, number> = { ...row.params }; for (const [k, v] of Object.entries(j.params ?? {})) if (/^\w{1,24}$/.test(k) && typeof v === 'number' && Number.isFinite(v)) params[k] = v
           const pol: Policy = { version: row.version + 1, tips: row.tips, rules, params, summary: typeof j.summary === 'string' ? j.summary.slice(0, 120) : '스스로 조금 더 배웠어' }

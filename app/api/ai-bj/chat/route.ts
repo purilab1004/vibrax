@@ -2,6 +2,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { AJ_PERSONAS } from '@/lib/ai-bj/personas'
 import type { Genre } from '@/lib/supabase/types'
 import { buildTalkContext, logTalk } from '@/lib/mlpilot/talk'
+import { createClient } from '@/lib/supabase/server'
+import { rateLimit, tooMany } from '@/lib/security/ratelimit'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -21,7 +23,12 @@ interface RequestBody {
 }
 
 export async function POST(req: Request) {
-  const body: RequestBody = await req.json()
+  // 로그인 사용자만 (게스트 플레이는 AJ 패널 대신 로그인 안내) + 분당 호출 제한 — LLM 토큰 남용 방지
+  const { data: { user } } = await (await createClient()).auth.getUser()
+  if (!user) return new Response('unauthorized', { status: 401 })
+  if (!rateLimit(`ajchat:${user.id}`, 40, 60_000).ok) return tooMany()
+  const body: RequestBody = await req.json().catch(() => null as unknown as RequestBody)
+  if (!body || typeof body.message !== 'string' || body.message.length > 2000) return new Response('bad request', { status: 400 })
   const { genre, gameTitle, gameDescription, message, history } = body
 
   const persona = AJ_PERSONAS[genre]

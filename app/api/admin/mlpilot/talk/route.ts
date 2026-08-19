@@ -44,7 +44,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const g = await requireAdmin(); if ('error' in g) return g.error
-  const b = await req.json().catch(() => null) as Record<string, unknown> | null
+  const raw = await req.text().catch(() => '')
+  if (raw.length > 4_000_000) return Response.json({ error: '업로드는 4MB 이하로 나눠 올려주세요.' }, { status: 413 })
+  const b = (() => { try { return JSON.parse(raw) as Record<string, unknown> } catch { return null } })()
   if (!b?.action) return Response.json({ error: 'bad request' }, { status: 400 })
   const A = g.admin
   const autoApprove = await isAuto('mlpilot.autoLearn')

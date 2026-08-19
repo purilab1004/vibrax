@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isAuto, logAutomation } from '@/lib/automation'
+import { rateLimit, tooMany } from '@/lib/security/ratelimit'
 
 const SPAM_WORDS = /카지노|바카라|토토|슬롯머신|먹튀|성인\s*사이트|야동|비아그라|시알리스|대출\s*(상담|문의)|텔레그램\s*@|텔레\s*@|casino|viagra|cialis|porn|xxx|escort|airdrop|free\s*crypto|bet365|1xbet|onlyfans|telegram\s*@/i
 const ALLOWED_HOSTS = ['vibrexcup.com', 'www.vibrexcup.com', 'localhost']
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
   if (!b?.id) return Response.json({ error: 'bad request' }, { status: 400 })
   const { data: { user } } = await (await createClient()).auth.getUser()
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 })
+  if (!rateLimit(`screen:${user.id}`, 20, 3600_000).ok) return tooMany()
   const admin = createAdminClient()
   const { data } = await admin.from('games').select('id,title,description,game_manual,play_url,teaser,user_id,genre,thumbnail_url,created_at').eq('id', b.id).maybeSingle()
   const g = data as { id: string; title: string; description?: string | null; game_manual?: string | null; play_url: string; teaser?: string | null; user_id: string; genre: string; thumbnail_url: string; created_at: string } | null

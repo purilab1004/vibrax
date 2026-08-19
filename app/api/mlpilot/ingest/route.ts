@@ -4,13 +4,20 @@ import { loadTalkSettings, invalidateTalkKb } from '@/lib/mlpilot/talk'
 import { labelTranscript, saveExamples, type ExampleInput } from '@/lib/mlpilot/ingest'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isAuto, logAutomation } from '@/lib/automation'
+import { timingSafeEqual } from 'node:crypto'
+import { rateLimit, tooMany } from '@/lib/security/ratelimit'
+import { requestIp } from '@/lib/security/log'
 
 export const maxDuration = 300
 export async function POST(req: Request) {
   const s = await loadTalkSettings()
-  const key = req.headers.get('x-mlpilot-key')
-  if (!s.ingestKey || !key || key !== s.ingestKey) return Response.json({ error: 'unauthorized' }, { status: 401 })
-  const b = await req.json().catch(() => null) as { examples?: ExampleInput[]; transcript?: { speaker?: string; text: string; event?: string | null }[]; rule?: { scope?: string; genre?: string; kind?: string; title?: string; content: string }; genre?: string; bjName?: string; name?: string } | null
+  const key = req.headers.get('x-mlpilot-key') ?? ''
+  if (!rateLimit(`ingest:${requestIp(req.headers) ?? 'x'}`, 60, 600_000).ok) return tooMany()
+  const ok = !!s.ingestKey && key.length === s.ingestKey.length && timingSafeEqual(Buffer.from(key), Buffer.from(s.ingestKey))
+  if (!ok) return Response.json({ error: 'unauthorized' }, { status: 401 })
+  const raw = await req.text().catch(() => '')
+  if (raw.length > 2_000_000) return Response.json({ error: 'payload too large (2MB)' }, { status: 413 })
+  const b = (() => { try { return JSON.parse(raw) } catch { return null } })() as { examples?: ExampleInput[]; transcript?: { speaker?: string; text: string; event?: string | null }[]; rule?: { scope?: string; genre?: string; kind?: string; title?: string; content: string }; genre?: string; bjName?: string; name?: string } | null
   if (!b) return Response.json({ error: 'bad json' }, { status: 400 })
   const autoApprove = await isAuto('mlpilot.autoLearn')
   if (Array.isArray(b.examples) && b.examples.length) {
