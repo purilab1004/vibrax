@@ -5,9 +5,10 @@ import { logServerError } from '@/lib/log/server'
 import { GENERATION_COST } from '@/lib/studio/constants'
 import { SYSTEM_PROMPT, buildMessages, type ChatTurn } from '@/lib/studio/prompt'
 import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER } from '@/lib/studio/parse'
-import { matchTemplate, templateOnly, extrasOf, TEMPLATES } from '@/lib/studio/templates'
+import { templateOnly, extrasOf } from '@/lib/studio/templates'
 import { matchTemplateIn } from '@/lib/studio/template-match'
 import { loadDbTemplates, saveTemplateCandidate, bumpTemplateUse } from '@/lib/studio/db-templates'
+import { effectiveStaticTemplates } from '@/lib/studio/template-overrides'
 import { hardenHtml } from '@/lib/studio/harden'
 import { personalizeTemplate } from '@/lib/studio/personalize'
 import { logUsage } from '@/lib/llm/usage'
@@ -116,8 +117,9 @@ export async function POST(req: Request) {
   //   (a) 장르 이름뿐 → 템플릿을 그대로 1버전으로 저장 (LLM 호출 없음 — 크레딧은 동일하게 차감: 서비스 비용/유지)
   //   (b) 추가 요구가 있으면 → 템플릿을 베이스 HTML 로 두고 "수정" 만 생성 (from-scratch 보다 저렴)
   // 정적 템플릿 + 관리자 승인 DB 템플릿(처음 만들어진 게임들) 모두 매칭 대상
-  const tmatch = !latest && images.length === 0 ? (matchTemplate(prompt) ?? matchTemplateIn(await loadDbTemplates(), prompt)) : null
-  if (tmatch && !TEMPLATES.includes(tmatch.template)) void bumpTemplateUse(tmatch.template.slug)
+  const staticList = await effectiveStaticTemplates()
+  const tmatch = !latest && images.length === 0 ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(await loadDbTemplates(), prompt)) : null
+  if (tmatch && !staticList.includes(tmatch.template)) void bumpTemplateUse(tmatch.template.slug)
   let baseHtml: string | null = latest?.html ?? null
   let effectivePrompt = prompt
   let templateNote = ''
