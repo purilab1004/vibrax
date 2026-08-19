@@ -39,7 +39,9 @@ export default function JeumtoBjOverlay({ config }: { config: AvatarConfig | nul
       if (!text) return
       setBubble(text)
       if (endTimer) clearTimeout(endTimer)
-      const end = () => { setBubble(null); viewerRef.current?.stop() }
+      // 패널이 아바타를 보여주고/숨기도록 말하기 상태 알림
+      window.dispatchEvent(new CustomEvent('avatar:speaking', { detail: { on: true } }))
+      const end = () => { setBubble(null); viewerRef.current?.stop(); window.dispatchEvent(new CustomEvent('avatar:speaking', { detail: { on: false } })) }
       let ms = 4000
       try {
         ms = (await speakText(text, voice)).durationMs

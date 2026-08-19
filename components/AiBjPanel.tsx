@@ -61,6 +61,15 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
   const [isStreaming, setIsStreaming] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [floatingMsg, setFloatingMsg] = useState<{ text: string; key: number } | null>(null)
+  // 아바타는 말할 때만 보이고, 말이 끝나면 서서히 사라진다 (카메라 방송이면 항상 표시)
+  const [speaking, setSpeaking] = useState(false)
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined
+    const h = (e: Event) => { const on = (e as CustomEvent<{ on: boolean }>).detail?.on; if (t) clearTimeout(t); if (on) setSpeaking(true); else t = setTimeout(() => setSpeaking(false), 1500) }
+    window.addEventListener('avatar:speaking', h)
+    return () => { window.removeEventListener('avatar:speaking', h); if (t) clearTimeout(t) }
+  }, [])
+  const avatarVisible = !!camera || speaking
 
   // 아바타를 데스크탑/모바일 한 곳에만 마운트하기 위한 뷰포트 감지
   const [isMobile, setIsMobile] = useState(() =>
@@ -344,7 +353,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         </div>
         {/* 우하단 — AJ 아바타 + 프로필 배지 */}
         <div className="absolute right-4 bottom-4 w-[180px]">
-          <div className="rounded-xl overflow-hidden border border-white/20 bg-[#f3ecdf] shadow-[0_8px_28px_rgba(0,0,0,0.5)]" style={{ height: '170px' }}>
+          <div className={`aj-stage ${camera ? 'aj-stage-cam' : ''} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '190px' }}>
             {!isMobile && bjAvatar}
           </div>
           <div className="mt-2 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5">
@@ -386,7 +395,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         {/* Mobile: 3D AJ avatar, bottom-right */}
         {isMobile && (
           <div
-            className={`absolute right-2 z-10 overflow-hidden rounded-lg border border-[#ebe4d6] bg-[#f3ecdf] ${camera ? 'pointer-events-auto' : 'pointer-events-none'}`}
+            className={`absolute right-2 z-10 aj-stage ${camera ? 'aj-stage-cam pointer-events-auto' : 'pointer-events-none'} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`}
             style={camera ? { bottom: '72px', width: 200, height: 112 } : { bottom: '72px', width: 116, height: 150 }}
           >
             {isMobile && bjAvatar}
