@@ -20,9 +20,9 @@ export function GoogleIcon({ className = 'w-4.5 h-4.5' }: { className?: string }
 
 export default function AuthShell({ eyebrow, title, subtitle, children, footer }: { eyebrow: string; title: React.ReactNode; subtitle?: React.ReactNode; children: React.ReactNode; footer?: React.ReactNode }) {
   return (
-    <div className="min-h-[calc(100svh-3.5rem)] grid grid-cols-1 lg:grid-cols-[1.05fr_1fr]">
+    <div className="min-h-[calc(100svh-3.5rem)] grid grid-cols-1 lg:grid-cols-[380px_1fr] xl:grid-cols-[420px_1fr]">
       {/* 좌측 — 브랜드 */}
-      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#0b1020] text-white p-12">
+      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#0b1020] text-white p-9">
         <div aria-hidden className="absolute inset-0">
           <div className="absolute -top-32 -left-24 w-[520px] h-[520px] rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.55),transparent)] blur-2xl" />
           <div className="absolute bottom-[-160px] right-[-120px] w-[560px] h-[560px] rounded-full bg-[radial-gradient(closest-side,rgba(6,182,212,0.45),transparent)] blur-2xl" />
@@ -35,9 +35,9 @@ export default function AuthShell({ eyebrow, title, subtitle, children, footer }
         </Link>
         <div className="relative max-w-md">
           <p className="font-pixel text-[10px] tracking-[0.35em] text-[#60a5fa]">PROMPT → GAME → WORLD</p>
-          <h2 className="mt-3 text-[40px] leading-[1.08] font-extrabold tracking-tight">프롬프트 한 줄로<br />게임을 만들고,<br /><span className="bg-gradient-to-r from-[#60a5fa] via-[#22d3ee] to-[#fbbf24] bg-clip-text text-transparent">AJ와 함께 세계로.</span></h2>
-          <p className="mt-4 text-[14px] text-white/60 leading-relaxed">AI 스튜디오에서 만들고, 나만의 점토 아바타로 방송하고, AI 게임 기업가 AJ가 성장과 수익을 챙겨줍니다.</p>
-          <div className="mt-8 flex items-center gap-6 text-[12px] text-white/50">
+          <h2 className="mt-3 text-[30px] leading-[1.12] font-extrabold tracking-tight">프롬프트 한 줄로<br />게임을 만들고,<br /><span className="bg-gradient-to-r from-[#60a5fa] via-[#22d3ee] to-[#fbbf24] bg-clip-text text-transparent">AJ와 함께 세계로.</span></h2>
+          <p className="mt-4 text-[13px] text-white/60 leading-relaxed">AI 스튜디오에서 만들고, 나만의 점토 아바타로 방송하고, AI 게임 기업가 AJ가 성장과 수익을 챙겨줍니다.</p>
+          <div className="mt-6 flex items-center gap-4 text-[11.5px] text-white/50 flex-wrap">
             <span><b className="text-white text-[16px] mr-1">30</b>가입 프롬코인</span>
             <span className="w-px h-4 bg-white/15" />
             <span><b className="text-white text-[16px] mr-1">1,000</b>게임 코인</span>
