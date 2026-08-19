@@ -9,7 +9,8 @@ export function normalizeTransaction(tx: PaddleTransaction, customerEmail?: stri
   for (const it of items) { credits += creditsForPriceId(it.price?.id) * (it.quantity ?? 1); priceId = priceId ?? it.price?.id ?? null }
   const pack = CREDIT_PACKS.find(p => packPriceId(p.key) === priceId)?.key ?? null
   const total = tx.details?.totals?.grand_total ?? tx.details?.totals?.total ?? null
-  const pm = tx.payments?.[tx.payments.length - 1]?.method_details
+  const lastPay = tx.payments?.[tx.payments.length - 1]
+  const pm = lastPay?.method_details
   return {
     id: tx.id,
     user_id: tx.custom_data?.user_id ?? null,
@@ -23,9 +24,22 @@ export function normalizeTransaction(tx: PaddleTransaction, customerEmail?: stri
     card_brand: pm?.card?.type ?? null,
     card_last4: pm?.card?.last4 ?? null,
     billed_at: tx.billed_at ?? tx.created_at ?? null,
+    // 실패 사유(카드 거절 코드 등) — 완료 전 실패 건 표시용 (refund_reason 컬럼 재사용)
+    refund_reason: tx.status !== 'completed' && lastPay?.error_code ? String(lastPay.error_code) : undefined,
     raw: tx as unknown as Record<string, unknown>,
     updated_at: new Date().toISOString(),
   }
+}
+
+// 결제 실패/미완료 반영: 결제 시도 기록만 남긴다 (크레딧 지급 없음). 이미 완료된 건은 덮어쓰지 않는다.
+export async function applyFailed(admin: SupabaseClient, tx: PaddleTransaction, customerEmail?: string | null) {
+  const row = normalizeTransaction(tx, customerEmail)
+  const { data: ex } = await admin.from('payments').select('status').eq('id', tx.id).maybeSingle()
+  const cur = (ex as { status?: string } | null)?.status
+  if (cur === 'completed' || cur === 'refunded' || cur === 'partially_refunded' || cur === 'chargeback' || cur === 'refund_pending') return row
+  const status = tx.status === 'canceled' ? 'canceled' : 'failed'
+  await admin.from('payments').upsert({ ...row, status } as never, { onConflict: 'id' })
+  return row
 }
 
 // 결제 완료 반영: payments upsert + 크레딧 지급(멱등: ref_id unique)

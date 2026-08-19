@@ -5,7 +5,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logServerError } from '@/lib/log/server'
 import { verifyPaddleSignature } from '@/lib/paddle/verify'
-import { applyCompleted, applyRefund, normalizeTransaction } from '@/lib/paddle/sync'
+import { applyCompleted, applyFailed, applyRefund, normalizeTransaction } from '@/lib/paddle/sync'
 import { getCustomer, paddleConfigured, type PaddleTransaction } from '@/lib/paddle/api'
 
 interface Adjustment { id: string; action: string; status: string; transaction_id: string; reason?: string; totals?: { total?: string }; type?: string; items?: unknown[] }
@@ -46,9 +46,11 @@ export async function POST(req: Request) {
       const { data: exists } = await admin.from('payments').select('id').eq('id', tx.id).maybeSingle()
       if (exists) await admin.from('payments').update(normalizeTransaction(tx) as never).eq('id', tx.id)
     } else if (type === 'transaction.payment_failed' || type === 'transaction.canceled') {
+      // 실패/취소도 결제 관리에 남긴다 (회원·금액·카드·사유)
       const tx = data as unknown as PaddleTransaction
-      const { data: exists } = await admin.from('payments').select('id,status').eq('id', tx.id).maybeSingle()
-      if (exists && (exists as { status: string }).status !== 'completed') await admin.from('payments').update({ status: type.endsWith('failed') ? 'failed' : 'canceled', updated_at: new Date().toISOString() } as never).eq('id', tx.id)
+      let email: string | null = null
+      if (tx.customer_id && paddleConfigured()) { try { email = (await getCustomer(tx.customer_id)).data.email ?? null } catch { /* */ } }
+      await applyFailed(admin, tx, email)
     } else if (type === 'adjustment.created' || type === 'adjustment.updated') {
       const adj = data as unknown as Adjustment
       if (adj.transaction_id) {

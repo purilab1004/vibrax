@@ -24,12 +24,12 @@ export interface PaddleTransaction {
   billed_at: string | null; created_at: string; custom_data?: { user_id?: string } | null
   details?: { totals?: { total?: string; grand_total?: string } } | null
   items?: { price?: { id?: string }; quantity?: number }[]
-  payments?: { method_details?: { type?: string; card?: { type?: string; last4?: string } } }[]
+  payments?: { status?: string; error_code?: string | null; method_details?: { type?: string; card?: { type?: string; last4?: string } } }[]
   origin?: string
 }
 
 export const getTransaction = (id: string) => call<{ data: PaddleTransaction }>(`/transactions/${id}?include=customer`)
-export const listTransactions = (after?: string) => call<{ data: PaddleTransaction[]; meta: { pagination: { has_more: boolean; next?: string } } }>(`/transactions?status=completed,past_due&per_page=100${after ? `&after=${after}` : ''}`)
+export const listTransactions = (after?: string) => call<{ data: PaddleTransaction[]; meta: { pagination: { has_more: boolean; next?: string } } }>(`/transactions?status=completed,past_due,ready,billed,canceled&per_page=100${after ? `&after=${after}` : ''}`)
 export const getCustomer = (id: string) => call<{ data: { email?: string } }>(`/customers/${id}`)
 
 // 전체 환불 요청 — Paddle 이 검토 후 승인/거절 (adjustment.updated 웹훅으로 결과 수신)

@@ -14,7 +14,7 @@ interface PayRow {
 }
 interface Data {
   days: number; currency: string; configured: boolean; env: string
-  totals: { count: number; completed: number; refunded: number; gross: number; refundedMinor: number; net: number; credits: number; buyers: number; unknownAmount: number }
+  totals: { count: number; failed?: number; completed: number; refunded: number; gross: number; refundedMinor: number; net: number; credits: number; buyers: number; unknownAmount: number }
   byDay: { day: string; gross: number; count: number; refunded: number }[]
   byPack: Record<string, { count: number; gross: number; credits: number }>
   rows: PayRow[]
@@ -23,7 +23,7 @@ interface Ev { id: string; event_type: string; created_at: string; processed: bo
 
 const STATUS: Record<string, { label: string; color: string }> = {
   completed: { label: '결제 완료', color: '#059669' }, refund_pending: { label: '환불 검토 중', color: '#f59e0b' }, refunded: { label: '환불됨', color: '#e11d48' },
-  partially_refunded: { label: '부분 환불', color: '#db2777' }, chargeback: { label: '차지백', color: '#7c3aed' }, canceled: { label: '취소', color: '#857a68' }, failed: { label: '실패', color: '#857a68' },
+  partially_refunded: { label: '부분 환불', color: '#db2777' }, chargeback: { label: '차지백', color: '#7c3aed' }, canceled: { label: '취소', color: '#857a68' }, failed: { label: '결제 실패', color: '#dc2626' },
 }
 const PACK: Record<string, string> = { small: 'Small · 100', medium: 'Medium · 450', large: 'Large · 1,250' }
 const money = (minor: number | null | undefined, cur: string | null | undefined) => {
@@ -31,7 +31,7 @@ const money = (minor: number | null | undefined, cur: string | null | undefined)
   const c = cur ?? 'USD'; const zero = ['KRW', 'JPY'].includes(c)
   return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: c, minimumFractionDigits: zero ? 0 : 2 }).format(zero ? minor : minor / 100)
 }
-type Filter = 'all' | 'completed' | 'refunded' | 'pending'
+type Filter = 'all' | 'completed' | 'refunded' | 'pending' | 'failed'
 
 export default function AdminPaymentsPage() {
   const [days, setDays] = useState(30)
@@ -70,7 +70,7 @@ export default function AdminPaymentsPage() {
   }
 
   const rows = useMemo(() => (data?.rows ?? []).filter(r =>
-    (filter === 'all' || (filter === 'completed' && r.status === 'completed') || (filter === 'refunded' && ['refunded', 'partially_refunded', 'chargeback'].includes(r.status)) || (filter === 'pending' && r.status === 'refund_pending')) &&
+    (filter === 'all' || (filter === 'completed' && r.status === 'completed') || (filter === 'refunded' && ['refunded', 'partially_refunded', 'chargeback'].includes(r.status)) || (filter === 'pending' && r.status === 'refund_pending') || (filter === 'failed' && ['failed', 'canceled'].includes(r.status))) &&
     (!query.trim() || [r.id, r.customer_email, r.invoice_number, r.profiles?.username, r.profiles?.agent_name].some(v => v?.toLowerCase().includes(query.trim().toLowerCase())))
   ), [data, filter, query])
 
@@ -103,7 +103,7 @@ export default function AdminPaymentsPage() {
         </div>
       )}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="총 매출" value={money(t.gross, cur)} sub={`${t.count}건 · 구매자 ${t.buyers}명${t.unknownAmount ? ` · 금액 미상 ${t.unknownAmount}건` : ''}`} />
+        <StatCard label="총 매출" value={money(t.gross, cur)} sub={`${t.count}건 · 구매자 ${t.buyers}명 · 실패 ${t.failed ?? 0}건${t.unknownAmount ? ` · 금액 미상 ${t.unknownAmount}건` : ''}`} />
         <StatCard label="환불액" value={money(t.refundedMinor, cur)} sub={`${t.refunded}건 · 환불율 ${refundRate}%`} accent="#e11d48" />
         <StatCard label="순매출" value={money(t.net, cur)} sub="총 매출 − 환불 (Paddle 수수료 제외)" accent="#059669" />
         <StatCard label="지급 크레딧" value={t.credits} sub={t.count ? `건당 평균 ${Math.round(t.credits / t.count)}` : '-'} accent="#0891b2" />
@@ -131,7 +131,7 @@ export default function AdminPaymentsPage() {
       <Card>
         <div className="flex items-center gap-3 flex-wrap p-3 border-b border-[#e3e6ec]">
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="이메일 · 회원 · 트랜잭션/인보이스 번호" className={`${input} max-w-sm`} />
-          <div className="ml-auto"><Segmented value={filter} onChange={setFilter} options={[{ value: 'all', label: `전체 ${data.rows.length}` }, { value: 'completed', label: '완료' }, { value: 'pending', label: '환불 검토' }, { value: 'refunded', label: '환불/차지백' }]} /></div>
+          <div className="ml-auto"><Segmented value={filter} onChange={setFilter} options={[{ value: 'all', label: `전체 ${data.rows.length}` }, { value: 'completed', label: '완료' }, { value: 'pending', label: '환불 검토' }, { value: 'refunded', label: '환불/차지백' }, { value: 'failed', label: `실패 ${t.failed ?? 0}` }]} /></div>
         </div>
         {rows.length === 0 ? <EmptyState title="결제 내역이 없어요" desc="기간을 늘리거나 Paddle 동기화를 실행해 보세요." /> : (
           <div className="overflow-x-auto">
@@ -152,7 +152,7 @@ export default function AdminPaymentsPage() {
                       <td className={td}><p className="text-[#1f2430]">{PACK[r.pack_key ?? ''] ?? (r.pack_key ?? '크레딧')}</p><p className="text-[11.5px] text-[#9aa1ad]">+{r.credits.toLocaleString()} 크레딧{r.credits_revoked ? ' · 회수됨' : ''}</p></td>
                       <td className={`${td} text-right tabular-nums`}><p className="font-semibold text-[#1f2430]">{money(r.amount_minor, r.currency)}</p>{r.refunded_minor > 0 && <p className="text-[11px] text-[#e11d48]">−{money(r.refunded_minor, r.currency)}</p>}</td>
                       <td className={`${td} whitespace-nowrap`}>{r.payment_method ? <span className="capitalize">{r.card_brand ?? r.payment_method}{r.card_last4 ? ` ••${r.card_last4}` : ''}</span> : <span className="text-[#c4b9a2]">—</span>}</td>
-                      <td className={td}><Badge color={st.color}>{st.label}</Badge></td>
+                      <td className={td}><Badge color={st.color}>{st.label}</Badge>{r.status === 'failed' && r.refund_reason && <p className="text-[10.5px] text-[#dc2626] mt-0.5 font-mono">{r.refund_reason}</p>}</td>
                       <td className={td}><a href={r.dashboard_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="font-mono text-[11px] text-[#2563eb] hover:underline">{r.id.slice(0, 12)}…</a>{r.invoice_number && <p className="text-[11px] text-[#9aa1ad]">{r.invoice_number}</p>}</td>
                       <td className={td} onClick={e => e.stopPropagation()}>
                         <div className="flex gap-1.5 justify-end">

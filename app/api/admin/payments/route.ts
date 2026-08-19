@@ -1,7 +1,7 @@
 // 관리자 결제 API — 목록/통계(GET), 환불 요청·수동 처리·동기화(POST)
 import { requireAdmin } from '@/lib/admin/guard'
 import { getCustomer, getTransaction, listTransactions, paddleConfigured, paddleDashboardUrl, requestFullRefund } from '@/lib/paddle/api'
-import { applyCompleted, applyRefund } from '@/lib/paddle/sync'
+import { applyCompleted, applyFailed, applyRefund } from '@/lib/paddle/sync'
 
 export async function GET(req: Request) {
   const g = await requireAdmin(); if ('error' in g) return g.error
@@ -15,20 +15,22 @@ export async function GET(req: Request) {
   const sum = (f: (r: Record<string, unknown>) => number) => rows.reduce((s, r) => s + f(r), 0)
   const completed = rows.filter(r => ['completed', 'partially_refunded', 'refund_pending'].includes(String(r.status)))
   const refunded = rows.filter(r => ['refunded', 'chargeback'].includes(String(r.status)))
-  const gross = sum(r => Number(r.amount_minor ?? 0))
-  const refundedMinor = sum(r => Number(r.refunded_minor ?? 0))
+  const paid = rows.filter(r => !['failed', 'canceled'].includes(String(r.status)))
+  const failedCount = rows.length - paid.length
+  const gross = paid.reduce((s, r) => s + Number(r.amount_minor ?? 0), 0)
+  const refundedMinor = paid.reduce((s, r) => s + Number(r.refunded_minor ?? 0), 0)
   const currency = (rows.find(r => r.currency)?.currency as string | undefined) ?? 'USD'
   const byDay: Record<string, { gross: number; count: number; refunded: number }> = {}
   for (let i = days - 1; i >= 0; i--) { const d = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10); byDay[d] = { gross: 0, count: 0, refunded: 0 } }
-  for (const r of rows) {
+  for (const r of paid) {
     const d = String(r.created_at).slice(0, 10); if (!byDay[d]) continue
     byDay[d].count++; byDay[d].gross += Number(r.amount_minor ?? 0); byDay[d].refunded += Number(r.refunded_minor ?? 0)
   }
   const byPack: Record<string, { count: number; gross: number; credits: number }> = {}
-  for (const r of rows) { const k = String(r.pack_key ?? 'unknown'); byPack[k] ??= { count: 0, gross: 0, credits: 0 }; byPack[k].count++; byPack[k].gross += Number(r.amount_minor ?? 0); byPack[k].credits += Number(r.credits ?? 0) }
+  for (const r of paid) { const k = String(r.pack_key ?? 'unknown'); byPack[k] ??= { count: 0, gross: 0, credits: 0 }; byPack[k].count++; byPack[k].gross += Number(r.amount_minor ?? 0); byPack[k].credits += Number(r.credits ?? 0) }
   return Response.json({
     days, currency, configured: paddleConfigured(), env: process.env.NEXT_PUBLIC_PADDLE_ENV ?? 'production',
-    totals: { count: rows.length, completed: completed.length, refunded: refunded.length, gross, refundedMinor, net: gross - refundedMinor, credits: sum(r => Number(r.credits ?? 0)), buyers: new Set(rows.map(r => r.user_id).filter(Boolean)).size, unknownAmount: rows.filter(r => r.amount_minor == null).length },
+    totals: { count: paid.length, failed: failedCount, completed: completed.length, refunded: refunded.length, gross, refundedMinor, net: gross - refundedMinor, credits: paid.reduce((s, r) => s + Number(r.credits ?? 0), 0), buyers: new Set(paid.map(r => r.user_id).filter(Boolean)).size, unknownAmount: paid.filter(r => r.amount_minor == null).length },
     byDay: Object.entries(byDay).map(([day, v]) => ({ day, ...v })),
     byPack,
     rows: rows.map(r => ({ ...r, raw: undefined, dashboard_url: paddleDashboardUrl(String(r.id)) })),
@@ -79,10 +81,12 @@ export async function POST(req: Request) {
       for (let page = 0; page < 20; page++) {
         const r = await listTransactions(after)
         for (const tx of r.data) {
-          if (tx.status !== 'completed' && tx.status !== 'past_due') continue
+          const failed = tx.status !== 'completed' && tx.status !== 'past_due' && (tx.payments ?? []).some(p => p.status === 'error' || p.error_code)
+          if (tx.status !== 'completed' && tx.status !== 'past_due' && !failed && tx.status !== 'canceled') continue
           let email: string | null = null
           if (tx.customer_id) { if (!emails.has(tx.customer_id)) { try { emails.set(tx.customer_id, (await getCustomer(tx.customer_id)).data.email ?? null) } catch { emails.set(tx.customer_id, null) } } email = emails.get(tx.customer_id) ?? null }
-          await applyCompleted(g.admin, tx, email); n++
+          if (tx.status === 'completed' || tx.status === 'past_due') await applyCompleted(g.admin, tx, email); else await applyFailed(g.admin, tx, email)
+          n++
         }
         if (!r.meta.pagination.has_more || !r.meta.pagination.next) break
         after = r.data[r.data.length - 1]?.id
@@ -97,7 +101,7 @@ export async function POST(req: Request) {
       const tx = (await getTransaction(b.id)).data
       let email: string | null = null
       if (tx.customer_id) { try { email = (await getCustomer(tx.customer_id)).data.email ?? null } catch { /* */ } }
-      await applyCompleted(g.admin, tx, email)
+      if (tx.status === 'completed' || tx.status === 'past_due') await applyCompleted(g.admin, tx, email); else await applyFailed(g.admin, tx, email)
       return Response.json({ ok: true })
     } catch (e) { return Response.json({ error: e instanceof Error ? e.message : '조회 실패' }, { status: 500 }) }
   }
