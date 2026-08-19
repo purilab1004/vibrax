@@ -17,7 +17,7 @@ import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
-import { countryFlag } from '@/lib/country'
+import { countryFlag, flagRingStyle } from '@/lib/country'
 import LiveCard from '@/components/LiveCard'
 import { recordShare } from '@/lib/shares'
 
@@ -152,7 +152,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
       <div className="flex flex-col items-center gap-5 self-end pb-8">
         {/* 제작자 아바타 */}
         <div className="flex flex-col items-center gap-1.5" title={creatorName}>
-          <span className="avatar-ring shadow-[0_2px_10px_rgba(36,31,23,0.15)]"><span className="avatar-wave w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
+          <span className="avatar-ring shadow-[0_2px_10px_rgba(36,31,23,0.15)]" style={flagRingStyle(game.country ?? game.profiles?.country)}><span className="avatar-wave w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt={creatorName} className="avatar-bob w-full h-full object-cover object-top" />

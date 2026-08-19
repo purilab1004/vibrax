@@ -16,7 +16,7 @@ import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
-import { countryFlag } from '@/lib/country'
+import { countryFlag, flagRingStyle } from '@/lib/country'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
 export default function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; golden?: boolean; rank?: number }) {
@@ -98,7 +98,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       {/* 하단 정보 + 아케이드 코인 플로우 */}
       <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-24 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
         <p className="flex items-center gap-2 text-[13px] font-semibold text-white/75">
-          <span className="avatar-ring"><span className="avatar-wave w-6 h-6 shrink-0 rounded-full overflow-hidden inline-flex items-center justify-center">
+          <span className="avatar-ring" style={flagRingStyle(game.country ?? game.profiles?.country)}><span className="avatar-wave w-6 h-6 shrink-0 rounded-full overflow-hidden inline-flex items-center justify-center">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarUrl} alt={creatorName} className="avatar-bob w-full h-full object-cover object-top" />

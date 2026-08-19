@@ -680,7 +680,7 @@ body {
   inset: -50%;
   z-index: -1;
   /* 흰 테두리 위를 파란·흰 빛이 따라 도는 느낌 */
-  background: conic-gradient(from 0deg, #ffffff 0deg, #ffffff 200deg, #7fd0ff 250deg, #2563eb 285deg, #ffffff 330deg, #ffffff 360deg);
+  background: var(--ring, conic-gradient(from 0deg, #ffffff 0deg, #ffffff 200deg, #7fd0ff 250deg, #2563eb 285deg, #ffffff 330deg, #ffffff 360deg));
   animation: avatar-ring-spin 1.8s linear infinite;
 }
 .avatar-ring > * { border-radius: 9999px; }
