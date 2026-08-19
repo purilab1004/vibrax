@@ -413,9 +413,15 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             )}
           </div>
           <div className="aj-drag relative mt-2 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
-            <div className="avatar-ring"><div className="avatar-wave w-7 h-7 rounded-full overflow-hidden shrink-0">
-              <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={28} height={28} className={`w-full h-full object-cover ${bjPic ? 'avatar-bob object-top' : ''}`} unoptimized />
-            </div></div>
+            <div className="relative shrink-0">
+              <div className="avatar-ring"><div className="avatar-wave w-7 h-7 rounded-full overflow-hidden shrink-0">
+                <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={28} height={28} className={`w-full h-full object-cover ${bjPic ? 'avatar-bob object-top' : ''}`} unoptimized />
+              </div></div>
+              {/* LIVE — 프로필 바로 아래 아주 작게 */}
+              <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-0.5 h-3 px-1 rounded-full bg-[#ef4444] text-white text-[7px] font-extrabold tracking-wider leading-none shadow-[0_1px_4px_rgba(239,68,68,0.6)]">
+                <span className="w-1 h-1 rounded-full bg-white animate-pulse inline-block" />LIVE
+              </span>
+            </div>
             <span className="font-pixel text-[10px] text-white truncate">{bjLabel}</span>
             {canJoin && (
               <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()}
@@ -423,10 +429,6 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
                 {joined ? '복귀' : '게임 참여'}
               </button>
             )}
-            {/* LIVE — 배지 위에 살짝 떠 있는 빨간 필 */}
-            <span className="absolute -top-2 left-3 inline-flex items-center gap-1 h-4 px-1.5 rounded-full bg-[#ef4444] text-white text-[9px] font-extrabold tracking-wider shadow-[0_2px_8px_rgba(239,68,68,0.5)]">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />LIVE
-            </span>
           </div>
         </div>
       </div>
