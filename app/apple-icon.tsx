@@ -1,15 +1,14 @@
 import { ImageResponse } from 'next/og'
 
-export const size = { width: 64, height: 64 }
+export const size = { width: 180, height: 180 }
 export const contentType = 'image/png'
 
-// 파비콘 — 파란 배지 + 찰흙 큐브 캐릭터 (NavBar LogoMark 와 동일)
-export default function Icon() {
+export default function AppleIcon() {
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', display: 'flex' }}>
-        <svg viewBox="0 0 32 32" width="64" height="64">
-          <rect x="0" y="0" width="32" height="32" rx="8" fill="#7dd3fc" />
+        <svg viewBox="0 0 32 32" width="180" height="180">
+          <rect x="0" y="0" width="32" height="32" fill="#7dd3fc" />
           <rect x="8.6" y="8.6" width="17" height="17" rx="5" fill="#b93d16" transform="rotate(-3 17 17)" />
           <rect x="7" y="7" width="17" height="17" rx="5" fill="#F05A28" transform="rotate(-3 15.5 15.5)" />
           <rect x="7" y="7" width="17" height="8" rx="5" fill="#ff8a5c" opacity="0.65" transform="rotate(-3 15.5 15.5)" />
