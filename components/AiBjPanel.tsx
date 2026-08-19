@@ -86,6 +86,10 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
   // PC 채팅 접기 — 게임 버튼을 가릴 때 왼쪽으로 밀어 넣는다 (기억)
   const [chatOpen, setChatOpen] = useState(() => { try { return localStorage.getItem('aj-chat-open') !== '0' } catch { return true } })
   const toggleChat = () => setChatOpen(v => { try { localStorage.setItem('aj-chat-open', v ? '0' : '1') } catch { /* ignore */ } return !v })
+  // 접힌 동안 새로 올라온 메시지 수 — 펼치면 0
+  const [seenCount, setSeenCount] = useState(0)
+  const unread = chatOpen ? 0 : Math.max(0, messages.length - seenCount)
+  useEffect(() => { if (chatOpen) { const t = setTimeout(() => setSeenCount(messages.length), 0); return () => clearTimeout(t) } }, [messages.length, chatOpen])
   // 채팅 시간 경과 페이드 — 1초마다 갱신 (표시 후 CHAT_HOLD 동안 유지 → CHAT_FADE 동안 서서히 사라짐)
   const CHAT_HOLD = 14_000, CHAT_FADE = 8_000
   const [now, setNow] = useState(() => Date.now())
@@ -377,8 +381,8 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             <button
               onClick={() => sendMessage(input)}
               disabled={isStreaming || !input.trim()}
-              className="w-8 h-8 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-sm flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-            >▶</button>
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#06b6d4] text-white flex items-center justify-center shadow-[0_2px_10px_rgba(37,99,235,0.45)] hover:brightness-110 active:scale-95 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none shrink-0" aria-label="보내기"
+            ><svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button>
           </div>
         </div>
         </div>
@@ -387,6 +391,9 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
           className="pointer-events-auto absolute bottom-[22px] h-8 w-6 rounded-r-md bg-black/55 backdrop-blur-md border border-l-0 border-white/15 text-white/80 hover:text-white hover:bg-black/75 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(.2,.8,.2,1)]"
           style={{ left: chatOpen ? 376 : 0 }}>
           <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 transition-transform duration-500 ${chatOpen ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+          {!chatOpen && unread > 0 && (
+            <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[10px] font-extrabold flex items-center justify-center shadow-[0_0_0_3px_rgba(239,68,68,0.3)] animate-pulse">{unread > 99 ? '99+' : unread}</span>
+          )}
         </button>
         {/* 우하단 — AJ 아바타 + 프로필 배지 */}
         <div className="absolute right-4 bottom-4 w-[180px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
@@ -405,22 +412,22 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
               </div>
             )}
           </div>
-          <div className="aj-drag mt-0.5 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
+          <div className="aj-drag relative mt-2 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
             <div className="avatar-ring"><div className="avatar-wave w-7 h-7 rounded-full overflow-hidden shrink-0">
               <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={28} height={28} className={`w-full h-full object-cover ${bjPic ? 'avatar-bob object-top' : ''}`} unoptimized />
             </div></div>
             <span className="font-pixel text-[10px] text-white truncate">{bjLabel}</span>
-            <span className="ml-auto flex items-center gap-1 text-[10px] text-red-400 font-pixel shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
-              LIVE
+            {canJoin && (
+              <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()}
+                className={`ml-auto h-6 px-2.5 rounded-full text-[11px] font-bold tracking-wide shrink-0 transition ${joined ? 'bg-white/15 text-white hover:bg-white/25' : 'bg-gradient-to-r from-[#3b82f6] to-[#06b6d4] text-white hover:brightness-110 shadow-[0_2px_8px_rgba(37,99,235,0.45)]'}`}>
+                {joined ? '복귀' : '게임 참여'}
+              </button>
+            )}
+            {/* LIVE — 배지 위에 살짝 떠 있는 빨간 필 */}
+            <span className="absolute -top-2 left-3 inline-flex items-center gap-1 h-4 px-1.5 rounded-full bg-[#ef4444] text-white text-[9px] font-extrabold tracking-wider shadow-[0_2px_8px_rgba(239,68,68,0.5)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />LIVE
             </span>
           </div>
-          {canJoin && (
-            <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()}
-              className={`mt-1.5 w-full h-8 rounded-full text-[11.5px] font-bold tracking-wide border transition-colors ${joined ? 'bg-white/10 border-white/25 text-white hover:bg-white/20' : 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] border-transparent text-white hover:brightness-110'}`}>
-              {joined ? '↩ 아바타 복귀' : '🎮 아바타 게임 참여'}
-            </button>
-          )}
         </div>
       </div>
 
