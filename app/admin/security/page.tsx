@@ -5,7 +5,8 @@ import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
 import { PageHeader, Card, Badge, SectionTitle, Skeleton, btn, th, td, trHover } from '@/components/admin/ui'
 
-interface Data { hours: { h: string; pv: number; sessions: number; errors: number; llm: number }[]; totals: { pv24: number; sessions24: number; errors24: number; errorRate: number; llm24: number; llmCost24: number; webhookFail7: number; webhook7: number; secHigh7: number; sec7: number; suspiciousSessions: number; topIps: { ip_hash: string; pv: number; suspicious: boolean }[] }; security: { id: string; kind: string; severity: string; ip_hash: string | null; user_id: string | null; path: string | null; detail: unknown; created_at: string }[]; ledger: { count: number; brokenAt: number | null; available: boolean; last: { seq: number; hash: string; created_at: string } | null }; modules: Record<string, boolean> }
+interface Block { height: number; prev_hash: string | null; merkle_root: string; from_seq: number; to_seq: number; tx_count: number; block_hash: string; sealed_at: string }
+interface Data { blocks: Block[]; hours: { h: string; pv: number; sessions: number; errors: number; llm: number }[]; totals: { pv24: number; sessions24: number; errors24: number; errorRate: number; llm24: number; llmCost24: number; webhookFail7: number; webhook7: number; secHigh7: number; sec7: number; suspiciousSessions: number; topIps: { ip_hash: string; pv: number; suspicious: boolean }[] }; security: { id: string; kind: string; severity: string; ip_hash: string | null; user_id: string | null; path: string | null; detail: unknown; created_at: string }[]; ledger: { count: number; brokenAt: number | null; available: boolean; last: { seq: number; hash: string; created_at: string } | null }; modules: Record<string, boolean> }
 const KIND: Record<string, string> = { webhook_bad_signature: '웹훅 서명 위조 시도', webhook_bad_ip: '웹훅 비허용 IP', admin_action: '관리자 조치', rate_limit: '요청 제한', suspicious_traffic: '이상 트래픽', auth: '인증' }
 const MOD: Record<string, string> = { paddleWebhookIpAllowlist: '결제 웹훅 IP 허용목록(런타임)', paddleSignature: '결제 웹훅 HMAC 서명 검증', adminIpAllowlistMaintenance: '점검 모드 IP 허용목록(현재 공개)', rlsAllTables: '모든 테이블 RLS', serviceRoleServerOnly: 'Service Role 키 서버 전용', noPrivateKeysInApp: '앱 내 프라이빗 키·지갑 서명 모듈 없음(커스터디얼)', ipStoredHashedOnly: 'IP 원문 미저장(해시)' }
 
@@ -64,6 +65,17 @@ export default function AdminSecurityPage() {
           </Card>
         </div>
       </div>
+      {/* Vibrex Chain — 블록 탐색기 */}
+      <Card className="overflow-hidden mt-3">
+        <SectionTitle right={<button onClick={async () => { const r = await fetch('/api/admin/security', { method: 'POST' }); const j = await r.json(); alert(r.ok ? (j.height ? `블록 #${j.height} 봉인 완료` : '봉인할 새 트랜잭션이 없어요') : j.error); load() }} className={btn.primary + ' !h-7'}>블록 봉인</button>}>Vibrex Chain · 블록 탐색기 (v1 · 단일 노드 PoA)</SectionTitle>
+        {(d.blocks ?? []).length === 0 ? <p className="p-5 text-[13px] text-[#9aa1ad]">아직 봉인된 블록이 없어요. 원장에 트랜잭션이 쌓이면 "블록 봉인"으로 첫 블록(#1)을 만들 수 있어요.</p> : (
+          <div className="overflow-x-auto"><table className="w-full">
+            <thead><tr><th className={th}>높이</th><th className={th}>봉인 시각</th><th className={`${th} text-right`}>트랜잭션</th><th className={th}>범위(seq)</th><th className={th}>블록 해시</th><th className={th}>이전 해시</th></tr></thead>
+            <tbody className="divide-y divide-[#eef0f4]">{d.blocks.map(b => (
+              <tr key={b.height} className={trHover}><td className={`${td} font-bold`}>#{b.height}</td><td className={`${td} whitespace-nowrap text-[#6b7280]`}>{new Date(b.sealed_at).toLocaleString()}</td><td className={`${td} text-right tabular-nums`}>{b.tx_count}</td><td className={`${td} font-mono text-[11px]`}>{b.from_seq}–{b.to_seq}</td><td className={`${td} font-mono text-[11px] text-[#2563eb]`}>{b.block_hash.slice(0, 20)}…</td><td className={`${td} font-mono text-[11px] text-[#9aa1ad]`}>{b.prev_hash ? b.prev_hash.slice(0, 20) + '…' : 'genesis'}</td></tr>
+            ))}</tbody></table></div>
+        )}
+      </Card>
     </div>
   )
 }

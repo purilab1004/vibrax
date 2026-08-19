@@ -14,6 +14,7 @@ export async function GET() {
     g.admin.from('game_coin_ledger').select('seq', { count: 'exact', head: true }),
     g.admin.from('game_coin_ledger').select('seq,hash,created_at').order('seq', { ascending: false }).limit(1),
   ])
+  const { data: blocks } = await g.admin.from('chain_blocks').select('height,prev_hash,merkle_root,from_seq,to_seq,tx_count,block_hash,sealed_at').order('height', { ascending: false }).limit(20).then(r => r, () => ({ data: null }))
   const visits = (v24 ?? []) as { created_at: string; session_id: string | null; path: string; ip_hash: string | null; device: string | null }[]
   const errs = (e24 ?? []) as { created_at: string; source: string; level: string }[]
   const hours = Array.from({ length: 24 }, (_, i) => { const t = new Date(now - (23 - i) * 3600_000); return { h: `${t.getHours()}시`, key: t.toISOString().slice(0, 13), pv: 0, sessions: new Set<string>(), errors: 0, llm: 0 } })
@@ -32,7 +33,16 @@ export async function GET() {
     hours: hours.map(h => ({ h: h.h, pv: h.pv, sessions: h.sessions.size, errors: h.errors, llm: h.llm })),
     totals: { pv24: visits.length, sessions24: new Set(visits.map(v => v.session_id).filter(Boolean)).size, errors24: errs.length, errorRate: visits.length ? errs.length / visits.length : 0, llm24: (llm ?? []).length, llmCost24: ((llm ?? []) as { cost_usd: number }[]).reduce((a, r) => a + Number(r.cost_usd), 0), webhookFail7: pes.filter(p => !p.processed || p.error).length, webhook7: pes.length, secHigh7: secRows.filter(s => s.severity === 'high').length, sec7: secRows.length, suspiciousSessions, topIps },
     security: secRows,
+    blocks: blocks ?? [],
     ledger: { count: ledgerCount ?? 0, brokenAt: (ledgerBad as { data?: number | null } | null)?.data ?? null, available: !(ledgerBad as { error?: unknown } | null)?.error, last: (lastLedger as { seq: number; hash: string; created_at: string }[] | null)?.[0] ?? null },
     modules: { paddleWebhookIpAllowlist: true, paddleSignature: true, adminIpAllowlistMaintenance: false, rlsAllTables: true, serviceRoleServerOnly: true, noPrivateKeysInApp: true, ipStoredHashedOnly: true },
   })
+}
+
+// 블록 봉인 (관리자 수동; 운영에선 cron 으로 10분마다)
+export async function POST() {
+  const g = await requireAdmin(); if ('error' in g) return g.error
+  const { data, error } = await g.admin.rpc('chain_seal_block' as never)
+  if (error) return Response.json({ error: error.message }, { status: 500 })
+  return Response.json({ height: data })
 }

@@ -9,6 +9,8 @@ import { templateOnly, extrasOf } from '@/lib/studio/templates'
 import { matchTemplateIn } from '@/lib/studio/template-match'
 import { loadDbTemplates, saveTemplateCandidate, bumpTemplateUse } from '@/lib/studio/db-templates'
 import { effectiveStaticTemplates } from '@/lib/studio/template-overrides'
+import { rankTemplates } from '@/lib/studio/similarity'
+import { loadMl, logMapping } from '@/lib/studio/mlpilot'
 import { hardenHtml } from '@/lib/studio/harden'
 import { personalizeTemplate } from '@/lib/studio/personalize'
 import { logUsage } from '@/lib/llm/usage'
@@ -118,13 +120,28 @@ export async function POST(req: Request) {
   //   (b) 추가 요구가 있으면 → 템플릿을 베이스 HTML 로 두고 "수정" 만 생성 (from-scratch 보다 저렴)
   // 정적 템플릿 + 관리자 승인 DB 템플릿(처음 만들어진 게임들) 모두 매칭 대상
   const staticList = await effectiveStaticTemplates()
-  const tmatch = !latest && images.length === 0 ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(await loadDbTemplates(), prompt)) : null
+  const dbList = !latest && images.length === 0 ? await loadDbTemplates() : []
+  let tmatch = !latest && images.length === 0 ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(dbList, prompt)) : null
+  let mapMethod: 'keyword' | 'similarity' | 'none' = tmatch ? 'keyword' : 'none'
+  let mapConf: number | null = tmatch ? 1 : null
+  // MLPilot: 키워드로 못 잡으면 유사도 매퍼(문자 n-gram, LLM 없음)로 가장 가까운 템플릿을 고른다
+  if (!tmatch && !latest && images.length === 0) {
+    const ml = await loadMl()
+    if (ml.enabled) {
+      const all = [...staticList, ...dbList]
+      const ranked = rankTemplates(prompt, all.map(t => ({ slug: t.slug, text: `${t.name} ${t.keywords.join(' ')} ${t.prompt} ${t.description}` })))
+      const top = ranked[0]
+      if (top && top.score >= ml.threshold) { const t = all.find(x => x.slug === top.slug)!; tmatch = { template: t, keyword: t.keywords[0] ?? t.name }; mapMethod = 'similarity'; mapConf = top.score }
+      else if (top) mapConf = top.score
+    }
+  }
   if (tmatch && !staticList.includes(tmatch.template)) void bumpTemplateUse(tmatch.template.slug)
+  void logMapping({ userId: user.id, projectId, prompt, templateSlug: tmatch?.template.slug ?? null, method: mapMethod, confidence: mapConf, usedLlm: !(tmatch && (mapMethod === 'similarity' || templateOnly(prompt, tmatch.keyword))) })
   let baseHtml: string | null = latest?.html ?? null
   let effectivePrompt = prompt
   let templateNote = ''
   if (tmatch) {
-    if (templateOnly(prompt, tmatch.keyword)) {
+    if (mapMethod === 'similarity' || templateOnly(prompt, tmatch.keyword)) {
       // 회원·프로젝트마다 제목/색조를 다르게 (LLM 없이) — 같은 템플릿이라도 다른 게임처럼
       const { html, title: pTitle } = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`)
       const { error: vErr } = await supabase.from('studio_versions').insert([
