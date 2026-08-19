@@ -17,7 +17,7 @@ export default function JeumtoBjOverlay({ config }: { config: AvatarConfig | nul
   const voice = config?.voice ?? 'female'
   const loaded = dataUrl ? loadedUrl === dataUrl : true
   const [bubble, setBubble] = useState<string | null>(null)
-  useJeumtoViewer(containerRef, viewerRef, { interactive: false, zoom: 1.55 })
+  useJeumtoViewer(containerRef, viewerRef, { interactive: false, zoom: 1.85 })
 
   useEffect(() => {
     let cancelled = false
