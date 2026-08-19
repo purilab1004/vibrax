@@ -751,5 +751,5 @@ body {
 @media (min-width: 768px) {
   /* Safari 는 proximity 에서 섹션 사이에 멈추는 경우가 있어 mandatory 로 — 홈은 히어로 + 카드뿐이라 안전 */
   html.home-snap { scroll-snap-type: y mandatory; }
-  html.home-snap .feed-snap { scroll-snap-align: start; scroll-snap-stop: normal; }
+  html.home-snap .feed-snap { scroll-snap-align: start; scroll-snap-stop: always; } /* 한 번에 한 장씩 — 카드가 완전히 올라온 뒤 다음으로 */
 }

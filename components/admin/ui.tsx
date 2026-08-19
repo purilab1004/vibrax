@@ -1,6 +1,7 @@
 'use client'
 // 관리자 UI 공통 조각 — 페이지 헤더 · 카드 · 배지 · 모달 · 버튼 (모던 대시보드 톤)
 import { useEffect } from 'react'
+import { btn } from '@/components/admin/tokens'
 
 export function PageHeader({ title, desc, actions, badge }: { title: string; desc?: React.ReactNode; actions?: React.ReactNode; badge?: React.ReactNode }) {
   return (
@@ -27,14 +28,7 @@ export function Badge({ children, color = '#2563eb', soft = true }: { children: 
   )
 }
 
-export const btn = {
-  primary: 'inline-flex items-center gap-1.5 h-8 px-3.5 rounded-md bg-[#2563eb] text-white text-[12.5px] font-semibold hover:bg-[#1d4ed8] disabled:opacity-50 transition-colors',
-  ghost: 'inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-[#d9dde5] bg-white text-[12.5px] font-medium text-[#1f2430] hover:bg-[#f3f5f8] hover:border-[#c5cad4] disabled:opacity-50 transition-colors',
-  danger: 'inline-flex items-center gap-1.5 h-8 px-3.5 rounded-md bg-[#dc2626] text-white text-[12.5px] font-semibold hover:bg-[#b91c1c] disabled:opacity-50 transition-colors',
-  icon: 'inline-flex items-center justify-center w-8 h-8 rounded-md text-[#6b7280] hover:bg-[#f3f5f8] hover:text-[#1f2430] transition-colors',
-}
-export const input = 'w-full h-8 rounded-md border border-[#d9dde5] bg-white px-3 text-[13px] text-[#1f2430] placeholder-[#9aa1ad] outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 transition'
-export const label = 'block text-[11px] font-semibold text-[#6b7280] mb-1'
+export { btn, input, label } from '@/components/admin/tokens'
 
 export function Modal({ open, onClose, title, children, width = 'max-w-md' }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode; width?: string }) {
   useEffect(() => {
@@ -75,9 +69,7 @@ export function Avatar({ url, name, size = 36 }: { url?: string | null; name: st
 }
 
 // ── 추가 조각 ────────────────────────────────────────────────
-export const th = 'text-left text-[10.5px] font-semibold uppercase tracking-wide text-[#6b7280] px-3 py-2 bg-[#f7f8fa] border-b border-[#e3e6ec] whitespace-nowrap'
-export const td = 'px-3 py-2 text-[12.5px] text-[#1f2430] align-middle'
-export const trHover = 'hover:bg-[#f7f9fc] transition-colors'
+export { th, td, trHover } from '@/components/admin/tokens'
 
 export function Segmented<T extends string | number>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: React.ReactNode }[] }) {
   return (

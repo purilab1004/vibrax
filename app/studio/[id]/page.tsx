@@ -170,6 +170,13 @@ export default function StudioComposerPage() {
         }),
       })
 
+      if (res.status === 503) {
+        setStreaming(null)
+        setMessages(m => m.slice(0, -1))
+        const t = await res.text().catch(() => '')
+        setError(t.replace(/^paused:\s*/, '') || '지금은 게임 생성이 잠시 중지되어 있어요. 잠시 후 다시 시도해 주세요.')
+        return
+      }
       if (res.status === 402) {
         setStreaming(null)
         setMessages(m => m.slice(0, -1))

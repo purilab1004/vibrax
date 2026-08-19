@@ -12,6 +12,7 @@ import { GENERATION_MAX_TOKENS } from '@/lib/llm/pricing'
 import { trackGeo } from '@/lib/geo/track'
 import { route as routeModel } from '@/lib/llm/router'
 import { loadPolicy } from '@/lib/tokenpilot/policy'
+import { guardStatus } from '@/lib/tokenpilot/guard'
 
 export const maxDuration = 300
 
@@ -50,6 +51,10 @@ export async function POST(req: Request) {
   }
   // 관리자는 크레딧 없이 생성 가능 (운영·테스트 용도)
   const isAdminUser = profile?.role === 'admin'
+  // TokenPilot 원가 가드 — 적자 구간이면 일반 사용자 생성 차단 (관리자는 통과)
+  if (!isAdminUser) {
+    try { const { stats } = await guardStatus(); if (stats.blocked) return new Response(`paused: ${stats.reason ?? ''}`, { status: 503 }) } catch { /* 가드 조회 실패는 생성 막지 않음 */ }
+  }
   const parsedCost = Number((costRow as { value?: unknown } | null)?.value)
   const cost = Number.isFinite(parsedCost) && parsedCost >= 1 ? parsedCost : GENERATION_COST
 

@@ -5,6 +5,7 @@ import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
 import { PageHeader, Card, Segmented, Skeleton, Toast, Toggle, btn, input as inputCls, label as labelCls, th, td, trHover } from '@/components/admin/ui'
 import { MODEL_CATALOG, type RouterPolicy, type Task } from '@/lib/llm/router'
+import type { CostGuard, GuardStats } from '@/lib/tokenpilot/guard'
 
 interface Data {
   savings: { baseline: number; actual: number; saved: number; templateSaved: number; routingSaved: number; ratio: number }
@@ -34,6 +35,10 @@ export default function AdminCostsPage() {
   const [packCredits, setPackCredits] = useState(100)
   // TokenPilot 정책 편집
   const [pol, setPol] = useState<RouterPolicy | null>(null)
+  // 원가 가드
+  const [guard, setGuard] = useState<{ guard: CostGuard; stats: GuardStats } | null>(null)
+  useEffect(() => { const t = setTimeout(() => fetch('/api/admin/tokenpilot').then(r => r.ok ? r.json() : null).then(j => j && setGuard(j)).catch(() => {}), 0); return () => clearTimeout(t) }, [])
+  const patchGuard = async (p: Partial<CostGuard>) => { const r = await fetch('/api/admin/tokenpilot', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) }); if (r.ok) { setGuard(await r.json()); setToast('원가 가드를 저장했어요.'); setTimeout(() => setToast(null), 2400) } }
   const [savingPol, setSavingPol] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const policy = pol ?? data?.policy ?? null
@@ -78,6 +83,34 @@ export default function AdminCostsPage() {
         <StatCard label="게임 1개 평균 원가" value={krw(t.avgCostPerProject, R)} sub={`${usd(t.avgCostPerProject)} · 인프라비 제외`} />
         <StatCard label="총 토큰" value={`${(t.inputTokens / 1000).toFixed(0)}k / ${(t.outputTokens / 1000).toFixed(0)}k`} sub="입력 / 출력" />
       </div>
+
+      {/* 원가 가드 — 적자 방지 정지 장치 */}
+      {guard && (() => { const g = guard.guard, st = guard.stats; const pctv = Number.isFinite(st.ratio) ? Math.round(st.ratio * 100) : null; const bar = Math.min(100, pctv ?? (st.costUsd > 0 ? 100 : 0)); const danger = st.blocked || (pctv != null && pctv >= g.maxRatio * 100); const warn = !danger && pctv != null && pctv >= g.maxRatio * 100 * 0.8; return (
+        <Card className={`p-5 border-l-4 ${st.blocked ? 'border-l-[#dc2626]' : danger ? 'border-l-[#dc2626]' : warn ? 'border-l-[#f59e0b]' : 'border-l-[#059669]'}`}>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              <h2 className="text-[14px] font-bold text-[#1f2430] flex items-center gap-2">원가 가드 <span className={`rounded px-1.5 py-0.5 text-[10.5px] font-bold uppercase ${st.blocked ? 'bg-[#dc2626] text-white' : 'bg-[#e6f4ea] text-[#059669]'}`}>{st.blocked ? '생성 중지됨' : '정상 운영'}</span></h2>
+              <p className="text-[12px] text-[#6b7280] mt-0.5">LLM 원가가 매출의 한도 비율을 넘으면 일반 사용자 게임 생성을 멈춰 적자를 막아요 (관리자는 항상 가능). 기간: {g.window === 'day' ? '오늘' : '이번 달'} · {new Date(st.since).toLocaleDateString()}부터</p>
+              <div className="mt-3 flex items-center gap-4 flex-wrap text-[12.5px]">
+                <span>원가 <b className="text-[#1f2430]">{krw(st.costUsd, R)}</b> <span className="text-[#9aa1ad]">({usd(st.costUsd)})</span></span>
+                <span>매출 <b className="text-[#1f2430]">{krw(st.revenueUsd, R)}</b></span>
+                <span>비율 <b className={danger ? 'text-[#dc2626]' : warn ? 'text-[#f59e0b]' : 'text-[#059669]'}>{pctv == null ? (st.costUsd > 0 ? '매출 없음' : '0%') : `${pctv}%`}</b> / 한도 {Math.round(g.maxRatio * 100)}%</span>
+              </div>
+              <div className="mt-2 h-2 w-full max-w-md rounded-full bg-[#eef0f4] overflow-hidden"><div className={`h-full ${danger ? 'bg-[#dc2626]' : warn ? 'bg-[#f59e0b]' : 'bg-[#059669]'}`} style={{ width: `${bar}%` }} /></div>
+              {st.reason && <p className="mt-2 text-[12px] font-semibold text-[#dc2626]">{st.reason}</p>}
+            </div>
+            <div className="flex flex-col gap-2 min-w-[260px]">
+              <div className="flex items-center justify-between gap-3"><span className="text-[12px] font-semibold text-[#6b7280]">모드</span><Segmented value={g.mode} onChange={v => patchGuard({ mode: v })} options={[{ value: 'auto', label: '오토' }, { value: 'manual', label: '매뉴얼' }, { value: 'off', label: '끔' }]} /></div>
+              {g.mode === 'auto' && <>
+                <div className="flex items-center justify-between gap-3"><span className="text-[12px] font-semibold text-[#6b7280]">한도 (원가/매출)</span><div className="flex items-center gap-1"><input type="number" min={10} max={200} step={5} value={Math.round(g.maxRatio * 100)} onChange={e => setGuard({ ...guard, guard: { ...g, maxRatio: Number(e.target.value) / 100 } })} onBlur={e => patchGuard({ maxRatio: Number(e.target.value) / 100 })} className={inputCls + ' !w-20 text-right'} /><span className="text-[12px] text-[#6b7280]">%</span></div></div>
+                <div className="flex items-center justify-between gap-3"><span className="text-[12px] font-semibold text-[#6b7280]">기간</span><Segmented value={g.window} onChange={v => patchGuard({ window: v })} options={[{ value: 'day', label: '일' }, { value: 'month', label: '월' }]} /></div>
+                <div className="flex items-center justify-between gap-3"><span className="text-[12px] font-semibold text-[#6b7280]" title="매출이 이 금액 미만이면 비율 대신 절대 원가(최소매출×한도)로 판단">최소 매출 기준 ($)</span><input type="number" min={0} step={5} value={g.minRevenueUsd} onChange={e => setGuard({ ...guard, guard: { ...g, minRevenueUsd: Number(e.target.value) } })} onBlur={e => patchGuard({ minRevenueUsd: Number(e.target.value) })} className={inputCls + ' !w-20 text-right'} /></div>
+              </>}
+              {g.mode === 'manual' && <button onClick={() => patchGuard({ paused: !g.paused })} className={g.paused ? btn.primary + ' justify-center' : btn.danger + ' justify-center'}>{g.paused ? '생성 재개' : '생성 즉시 중지'}</button>}
+            </div>
+          </div>
+        </Card>
+      ) })()}
 
       {/* 절감 효과 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
