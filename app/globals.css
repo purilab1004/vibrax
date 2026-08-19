@@ -761,7 +761,7 @@ body {
 
 /* AJ 아바타 무대 — 둥근 사각 프레임, 하단이 부드럽게 어둠으로 녹아드는 비네트. 말할 때만 떠오르고 끝나면 서서히 사라진다 */
 .aj-stage {
-  position: relative; overflow: hidden; border-radius: 28px;
+  overflow: hidden; border-radius: 28px; /* position 은 사용하는 쪽에서 (absolute/relative) */
   /* 박스 테두리·배경 없이 — 아바타만 게임 화면 위에 자연스럽게 */
   background: transparent; box-shadow: none;
   transition: opacity 0.9s ease, transform 0.9s cubic-bezier(.2,.8,.2,1), filter 0.9s ease;

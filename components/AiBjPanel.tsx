@@ -64,8 +64,13 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [floatingMsg, setFloatingMsg] = useState<{ text: string; key: number } | null>(null)
+  // 아바타를 데스크탑/모바일 한 곳에만 마운트하기 위한 뷰포트 감지
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  )
+  // 모바일 — 채팅 접기/아바타 숨기기 (PC 와 같은 오버레이 스타일)
+  const [mChatOpen, setMChatOpen] = useState(true)
+  const [mAvatarHidden, setMAvatarHidden] = useState(false)
   // 아바타는 말할 때만 보이고, 말이 끝나면 서서히 사라진다 (카메라 방송이면 항상 표시)
   const [speaking, setSpeaking] = useState(false)
   useEffect(() => {
@@ -120,8 +125,9 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const toggleChat = () => setChatOpen(v => { try { localStorage.setItem('aj-chat-open', v ? '0' : '1') } catch { /* ignore */ } return !v })
   // 접힌 동안 새로 올라온 메시지 수 — 펼치면 0
   const [seenCount, setSeenCount] = useState(0)
-  const unread = chatOpen ? 0 : Math.max(0, messages.length - seenCount)
-  useEffect(() => { if (chatOpen) { const t = setTimeout(() => setSeenCount(messages.length), 0); return () => clearTimeout(t) } }, [messages.length, chatOpen])
+  const anyOpen = isMobile ? mChatOpen : chatOpen
+  const unread = anyOpen ? 0 : Math.max(0, messages.length - seenCount)
+  useEffect(() => { if (anyOpen) { const t = setTimeout(() => setSeenCount(messages.length), 0); return () => clearTimeout(t) } }, [messages.length, anyOpen])
   // 채팅 시간 경과 페이드 — 1초마다 갱신 (표시 후 CHAT_HOLD 동안 유지 → CHAT_FADE 동안 서서히 사라짐)
   const CHAT_HOLD = 14_000, CHAT_FADE = 8_000
   const [now, setNow] = useState(() => Date.now())
@@ -135,14 +141,9 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const onDragEnd = () => { const d = dragRef.current; dragRef.current = null; if (d?.moved) { try { localStorage.setItem('aj-avatar-pos', JSON.stringify({ x: Math.min(0, d.ox), y: Math.min(0, d.oy) })) } catch { /* ignore */ } } }
   useEffect(() => { try { localStorage.setItem('aj-avatar-pos', JSON.stringify(drag)) } catch { /* ignore */ } }, [drag])
 
-  // 아바타를 데스크탑/모바일 한 곳에만 마운트하기 위한 뷰포트 감지
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-  )
 
   const isStreamingRef = useRef(false)
   const messagesRef = useRef<Message[]>([])
-  const prevStreaming = useRef(false)
   const commentaryIdx = useRef(0)
 
   useEffect(() => { isStreamingRef.current = isStreaming }, [isStreaming])
@@ -161,17 +162,6 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: isStreaming ? 'instant' : 'smooth' })
   }, [messages, isStreaming])
-
-  // Floating message (mobile)
-  useEffect(() => {
-    if (prevStreaming.current && !isStreaming && !mobileOpen) {
-      const last = messagesRef.current[messagesRef.current.length - 1]
-      if (last?.role === 'assistant' && last.content) {
-        setFloatingMsg({ text: last.content, key: Date.now() })
-      }
-    }
-    prevStreaming.current = isStreaming
-  }, [isStreaming, mobileOpen])
 
   // Core AJ stream function
   const streamAj = useCallback(async (
@@ -359,74 +349,6 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     await streamAj(text, true)
   }
 
-  // ── Shared UI pieces ──
-  const messageList = (
-    <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0">
-      {messages.map((msg, i) => (
-        <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-          {msg.role === 'assistant' && (
-            <div className={`w-5 h-5 shrink-0 rounded-full border ${persona.borderColor} overflow-hidden mt-0.5`}>
-              <Image src="/aibot.png" alt={persona.name} width={20} height={20} className="w-full h-full object-cover" unoptimized />
-            </div>
-          )}
-          {msg.source === 'agent' && (
-            <div className="w-5 h-5 shrink-0 rounded-full border border-purple-300 overflow-hidden mt-0.5 bg-white flex items-center justify-center">
-              {agentConfig?.avatarUrl ? (
-                <Image src={agentConfig.avatarUrl} alt={msg.agentName ?? ''} width={20} height={20} className="w-full h-full object-cover" unoptimized />
-              ) : (
-                <span className="text-[11px]">🤖</span>
-              )}
-            </div>
-          )}
-          <div className={`max-w-[85%] text-xs px-2.5 py-1.5 rounded leading-relaxed ${
-            msg.role === 'user'
-              ? msg.source === 'agent'
-                ? 'bg-purple-50 text-purple-800 border border-purple-200'
-                : 'bg-[#2563eb]/10 text-[#2563eb] border border-[#2563eb]/20'
-              : 'bg-white text-[#3a332a] border border-[#ebe4d6]'
-          }`}>
-            {msg.source === 'agent' && (
-              <p className="font-pixel text-[10px] text-purple-500 mb-0.5">{msg.agentName}</p>
-            )}
-            {msg.content}
-            {msg.role === 'assistant' && isStreaming && i === messages.length - 1 && (
-              <span className="inline-block w-1.5 h-3 bg-[#2563eb] ml-0.5 animate-pulse" />
-            )}
-          </div>
-        </div>
-      ))}
-      <div ref={endRef} />
-    </div>
-  )
-
-  const inputBar = (
-    <div className="px-3 py-2 border-t border-[#ebe4d6] shrink-0">
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
-          placeholder="AJ에게 말걸기..."
-          className="flex-1 bg-white border border-[#ddd3bf] text-[#241f17] text-xs px-2.5 py-2 placeholder-[#a1957f] focus:outline-none focus:border-[#2563eb] disabled:opacity-50"
-        />
-        <button
-          onClick={() => sendMessage(input)}
-          disabled={!input.trim()}
-          className="font-pixel text-[11px] px-3 py-2 bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-        >▶</button>
-      </div>
-    </div>
-  )
-
-  const streamingDots = isStreaming && (
-    <span className="flex gap-0.5 ml-auto">
-      {[0,1,2].map(i => (
-        <span key={i} className="w-1 h-1 rounded-full bg-[#2563eb] animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-      ))}
-    </span>
-  )
-
   return (
     <>
       {/* ─── Desktop: 게임 위 오버레이 채팅 — 스트리밍 스타일, 위로 갈수록 자연스럽게 사라진다 ─── */}
@@ -483,7 +405,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
         </button>
         {/* 우하단 — AJ 아바타 + 프로필 배지 */}
         <div className="absolute right-4 bottom-4 w-[180px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
-          <div className={`aj-stage aj-stage-desk aj-drag ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '200px' }}
+          <div className={`relative aj-stage aj-stage-desk aj-drag ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '200px' }}
             onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
             {!isMobile && bjAvatar}
             {/* 말하는 중 — 머리 우측 위의 "…" 말풍선 (CSS/SVG) */}
@@ -520,86 +442,53 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
         </div>
       </div>
 
-      {/* ─── Mobile: floating message ─── */}
-      {floatingMsg && !mobileOpen && (
-        <div
-          key={floatingMsg.key}
-          className="md:hidden absolute left-3 right-3 z-10 pointer-events-none"
-          style={{ bottom: '60px', animation: 'floatUpFade 3.8s ease-out forwards' }}
-          onAnimationEnd={() => setFloatingMsg(null)}
-        >
-          <div
-            className="bg-black/75 backdrop-blur-sm border border-[#ddd3bf] rounded px-3 py-2 text-xs text-[#3a332a] overflow-hidden"
-            style={{
-              maskImage: 'linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)',
-              WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)',
-            }}
-          >
-            <span className="font-pixel text-[11px] text-[#2563eb]">{persona.name}</span>
-            <p className="mt-0.5 leading-relaxed line-clamp-2">{floatingMsg.text}</p>
+      {/* ─── Mobile: PC 와 같은 오버레이 — 좌하단 채팅(접기), 우하단 아바타(드래그·숨기기) + 네임 배지 ─── */}
+      <div className="md:hidden absolute inset-0 pointer-events-none z-10">
+        {/* 채팅 스택 + 입력 — 접으면 왼쪽으로 슬라이드 */}
+        <div className="absolute inset-0 transition-transform duration-400 ease-[cubic-bezier(.2,.8,.2,1)]" style={{ transform: mChatOpen ? 'translateX(0)' : 'translateX(-110%)' }}>
+          <div className="chat-fade absolute left-2 right-[128px] bottom-[58px] max-h-[42%] flex flex-col justify-end overflow-hidden">
+            <div className="space-y-1">
+              {messages.slice(-10).map((msg, i) => (
+                <div key={i} className="flex transition-opacity duration-1000" style={{ opacity: ageOpacity(msg.ts) }}>
+                  <div className="max-w-full text-[12px] leading-snug px-2.5 py-1 rounded-2xl text-white bg-black/80 shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
+                    <span className={`font-bold mr-1 ${msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'}`}>{msg.role === 'assistant' ? persona.name : msg.source === 'agent' ? (msg.agentName ?? 'AGENT') : agentConfig?.name ?? 'ME'}</span>{msg.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="absolute left-2 right-[128px] bottom-2.5 pointer-events-auto">
+            <div className="flex items-center gap-1.5 bg-black/55 backdrop-blur-md rounded-full pl-3.5 pr-1 py-1 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
+              <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
+                placeholder={joined ? 'AI에게 가르치기…' : 'AJ에게 말걸기...'} className="flex-1 min-w-0 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none" />
+              <button onClick={() => sendMessage(input)} disabled={!input.trim()} aria-label="보내기" className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#06b6d4] text-white flex items-center justify-center active:scale-95 transition disabled:opacity-40 shrink-0"><svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button>
+            </div>
           </div>
         </div>
-      )}
-
-      {/* ─── Mobile: bottom sheet ─── */}
-      <div className="md:hidden pointer-events-none">
-        {/* Mobile: 3D AJ avatar, bottom-right */}
-        {isMobile && (
-          <div
-            className={`absolute right-2 z-10 aj-stage ${camera ? 'aj-stage-cam pointer-events-auto' : 'pointer-events-none'} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`}
-            style={camera ? { bottom: '72px', width: 200, height: 112 } : { bottom: '72px', width: 116, height: 150 }}
-          >
+        {/* 채팅 접기/펼치기 탭 */}
+        <button onClick={() => setMChatOpen(v => !v)} aria-label={mChatOpen ? '채팅 접기' : '채팅 펼치기'}
+          className="pointer-events-auto absolute bottom-[18px] h-8 w-6 rounded-r-md bg-black/55 backdrop-blur-md border border-l-0 border-white/15 text-white/80 flex items-center justify-center transition-all duration-400"
+          style={{ left: mChatOpen ? 'calc(100% - 128px - 8px)' : 0 }}>
+          <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 transition-transform duration-400 ${mChatOpen ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+          {!mChatOpen && unread > 0 && <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[10px] font-extrabold flex items-center justify-center animate-pulse">{unread > 99 ? '99+' : unread}</span>}
+        </button>
+        {/* 우하단 — 아바타(드래그 이동, 배지 탭으로 숨기기/보이기) + 네임 배지 */}
+        <div className="absolute right-2 bottom-2.5 w-[116px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
+          <div className={`relative aj-stage aj-stage-desk aj-drag ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible && !mAvatarHidden ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: camera ? 90 : 132 }}
+            onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
             {isMobile && bjAvatar}
+            {speaking && !camera && !mAvatarHidden && (
+              <div className="aj-typing" aria-hidden><svg viewBox="0 0 64 56" className="w-full h-full"><path d="M32 6c14.9 0 26 9 26 20.5S46.9 47 32 47c-2.1 0-4.2-.2-6.2-.5L14 53l2.4-10.8C9.9 38.4 6 32.8 6 26.5 6 15 17.1 6 32 6Z" fill="rgba(10,12,18,0.6)" stroke="#ffffff" strokeWidth="3.5" strokeLinejoin="round" /><circle cx="21" cy="27" r="3.6" fill="#ffffff" className="aj-dot" /><circle cx="32" cy="27" r="3.6" fill="#ffffff" className="aj-dot" style={{ animationDelay: '.18s' }} /><circle cx="43" cy="27" r="3.6" fill="#ffffff" className="aj-dot" style={{ animationDelay: '.36s' }} /></svg></div>
+            )}
           </div>
-        )}
-        {mobileOpen && (
-          <div className="absolute inset-0 z-10 bg-black/40 pointer-events-auto" onClick={() => setMobileOpen(false)} />
-        )}
-        <div className="absolute left-0 right-0 bottom-0 z-20 flex flex-col pointer-events-auto" style={{ transform: 'translateZ(0)' }}>
-          <div
-            className="flex flex-col bg-[#fcfaf5] border-t border-[#ebe4d6] overflow-hidden transition-all duration-300 ease-out"
-            style={{ height: mobileOpen ? '52vh' : '0px' }}
-          >
-            <div className="flex justify-center pt-2 pb-1 shrink-0">
-              <div className="w-10 h-1 rounded-full bg-gray-600" />
-            </div>
-            <div className="flex items-center justify-between px-4 py-1.5 border-b border-[#ebe4d6] shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="font-pixel text-[11px] text-[#2563eb] tracking-widest">💬 LIVE CHAT</span>
-                {streamingDots}
-              </div>
-              <button onClick={() => setMobileOpen(false)} className="text-[#857a68] text-lg leading-none px-1">✕</button>
-            </div>
-            {messageList}
-            {inputBar}
+          <div className="aj-drag relative flex items-center gap-1.5 bg-black/45 backdrop-blur-md rounded-full pl-1 pr-1 py-1 border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.45)]" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
+            <button onClick={e => { e.stopPropagation(); setMAvatarHidden(v => !v) }} onPointerDown={e => e.stopPropagation()} className="relative shrink-0" aria-label={mAvatarHidden ? '아바타 보이기' : '아바타 숨기기'} title={mAvatarHidden ? '아바타 보이기' : '아바타 숨기기'}>
+              <div className="avatar-ring"><div className="avatar-wave w-7 h-7 rounded-full overflow-hidden"><Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={28} height={28} className={`w-full h-full object-cover ${bjPic ? 'avatar-bob object-top' : ''}`} unoptimized /></div></div>
+              <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-black/80 ${mAvatarHidden ? 'bg-[#9ca3af]' : 'bg-[#ef4444] animate-pulse'}`} />
+            </button>
+            <div className="min-w-0 flex-1 leading-tight"><p className="font-pixel text-[9px] text-white truncate">{bjLabel}</p><p className="text-[8px] font-bold tracking-[0.12em] text-[#ff6b6b]">{mAvatarHidden ? 'HIDDEN' : 'LIVE'}</p></div>
+            {canJoin && <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()} className={`h-6 px-2 rounded-full text-[10px] font-bold shrink-0 ${joined ? 'bg-white/15 text-white' : 'bg-white text-[#111]'}`}>{joined ? '복귀' : '참여'}</button>}
           </div>
-
-          <button
-            onClick={() => setMobileOpen(v => !v)}
-            className={`flex items-center gap-3 w-full px-4 py-3 bg-[#ffffff] border-t-2 ${persona.borderColor} active:brightness-125 transition-all`}
-          >
-            <div className="avatar-ring"><div className="avatar-wave w-8 h-8 rounded-full overflow-hidden shrink-0">
-              <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={32} height={32} className={`w-full h-full object-cover ${bjPic ? 'avatar-bob object-top' : ''}`} unoptimized />
-            </div></div>
-            <div className="flex flex-col items-start min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-pixel text-[11px] text-[#241f17] truncate">{bjLabel}</span>
-                <span className="flex items-center gap-1 text-[11px] text-red-400 font-pixel">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
-                  LIVE
-                </span>
-                {isStreaming && !mobileOpen && streamingDots}
-              </div>
-              <span className="text-[11px] text-[#857a68] truncate">
-                {agentConfig ? `🤖 ${agentConfig.name} 참전 중` : persona.catchphrase}
-              </span>
-            </div>
-            <div className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 border font-pixel text-[11px] ${
-              mobileOpen ? 'border-[#cfc4ab] text-[#6b6152]' : 'border-[#2563eb] text-[#2563eb] bg-[#2563eb]/10'
-            }`}>
-              {mobileOpen ? '▼ 닫기' : '💬 채팅하기'}
-            </div>
-          </button>
         </div>
       </div>
     </>
