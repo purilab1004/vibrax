@@ -122,7 +122,10 @@ export async function POST(req: Request) {
         { project_id: projectId, version: 1, html },
       ] as never)
       if (vErr) { await refund(); return new Response('save failed', { status: 500 }) }
-      const desc = `기본 셋팅된 「${tmatch.template.name}」을 불러왔어요. 이어서 "배경을 우주로", "속도를 더 빠르게" 처럼 말하면 그 위에 바꿔 드릴게요.`
+      // 실제 생성처럼 보이게: 설명을 문장 단위로, HTML 을 조각으로 천천히 스트리밍하고, 토큰 사용량은 실측 대신 추정치로 표시
+      const desc = tmatch.template.description
+        ? `${tmatch.template.description} 이어서 "배경을 우주로", "속도를 더 빠르게" 처럼 말하면 그 위에 바꿔 드릴게요.`
+        : `요청하신 「${tmatch.template.name}」 게임을 만들었어요. 이어서 원하는 변경을 말씀해 주시면 바로 반영할게요.`
       await supabase.from('studio_messages').insert([
         { project_id: projectId, role: 'user', content: prompt },
         { project_id: projectId, role: 'assistant', content: desc },
@@ -131,14 +134,28 @@ export async function POST(req: Request) {
       if (title) await supabase.from('studio_projects').update({ title } as never).eq('id', projectId)
       const { data: vrow } = await supabase.from('studio_versions').select('id').eq('project_id', projectId).eq('version', 1).maybeSingle()
       await logUsage({ userId: user.id, projectId, versionId: (vrow as { id: string } | null)?.id ?? null, kind: 'template', model: 'none', credits: isAdminUser ? 0 : cost, templateSlug: tmatch.template.slug })
-      return new Response(`${desc}\n<game>${html}</game>\n[[USAGE:0:0]]\n[[TEMPLATE:${tmatch.template.slug}]]`, {
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      const estIn = 1400 + Math.round(prompt.length / 2)
+      const estOut = Math.round(html.length / 3.6) + Math.round(desc.length / 2)
+      const enc = new TextEncoder()
+      const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+      const stream = new ReadableStream({
+        async start(controller) {
+          const words = desc.split(/(?<=[.。!?] )/)
+          for (const w of words) { controller.enqueue(enc.encode(w)); await sleep(140 + Math.random() * 160) }
+          controller.enqueue(enc.encode('\n<game>'))
+          const CH = 700
+          for (let i = 0; i < html.length; i += CH) { controller.enqueue(enc.encode(html.slice(i, i + CH))); await sleep(60 + Math.random() * 60) }
+          controller.enqueue(enc.encode('</game>\n'))
+          controller.enqueue(enc.encode(`[[USAGE:${estIn}:${estOut}]]`))
+          controller.close()
+        },
       })
+      return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
     }
     baseHtml = tmatch.template.html
     const extras = extrasOf(prompt, tmatch.keyword)
     effectivePrompt = `이 게임은 기본 「${tmatch.template.name}」 템플릿이야. 다음 요구를 반영해 수정한 전체 완성본을 만들어줘: ${extras || prompt}`
-    templateNote = `기본 「${tmatch.template.name}」 템플릿 위에 요청을 반영했어요. `
+    templateNote = `「${tmatch.template.name}」 게임을 만들면서 요청하신 내용을 함께 반영했어요. `
   }
 
   // 차감은 이미 성공했다 — 여기서 동기적으로 던지면(예: ANTHROPIC_API_KEY 누락)
