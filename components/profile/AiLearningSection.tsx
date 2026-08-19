@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-interface Row { game_id: string; version: number; rules: unknown[]; tips: string[]; best_score: number | null; updated_at: string; games: { title: string; genre: string; thumbnail_url: string | null } | null }
+interface Row { game_id: string; version: number; rules: unknown[]; tips: string[]; best_score: number | null; auto_learn?: boolean; auto_count?: number; episodes?: { v: number; score: number }[]; updated_at: string; games: { title: string; genre: string; thumbnail_url: string | null } | null }
 const GENRE: Record<string, { label: string; color: string; difficulty: number; why: string }> = {
   action: { label: 'ACTION', color: '#dc2626', difficulty: 2, why: '반사 규칙 위주 — 빨리 배움' },
   sports: { label: 'SPORTS', color: '#059669', difficulty: 2, why: '타이밍·위치 규칙' },
@@ -19,7 +19,7 @@ export default function AiLearningSection() {
   const [rows, setRows] = useState<Row[] | null>(null)
   const [missing, setMissing] = useState(false)
   useEffect(() => {
-    createClient().from('aj_play_policies').select('game_id,version,rules,tips,best_score,updated_at,games(title,genre,thumbnail_url)').order('updated_at', { ascending: false }).limit(200)
+    createClient().from('aj_play_policies').select('game_id,version,rules,tips,best_score,auto_learn,auto_count,episodes,updated_at,games(title,genre,thumbnail_url)').order('updated_at', { ascending: false }).limit(200)
       .then(({ data, error }) => { if (error) { setMissing(true); setRows([]) } else setRows((data as unknown as Row[]) ?? []) })
   }, [])
   if (rows === null) return <div className="h-28 rounded-xl bg-[#f6f2ea] animate-pulse" />
@@ -28,14 +28,21 @@ export default function AiLearningSection() {
   const totalXp = rows.reduce((a, r) => a + xpOf(r), 0)
   const totalRules = rows.reduce((a, r) => a + (Array.isArray(r.rules) ? r.rules.length : 0), 0)
   const totalLessons = rows.reduce((a, r) => a + r.version, 0)
+  const totalAuto = rows.reduce((a, r) => a + (r.auto_count ?? 0), 0)
+  const allAuto = rows.length === 0 || rows.every(r => r.auto_learn !== false)
+  const toggleAuto = async (on: boolean) => { setRows(rs => (rs ?? []).map(r => ({ ...r, auto_learn: on }))); await createClient().from('aj_play_policies').update({ auto_learn: on } as never).in('game_id', rows.map(r => r.game_id)); try { localStorage.setItem('aj-auto-learn', on ? '1' : '0') } catch { /* ignore */ } }
   return (
     <div className="rounded-xl border border-[#ebe4d6] bg-[#fcfaf5] p-4 md:p-5 space-y-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div><p className="font-pixel text-[9px] tracking-[0.3em] text-[#2563eb]">AI PLAY LEARNING</p><h3 className="text-[15px] font-bold text-[#241f17] mt-1">내 아바타 플레이 학습 현황</h3><p className="text-[12px] text-[#857a68] mt-0.5">게임에 아바타를 참여시키고 채팅으로 가르치면 게임별로 규칙이 쌓여요. 장르마다 학습 난이도가 달라 레벨이 오르는 속도가 다릅니다.</p></div>
         <div className="flex gap-2">
-          {[['가르친 횟수', totalLessons], ['학습된 규칙', totalRules], ['학습한 게임', rows.length]].map(([l, v]) => <div key={l as string} className="rounded-lg bg-white border border-[#ebe4d6] px-3 py-2 min-w-[78px] text-center"><p className="text-[10px] text-[#857a68] font-semibold">{l}</p><p className="text-[18px] font-extrabold text-[#241f17] leading-none mt-0.5 tabular-nums">{v as number}</p></div>)}
+          {[['가르친 횟수', totalLessons], ['자동 학습', totalAuto], ['학습된 규칙', totalRules], ['학습한 게임', rows.length]].map(([l, v]) => <div key={l as string} className="rounded-lg bg-white border border-[#ebe4d6] px-3 py-2 min-w-[78px] text-center"><p className="text-[10px] text-[#857a68] font-semibold">{l}</p><p className="text-[18px] font-extrabold text-[#241f17] leading-none mt-0.5 tabular-nums">{v as number}</p></div>)}
         </div>
       </div>
+      <label className="flex items-start gap-2.5 rounded-lg bg-white border border-[#ebe4d6] px-3.5 py-3 cursor-pointer">
+        <input type="checkbox" checked={allAuto} onChange={e => toggleAuto(e.target.checked)} className="mt-0.5" />
+        <span className="text-[12.5px] text-[#374151]"><b className="text-[#241f17]">자동 학습</b> — 아바타가 대신 플레이하는 동안 3판마다 결과를 스스로 돌아보고 규칙을 조금씩 고쳐요(점수가 떨어지면 잘되던 방식으로 자동 복귀). 내가 채팅으로 가르친 내용은 항상 우선 지켜요.</span>
+      </label>
       {/* 장르별 레벨 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {Object.entries(GENRE).map(([g, meta]) => {
@@ -64,7 +71,7 @@ export default function AiLearningSection() {
               <div className="w-12 h-8 rounded-md overflow-hidden bg-[#f1ece2] shrink-0">{r.games?.thumbnail_url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={r.games.thumbnail_url} alt="" className="w-full h-full object-cover" />}</div>
               <div className="min-w-0 flex-1"><Link href={`/games/${r.game_id}`} className="text-[13.5px] font-semibold text-[#241f17] hover:text-[#2563eb] truncate block">{r.games?.title ?? '게임'}</Link><p className="text-[11px] text-[#9d9280] truncate">{r.tips?.slice(-1)[0] ? `최근 가르침: ${r.tips.slice(-1)[0]}` : '가르친 내용 없음'}</p></div>
               <span className="font-pixel text-[8px] px-1.5 py-0.5 rounded text-white shrink-0" style={{ background: g.color }}>{g.label}</span>
-              <div className="text-right shrink-0"><p className="text-[12.5px] font-bold text-[#241f17] tabular-nums">학습 v{r.version} · 규칙 {n}</p><p className="text-[11px] text-[#9d9280] tabular-nums">{r.best_score != null ? `최고 ${r.best_score.toLocaleString()}점` : '기록 없음'} · XP {xpOf(r)}</p></div>
+              <div className="text-right shrink-0"><p className="text-[12.5px] font-bold text-[#241f17] tabular-nums">학습 v{r.version} · 규칙 {n}{(r.auto_count ?? 0) > 0 ? ` · 자동 ${r.auto_count}` : ''}</p><p className="text-[11px] text-[#9d9280] tabular-nums">{r.best_score != null ? `최고 ${r.best_score.toLocaleString()}점` : '기록 없음'} · XP {xpOf(r)}</p></div>
             </li>) })}
         </ul>
       )}

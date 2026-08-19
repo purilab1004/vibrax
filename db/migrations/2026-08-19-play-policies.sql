@@ -15,3 +15,8 @@ create table if not exists public.aj_play_policies (
 alter table public.aj_play_policies enable row level security;
 drop policy if exists aj_play_policies_own on public.aj_play_policies;
 create policy aj_play_policies_own on public.aj_play_policies for all to authenticated using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
+alter table public.aj_play_policies add column if not exists episodes jsonb not null default '[]';
+alter table public.aj_play_policies add column if not exists auto_learn boolean not null default true;
+alter table public.aj_play_policies add column if not exists best_rules jsonb;
+alter table public.aj_play_policies add column if not exists best_avg real;
+alter table public.aj_play_policies add column if not exists auto_count int not null default 0;

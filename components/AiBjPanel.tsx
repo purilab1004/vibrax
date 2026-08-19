@@ -290,7 +290,19 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       if (isStreamingRef.current && !urgent) return
       lastEvtAt.current = now
       const score = typeof data?.score === 'number' ? data.score : null
-      if (joinedRef.current && gameId && score != null && (name === 'over' || name === 'clear')) fetch('/api/ai-bj/coach', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId, score }) }).catch(() => {})
+      if (joinedRef.current && gameId && (name === 'over' || name === 'clear')) {
+        // 자동 학습 — 한 판 결과를 보내고, 스스로 개선한 새 정책이 오면 봇에 주입 + AJ 가 알려준다
+        fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'episode', gameId, score: score ?? 0, cleared: name === 'clear', durationSec: (e as CustomEvent<{ sec?: number }>).detail?.sec ?? 0, manifest: manifestRef.current, genre, gameTitle }) })
+          .then(r => r.json()).then(j => {
+            if (j?.policy) {
+              policyRef.current = j.policy
+              gameFrame()?.contentWindow?.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*')
+              const line = `${j.policy.summary ?? '스스로 조금 더 배웠어'} (자동 학습 v${j.policy.version})`
+              setMessages(prev => [...prev, { role: 'assistant', content: line, ts: Date.now() }])
+              window.dispatchEvent(new CustomEvent('avatar:speak', { detail: { text: j.policy.summary ?? line } }))
+            }
+          }).catch(() => {})
+      }
       const prompt = name === 'start' ? `"${gameTitle}" 플레이 시작! 한마디로 응원.` : name === 'over' ? `게임오버${score != null ? ` (점수 ${score})` : ''}. 먼저 공감 한 문장, 그다음 다시 하자고 짧게.` : name === 'clear' ? `드디어 최종 클리어!${score != null ? ` 최종 점수 ${score}.` : ''} 축하와 감탄, 성취를 한껏 띄워줘.` : name === 'level' ? `레벨/스테이지 업${data?.level != null ? ` (${String(data.level)})` : ''}! 짧게 환호.` : name === 'combo' ? '콤보 터졌다! 짧고 신나게.' : name === 'fail' ? '아쉬운 실수. 짧게 위로하고 팁 하나.' : `점수 ${score ?? ''} 돌파! 짧게 반응.`
       streamAj(prompt, false, true, undefined, `event_${name === 'over' ? 'over' : name === 'clear' ? 'clear' : name === 'level' ? 'level' : name === 'combo' ? 'combo' : name === 'fail' ? 'fail' : name === 'start' ? 'start' : 'score'}`)
     }
