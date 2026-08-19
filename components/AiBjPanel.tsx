@@ -69,8 +69,8 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
   )
   // 모바일 — 채팅 접기/아바타 숨기기 (PC 와 같은 오버레이 스타일)
-  const [mChatOpen, setMChatOpen] = useState(true)
-  const [mAvatarHidden, setMAvatarHidden] = useState(false)
+  const [mChatOpen, setMChatOpen] = useState(false)  // 모바일은 기본 접힘 — 게임 화면 확보, 새 메시지는 배지로
+  const [mAvatarHidden, setMAvatarHidden] = useState(true)  // 모바일은 기본 숨김(게임 컨트롤러 공간) — 배지의 프로필을 탭하면 보임
   // 아바타는 말할 때만 보이고, 말이 끝나면 서서히 사라진다 (카메라 방송이면 항상 표시)
   const [speaking, setSpeaking] = useState(false)
   useEffect(() => {
