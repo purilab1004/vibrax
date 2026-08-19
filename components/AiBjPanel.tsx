@@ -169,6 +169,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     addAsUserMsg: boolean,
     isAuto = false,
     agentName?: string,
+    situationOverride?: string,
   ) => {
     if (isStreamingRef.current) return
 
@@ -202,7 +203,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
           history,
           isAutoCommentary: isAuto,
           // MLPilot v2 — 상황 라벨: 인트로/자동 중계/시청자 답변/에이전트 답변
-          situation: isAuto ? 'commentary' : agentName ? 'agent_reply' : addAsUserMsg ? 'reply' : 'intro',
+          situation: situationOverride ?? (isAuto ? 'commentary' : agentName ? 'agent_reply' : addAsUserMsg ? 'reply' : 'intro'),
           gameId: gameId ?? null,
           viewerText: addAsUserMsg ? prompt : null,
         }),
@@ -268,6 +269,23 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       // silent fail
     }
   }, [agentConfig, gameTitle, genre, streamAj])
+
+  // 게임 이벤트(시작/득점/레벨/게임오버/클리어) → 상황에 맞는 한마디 (8초 쿨다운, 클리어·게임오버는 즉시)
+  const lastEvtAt = useRef(0)
+  useEffect(() => {
+    const h = (e: Event) => {
+      const { name, data } = (e as CustomEvent<{ name: string; data: { score?: number; level?: unknown } | null }>).detail
+      const now = Date.now(); const urgent = name === 'over' || name === 'clear' || name === 'start'
+      if (!urgent && now - lastEvtAt.current < 8000) return
+      if (isStreamingRef.current && !urgent) return
+      lastEvtAt.current = now
+      const score = typeof data?.score === 'number' ? data.score : null
+      const prompt = name === 'start' ? `"${gameTitle}" 플레이 시작! 한마디로 응원.` : name === 'over' ? `게임오버${score != null ? ` (점수 ${score})` : ''}. 먼저 공감 한 문장, 그다음 다시 하자고 짧게.` : name === 'clear' ? `드디어 최종 클리어!${score != null ? ` 최종 점수 ${score}.` : ''} 축하와 감탄, 성취를 한껏 띄워줘.` : name === 'level' ? `레벨/스테이지 업${data?.level != null ? ` (${String(data.level)})` : ''}! 짧게 환호.` : name === 'combo' ? '콤보 터졌다! 짧고 신나게.' : name === 'fail' ? '아쉬운 실수. 짧게 위로하고 팁 하나.' : `점수 ${score ?? ''} 돌파! 짧게 반응.`
+      streamAj(prompt, false, true, undefined, `event_${name === 'over' ? 'over' : name === 'clear' ? 'clear' : name === 'level' ? 'level' : name === 'combo' ? 'combo' : name === 'fail' ? 'fail' : name === 'start' ? 'start' : 'score'}`)
+    }
+    window.addEventListener('aj:game-event', h)
+    return () => window.removeEventListener('aj:game-event', h)
+  }, [gameTitle, streamAj])
 
   // Timers: intro at 1s, commentary every 10s, agent every 18s
   useEffect(() => {

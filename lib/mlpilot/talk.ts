@@ -2,12 +2,12 @@
 // 예시·규칙 지식베이스를 읽어 AJ system prompt 에 주입하고, 발화를 피드백으로 기록한다. 설계: docs/superpowers/specs/2026-08-19-mlpilot-aj-talk-design.md
 import { createAdminClient } from '@/lib/supabase/admin'
 
-export const SITUATIONS = ['intro', 'commentary', 'reply', 'agent_reply', 'event_start', 'event_score', 'event_combo', 'event_fail', 'event_over', 'event_level', 'hype', 'comfort', 'tease', 'ad', 'greeting', 'farewell'] as const
+export const SITUATIONS = ['intro', 'commentary', 'reply', 'agent_reply', 'event_start', 'event_score', 'event_combo', 'event_fail', 'event_over', 'event_clear', 'event_level', 'hype', 'comfort', 'tease', 'ad', 'greeting', 'farewell'] as const
 export const EMOTIONS = ['excited', 'calm', 'empathy', 'funny', 'urgent', 'proud', 'sad', 'curious', 'warm'] as const
 export const RULE_KINDS = ['persona', 'empathy', 'style', 'dont', 'scenario'] as const
 export type Situation = typeof SITUATIONS[number]
 export type Emotion = typeof EMOTIONS[number]
-export const SITUATION_LABEL: Record<Situation, string> = { intro: '방송 시작 인사', commentary: '자동 중계', reply: '시청자 답변', agent_reply: '에이전트 답변', event_start: '게임 시작', event_score: '득점', event_combo: '콤보', event_fail: '실수/실패', event_over: '게임 오버', event_level: '레벨 업', hype: '분위기 띄우기', comfort: '위로/공감', tease: '장난/놀리기', ad: '광고 멘트', greeting: '인사', farewell: '마무리' }
+export const SITUATION_LABEL: Record<Situation, string> = { intro: '방송 시작 인사', commentary: '자동 중계', reply: '시청자 답변', agent_reply: '에이전트 답변', event_start: '게임 시작', event_score: '득점', event_combo: '콤보', event_fail: '실수/실패', event_over: '게임 오버', event_clear: '최종 클리어', event_level: '레벨 업', hype: '분위기 띄우기', comfort: '위로/공감', tease: '장난/놀리기', ad: '광고 멘트', greeting: '인사', farewell: '마무리' }
 export const EMOTION_LABEL: Record<Emotion, string> = { excited: '신남', calm: '차분', empathy: '공감', funny: '웃김', urgent: '긴박', proud: '자랑스러움', sad: '아쉬움', curious: '호기심', warm: '따뜻함' }
 
 export interface TalkExample { id: string; genre: string | null; game_id: string | null; situation: string; emotion: string | null; trigger_text: string | null; utterance: string; lang: string | null; tags: string[]; quality: number; uses: number; approved: boolean; source: string; created_at: string }
@@ -57,7 +57,7 @@ export async function buildTalkContext(p: { genre: string; gameId?: string | nul
   const { examples, rules } = await loadKb()
   const style = detectViewerStyle(p.viewerText)
   // 감정 추론: 명시 없으면 상황·상대 무드로
-  const emotion = p.emotion ?? (style?.mood === 'down' ? 'empathy' : style?.mood === 'angry' ? 'calm' : p.situation === 'event_fail' || p.situation === 'event_over' ? 'empathy' : p.situation === 'event_score' || p.situation === 'event_combo' || p.situation === 'hype' ? 'excited' : null)
+  const emotion = p.emotion ?? (style?.mood === 'down' ? 'empathy' : style?.mood === 'angry' ? 'calm' : p.situation === 'event_fail' || p.situation === 'event_over' ? 'empathy' : p.situation === 'event_score' || p.situation === 'event_combo' || p.situation === 'hype' ? 'excited' : p.situation === 'event_clear' ? 'proud' : null)
   // 규칙: global → genre → game 순, 우선순위 높은 것부터, 글자 예산 내
   const picked: TalkRule[] = []
   let chars = 0

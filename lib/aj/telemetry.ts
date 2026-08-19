@@ -4,14 +4,14 @@
 import { useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-interface Sess { id: string | null; startedAt: number; scoreMax: number | null; overs: number; firstOverSec: number | null; events: number }
+interface Sess { id: string | null; startedAt: number; scoreMax: number | null; overs: number; firstOverSec: number | null; events: number; cleared: boolean; clearSec: number | null; autopilot: boolean }
 
 export function useGameTelemetry(gameId: string, active: boolean) {
   const ref = useRef<Sess | null>(null)
   useEffect(() => {
     if (!active) return
     const supabase = createClient()
-    const s: Sess = { id: null, startedAt: Date.now(), scoreMax: null, overs: 0, firstOverSec: null, events: 0 }
+    const s: Sess = { id: null, startedAt: Date.now(), scoreMax: null, overs: 0, firstOverSec: null, events: 0, cleared: false, clearSec: null, autopilot: false }
     ref.current = s
     let alive = true
     let userId: string | null = null
@@ -26,6 +26,7 @@ export function useGameTelemetry(gameId: string, active: boolean) {
       const patch = {
         duration_sec: Math.round((Date.now() - s.startedAt) / 1000),
         score_max: s.scoreMax, game_overs: s.overs, first_over_sec: s.firstOverSec, events: s.events,
+        cleared: s.cleared, clear_sec: s.clearSec, autopilot: s.autopilot,
         ended_at: final ? new Date().toISOString() : null,
       }
       try {
@@ -62,6 +63,11 @@ export function useGameTelemetry(gameId: string, active: boolean) {
         if (typeof d.data?.score === 'number') s.scoreMax = Math.max(s.scoreMax ?? 0, d.data.score)
         if (s.firstOverSec == null) s.firstOverSec = sec
       }
+      // 최종 완료(클리어) — 게임오버와 구분. 오토파일럿 on/off 도 기록
+      if (d.name === 'clear') { s.cleared = true; if (s.clearSec == null) s.clearSec = sec; if (typeof d.data?.score === 'number') s.scoreMax = Math.max(s.scoreMax ?? 0, d.data.score) }
+      if (d.name === 'autopilot_on') s.autopilot = true
+      // AJ 중계용 — 패널이 상황(event_*)에 맞춰 한마디 한다
+      if (['start', 'score', 'level', 'over', 'clear', 'combo', 'fail'].includes(d.name ?? '')) window.dispatchEvent(new CustomEvent('aj:game-event', { detail: { name: d.name, data: d.data ?? null, sec } }))
     }
     window.addEventListener('message', onMsg)
     const iv = setInterval(() => flush(false), 15000)
