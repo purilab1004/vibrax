@@ -66,7 +66,7 @@ export default function AdminRail() {
               const isEngine = !!accent
               return (
                 <Link key={href} href={href} style={isEngine ? (on ? { background: accent, color: '#fff' } : { color: accent }) : undefined} className={`relative h-9 w-full rounded-md flex items-center gap-3 px-[11px] transition-colors ${on ? (isEngine ? '' : 'bg-[#2563eb] text-white') : 'hover:bg-white/10 hover:text-white'}`} aria-label={label}>
-                  <span className="relative shrink-0">{icon}{auto?.menuModule[href] && <span className="absolute -top-1 -right-1.5 group-hover/rail:hidden"><AutoDot state={auto.health[auto.menuModule[href]]?.state ?? 'off'} size={7} /></span>}</span>
+                  <span className="relative shrink-0">{icon}{auto?.menuModule[href] && <span className="absolute -bottom-1 -left-1.5 group-hover/rail:hidden"><AutoDot state={auto.health[auto.menuModule[href]]?.state ?? 'off'} size={7} /></span>}</span>
                   <span className="text-[12.5px] font-semibold whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-opacity flex items-center gap-2">{label}{auto?.menuModule[href] && <AutoDot state={auto.health[auto.menuModule[href]]?.state ?? 'off'} />}</span>
                 </Link>
               )
