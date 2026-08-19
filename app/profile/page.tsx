@@ -413,8 +413,8 @@ export default function ProfilePage() {
             <div>
               <p className="text-[12px] font-semibold text-[#6b6152] mb-1.5">성격 / 말투</p>
               <textarea
-                className={inputClass + ' resize-none'}
-                rows={3}
+                className={inputClass + ' resize-y !h-auto min-h-[140px] py-3 leading-relaxed'}
+                rows={6}
                 value={agentPersona}
                 onChange={e => setAgentPersona(e.target.value)}
                 placeholder="예: 항상 긍정적이고 열정적인 게이머. 재밌으면 크게 리액션함."
