@@ -21,7 +21,26 @@ function clientIp(request: NextRequest): string {
   return xff ? xff.split(',')[0].trim() : ''
 }
 
+// ── 관리자 서버 분리 ──
+// ADMIN_HOST(예: admin.vibrexcup.com)가 설정되면: 관리자 호스트에서는 /admin·/api/admin·인증 경로만 서비스하고,
+// 회원 호스트(vibrexcup.com)에서 /admin 으로 오면 관리자 호스트로 보낸다. (같은 코드베이스, 별도 Vercel 프로젝트·도메인·환경변수)
+const ADMIN_HOST = process.env.ADMIN_HOST ?? ''
+const IS_ADMIN_APP = process.env.NEXT_PUBLIC_APP_MODE === 'admin'
+
 export async function proxy(request: NextRequest) {
+  {
+    const host = request.headers.get('host') ?? ''
+    const { pathname } = request.nextUrl
+    const isAdminHost = IS_ADMIN_APP || (ADMIN_HOST && host.startsWith(ADMIN_HOST))
+    if (isAdminHost) {
+      // 관리자 서버: 허용 경로 외에는 /admin 으로
+      const ok = pathname.startsWith('/admin') || pathname.startsWith('/api/admin') || pathname.startsWith('/api/auth') || pathname.startsWith('/auth') || pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname.startsWith('/_next') || pathname.startsWith('/icon') || pathname === '/favicon.ico' || pathname === '/robots.txt' || pathname.startsWith('/api/log') || pathname.startsWith('/aj/')
+      if (!ok) { const u = request.nextUrl.clone(); u.pathname = '/admin'; u.search = ''; return NextResponse.redirect(u) }
+    } else if (ADMIN_HOST && (pathname.startsWith('/admin') || pathname.startsWith('/api/admin'))) {
+      // 회원 서버: 관리자 경로는 관리자 호스트로
+      const u = new URL(request.url); u.host = ADMIN_HOST; u.protocol = 'https:'; return NextResponse.redirect(u)
+    }
+  }
   // OAuth/매직링크 코드가 엉뚱한 경로(예: /?code=…)로 돌아오면 콜백 라우트로 보내 세션 교환
   if (request.nextUrl.searchParams.has('code') && !request.nextUrl.pathname.startsWith('/auth/callback') && !request.nextUrl.pathname.startsWith('/api')) {
     const url = request.nextUrl.clone()

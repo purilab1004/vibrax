@@ -5,6 +5,7 @@ import { loadLlmPilot } from '@/lib/llmpilot/settings'
 // AI "학습·실시간 브라우징" 봇(사이트 통복사에 쓰이는 것)은 차단.
 // robots.txt는 신사협정이므로 실제 강제는 proxy.ts의 UA 403이 담당한다.
 export default async function robots(): Promise<MetadataRoute.Robots> {
+  if (process.env.NEXT_PUBLIC_APP_MODE === 'admin') return { rules: [{ userAgent: '*', disallow: '/' }] }
   const s = await loadLlmPilot()
   const userBots = ['ChatGPT-User', 'Claude-User', 'Claude-Web', 'Perplexity-User', 'Gemini-Deep-Research', 'Google-CloudVertexBot']
   const trainBots = ['GPTBot', 'ClaudeBot', 'anthropic-ai', 'Google-Extended', 'Applebot-Extended', 'CCBot', 'Bytespider', 'meta-externalagent', 'cohere-ai']
