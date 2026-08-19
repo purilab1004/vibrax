@@ -131,6 +131,9 @@ export default function PublishModal({
       // 게임 출시 소개 블로그 글 자동 생성 (fire-and-forget)
       const newId = (inserted as { id: string } | null)?.id
       if (newId) {
+        // 스팸 심사 (AI) — 스팸 판정 시 즉시 삭제되고 안내
+        const screen = await fetch('/api/games/screen', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: newId }) }).then(r => r.json()).catch(() => null) as { removed?: boolean } | null
+        if (screen?.removed) { setError('운영 정책(스팸·도박·성인·외부 유도)에 맞지 않아 등록이 취소되었어요. 내용을 수정해 다시 등록해 주세요.'); return }
         fetch('/api/geo/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'publish', ref: newId }), keepalive: true }).catch(() => {})
         fetch('/api/blog/game-post', {
           method: 'POST',

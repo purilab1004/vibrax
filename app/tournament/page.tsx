@@ -224,7 +224,7 @@ export default function TournamentPage() {
     e.preventDefault()
     if (status === 'busy' || !user) return
     setStatus('busy')
-    const { error } = await supabase.from('tournament_applications').insert([{
+    const { data: inserted, error } = await supabase.from('tournament_applications').insert([{
       user_id: user.id,
       division,
       name: name.trim(),
@@ -234,7 +234,8 @@ export default function TournamentPage() {
       school_name: division === 'school' ? schoolName.trim() || null : null,
       company_name: division === 'company' ? companyName.trim() || null : null,
       note: note.trim() || null,
-    }] as never)
+    }] as never).select('id').single()
+    if (!error && inserted) fetch('/api/applications/notify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'tournament', id: (inserted as { id: string }).id }), keepalive: true }).catch(() => {})
     if (error) {
       // 23505 = 같은 부문에 이미 신청함
       if (error.code === '23505') setStatus('dup')

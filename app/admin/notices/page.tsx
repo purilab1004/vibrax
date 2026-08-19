@@ -1,5 +1,6 @@
 'use client'
 // 공지 관리 — 목록(고정/공개 배지) · 카드형 에디터 · 토글 · 삭제 확인
+import AutoPanel from '@/components/admin/AutoPanel'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
@@ -84,6 +85,7 @@ export default function AdminNoticesPage() {
     <div>
       <PageHeader title={a.noticesHeading} desc="사이트 공지를 작성하고 고정·공개 여부를 바로 바꿀 수 있어요."
         actions={<button onClick={() => open('new')} className={btn.primary}>{a.newNotice}</button>} />
+      <AutoPanel module="notices" />
       <Card>
         {notices === null ? <Skeleton /> : notices.length === 0 ? <EmptyState title="공지가 없어요" action={<button onClick={() => open('new')} className={btn.primary}>{a.newNotice}</button>} /> : (
           <ul className="divide-y divide-[#eef0f4]">

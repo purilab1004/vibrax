@@ -7,8 +7,9 @@ import { AutoDot } from '@/components/admin/AutoStatusDot'
 
 interface Log { id: string; module: string; action: string; target: string | null; status: 'ok' | 'error' | 'needs_review'; detail: Record<string, unknown> | null; reviewed_at: string | null; created_at: string }
 interface Mod { key: string; menu: string; label: string; desc: string }
-interface Data { flags: Record<string, boolean>; health: Record<string, { state: 'on' | 'off' | 'error'; errors: number; review: number }>; modules: Mod[]; logs: Log[]; logsMissing?: boolean; pending: { templates: number; refunds: number; failedPayments: number; openErrors: number; securityHigh: number; review: number; errors: number } }
-const MODULE_LABEL: Record<string, [string, string]> = { templates: ['템플릿', '/admin/templates'], mlpilot: ['MLPilot', '/admin/mlpilot'], tokenpilot: ['TokenPilot', '/admin/costs'], adpilot: ['AdPilot', '/admin/ads'], blog: ['블로그', '/admin/blog'], aj: ['AJ', '/admin/aj'], payments: ['결제', '/admin/payments'], broadcasts: ['방송', '/admin/broadcasts'], security: ['보안', '/admin/security'] }
+interface Kpi { visitors24h: number; signups24h: number; games24h: number; generations24h: number; llmCostUsd24h: number; paymentsCount24h: number; revenueKrw24h: number; revenueUsd24h: number; applications24h: number }
+interface Data { kpi?: Kpi; flags: Record<string, boolean>; health: Record<string, { state: 'on' | 'off' | 'error'; errors: number; review: number }>; modules: Mod[]; logs: Log[]; logsMissing?: boolean; pending: { templates: number; refunds: number; failedPayments: number; openErrors: number; securityHigh: number; review: number; errors: number } }
+const MODULE_LABEL: Record<string, [string, string]> = { templates: ['템플릿', '/admin/templates'], games: ['게임 관리', '/admin/games'], notices: ['공지 관리', '/admin/notices'], applications: ['신청 관리', '/admin/applications'], mlpilot: ['MLPilot', '/admin/mlpilot'], tokenpilot: ['TokenPilot', '/admin/costs'], adpilot: ['AdPilot', '/admin/ads'], blog: ['블로그', '/admin/blog'], aj: ['AJ', '/admin/aj'], payments: ['결제', '/admin/payments'], broadcasts: ['방송', '/admin/broadcasts'], security: ['보안', '/admin/security'] }
 const rel = (iso: string) => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); if (m < 1) return '방금'; if (m < 60) return `${m}분 전`; const h = Math.round(m / 60); if (h < 24) return `${h}시간 전`; return `${Math.round(h / 24)}일 전` }
 
 export default function OpsBoard({ standalone = false }: { standalone?: boolean }) {
@@ -27,6 +28,25 @@ export default function OpsBoard({ standalone = false }: { standalone?: boolean 
     <div>
       {header}
       {d.logsMissing && <p className="mb-3 rounded-md border border-amber-300 bg-amber-50 text-amber-800 text-[13px] px-4 py-3">처리 내역 테이블이 없어요. <code>db/migrations/2026-08-19-automation.sql</code> 을 실행하면 AI 처리 내역이 쌓입니다. (스위치는 동작해요)</p>}
+      {/* 핵심 지표 (24시간) */}
+      {d.kpi && <>
+        <p className="text-[10.5px] font-bold uppercase tracking-wide text-[#9aa1ad] mb-1.5">핵심 지표 · 최근 24시간</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2 mb-4">
+          {([
+            ['1일 접속자', d.kpi.visitors24h.toLocaleString(), '/admin/access', '#2563eb'],
+            ['가입', d.kpi.signups24h.toLocaleString(), '/admin/members', '#2563eb'],
+            ['게임 등록', d.kpi.games24h.toLocaleString(), '/admin/games', '#7c3aed'],
+            ['AI 생성', d.kpi.generations24h.toLocaleString(), '/admin/costs', '#0891b2'],
+            ['LLM 원가', `$${d.kpi.llmCostUsd24h.toFixed(2)}`, '/admin/costs', '#0891b2'],
+            ['결제 건수', d.kpi.paymentsCount24h.toLocaleString(), '/admin/payments', '#059669'],
+            ['매출', d.kpi.revenueKrw24h > 0 ? `₩${d.kpi.revenueKrw24h.toLocaleString()}${d.kpi.revenueUsd24h > 0 ? ` +$${d.kpi.revenueUsd24h.toFixed(0)}` : ''}` : `$${d.kpi.revenueUsd24h.toFixed(2)}`, '/admin/payments', '#059669'],
+            ['신청서', d.kpi.applications24h.toLocaleString(), '/admin/applications', '#f59e0b'],
+          ] as [string, string, string, string][]).map(([l, v, href, c]) => (
+            <Link key={l} href={href} className="rounded-lg border border-[#e3e6ec] bg-white px-3.5 py-3 hover:border-[#c5cad4]"><p className="text-[10.5px] font-semibold uppercase tracking-wide text-[#6b7280]">{l}</p><p className="text-[20px] font-bold leading-none mt-1.5 tabular-nums truncate" style={{ color: c }}>{v}</p></Link>
+          ))}
+        </div>
+      </>}
+      <p className="text-[10.5px] font-bold uppercase tracking-wide text-[#9aa1ad] mb-1.5">사람이 봐야 할 것</p>
       {/* 사람이 봐야 할 것 — 모바일 2열 카드 */}
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2 mb-4">
         {[['검토 대기', d.pending.review, '/admin-ops', '#f59e0b'], ['AI 오류', d.pending.errors, '/admin-ops', '#dc2626'], ['템플릿 승인 대기', d.pending.templates, '/admin/templates', '#7c3aed'], ['환불 검토', d.pending.refunds, '/admin/payments', '#f59e0b'], ['결제 실패(24h)', d.pending.failedPayments, '/admin/payments', '#dc2626'], ['미해결 에러(24h)', d.pending.openErrors, '/admin/logs', '#dc2626'], ['보안 HIGH(24h)', d.pending.securityHigh, '/admin/security', '#dc2626']].map(([l, v, href, c]) => (

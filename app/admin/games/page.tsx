@@ -1,5 +1,6 @@
 'use client'
 // 게임 관리 — 검색 · 정렬 · 장르 필터 · 편집 모달 · 삭제 확인 · AJ 링크
+import AutoPanel from '@/components/admin/AutoPanel'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -64,6 +65,7 @@ export default function AdminGamesPage() {
     <div>
       <PageHeader title={a.gamesHeading} desc="게시된 게임을 검색·수정·삭제하고 AJ 대시보드로 이동할 수 있어요."
         actions={<Link href="/submit" className={btn.primary}>게임 등록</Link>} />
+      <AutoPanel module="games" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
         <StatCard label="게시된 게임" value={games?.length ?? '-'} />

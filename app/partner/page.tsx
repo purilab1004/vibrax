@@ -143,7 +143,9 @@ export default function PartnerPage() {
     e.preventDefault()
     if (status === 'busy') return
     setStatus('busy')
+    const newId = crypto.randomUUID()  // 열람 정책이 관리자 전용이라 insert 후 select 불가 → id 를 미리 만든다
     const { error } = await supabase.from('partner_applications').insert([{
+      id: newId,
       org_type: orgType,
       org_name: orgName.trim(),
       contact_name: contactName.trim(),
@@ -151,6 +153,7 @@ export default function PartnerPage() {
       website: website.trim() || null,
       message: message.trim() || null,
     }] as never)
+    if (!error) fetch('/api/applications/notify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'partner', id: newId }), keepalive: true }).catch(() => {})
     if (error) {
       console.error('[partner]', error)
       setStatus('fail')

@@ -258,6 +258,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
                 ['#agent', '내 아바타 · AJ', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="7" width="14" height="11" rx="2" /><path d="M12 7V4M9 12h.01M15 12h.01M9.5 15.5c.8.7 4.2.7 5 0" /></svg>],
                 ['#games', '내 게임', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
                 ['#billing', '결제 내역', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></svg>],
+                ['#notices', '공지사항', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 10v4l10 4V6L4 10Z" /><path d="M14 8.5a3.5 3.5 0 0 1 0 7M6.5 14.5V19" /></svg>],
                 ['#collections', '좋아요 · 컬렉션', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10Z" /></svg>],
               ] as [string, string, React.ReactNode][]).map(([hash, label2, icon]) => (
                 <a key={hash} href={`/profile${hash}`} className={row(profileHash === hash)} title={label2}>

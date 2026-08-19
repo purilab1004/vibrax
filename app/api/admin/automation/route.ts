@@ -2,7 +2,7 @@
 import { requireAdmin } from '@/lib/admin/guard'
 import { AUTOMATION_MODULES, loadAutomation, saveAutomation, type AutomationKey } from '@/lib/automation'
 
-export const MENU_MODULE: Record<string, string> = { '/admin/templates': 'templates', '/admin/mlpilot': 'mlpilot', '/admin/costs': 'tokenpilot', '/admin/ads': 'adpilot', '/admin/blog': 'blog', '/admin/aj': 'aj', '/admin/payments': 'payments', '/admin/broadcasts': 'broadcasts', '/admin/security': 'security' }
+export const MENU_MODULE: Record<string, string> = { '/admin/templates': 'templates', '/admin/games': 'games', '/admin/notices': 'notices', '/admin/applications': 'applications', '/admin/mlpilot': 'mlpilot', '/admin/costs': 'tokenpilot', '/admin/ads': 'adpilot', '/admin/blog': 'blog', '/admin/aj': 'aj', '/admin/payments': 'payments', '/admin/broadcasts': 'broadcasts', '/admin/security': 'security' }
 
 export async function GET(req: Request) {
   const g = await requireAdmin(); if ('error' in g) return g.error
@@ -25,7 +25,25 @@ export async function GET(req: Request) {
     g.admin.from('app_errors').select('id', { count: 'exact', head: true }).is('resolved_at', null).gte('created_at', since24),
     g.admin.from('security_events').select('id', { count: 'exact', head: true }).eq('severity', 'high').gte('created_at', since24),
   ])
-  return Response.json({ flags, health, menuModule: MENU_MODULE, modules: AUTOMATION_MODULES, logs: error ? [] : logs ?? [], logsMissing: !!error && /does not exist|schema cache/i.test(error.message),
+  // 핵심 지표 카드 — 1일 접속자(세션), 오늘 가입, 24h 게임 등록, 24h 생성(LLM), 24h 매출, 24h 신청서
+  // since24 는 위에서 정의
+  const [vis, { count: signups }, { count: newGames }, gen, pay, { count: appT }, { count: appP }] = await Promise.all([
+    g.admin.from('visits').select('session_id').gte('created_at', since24).limit(50000),
+    g.admin.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', since24),
+    g.admin.from('games').select('id', { count: 'exact', head: true }).gte('created_at', since24),
+    g.admin.from('llm_usage').select('kind,cost_usd').gte('created_at', since24).limit(20000),
+    g.admin.from('payments').select('amount_minor,currency,status').gte('created_at', since24).eq('status', 'completed').limit(5000),
+    g.admin.from('tournament_applications').select('id', { count: 'exact', head: true }).gte('created_at', since24),
+    g.admin.from('partner_applications').select('id', { count: 'exact', head: true }).gte('created_at', since24),
+  ])
+  const sessions = new Set(((vis.data ?? []) as { session_id: string }[]).map(v => v.session_id)).size
+  const genRows = (gen.data ?? []) as { kind: string; cost_usd: number }[]
+  const payRows = (pay.data ?? []) as { amount_minor: number | null; currency: string | null }[]
+  const zeroDec = (c: string | null) => ['KRW', 'JPY'].includes((c ?? '').toUpperCase())
+  const revenueKrw = payRows.reduce((a, r) => a + (r.currency?.toUpperCase() === 'KRW' ? (r.amount_minor ?? 0) : 0), 0)
+  const revenueUsd = payRows.reduce((a, r) => a + (r.currency?.toUpperCase() === 'USD' ? (r.amount_minor ?? 0) / 100 : (!zeroDec(r.currency) && r.currency && r.currency.toUpperCase() !== 'KRW' ? (r.amount_minor ?? 0) / 100 : 0)), 0)
+  const kpi = { visitors24h: sessions, signups24h: signups ?? 0, games24h: newGames ?? 0, generations24h: genRows.filter(r => ['create', 'edit', 'template', 'template_edit', 'from_image'].includes(r.kind)).length, llmCostUsd24h: genRows.reduce((a, r) => a + Number(r.cost_usd ?? 0), 0), paymentsCount24h: payRows.length, revenueKrw24h: revenueKrw, revenueUsd24h: revenueUsd, applications24h: (appT ?? 0) + (appP ?? 0) }
+  return Response.json({ kpi, flags, health, menuModule: MENU_MODULE, modules: AUTOMATION_MODULES, logs: error ? [] : logs ?? [], logsMissing: !!error && /does not exist|schema cache/i.test(error.message),
     pending: { templates: pendTemplates ?? 0, refunds: pendRefund ?? 0, failedPayments: failedPay ?? 0, openErrors: openErrors ?? 0, securityHigh: secHigh ?? 0, review: errRows.filter(r => r.status === 'needs_review').length, errors: errRows.filter(r => r.status === 'error').length } })
 }
 export async function PATCH(req: Request) {

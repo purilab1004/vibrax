@@ -2,7 +2,10 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export const AUTOMATION_MODULES = [
-  { key: 'templates.autoApprove', menu: '템플릿', label: '처음 만들어진 게임을 템플릿으로 자동 승인', desc: 'off 면 후보로만 쌓이고 사람이 승인' },
+  { key: 'templates.autoApprove', menu: '템플릿', label: '기본 템플릿에 없는 새 게임이 만들어지면 템플릿으로 자동 추가', desc: 'off 면 후보로만 쌓이고 사람이 승인' },
+  { key: 'games.autoSpam', menu: '게임 관리', label: '의심스러운 게임(스팸·도박·성인·피싱 링크) AI 판정 후 자동 삭제', desc: 'off 면 의심 게임을 검토 대기로만 표시' },
+  { key: 'notices.autoIssue', menu: '공지 관리', label: '장애 감지 시(같은 오류 10분 내 5회) 자동 안내 공지 게시', desc: 'off 면 에러 로그만 쌓임 — 공지는 사람이' },
+  { key: 'applications.emailAdmin', menu: '신청 관리', label: '토너먼트·파트너 신청서 접수 시 관리자에게 메일 발송', desc: 'off 면 대시보드 검토 대기로만 표시' },
   { key: 'mlpilot.aiJudge', menu: 'MLPilot', label: 'AI 자동 판단(Haiku)으로 프롬프트→템플릿 매핑', desc: 'off 면 키워드/유사도만 사용' },
   { key: 'mlpilot.autoLearn', menu: 'MLPilot', label: '매핑 성공 시 키워드 자동 학습', desc: 'off 면 관리자가 "학습" 버튼으로만' },
   { key: 'tokenpilot.guard', menu: 'TokenPilot', label: '원가 가드 자동 차단(오토 모드)', desc: 'off 면 매뉴얼 — 관리자가 정지/재개' },
@@ -15,7 +18,7 @@ export const AUTOMATION_MODULES = [
 ] as const
 export type AutomationKey = typeof AUTOMATION_MODULES[number]['key']
 export type AutomationFlags = Record<AutomationKey, boolean>
-export const DEFAULT_AUTOMATION: AutomationFlags = { 'templates.autoApprove': false, 'mlpilot.aiJudge': true, 'mlpilot.autoLearn': true, 'tokenpilot.guard': true, 'adpilot.autoCreative': true, 'blog.autoPost': true, 'aj.autoReport': false, 'payments.autoRevoke': true, 'broadcasts.autoOff': false, 'security.autoBlock': false }
+export const DEFAULT_AUTOMATION: AutomationFlags = { 'templates.autoApprove': false, 'games.autoSpam': true, 'notices.autoIssue': true, 'applications.emailAdmin': true, 'mlpilot.aiJudge': true, 'mlpilot.autoLearn': true, 'tokenpilot.guard': true, 'adpilot.autoCreative': true, 'blog.autoPost': true, 'aj.autoReport': false, 'payments.autoRevoke': true, 'broadcasts.autoOff': false, 'security.autoBlock': false }
 
 let cache: { at: number; v: AutomationFlags } | null = null
 export async function loadAutomation(): Promise<AutomationFlags> {
