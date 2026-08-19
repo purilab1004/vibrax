@@ -1,6 +1,7 @@
 'use client'
 
 import NoticesSection from '@/components/profile/NoticesSection'
+import AiLearningSection from '@/components/profile/AiLearningSection'
 import { useEffect, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
@@ -480,6 +481,7 @@ export default function ProfilePage() {
             <p className="text-[11px] text-[#857a68] leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요. 게임 목록엔 아이디 대신 <span className="text-[#2563eb] font-semibold">에이전트 이름</span>이 표시됩니다.</p>
           </div>
         </div>
+        <AiLearningSection />
       </section>}
 
       {/* ── My Games ── */}

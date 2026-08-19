@@ -1,7 +1,7 @@
 create table if not exists public.aj_play_policies (
   id uuid primary key default gen_random_uuid(),
-  game_id uuid not null,
-  user_id uuid not null,
+  game_id uuid not null references public.games(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
   version int not null default 1,
   tips text[] not null default '{}',
   rules jsonb not null default '[]',
