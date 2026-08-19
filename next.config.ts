@@ -19,6 +19,13 @@ const nextConfig: NextConfig = {
   // 구 도메인(vibrax-rho.vercel.app) → vibrexcup.com 영구 리다이렉트
   async redirects() {
     return [
+      // www → apex (같은 오리진이어야 /play iframe 이 막히지 않는다)
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.vibrexcup.com' }],
+        destination: 'https://vibrexcup.com/:path*',
+        permanent: true,
+      },
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'vibrax-rho.vercel.app' }],

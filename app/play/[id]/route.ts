@@ -26,7 +26,9 @@ export async function GET(
       'Content-Type': 'text/html; charset=utf-8',
       // 최상위 문서로 열려도 스크립트 격리 유지
       'Content-Security-Policy':
-        "sandbox allow-scripts allow-pointer-lock; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; media-src data:;",
+        "sandbox allow-scripts allow-pointer-lock; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; media-src data:; frame-ancestors 'self' https://vibrexcup.com https://www.vibrexcup.com https://*.vibrexcup.com https://*.vercel.app http://localhost:*;",
+      // 전역 X-Frame-Options(SAMEORIGIN) 대신 위 frame-ancestors 로 허용 (www ↔ apex, 관리자 호스트에서의 임베드)
+      'X-Frame-Options': 'ALLOWALL',
       'Cache-Control': 'no-store',
     },
   })
