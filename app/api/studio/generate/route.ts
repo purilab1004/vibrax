@@ -7,6 +7,7 @@ import { SYSTEM_PROMPT, buildMessages, type ChatTurn } from '@/lib/studio/prompt
 import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER } from '@/lib/studio/parse'
 import { matchTemplate, templateOnly, extrasOf } from '@/lib/studio/templates'
 import { hardenHtml } from '@/lib/studio/harden'
+import { personalizeTemplate } from '@/lib/studio/personalize'
 import { logUsage } from '@/lib/llm/usage'
 import { GENERATION_MAX_TOKENS } from '@/lib/llm/pricing'
 import { trackGeo } from '@/lib/geo/track'
@@ -117,15 +118,16 @@ export async function POST(req: Request) {
   let templateNote = ''
   if (tmatch) {
     if (templateOnly(prompt, tmatch.keyword)) {
-      const html = tmatch.template.html
+      // 회원·프로젝트마다 제목/색조를 다르게 (LLM 없이) — 같은 템플릿이라도 다른 게임처럼
+      const { html, title: pTitle } = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`)
       const { error: vErr } = await supabase.from('studio_versions').insert([
         { project_id: projectId, version: 1, html },
       ] as never)
       if (vErr) { await refund(); return new Response('save failed', { status: 500 }) }
       // 실제 생성처럼 보이게: 설명을 문장 단위로, HTML 을 조각으로 천천히 스트리밍하고, 토큰 사용량은 실측 대신 추정치로 표시
       const desc = tmatch.template.description
-        ? `${tmatch.template.description} 이어서 "배경을 우주로", "속도를 더 빠르게" 처럼 말하면 그 위에 바꿔 드릴게요.`
-        : `요청하신 「${tmatch.template.name}」 게임을 만들었어요. 이어서 원하는 변경을 말씀해 주시면 바로 반영할게요.`
+        ? `「${pTitle || tmatch.template.name}」 을(를) 만들었어요. ${tmatch.template.description} 이어서 "배경을 우주로", "속도를 더 빠르게" 처럼 말하면 그 위에 바꿔 드릴게요.`
+        : `요청하신 「${pTitle || tmatch.template.name}」 게임을 만들었어요. 이어서 원하는 변경을 말씀해 주시면 바로 반영할게요.`
       await supabase.from('studio_messages').insert([
         { project_id: projectId, role: 'user', content: prompt },
         { project_id: projectId, role: 'assistant', content: desc },
@@ -152,7 +154,7 @@ export async function POST(req: Request) {
       })
       return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
     }
-    baseHtml = tmatch.template.html
+    baseHtml = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`).html
     const extras = extrasOf(prompt, tmatch.keyword)
     effectivePrompt = `이 게임은 기본 「${tmatch.template.name}」 템플릿이야. 다음 요구를 반영해 수정한 전체 완성본을 만들어줘: ${extras || prompt}`
     templateNote = `「${tmatch.template.name}」 게임을 만들면서 요청하신 내용을 함께 반영했어요. `
