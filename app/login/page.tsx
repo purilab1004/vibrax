@@ -5,135 +5,57 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
+import AuthShell, { GoogleIcon, authInput, authLabel, authPrimary } from '@/components/auth/AuthShell'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [show, setShow] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [resetMsg, setResetMsg] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [oauthPending, setOauthPending] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') ?? '/'
+  const oauthErr = searchParams.get('error') === 'oauth'
   const supabase = createClient()
-  const { T } = useLang()
-  const a = T.auth
+  const { lang } = useLang()
+  const ko = lang !== 'en'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError(error.message)
-        return
-      }
-      router.push(redirect)
-      router.refresh()
+      if (error) { setError(/invalid login/i.test(error.message) ? (ko ? '이메일 또는 비밀번호가 맞지 않아요.' : 'Invalid email or password.') : error.message); return }
+      router.push(redirect); router.refresh()
     })
   }
-
-  // 비밀번호 찾기 — 입력한 이메일로 재설정 링크 발송
-  const handleForgotPassword = () => {
-    setError(null)
-    setResetMsg(null)
-    if (!email.trim()) {
-      setError('이메일을 먼저 입력해주세요.')
-      return
-    }
-    startTransition(async () => {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
-      if (error) {
-        setError(error.message)
-        return
-      }
-      setResetMsg('비밀번호 재설정 링크를 이메일로 보냈어요. 메일함(스팸함 포함)을 확인해주세요.')
-    })
+  const google = async () => {
+    setOauthPending(true); setError(null)
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirect)}`, queryParams: { prompt: 'select_account' } } })
+    if (error) { setError(error.message); setOauthPending(false) }
   }
-
-  const inputClass =
-    'w-full bg-[#ffffff] border border-[#ddd3bf] focus:border-[#2563eb] px-4 py-3 text-sm outline-none transition-colors text-[#241f17] placeholder-[#a1957f]'
 
   return (
-    <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <h1 className="font-pixel text-[#2563eb] text-base mb-2 text-center tracking-widest">
-          {a.loginHeading}
-        </h1>
-        <p className="text-[#4a4337] text-xs text-center mb-8">{a.loginSubtitle}</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
-              {a.email}
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              placeholder="your@email.com"
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
-              {a.password}
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              className={inputClass}
-            />
-          </div>
-          {error && (
-            <p className="text-red-400 text-xs border border-red-900 bg-red-900/20 px-3 py-2">
-              {error}
-            </p>
-          )}
-          {resetMsg && (
-            <p className="text-[#2563eb] text-xs border border-[#2563eb]/30 bg-[#2563eb]/5 px-3 py-2 rounded">
-              ✉️ {resetMsg}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full bg-[#2563eb] text-white font-pixel text-[11px] py-3 hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 mt-2 tracking-widest"
-          >
-            {isPending ? a.loading : a.login}
-          </button>
-        </form>
-        <div className="flex items-center justify-center gap-4 mt-6 text-xs">
-          <button
-            type="button"
-            onClick={handleForgotPassword}
-            disabled={isPending}
-            className="text-[#857a68] hover:text-[#2563eb] hover:underline transition-colors disabled:opacity-50"
-          >
-            비밀번호 찾기
-          </button>
-          <span className="text-[#ddd3bf]">|</span>
-          <p className="text-[#4a4337]">
-            {a.noAccount}{' '}
-            <Link href="/signup" className="text-[#2563eb] hover:underline">
-              SIGNUP
-            </Link>
-          </p>
+    <AuthShell eyebrow="WELCOME BACK" title={ko ? '다시 만나서 반가워요' : 'Welcome back'} subtitle={ko ? 'Vibrexcup 계정으로 로그인하세요.' : 'Sign in to your Vibrexcup account.'}
+      footer={<p>{ko ? '계정이 없으신가요?' : "Don't have an account?"} <Link href={`/signup${redirect !== '/' ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="font-semibold text-[#2563eb] hover:underline">{ko ? '무료로 가입하기' : 'Sign up free'}</Link></p>}>
+      <button type="button" onClick={google} disabled={oauthPending} className="w-full h-11 rounded-xl border border-[#ddd3bf] bg-white text-[14px] font-semibold text-[#241f17] hover:bg-[#faf8f3] hover:border-[#cfc4ab] transition-colors flex items-center justify-center gap-2.5 disabled:opacity-60">
+        <GoogleIcon className="w-[18px] h-[18px]" />{oauthPending ? (ko ? 'Google 로 이동 중…' : 'Redirecting…') : (ko ? 'Google 로 계속하기' : 'Continue with Google')}
+      </button>
+      <div className="my-5 flex items-center gap-3 text-[11px] text-[#a1957f]"><span className="h-px flex-1 bg-[#ebe4d6]" />{ko ? '또는 이메일로' : 'or with email'}<span className="h-px flex-1 bg-[#ebe4d6]" /></div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div><label className={authLabel}>{ko ? '이메일' : 'Email'}</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" className={authInput} /></div>
+        <div>
+          <div className="flex items-center justify-between mb-1.5"><label className="text-[12px] font-semibold text-[#6b6152]">{ko ? '비밀번호' : 'Password'}</label><Link href={`/forgot-password${email ? `?email=${encodeURIComponent(email)}` : ''}`} className="text-[12px] font-semibold text-[#2563eb] hover:underline">{ko ? '비밀번호를 잊으셨나요?' : 'Forgot password?'}</Link></div>
+          <div className="relative"><input type={show ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" placeholder="••••••••" className={authInput + ' pr-11'} /><button type="button" onClick={() => setShow(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9d9280] hover:text-[#241f17]" aria-label="toggle password">{show ? <svg viewBox="0 0 24 24" className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth={2}><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c5 0 9 4 10 7-.4 1.2-1.2 2.5-2.3 3.6M6.2 6.2C4.2 7.6 2.7 9.5 2 12c1 3 5 7 10 7 1.6 0 3.1-.4 4.4-1" /></svg> : <svg viewBox="0 0 24 24" className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth={2}><path d="M2 12c1-3 5-7 10-7s9 4 10 7c-1 3-5 7-10 7S3 15 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>}</button></div>
         </div>
-      </div>
-    </div>
+        {(error || oauthErr) && <p className="rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-[13px] px-3.5 py-2.5">{error ?? (ko ? 'Google 로그인에 실패했어요. 다시 시도해 주세요.' : 'Google sign-in failed. Please try again.')}</p>}
+        <button type="submit" disabled={isPending} className={authPrimary}>{isPending ? (ko ? '로그인 중…' : 'Signing in…') : (ko ? '로그인' : 'Sign in')}</button>
+      </form>
+      <p className="mt-5 text-[11.5px] text-[#9d9280] leading-relaxed">{ko ? '로그인하면 ' : 'By continuing you agree to our '}<Link href="/terms" className="underline hover:text-[#2563eb]">{ko ? '이용약관' : 'Terms'}</Link>{ko ? '과 ' : ' and '}<Link href="/privacy" className="underline hover:text-[#2563eb]">{ko ? '개인정보처리방침' : 'Privacy Policy'}</Link>{ko ? '에 동의하는 것으로 봅니다.' : '.'}</p>
+    </AuthShell>
   )
 }
 
-export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
-  )
-}
+export default function LoginPage() { return <Suspense><LoginForm /></Suspense> }
