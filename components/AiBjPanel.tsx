@@ -337,9 +337,12 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       window.dispatchEvent(new CustomEvent('avatar:speak', { detail: { text: j.policy.summary ?? reply } }))
     } catch { put('잠깐 끊겼어! 다시 말해줘 💫') } finally { setIsStreaming(false) }
   }
+  // 보내기 — AJ 가 말하는 중이면 끝날 때까지 잠깐 기다렸다가 보낸다 (입력창은 절대 비활성화하지 않는다: 포커스가 튕기므로)
+  const waitIdle = () => new Promise<void>(res => { const t = setInterval(() => { if (!isStreamingRef.current) { clearInterval(t); res() } }, 120); setTimeout(() => { clearInterval(t); res() }, 15000) })
   const sendMessage = async (text: string) => {
-    if (!text.trim() || isStreaming) return
+    if (!text.trim()) return
     setInput('')
+    await waitIdle()
     if (joinedRef.current && gameId) { await coach(text.trim()); return }
     await streamAj(text, true)
   }
@@ -393,7 +396,6 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
           placeholder="AJ에게 말걸기..."
-          disabled={isStreaming}
           className="flex-1 bg-white border border-[#ddd3bf] text-[#241f17] text-xs px-2.5 py-2 placeholder-[#a1957f] focus:outline-none focus:border-[#2563eb] disabled:opacity-50"
         />
         <button
@@ -448,7 +450,6 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
               placeholder={joined ? "AI에게 가르치기… (예: 공이 오른쪽이면 미리 오른쪽으로)" : "AJ에게 말걸기..."}
-              disabled={isStreaming}
               className="flex-1 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none disabled:opacity-50"
             />
             <button
