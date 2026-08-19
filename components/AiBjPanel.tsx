@@ -412,7 +412,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
               </div>
             )}
           </div>
-          <div className="aj-drag relative mt-2 flex items-center gap-2.5 bg-black/60 backdrop-blur-md rounded-full pl-1.5 pr-1.5 py-1.5 border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.45)]" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
+          <div className="aj-drag relative -mt-1 flex items-center gap-2.5 bg-black/60 backdrop-blur-md rounded-full pl-1.5 pr-1.5 py-1.5 border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.45)]" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
             <div className="relative shrink-0">
               <div className="avatar-ring"><div className="avatar-wave w-8 h-8 rounded-full overflow-hidden shrink-0">
                 <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={32} height={32} className={`w-full h-full object-cover ${bjPic ? 'avatar-bob object-top' : ''}`} unoptimized />

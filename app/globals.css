@@ -768,8 +768,8 @@ body {
   will-change: opacity, transform;
 }
 .aj-stage > * {
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 74%, rgba(0,0,0,0.6) 90%, transparent 100%), radial-gradient(ellipse 72% 64% at 50% 52%, #000 62%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 74%, rgba(0,0,0,0.6) 90%, transparent 100%), radial-gradient(ellipse 72% 64% at 50% 52%, #000 62%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 84%, rgba(0,0,0,0.7) 94%, transparent 100%), radial-gradient(ellipse 74% 70% at 50% 58%, #000 64%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 84%, rgba(0,0,0,0.7) 94%, transparent 100%), radial-gradient(ellipse 74% 70% at 50% 58%, #000 64%, transparent 100%);
   -webkit-mask-composite: source-in; mask-composite: intersect;
 }
 .aj-stage::after { /* 하단의 은은한 원형 글로우 (아바타 발치) */
@@ -808,7 +808,7 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
 }
 .aj-halo::before { z-index: -1; } /* 후광은 빛줄기 위, 캐릭터 아래 */
 /* PC: 캐릭터를 무대 아래쪽(네임 배지 바로 위)으로 내린다 */
-.aj-stage-desk .aj-halo { transform: translateY(17%); }
+.aj-stage-desk .aj-halo { transform: translateY(26%); }
 
 /* 아바타 드래그 이동 */
 .aj-drag { cursor: grab; touch-action: none; }
