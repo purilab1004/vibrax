@@ -28,9 +28,9 @@ export async function GET(req: Request) {
 }
 export async function PATCH(req: Request) {
   const g = await requireAdmin(); if ('error' in g) return g.error
-  const b = await req.json().catch(() => null) as { enabled?: boolean; threshold?: number } | null
+  const b = await req.json().catch(() => null) as { enabled?: boolean; threshold?: number; aiJudge?: boolean; autoLearn?: boolean } | null
   if (!b) return Response.json({ error: 'bad request' }, { status: 400 })
-  const v = await saveMl({ ...(typeof b.enabled === 'boolean' ? { enabled: b.enabled } : {}), ...(typeof b.threshold === 'number' && b.threshold > 0 && b.threshold < 1 ? { threshold: b.threshold } : {}) })
+  const v = await saveMl({ ...(typeof b.enabled === 'boolean' ? { enabled: b.enabled } : {}), ...(typeof b.threshold === 'number' && b.threshold > 0 && b.threshold < 1 ? { threshold: b.threshold } : {}), ...(typeof b.aiJudge === 'boolean' ? { aiJudge: b.aiJudge } : {}), ...(typeof b.autoLearn === 'boolean' ? { autoLearn: b.autoLearn } : {}) })
   return Response.json({ settings: v })
 }
 // 수동 매핑 학습: 프롬프트(또는 지정 키워드)를 템플릿 키워드에 추가 → 이후 같은 표현은 LLM 없이 처리

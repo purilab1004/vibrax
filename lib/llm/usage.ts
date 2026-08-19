@@ -2,7 +2,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { costUsd } from './pricing'
 
-export type UsageKind = 'create' | 'edit' | 'template' | 'template_edit' | 'explain' | 'from_image' | 'bj_chat'
+export type UsageKind = 'create' | 'edit' | 'template' | 'template_edit' | 'explain' | 'from_image' | 'bj_chat' | 'classify'
 
 export async function logUsage(row: {
   userId?: string | null

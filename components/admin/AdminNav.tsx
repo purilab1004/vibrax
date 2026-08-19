@@ -24,6 +24,7 @@ export default function AdminNav() {
     ['/admin/access', '접속 관리'],
     ['/admin/security', '보안·서버'],
     ['/admin/logs', '에러 로그'],
+    ['/admin/legal', '약관 관리'],
     ['/admin/settings', a.navSettings],
     ['/admin/ads', 'AdPilot'],
     ['/admin/mlpilot', 'MLPilot'],

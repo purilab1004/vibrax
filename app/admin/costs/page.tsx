@@ -21,7 +21,7 @@ interface Data {
   recent: { id: string; kind: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; credits: number; template_slug: string | null; created_at: string }[]
 }
 
-const KIND_LABEL: Record<string, string> = { create: '새 게임 생성', edit: '기존 게임 수정', template: '템플릿 로드', template_edit: '템플릿+수정', explain: '학습 노트', from_image: '사진→레시피', bj_chat: 'AJ 중계' }
+const KIND_LABEL: Record<string, string> = { create: '새 게임 생성', edit: '기존 게임 수정', template: '템플릿 로드', template_edit: '템플릿+수정', explain: '학습 노트', from_image: '사진→레시피', bj_chat: 'AJ 중계', classify: 'MLPilot 분류(Haiku)' }
 const krw = (usd: number, rate: number) => `₩${Math.round(usd * rate).toLocaleString()}`
 const usd = (v: number) => `$${v.toFixed(v < 1 ? 3 : 2)}`
 

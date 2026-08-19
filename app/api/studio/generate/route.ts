@@ -10,7 +10,8 @@ import { matchTemplateIn } from '@/lib/studio/template-match'
 import { loadDbTemplates, saveTemplateCandidate, bumpTemplateUse } from '@/lib/studio/db-templates'
 import { effectiveStaticTemplates } from '@/lib/studio/template-overrides'
 import { rankTemplates } from '@/lib/studio/similarity'
-import { loadMl, logMapping } from '@/lib/studio/mlpilot'
+import { loadMl, logMapping, learnKeyword } from '@/lib/studio/mlpilot'
+import { aiJudgeTemplate } from '@/lib/studio/ai-judge'
 import { hardenHtml } from '@/lib/studio/harden'
 import { personalizeTemplate } from '@/lib/studio/personalize'
 import { logUsage } from '@/lib/llm/usage'
@@ -122,7 +123,7 @@ export async function POST(req: Request) {
   const staticList = await effectiveStaticTemplates()
   const dbList = !latest && images.length === 0 ? await loadDbTemplates() : []
   let tmatch = !latest && images.length === 0 ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(dbList, prompt)) : null
-  let mapMethod: 'keyword' | 'similarity' | 'none' = tmatch ? 'keyword' : 'none'
+  let mapMethod: 'keyword' | 'similarity' | 'ml' | 'none' = tmatch ? 'keyword' : 'none'
   let mapConf: number | null = tmatch ? 1 : null
   // MLPilot: 키워드로 못 잡으면 유사도 매퍼(문자 n-gram, LLM 없음)로 가장 가까운 템플릿을 고른다
   if (!tmatch && !latest && images.length === 0) {
@@ -133,15 +134,27 @@ export async function POST(req: Request) {
       const top = ranked[0]
       if (top && top.score >= ml.threshold) { const t = all.find(x => x.slug === top.slug)!; tmatch = { template: t, keyword: t.keywords[0] ?? t.name }; mapMethod = 'similarity'; mapConf = top.score }
       else if (top) mapConf = top.score
+      // AI 자동 판단(Haiku 분류, 초저가) — 유사도로도 못 잡았을 때만
+      if (!tmatch && ml.aiJudge) {
+        const j = await aiJudgeTemplate(prompt, all.map(t => ({ slug: t.slug, name: t.name, keywords: t.keywords })), user.id, projectId)
+        if (j.slug && j.confidence >= 0.7) {
+          const t = all.find(x => x.slug === j.slug)!; tmatch = { template: t, keyword: t.keywords[0] ?? t.name }; mapMethod = 'ml'; mapConf = j.confidence
+          if (ml.autoLearn && j.keyword) void learnKeyword(t.slug, j.keyword)
+        }
+      }
+      // 유사도 매핑이 확신도 높으면 프롬프트 핵심 토큰을 키워드로 자동 학습
+      if (tmatch && mapMethod === 'similarity' && ml.autoLearn && (mapConf ?? 0) >= ml.threshold + 0.15) {
+        const { extractKeywords } = await import('@/lib/studio/db-templates'); const k = extractKeywords(prompt)[0]; if (k) void learnKeyword(tmatch.template.slug, k)
+      }
     }
   }
   if (tmatch && !staticList.includes(tmatch.template)) void bumpTemplateUse(tmatch.template.slug)
-  void logMapping({ userId: user.id, projectId, prompt, templateSlug: tmatch?.template.slug ?? null, method: mapMethod, confidence: mapConf, usedLlm: !(tmatch && (mapMethod === 'similarity' || templateOnly(prompt, tmatch.keyword))) })
+  void logMapping({ userId: user.id, projectId, prompt, templateSlug: tmatch?.template.slug ?? null, method: mapMethod, confidence: mapConf, usedLlm: !(tmatch && (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword))) })
   let baseHtml: string | null = latest?.html ?? null
   let effectivePrompt = prompt
   let templateNote = ''
   if (tmatch) {
-    if (mapMethod === 'similarity' || templateOnly(prompt, tmatch.keyword)) {
+    if (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword)) {
       // 회원·프로젝트마다 제목/색조를 다르게 (LLM 없이) — 같은 템플릿이라도 다른 게임처럼
       const { html, title: pTitle } = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`)
       const { error: vErr } = await supabase.from('studio_versions').insert([

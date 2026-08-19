@@ -25,7 +25,7 @@ export default function ConsentForm({ onNext, busy, submitLabel = '동의하고 
         {row('terms', <><Link href="/terms" target="_blank" className="underline underline-offset-2 hover:text-[#2563eb]">이용약관</Link>에 동의합니다</>, true)}
         {row('privacy', <><Link href="/privacy" target="_blank" className="underline underline-offset-2 hover:text-[#2563eb]">개인정보 수집·이용</Link>에 동의합니다</>, true)}
         {row('age', <>만 14세 이상입니다</>, true)}
-        {row('marketing', <>이벤트·혜택·신작 소식 등 마케팅 정보 수신에 동의합니다 <span className="text-[#9d9280]">(이메일)</span></>, false)}
+        {row('marketing', <><Link href="/marketing-consent" target="_blank" className="underline underline-offset-2 hover:text-[#2563eb]">마케팅 정보 수신</Link>에 동의합니다 <span className="text-[#9d9280]">(이벤트·혜택·신작 소식, 이메일)</span></>, false)}
       </div>
       <button type="button" disabled={!required || busy} onClick={() => onNext(c)} className={authPrimary + ' mt-5'}>{busy ? '처리 중…' : submitLabel}</button>
       {!required && <p className="mt-2 text-[11.5px] text-[#9d9280] text-center">필수 항목에 모두 동의해야 계속할 수 있어요.</p>}

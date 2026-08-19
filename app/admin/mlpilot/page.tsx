@@ -6,7 +6,7 @@ import TrendChart from '@/components/admin/TrendChart'
 import { PageHeader, Card, Badge, SectionTitle, Segmented, Skeleton, Toggle, Toast, Modal, btn, input, label as labelCls, th, td, trHover } from '@/components/admin/ui'
 
 interface Row { id: string; prompt: string; template_slug: string | null; method: string; confidence: number | null; used_llm: boolean; created_at: string; suggestions?: { slug: string; name: string; score: number }[] }
-interface Data { days: number; settings: { enabled: boolean; threshold: number; model: string }; total: number; free: number; ratio: number; byMethod: Record<string, number>; byDay: { day: string; total: number; free: number }[]; unmapped: Row[]; recent: Row[]; templates: { slug: string; name: string }[] }
+interface Data { days: number; settings: { enabled: boolean; threshold: number; model: string; aiJudge: boolean; autoLearn: boolean }; total: number; free: number; ratio: number; byMethod: Record<string, number>; byDay: { day: string; total: number; free: number }[]; unmapped: Row[]; recent: Row[]; templates: { slug: string; name: string }[] }
 const METHOD: Record<string, [string, string]> = { keyword: ['키워드', '#2563eb'], similarity: ['유사도', '#7c3aed'], manual: ['수동 학습', '#059669'], ml: ['ML 모델', '#0891b2'], none: ['LLM 생성', '#f59e0b'] }
 
 export default function MlPilotPage() {
@@ -27,10 +27,11 @@ export default function MlPilotPage() {
   return (
     <div>
       {header}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mb-3">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-3">
         <StatCard label="LLM 없이 처리율" value={`${Math.round(d.ratio * 100)}%`} sub={`${d.free}/${d.total} 프롬프트`} accent={d.ratio >= 0.5 ? '#059669' : '#f59e0b'} />
         <StatCard label="키워드 매핑" value={d.byMethod.keyword ?? 0} accent="#2563eb" />
         <StatCard label="유사도 매핑" value={d.byMethod.similarity ?? 0} accent="#7c3aed" />
+        <StatCard label="AI 자동 판단" value={d.byMethod.ml ?? 0} accent="#0891b2" />
         <StatCard label="LLM 생성" value={d.byMethod.none ?? 0} accent="#f59e0b" />
         <StatCard label="모델" value={d.settings.model} sub={d.settings.enabled ? `임계값 ${d.settings.threshold}` : '꺼짐'} accent="#0891b2" />
       </div>
@@ -39,6 +40,8 @@ export default function MlPilotPage() {
         <Card className="p-4 space-y-3">
           <p className="text-[12px] font-bold uppercase tracking-wide text-[#1f2430]">매퍼 설정</p>
           <Toggle checked={d.settings.enabled} onChange={v => patch({ enabled: v })} label="유사도 매핑 사용 (키워드로 못 잡은 프롬프트를 가장 가까운 템플릿으로)" />
+          <Toggle checked={d.settings.aiJudge} onChange={v => patch({ aiJudge: v })} label="AI 자동 판단 — 유사도로도 못 잡으면 Haiku 에게 '어느 템플릿인가'만 묻기 (호출당 약 ₩0.5, 생성 대비 1/1000)" />
+          <Toggle checked={d.settings.autoLearn} onChange={v => patch({ autoLearn: v })} label="자동 키워드 학습 — 매핑 성공 시 프롬프트의 핵심 표현을 템플릿 키워드에 자동 추가 (다음부턴 AI 판단 없이 즉시 매핑)" />
           <div><label className={labelCls}>임계값 (0.2 공격적 ~ 0.7 보수적)</label><div className="flex items-center gap-2"><input type="number" step={0.02} min={0.1} max={0.9} value={thr} onChange={e => setThr(Number(e.target.value))} className={input + ' !w-24'} /><button onClick={() => patch({ threshold: thr })} className={btn.primary}>저장</button></div></div>
           <p className="text-[11.5px] text-[#9aa1ad]">낮추면 더 많은 프롬프트가 템플릿으로 처리돼 원가가 줄지만 엉뚱한 게임이 나올 위험이 커져요. 아래 미매핑 프롬프트를 &ldquo;학습&rdquo;으로 키워드에 넣는 게 가장 안전한 방법.</p>
         </Card>

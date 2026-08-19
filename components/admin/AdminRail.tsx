@@ -42,6 +42,7 @@ export default function AdminRail() {
       ['/admin/mlpilot', 'MLPilot', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="6" cy="6" r="2.5" /><circle cx="18" cy="6" r="2.5" /><circle cx="6" cy="18" r="2.5" /><circle cx="18" cy="18" r="2.5" /><circle cx="12" cy="12" r="2.5" /><path d="M8 7.5l2.5 2.5M16 7.5l-2.5 2.5M8 16.5l2.5-2.5M16 16.5l-2.5-2.5" /></svg>, '#c084fc'],
     ] },
     { title: '시스템', items: [
+      ['/admin/legal', '약관 관리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M6 3h9l4 4v14H6Z" /><path d="M15 3v4h4M9 12h6M9 16h6M9 8h2" /></svg>],
       ['/admin/access', '접속 관리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 18V10M10 18V6M16 18v-4M22 18H2" /></svg>],
       ['/admin/logs', '에러 로그', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 9v4M12 17h.01M10.3 4.3 2.7 18a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z" /></svg>],
       ['/admin/security', '보안·서버', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3Z" /><path d="m9 12 2 2 4-4" /></svg>],
