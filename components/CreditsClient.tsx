@@ -198,7 +198,8 @@ export default function CreditsClient({ countryCode }: { countryCode: string | n
                     <span className="text-[#857a68] whitespace-nowrap">{new Date(h.created_at).toLocaleDateString()}</span>
                     <span className="flex-1 font-semibold text-[#241f17]">+{h.credits.toLocaleString()} 크레딧</span>
                     <span className="tabular-nums text-[#4a4337]">{money(h.amount_minor, h.currency)}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${h.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : h.status.startsWith('refund') ? 'bg-rose-50 text-rose-600' : 'bg-[#f1ece2] text-[#6b6152]'}`}>{h.status === 'completed' ? '완료' : h.status === 'refunded' ? '환불' : h.status === 'refund_pending' ? '환불 검토' : h.status}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${h.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : h.status.startsWith('refund') ? 'bg-rose-50 text-rose-600' : h.status === 'failed' ? 'bg-rose-50 text-rose-600' : 'bg-[#f1ece2] text-[#6b6152]'}`}>{h.status === 'completed' ? '완료' : h.status === 'refunded' ? '환불' : h.status === 'refund_pending' ? '환불 검토' : h.status === 'failed' ? '실패' : h.status}</span>
+                    {h.status === 'completed' && <a href={`/api/payments/receipt?id=${h.id}`} target="_blank" rel="noreferrer" className="text-[11.5px] text-[#2563eb] hover:underline whitespace-nowrap">영수증</a>}
                   </li>
                 ))}
               </ul>

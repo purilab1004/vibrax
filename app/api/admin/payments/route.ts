@@ -1,6 +1,6 @@
 // 관리자 결제 API — 목록/통계(GET), 환불 요청·수동 처리·동기화(POST)
 import { requireAdmin } from '@/lib/admin/guard'
-import { getCustomer, getTransaction, listTransactions, paddleConfigured, paddleDashboardUrl, requestFullRefund } from '@/lib/paddle/api'
+import { getCustomer, getInvoiceUrl, getTransaction, listTransactions, paddleConfigured, paddleDashboardUrl, requestFullRefund } from '@/lib/paddle/api'
 import { applyCompleted, applyFailed, applyRefund } from '@/lib/paddle/sync'
 
 export async function GET(req: Request) {
@@ -93,6 +93,11 @@ export async function POST(req: Request) {
       }
       return Response.json({ ok: true, synced: n })
     } catch (e) { return Response.json({ error: e instanceof Error ? e.message : '동기화 실패' }, { status: 500 }) }
+  }
+  if (b.action === 'invoice') {
+    if (!b.id) return Response.json({ error: 'bad request' }, { status: 400 })
+    if (!paddleConfigured()) return Response.json({ error: 'PADDLE_API_KEY 미설정', needKey: true }, { status: 400 })
+    try { const r = await getInvoiceUrl(b.id); return Response.json({ url: r.data.url }) } catch (e) { return Response.json({ error: e instanceof Error ? e.message : '영수증 조회 실패' }, { status: 500 }) }
   }
   if (b.action === 'sync_one') {
     if (!b.id) return Response.json({ error: 'bad request' }, { status: 400 })

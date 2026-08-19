@@ -165,6 +165,7 @@ export default function AdminPaymentsPage() {
                       <td className={td}><a href={r.dashboard_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="font-mono text-[11px] text-[#2563eb] hover:underline">{r.id.slice(0, 12)}…</a>{r.invoice_number && <p className="text-[11px] text-[#9aa1ad]">{r.invoice_number}</p>}</td>
                       <td className={td} onClick={e => e.stopPropagation()}>
                         <div className="flex gap-1.5 justify-end">
+                          {data.configured && r.status === 'completed' && <button onClick={async () => { const j = await act('invoice', r.id); if (j?.url) window.open(j.url, '_blank') }} className={btn.ghost + ' !h-8 !px-2.5'}>영수증</button>}
                           {r.status === 'completed' && <button onClick={() => { setRefunding(r); setReason('') }} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] font-medium text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">환불</button>}
                           <button onClick={() => openDetail(r)} className={btn.ghost + ' !h-8 !px-2.5'}>상세</button>
                         </div>
@@ -212,6 +213,7 @@ export default function AdminPaymentsPage() {
               ].map(([k, v], i) => <div key={i}><p className="text-[11px] font-semibold text-[#9aa1ad]">{k as string}</p><div className="text-[#1f2430] mt-0.5">{v as React.ReactNode}</div></div>)}
             </div>
             <div className="flex gap-2 flex-wrap">
+              {data.configured && ['completed', 'refunded', 'partially_refunded', 'refund_pending'].includes(detail.status) && <button disabled={busy} onClick={async () => { const j = await act('invoice', detail.id); if (j?.url) window.open(j.url, '_blank') }} className={btn.ghost + ' !h-8'}>영수증 (PDF)</button>}
               {data.configured && <button disabled={busy} onClick={async () => { const j = await act('sync_one', detail.id); if (j) say('Paddle 에서 최신 정보를 가져왔어요.') }} className={btn.ghost + ' !h-8'}>Paddle 에서 새로고침</button>}
               {(detail.status === 'refunded' || detail.status === 'chargeback') && <button disabled={busy} onClick={async () => { if (!confirm('환불 상태를 취소하고 회수한 크레딧을 다시 지급할까요?')) return; const j = await act('unrefund', detail.id); if (j) { say('환불을 철회했어요.'); setDetail(null) } }} className={btn.ghost + ' !h-8'}>환불 철회 (크레딧 재지급)</button>}
             </div>

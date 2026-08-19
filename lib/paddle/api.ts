@@ -30,6 +30,8 @@ export interface PaddleTransaction {
 
 export const getTransaction = (id: string) => call<{ data: PaddleTransaction }>(`/transactions/${id}?include=customer`)
 export const listTransactions = (after?: string) => call<{ data: PaddleTransaction[]; meta: { pagination: { has_more: boolean; next?: string } } }>(`/transactions?status=completed,past_due,ready,billed,canceled&per_page=100${after ? `&after=${after}` : ''}`)
+// 영수증(인보이스 PDF) — 완료된 트랜잭션만. 반환 URL 은 단기 유효
+export const getInvoiceUrl = (id: string) => call<{ data: { url: string } }>(`/transactions/${id}/invoice?disposition=inline`)
 export const getCustomer = (id: string) => call<{ data: { email?: string } }>(`/customers/${id}`)
 
 // 전체 환불 요청 — Paddle 이 검토 후 승인/거절 (adjustment.updated 웹훅으로 결과 수신)
