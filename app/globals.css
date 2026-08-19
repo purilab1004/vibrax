@@ -806,3 +806,7 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
   animation: aj-rays-spin 70s linear infinite, aj-rays-pulse 3.2s ease-in-out infinite;
 }
 .aj-halo::before { z-index: -1; } /* 후광은 빛줄기 위, 캐릭터 아래 */
+/* 아바타 드래그 이동 */
+.aj-drag { cursor: grab; touch-action: none; }
+.aj-drag:active { cursor: grabbing; }
+.aj-drag canvas { pointer-events: none; }

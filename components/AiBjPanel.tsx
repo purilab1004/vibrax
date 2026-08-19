@@ -70,6 +70,13 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
     return () => { window.removeEventListener('avatar:speaking', h); if (t) clearTimeout(t) }
   }, [])
   const avatarVisible = !!camera || speaking
+  // PC: 아바타 드래그로 위치 이동 (오프셋은 브라우저에 기억)
+  const [drag, setDrag] = useState<{ x: number; y: number }>(() => { try { const v = JSON.parse(localStorage.getItem('aj-avatar-pos') ?? 'null'); return v && typeof v.x === 'number' ? v : { x: 0, y: 0 } } catch { return { x: 0, y: 0 } } })
+  const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null)
+  const onDragStart = (e: React.PointerEvent) => { if (e.button !== 0) return; dragRef.current = { sx: e.clientX, sy: e.clientY, ox: drag.x, oy: drag.y, moved: false }; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }
+  const onDragMove = (e: React.PointerEvent) => { const d = dragRef.current; if (!d) return; const nx = d.ox + e.clientX - d.sx, ny = d.oy + e.clientY - d.sy; d.moved = true; setDrag({ x: Math.max(-(window.innerWidth - 220), Math.min(0, nx)), y: Math.max(-(window.innerHeight - 300), Math.min(0, ny)) }) }
+  const onDragEnd = () => { const d = dragRef.current; dragRef.current = null; if (d?.moved) { try { localStorage.setItem('aj-avatar-pos', JSON.stringify({ x: Math.min(0, d.ox), y: Math.min(0, d.oy) })) } catch { /* ignore */ } } }
+  useEffect(() => { try { localStorage.setItem('aj-avatar-pos', JSON.stringify(drag)) } catch { /* ignore */ } }, [drag])
 
   // 아바타를 데스크탑/모바일 한 곳에만 마운트하기 위한 뷰포트 감지
   const [isMobile, setIsMobile] = useState(() =>
@@ -352,8 +359,9 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
           </div>
         </div>
         {/* 우하단 — AJ 아바타 + 프로필 배지 */}
-        <div className="absolute right-4 bottom-4 w-[180px]">
-          <div className={`aj-stage ${camera ? 'aj-stage-cam' : ''} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '200px' }}>
+        <div className="absolute right-4 bottom-4 w-[180px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
+          <div className={`aj-stage aj-drag ${camera ? 'aj-stage-cam' : ''} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '200px' }}
+            onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
             {!isMobile && bjAvatar}
           </div>
           <div className="mt-2 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5">
