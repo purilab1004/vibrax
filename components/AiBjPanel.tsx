@@ -353,7 +353,7 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         </div>
         {/* 우하단 — AJ 아바타 + 프로필 배지 */}
         <div className="absolute right-4 bottom-4 w-[180px]">
-          <div className={`aj-stage ${camera ? 'aj-stage-cam' : ''} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '215px' }}>
+          <div className={`aj-stage ${camera ? 'aj-stage-cam' : ''} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '200px' }}>
             {!isMobile && bjAvatar}
           </div>
           <div className="mt-2 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5">

@@ -70,7 +70,7 @@ export default function JeumtoBjOverlay({ config }: { config: AvatarConfig | nul
         </div>
       )}
       {bubble && (
-        <div className="absolute left-1.5 right-1.5 top-1.5 pointer-events-none">
+        <div className="md:hidden absolute left-1.5 right-1.5 top-1.5 pointer-events-none">{/* PC 는 좌하단 채팅 피드가 있어 말풍선 생략 */}
           <div className="bg-black/75 border border-[#ddd3bf] rounded px-2 py-1 text-[10px] text-gray-100 leading-snug line-clamp-3">
             💬 {bubble}
           </div>
