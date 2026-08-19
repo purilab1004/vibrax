@@ -70,7 +70,19 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
     window.addEventListener('avatar:speaking', h)
     return () => { window.removeEventListener('avatar:speaking', h); if (t) clearTimeout(t) }
   }, [])
-  const avatarVisible = !!camera || speaking
+  // 아바타 게임 참여 — 스냅샷을 게임 iframe 에 postMessage, 무대의 아바타는 게임 속으로 빨려 들어가듯 사라진다. 복귀 가능.
+  const [joined, setJoined] = useState(false)
+  const [canJoin, setCanJoin] = useState(false)
+  const gameFrame = () => Array.from(document.querySelectorAll('iframe')).find(f => { try { return new URL(f.src, location.href).pathname.startsWith('/play/') } catch { return false } }) ?? null
+  useEffect(() => { const t = setTimeout(() => setCanJoin(!camera && !!gameFrame()), 800); return () => clearTimeout(t) }, [camera])
+  useEffect(() => {
+    const onSnap = (e: Event) => { const image = (e as CustomEvent<{ image: string }>).detail?.image; const f = gameFrame(); if (!image || !f?.contentWindow) return; f.contentWindow.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*'); setJoined(true) }
+    window.addEventListener('avatar:snapshot', onSnap)
+    return () => window.removeEventListener('avatar:snapshot', onSnap)
+  }, [bjLabel])
+  const joinGame = () => window.dispatchEvent(new CustomEvent('avatar:snapshot-request'))
+  const leaveGame = () => { gameFrame()?.contentWindow?.postMessage({ type: 'vibrex:avatar-remove' }, '*'); setJoined(false) }
+  const avatarVisible = (!!camera || speaking) && !joined
   // PC 채팅 접기 — 게임 버튼을 가릴 때 왼쪽으로 밀어 넣는다 (기억)
   const [chatOpen, setChatOpen] = useState(() => { try { return localStorage.getItem('aj-chat-open') !== '0' } catch { return true } })
   const toggleChat = () => setChatOpen(v => { try { localStorage.setItem('aj-chat-open', v ? '0' : '1') } catch { /* ignore */ } return !v })
@@ -378,9 +390,20 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         </button>
         {/* 우하단 — AJ 아바타 + 프로필 배지 */}
         <div className="absolute right-4 bottom-4 w-[180px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
-          <div className={`aj-stage aj-stage-desk aj-drag ${camera ? 'aj-stage-cam' : ''} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '200px' }}
+          <div className={`aj-stage aj-stage-desk aj-drag ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '200px' }}
             onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
             {!isMobile && bjAvatar}
+            {/* 말하는 중 — 머리 우측 위의 "…" 말풍선 (CSS/SVG) */}
+            {speaking && !camera && (
+              <div className="aj-typing" aria-hidden>
+                <svg viewBox="0 0 64 56" className="w-full h-full">
+                  <path d="M32 6c14.9 0 26 9 26 20.5S46.9 47 32 47c-2.1 0-4.2-.2-6.2-.5L14 53l2.4-10.8C9.9 38.4 6 32.8 6 26.5 6 15 17.1 6 32 6Z" fill="rgba(10,12,18,0.72)" stroke="#5bb8e6" strokeWidth="3.5" strokeLinejoin="round" />
+                  <circle cx="21" cy="27" r="3.6" fill="#5bb8e6" className="aj-dot" style={{ animationDelay: '0s' }} />
+                  <circle cx="32" cy="27" r="3.6" fill="#5bb8e6" className="aj-dot" style={{ animationDelay: '.18s' }} />
+                  <circle cx="43" cy="27" r="3.6" fill="#5bb8e6" className="aj-dot" style={{ animationDelay: '.36s' }} />
+                </svg>
+              </div>
+            )}
           </div>
           <div className="aj-drag mt-0.5 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
             <div className="avatar-ring"><div className="avatar-wave w-7 h-7 rounded-full overflow-hidden shrink-0">
@@ -392,6 +415,12 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
               LIVE
             </span>
           </div>
+          {canJoin && (
+            <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()}
+              className={`mt-1.5 w-full h-8 rounded-full text-[11.5px] font-bold tracking-wide border transition-colors ${joined ? 'bg-white/10 border-white/25 text-white hover:bg-white/20' : 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] border-transparent text-white hover:brightness-110'}`}>
+              {joined ? '↩ 아바타 복귀' : '🎮 아바타 게임 참여'}
+            </button>
+          )}
         </div>
       </div>
 

@@ -53,7 +53,12 @@ export default function JeumtoBjOverlay({ config }: { config: AvatarConfig | nul
       endTimer = setTimeout(end, ms + 400)
     }
     window.addEventListener('avatar:speak', handler)
-    return () => { window.removeEventListener('avatar:speak', handler); if (endTimer) clearTimeout(endTimer) }
+    // 게임 참여용 스냅샷 요청 — 투명 배경 PNG 를 만들어 돌려준다
+    const snap = () => {
+      try { const c = viewerRef.current?.snapshot(256, { blink: false, talk: false }); const image = c?.toDataURL('image/png'); if (image) window.dispatchEvent(new CustomEvent('avatar:snapshot', { detail: { image } })) } catch (e) { console.warn('[jeumto] snapshot failed', e) }
+    }
+    window.addEventListener('avatar:snapshot-request', snap)
+    return () => { window.removeEventListener('avatar:speak', handler); window.removeEventListener('avatar:snapshot-request', snap); if (endTimer) clearTimeout(endTimer) }
   }, [voice])
 
   return (
