@@ -21,6 +21,13 @@ function clientIp(request: NextRequest): string {
 }
 
 export async function proxy(request: NextRequest) {
+  // OAuth/매직링크 코드가 엉뚱한 경로(예: /?code=…)로 돌아오면 콜백 라우트로 보내 세션 교환
+  if (request.nextUrl.searchParams.has('code') && !request.nextUrl.pathname.startsWith('/auth/callback') && !request.nextUrl.pathname.startsWith('/api')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/callback'
+    url.searchParams.set('next', request.nextUrl.pathname === '/' ? '/' : request.nextUrl.pathname)
+    return NextResponse.redirect(url)
+  }
   const ua = request.headers.get('user-agent') ?? ''
   if (AI_BLOCK_UA.test(ua)) {
     return new NextResponse('Forbidden', { status: 403 })
