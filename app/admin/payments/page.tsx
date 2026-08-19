@@ -25,6 +25,15 @@ const STATUS: Record<string, { label: string; color: string }> = {
   completed: { label: '결제 완료', color: '#059669' }, refund_pending: { label: '환불 검토 중', color: '#f59e0b' }, refunded: { label: '환불됨', color: '#e11d48' },
   partially_refunded: { label: '부분 환불', color: '#db2777' }, chargeback: { label: '차지백', color: '#7c3aed' }, canceled: { label: '취소', color: '#857a68' }, failed: { label: '결제 실패', color: '#dc2626' },
 }
+// Paddle 결제 실패 코드 → 사람이 읽는 사유
+const FAIL_REASON: Record<string, string> = {
+  declined: '카드사 승인 거절 (한도·정지·해외결제 차단 등)', declined_not_retryable: '카드사 거절 — 재시도 불가',
+  insufficient_funds: '잔액 부족', invalid_card: '카드 정보 오류', expired_card: '만료된 카드', invalid_amount: '결제 금액 오류',
+  fraud: '부정거래 의심으로 차단', authentication_failed: '3D 인증(본인확인) 실패', authentication_required: '추가 인증 필요',
+  blocked_card: '정지된 카드', canceled: '고객이 결제 취소', system_error: 'PG 시스템 오류', transaction_not_permitted: '허용되지 않는 거래',
+  unknown: '알 수 없는 오류', psp_error: 'PG 처리 오류', already_canceled: '이미 취소됨', already_refunded: '이미 환불됨',
+}
+const failReason = (code: string | null | undefined) => code ? (FAIL_REASON[code] ?? code) : '-'
 const PACK: Record<string, string> = { small: 'Small · 100', medium: 'Medium · 450', large: 'Large · 1,250' }
 const money = (minor: number | null | undefined, cur: string | null | undefined) => {
   if (minor == null) return '—'
@@ -152,7 +161,7 @@ export default function AdminPaymentsPage() {
                       <td className={td}><p className="text-[#1f2430]">{PACK[r.pack_key ?? ''] ?? (r.pack_key ?? '크레딧')}</p><p className="text-[11.5px] text-[#9aa1ad]">+{r.credits.toLocaleString()} 크레딧{r.credits_revoked ? ' · 회수됨' : ''}</p></td>
                       <td className={`${td} text-right tabular-nums`}><p className="font-semibold text-[#1f2430]">{money(r.amount_minor, r.currency)}</p>{r.refunded_minor > 0 && <p className="text-[11px] text-[#e11d48]">−{money(r.refunded_minor, r.currency)}</p>}</td>
                       <td className={`${td} whitespace-nowrap`}>{r.payment_method ? <span className="capitalize">{r.card_brand ?? r.payment_method}{r.card_last4 ? ` ••${r.card_last4}` : ''}</span> : <span className="text-[#c4b9a2]">—</span>}</td>
-                      <td className={td}><Badge color={st.color}>{st.label}</Badge>{r.status === 'failed' && r.refund_reason && <p className="text-[10.5px] text-[#dc2626] mt-0.5 font-mono">{r.refund_reason}</p>}</td>
+                      <td className={td}><Badge color={st.color}>{st.label}</Badge>{r.status === 'failed' && r.refund_reason && <p className="text-[10.5px] text-[#dc2626] mt-0.5" title={r.refund_reason}>{failReason(r.refund_reason)}</p>}</td>
                       <td className={td}><a href={r.dashboard_url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="font-mono text-[11px] text-[#2563eb] hover:underline">{r.id.slice(0, 12)}…</a>{r.invoice_number && <p className="text-[11px] text-[#9aa1ad]">{r.invoice_number}</p>}</td>
                       <td className={td} onClick={e => e.stopPropagation()}>
                         <div className="flex gap-1.5 justify-end">
@@ -199,7 +208,7 @@ export default function AdminPaymentsPage() {
                 ['금액', money(detail.amount_minor, detail.currency)], ['환불액', detail.refunded_minor ? money(detail.refunded_minor, detail.currency) : '—'],
                 ['결제수단', detail.payment_method ? `${detail.card_brand ?? detail.payment_method}${detail.card_last4 ? ` ••${detail.card_last4}` : ''}` : '—'], ['인보이스', detail.invoice_number ?? '—'],
                 ['결제 일시', new Date(detail.billed_at ?? detail.created_at).toLocaleString()], ['환불 일시', detail.refunded_at ? new Date(detail.refunded_at).toLocaleString() : '—'],
-                ['환불 사유', detail.refund_reason ?? '—'], ['국가', detail.country ?? '—'],
+                [detail.status === 'failed' ? '실패 사유' : '환불 사유', detail.status === 'failed' ? `${failReason(detail.refund_reason)}${detail.refund_reason ? ` (${detail.refund_reason})` : ''}` : (detail.refund_reason ?? '—')], ['국가', detail.country ?? '—'],
               ].map(([k, v], i) => <div key={i}><p className="text-[11px] font-semibold text-[#9aa1ad]">{k as string}</p><div className="text-[#1f2430] mt-0.5">{v as React.ReactNode}</div></div>)}
             </div>
             <div className="flex gap-2 flex-wrap">
