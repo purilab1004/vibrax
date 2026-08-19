@@ -22,6 +22,7 @@ export default function AdminNav() {
     ['/admin/aj', 'AJ 랭킹'],
     ['/admin/payments', '결제 관리'],
     ['/admin/access', '접속 관리'],
+    ['/admin/security', '보안·서버'],
     ['/admin/logs', '에러 로그'],
     ['/admin/settings', a.navSettings],
     ['/admin/ads', 'AdPilot'],

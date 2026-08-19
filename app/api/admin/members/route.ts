@@ -1,5 +1,6 @@
 // 회원 관리 API (service role) — 생성 / 관리자 종류·정지 변경 / 삭제
 import { requireAdmin, SUPER_ADMIN_EMAILS } from '@/lib/admin/guard'
+import { logSecurity } from '@/lib/security/log'
 
 const isProtected = (email: string | null | undefined) => !!email && SUPER_ADMIN_EMAILS.includes(email)
 
@@ -46,6 +47,7 @@ export async function PATCH(req: Request) {
   if (!Object.keys(patch).length) return Response.json({ error: 'nothing to do' }, { status: 400 })
   const { error } = await g.admin.from('profiles').update(patch as never).eq('id', body.userId)
   if (error) return Response.json({ error: error.message }, { status: 500 })
+  void logSecurity('admin_action', { severity: 'info', headers: req.headers, userId: g.user.id, path: '/api/admin/members', detail: { action: 'patch', target: body.userId, patch } })
   return Response.json({ ok: true })
 }
 
@@ -62,5 +64,6 @@ export async function DELETE(req: Request) {
   if (pErr && !/does not exist|function/i.test(pErr.message)) return Response.json({ error: `데이터 정리 실패: ${pErr.message}` }, { status: 500 })
   const { error } = await g.admin.auth.admin.deleteUser(body.userId)
   if (error) return Response.json({ error: `계정 삭제 실패: ${error.message}` }, { status: 500 })
+  void logSecurity('admin_action', { severity: 'high', headers: req.headers, userId: g.user.id, path: '/api/admin/members', detail: { action: 'delete', target: body.userId } })
   return Response.json({ ok: true })
 }

@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { geoFromHeaders } from '@/lib/geo/track'
+import { ipHash, requestIp } from '@/lib/security/log'
 
 function parseUa(ua: string) {
   const device = /Mobi|Android|iPhone|iPad/i.test(ua) ? 'mobile' : 'desktop'
@@ -18,6 +19,6 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   const ua = req.headers.get('user-agent') ?? ''
   const g = geoFromHeaders(req.headers)
-  await createAdminClient().from('visits').insert([{ session_id: b.sid?.slice(0, 64) ?? null, user_id: user?.id ?? null, path: b.path.slice(0, 500), referrer: b.referrer?.slice(0, 500) || null, country: g.country, city: g.city, ...parseUa(ua) }] as never)
+  await createAdminClient().from('visits').insert([{ session_id: b.sid?.slice(0, 64) ?? null, user_id: user?.id ?? null, path: b.path.slice(0, 500), referrer: b.referrer?.slice(0, 500) || null, country: g.country, city: g.city, ip_hash: ipHash(requestIp(req.headers)), ...parseUa(ua) }] as never)
   return new Response(null, { status: 204 })
 }
