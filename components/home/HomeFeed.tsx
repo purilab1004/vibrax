@@ -26,9 +26,11 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
   useEffect(() => {
     const el = rootRef.current
     if (!el) return
-    const io = new IntersectionObserver((es) => setInFeed(es.some((e) => e.isIntersecting)), { rootMargin: '-40% 0px 0px 0px' })
-    io.observe(el)
-    return () => io.disconnect()
+    // 피드(카드 섹션)의 상단이 화면 위쪽 20% 안으로 올라왔을 때만 — 히어로/프롬프트 구간에선 상단 ☰ 메뉴와 겹치지 않게 숨김
+    const onScroll = () => { const r = el.getBoundingClientRect(); setInFeed(r.top <= window.innerHeight * 0.2 && r.bottom > 80) }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true }); window.addEventListener('resize', onScroll)
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll) }
   }, [])
   const pills = (close: () => void) => (
     <div className="inline-flex items-center gap-1.5 rounded-full bg-white/75 backdrop-blur-xl border border-[#ebe4d6] p-1.5">
