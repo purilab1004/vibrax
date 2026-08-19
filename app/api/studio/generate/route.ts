@@ -5,7 +5,9 @@ import { logServerError } from '@/lib/log/server'
 import { GENERATION_COST } from '@/lib/studio/constants'
 import { SYSTEM_PROMPT, buildMessages, type ChatTurn } from '@/lib/studio/prompt'
 import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER } from '@/lib/studio/parse'
-import { matchTemplate, templateOnly, extrasOf } from '@/lib/studio/templates'
+import { matchTemplate, templateOnly, extrasOf, TEMPLATES } from '@/lib/studio/templates'
+import { matchTemplateIn } from '@/lib/studio/template-match'
+import { loadDbTemplates, saveTemplateCandidate, bumpTemplateUse } from '@/lib/studio/db-templates'
 import { hardenHtml } from '@/lib/studio/harden'
 import { personalizeTemplate } from '@/lib/studio/personalize'
 import { logUsage } from '@/lib/llm/usage'
@@ -113,7 +115,9 @@ export async function POST(req: Request) {
   // ── 템플릿 엔진: 첫 생성이고 알려진 장르면 ──
   //   (a) 장르 이름뿐 → 템플릿을 그대로 1버전으로 저장 (LLM 호출 없음 — 크레딧은 동일하게 차감: 서비스 비용/유지)
   //   (b) 추가 요구가 있으면 → 템플릿을 베이스 HTML 로 두고 "수정" 만 생성 (from-scratch 보다 저렴)
-  const tmatch = !latest && images.length === 0 ? matchTemplate(prompt) : null
+  // 정적 템플릿 + 관리자 승인 DB 템플릿(처음 만들어진 게임들) 모두 매칭 대상
+  const tmatch = !latest && images.length === 0 ? (matchTemplate(prompt) ?? matchTemplateIn(await loadDbTemplates(), prompt)) : null
+  if (tmatch && !TEMPLATES.includes(tmatch.template)) void bumpTemplateUse(tmatch.template.slug)
   let baseHtml: string | null = latest?.html ?? null
   let effectivePrompt = prompt
   let templateNote = ''
@@ -243,6 +247,10 @@ export async function POST(req: Request) {
                 { project_id: projectId, role: 'assistant', content: parsed.description },
               ] as never)
               if (mErr) console.error('[studio/generate] messages insert failed', mErr)
+              if (nextVersion === 1 && !tmatch && images.length === 0) {
+                // 처음 만들어진 게임 → 템플릿 후보로 저장 (관리자 승인 후 재사용 → 다음부턴 LLM 비용 0)
+                void saveTemplateCandidate({ prompt, title: extractTitle(parsed.html), description: parsed.description, html: hardenHtml(parsed.html), projectId, userId: user.id })
+              }
               if (nextVersion === 1) {
                 const title = extractTitle(parsed.html)
                 if (title) {

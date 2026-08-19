@@ -18,9 +18,15 @@ const HUES = [0, 35, 70, 110, 150, 195, 240, 285, 320]
 export function personalizeTemplate(slug: string, html: string, seed: string): { html: string; title: string } {
   const v = VARIANTS[slug]
   const h = hashOf(seed)
-  if (!v) return { html, title: '' }
-  const pick = v.titles[h % v.titles.length]
   let out = html
+  if (!v) {
+    // DB 템플릿(변형 목록 없음): 색조만 살짝 다르게
+    const hue0 = HUES[(h >> 3) % HUES.length]
+    if (hue0 !== 0) { const css0 = `<style id="vx-theme">html{filter:hue-rotate(${hue0}deg) saturate(1.05)}</style>`; out = out.includes('</head>') ? out.replace('</head>', `${css0}</head>`) : css0 + out }
+    const t = out.match(/<title>([^<]*)<\/title>/i)?.[1] ?? ''
+    return { html: out, title: t }
+  }
+  const pick = v.titles[h % v.titles.length]
   // 표시 제목 치환 (영문 h1 이 있으면 영문 변형, 나머지는 한글)
   for (const token of v.replace) {
     const isEn = /^[A-Z0-9 ]+$/.test(token.replace(/[^\x00-\x7F]/g, ''))

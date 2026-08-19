@@ -17,6 +17,7 @@ export default function AdminNav() {
     ['/admin/notices', a.navNotices],
     ['/admin/members', a.navMembers],
     ['/admin/applications', a.navApplications],
+    ['/admin/templates', '템플릿'],
     ['/admin/aj', 'AJ 랭킹'],
     ['/admin/payments', '결제 관리'],
     ['/admin/access', '접속 관리'],
