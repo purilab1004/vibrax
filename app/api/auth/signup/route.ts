@@ -29,11 +29,14 @@ export async function POST(req: Request) {
   if (password.length < 6) return Response.json({ error: '비밀번호는 6자 이상이어야 해요.' }, { status: 400 })
 
   const admin = createAdminClient()
-  const { data: created, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true })
+  const consent = (typeof (body as { consent?: unknown }).consent === 'object' && (body as { consent?: unknown }).consent) ? (body as { consent: { marketing?: boolean } }).consent : null
+  const now = new Date().toISOString()
+  const { data: created, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { terms_agreed_at: now, marketing_opt_in: !!consent?.marketing } })
   if (error) {
     const msg = /already|exists|registered/i.test(error.message) ? '이미 가입된 이메일이에요. 로그인해 주세요.' : error.message
     return Response.json({ error: msg }, { status: /already|exists|registered/i.test(error.message) ? 409 : 400 })
   }
+  if (created?.user?.id) { await admin.from('profiles').update({ terms_agreed_at: now, marketing_opt_in: !!consent?.marketing, marketing_agreed_at: consent?.marketing ? now : null } as never).eq('id', created.user.id).then(() => {}, () => {}) }
   void trackGeo(req.headers, 'signup', created?.user?.id ?? null)
   return Response.json({ ok: true })
 }
