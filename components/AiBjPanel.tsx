@@ -71,6 +71,9 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
     return () => { window.removeEventListener('avatar:speaking', h); if (t) clearTimeout(t) }
   }, [])
   const avatarVisible = !!camera || speaking
+  // PC 채팅 접기 — 게임 버튼을 가릴 때 왼쪽으로 밀어 넣는다 (기억)
+  const [chatOpen, setChatOpen] = useState(() => { try { return localStorage.getItem('aj-chat-open') !== '0' } catch { return true } })
+  const toggleChat = () => setChatOpen(v => { try { localStorage.setItem('aj-chat-open', v ? '0' : '1') } catch { /* ignore */ } return !v })
   // 채팅 시간 경과 페이드 — 1초마다 갱신 (표시 후 CHAT_HOLD 동안 유지 → CHAT_FADE 동안 서서히 사라짐)
   const CHAT_HOLD = 14_000, CHAT_FADE = 8_000
   const [now, setNow] = useState(() => Date.now())
@@ -325,7 +328,8 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
     <>
       {/* ─── Desktop: 게임 위 오버레이 채팅 — 스트리밍 스타일, 위로 갈수록 자연스럽게 사라진다 ─── */}
       <div className="hidden md:block absolute inset-0 pointer-events-none z-10">
-        {/* 좌하단 메시지 스택 */}
+        {/* 좌하단 메시지 스택 (+ 입력) — 접으면 왼쪽으로 슬라이드 */}
+        <div className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)]" style={{ transform: chatOpen ? 'translateX(0)' : 'translateX(-400px)' }}>
         <div className="chat-fade absolute left-4 bottom-[74px] w-[360px] max-h-[58%] flex flex-col justify-end overflow-hidden">
           <div className="space-y-1.5">
             {messages.slice(-14).map((msg, i, arr) => (
@@ -365,6 +369,13 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
             >▶</button>
           </div>
         </div>
+        </div>
+        {/* 채팅 접기/펼치기 탭 — 입력창 높이에 맞춰 왼쪽 가장자리 */}
+        <button onClick={toggleChat} aria-label={chatOpen ? '채팅 접기' : '채팅 펼치기'} title={chatOpen ? '채팅 접기' : '채팅 펼치기'}
+          className="pointer-events-auto absolute bottom-[22px] h-8 w-6 rounded-r-md bg-black/55 backdrop-blur-md border border-l-0 border-white/15 text-white/80 hover:text-white hover:bg-black/75 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(.2,.8,.2,1)]"
+          style={{ left: chatOpen ? 376 : 0 }}>
+          <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 transition-transform duration-500 ${chatOpen ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+        </button>
         {/* 우하단 — AJ 아바타 + 프로필 배지 */}
         <div className="absolute right-4 bottom-4 w-[180px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
           <div className={`aj-stage aj-stage-desk aj-drag ${camera ? 'aj-stage-cam' : ''} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '200px' }}

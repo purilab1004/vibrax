@@ -814,3 +814,6 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
 .aj-drag { cursor: grab; touch-action: none; }
 .aj-drag:active { cursor: grabbing; }
 .aj-drag canvas { pointer-events: none; }
+/* 플레이 상단 한 줄 — 떠오르며 나타나고, 끝날 때 서서히 사라진다 */
+@keyframes playLine { 0% { opacity: 0; transform: translateY(6px); } 8% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; } }
+.play-line { animation: playLine 8s ease forwards; }

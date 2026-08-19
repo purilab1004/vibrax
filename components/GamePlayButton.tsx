@@ -11,8 +11,7 @@ import { useLiveBroadcasts, liveForGame } from '@/lib/live/useLiveBroadcasts'
 import { useGameTelemetry } from '@/lib/aj/telemetry'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 import AiBjPanel from './AiBjPanel'
-import LiveTitleTicker from './LiveTitleTicker'
-import LikeButton from './LikeButton'
+import PlayHeader from './PlayHeader'
 import { hasCoinTicket, ticketKeyOf } from './GameCard'
 
 interface Props {
@@ -135,23 +134,7 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
           className="fixed inset-0 z-[70] flex flex-col bg-black"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#ebe4d6] bg-[#fcfaf5] shrink-0">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <span className={`font-pixel text-[11px] px-2 py-1 text-white rounded shrink-0 ${genreColor}`}>
-                {genreLabel}
-              </span>
-              <LiveTitleTicker title={game.title} />
-            </div>
-            <div className="shrink-0 ml-3 bg-white rounded-full px-3 py-1.5 border border-[#ebe4d6]">
-              <LikeButton gameId={game.id} size="md" />
-            </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="shrink-0 ml-3 font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] transition-colors px-3 py-1 border border-[#ddd3bf] hover:border-[#2563eb]"
-            >
-              ✕ CLOSE
-            </button>
-          </div>
+          <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} />
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="flex-1 min-h-0 pb-[53px] md:pb-0">
               <iframe

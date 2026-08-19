@@ -6,9 +6,10 @@ import { createClient } from '@/lib/supabase/client'
 interface Props {
   gameId: string
   size?: 'sm' | 'md' | 'lg'
+  dark?: boolean   // 어두운 배경(유리 버튼) 위에서 흰색 톤
 }
 
-export default function LikeButton({ gameId, size = 'sm' }: Props) {
+export default function LikeButton({ gameId, size = 'sm', dark = false }: Props) {
   const [liked, setLiked] = useState(false)
   const [count, setCount] = useState(0)
   const [userId, setUserId] = useState<string | null>(null)
@@ -64,7 +65,7 @@ export default function LikeButton({ gameId, size = 'sm' }: Props) {
       className={`flex items-center gap-1 transition-colors disabled:cursor-default ${
         liked
           ? 'text-red-400'
-          : 'text-[#857a68] hover:text-red-400'
+          : dark ? 'text-white/90 hover:text-red-400' : 'text-[#857a68] hover:text-red-400'
       } ${!userId ? 'opacity-60' : ''}`}
     >
       <span className={iconSize}>{liked ? '♥' : '♡'}</span>
