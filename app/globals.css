@@ -567,8 +567,9 @@ body {
 
 /* 오버레이 채팅 — 위로 갈수록 메시지가 자연스럽게 사라진다 */
 .chat-fade {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 30%);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 30%);
+  /* 중간쯤부터 위로 갈수록 서서히 사라진다 */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.25) 25%, #000 55%);
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.25) 25%, #000 55%);
 }
 
 /* ABOUT 장면 — 뻐끔대는 입 (커졌다 작아졌다) */
@@ -767,8 +768,8 @@ body {
   will-change: opacity, transform;
 }
 .aj-stage > * {
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, rgba(0,0,0,0.6) 82%, transparent 100%), radial-gradient(ellipse 70% 60% at 50% 40%, #000 60%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 62%, rgba(0,0,0,0.6) 82%, transparent 100%), radial-gradient(ellipse 70% 60% at 50% 40%, #000 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 74%, rgba(0,0,0,0.6) 90%, transparent 100%), radial-gradient(ellipse 72% 64% at 50% 52%, #000 62%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 74%, rgba(0,0,0,0.6) 90%, transparent 100%), radial-gradient(ellipse 72% 64% at 50% 52%, #000 62%, transparent 100%);
   -webkit-mask-composite: source-in; mask-composite: intersect;
 }
 .aj-stage::after { /* 하단의 은은한 원형 글로우 (아바타 발치) */
@@ -806,6 +807,9 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
   animation: aj-rays-spin 70s linear infinite, aj-rays-pulse 3.2s ease-in-out infinite;
 }
 .aj-halo::before { z-index: -1; } /* 후광은 빛줄기 위, 캐릭터 아래 */
+/* PC: 캐릭터를 무대 아래쪽(네임 배지 바로 위)으로 내린다 */
+.aj-stage-desk .aj-halo { transform: translateY(17%); }
+
 /* 아바타 드래그 이동 */
 .aj-drag { cursor: grab; touch-action: none; }
 .aj-drag:active { cursor: grabbing; }

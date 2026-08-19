@@ -17,6 +17,7 @@ interface Message {
   content: string
   source?: 'user' | 'agent'
   agentName?: string
+  ts?: number   // 표시 시각 — 시간이 지나면 위에서부터 서서히 사라진다
 }
 
 interface AgentConfig {
@@ -70,6 +71,11 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
     return () => { window.removeEventListener('avatar:speaking', h); if (t) clearTimeout(t) }
   }, [])
   const avatarVisible = !!camera || speaking
+  // 채팅 시간 경과 페이드 — 1초마다 갱신 (표시 후 CHAT_HOLD 동안 유지 → CHAT_FADE 동안 서서히 사라짐)
+  const CHAT_HOLD = 14_000, CHAT_FADE = 8_000
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => { const iv = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(iv) }, [])
+  const ageOpacity = (ts?: number) => { if (!ts) return 1; const a = now - ts; if (a < CHAT_HOLD) return 1; return Math.max(0, 1 - (a - CHAT_HOLD) / CHAT_FADE) }
   // PC: 아바타 드래그로 위치 이동 (오프셋은 브라우저에 기억)
   const [drag, setDrag] = useState<{ x: number; y: number }>(() => { try { const v = JSON.parse(localStorage.getItem('aj-avatar-pos') ?? 'null'); return v && typeof v.x === 'number' ? v : { x: 0, y: 0 } } catch { return { x: 0, y: 0 } } })
   const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null)
@@ -136,11 +142,12 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         content: prompt,
         source: agentName ? 'agent' : 'user',
         agentName,
+        ts: Date.now(),
       }])
     }
 
     setIsStreaming(true)
-    setMessages(prev => [...prev, { role: 'assistant', content: '' }])
+    setMessages(prev => [...prev, { role: 'assistant', content: '', ts: Date.now() }])
 
     try {
       const res = await fetch('/api/ai-bj/chat', {
@@ -322,8 +329,8 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         <div className="chat-fade absolute left-4 bottom-[74px] w-[360px] max-h-[58%] flex flex-col justify-end overflow-hidden">
           <div className="space-y-1.5">
             {messages.slice(-14).map((msg, i, arr) => (
-              <div key={i} className="flex items-start gap-2">
-                <div className="max-w-full text-[13px] leading-relaxed px-3 py-1.5 rounded-2xl backdrop-blur-[3px] text-white shadow-[0_1px_4px_rgba(0,0,0,0.3)] bg-black/45">
+              <div key={i} className="flex items-start gap-2 transition-opacity duration-1000" style={{ opacity: ageOpacity(msg.ts) }}>
+                <div className="max-w-full text-[13px] leading-relaxed px-3 py-1.5 rounded-2xl text-white shadow-[0_1px_4px_rgba(0,0,0,0.4)] bg-black/85">
                   <span className={`font-bold mr-1.5 ${
                     msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'
                   }`}>
@@ -360,11 +367,11 @@ export default function AiBjPanel({ genre, gameTitle, gameDescription, agentConf
         </div>
         {/* 우하단 — AJ 아바타 + 프로필 배지 */}
         <div className="absolute right-4 bottom-4 w-[180px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
-          <div className={`aj-stage aj-drag ${camera ? 'aj-stage-cam' : ''} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '200px' }}
+          <div className={`aj-stage aj-stage-desk aj-drag ${camera ? 'aj-stage-cam' : ''} ${avatarVisible ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: '200px' }}
             onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
             {!isMobile && bjAvatar}
           </div>
-          <div className="aj-drag mt-2 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
+          <div className="aj-drag mt-0.5 flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full px-2.5 py-1.5" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} title="드래그해서 위치 이동">
             <div className="avatar-ring"><div className="avatar-wave w-7 h-7 rounded-full overflow-hidden shrink-0">
               <Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={28} height={28} className={`w-full h-full object-cover ${bjPic ? 'avatar-bob object-top' : ''}`} unoptimized />
             </div></div>
