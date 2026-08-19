@@ -699,7 +699,7 @@ function BillingSection({ userId }: { userId: string }) {
     supabase.from('credit_ledger').select('id,amount,reason,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(50).then(({ data }) => setLedger((data as typeof ledger) ?? []))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])
-  const money = (m: number | null, c: string | null) => m == null ? '—' : new Intl.NumberFormat('en-US', { style: 'currency', currency: c ?? 'USD' }).format(m / 100)
+  const money = (m: number | null, c: string | null) => { if (m == null) return '—'; const cc = (c ?? 'USD').toUpperCase(); const zero = ['KRW', 'JPY', 'VND', 'CLP', 'ISK', 'HUF', 'TWD'].includes(cc); return new Intl.NumberFormat(cc === 'KRW' ? 'ko-KR' : 'en-US', { style: 'currency', currency: cc, minimumFractionDigits: zero ? 0 : 2 }).format(zero ? m : m / 100) }
   const PACK: Record<string, string> = { small: 'Starter · 100', medium: 'Creator · 450', large: 'Studio · 1,250' }
   const ST: Record<string, [string, string]> = { completed: ['완료', 'bg-emerald-50 text-emerald-600'], refunded: ['환불', 'bg-rose-50 text-rose-600'], partially_refunded: ['부분 환불', 'bg-rose-50 text-rose-600'], refund_pending: ['환불 검토', 'bg-amber-50 text-amber-600'], failed: ['실패', 'bg-rose-50 text-rose-600'], canceled: ['취소', 'bg-[#f1ece2] text-[#6b6152]'], chargeback: ['차지백', 'bg-rose-50 text-rose-600'] }
   const REASON: Record<string, string> = { purchase: '크레딧 구매', generation: '게임 생성·수정', refund: '생성 실패 환불', signup_bonus: '가입 보너스', admin_adjust: '관리자 조정', purchase_refund: '결제 환불 회수', chargeback: '차지백 회수' }

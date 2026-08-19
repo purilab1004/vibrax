@@ -123,7 +123,7 @@ export default function CreditsClient({ countryCode }: { countryCode: string | n
       .then(({ data }) => setHistory((data as typeof history) ?? []))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])
-  const money = (minor: number | null, cur: string | null) => minor == null ? '—' : new Intl.NumberFormat('en-US', { style: 'currency', currency: cur ?? 'USD' }).format(minor / 100)
+  const money = (minor: number | null, cur: string | null) => { if (minor == null) return '—'; const c = (cur ?? 'USD').toUpperCase(); const zero = ['KRW', 'JPY', 'VND', 'CLP', 'ISK', 'HUF', 'TWD'].includes(c); return new Intl.NumberFormat(c === 'KRW' ? 'ko-KR' : 'en-US', { style: 'currency', currency: c, minimumFractionDigits: zero ? 0 : 2 }).format(zero ? minor : minor / 100) }
 
   return (
     <div className="relative overflow-hidden">

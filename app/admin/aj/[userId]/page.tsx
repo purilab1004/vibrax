@@ -141,7 +141,7 @@ export default async function AdminAjDetail({ params }: { params: Promise<{ user
             </div>
             <div>
               <p className="text-[12px] font-semibold text-[#6b7280] mb-1.5">크레딧 결제</p>
-              {pay.length === 0 ? <p className="text-[#9aa1ad]">없음</p> : <ul className="space-y-1">{pay.map(x => <li key={x.id} className="flex items-center gap-2"><span className="text-[#1f2430]">+{x.credits} 크레딧</span><span className="text-[#6b7280]">{x.amount_minor != null ? `${(x.amount_minor / 100).toFixed(2)} ${x.currency}` : ''}</span><Badge color={x.status === 'completed' ? '#059669' : '#e11d48'}>{x.status}</Badge><span className="ml-auto text-[11px] text-[#9aa1ad]">{new Date(x.created_at).toLocaleDateString()}</span></li>)}</ul>}
+              {pay.length === 0 ? <p className="text-[#9aa1ad]">없음</p> : <ul className="space-y-1">{pay.map(x => <li key={x.id} className="flex items-center gap-2"><span className="text-[#1f2430]">+{x.credits} 크레딧</span><span className="text-[#6b7280]">{x.amount_minor != null ? (['KRW','JPY'].includes((x.currency ?? '').toUpperCase()) ? `${x.amount_minor.toLocaleString()} ${x.currency}` : `${(x.amount_minor / 100).toFixed(2)} ${x.currency}`) : ''}</span><Badge color={x.status === 'completed' ? '#059669' : '#e11d48'}>{x.status}</Badge><span className="ml-auto text-[11px] text-[#9aa1ad]">{new Date(x.created_at).toLocaleDateString()}</span></li>)}</ul>}
             </div>
             <div>
               <p className="text-[12px] font-semibold text-[#6b7280] mb-1.5">LLM 사용 (종류별)</p>
