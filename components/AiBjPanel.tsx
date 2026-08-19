@@ -76,6 +76,10 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   }, [])
   // 아바타 게임 참여 — 스냅샷을 게임 iframe 에 postMessage, 무대의 아바타는 게임 속으로 빨려 들어가듯 사라진다. 복귀 가능.
   const [joined, setJoined] = useState(false)
+  const joinedRef = useRef(false); useEffect(() => { joinedRef.current = joined }, [joined])
+  const policyRef = useRef<{ version: number; rules: unknown[]; summary: string | null } | null>(null)
+  const manifestRef = useRef<Record<string, unknown> | null>(null)
+  useEffect(() => { const h = (e: MessageEvent) => { const d = e.data as { type?: string; manifest?: Record<string, unknown> } | null; if (d?.type === 'vibrex:manifest') manifestRef.current = d.manifest ?? null }; window.addEventListener('message', h); return () => window.removeEventListener('message', h) }, [])
   const [canJoin, setCanJoin] = useState(false)
   const gameFrame = () => Array.from(document.querySelectorAll('iframe')).find(f => { try { return new URL(f.src, location.href).pathname.startsWith('/play/') } catch { return false } }) ?? null
   useEffect(() => { const t = setTimeout(() => setCanJoin(!camera && !!gameFrame()), 800); return () => clearTimeout(t) }, [camera])
@@ -96,7 +100,13 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
         }
       } catch { /* ignore */ }
       const win = f.contentWindow
-      setTimeout(() => { win.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*'); win.postMessage({ type: 'vibrex:autopilot', on: true }, '*') }, 700)
+      setTimeout(async () => {
+        win.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*')
+        // 이전에 가르친 정책이 있으면 먼저 주입 (세션이 바뀌어도 학습 유지)
+        if (gameId) { try { const r = await fetch(`/api/ai-bj/coach?gameId=${gameId}`); const j = await r.json(); if (j.policy) { policyRef.current = j.policy; win.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*') } } catch { /* ignore */ } }
+        win.postMessage({ type: 'vibrex:autopilot', on: true }, '*')
+        win.postMessage({ type: 'vibrex:manifest-request' }, '*')
+      }, 700)
       setJoined(true)
     }
     window.addEventListener('avatar:snapshot', onSnap)
@@ -280,6 +290,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       if (isStreamingRef.current && !urgent) return
       lastEvtAt.current = now
       const score = typeof data?.score === 'number' ? data.score : null
+      if (joinedRef.current && gameId && score != null && (name === 'over' || name === 'clear')) fetch('/api/ai-bj/coach', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId, score }) }).catch(() => {})
       const prompt = name === 'start' ? `"${gameTitle}" 플레이 시작! 한마디로 응원.` : name === 'over' ? `게임오버${score != null ? ` (점수 ${score})` : ''}. 먼저 공감 한 문장, 그다음 다시 하자고 짧게.` : name === 'clear' ? `드디어 최종 클리어!${score != null ? ` 최종 점수 ${score}.` : ''} 축하와 감탄, 성취를 한껏 띄워줘.` : name === 'level' ? `레벨/스테이지 업${data?.level != null ? ` (${String(data.level)})` : ''}! 짧게 환호.` : name === 'combo' ? '콤보 터졌다! 짧고 신나게.' : name === 'fail' ? '아쉬운 실수. 짧게 위로하고 팁 하나.' : `점수 ${score ?? ''} 돌파! 짧게 반응.`
       streamAj(prompt, false, true, undefined, `event_${name === 'over' ? 'over' : name === 'clear' ? 'clear' : name === 'level' ? 'level' : name === 'combo' ? 'combo' : name === 'fail' ? 'fail' : name === 'start' ? 'start' : 'score'}`)
     }
@@ -309,9 +320,27 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     }
   }, [streamAj, runAgentTurn, gameTitle, agentConfig])
 
+  // 내 AI 가 대신 플레이 중일 때 말을 걸면 = 코칭. 조언을 정책으로 컴파일해 봇에 주입하고, AJ 가 배운 내용을 답한다.
+  const coach = async (text: string) => {
+    setMessages(prev => [...prev, { role: 'user', content: text, source: 'user', ts: Date.now() }, { role: 'assistant', content: '', ts: Date.now() }])
+    setIsStreaming(true)
+    const put = (c: string) => setMessages(prev => { const u = [...prev]; u[u.length - 1] = { ...u[u.length - 1], content: c }; return u })
+    try {
+      const r = await fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId, message: text, manifest: manifestRef.current, genre, gameTitle }) })
+      const j = await r.json()
+      if (!r.ok || !j.policy) { put('음… 그건 아직 못 배우겠어. 다르게 말해줄래?'); return }
+      policyRef.current = j.policy
+      gameFrame()?.contentWindow?.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*')
+      const n = Array.isArray(j.policy.rules) ? j.policy.rules.length : 0
+      const reply = `${j.policy.summary ?? '알았어, 반영했어!'} (학습 v${j.policy.version}${n ? ` · 규칙 ${n}개` : ''})`
+      put(reply)
+      window.dispatchEvent(new CustomEvent('avatar:speak', { detail: { text: j.policy.summary ?? reply } }))
+    } catch { put('잠깐 끊겼어! 다시 말해줘 💫') } finally { setIsStreaming(false) }
+  }
   const sendMessage = async (text: string) => {
     if (!text.trim() || isStreaming) return
     setInput('')
+    if (joinedRef.current && gameId) { await coach(text.trim()); return }
     await streamAj(text, true)
   }
 
@@ -418,7 +447,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
-              placeholder="AJ에게 말걸기..."
+              placeholder={joined ? "AI에게 가르치기… (예: 공이 오른쪽이면 미리 오른쪽으로)" : "AJ에게 말걸기..."}
               disabled={isStreaming}
               className="flex-1 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none disabled:opacity-50"
             />

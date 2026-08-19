@@ -1,0 +1,17 @@
+create table if not exists public.aj_play_policies (
+  id uuid primary key default gen_random_uuid(),
+  game_id uuid not null,
+  user_id uuid not null,
+  version int not null default 1,
+  tips text[] not null default '{}',
+  rules jsonb not null default '[]',
+  params jsonb not null default '{}',
+  summary text,
+  best_score int,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (game_id, user_id)
+);
+alter table public.aj_play_policies enable row level security;
+drop policy if exists aj_play_policies_own on public.aj_play_policies;
+create policy aj_play_policies_own on public.aj_play_policies for all to authenticated using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
