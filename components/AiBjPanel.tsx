@@ -60,6 +60,8 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const bjAvatar = camera ? <LiveView live={camera} /> : <JeumtoBjOverlay config={stageConfig} />
   // 하단 BJ 프로필 — 제작자 에이전트 이름 + 아바타(없으면 AJ 페르소나 fallback)
   const bjLabel = myAvatarConfig ? (agentConfig?.name?.trim() || bjName?.trim() || persona.name) : (bjName?.trim() || persona.name)
+  // 채팅에서 AJ(스트리머) 표기 — 게임을 만든 회원의 닉네임 (없을 때만 장르 페르소나)
+  const ajChatName = bjName?.trim() || persona.name
   const bjPic = stageConfig?.previewUrl ?? null
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -95,7 +97,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   }, [gameId])
   const [canJoin, setCanJoin] = useState(false)
   const gameFrame = () => Array.from(document.querySelectorAll('iframe')).find(f => { try { return new URL(f.src, location.href).pathname.startsWith('/play/') } catch { return false } }) ?? null
-  useEffect(() => { const t = setTimeout(() => setCanJoin(!camera && !!gameFrame()), 800); return () => clearTimeout(t) }, [camera])
+  useEffect(() => { if (camera) { setCanJoin(false); return } const iv = setInterval(() => { const ok = !!gameFrame(); setCanJoin(prev => (prev === ok ? prev : ok)) }, 700); return () => clearInterval(iv) }, [camera])
   useEffect(() => {
     const onSnap = (e: Event) => {
       const image = (e as CustomEvent<{ image: string }>).detail?.image; const f = gameFrame(); if (!image || !f?.contentWindow) return
@@ -371,7 +373,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
                   <span className={`font-bold mr-1.5 ${
                     msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'
                   }`}>
-                    {msg.role === 'assistant' ? persona.name : msg.source === 'agent' ? (msg.agentName ?? 'AGENT') : agentConfig?.name ?? 'ME'}
+                    {msg.role === 'assistant' ? ajChatName : msg.source === 'agent' ? (msg.agentName ?? 'AGENT') : agentConfig?.name ?? 'ME'}
                   </span>
                   {msg.content}
                   {msg.role === 'assistant' && isStreaming && i === arr.length - 1 && (
@@ -459,7 +461,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
               {messages.slice(-10).map((msg, i) => (
                 <div key={i} className="flex transition-opacity duration-1000" style={{ opacity: ageOpacity(msg.ts) }}>
                   <div className="max-w-full text-[12px] leading-snug px-2.5 py-1 rounded-2xl text-white bg-black/80 shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
-                    <span className={`font-bold mr-1 ${msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'}`}>{msg.role === 'assistant' ? persona.name : msg.source === 'agent' ? (msg.agentName ?? 'AGENT') : agentConfig?.name ?? 'ME'}</span>{msg.content}
+                    <span className={`font-bold mr-1 ${msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'}`}>{msg.role === 'assistant' ? ajChatName : msg.source === 'agent' ? (msg.agentName ?? 'AGENT') : agentConfig?.name ?? 'ME'}</span>{msg.content}
                   </div>
                 </div>
               ))}
