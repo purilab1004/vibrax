@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-interface Row { game_id: string; version: number; rules: unknown[]; tips: string[]; best_score: number | null; auto_learn?: boolean; auto_count?: number; template_skill?: number; episodes?: { v: number; score: number }[]; demos?: unknown[]; updated_at: string; games: { title: string; genre: string; thumbnail_url: string | null } | null }
+interface Curriculum { total: number; learned: number; steps: { name: string; done: boolean }[]; next: string | null; needEpisodes: number; readyAt: string | null }
+interface Row { game_id: string; version: number; rules: unknown[]; tips: string[]; best_score: number | null; auto_learn?: boolean; auto_count?: number; template_skill?: number; episodes?: { v: number; score: number }[]; demos?: unknown[]; updated_at: string; curriculum?: Curriculum | null; games: { title: string; genre: string; thumbnail_url: string | null } | null }
 const GENRE: Record<string, { label: string; color: string; difficulty: number; why: string }> = {
   action: { label: 'ACTION', color: '#dc2626', difficulty: 2, why: '반사 규칙 위주 — 빨리 배움' },
   sports: { label: 'SPORTS', color: '#059669', difficulty: 2, why: '타이밍·위치 규칙' },
@@ -28,10 +29,12 @@ export default function AiLearningSection() {
   const [logs, setLogs] = useState<LearnLog[] | null>(null)
   const [missing, setMissing] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
+  const [openSteps, setOpenSteps] = useState<string | null>(null)
   const learnFromDemo = async (gameId: string) => { setBusy(gameId); try { const r = await fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'learnFromDemo', gameId }) }); const j = await r.json(); if (r.ok && j.policy) setRows(rs => (rs ?? []).map(x => x.game_id === gameId ? { ...x, version: j.policy.version, rules: j.policy.rules, tips: j.policy.tips } : x)); else alert(j.error ?? '실패') } finally { setBusy(null) } }
   useEffect(() => {
-    createClient().from('aj_play_policies').select('game_id,version,rules,tips,best_score,auto_learn,auto_count,template_skill,episodes,demos,updated_at,games(title,genre,thumbnail_url)').order('updated_at', { ascending: false }).limit(200)
-      .then(({ data, error }) => { if (error) { setMissing(true); setRows([]) } else setRows((data as unknown as Row[]) ?? []) })
+    fetch('/api/ai-bj/learning').then(r => r.json())
+      .then(j => { if (j.error) { setMissing(true); setRows([]) } else setRows((j.rows as Row[]) ?? []) })
+      .catch(() => { setMissing(true); setRows([]) })
     createClient().from('aj_learn_log').select('*').order('created_at', { ascending: false }).limit(40).then(({ data }) => setLogs((data as LearnLog[] | null) ?? []))
   }, [])
   if (rows === null) return <div className="h-28 rounded-xl bg-[#f6f2ea] animate-pulse" />
@@ -97,7 +100,21 @@ export default function AiLearningSection() {
           {rows.map(r => { const g = GENRE[r.games?.genre ?? 'action'] ?? GENRE.action; const n = Array.isArray(r.rules) ? r.rules.length : 0; return (
             <li key={r.game_id} className="flex items-center gap-3 py-2.5">
               <div className="w-12 h-8 rounded-md overflow-hidden bg-[#f1ece2] shrink-0">{r.games?.thumbnail_url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={r.games.thumbnail_url} alt="" className="w-full h-full object-cover" />}</div>
-              <div className="min-w-0 flex-1"><Link href={`/games/${r.game_id}`} className="text-[13.5px] font-semibold text-[#241f17] hover:text-[#2563eb] truncate block">{r.games?.title ?? '게임'}</Link><p className="text-[11px] text-[#9d9280] truncate">{r.tips?.slice(-1)[0] ? `최근 가르침: ${r.tips.slice(-1)[0]}` : '가르친 내용 없음'}</p></div>
+              <div className="min-w-0 flex-1">
+                <Link href={`/games/${r.game_id}`} className="text-[13.5px] font-semibold text-[#241f17] hover:text-[#2563eb] truncate block">{r.games?.title ?? '게임'}</Link>
+                <p className="text-[11px] text-[#9d9280] truncate">{r.tips?.slice(-1)[0] ? `최근 가르침: ${r.tips.slice(-1)[0]}` : '가르친 내용 없음'}</p>
+                {r.curriculum && (
+                  <button onClick={() => setOpenSteps(openSteps === r.game_id ? null : r.game_id)} className="mt-1 flex items-center gap-1.5 w-full max-w-[280px] group">
+                    <div className="flex-1 h-1.5 rounded-full bg-[#f1ece2] overflow-hidden"><div className="h-full rounded-full bg-[#2563eb] transition-all" style={{ width: `${Math.round(r.curriculum.learned / r.curriculum.total * 100)}%` }} /></div>
+                    <span className="shrink-0 text-[10.5px] font-bold text-[#2563eb] tabular-nums group-hover:underline">기본기 {r.curriculum.learned}/{r.curriculum.total} {openSteps === r.game_id ? '▴' : '▾'}</span>
+                  </button>
+                )}
+                {r.curriculum && openSteps === r.game_id && (
+                  <ol className="mt-1.5 space-y-0.5">
+                    {r.curriculum.steps.map((st, i) => <li key={i} className={`text-[11px] flex items-center gap-1.5 ${st.done ? 'text-[#059669]' : 'text-[#9d9280]'}`}><span>{st.done ? '✓' : '○'}</span>{i + 1}. {st.name}{!st.done && i === r.curriculum!.learned && <span className="text-[#2563eb] font-semibold">← 다음{r.curriculum!.needEpisodes > 0 ? ` (플레이 ${r.curriculum!.needEpisodes}판 더)` : r.curriculum!.readyAt && new Date(r.curriculum!.readyAt) > new Date() ? ` (${new Date(r.curriculum!.readyAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 이후)` : ' (다음 판에 학습)'}</span>}</li>)}
+                  </ol>
+                )}
+              </div>
               <span className="font-pixel text-[8px] px-1.5 py-0.5 rounded text-white shrink-0" style={{ background: g.color }}>{g.label}</span>
               <div className="text-right shrink-0"><p className="text-[12.5px] font-bold text-[#241f17] tabular-nums">학습 v{r.version} · 규칙 {n}{(r.template_skill ?? 0) > 0 ? ` · 기본기 ${r.template_skill}단계` : ''}{(r.auto_count ?? 0) > 0 ? ` · 자동 ${r.auto_count}` : ''}</p><p className="text-[11px] text-[#9d9280] tabular-nums">{r.best_score != null ? `최고 ${r.best_score.toLocaleString()}점` : '기록 없음'} · XP {xpOf(r)}{Array.isArray(r.demos) && r.demos.length > 0 ? ` · 내 플레이 ${r.demos.length}샘플` : ''}</p>
                 {Array.isArray(r.demos) && r.demos.length >= 20 && <button onClick={() => learnFromDemo(r.game_id)} disabled={busy === r.game_id} className="mt-1 h-6 px-2 rounded-full bg-[#241f17] text-white text-[10.5px] font-bold disabled:opacity-50">{busy === r.game_id ? '학습 중…' : '내 플레이로 학습'}</button>}</div>
