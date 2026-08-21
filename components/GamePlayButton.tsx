@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { playSrc } from '@/lib/game-src'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -140,10 +141,11 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="flex-1 min-h-0 pb-[53px] md:pb-0">
               <iframe
-                src={game.play_url}
+                src={playSrc(game)}
                 className="w-full h-full border-0"
                 allow="fullscreen; autoplay"
                 title={game.title}
+                onError={(e) => { const f = e.currentTarget; if (f.src !== game.play_url) f.src = game.play_url }}
               />
             </div>
             {isGuest ? (

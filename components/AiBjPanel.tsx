@@ -101,56 +101,44 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const gameFrame = () => Array.from(document.querySelectorAll('iframe')).find(f => { try { return new URL(f.src, location.href).pathname.startsWith('/play/') } catch { return false } }) ?? null
   const anyFrame = () => document.querySelector('iframe')
   const [companion, setCompanion] = useState<{ image: string } | null>(null)
+  const ackRef = useRef(false)
   useEffect(() => { const iv = setInterval(() => { const ok = !camera && !!anyFrame(); setCanJoin(prev => (prev === ok ? prev : ok)) }, 700); return () => clearInterval(iv) }, [camera])
+  useEffect(() => { const h = (e: MessageEvent) => { if ((e.data as { type?: string })?.type === 'vibrex:avatar-received') ackRef.current = true }; window.addEventListener('message', h); return () => window.removeEventListener('message', h) }, [])
+  const flyInto = (image: string, target: DOMRect, opts: { spin?: boolean; scale?: number }) => {
+    try {
+      const stage = document.querySelector('.aj-stage-desk') as HTMLElement | null
+      const from = stage?.getBoundingClientRect(); if (!from) return
+      const img = document.createElement('img'); img.src = image; img.alt = ''
+      const size = Math.min(from.width, from.height) * 0.8
+      img.style.cssText = `position:fixed;left:${from.left + from.width / 2 - size / 2}px;top:${from.top + from.height / 2 - size / 2}px;width:${size}px;height:${size}px;object-fit:contain;z-index:100000;pointer-events:none;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));transition:transform .85s cubic-bezier(.4,0,.2,1),opacity .85s ease;`
+      document.body.appendChild(img)
+      requestAnimationFrame(() => requestAnimationFrame(() => { const dx = target.left + target.width / 2 - (from.left + from.width / 2), dy = target.top + target.height / 2 - (from.top + from.height / 2); img.style.transform = `translate(${dx}px, ${dy}px) scale(${opts.scale ?? 0.25})${opts.spin ? ' rotate(360deg)' : ''}`; img.style.opacity = '0' }))
+      setTimeout(() => img.remove(), 950)
+    } catch { /* ignore */ }
+  }
   useEffect(() => {
     const onSnap = (e: Event) => {
       const image = (e as CustomEvent<{ image: string }>).detail?.image; if (!image) return
-      const f = gameFrame()
-      if (!f?.contentWindow) {
-        // 외부 게임 — 동반 모드: 아바타가 화면 위로 날아와 함께 관전·응원
-        const tgt = anyFrame(); if (!tgt) return
-        try {
-          const stage = document.querySelector('.aj-stage-desk') as HTMLElement | null
-          const from = stage?.getBoundingClientRect(), to = tgt.getBoundingClientRect()
-          if (from && to) {
-            const img = document.createElement('img'); img.src = image; img.alt = ''
-            const size = Math.min(from.width, from.height) * 0.8
-            img.style.cssText = `position:fixed;left:${from.left + from.width / 2 - size / 2}px;top:${from.top + from.height / 2 - size / 2}px;width:${size}px;height:${size}px;object-fit:contain;z-index:100000;pointer-events:none;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));transition:transform .85s cubic-bezier(.4,0,.2,1),opacity .85s ease;`
-            document.body.appendChild(img)
-            requestAnimationFrame(() => requestAnimationFrame(() => { const dx = to.left + to.width / 2 - (from.left + from.width / 2); const dy = to.top + to.height - 150 - (from.top + from.height / 2); img.style.transform = `translate(${dx}px, ${dy}px) scale(.5)`; img.style.opacity = '0' }))
-            setTimeout(() => img.remove(), 950)
-          }
-        } catch { /* ignore */ }
-        setTimeout(() => setCompanion({ image }), 700)
-        setJoined(true)
-        return
-      }
-      // 전환 연출 — 아바타 스냅샷이 무대에서 게임 화면 중앙으로 날아가 빨려 들어간다
-      try {
-        const stage = document.querySelector('.aj-stage-desk') as HTMLElement | null
-        const from = stage?.getBoundingClientRect(), to = f.getBoundingClientRect()
-        if (from && to) {
-          const img = document.createElement('img'); img.src = image; img.alt = ''
-          const size = Math.min(from.width, from.height) * 0.8
-          img.style.cssText = `position:fixed;left:${from.left + from.width / 2 - size / 2}px;top:${from.top + from.height / 2 - size / 2}px;width:${size}px;height:${size}px;object-fit:contain;z-index:100000;pointer-events:none;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));transition:transform .85s cubic-bezier(.4,0,.2,1),opacity .85s ease;`
-          document.body.appendChild(img)
-          requestAnimationFrame(() => requestAnimationFrame(() => { const dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top + to.height / 2 - (from.top + from.height / 2); img.style.transform = `translate(${dx}px, ${dy}px) scale(.25) rotate(360deg)`; img.style.opacity = '0' }))
-          setTimeout(() => img.remove(), 950)
-        }
-      } catch { /* ignore */ }
-      const win = f.contentWindow
+      const f = gameFrame(); const tgt = f ?? anyFrame(); if (!tgt) return
+      const rect = tgt.getBoundingClientRect()
+      flyInto(image, rect, { spin: true })
+      ackRef.current = false
+      const win = f?.contentWindow
       setTimeout(async () => {
-        win.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*')
-        // 이전에 가르친 정책이 있으면 먼저 주입 (세션이 바뀌어도 학습 유지)
-        if (gameId) { try { const r = await fetch(`/api/ai-bj/coach?gameId=${gameId}`); const j = await r.json(); if (j.policy) { policyRef.current = j.policy; win.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*') } } catch { /* ignore */ } }
-        win.postMessage({ type: 'vibrex:autopilot', on: true }, '*')
-        win.postMessage({ type: 'vibrex:manifest-request' }, '*')
+        if (win) {
+          win.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*')
+          if (gameId) { try { const r = await fetch(`/api/ai-bj/coach?gameId=${gameId}`); const j = await r.json(); if (j.policy) { policyRef.current = j.policy; win.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*') } } catch { /* ignore */ } }
+          win.postMessage({ type: 'vibrex:autopilot', on: true }, '*')
+          win.postMessage({ type: 'vibrex:manifest-request' }, '*')
+        }
+        setJoined(true)
+        // 브리지가 심어졌으면(우리 오리진·프록시 성공) ack 가 온다 → 진짜 AI 참여. 안 오면(순수 외부) 동반 모드로 표시.
+        setTimeout(() => { if (!ackRef.current) setCompanion({ image }); else setCompanion(null) }, 1200)
       }, 700)
-      setJoined(true)
     }
     window.addEventListener('avatar:snapshot', onSnap)
     return () => window.removeEventListener('avatar:snapshot', onSnap)
-  }, [bjLabel])
+  }, [bjLabel, gameId])
   const joinGame = () => window.dispatchEvent(new CustomEvent('avatar:snapshot-request'))
   const leaveGame = () => { const w = gameFrame()?.contentWindow; w?.postMessage({ type: 'vibrex:autopilot', on: false }, '*'); w?.postMessage({ type: 'vibrex:avatar-remove' }, '*'); setCompanion(null); setJoined(false) }
   const avatarVisible = (!!camera || speaking) && !joined

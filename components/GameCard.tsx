@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic'
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { playSrc } from '@/lib/game-src'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -866,10 +867,11 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="flex-1 min-h-0 pb-[53px] md:pb-0">
               <iframe
-                src={game.play_url}
+                src={playSrc(game)}
                 className="w-full h-full border-0"
                 allow="fullscreen; autoplay"
                 title={game.title}
+                onError={(e) => { const f = e.currentTarget; if (f.src !== game.play_url) f.src = game.play_url }}
               />
             </div>
             <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} myAvatarConfig={myAvatarConfig} bjName={creatorName} bjLive={liveForGame(liveMap, game.id)} />
