@@ -52,6 +52,30 @@ const GENRE_CURRICULUM: Record<string, BotSkill[]> = {
   adventure: TEMPLATE_CURRICULUM.runner,
   strategy: TEMPLATE_CURRICULUM.tetris,
 }
+// 관리자 추가 커리큘럼(DB) — 내장 뒤에 이어붙는다. 60초 캐시.
+let dbCache: { at: number; v: Record<string, BotSkill[]> } | null = null
+export function invalidateCurriculum() { dbCache = null }
+async function loadDbCurriculum(): Promise<Record<string, BotSkill[]>> {
+  if (dbCache && Date.now() - dbCache.at < 60_000) return dbCache.v
+  try {
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const { data } = await createAdminClient().from('aj_bot_curriculum').select('template_key,step_order,name,hint,enabled').eq('enabled', true).order('step_order').limit(500)
+    const v: Record<string, BotSkill[]> = {}
+    for (const r of (data ?? []) as { template_key: string; name: string; hint: string }[]) (v[r.template_key] ??= []).push({ name: r.name, hint: r.hint })
+    dbCache = { at: Date.now(), v }; return v
+  } catch { return {} }
+}
+/** 내장 + 관리자 추가분 합쳐서 반환 (관리자 단계는 내장 뒤에 이어짐 = 심화 과정) */
+export async function curriculumForAsync(templateSlug: string | null | undefined, genre: string | null | undefined, gameId?: string | null): Promise<{ key: string; skills: BotSkill[] } | null> {
+  const db = await loadDbCurriculum()
+  const base = curriculumFor(templateSlug, genre)
+  const key = base?.key ?? (templateSlug && db[templateSlug] ? templateSlug : genre && db[`genre:${genre}`] ? `genre:${genre}` : null)
+  const creator = gameId ? db[`game:${gameId}`] ?? [] : []   // 제작자가 등록한 이 게임 전용 가이드 — 다른 유저의 AJ 도 이 단계를 배운다
+  const skills = [...(key ? base?.skills ?? [] : []), ...(key ? db[key] ?? [] : []), ...creator]
+  if (!skills.length) return null
+  return { key: key ?? `game:${gameId}`, skills }
+}
+export const BUILTIN_CURRICULUM = TEMPLATE_CURRICULUM
 export function curriculumFor(templateSlug: string | null | undefined, genre: string | null | undefined): { key: string; skills: BotSkill[] } | null {
   if (templateSlug) { const k = Object.keys(TEMPLATE_CURRICULUM).find(k2 => templateSlug.includes(k2)); if (k) return { key: k, skills: TEMPLATE_CURRICULUM[k] } }
   if (genre && GENRE_CURRICULUM[genre]) return { key: `genre:${genre}`, skills: GENRE_CURRICULUM[genre] }

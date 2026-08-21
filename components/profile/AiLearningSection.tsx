@@ -20,14 +20,19 @@ const tierNeed = (i: number) => Math.round(60 * Math.pow(1.28, i))   // 1→2 �
 const tierOf = (xp: number) => { let t = 0, acc = 0; while (t < TIERS.length - 1 && xp >= acc + tierNeed(t)) { acc += tierNeed(t); t++ } return { tier: t, into: xp - acc, need: tierNeed(t), maxed: t === TIERS.length - 1 } }
 const xpOf = (r: Row) => r.version * 10 + (Array.isArray(r.rules) ? r.rules.length : 0) * 6 + (r.template_skill ?? 0) * 15 + (r.best_score && r.best_score > 0 ? 12 : 0)
 
+interface LearnLog { id: string; game_id: string | null; kind: string; title: string; detail: string | null; version: number | null; created_at: string }
+const LOG_KIND: Record<string, [string, string]> = { curriculum: ['기본기', '#2563eb'], coach: ['프롬프트 코칭', '#7c3aed'], demo: ['내 플레이 모방', '#0891b2'], reflect: ['자기 반성', '#059669'], revert: ['복귀', '#f59e0b'] }
+
 export default function AiLearningSection() {
   const [rows, setRows] = useState<Row[] | null>(null)
+  const [logs, setLogs] = useState<LearnLog[] | null>(null)
   const [missing, setMissing] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const learnFromDemo = async (gameId: string) => { setBusy(gameId); try { const r = await fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'learnFromDemo', gameId }) }); const j = await r.json(); if (r.ok && j.policy) setRows(rs => (rs ?? []).map(x => x.game_id === gameId ? { ...x, version: j.policy.version, rules: j.policy.rules, tips: j.policy.tips } : x)); else alert(j.error ?? '실패') } finally { setBusy(null) } }
   useEffect(() => {
     createClient().from('aj_play_policies').select('game_id,version,rules,tips,best_score,auto_learn,auto_count,template_skill,episodes,demos,updated_at,games(title,genre,thumbnail_url)').order('updated_at', { ascending: false }).limit(200)
       .then(({ data, error }) => { if (error) { setMissing(true); setRows([]) } else setRows((data as unknown as Row[]) ?? []) })
+    createClient().from('aj_learn_log').select('*').order('created_at', { ascending: false }).limit(40).then(({ data }) => setLogs((data as LearnLog[] | null) ?? []))
   }, [])
   if (rows === null) return <div className="h-28 rounded-xl bg-[#f6f2ea] animate-pulse" />
   const byGenre: Record<string, { xp: number; games: number }> = {}
@@ -98,6 +103,20 @@ export default function AiLearningSection() {
                 {Array.isArray(r.demos) && r.demos.length >= 20 && <button onClick={() => learnFromDemo(r.game_id)} disabled={busy === r.game_id} className="mt-1 h-6 px-2 rounded-full bg-[#241f17] text-white text-[10.5px] font-bold disabled:opacity-50">{busy === r.game_id ? '학습 중…' : '내 플레이로 학습'}</button>}</div>
             </li>) })}
         </ul>
+      )}
+      {/* 학습 기록 — 언제 무엇을 배웠는지 (기본기/코칭/모방/자기 반성) */}
+      {logs && logs.length > 0 && (
+        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
+          <p className="text-[12px] font-bold uppercase tracking-wide text-[#857a68] mb-2">학습 기록</p>
+          <ul className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+            {logs.map(l => { const [lb, c] = LOG_KIND[l.kind] ?? [l.kind, '#6b7280']; const g = rows?.find(r => r.game_id === l.game_id); return (
+              <li key={l.id} className="flex items-start gap-2 text-[12px]">
+                <span className="shrink-0 mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold text-white" style={{ background: c }}>{lb}</span>
+                <span className="min-w-0 flex-1 text-[#374151]"><b className="text-[#241f17]">{l.title}</b>{g?.games?.title ? <span className="text-[#9d9280]"> · {g.games.title}</span> : null}{l.detail ? <span className="block text-[11px] text-[#9d9280] truncate">{l.detail}</span> : null}</span>
+                <span className="shrink-0 text-[10.5px] text-[#9d9280] tabular-nums">{new Date(l.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}{l.version ? ` · v${l.version}` : ''}</span>
+              </li>) })}
+          </ul>
+        </div>
       )}
     </div>
   )

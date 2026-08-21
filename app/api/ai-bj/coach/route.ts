@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit, tooMany, isSafeCond } from '@/lib/security/ratelimit'
-import { curriculumFor } from '@/lib/studio/bot-curriculum'
+import { curriculumForAsync } from '@/lib/studio/bot-curriculum'
 
 interface Manifest { title?: string; goal?: string; clearCondition?: string; controls?: { input: string; action: string }[]; inputs?: string[]; stateKeys?: string[]; sample?: Record<string, unknown> }
 interface Policy { version: number; tips: string[]; rules: { cond: string; action: string; hold?: number; why?: string }[]; params: Record<string, number>; summary: string | null }
@@ -58,6 +58,7 @@ ${demoSummary((prev as unknown as { demos?: Demo[] } | null)?.demos)}
   const row = { game_id: b.gameId, user_id: user.id, version: out.version, tips: out.tips, rules: out.rules, params: out.params, summary: out.summary, updated_at: new Date().toISOString() }
   const { error } = prev ? await admin.from('aj_play_policies').update(row as never).eq('id', prev.id) : await admin.from('aj_play_policies').insert([row] as never)
   if (error) return Response.json({ error: error.message }, { status: 500 })
+  void logLearn(admin, user.id, b.gameId, b.action === 'learnFromDemo' ? 'demo' : 'coach', b.action === 'learnFromDemo' ? '내 플레이(데모)로 학습' : `코칭: ${b.message!.trim().slice(0, 60)}`, out.summary ?? '', out.version)
   return Response.json({ ok: true, policy: out })
 }
 
@@ -103,10 +104,14 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
     const game = gm as { genre: string | null; studio_project_id: string | null } | null
     let slug: string | null = null
     if (game?.studio_project_id) { const { data: pm } = await admin.from('prompt_mappings').select('template_slug').eq('project_id', game.studio_project_id).not('template_slug', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle(); slug = (pm as { template_slug: string | null } | null)?.template_slug ?? null }
-    return curriculumFor(slug, game?.genre ?? b.genre ?? null)
+    return curriculumForAsync(slug, game?.genre ?? b.genre ?? null, gameId)
   })().catch(() => null)
   const skillIdx = rowX.template_skill ?? 0
-  if (row.auto_learn && cu && skillIdx < cu.skills.length && totalEps >= (skillIdx + 1) * 2 && process.env.ANTHROPIC_API_KEY) {
+  // 시간차 학습 — 단계 사이 최소 1시간 (실제 사람이 배우듯 천천히)
+  const SKILL_INTERVAL_MS = 3600_000
+  const lastSkillAt = (row as unknown as { last_skill_at?: string | null }).last_skill_at
+  const skillReady = !lastSkillAt || Date.now() - new Date(lastSkillAt).getTime() >= SKILL_INTERVAL_MS
+  if (row.auto_learn && cu && skillIdx < cu.skills.length && totalEps >= (skillIdx + 1) * 2 && skillReady && process.env.ANTHROPIC_API_KEY) {
     const skill = cu.skills[skillIdx]
     const m0 = b.manifest ?? {}
     const sk = (m0.stateKeys ?? (m0.sample ? Object.keys(m0.sample) : [])).slice(0, 40)
@@ -125,8 +130,9 @@ state() 키: ${sk.join(', ')}  예시 값: ${m0.sample ? JSON.stringify(m0.sampl
         const rules = (Array.isArray(j.rules) ? j.rules : []).filter(r => r && typeof r.cond === 'string' && typeof r.action === 'string' && isSafeCond(r.cond) && inp.includes(r.action)).slice(0, 12).map(r => ({ cond: r.cond.slice(0, 200), action: r.action, hold: Math.max(30, Math.min(1500, Number(r.hold ?? 100))), why: String(r.why ?? `[기본기] ${skill.name}`).slice(0, 80) }))
         if (rules.length) {
           const pol: Policy = { version: row.version + 1, tips: row.tips, rules, params: row.params, summary: `기본기 ${skillIdx + 1}단계 "${skill.name}" 배웠어!` }
-          Object.assign(patch, { version: pol.version, rules: pol.rules, summary: pol.summary, template_skill: skillIdx + 1 })
+          Object.assign(patch, { version: pol.version, rules: pol.rules, summary: pol.summary, template_skill: skillIdx + 1, last_skill_at: new Date().toISOString() })
           changed = { policy: pol, note: 'curriculum' }
+          void logLearn(admin, userId, gameId, 'curriculum', `기본기 ${skillIdx + 1}단계 · ${skill.name}`, skill.hint, pol.version)
         }
       } catch { /* ignore */ }
     }
@@ -144,6 +150,7 @@ state() 키: ${sk.join(', ')}  예시 값: ${m0.sample ? JSON.stringify(m0.sampl
       const pol: Policy = { version: row.version + 1, tips: row.tips, rules: row.best_rules, params: row.params, summary: `새 시도가 별로라 잘되던 방식(평균 ${Math.round(bestAvg)}점)으로 돌아갔어` }
       Object.assign(patch, { version: pol.version, rules: pol.rules, summary: pol.summary, auto_count: (row.auto_count ?? 0) + 1 })
       changed = { policy: pol, note: 'revert' }
+      void logLearn(admin, userId, gameId, 'revert', '잘되던 방식으로 복귀', `최근 평균이 최고 평균보다 낮아 이전 규칙으로 되돌림`, pol.version)
     } else if (process.env.ANTHROPIC_API_KEY && stateKeys.length && inputs.length) {
       try {
         const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -166,6 +173,7 @@ ${demoSummary((row as unknown as { demos?: Demo[] }).demos)}
           const pol: Policy = { version: row.version + 1, tips: row.tips, rules, params, summary: typeof j.summary === 'string' ? j.summary.slice(0, 120) : '스스로 조금 더 배웠어' }
           Object.assign(patch, { version: pol.version, rules: pol.rules, params: pol.params, summary: pol.summary, auto_count: (row.auto_count ?? 0) + 1 })
           changed = { policy: pol, note: 'improve' }
+          void logLearn(admin, userId, gameId, 'reflect', '자기 반성 개선', pol.summary ?? '', pol.version)
         }
       } catch { /* ignore */ }
     }
@@ -203,4 +211,8 @@ function demoSummary(demos: Demo[] | null | undefined): string {
   }
   if (!lines.length) return ''
   return `[인간 플레이 데모 요약 — 사람이 어떤 상태에서 어떤 입력을 눌렀는지] 이 통계를 참고해 사람 스타일을 따라하는 규칙을 우선 만든다:\n${lines.join('\n')}`
+}
+
+async function logLearn(admin: ReturnType<typeof createAdminClient>, userId: string, gameId: string, kind: string, title: string, detail: string, version: number) {
+  try { await admin.from('aj_learn_log').insert([{ game_id: gameId, user_id: userId, kind, title: title.slice(0, 120), detail: detail.slice(0, 500) || null, version }] as never) } catch { /* ignore */ }
 }

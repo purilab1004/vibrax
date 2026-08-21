@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/admin/guard'
 import { loadTalkSettings, saveTalkSettings, invalidateTalkKb, SITUATIONS, EMOTIONS, RULE_KINDS, SITUATION_LABEL, EMOTION_LABEL } from '@/lib/mlpilot/talk'
 import { parseCsv, csvToExamples, labelTranscript, mdToRulesAndExamples, saveExamples } from '@/lib/mlpilot/ingest'
 import { isAuto, logAutomation } from '@/lib/automation'
+import { BUILTIN_CURRICULUM, invalidateCurriculum } from '@/lib/studio/bot-curriculum'
 import { randomBytes } from 'node:crypto'
 
 export const maxDuration = 300
@@ -22,6 +23,7 @@ export async function GET(req: Request) {
     if (error) return Response.json({ error: error.message, missing: /does not exist|schema cache/i.test(error.message) }, { status: 500 })
     return Response.json({ rows: data ?? [] })
   }
+  if (tab === 'curriculum') { const { data, error } = await A.from('aj_bot_curriculum').select('*').order('template_key').order('step_order'); if (error) return Response.json({ error: error.message, missing: /does not exist|schema cache/i.test(error.message) }, { status: 500 }); return Response.json({ rows: data ?? [], builtin: Object.fromEntries(Object.entries(BUILTIN_CURRICULUM).map(([k, v]) => [k, v.map(x => x.name)])) }) }
   if (tab === 'rules') { const { data, error } = await A.from('aj_talk_rules').select('*').order('priority', { ascending: false }).order('created_at', { ascending: false }); if (error) return Response.json({ error: error.message }, { status: 500 }); return Response.json({ rows: data ?? [] }) }
   if (tab === 'sources') { const { data, error } = await A.from('aj_talk_sources').select('*').order('created_at', { ascending: false }).limit(200); if (error) return Response.json({ error: error.message }, { status: 500 }); return Response.json({ rows: data ?? [] }) }
   if (tab === 'feedback') { const { data, error } = await A.from('aj_talk_feedback').select('*').order('created_at', { ascending: false }).limit(300); if (error) return Response.json({ error: error.message }, { status: 500 }); return Response.json({ rows: data ?? [] }) }
@@ -94,6 +96,14 @@ export async function POST(req: Request) {
         const { error } = await A.from('aj_talk_rules').insert([{ scope: r.scope || 'global', genre: r.genre || null, game_id: r.game_id || null, kind: r.kind || 'style', title: r.title || null, content: r.content.trim(), priority: r.priority ?? 0, enabled: true, created_by: g.user.id }] as never)
         if (error) throw error; invalidateTalkKb(); return Response.json({ ok: true })
       }
+      case 'addSkill': {
+        const r = b.skill as { template_key: string; name: string; hint: string; step_order?: number }
+        if (!r?.template_key?.trim() || !r.name?.trim() || !r.hint?.trim()) return Response.json({ error: '템플릿 키·이름·내용 필수' }, { status: 400 })
+        const { error } = await A.from('aj_bot_curriculum').insert([{ template_key: r.template_key.trim(), name: r.name.trim().slice(0, 60), hint: r.hint.trim().slice(0, 500), step_order: r.step_order ?? 100, created_by: g.user.id }] as never)
+        if (error) throw error; invalidateCurriculum(); return Response.json({ ok: true })
+      }
+      case 'deleteSkill': { const { error } = await A.from('aj_bot_curriculum').delete().eq('id', String(b.id)); if (error) throw error; invalidateCurriculum(); return Response.json({ ok: true }) }
+      case 'toggleSkill': { const { error } = await A.from('aj_bot_curriculum').update({ enabled: !!b.enabled } as never).eq('id', String(b.id)); if (error) throw error; invalidateCurriculum(); return Response.json({ ok: true }) }
       case 'rotateKey': { const key = 'mlp_' + randomBytes(24).toString('base64url'); await saveTalkSettings({ ingestKey: key }); return Response.json({ ok: true, key }) }
       case 'learn': {
         // 학습: 피드백 신호로 예시 품질 갱신 + 고성과 발화를 예시 후보로 승격

@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
 import { PageHeader, Card, Badge, Segmented, Skeleton, Toggle, Toast, Modal, ConfirmModal, btn, input, label as labelCls, th, td, trHover, Pager, usePager } from '@/components/admin/ui'
 
-type Tab = 'overview' | 'examples' | 'rules' | 'upload' | 'connect' | 'feedback' | 'mapping'
+type Tab = 'overview' | 'examples' | 'rules' | 'curriculum' | 'upload' | 'connect' | 'feedback' | 'mapping'
 interface Meta { situations: string[]; emotions: string[]; ruleKinds: string[]; situationLabel: Record<string, string>; emotionLabel: Record<string, string> }
 interface Overview { settings: { enabled: boolean; maxExamples: number; maxRuleChars: number; logSample: number; ingestKey: string | null; hasKey: boolean; labelModel: string }; counts: { examples: number; approved: number; pending: number; rules: number; feedback: number; feedback7: number }; bySituation: Record<string, number>; byEmotion: Record<string, number>; byGenre: Record<string, number>; sources: Source[]; meta: Meta }
 interface Example { id: string; source: string; genre: string | null; situation: string; emotion: string | null; trigger_text: string | null; utterance: string; lang: string | null; tags: string[]; quality: number; approved: boolean; uses: number; created_at: string }
@@ -38,7 +38,7 @@ export default function MlPilotPage() {
   useEffect(() => { const t = setTimeout(loadOv, 0); return () => clearTimeout(t) }, [loadOv])
   const header = <PageHeader title="MLPilot" badge={<span className="inline-flex items-center rounded px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-white" style={{ background: '#7c3aed' }}>AJ Talk Engine</span>}
     desc="AJ 가 게임·상황·감정·상대 말투에 맞게 말하도록 대화 데이터를 축적하고 학습하는 엔진. 인간 BJ 대사, CSV, MD 가이드, 외부 자동화(n8n) 로 데이터를 넣으면 AJ 프롬프트에 상황별 예시·규칙으로 주입되고, 피드백으로 품질이 갱신됩니다."
-    actions={<Segmented value={tab} onChange={setTab} options={[{ value: 'overview', label: '개요' }, { value: 'examples', label: `예시 ${ov ? ov.counts.examples : ''}` }, { value: 'rules', label: `규칙 ${ov ? ov.counts.rules : ''}` }, { value: 'upload', label: '업로드' }, { value: 'connect', label: '연결' }, { value: 'feedback', label: '피드백' }, { value: 'mapping', label: '템플릿 매핑' }]} />} />
+    actions={<Segmented value={tab} onChange={setTab} options={[{ value: 'overview', label: '개요' }, { value: 'examples', label: `예시 ${ov ? ov.counts.examples : ''}` }, { value: 'rules', label: `규칙 ${ov ? ov.counts.rules : ''}` }, { value: 'curriculum', label: '봇 기본기' }, { value: 'upload', label: '업로드' }, { value: 'connect', label: '연결' }, { value: 'feedback', label: '피드백' }, { value: 'mapping', label: '템플릿 매핑' }]} />} />
   if (tab === 'mapping') return <div>{header}<AutoPanel module="mlpilot" /><MappingTab /></div>
   if (err) return <div>{header}<Card className="p-6 text-[13px] text-[#6b7280]">{err.missing ? <>AJ 대화 학습 테이블이 없어요. <code>db/migrations/2026-08-19-mlpilot-talk.sql</code> 을 실행하세요.</> : err.msg}</Card></div>
   if (!ov) return <div>{header}<Skeleton rows={6} /></div>
@@ -49,6 +49,7 @@ export default function MlPilotPage() {
       {tab === 'overview' && <OverviewTab ov={ov} reload={loadOv} say={say} />}
       {tab === 'examples' && <ExamplesTab meta={ov.meta} say={say} reload={loadOv} />}
       {tab === 'rules' && <RulesTab meta={ov.meta} say={say} reload={loadOv} />}
+      {tab === 'curriculum' && <CurriculumTab say={say} />}
       {tab === 'upload' && <UploadTab ov={ov} say={say} reload={loadOv} />}
       {tab === 'connect' && <ConnectTab ov={ov} say={say} reload={loadOv} />}
       {tab === 'feedback' && <FeedbackTab meta={ov.meta} say={say} />}
@@ -302,5 +303,55 @@ function FeedbackTab({ meta, say }: { meta: Meta; say: (m: string) => void }) {
             </tr>))}</tbody></table><Pager {...pager} /></div>
       )}
     </Card>
+  )
+}
+
+function CurriculumTab({ say }: { say: (m: string) => void }) {
+  interface CurRow { id: string; template_key: string; game_id: string | null; step_order: number; name: string; hint: string; enabled: boolean }
+  const [rows, setRows] = useState<CurRow[] | null>(null)
+  const [builtin, setBuiltin] = useState<Record<string, string[]>>({})
+  const [f, setF] = useState({ template_key: 'tetris', name: '', hint: '', step_order: 100 })
+  const load = useCallback(async () => { const r = await fetch('/api/admin/mlpilot/talk?tab=curriculum'); const j = await r.json(); setRows(j.rows ?? []); setBuiltin(j.builtin ?? {}) }, [])
+  useEffect(() => { const t = setTimeout(load, 0); return () => clearTimeout(t) }, [load])
+  const KEYS = [...Object.keys(builtin), 'genre:action', 'genre:sports', 'genre:adventure', 'genre:strategy']
+  const add = async () => { const r = await api('POST', { action: 'addSkill', skill: f }); if (r.ok) { say('추가했어요.'); setF({ ...f, name: '', hint: '' }); load() } else say(r.error ?? '실패') }
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-3">
+      <Card className="overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-[#e3e6ec] text-[12px] font-bold uppercase tracking-wide text-[#1f2430]">봇 기본기 커리큘럼 — 템플릿이 보유한 정석 지식</div>
+        <p className="px-4 pt-3 text-[12.5px] text-[#6b7280]">내장 단계(코드) 뒤에 여기서 추가한 단계가 심화 과정으로 이어져요. 회원별 AJ 는 2판 + 1시간 간격으로 한 단계씩 배웁니다. 제작자가 자기 게임에 등록한 가이드(game:*)도 여기 보여요.</p>
+        <div className="p-4 space-y-3">
+          {Object.entries(builtin).map(([k, names]) => (
+            <div key={k}>
+              <p className="text-[12px] font-bold text-[#1f2430]">{k} <span className="text-[#9aa1ad] font-normal">내장 {names.length}단계</span></p>
+              <p className="text-[11.5px] text-[#6b7280]">{names.map((n, i) => `${i + 1}.${n}`).join(' → ')}</p>
+              {(rows ?? []).filter(r => r.template_key === k).map((r, i) => (
+                <div key={r.id} className={`mt-1 flex items-start gap-2 text-[12px] ${r.enabled ? '' : 'opacity-50'}`}><Badge color="#7c3aed">추가 {names.length + i + 1}단계</Badge><span className="flex-1"><b>{r.name}</b> — {r.hint}</span>
+                  <button onClick={async () => { await api('POST', { action: 'toggleSkill', id: r.id, enabled: !r.enabled }); load() }} className={btn.ghost + ' !h-6 !px-2 !text-[11px]'}>{r.enabled ? '끄기' : '켜기'}</button>
+                  <button onClick={async () => { await api('POST', { action: 'deleteSkill', id: r.id }); load() }} className="text-[#dc2626] text-[11px] font-semibold">삭제</button></div>
+              ))}
+            </div>
+          ))}
+          {(rows ?? []).filter(r => !builtin[r.template_key]).length > 0 && (
+            <div className="pt-2 border-t border-[#eef0f4]">
+              <p className="text-[12px] font-bold text-[#1f2430] mb-1">기타 (장르 폴백 · 제작자 게임 가이드)</p>
+              {(rows ?? []).filter(r => !builtin[r.template_key]).map(r => (
+                <div key={r.id} className={`mt-1 flex items-start gap-2 text-[12px] ${r.enabled ? '' : 'opacity-50'}`}><Badge color={r.game_id ? '#059669' : '#0891b2'}>{r.template_key}</Badge><span className="flex-1"><b>{r.name}</b> — {r.hint}</span>
+                  <button onClick={async () => { await api('POST', { action: 'toggleSkill', id: r.id, enabled: !r.enabled }); load() }} className={btn.ghost + ' !h-6 !px-2 !text-[11px]'}>{r.enabled ? '끄기' : '켜기'}</button>
+                  <button onClick={async () => { await api('POST', { action: 'deleteSkill', id: r.id }); load() }} className="text-[#dc2626] text-[11px] font-semibold">삭제</button></div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
+      <Card className="p-4 space-y-3">
+        <p className="text-[12px] font-bold uppercase tracking-wide text-[#1f2430]">단계 추가</p>
+        <div><label className={labelCls}>템플릿 / 장르</label><select value={f.template_key} onChange={e => setF({ ...f, template_key: e.target.value })} className={input}>{KEYS.map(k => <option key={k} value={k}>{k}</option>)}</select></div>
+        <div><label className={labelCls}>단계 이름</label><input value={f.name} onChange={e => setF({ ...f, name: e.target.value })} className={input} placeholder="예: T-스핀 준비" /></div>
+        <div><label className={labelCls}>가르칠 내용 (자연어 — AI 가 게임 상태에 맞는 규칙으로 컴파일)</label><textarea value={f.hint} onChange={e => setF({ ...f, hint: e.target.value })} rows={5} className={input + ' !h-auto py-2'} placeholder="예: L/J 블록으로 한 칸 파인 홈을 만들어 두고 T 블록이 오면 회전해 끼워 넣어 보너스를 노려." /></div>
+        <div><label className={labelCls}>순서 (큰 수가 나중)</label><input type="number" value={f.step_order} onChange={e => setF({ ...f, step_order: Number(e.target.value) })} className={input + ' !w-28'} /></div>
+        <button onClick={add} disabled={!f.name.trim() || !f.hint.trim()} className={btn.primary}>추가</button>
+      </Card>
+    </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import NoticesSection from '@/components/profile/NoticesSection'
 import AiLearningSection from '@/components/profile/AiLearningSection'
+import GameCurriculumModal from '@/components/profile/GameCurriculumModal'
 import { useEffect, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
@@ -75,6 +76,7 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [games, setGames] = useState<Game[]>([])
   const [editingGame, setEditingGame] = useState<EditingGame | null>(null)
+  const [curriculumGame, setCurriculumGame] = useState<{ id: string; title: string } | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [profileMsg, setProfileMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null)
@@ -550,6 +552,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <a href={`/aj/${game.id}`} title="AJ 대시보드 — 지표·분석·업데이트 제안" className="inline-flex items-center h-8 px-3 rounded-lg border border-[#2563eb]/40 bg-[#2563eb]/5 text-[12.5px] font-semibold text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors">AJ</a>
                     <a href={`/ads?game=${game.id}`} title="AJ AdPilot — 홍보 캠페인" className="inline-flex items-center h-8 px-3 rounded-lg border border-[#ddd3bf] bg-white text-[12.5px] font-medium text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">홍보</a>
+                    <button onClick={() => setCurriculumGame({ id: game.id, title: game.title })} title="AJ 학습 가이드 — 내 게임의 정석 플레이를 등록하면 모든 회원의 AI 가 배워요" className="inline-flex items-center h-8 px-3 rounded-lg border border-[#7c3aed]/40 bg-[#7c3aed]/5 text-[12.5px] font-semibold text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white transition-colors">학습</button>
                     <button
                       onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', country: game.country ?? country ?? '', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, teaser: game.teaser ?? '', newThumbnail: null, newManual: null })}
                       className="inline-flex items-center h-8 px-3 rounded-lg border border-[#ddd3bf] bg-white text-[12.5px] font-medium text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors"
@@ -576,6 +579,7 @@ export default function ProfilePage() {
       {tab === 'billing' && user && <BillingSection userId={user.id} />}
       {tab === 'notices' && <section id="notices" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]"><NoticesSection /></section>}
       {tab === 'collections' && user && <section id="collections" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]"><MyCollections userId={user.id} /></section>}
+      {curriculumGame && <GameCurriculumModal gameId={curriculumGame.id} title={curriculumGame.title} onClose={() => setCurriculumGame(null)} />}
 
       {/* ── Edit Game Modal ── */}
       {editingGame && (
