@@ -31,6 +31,7 @@ export async function POST(req: Request) {
   const { error } = await admin.from('aj_bot_curriculum').insert([{ template_key: `game:${b.gameId}`, game_id: b.gameId, step_order: ((count ?? 0) + 1) * 10, name: b.name.trim().slice(0, 60), hint: b.hint.trim().slice(0, 500), created_by: user.id }] as never)
   if (error) return Response.json({ error: error.message }, { status: 500 })
   invalidateCurriculum()
+  try { await admin.from('aj_learn_log').insert([{ game_id: b.gameId, user_id: user.id, kind: 'guide', title: `게임 학습 가이드 등록: ${b.name.trim().slice(0, 40)}`, detail: b.hint.trim().slice(0, 200) }] as never) } catch { /* ignore */ }
   return Response.json({ ok: true })
 }
 export async function DELETE(req: Request) {

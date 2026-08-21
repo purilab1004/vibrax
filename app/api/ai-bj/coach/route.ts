@@ -189,6 +189,8 @@ ${demoSummary((row as unknown as { demos?: Demo[] }).demos)}
     }
   }
   await admin.from('aj_play_policies').update(patch as never).eq('id', row.id)
+  // AI 가 한 판을 끝냈다 — 플레이 기록 (정책 변화가 없어도 남긴다)
+  if (!changed) void logLearn(admin, userId, gameId, 'play', `AI 플레이 ${eps.length}판째 · ${b.cleared ? '클리어' : '점수 ' + score}`, `이번 판 점수 ${score}${b.cleared ? ' (최종 클리어!)' : ''}`, row.version)
   return Response.json({ ok: true, policy: changed?.policy ?? null, note: changed?.note ?? null, episodes: cur.length })
 }
 
@@ -201,9 +203,12 @@ async function saveDemo(admin: ReturnType<typeof createAdminClient>, userId: str
   if (!clean.length) return Response.json({ ok: true, kept: 0 })
   const { data } = await admin.from('aj_play_policies').select('id,demos').eq('game_id', gameId).eq('user_id', userId).maybeSingle()
   const row = data as { id: string; demos: Demo[] | null } | null
+  const before = (row?.demos as Demo[] | null)?.length ?? 0
   const demos = [...((row?.demos as Demo[] | null) ?? []), ...clean].slice(-600)
   if (row) await admin.from('aj_play_policies').update({ demos, updated_at: new Date().toISOString() } as never).eq('id', row.id)
   else await admin.from('aj_play_policies').insert([{ game_id: gameId, user_id: userId, version: 1, tips: [], rules: [], params: {}, demos }] as never)
+  // 사람 플레이 관찰 — 75샘플(약 15초) 단위로 학습 기록에 남긴다 (매 배치마다 남기면 과도)
+  if (Math.floor(demos.length / 75) > Math.floor(before / 75)) void logLearn(admin, userId, gameId, 'demo', `내 플레이 관찰 — 누적 ${demos.length}샘플`, '사람이 어떤 상황에서 어떤 조작을 하는지 배우는 중', null)
   return Response.json({ ok: true, kept: demos.length })
 }
 function demoSummary(demos: Demo[] | null | undefined): string {
@@ -232,6 +237,6 @@ function demoSummary(demos: Demo[] | null | undefined): string {
   return `[인간 플레이 데모 요약 — 사람이 어떤 상태에서 어떤 입력을 눌렀는지] 이 통계를 참고해 사람 스타일을 따라하는 규칙을 우선 만든다:\n${lines.join('\n')}`
 }
 
-async function logLearn(admin: ReturnType<typeof createAdminClient>, userId: string, gameId: string, kind: string, title: string, detail: string, version: number) {
+async function logLearn(admin: ReturnType<typeof createAdminClient>, userId: string, gameId: string, kind: string, title: string, detail: string, version: number | null) {
   try { await admin.from('aj_learn_log').insert([{ game_id: gameId, user_id: userId, kind, title: title.slice(0, 120), detail: detail.slice(0, 500) || null, version }] as never) } catch { /* ignore */ }
 }

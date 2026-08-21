@@ -22,7 +22,7 @@ const tierOf = (xp: number) => { let t = 0, acc = 0; while (t < TIERS.length - 1
 const xpOf = (r: Row) => r.version * 10 + (Array.isArray(r.rules) ? r.rules.length : 0) * 6 + (r.template_skill ?? 0) * 15 + (r.best_score && r.best_score > 0 ? 12 : 0)
 
 interface LearnLog { id: string; game_id: string | null; kind: string; title: string; detail: string | null; version: number | null; created_at: string }
-const LOG_KIND: Record<string, [string, string]> = { curriculum: ['기본기', '#2563eb'], coach: ['프롬프트 코칭', '#7c3aed'], demo: ['내 플레이 모방', '#0891b2'], reflect: ['자기 반성', '#059669'], revert: ['복귀', '#f59e0b'] }
+const LOG_KIND: Record<string, [string, string]> = { curriculum: ['기본기', '#2563eb'], coach: ['프롬프트 코칭', '#7c3aed'], demo: ['내 플레이 모방', '#0891b2'], reflect: ['자기 반성', '#059669'], revert: ['복귀', '#f59e0b'], play: ['AI 플레이', '#0ea5e9'], guide: ['개발자 가이드', '#d97706'] }
 
 export default function AiLearningSection() {
   const [rows, setRows] = useState<Row[] | null>(null)
@@ -121,10 +121,14 @@ export default function AiLearningSection() {
             </li>) })}
         </ul>
       )}
-      {/* 학습 기록 — 언제 무엇을 배웠는지 (기본기/코칭/모방/자기 반성) */}
-      {logs && logs.length > 0 && (
-        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
-          <p className="text-[12px] font-bold uppercase tracking-wide text-[#857a68] mb-2">학습 기록</p>
+      {/* 학습 기록 — 언제 무엇을 배웠는지 (5가지 경로) */}
+      <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <p className="text-[12px] font-bold uppercase tracking-wide text-[#857a68]">학습 기록</p>
+          <div className="flex flex-wrap gap-1.5">{Object.entries(LOG_KIND).map(([k, [lb, c]]) => <span key={k} className="inline-flex items-center gap-1 text-[10px] text-[#6b6152]"><span className="w-2 h-2 rounded-full" style={{ background: c }} />{lb}</span>)}</div>
+        </div>
+        <p className="text-[11.5px] text-[#9d9280] mb-2 leading-relaxed">AI 는 5가지 방법으로 배워요: <b className="text-[#0ea5e9]">AI 직접 플레이</b>·<b className="text-[#2563eb]">템플릿 기본기</b>·<b className="text-[#7c3aed]">내 프롬프트 코칭</b>·<b className="text-[#0891b2]">내 플레이 모방</b>·<b className="text-[#d97706]">개발자 가이드</b>. <span className="text-[#b9b0a0]">단, 게임에 표준 상태 정보(매니페스트)가 없는 옛 게임은 관찰할 데이터가 없어 기록이 남지 않아요.</span></p>
+        {!logs || logs.length === 0 ? <p className="text-[12.5px] text-[#9d9280] py-6 text-center">아직 학습 기록이 없어요. 게임에 <b>아바타를 참여</b>시켜 AI 가 플레이하거나, 직접 플레이해 보세요.</p> : (
           <ul className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
             {logs.map(l => { const [lb, c] = LOG_KIND[l.kind] ?? [l.kind, '#6b7280']; const g = rows?.find(r => r.game_id === l.game_id); return (
               <li key={l.id} className="flex items-start gap-2 text-[12px]">
@@ -133,8 +137,8 @@ export default function AiLearningSection() {
                 <span className="shrink-0 text-[10.5px] text-[#9d9280] tabular-nums">{new Date(l.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}{l.version ? ` · v${l.version}` : ''}</span>
               </li>) })}
           </ul>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
