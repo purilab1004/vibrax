@@ -129,8 +129,9 @@ state() 키: ${sk.join(', ')}  예시 값: ${m0.sample ? JSON.stringify(m0.sampl
         const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)) as Partial<Policy>
         const rules = (Array.isArray(j.rules) ? j.rules : []).filter(r => r && typeof r.cond === 'string' && typeof r.action === 'string' && isSafeCond(r.cond) && inp.includes(r.action)).slice(0, 12).map(r => ({ cond: r.cond.slice(0, 200), action: r.action, hold: Math.max(30, Math.min(1500, Number(r.hold ?? 100))), why: String(r.why ?? `[기본기] ${skill.name}`).slice(0, 80) }))
         if (rules.length) {
-          const pol: Policy = { version: row.version + 1, tips: row.tips, rules, params: row.params, summary: `기본기 ${skillIdx + 1}단계 "${skill.name}" 배웠어!` }
-          Object.assign(patch, { version: pol.version, rules: pol.rules, summary: pol.summary, template_skill: skillIdx + 1, last_skill_at: new Date().toISOString() })
+          const botSkill = Math.round((0.3 + 0.7 * ((skillIdx + 1) / cu.skills.length)) * 100) / 100  // 기본기 진행도 → 내장 완성형 봇의 실력 해제
+          const pol: Policy = { version: row.version + 1, tips: row.tips, rules, params: { ...row.params, botSkill }, summary: `기본기 ${skillIdx + 1}단계 "${skill.name}" 배웠어!` }
+          Object.assign(patch, { version: pol.version, rules: pol.rules, params: pol.params, summary: pol.summary, template_skill: skillIdx + 1, last_skill_at: new Date().toISOString() })
           changed = { policy: pol, note: 'curriculum' }
           void logLearn(admin, userId, gameId, 'curriculum', `기본기 ${skillIdx + 1}단계 · ${skill.name}`, skill.hint, pol.version)
         }
@@ -151,6 +152,15 @@ state() 키: ${sk.join(', ')}  예시 값: ${m0.sample ? JSON.stringify(m0.sampl
       Object.assign(patch, { version: pol.version, rules: pol.rules, summary: pol.summary, auto_count: (row.auto_count ?? 0) + 1 })
       changed = { policy: pol, note: 'revert' }
       void logLearn(admin, userId, gameId, 'revert', '잘되던 방식으로 복귀', `최근 평균이 최고 평균보다 낮아 이전 규칙으로 되돌림`, pol.version)
+    } else if (!stateKeys.length || !inputs.length || !process.env.ANTHROPIC_API_KEY) {
+      // 파라미터 진화(CEM 축소판) — 규칙을 만들 수 없는 게임도 봇 파라미터를 조금씩 변이시키며 좋아진 것만 채택(회귀 방지가 필터)
+      const base = { reactionMs: 120, randomness: 0.15, botSkill: 0.3, ...row.params }
+      const mut = (v: number, lo: number, hi: number) => Math.round(Math.max(lo, Math.min(hi, v * (0.85 + Math.random() * 0.3))) * 100) / 100
+      const params = { ...base, reactionMs: mut(base.reactionMs, 30, 400), randomness: mut(base.randomness, 0, 0.5), botSkill: Math.round(Math.min(1, base.botSkill + 0.05) * 100) / 100 }
+      const pol: Policy = { version: row.version + 1, tips: row.tips, rules: row.rules, params, summary: '반응 속도를 조금 조절해봤어' }
+      Object.assign(patch, { version: pol.version, params: pol.params, summary: pol.summary, auto_count: (row.auto_count ?? 0) + 1 })
+      changed = { policy: pol, note: 'evolve' }
+      void logLearn(admin, userId, gameId, 'reflect', '파라미터 진화(변이 시도)', `reactionMs ${params.reactionMs} · randomness ${params.randomness} · botSkill ${params.botSkill}`, pol.version)
     } else if (process.env.ANTHROPIC_API_KEY && stateKeys.length && inputs.length) {
       try {
         const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -185,9 +195,9 @@ ${demoSummary((row as unknown as { demos?: Demo[] }).demos)}
 // ── 인간 플레이 데모(모방 학습) ──────────────────────────────────────────────
 // 사람이 직접 플레이할 때 게임이 0.2초마다 (상태 수치, 눌린 입력)을 보낸다 → 정책 행에 최근 600샘플 보관.
 // 코칭/자동 학습 프롬프트에 "입력별로 어떤 상태일 때 눌렀는지" 통계 요약을 넣어 Haiku 가 사람 스타일의 규칙을 만들게 한다.
-type Demo = { s: Record<string, number>; k: string[] }
+type Demo = { s: Record<string, number>; k: string[]; p?: [number, number] }
 async function saveDemo(admin: ReturnType<typeof createAdminClient>, userId: string, gameId: string, samples: Demo[]) {
-  const clean = samples.filter(x => x && typeof x === 'object' && x.s && Array.isArray(x.k)).slice(0, 100).map(x => ({ s: Object.fromEntries(Object.entries(x.s).filter(([k, v]) => /^\w{1,24}$/.test(k) && typeof v === 'number' && Number.isFinite(v)).slice(0, 16)), k: x.k.filter(k => typeof k === 'string').slice(0, 6) }))
+  const clean = samples.filter(x => x && typeof x === 'object' && x.s && Array.isArray(x.k)).slice(0, 100).map(x => ({ s: Object.fromEntries(Object.entries(x.s).filter(([k, v]) => /^\w{1,24}$/.test(k) && typeof v === 'number' && Number.isFinite(v)).slice(0, 16)), k: x.k.filter(k => typeof k === 'string').slice(0, 6), ...(Array.isArray((x as Demo).p) && (x as Demo).p!.length === 2 && (x as Demo).p!.every(n => typeof n === 'number') ? { p: (x as Demo).p } : {}) }))
   if (!clean.length) return Response.json({ ok: true, kept: 0 })
   const { data } = await admin.from('aj_play_policies').select('id,demos').eq('game_id', gameId).eq('user_id', userId).maybeSingle()
   const row = data as { id: string; demos: Demo[] | null } | null
@@ -208,6 +218,15 @@ function demoSummary(demos: Demo[] | null | undefined): string {
     const num = (arr: Demo[], f: string) => mean(arr.map(x => x.s[f]).filter((v): v is number => typeof v === 'number'))
     const diffs = [...feats].map(f => { const mo = num(on, f); const mf = num(off, f); return { f, mo, mf, d: Math.abs(mo - mf) } }).sort((x, y) => y.d - x.d).slice(0, 3)
     lines.push(`- ${a} 누름(${on.length}/${demos.length} 샘플): ` + diffs.map(x => `${x.f} 평균 ${x.mo.toFixed(1)} (안 누를 때 ${x.mf.toFixed(1)})`).join(', '))
+  }
+  const taps = demos.filter(d => Array.isArray(d.p))
+  if (taps.length >= 5) {
+    const feats2 = [...feats]
+    const byRegion: Record<string, number> = {}
+    for (const d of taps) { const [x, y] = d.p!; byRegion[`${x < 0.33 ? '좌' : x > 0.66 ? '우' : '중'}${y < 0.4 ? '상' : y > 0.7 ? '하' : '중'}`] = (byRegion[`${x < 0.33 ? '좌' : x > 0.66 ? '우' : '중'}${y < 0.4 ? '상' : y > 0.7 ? '하' : '중'}`] ?? 0) + 1 }
+    const top = Object.entries(byRegion).sort((a, b2) => b2[1] - a[1]).slice(0, 3).map(([k, n]) => `${k} ${n}회`).join(', ')
+    const near = feats2.map(f => { const mt = mean(taps.map(d => d.s[f]).filter((v): v is number => typeof v === 'number')); const ma = mean(demos.map(d => d.s[f]).filter((v): v is number => typeof v === 'number')); return { f, d: Math.abs(mt - ma), mt } }).sort((a, b2) => b2.d - a.d).slice(0, 2)
+    lines.push(`- 화면 탭 위치(${taps.length}회): ${top}${near.length ? ` — 탭 시점의 상태: ${near.map(x => `${x.f}≈${x.mt.toFixed(1)}`).join(', ')}` : ''}`)
   }
   if (!lines.length) return ''
   return `[인간 플레이 데모 요약 — 사람이 어떤 상태에서 어떤 입력을 눌렀는지] 이 통계를 참고해 사람 스타일을 따라하는 규칙을 우선 만든다:\n${lines.join('\n')}`
