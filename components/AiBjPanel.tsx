@@ -96,11 +96,35 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     window.addEventListener('message', h); return () => window.removeEventListener('message', h)
   }, [gameId])
   const [canJoin, setCanJoin] = useState(false)
+  // 표준 게임(/play/, 같은 오리진) = 아바타가 게임 안에 들어가 직접 플레이·학습.
+  // 외부 게임(다른 도메인) = 브라우저 보안상 게임 안엔 못 들어가므로, 화면 위에 떠서 응원하는 '동반 모드'로 참여한다.
   const gameFrame = () => Array.from(document.querySelectorAll('iframe')).find(f => { try { return new URL(f.src, location.href).pathname.startsWith('/play/') } catch { return false } }) ?? null
-  useEffect(() => { if (camera) { setCanJoin(false); return } const iv = setInterval(() => { const ok = !!gameFrame(); setCanJoin(prev => (prev === ok ? prev : ok)) }, 700); return () => clearInterval(iv) }, [camera])
+  const anyFrame = () => document.querySelector('iframe')
+  const [companion, setCompanion] = useState<{ image: string } | null>(null)
+  useEffect(() => { if (camera) { setCanJoin(false); return } const iv = setInterval(() => { const ok = !!anyFrame(); setCanJoin(prev => (prev === ok ? prev : ok)) }, 700); return () => clearInterval(iv) }, [camera])
   useEffect(() => {
     const onSnap = (e: Event) => {
-      const image = (e as CustomEvent<{ image: string }>).detail?.image; const f = gameFrame(); if (!image || !f?.contentWindow) return
+      const image = (e as CustomEvent<{ image: string }>).detail?.image; if (!image) return
+      const f = gameFrame()
+      if (!f?.contentWindow) {
+        // 외부 게임 — 동반 모드: 아바타가 화면 위로 날아와 함께 관전·응원
+        const tgt = anyFrame(); if (!tgt) return
+        try {
+          const stage = document.querySelector('.aj-stage-desk') as HTMLElement | null
+          const from = stage?.getBoundingClientRect(), to = tgt.getBoundingClientRect()
+          if (from && to) {
+            const img = document.createElement('img'); img.src = image; img.alt = ''
+            const size = Math.min(from.width, from.height) * 0.8
+            img.style.cssText = `position:fixed;left:${from.left + from.width / 2 - size / 2}px;top:${from.top + from.height / 2 - size / 2}px;width:${size}px;height:${size}px;object-fit:contain;z-index:100000;pointer-events:none;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));transition:transform .85s cubic-bezier(.4,0,.2,1),opacity .85s ease;`
+            document.body.appendChild(img)
+            requestAnimationFrame(() => requestAnimationFrame(() => { const dx = to.left + to.width / 2 - (from.left + from.width / 2); const dy = to.top + to.height - 150 - (from.top + from.height / 2); img.style.transform = `translate(${dx}px, ${dy}px) scale(.5)`; img.style.opacity = '0' }))
+            setTimeout(() => img.remove(), 950)
+          }
+        } catch { /* ignore */ }
+        setTimeout(() => setCompanion({ image }), 700)
+        setJoined(true)
+        return
+      }
       // 전환 연출 — 아바타 스냅샷이 무대에서 게임 화면 중앙으로 날아가 빨려 들어간다
       try {
         const stage = document.querySelector('.aj-stage-desk') as HTMLElement | null
@@ -128,7 +152,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     return () => window.removeEventListener('avatar:snapshot', onSnap)
   }, [bjLabel])
   const joinGame = () => window.dispatchEvent(new CustomEvent('avatar:snapshot-request'))
-  const leaveGame = () => { const w = gameFrame()?.contentWindow; w?.postMessage({ type: 'vibrex:autopilot', on: false }, '*'); w?.postMessage({ type: 'vibrex:avatar-remove' }, '*'); setJoined(false) }
+  const leaveGame = () => { const w = gameFrame()?.contentWindow; w?.postMessage({ type: 'vibrex:autopilot', on: false }, '*'); w?.postMessage({ type: 'vibrex:avatar-remove' }, '*'); setCompanion(null); setJoined(false) }
   const avatarVisible = (!!camera || speaking) && !joined
   // PC 채팅 접기 — 게임 버튼을 가릴 때 왼쪽으로 밀어 넣는다 (기억)
   const [chatOpen, setChatOpen] = useState(() => { try { return localStorage.getItem('aj-chat-open') !== '0' } catch { return true } })
@@ -355,12 +379,20 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     if (!text.trim()) return
     setInput('')
     await waitIdle()
-    if (joinedRef.current && gameId) { await coach(text.trim()); return }
+    if (joinedRef.current && gameId && gameFrame()) { await coach(text.trim()); return }
     await streamAj(text, true)
   }
 
   return (
     <>
+      {/* 동반 모드 — 외부 게임: 아바타가 화면 하단 중앙에서 함께 응원 (PC·모바일 공통) */}
+      {joined && companion && (
+        <div className="absolute inset-x-0 bottom-[92px] md:bottom-16 z-10 pointer-events-none flex flex-col items-center gap-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={companion.image} alt="" className="w-[76px] h-[76px] object-contain avatar-bob drop-shadow-[0_8px_18px_rgba(0,0,0,0.55)]" />
+          <span className="rounded-full bg-black/55 backdrop-blur px-2.5 py-1 text-[10.5px] font-bold text-white">{bjLabel} 응원 중 📣</span>
+        </div>
+      )}
       {/* ─── Desktop: 게임 위 오버레이 채팅 — 스트리밍 스타일, 위로 갈수록 자연스럽게 사라진다 ─── */}
       <div className="hidden md:block absolute inset-0 pointer-events-none z-10">
         {/* 좌하단 메시지 스택 (+ 입력) — 접으면 왼쪽으로 슬라이드 */}
