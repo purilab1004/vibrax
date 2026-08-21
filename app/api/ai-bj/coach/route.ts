@@ -4,6 +4,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit, tooMany, isSafeCond } from '@/lib/security/ratelimit'
+import { curriculumFor } from '@/lib/studio/bot-curriculum'
 
 interface Manifest { title?: string; goal?: string; clearCondition?: string; controls?: { input: string; action: string }[]; inputs?: string[]; stateKeys?: string[]; sample?: Record<string, unknown> }
 interface Policy { version: number; tips: string[]; rules: { cond: string; action: string; hold?: number; why?: string }[]; params: Record<string, number>; summary: string | null }
@@ -93,7 +94,45 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
   if ((row.best_score ?? -1) < score) patch.best_score = score
   const cur = eps.filter(e => e.v === row!.version)
   let changed: { policy: Policy; note: string } | null = null
-  if (row.auto_learn && cur.length >= 3 && cur.length % 3 === 0) {
+  // ── 1) 템플릿 기본기 커리큘럼 — 템플릿이 미리 보유한 정석 지식을 2판마다 한 단계씩 학습 ──
+  const rowX = row as typeof row & { template_skill?: number }
+  const totalEps = eps.length
+  const cu = await (async () => {
+    // 게임 → 스튜디오 프로젝트 → 매핑된 템플릿 slug (없으면 장르 폴백)
+    const { data: gm } = await admin.from('games').select('genre,studio_project_id').eq('id', gameId).maybeSingle()
+    const game = gm as { genre: string | null; studio_project_id: string | null } | null
+    let slug: string | null = null
+    if (game?.studio_project_id) { const { data: pm } = await admin.from('prompt_mappings').select('template_slug').eq('project_id', game.studio_project_id).not('template_slug', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle(); slug = (pm as { template_slug: string | null } | null)?.template_slug ?? null }
+    return curriculumFor(slug, game?.genre ?? b.genre ?? null)
+  })().catch(() => null)
+  const skillIdx = rowX.template_skill ?? 0
+  if (row.auto_learn && cu && skillIdx < cu.skills.length && totalEps >= (skillIdx + 1) * 2 && process.env.ANTHROPIC_API_KEY) {
+    const skill = cu.skills[skillIdx]
+    const m0 = b.manifest ?? {}
+    const sk = (m0.stateKeys ?? (m0.sample ? Object.keys(m0.sample) : [])).slice(0, 40)
+    const inp = (m0.inputs ?? []).slice(0, 12)
+    if (sk.length && inp.length) {
+      try {
+        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+        const sys = `너는 게임 봇 코치 컴파일러다. 아래 "정석 기술"을 이 게임의 상태 키와 입력으로 실행 가능한 규칙으로 바꾼다.
+게임: ${b.gameTitle ?? ''} / 목표: ${m0.goal ?? '-'} / 입력(action): ${inp.join(', ')}
+state() 키: ${sk.join(', ')}  예시 값: ${m0.sample ? JSON.stringify(m0.sample).slice(0, 400) : '-'}
+기존 규칙(유지하며 아래 기술을 추가·정교화): ${JSON.stringify(row.rules).slice(0, 1200)}
+출력 JSON 한 개만: {"rules":[{"cond":"s.x > 1","action":"right","hold":80,"why":"[기본기] ..."}],"summary":"한 문장"} — cond 는 s 만 쓰는 불리언 식, 최대 12개.`
+        const msg = await client.messages.create({ model: 'claude-haiku-4-5', max_tokens: 1200, system: sys, messages: [{ role: 'user', content: `정석 기술 ${skillIdx + 1}단계 "${skill.name}": ${skill.hint}` }] })
+        const t = msg.content.map(c => (c.type === 'text' ? c.text : '')).join('')
+        const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)) as Partial<Policy>
+        const rules = (Array.isArray(j.rules) ? j.rules : []).filter(r => r && typeof r.cond === 'string' && typeof r.action === 'string' && isSafeCond(r.cond) && inp.includes(r.action)).slice(0, 12).map(r => ({ cond: r.cond.slice(0, 200), action: r.action, hold: Math.max(30, Math.min(1500, Number(r.hold ?? 100))), why: String(r.why ?? `[기본기] ${skill.name}`).slice(0, 80) }))
+        if (rules.length) {
+          const pol: Policy = { version: row.version + 1, tips: row.tips, rules, params: row.params, summary: `기본기 ${skillIdx + 1}단계 "${skill.name}" 배웠어!` }
+          Object.assign(patch, { version: pol.version, rules: pol.rules, summary: pol.summary, template_skill: skillIdx + 1 })
+          changed = { policy: pol, note: 'curriculum' }
+        }
+      } catch { /* ignore */ }
+    }
+  }
+  // ── 2) 커리큘럼을 다 배웠으면(또는 없으면) 자기 반성 개선 — 여기서부터는 이 유저만의 학습 ──
+  if (!changed && row.auto_learn && cur.length >= 3 && cur.length % 3 === 0) {
     const avg = cur.reduce((a, e) => a + e.score, 0) / cur.length
     const bestAvg = row.best_avg ?? -Infinity
     if (avg >= bestAvg) { patch.best_avg = avg; patch.best_rules = row.rules }

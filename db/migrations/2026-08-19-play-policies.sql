@@ -21,3 +21,4 @@ alter table public.aj_play_policies add column if not exists best_rules jsonb;
 alter table public.aj_play_policies add column if not exists best_avg real;
 alter table public.aj_play_policies add column if not exists auto_count int not null default 0;
 alter table public.aj_play_policies add column if not exists demos jsonb not null default '[]';
+alter table public.aj_play_policies add column if not exists template_skill int not null default 0;

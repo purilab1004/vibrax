@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-interface Row { game_id: string; version: number; rules: unknown[]; tips: string[]; best_score: number | null; auto_learn?: boolean; auto_count?: number; episodes?: { v: number; score: number }[]; demos?: unknown[]; updated_at: string; games: { title: string; genre: string; thumbnail_url: string | null } | null }
+interface Row { game_id: string; version: number; rules: unknown[]; tips: string[]; best_score: number | null; auto_learn?: boolean; auto_count?: number; template_skill?: number; episodes?: { v: number; score: number }[]; demos?: unknown[]; updated_at: string; games: { title: string; genre: string; thumbnail_url: string | null } | null }
 const GENRE: Record<string, { label: string; color: string; difficulty: number; why: string }> = {
   action: { label: 'ACTION', color: '#dc2626', difficulty: 2, why: '반사 규칙 위주 — 빨리 배움' },
   sports: { label: 'SPORTS', color: '#059669', difficulty: 2, why: '타이밍·위치 규칙' },
@@ -18,7 +18,7 @@ const TIERS = ['새싹', '견습', '초보', '연습생', '루키', '플레이�
 const TIER_COLORS = ['#9ca3af', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#fbbf24', '#fde047', '#ffffff']
 const tierNeed = (i: number) => Math.round(60 * Math.pow(1.28, i))   // 1→2 단계 60XP … 19→20 약 4,300XP
 const tierOf = (xp: number) => { let t = 0, acc = 0; while (t < TIERS.length - 1 && xp >= acc + tierNeed(t)) { acc += tierNeed(t); t++ } return { tier: t, into: xp - acc, need: tierNeed(t), maxed: t === TIERS.length - 1 } }
-const xpOf = (r: Row) => r.version * 10 + (Array.isArray(r.rules) ? r.rules.length : 0) * 6 + (r.best_score && r.best_score > 0 ? 12 : 0)
+const xpOf = (r: Row) => r.version * 10 + (Array.isArray(r.rules) ? r.rules.length : 0) * 6 + (r.template_skill ?? 0) * 15 + (r.best_score && r.best_score > 0 ? 12 : 0)
 
 export default function AiLearningSection() {
   const [rows, setRows] = useState<Row[] | null>(null)
@@ -26,7 +26,7 @@ export default function AiLearningSection() {
   const [busy, setBusy] = useState<string | null>(null)
   const learnFromDemo = async (gameId: string) => { setBusy(gameId); try { const r = await fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'learnFromDemo', gameId }) }); const j = await r.json(); if (r.ok && j.policy) setRows(rs => (rs ?? []).map(x => x.game_id === gameId ? { ...x, version: j.policy.version, rules: j.policy.rules, tips: j.policy.tips } : x)); else alert(j.error ?? '실패') } finally { setBusy(null) } }
   useEffect(() => {
-    createClient().from('aj_play_policies').select('game_id,version,rules,tips,best_score,auto_learn,auto_count,episodes,demos,updated_at,games(title,genre,thumbnail_url)').order('updated_at', { ascending: false }).limit(200)
+    createClient().from('aj_play_policies').select('game_id,version,rules,tips,best_score,auto_learn,auto_count,template_skill,episodes,demos,updated_at,games(title,genre,thumbnail_url)').order('updated_at', { ascending: false }).limit(200)
       .then(({ data, error }) => { if (error) { setMissing(true); setRows([]) } else setRows((data as unknown as Row[]) ?? []) })
   }, [])
   if (rows === null) return <div className="h-28 rounded-xl bg-[#f6f2ea] animate-pulse" />
@@ -94,7 +94,7 @@ export default function AiLearningSection() {
               <div className="w-12 h-8 rounded-md overflow-hidden bg-[#f1ece2] shrink-0">{r.games?.thumbnail_url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={r.games.thumbnail_url} alt="" className="w-full h-full object-cover" />}</div>
               <div className="min-w-0 flex-1"><Link href={`/games/${r.game_id}`} className="text-[13.5px] font-semibold text-[#241f17] hover:text-[#2563eb] truncate block">{r.games?.title ?? '게임'}</Link><p className="text-[11px] text-[#9d9280] truncate">{r.tips?.slice(-1)[0] ? `최근 가르침: ${r.tips.slice(-1)[0]}` : '가르친 내용 없음'}</p></div>
               <span className="font-pixel text-[8px] px-1.5 py-0.5 rounded text-white shrink-0" style={{ background: g.color }}>{g.label}</span>
-              <div className="text-right shrink-0"><p className="text-[12.5px] font-bold text-[#241f17] tabular-nums">학습 v{r.version} · 규칙 {n}{(r.auto_count ?? 0) > 0 ? ` · 자동 ${r.auto_count}` : ''}</p><p className="text-[11px] text-[#9d9280] tabular-nums">{r.best_score != null ? `최고 ${r.best_score.toLocaleString()}점` : '기록 없음'} · XP {xpOf(r)}{Array.isArray(r.demos) && r.demos.length > 0 ? ` · 내 플레이 ${r.demos.length}샘플` : ''}</p>
+              <div className="text-right shrink-0"><p className="text-[12.5px] font-bold text-[#241f17] tabular-nums">학습 v{r.version} · 규칙 {n}{(r.template_skill ?? 0) > 0 ? ` · 기본기 ${r.template_skill}단계` : ''}{(r.auto_count ?? 0) > 0 ? ` · 자동 ${r.auto_count}` : ''}</p><p className="text-[11px] text-[#9d9280] tabular-nums">{r.best_score != null ? `최고 ${r.best_score.toLocaleString()}점` : '기록 없음'} · XP {xpOf(r)}{Array.isArray(r.demos) && r.demos.length > 0 ? ` · 내 플레이 ${r.demos.length}샘플` : ''}</p>
                 {Array.isArray(r.demos) && r.demos.length >= 20 && <button onClick={() => learnFromDemo(r.game_id)} disabled={busy === r.game_id} className="mt-1 h-6 px-2 rounded-full bg-[#241f17] text-white text-[10.5px] font-bold disabled:opacity-50">{busy === r.game_id ? '학습 중…' : '내 플레이로 학습'}</button>}</div>
             </li>) })}
         </ul>
