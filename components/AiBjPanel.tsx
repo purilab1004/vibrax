@@ -101,7 +101,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const gameFrame = () => Array.from(document.querySelectorAll('iframe')).find(f => { try { return new URL(f.src, location.href).pathname.startsWith('/play/') } catch { return false } }) ?? null
   const anyFrame = () => document.querySelector('iframe')
   const [companion, setCompanion] = useState<{ image: string } | null>(null)
-  useEffect(() => { if (camera) { setCanJoin(false); return } const iv = setInterval(() => { const ok = !!anyFrame(); setCanJoin(prev => (prev === ok ? prev : ok)) }, 700); return () => clearInterval(iv) }, [camera])
+  useEffect(() => { const iv = setInterval(() => { const ok = !camera && !!anyFrame(); setCanJoin(prev => (prev === ok ? prev : ok)) }, 700); return () => clearInterval(iv) }, [camera])
   useEffect(() => {
     const onSnap = (e: Event) => {
       const image = (e as CustomEvent<{ image: string }>).detail?.image; if (!image) return
