@@ -37,7 +37,7 @@ export default function AiLearningSection() {
       .catch(() => { setMissing(true); setRows([]) })
     createClient().from('aj_learn_log').select('*').order('created_at', { ascending: false }).limit(300).then(({ data }) => setLogs((data as LearnLog[] | null) ?? []))
   }, [])
-  const [logGame, setLogGame] = useState<string>('all')
+  const [logModal, setLogModal] = useState<{ id: string; title: string } | null>(null)
   if (rows === null) return <div className="h-28 rounded-xl bg-[#f6f2ea] animate-pulse" />
   const byGenre: Record<string, { xp: number; games: number }> = {}
   for (const r of rows) { const g = r.games?.genre ?? 'action'; const b = (byGenre[g] ??= { xp: 0, games: 0 }); b.xp += xpOf(r); b.games++ }
@@ -119,38 +119,35 @@ export default function AiLearningSection() {
               <span className="font-pixel text-[8px] px-1.5 py-0.5 rounded text-white shrink-0" style={{ background: g.color }}>{g.label}</span>
               <div className="text-right shrink-0"><p className="text-[12.5px] font-bold text-[#241f17] tabular-nums">학습 v{r.version} · 규칙 {n}{(r.template_skill ?? 0) > 0 ? ` · 기본기 ${r.template_skill}단계` : ''}{(r.auto_count ?? 0) > 0 ? ` · 자동 ${r.auto_count}` : ''}</p><p className="text-[11px] text-[#9d9280] tabular-nums">{r.best_score != null ? `🏆 최고 ${r.best_score.toLocaleString()}점${r.best_score_at ? ` · ${new Date(r.best_score_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}` : '기록 없음'} · XP {xpOf(r)}{Array.isArray(r.demos) && r.demos.length > 0 ? ` · 내 플레이 ${r.demos.length}샘플` : ''}</p>
                 <div className="mt-1 flex items-center gap-1.5 justify-end">
-                  <button onClick={() => { setLogGame(r.game_id); document.getElementById('aj-log')?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }} className="h-6 px-2 rounded-full border border-[#e6dfd0] text-[10.5px] font-semibold text-[#6b6152] hover:border-[#241f17]">기록 보기</button>
+                  <button onClick={() => setLogModal({ id: r.game_id, title: r.games?.title ?? '게임' })} className="h-6 px-2 rounded-full border border-[#e6dfd0] text-[10.5px] font-semibold text-[#6b6152] hover:border-[#241f17]">기록 보기</button>
                   {Array.isArray(r.demos) && r.demos.length >= 20 && <button onClick={() => learnFromDemo(r.game_id)} disabled={busy === r.game_id} className="h-6 px-2 rounded-full bg-[#241f17] text-white text-[10.5px] font-bold disabled:opacity-50">{busy === r.game_id ? '학습 중…' : '내 플레이로 학습'}</button>}
                 </div>
               </div>
             </li>) })}
         </ul>
       )}
-      {/* 학습 기록 — 언제 무엇을 배웠는지 (5가지 경로) */}
-      <div id="aj-log" className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
-        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-          <p className="text-[12px] font-bold uppercase tracking-wide text-[#857a68]">학습 기록</p>
-          <div className="flex flex-wrap gap-1.5">{Object.entries(LOG_KIND).map(([k, [lb, c]]) => <span key={k} className="inline-flex items-center gap-1 text-[10px] text-[#6b6152]"><span className="w-2 h-2 rounded-full" style={{ background: c }} />{lb}</span>)}</div>
-        </div>
-        {/* 게임별 필터 */}
-        {(() => { const gameOpts = Array.from(new Map((logs ?? []).filter(l => l.game_id).map(l => [l.game_id!, rows?.find(r => r.game_id === l.game_id)?.games?.title ?? '게임'])).entries()); return gameOpts.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar mb-2 -mx-1 px-1">
-            <button onClick={() => setLogGame('all')} className={`shrink-0 h-7 px-3 rounded-full text-[11.5px] font-semibold border transition-colors ${logGame === 'all' ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white border-[#e6dfd0] text-[#6b6152] hover:border-[#241f17]'}`}>전체</button>
-            {gameOpts.map(([id, title]) => <button key={id} onClick={() => setLogGame(id)} className={`shrink-0 h-7 px-3 rounded-full text-[11.5px] font-semibold border transition-colors whitespace-nowrap ${logGame === id ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white border-[#e6dfd0] text-[#6b6152] hover:border-[#241f17]'}`}>{title}</button>)}
+      {/* 게임별 학습 기록 — '기록 보기'를 누른 게임만 모달로 */}
+      {logModal && (() => { const shown = (logs ?? []).filter(l => l.game_id === logModal.id); return (
+        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/60 px-3 sm:px-4" onClick={() => setLogModal(null)}>
+          <div className="w-full max-w-lg rounded-t-2xl sm:rounded-2xl bg-white p-5 md:p-6 max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3 mb-1 shrink-0">
+              <div><p className="font-pixel text-[9px] tracking-[0.3em] text-[#2563eb]">LEARNING LOG</p><h3 className="text-[16px] font-bold text-[#241f17] mt-1">{logModal.title} · 학습 기록</h3></div>
+              <button onClick={() => setLogModal(null)} className="text-[#9d9280] hover:text-[#241f17] text-lg leading-none">✕</button>
+            </div>
+            <div className="flex flex-wrap gap-1.5 my-2 shrink-0">{Object.entries(LOG_KIND).map(([k, [lb, c]]) => <span key={k} className="inline-flex items-center gap-1 text-[10px] text-[#6b6152]"><span className="w-2 h-2 rounded-full" style={{ background: c }} />{lb}</span>)}</div>
+            {!shown.length ? <p className="text-[12.5px] text-[#9d9280] py-8 text-center">이 게임의 학습 기록이 아직 없어요. 아바타를 참여시켜 AI 가 플레이하거나 직접 플레이해 보세요.</p> : (
+              <ul className="space-y-1.5 overflow-y-auto pr-1 -mr-1">
+                {shown.map(l => { const [lb, c] = LOG_KIND[l.kind] ?? [l.kind, '#6b7280']; return (
+                  <li key={l.id} className="flex items-start gap-2 text-[12px]">
+                    <span className="shrink-0 mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold text-white" style={{ background: c }}>{lb}</span>
+                    <span className="min-w-0 flex-1 text-[#374151]"><b className="text-[#241f17]">{l.title}</b>{l.detail ? <span className="block text-[11px] text-[#9d9280] truncate">{l.detail}</span> : null}</span>
+                    <span className="shrink-0 text-[10.5px] text-[#9d9280] tabular-nums">{new Date(l.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}{l.version ? ` · v${l.version}` : ''}</span>
+                  </li>) })}
+              </ul>
+            )}
           </div>
-        ) })()}
-        <p className="text-[11.5px] text-[#9d9280] mb-2 leading-relaxed">AI 는 5가지 방법으로 배워요: <b className="text-[#0ea5e9]">AI 직접 플레이</b>·<b className="text-[#2563eb]">템플릿 기본기</b>·<b className="text-[#7c3aed]">내 프롬프트 코칭</b>·<b className="text-[#0891b2]">내 플레이 모방</b>·<b className="text-[#d97706]">개발자 가이드</b>. <span className="text-[#b9b0a0]">단, 게임에 표준 상태 정보(매니페스트)가 없는 옛 게임은 관찰할 데이터가 없어 기록이 남지 않아요.</span></p>
-        {(() => { const shown = (logs ?? []).filter(l => logGame === 'all' || l.game_id === logGame); return !shown.length ? <p className="text-[12.5px] text-[#9d9280] py-6 text-center">{logGame === 'all' ? <>아직 학습 기록이 없어요. 게임에 <b>아바타를 참여</b>시켜 AI 가 플레이하거나, 직접 플레이해 보세요.</> : '이 게임의 학습 기록이 없어요.'}</p> : (
-          <ul className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
-            {shown.map(l => { const [lb, c] = LOG_KIND[l.kind] ?? [l.kind, '#6b7280']; const g = rows?.find(r => r.game_id === l.game_id); return (
-              <li key={l.id} className="flex items-start gap-2 text-[12px]">
-                <span className="shrink-0 mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold text-white" style={{ background: c }}>{lb}</span>
-                <span className="min-w-0 flex-1 text-[#374151]"><b className="text-[#241f17]">{l.title}</b>{g?.games?.title ? <span className="text-[#9d9280]"> · {g.games.title}</span> : null}{l.detail ? <span className="block text-[11px] text-[#9d9280] truncate">{l.detail}</span> : null}</span>
-                <span className="shrink-0 text-[10.5px] text-[#9d9280] tabular-nums">{new Date(l.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}{l.version ? ` · v${l.version}` : ''}</span>
-              </li>) })}
-          </ul>
-        ) })()}
-      </div>
+        </div>
+      ) })()}
     </div>
   )
 }
