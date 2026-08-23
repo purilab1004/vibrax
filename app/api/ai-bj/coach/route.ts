@@ -69,10 +69,14 @@ export async function PATCH(req: Request) {
   const b = await req.json().catch(() => null) as { gameId?: string; score?: number } | null
   if (!b?.gameId || typeof b.score !== 'number') return Response.json({ error: 'bad request' }, { status: 400 })
   const admin = createAdminClient()
-  const { data } = await admin.from('aj_play_policies').select('id,best_score').eq('game_id', b.gameId).eq('user_id', user.id).maybeSingle()
-  const cur = data as { id: string; best_score: number | null } | null
-  if (cur && (cur.best_score ?? -1) < b.score) await admin.from('aj_play_policies').update({ best_score: b.score } as never).eq('id', cur.id)
-  return Response.json({ ok: true })
+  const { data } = await admin.from('aj_play_policies').select('id,best_score,version').eq('game_id', b.gameId).eq('user_id', user.id).maybeSingle()
+  const cur = data as { id: string; best_score: number | null; version: number } | null
+  if (cur && (cur.best_score ?? -1) < b.score) {
+    const prevBest = cur.best_score ?? null
+    await admin.from('aj_play_policies').update({ best_score: b.score, best_score_at: new Date().toISOString() } as never).eq('id', cur.id)
+    void logLearn(admin, user.id, b.gameId, 'record', `최고 점수 갱신 — ${b.score.toLocaleString()}점`, prevBest != null ? `이전 최고 ${prevBest.toLocaleString()}점 → ${b.score.toLocaleString()}점` : `첫 기록 ${b.score.toLocaleString()}점`, cur.version)
+  }
+  return Response.json({ ok: true, best: Math.max(cur?.best_score ?? 0, b.score) })
 }
 
 // ── 자동 학습 ──────────────────────────────────────────────────────────────────
@@ -92,7 +96,7 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
   const score = typeof b.score === 'number' ? b.score : 0
   const eps: Ep[] = [...(Array.isArray(row.episodes) ? row.episodes : []), { v: row.version, score, sec: Math.round(b.durationSec ?? 0), cleared: !!b.cleared, t: new Date().toISOString() }].slice(-40)
   const patch: Record<string, unknown> = { episodes: eps, updated_at: new Date().toISOString() }
-  if ((row.best_score ?? -1) < score) patch.best_score = score
+  if ((row.best_score ?? -1) < score) { const prevBest = row.best_score ?? null; patch.best_score = score; patch.best_score_at = new Date().toISOString(); void logLearn(admin, userId, gameId, 'record', `최고 점수 갱신 — ${score.toLocaleString()}점`, prevBest != null ? `이전 최고 ${prevBest.toLocaleString()}점 → ${score.toLocaleString()}점${b.cleared ? ' (클리어)' : ''}` : `첫 기록 ${score.toLocaleString()}점`, row.version) }
   const cur = eps.filter(e => e.v === row!.version)
   let changed: { policy: Policy; note: string } | null = null
   // ── 1) 템플릿 기본기 커리큘럼 — 템플릿이 미리 보유한 정석 지식을 2판마다 한 단계씩 학습 ──
@@ -201,12 +205,16 @@ type Demo = { s: Record<string, number>; k: string[]; p?: [number, number] }
 async function saveDemo(admin: ReturnType<typeof createAdminClient>, userId: string, gameId: string, samples: Demo[]) {
   const clean = samples.filter(x => x && typeof x === 'object' && x.s && Array.isArray(x.k)).slice(0, 100).map(x => ({ s: Object.fromEntries(Object.entries(x.s).filter(([k, v]) => /^\w{1,24}$/.test(k) && typeof v === 'number' && Number.isFinite(v)).slice(0, 16)), k: x.k.filter(k => typeof k === 'string').slice(0, 6), ...(Array.isArray((x as Demo).p) && (x as Demo).p!.length === 2 && (x as Demo).p!.every(n => typeof n === 'number') ? { p: (x as Demo).p } : {}) }))
   if (!clean.length) return Response.json({ ok: true, kept: 0 })
-  const { data } = await admin.from('aj_play_policies').select('id,demos').eq('game_id', gameId).eq('user_id', userId).maybeSingle()
-  const row = data as { id: string; demos: Demo[] | null } | null
+  const { data } = await admin.from('aj_play_policies').select('id,demos,best_score').eq('game_id', gameId).eq('user_id', userId).maybeSingle()
+  const row = data as { id: string; demos: Demo[] | null; best_score: number | null } | null
   const before = (row?.demos as Demo[] | null)?.length ?? 0
   const demos = [...((row?.demos as Demo[] | null) ?? []), ...clean].slice(-600)
-  if (row) await admin.from('aj_play_policies').update({ demos, updated_at: new Date().toISOString() } as never).eq('id', row.id)
-  else await admin.from('aj_play_policies').insert([{ game_id: gameId, user_id: userId, version: 1, tips: [], rules: [], params: {}, demos }] as never)
+  // 사람이 플레이한 이번 배치의 최고 점수 — 이전 최고보다 높으면 갱신·기록 (내 플레이도 실력 추적에 포함)
+  const maxScore = clean.reduce((m, x) => { const sc = x.s.score; return typeof sc === 'number' && sc > m ? sc : m }, -Infinity)
+  const upd: Record<string, unknown> = { demos, updated_at: new Date().toISOString() }
+  if (row && Number.isFinite(maxScore) && (row.best_score ?? -1) < maxScore) { const prevBest = row.best_score ?? null; upd.best_score = maxScore; upd.best_score_at = new Date().toISOString(); void logLearn(admin, userId, gameId, 'record', `최고 점수 갱신 — ${maxScore.toLocaleString()}점 (내 플레이)`, prevBest != null ? `이전 최고 ${prevBest.toLocaleString()}점 → ${maxScore.toLocaleString()}점` : `첫 기록 ${maxScore.toLocaleString()}점`, null) }
+  if (row) await admin.from('aj_play_policies').update(upd as never).eq('id', row.id)
+  else await admin.from('aj_play_policies').insert([{ game_id: gameId, user_id: userId, version: 1, tips: [], rules: [], params: {}, demos, ...(Number.isFinite(maxScore) ? { best_score: maxScore, best_score_at: new Date().toISOString() } : {}) }] as never)
   // 사람 플레이 관찰 — 75샘플(약 15초) 단위로 학습 기록에 남긴다 (매 배치마다 남기면 과도)
   if (Math.floor(demos.length / 75) > Math.floor(before / 75)) void logLearn(admin, userId, gameId, 'demo', `내 플레이 관찰 — 누적 ${demos.length}샘플`, '사람이 어떤 상황에서 어떤 조작을 하는지 배우는 중', null)
   return Response.json({ ok: true, kept: demos.length })

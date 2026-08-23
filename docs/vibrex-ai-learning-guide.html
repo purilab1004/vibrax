@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vibrexcup AJ 학습 시스템 가이드</title>
+<style>
+  :root{
+    --ink:#1a1d26; --sub:#5b6472; --line:#e6e2d8; --bg:#fcfaf5; --card:#ffffff;
+    --blue:#2563eb; --cyan:#0891b2; --purple:#7c3aed; --green:#059669; --amber:#d97706; --sky:#0ea5e9; --red:#e11d48;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard',system-ui,sans-serif;
+    line-height:1.65;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .page{max-width:840px;margin:0 auto;padding:56px 44px 80px}
+  header.cover{border-bottom:3px solid var(--ink);padding-bottom:28px;margin-bottom:36px}
+  .eyebrow{font-size:11px;letter-spacing:.34em;font-weight:800;color:var(--blue);text-transform:uppercase}
+  h1{font-size:34px;line-height:1.15;margin:12px 0 8px;letter-spacing:-.01em}
+  .lead{font-size:15px;color:var(--sub);max-width:600px}
+  .meta{margin-top:18px;font-size:12px;color:var(--sub)}
+  h2{font-size:21px;margin:44px 0 6px;padding-top:14px;border-top:1px solid var(--line);letter-spacing:-.01em}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--ink);color:#fff;font-size:13px;font-weight:800;margin-right:9px;vertical-align:2px}
+  h3{font-size:15px;margin:22px 0 4px}
+  p{margin:8px 0}
+  small{color:var(--sub)}
+  .sub{color:var(--sub);font-size:13.5px}
+  ul{margin:8px 0;padding-left:20px}
+  li{margin:4px 0}
+  code{font-family:var(--mono);font-size:12.5px;background:#f1ede4;padding:1px 5px;border-radius:4px}
+  pre{background:#0f1117;color:#e5e7eb;border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.55;margin:10px 0}
+  pre .k{color:#7dd3fc}.pre .s{color:#a7f3d0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0;
+    box-shadow:0 1px 2px rgba(26,29,38,.04),0 10px 30px -22px rgba(26,29,38,.3)}
+  .tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#fff;padding:3px 9px;border-radius:999px;letter-spacing:.02em}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);background:#f6f2ea}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .flow{background:#f6f2ea;border-radius:12px;padding:16px 18px;font-family:var(--mono);font-size:12px;line-height:1.7;white-space:pre-wrap;color:#333}
+  .note{border-left:4px solid var(--amber);background:#fff8ee;border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0;font-size:13.5px}
+  .kv{font-size:13px}.kv b{color:var(--ink)}
+  footer{margin-top:48px;padding-top:18px;border-top:1px solid var(--line);font-size:11.5px;color:var(--sub);display:flex;justify-content:space-between}
+  @media print{ .page{padding:0 8px} h2{break-after:avoid} .card,pre,table,.flow{break-inside:avoid} a{color:inherit;text-decoration:none} }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="cover">
+  <div class="eyebrow">Vibrexcup · AJ Learning System</div>
+  <h1>AJ 아바타 학습 시스템 가이드</h1>
+  <p class="lead">회원의 AI 아바타가 게임을 스스로·사람에게·개발자에게 배워 점점 잘하게 되는 구조를 방식별로 정리한 기술 문서입니다.</p>
+  <div class="meta">Vibrexcup 내부 문서 · 2026 · 예시는 브레이커(벽돌깨기) 계열 게임 기준</div>
+</header>
+
+<h2>공통 토대 — 상태·행동·보상</h2>
+<p class="sub">모든 학습은 게임이 노출하는 3요소를 재료로 씁니다. 이는 강화학습의 기본 틀과 동일합니다.</p>
+<div class="card">
+<pre>VIBREX_GAME = {
+  state()   → { ballX, ballY, ballDx, ballDy, paddleX, paddleW, attached, score, lives, stage, bricksLeft }  <span style="color:#94a3b8">// 상태(State)</span>
+  inputs    → left / right / action(발사)                                                                     <span style="color:#94a3b8">// 행동(Action)</span>
+  phase()   → title | playing | over | cleared
+  progress()→ 0 ~ 1
+}
+보상(Reward) = 점수 ↑ (+) · 클리어 (+) · 게임오버 (−)</pre>
+</div>
+<p class="note"><b>왜 DQN/PPO(신경망 강화학습)를 쓰지 않았나</b> — 회원이 만드는 게임이 수천 개라, 게임 1개당 GPU로 신경망을 수만 판 학습시키는 것은 비용·인프라상 불가능합니다. 대신 <b>사람이 읽을 수 있는 규칙 + 정석 휴리스틱 + 가벼운 진화(CEM) + LLM 최적화</b>를 조합했습니다. 효과는 유사하면서 비용이 거의 0이고, “무엇을 배웠는지”가 사람에게 그대로 보입니다.</p>
+
+<h2><span class="n">1</span>AI 직접 플레이 (오토파일럿)</h2>
+<p class="sub">게임을 실제로 조작하는 실행 엔진. 두 종류를 자동 선택합니다.</p>
+<div class="grid">
+  <div class="card">
+    <h3>완성형 봇 (정석 알고리즘)</h3>
+    <p class="sub">새 템플릿 게임에 내장. 브레이커는 <b>공 낙하점 물리 예측</b>(벽 반사까지 계산), 테트리스는 <b>모든 회전×열 착지 시뮬레이션 후 구멍·높이 평가</b>.</p>
+  </div>
+  <div class="card">
+    <h3>폴백 봇</h3>
+    <p class="sub">매니페스트가 없으면 키 입력 + 화면 클릭 + 아래에서 학습한 규칙(조건→행동)을 실행.</p>
+  </div>
+</div>
+<p class="kv">실력은 <code>setSkill(0~1)</code>로 조절 — 낮으면 반응이 느리고 실수, 높으면 정밀. 이 실력은 <b>② 기본기 학습</b>으로 0.3 → 1.0까지 단계 해제됩니다.</p>
+
+<h2><span class="n">2</span>템플릿 기본기 커리큘럼</h2>
+<p class="sub">템플릿이 미리 보유한 정석 플레이를, 회원 AI가 <b>2판 + 1시간 간격</b>으로 한 단계씩 학습합니다. 정석 힌트를 이 게임의 <code>state</code>에 맞는 실행 규칙으로 번역(Haiku).</p>
+<div class="card">
+<p class="kv"><b>브레이커 커리큘럼</b> — 1. 공 따라가기 → 2. 낙하점 예측 → 3. 가장자리로 각도 조절 → 4. 옆 통로 뚫기</p>
+<p class="kv" style="margin-top:6px">1단계 “공 따라가기” 컴파일 결과:</p>
+<pre>{ "cond": "s.ballDy > 0 && s.ballX > s.paddleX + 8", "action": "right", "hold": 80 }
+<span style="color:#94a3b8">// 공이 내려오는 중이고 패들보다 오른쪽 → 오른쪽으로 80ms 이동</span></pre>
+<p class="sub">단계가 오를수록 규칙이 정교해지고 봇 실력(botSkill)도 함께 해제됩니다. 관리자·개발자가 단계를 추가할 수 있습니다.</p>
+</div>
+
+<h2><span class="n">3</span>프롬프트 코칭 (말로 가르치기)</h2>
+<p class="sub">게임 참여 중 채팅으로 가르치면 실행 규칙으로 컴파일됩니다. 이 규칙은 <b>게임별·나만의 것</b>이라 다른 회원 AI에게는 가지 않습니다.</p>
+<div class="card">
+<p class="kv">내 입력: <i>“공이 왼쪽 끝으로 가면 미리 왼쪽 벽에 붙어”</i></p>
+<pre>{ "cond": "s.ballX &lt; 60 &amp;&amp; s.ballDx &lt; 0", "action": "left", "hold": 200, "why": "왼쪽 벽 근처 선점" }</pre>
+<p class="sub">AJ 응답: “왼쪽 벽 선점 규칙 추가했어 (학습 v15 · 규칙 3개)”</p>
+</div>
+
+<h2><span class="n">4</span>내 플레이 모방 (사람 조작 관찰)</h2>
+<p class="sub">내가 직접 플레이하면 0.2초마다 <b>(상태, 눌린 키, 탭 위치)</b>를 기록합니다. 이를 통계로 요약해 “사람은 이럴 때 이렇게 하더라”를 규칙으로 만듭니다.</p>
+<div class="card">
+<pre>[인간 데모 요약]
+- right 누름 (32/120 샘플): ballX 평균 210  (안 누를 때 140)
+- action 누름 (8/120): attached=1, paddleX≈ballX 일 때
+- 화면 탭 위치: 우하 12회, 좌하 8회</pre>
+<p class="sub">→ “공이 오른쪽일 때 오른쪽으로 갔다”는 패턴을 학습. AJ 학습 탭의 <b>‘내 플레이로 학습’</b> 버튼으로 즉시 반영할 수도 있습니다.</p>
+</div>
+
+<h2><span class="n">5</span>자기 반성 + 파라미터 진화 (알아서 성장)</h2>
+<p class="sub"><b>3판마다</b> 최근 점수를 스스로 돌아봅니다.</p>
+<ul>
+  <li>규칙이 있는 게임: “평균 X점, 더 잘하려면?”을 자문해 규칙을 조금씩 수정 (LLM as optimizer).</li>
+  <li>규칙을 못 만드는 게임: <code>reactionMs·randomness·botSkill</code> 등 숫자 파라미터를 변이 (가벼운 진화 / CEM).</li>
+  <li><b>안전장치</b>: 새 버전 평균이 역대 최고 평균의 85% 미만이면 <b>잘되던 규칙으로 자동 복귀</b> (알파고식 “더 나은 정책만 채택”).</li>
+</ul>
+<pre>자기 반성 · 파라미터 진화(변이 시도) — reactionMs 30.56 · randomness 0.01 · botSkill 0.35 · v15</pre>
+
+<h2><span class="n">6</span>개발자 가이드 (제작자가 가르치기)</h2>
+<p class="sub">게임 제작자가 내정보 &gt; 내 게임 &gt; <b>학습</b>에서 자기 게임의 정석을 단계로 등록하면, <b>그 게임을 하는 모든 회원의 AI</b>가 ②처럼 시간차로 배웁니다. (내 코칭·모방은 나만 보유, 개발자 가이드·기본기는 공용)</p>
+
+<h2>전체 흐름</h2>
+<div class="flow">AI 플레이(①) ──▶ 판 끝날 때마다 에피소드·점수 기록 ──▶ 3판마다 자기 반성(⑤)
+      ▲
+      │  실행 정책 = 기본기(②) + 내 코칭(③) + 내 플레이 모방(④) + 개발자 가이드(⑥)
+      │  실력(botSkill) = 기본기 진행도만큼 완성형 봇 해제
+      ▼
+모든 학습은 (게임 × 회원) 단위로 저장 ──▶ 내정보 &gt; AJ 학습 에서 확인</div>
+
+<h2>학습 기록에서 보이는 라벨</h2>
+<div class="pill-row">
+  <span class="tag" style="background:#0ea5e9">AI 플레이</span>
+  <span class="tag" style="background:#2563eb">기본기</span>
+  <span class="tag" style="background:#7c3aed">프롬프트 코칭</span>
+  <span class="tag" style="background:#0891b2">내 플레이 모방</span>
+  <span class="tag" style="background:#059669">자기 반성</span>
+  <span class="tag" style="background:#d97706">개발자 가이드</span>
+  <span class="tag" style="background:#e11d48">복귀</span>
+</div>
+<table>
+  <tr><th>방식</th><th>누가</th><th>공유 범위</th><th>기록 시점</th></tr>
+  <tr><td>AI 직접 플레이</td><td>AI</td><td>나</td><td>매 판 종료</td></tr>
+  <tr><td>템플릿 기본기</td><td>플랫폼</td><td>모두(단계별)</td><td>2판+1시간마다 1단계</td></tr>
+  <tr><td>프롬프트 코칭</td><td>나(채팅)</td><td>나</td><td>가르칠 때</td></tr>
+  <tr><td>내 플레이 모방</td><td>나(플레이)</td><td>나</td><td>75샘플(≈15초)마다</td></tr>
+  <tr><td>자기 반성/진화</td><td>AI</td><td>나</td><td>3판마다</td></tr>
+  <tr><td>개발자 가이드</td><td>제작자</td><td>그 게임의 모두</td><td>가이드 등록 시</td></tr>
+</table>
+
+<h2>중요한 전제 조건</h2>
+<p class="note">학습은 게임이 <b>표준 상태 정보(매니페스트: <code>state()</code>·<code>inputs</code>)</b>를 노출해야 동작합니다. 2026-08-19 표준 도입 이후 만들어진 게임과 그 이후의 템플릿 게임에서 유효합니다. 그 이전 게임·외부 링크 게임은 관찰할 데이터가 없어 <b>① AI 플레이(범용 봇)</b>만 가능하고 ④⑤ 학습 데이터는 쌓이지 않습니다.</p>
+
+<footer>
+  <span>Vibrexcup — AJ Learning System Guide</span>
+  <span>저장: 브라우저에서 ⌘P / Ctrl+P → “PDF로 저장”</span>
+</footer>
+
+</div>
+</body>
+</html>

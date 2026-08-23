@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 interface Curriculum { total: number; learned: number; steps: { name: string; done: boolean }[]; next: string | null; needEpisodes: number; readyAt: string | null }
-interface Row { game_id: string; version: number; rules: unknown[]; tips: string[]; best_score: number | null; auto_learn?: boolean; auto_count?: number; template_skill?: number; episodes?: { v: number; score: number }[]; demos?: unknown[]; updated_at: string; curriculum?: Curriculum | null; games: { title: string; genre: string; thumbnail_url: string | null } | null }
+interface Row { game_id: string; version: number; rules: unknown[]; tips: string[]; best_score: number | null; best_score_at?: string | null; auto_learn?: boolean; auto_count?: number; template_skill?: number; episodes?: { v: number; score: number }[]; demos?: unknown[]; updated_at: string; curriculum?: Curriculum | null; games: { title: string; genre: string; thumbnail_url: string | null } | null }
 const GENRE: Record<string, { label: string; color: string; difficulty: number; why: string }> = {
   action: { label: 'ACTION', color: '#dc2626', difficulty: 2, why: '반사 규칙 위주 — 빨리 배움' },
   sports: { label: 'SPORTS', color: '#059669', difficulty: 2, why: '타이밍·위치 규칙' },
@@ -22,7 +22,7 @@ const tierOf = (xp: number) => { let t = 0, acc = 0; while (t < TIERS.length - 1
 const xpOf = (r: Row) => r.version * 10 + (Array.isArray(r.rules) ? r.rules.length : 0) * 6 + (r.template_skill ?? 0) * 15 + (r.best_score && r.best_score > 0 ? 12 : 0)
 
 interface LearnLog { id: string; game_id: string | null; kind: string; title: string; detail: string | null; version: number | null; created_at: string }
-const LOG_KIND: Record<string, [string, string]> = { curriculum: ['기본기', '#2563eb'], coach: ['프롬프트 코칭', '#7c3aed'], demo: ['내 플레이 모방', '#0891b2'], reflect: ['자기 반성', '#059669'], revert: ['복귀', '#f59e0b'], play: ['AI 플레이', '#0ea5e9'], guide: ['개발자 가이드', '#d97706'] }
+const LOG_KIND: Record<string, [string, string]> = { record: ['최고 점수', '#e11d48'], curriculum: ['기본기', '#2563eb'], coach: ['프롬프트 코칭', '#7c3aed'], demo: ['내 플레이 모방', '#0891b2'], reflect: ['자기 반성', '#059669'], revert: ['복귀', '#f59e0b'], play: ['AI 플레이', '#0ea5e9'], guide: ['개발자 가이드', '#d97706'] }
 
 export default function AiLearningSection() {
   const [rows, setRows] = useState<Row[] | null>(null)
@@ -116,7 +116,7 @@ export default function AiLearningSection() {
                 )}
               </div>
               <span className="font-pixel text-[8px] px-1.5 py-0.5 rounded text-white shrink-0" style={{ background: g.color }}>{g.label}</span>
-              <div className="text-right shrink-0"><p className="text-[12.5px] font-bold text-[#241f17] tabular-nums">학습 v{r.version} · 규칙 {n}{(r.template_skill ?? 0) > 0 ? ` · 기본기 ${r.template_skill}단계` : ''}{(r.auto_count ?? 0) > 0 ? ` · 자동 ${r.auto_count}` : ''}</p><p className="text-[11px] text-[#9d9280] tabular-nums">{r.best_score != null ? `최고 ${r.best_score.toLocaleString()}점` : '기록 없음'} · XP {xpOf(r)}{Array.isArray(r.demos) && r.demos.length > 0 ? ` · 내 플레이 ${r.demos.length}샘플` : ''}</p>
+              <div className="text-right shrink-0"><p className="text-[12.5px] font-bold text-[#241f17] tabular-nums">학습 v{r.version} · 규칙 {n}{(r.template_skill ?? 0) > 0 ? ` · 기본기 ${r.template_skill}단계` : ''}{(r.auto_count ?? 0) > 0 ? ` · 자동 ${r.auto_count}` : ''}</p><p className="text-[11px] text-[#9d9280] tabular-nums">{r.best_score != null ? `🏆 최고 ${r.best_score.toLocaleString()}점${r.best_score_at ? ` (${new Date(r.best_score_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })})` : ''}` : '기록 없음'} · XP {xpOf(r)}{Array.isArray(r.demos) && r.demos.length > 0 ? ` · 내 플레이 ${r.demos.length}샘플` : ''}</p>
                 {Array.isArray(r.demos) && r.demos.length >= 20 && <button onClick={() => learnFromDemo(r.game_id)} disabled={busy === r.game_id} className="mt-1 h-6 px-2 rounded-full bg-[#241f17] text-white text-[10.5px] font-bold disabled:opacity-50">{busy === r.game_id ? '학습 중…' : '내 플레이로 학습'}</button>}</div>
             </li>) })}
         </ul>
