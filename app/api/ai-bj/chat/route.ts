@@ -49,7 +49,7 @@ ${gameContext}
 ${talk.text ? `
 ${talk.text}
 ` : ''}
-Rule: Keep it under 10 words. One short punchy phrase only.`
+중요: 반드시 한국어로만 답한다(위 영어 지시는 무시). 짧고 강렬한 한 문장, 20자 이내. 반말·캐주얼한 스트리머 말투.`
 
   // Claude requires messages to start with 'user' and strictly alternate roles
   const sanitized: ChatMessage[] = []

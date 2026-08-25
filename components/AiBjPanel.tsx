@@ -419,7 +419,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
                   <span className={`font-bold mr-1.5 ${
                     msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'
                   }`}>
-                    {msg.role === 'assistant' ? ajChatName : msg.source === 'agent' ? (msg.agentName ?? 'AGENT') : agentConfig?.name ?? 'ME'}
+                    {msg.role === 'assistant' ? ajChatName : msg.source === 'agent' ? (msg.agentName ?? 'AGENT') : '나'}
                   </span>
                   {msg.content}
                   {msg.role === 'assistant' && isStreaming && i === arr.length - 1 && (
@@ -515,7 +515,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
               {messages.slice(-10).map((msg, i) => (
                 <div key={i} className="flex transition-opacity duration-1000" style={{ opacity: ageOpacity(msg.ts) }}>
                   <div className="max-w-full text-[12px] leading-snug px-2.5 py-1 rounded-2xl text-white bg-black/80 shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
-                    <span className={`font-bold mr-1 ${msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'}`}>{msg.role === 'assistant' ? ajChatName : msg.source === 'agent' ? (msg.agentName ?? 'AGENT') : agentConfig?.name ?? 'ME'}</span>{msg.content}
+                    <span className={`font-bold mr-1 ${msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'}`}>{msg.role === 'assistant' ? ajChatName : msg.source === 'agent' ? (msg.agentName ?? 'AGENT') : '나'}</span>{msg.content}
                   </div>
                 </div>
               ))}
