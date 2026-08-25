@@ -16,8 +16,6 @@ interface Row {
   template_skill?: number; episodes?: Episode[]; demos?: unknown[]; updated_at: string
   curriculum?: Curriculum | null; games: { title: string; genre: string; thumbnail_url: string | null } | null
 }
-const IN_LABEL: Record<string, string> = { ballX: '공 X', ballY: '공 Y', ballDx: '공 속도X', ballDy: '공 속도Y', paddleX: '패들 X', paddleW: '패들폭', score: '점수', lives: '목숨', stage: '스테이지', bricksLeft: '남은 벽돌', px: '조각 X', prot: '회전', ptype: '조각', level: '레벨', lines: '라인', maxH: '높이', holes: '구멍', bump: '요철', attached: '붙음' }
-const OUT_LABEL: Record<string, string> = { left: '◀ 왼쪽', right: '▶ 오른쪽', up: '▲ 위', down: '▼ 아래', action: '● 액션', action2: '○ 액션2' }
 interface LearnLog { id: string; game_id: string | null; kind: string; title: string; detail: string | null; version: number | null; created_at: string }
 const LOG_KIND: Record<string, [string, string]> = { record: ['최고 점수', '#e11d48'], curriculum: ['기본기', '#2563eb'], coach: ['프롬프트 코칭', '#7c3aed'], demo: ['내 플레이 모방', '#0891b2'], reflect: ['자기 반성', '#059669'], revert: ['복귀', '#f59e0b'], play: ['AI 플레이', '#0ea5e9'], guide: ['개발자 가이드', '#d97706'] }
 const GENRE: Record<string, { label: string; color: string }> = {
@@ -141,18 +139,40 @@ function GameDashboard({ row, logs, busy, onLearnDemo }: { row: Row; logs: Learn
         <Stat label="자기 진화" value={row.auto_count ?? 0} sub={demoN ? `내 플레이 ${demoN}` : undefined} accent="#059669" />
       </div>
 
-      {/* 아바타 두뇌 — 3D 신경망 (발달한 줄기에 빛이 흐르고 천천히 회전) */}
-      <div className="rounded-2xl bg-[#070b14] text-white p-4 md:p-5 relative overflow-hidden">
-        <div aria-hidden className="absolute inset-0" style={{ background: 'radial-gradient(120% 90% at 50% 0%, rgba(56,189,248,0.12), transparent 55%)' }} />
-        <div className="relative flex items-center justify-between mb-1">
-          <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-white/60">아바타 두뇌 · 3D 신경망</p>
-          {row.brainViz ? <span className="text-[11px] font-semibold text-[#38bdf8] tabular-nums">{row.brainViz.gen}세대 · 적합도 {Math.round(row.brainViz.fitness)} · {row.brainViz.arch.join('-')}</span> : <span className="text-[11px] text-white/40">학습 전 (데모)</span>}
+      {/* ── 신경망 — 독립 섹션 ── */}
+      <div className="rounded-3xl bg-gradient-to-b from-[#0a1120] to-[#070b14] text-white relative overflow-hidden ring-1 ring-white/5">
+        <div aria-hidden className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-16 left-1/4 w-[440px] h-[440px] rounded-full bg-[radial-gradient(closest-side,rgba(56,189,248,0.18),transparent)] blur-2xl" />
+          <div className="absolute -bottom-24 right-1/4 w-[420px] h-[420px] rounded-full bg-[radial-gradient(closest-side,rgba(244,114,182,0.14),transparent)] blur-2xl" />
+          <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
         </div>
-        <div className="relative"><BrainNetwork3D b={row.brainViz ?? null} /></div>
+        <div className="relative px-5 md:px-6 pt-5 flex items-end justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.35em] text-[#38bdf8]/80 uppercase">Neural Network</p>
+            <h3 className="text-[18px] md:text-[20px] font-extrabold tracking-tight mt-0.5">AJ 신경망</h3>
+            <p className="text-[12px] text-white/45 mt-0.5">상태(입력)를 읽고 행동(출력)을 스스로 결정하는 두뇌 — 세대를 거쳐 진화해요.</p>
+          </div>
+          {row.brainViz ? (
+            <div className="flex items-center gap-2">
+              {[[`${row.brainViz.gen}`, '세대'], [`${Math.round(row.brainViz.fitness)}`, '최고 적합도'], [row.brainViz.arch.join('·'), '구조']].map(([v, l]) => (
+                <div key={l} className="text-center px-3 py-1.5 rounded-xl bg-white/5 border border-white/10"><p className="text-[15px] font-extrabold leading-none tabular-nums">{v}</p><p className="text-[9px] text-white/45 mt-1 uppercase tracking-wide">{l}</p></div>
+              ))}
+            </div>
+          ) : <span className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/50">학습 전 · 미리보기</span>}
+        </div>
+        <BrainNetwork3D b={row.brainViz ?? null} />
         {row.brainViz ? (
-          <div className="relative mt-1"><p className="text-[11px] text-white/50 mb-2">가중치 평면도</p><BrainNetwork b={row.brainViz} /></div>
+          <div className="relative px-5 md:px-6 pb-5">
+            <div className="flex items-center gap-4 text-[11px] text-white/55 flex-wrap">
+              <span className="inline-flex items-center gap-1.5"><span className="w-3.5 h-0.5 rounded-full bg-[#34d399] inline-block" />양(+) 시냅스</span>
+              <span className="inline-flex items-center gap-1.5"><span className="w-3.5 h-0.5 rounded-full bg-[#fb7185] inline-block" />음(−) 시냅스</span>
+              <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#6ee7b7] inline-block shadow-[0_0_8px_#6ee7b7]" />빛 = 발달한 신경 줄기</span>
+            </div>
+          </div>
         ) : (
-          <div className="relative"><ParamGenome params={row.params ?? {}} rules={rules} /></div>
+          <div className="relative px-5 md:px-6 pb-5">
+            <ParamGenome params={row.params ?? {}} rules={rules} />
+          </div>
         )}
       </div>
 
@@ -236,51 +256,6 @@ function GenerationChart({ episodes }: { episodes: Episode[] }) {
 }
 
 // 최고 개체 정책 신경망 — 상태특징(입력) → 규칙(은닉) → 행동(출력) 3층 그래프. 규칙이 없으면 파라미터 게놈 게이지.
-// 아바타 두뇌 — 실제 가중치 신경망. 초록=양·빨강=음, 굵기/불투명도=가중치 크기.
-// 발달한(강한) 신경 줄기에는 빛이 흐른다(애니메이션). 입력=상태, 은닉, 출력=행동.
-function BrainNetwork({ b }: { b: BrainViz }) {
-  const [ni, nh, no] = b.arch
-  const W = 620, H = Math.max(170, Math.max(ni, nh, no) * 30 + 40)
-  const colX = [96, W / 2, W - 96]
-  const yOf = (i: number, c: number) => 30 + (c <= 1 ? (H - 60) / 2 : i / (c - 1) * (H - 60))
-  const maxW = Math.max(0.001, ...b.w1.flat().map(Math.abs), ...b.w2.flat().map(Math.abs))
-  const edge = (w: number) => { const a = Math.abs(w) / maxW; return { color: w >= 0 ? '#22c55e' : '#f43f5e', op: 0.12 + a * 0.7, sw: 0.4 + a * 2.4, strong: a > 0.55 } }
-  // 발달한 줄기(상위 가중치)에 빛 흐름
-  type E = { x1: number; y1: number; x2: number; y2: number; a: number; color: string }
-  const flows: E[] = []
-  b.w1.forEach((row, i) => row.forEach((w, j) => { const a = Math.abs(w) / maxW; if (a > 0.5) flows.push({ x1: colX[0], y1: yOf(i, ni), x2: colX[1], y2: yOf(j, nh), a, color: w >= 0 ? '#4ade80' : '#fb7185' }) }))
-  b.w2.forEach((row, j) => row.forEach((w, k) => { const a = Math.abs(w) / maxW; if (a > 0.5) flows.push({ x1: colX[1], y1: yOf(j, nh), x2: colX[2], y2: yOf(k, no), a, color: w >= 0 ? '#4ade80' : '#fb7185' }) }))
-  const topFlows = flows.sort((x, y) => y.a - x.a).slice(0, 10)
-  return (
-    <div className="relative">
-      <div className="overflow-x-auto"><svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px]" style={{ maxHeight: 260 }}>
-        <defs><filter id="nnglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs>
-        {/* 층 라벨 */}
-        <text x={colX[0]} y={16} fontSize="9" fill="#64748b" textAnchor="middle">상태(입력)</text>
-        <text x={colX[1]} y={16} fontSize="9" fill="#64748b" textAnchor="middle">은닉 {nh}</text>
-        <text x={colX[2]} y={16} fontSize="9" fill="#64748b" textAnchor="middle">행동(출력)</text>
-        {/* w1 edges */}
-        {b.w1.map((row, i) => row.map((w, j) => { const e = edge(w); return <line key={`a${i}-${j}`} x1={colX[0]} y1={yOf(i, ni)} x2={colX[1]} y2={yOf(j, nh)} stroke={e.color} strokeOpacity={e.op} strokeWidth={e.sw} /> }))}
-        {/* w2 edges */}
-        {b.w2.map((row, j) => row.map((w, k) => { const e = edge(w); return <line key={`b${j}-${k}`} x1={colX[1]} y1={yOf(j, nh)} x2={colX[2]} y2={yOf(k, no)} stroke={e.color} strokeOpacity={e.op} strokeWidth={e.sw} /> }))}
-        {/* 발달한 줄기의 빛 흐름 */}
-        {topFlows.map((f, i) => <line key={`f${i}`} x1={f.x1} y1={f.y1} x2={f.x2} y2={f.y2} stroke={f.color} strokeWidth={1 + f.a * 2} strokeOpacity="0.9" strokeLinecap="round" strokeDasharray="1 14" filter="url(#nnglow)" className="nn-flow" style={{ animationDelay: `${(i % 5) * 0.3}s` }} />)}
-        {/* 입력 노드 */}
-        {b.inputs.map((f, i) => <g key={f}><circle cx={colX[0]} cy={yOf(i, ni)} r="6" fill="#38bdf8" filter="url(#nnglow)" /><text x={colX[0] - 11} y={yOf(i, ni) + 3} fontSize="9.5" fill="#cbd5e1" textAnchor="end">{IN_LABEL[f] ?? f}</text></g>)}
-        {/* 은닉 노드 */}
-        {Array.from({ length: nh }).map((_, j) => <circle key={j} cx={colX[1]} cy={yOf(j, nh)} r="5.5" fill="#334155" stroke="#64748b" strokeWidth="1" />)}
-        {/* 출력 노드 */}
-        {b.outputs.map((a, k) => <g key={a}><circle cx={colX[2]} cy={yOf(k, no)} r="8" fill="#f472b6" filter="url(#nnglow)" /><text x={colX[2] + 12} y={yOf(k, no) + 3} fontSize="9.5" fill="#e2e8f0">{OUT_LABEL[a] ?? a}</text></g>)}
-      </svg></div>
-      <div className="flex items-center gap-3 mt-1 text-[10.5px] text-white/50 flex-wrap">
-        <span className="inline-flex items-center gap-1"><span className="w-3 h-0.5 bg-[#22c55e] inline-block" />양(+) 가중치</span>
-        <span className="inline-flex items-center gap-1"><span className="w-3 h-0.5 bg-[#f43f5e] inline-block" />음(−) 가중치</span>
-        <span>빛나는 줄기 = 발달한 신경 경로 · 선 굵기 = 가중치 크기</span>
-      </div>
-    </div>
-  )
-}
-
 // 신경망이 아직 없는(매니페스트 없는) 게임 — 파라미터 게놈 게이지
 function ParamGenome({ params, rules }: { params: Record<string, number>; rules: Rule[] }) {
   const genes: [string, number, number, number][] = [
