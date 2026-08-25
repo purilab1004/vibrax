@@ -2,7 +2,9 @@
 // 내정보 > AJ 학습 — 뉴로에볼루션 대시보드. 게임을 골라 그 게임 AI 의 학습 현황·세대별 성적·최고 개체(정책 신경망)·학습 기록을 본다.
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
+const BrainNetwork3D = dynamic(() => import('./BrainNetwork3D'), { ssr: false })
 
 interface Curriculum { total: number; learned: number; steps: { name: string; done: boolean }[]; next: string | null; needEpisodes: number; readyAt: string | null }
 interface Rule { cond: string; action: string; hold?: number; why?: string }
@@ -139,14 +141,19 @@ function GameDashboard({ row, logs, busy, onLearnDemo }: { row: Row; logs: Learn
         <Stat label="자기 진화" value={row.auto_count ?? 0} sub={demoN ? `내 플레이 ${demoN}` : undefined} accent="#059669" />
       </div>
 
-      {/* 아바타 두뇌 — 최고 개체 신경망 (발달한 신경 줄기가 빛으로 흐른다) */}
-      <div className="rounded-2xl bg-[#0b0f1a] text-white p-4 md:p-5 relative overflow-hidden">
-        <div aria-hidden className="absolute inset-0 opacity-[0.5]" style={{ background: 'radial-gradient(120% 80% at 50% 0%, rgba(56,189,248,0.10), transparent 60%)' }} />
-        <div className="relative flex items-center justify-between mb-2">
-          <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-white/60">아바타 두뇌 · 신경망</p>
-          {row.brainViz && <span className="text-[11px] font-semibold text-[#38bdf8] tabular-nums">{row.brainViz.gen}세대 · 적합도 {Math.round(row.brainViz.fitness)}</span>}
+      {/* 아바타 두뇌 — 3D 신경망 (발달한 줄기에 빛이 흐르고 천천히 회전) */}
+      <div className="rounded-2xl bg-[#070b14] text-white p-4 md:p-5 relative overflow-hidden">
+        <div aria-hidden className="absolute inset-0" style={{ background: 'radial-gradient(120% 90% at 50% 0%, rgba(56,189,248,0.12), transparent 55%)' }} />
+        <div className="relative flex items-center justify-between mb-1">
+          <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-white/60">아바타 두뇌 · 3D 신경망</p>
+          {row.brainViz ? <span className="text-[11px] font-semibold text-[#38bdf8] tabular-nums">{row.brainViz.gen}세대 · 적합도 {Math.round(row.brainViz.fitness)} · {row.brainViz.arch.join('-')}</span> : <span className="text-[11px] text-white/40">학습 전 (데모)</span>}
         </div>
-        {row.brainViz ? <BrainNetwork b={row.brainViz} /> : <ParamGenome params={row.params ?? {}} rules={rules} />}
+        <div className="relative"><BrainNetwork3D b={row.brainViz ?? null} /></div>
+        {row.brainViz ? (
+          <div className="relative mt-1"><p className="text-[11px] text-white/50 mb-2">가중치 평면도</p><BrainNetwork b={row.brainViz} /></div>
+        ) : (
+          <div className="relative"><ParamGenome params={row.params ?? {}} rules={rules} /></div>
+        )}
       </div>
 
       {/* 세대별 성적 */}
