@@ -33,6 +33,7 @@ export default function AiLearningSection() {
   const [missing, setMissing] = useState(false)
   const [sel, setSel] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [q, setQ] = useState('')
   useEffect(() => {
     fetch('/api/ai-bj/learning').then(r => r.json())
       .then(j => { if (j.error) { setMissing(true); setRows([]) } else { const rs = (j.rows as Row[]) ?? []; setRows(rs); setSel(s => s ?? rs[0]?.game_id ?? null) } })
@@ -75,23 +76,43 @@ export default function AiLearningSection() {
           <p className="text-[12.5px] text-[#857a68] mt-1">게임을 열고 <b>게임 참여</b>로 AI 를 플레이시키거나 직접 플레이하면 학습이 시작돼요. <Link href="/games" className="text-[#2563eb] font-semibold">게임 보러 가기 →</Link></p>
         </div>
       ) : (
-        <>
-          {/* 게임 선택 */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
-            {rows.map(r => (
-              <button key={r.game_id} onClick={() => setSel(r.game_id)}
-                className={`shrink-0 flex items-center gap-2 h-9 pl-1 pr-3 rounded-full border transition-colors ${sel === r.game_id ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white border-[#e6dfd0] text-[#4a4337] hover:border-[#241f17]'}`}>
-                <span className="w-7 h-7 rounded-full overflow-hidden bg-[#f1ece2] shrink-0">{r.games?.thumbnail_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={r.games.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                ) : null}</span>
-                <span className="text-[12.5px] font-semibold whitespace-nowrap max-w-[140px] truncate">{r.games?.title ?? '게임'}</span>
-              </button>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-3">
+          {/* 게임 목록 — 검색 + 스크롤 리스트 (모바일은 드롭다운) */}
+          <aside className="lg:sticky lg:top-4 self-start">
+            {/* 모바일: 드롭다운 */}
+            <select value={sel ?? ''} onChange={e => setSel(e.target.value)} className="lg:hidden w-full h-11 rounded-xl border border-[#e6dfd0] bg-white px-3 text-[13.5px] font-semibold text-[#241f17] mb-3">
+              {rows.map(r => <option key={r.game_id} value={r.game_id}>{r.games?.title ?? '게임'} · v{r.version}{r.best_score != null ? ` · ${r.best_score}점` : ''}</option>)}
+            </select>
+            {/* 데스크톱: 검색 + 목록 */}
+            <div className="hidden lg:block rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] overflow-hidden">
+              <div className="p-2.5 border-b border-[#f1ece2]">
+                <div className="flex items-center gap-2 h-9 rounded-lg bg-[#f6f2ea] px-2.5">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#9d9280] shrink-0" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+                  <input value={q} onChange={e => setQ(e.target.value)} placeholder="게임 검색" className="flex-1 min-w-0 bg-transparent text-[13px] focus:outline-none" />
+                </div>
+              </div>
+              <ul className="max-h-[520px] overflow-y-auto p-1.5">
+                {rows.filter(r => !q.trim() || (r.games?.title ?? '').toLowerCase().includes(q.trim().toLowerCase())).map(r => (
+                  <li key={r.game_id}>
+                    <button onClick={() => setSel(r.game_id)} className={`w-full flex items-center gap-2.5 rounded-xl p-1.5 text-left transition-colors ${sel === r.game_id ? 'bg-[#241f17] text-white' : 'hover:bg-[#f6f2ea]'}`}>
+                      <span className="w-9 h-9 rounded-lg overflow-hidden bg-[#f1ece2] shrink-0">{r.games?.thumbnail_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={r.games.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                      ) : null}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[12.5px] font-bold truncate">{r.games?.title ?? '게임'}</span>
+                        <span className={`block text-[10.5px] tabular-nums ${sel === r.game_id ? 'text-white/60' : 'text-[#9d9280]'}`}>v{r.version}{r.best_score != null ? ` · 🏆${r.best_score}` : ''}{(r.template_skill ?? 0) > 0 ? ` · 기본기${r.template_skill}` : ''}</span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+                {rows.filter(r => !q.trim() || (r.games?.title ?? '').toLowerCase().includes(q.trim().toLowerCase())).length === 0 && <li className="p-4 text-center text-[12px] text-[#9d9280]">검색 결과 없음</li>}
+              </ul>
+            </div>
+          </aside>
 
-          {cur && <GameDashboard row={cur} logs={logs.filter(l => l.game_id === cur.game_id)} busy={busy === cur.game_id} onLearnDemo={() => learnFromDemo(cur.game_id)} />}
-        </>
+          <div className="min-w-0">{cur && <GameDashboard row={cur} logs={logs.filter(l => l.game_id === cur.game_id)} busy={busy === cur.game_id} onLearnDemo={() => learnFromDemo(cur.game_id)} />}</div>
+        </div>
       )}
     </div>
   )
