@@ -42,31 +42,6 @@ interface Props {
   bjLive?: LiveInfo | null
 }
 
-// 코칭 추천 문구 — 회원이 기술 용어(ballX 등) 몰라도 탭 한 번으로 가르친다. 뒤에서 AI 가 게임 상태 규칙으로 번역.
-const COACH_TIPS: Record<string, { label: string; say: string }[]> = {
-  action: [
-    { label: '🎯 떨어질 곳 미리 받기', say: '공이 내려올 때 벽에 튕기는 것까지 계산해서 떨어질 위치를 예측하고 미리 그 자리로 가서 받아.' },
-    { label: '⚡ 빠를 때 더 일찍', say: '공이 빠를수록 더 일찍 움직여서 놓치지 마.' },
-    { label: '📐 각도 주기', say: '안 깨진 게 많은 쪽으로 보내게 가운데 말고 가장자리로 맞혀.' },
-    { label: '🛡️ 안전하게', say: '무리하지 말고 실수 없이 안정적으로 플레이해.' },
-  ],
-  sports: [
-    { label: '🎯 미리 위치 잡기', say: '공/상대가 올 곳을 예측해서 미리 그 자리로 이동해.' },
-    { label: '⚡ 빠르게 반응', say: '더 빠르게 반응해서 놓치지 마.' },
-    { label: '🛡️ 안전 우선', say: '무리하지 말고 안정적으로 플레이해.' },
-  ],
-  adventure: [
-    { label: '🗺️ 장애물 피하기', say: '앞에 장애물이 있으면 미리 피하고 부딪히지 마.' },
-    { label: '💎 아이템 먹기', say: '안전할 때만 아이템 쪽으로 움직이고 위험하면 회피 우선.' },
-    { label: '🛡️ 안전하게', say: '체력 관리하면서 신중하게 진행해.' },
-  ],
-  strategy: [
-    { label: '🧠 이득 되는 수', say: '지금 상황에서 점수나 이득이 가장 큰 선택을 골라.' },
-    { label: '🛡️ 위험 관리', say: '위험이 커지면 욕심내지 말고 안전한 쪽으로 가.' },
-    { label: '⚡ 빠른 판단', say: '망설이지 말고 빠르게 결정해.' },
-  ],
-}
-const coachTipsFor = (g: string) => COACH_TIPS[g] ?? COACH_TIPS.action
 // 다른 시청자 이름 마스킹 — 앞 4글자만 보이고 나머지는 ** (개인정보 보호)
 const maskName = (name: string) => { const n = (name || '').trim(); return n.length > 4 ? n.slice(0, 4) + '**' : n }
 
@@ -125,7 +100,6 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   }, [gameId])
   const [canJoin, setCanJoin] = useState(false)
   const [chatExpanded, setChatExpanded] = useState(false)  // 채팅 전체 내역 펼치기
-  const [showTips, setShowTips] = useState(false)  // 코칭 추천 문구 — 평소 숨김, 💡 버튼으로만 펼침
   // 음성 입력 — 브라우저 음성인식(한국어)으로 말하면 채팅에 텍스트로 입력된다. (지원 브라우저에서만 버튼 노출)
   const [listening, setListening] = useState(false)
   const recogRef = useRef<{ start: () => void; stop: () => void } | null>(null)
@@ -469,18 +443,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
         </div>
         {/* 좌하단 입력 바 — 유리 알약 */}
         <div className="absolute left-4 bottom-4 w-[360px] pointer-events-auto">
-          {joined && !!gameFrame() && showTips && (
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {coachTipsFor(genre).map(t => (
-                <button key={t.label} onClick={() => { sendMessage(t.say); setShowTips(false) }} title={t.say}
-                  className="rounded-full bg-black/55 backdrop-blur-md border border-white/15 text-white/90 text-[11.5px] font-semibold px-2.5 py-1 hover:bg-black/75 transition-colors">{t.label}</button>
-              ))}
-            </div>
-          )}
           <div className="flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full pl-4 pr-1.5 py-1.5 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
-            {joined && !!gameFrame() && (
-              <button onClick={() => setShowTips(v => !v)} aria-label="코칭 팁" title="AI 에게 가르칠 추천 문구" className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[15px] transition ${showTips ? 'bg-white/25' : 'hover:bg-white/15'}`}>💡</button>
-            )}
             <input
               type="text"
               value={input}
@@ -566,17 +529,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
             </div>
           </div>
           <div className="absolute left-2 right-[150px] bottom-2.5 pointer-events-auto">
-            {joined && !!gameFrame() && showTips && (
-              <div className="flex gap-1.5 mb-1.5 overflow-x-auto no-scrollbar">
-                {coachTipsFor(genre).map(t => (
-                  <button key={t.label} onClick={() => { sendMessage(t.say); setShowTips(false) }} className="shrink-0 rounded-full bg-black/55 backdrop-blur-md border border-white/15 text-white/90 text-[11px] font-semibold px-2.5 py-1 whitespace-nowrap">{t.label}</button>
-                ))}
-              </div>
-            )}
-            <div className="flex items-center gap-1.5 bg-black/55 backdrop-blur-md rounded-full pl-2 pr-1 py-1 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
-              {joined && !!gameFrame() && (
-                <button onClick={() => setShowTips(v => !v)} aria-label="코칭 팁" className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[14px] ${showTips ? 'bg-white/25' : ''}`}>💡</button>
-              )}
+            <div className="flex items-center gap-1.5 bg-black/55 backdrop-blur-md rounded-full pl-3.5 pr-1 py-1 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
               <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
                 placeholder={joined ? 'AI에게 가르치기…' : 'AJ에게 말걸기...'} className="flex-1 min-w-0 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none" />
               {renderMic(32)}
