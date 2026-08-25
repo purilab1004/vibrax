@@ -253,14 +253,15 @@ export default function ProfilePage() {
   const inputClass = 'w-full h-10 rounded-lg bg-white border border-[#ddd3bf] focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 px-3.5 text-[14px] outline-none transition text-[#241f17] placeholder-[#a1957f]'
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
+    <div className="max-w-6xl mx-auto px-6 py-10">
       <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest">LOADING...</p>
     </div>
   )
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10 space-y-12">
-      {/* 헤더 — 아바타 · 이름 · 이메일 · 국가 · 재화 */}
+    <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+      {/* 헤더 — 프로필 탭에서만 노출 */}
+      {tab === 'profile' && (
       <div className="relative overflow-hidden rounded-3xl bg-[#171b26] text-white shadow-[0_24px_60px_-28px_rgba(23,27,38,0.6)]">
         <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-24 -left-10 w-72 h-72 rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.55),transparent)] blur-2xl" /><div className="absolute -bottom-28 right-10 w-80 h-80 rounded-full bg-[radial-gradient(closest-side,rgba(245,158,11,0.35),transparent)] blur-2xl" /><div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '18px 18px' }} /></div>
         <div className="relative px-6 md:px-8 py-6 flex items-center gap-5 flex-wrap">
@@ -282,6 +283,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      )}
       {/* 모바일 탭 (데스크톱은 사이드 메뉴) */}
       <nav className="md:hidden -mt-6 flex items-center gap-1 rounded-full bg-[#f1ece2] p-1 overflow-x-auto scrollbar-hide" aria-label="my page sections">
         {(Object.keys(TAB_LABEL) as Tab[]).map(t => <a key={t} href={`#${t}`} className={`h-8 px-3.5 rounded-full text-[12.5px] font-semibold whitespace-nowrap flex items-center transition-colors ${tab === t ? 'bg-white text-[#241f17] shadow-sm' : 'text-[#6b6152]'}`}>{TAB_LABEL[t]}</a>)}
