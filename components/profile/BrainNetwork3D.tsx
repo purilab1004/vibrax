@@ -3,6 +3,7 @@
 // 뉴런은 글로우 헤일로로 맥동하고, 발달한 신경 줄기에는 빛 입자가 흐른다. 두뇌가 유기적으로 부유·회전한다.
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 export interface Brain3D { arch: [number, number, number]; inputs: string[]; outputs: string[]; w1: number[][]; w2: number[][] }
 const IN_LABEL: Record<string, string> = { ballX: '공 X', ballY: '공 Y', ballDx: '속도 X', ballDy: '속도 Y', paddleX: '패들 X', paddleW: '패들폭', score: '점수', lives: '목숨', stage: '단계', bricksLeft: '벽돌', px: '조각X', prot: '회전', ptype: '조각', level: '레벨', lines: '라인', maxH: '높이', holes: '구멍', bump: '요철', attached: '붙음' }
@@ -48,6 +49,16 @@ export default function BrainNetwork3D({ b, height = 340 }: { b: Brain3D | null;
     el.appendChild(renderer.domElement)
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(40, W / height, 0.1, 100); camera.position.set(0, 0, 15)
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true; controls.dampingFactor = 0.08
+    controls.enablePan = false; controls.minDistance = 6; controls.maxDistance = 30
+    controls.autoRotate = true; controls.autoRotateSpeed = 1.1
+    controls.rotateSpeed = 0.8; controls.zoomSpeed = 0.9
+    // 사용자가 만지면 자동회전 멈춤
+    renderer.domElement.addEventListener('pointerdown', () => { controls.autoRotate = false })
+    renderer.domElement.style.touchAction = 'none'; renderer.domElement.style.cursor = 'grab'
+    renderer.domElement.addEventListener('pointerdown', () => { renderer.domElement.style.cursor = 'grabbing' })
+    window.addEventListener('pointerup', () => { renderer.domElement.style.cursor = 'grab' })
     scene.add(new THREE.AmbientLight(0xffffff, 0.9))
     const pl = new THREE.PointLight(0x66ccff, 1.4, 80); pl.position.set(-6, 6, 12); scene.add(pl)
     const group = new THREE.Group(); scene.add(group)
@@ -96,8 +107,7 @@ export default function BrainNetwork3D({ b, height = 340 }: { b: Brain3D | null;
     let raf = 0; const clock = new THREE.Clock()
     const loop = () => {
       const dt = clock.getDelta(), et = clock.elapsedTime
-      group.rotation.y = et * 0.12 + Math.sin(et * 0.3) * 0.15
-      group.rotation.x = Math.sin(et * 0.2) * 0.14
+      controls.update()
       for (const n of nodes) { const s = 1 + Math.sin(et * 1.6 + n.phase) * 0.12; n.mesh.scale.setScalar(s); n.halo.scale.setScalar(n.base * 6 * (0.9 + Math.sin(et * 1.6 + n.phase) * 0.18)) }
       for (const f of flows) { f.t = (f.t + dt * f.speed) % 1; f.mesh.position.lerpVectors(f.a, f.b, f.t); f.halo.position.copy(f.mesh.position) }
       renderer.render(scene, camera); raf = requestAnimationFrame(loop)
@@ -105,7 +115,19 @@ export default function BrainNetwork3D({ b, height = 340 }: { b: Brain3D | null;
     loop()
     const onResize = () => { const w = el.clientWidth || 640; renderer.setSize(w, height); camera.aspect = w / height; camera.updateProjectionMatrix() }
     window.addEventListener('resize', onResize)
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); renderer.dispose(); if (renderer.domElement.parentElement === el) el.removeChild(renderer.domElement) }
+    // 리셋 버튼
+    const resetHandler = () => { controls.reset(); controls.autoRotate = true }
+    el.addEventListener('vbx-brain-reset', resetHandler)
+    controls.saveState()
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); el.removeEventListener('vbx-brain-reset', resetHandler); controls.dispose(); renderer.dispose(); if (renderer.domElement.parentElement === el) el.removeChild(renderer.domElement) }
   }, [b, height])
-  return <div ref={ref} className="w-full" style={{ height }} />
+  return (
+    <div className="relative">
+      <div ref={ref} className="w-full" style={{ height }} />
+      <div className="absolute top-2 right-3 flex items-center gap-2 pointer-events-none">
+        <span className="text-[10px] text-white/40">드래그 회전 · 스크롤 확대</span>
+        <button onClick={() => ref.current?.dispatchEvent(new CustomEvent('vbx-brain-reset'))} className="pointer-events-auto text-[10.5px] font-semibold text-white/70 bg-white/10 border border-white/15 rounded-full px-2.5 py-1 hover:bg-white/20">리셋</button>
+      </div>
+    </div>
+  )
 }
