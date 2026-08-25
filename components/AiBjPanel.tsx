@@ -124,6 +124,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     window.addEventListener('message', h); return () => window.removeEventListener('message', h)
   }, [gameId])
   const [canJoin, setCanJoin] = useState(false)
+  const [chatExpanded, setChatExpanded] = useState(false)  // 채팅 전체 내역 펼치기
   // 음성 입력 — 브라우저 음성인식(한국어)으로 말하면 채팅에 텍스트로 입력된다. (지원 브라우저에서만 버튼 노출)
   const [listening, setListening] = useState(false)
   const recogRef = useRef<{ start: () => void; stop: () => void } | null>(null)
@@ -439,10 +440,16 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       <div className="hidden md:block absolute inset-0 pointer-events-none z-10">
         {/* 좌하단 메시지 스택 (+ 입력) — 접으면 왼쪽으로 슬라이드 */}
         <div className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)]" style={{ transform: chatOpen ? 'translateX(0)' : 'translateX(-400px)' }}>
-        <div className="chat-fade absolute left-4 bottom-[74px] w-[360px] max-h-[58%] flex flex-col justify-end overflow-hidden">
+        {/* 펼치기 버튼 — 전체 채팅 내역을 위로 확장 */}
+        <button onClick={() => setChatExpanded(v => !v)} className="pointer-events-auto absolute left-4 bottom-[74px] z-10 h-7 px-3 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/90 text-[11.5px] font-semibold flex items-center gap-1.5 hover:bg-black/80 transition-colors">
+          <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 transition-transform ${chatExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
+          {chatExpanded ? '접기' : `내역 펼치기${messages.length > 0 ? ` (${messages.length})` : ''}`}
+        </button>
+        <div className={`${chatExpanded ? '' : 'chat-fade'} absolute left-4 bottom-[110px] w-[360px] flex flex-col justify-end ${chatExpanded ? 'overflow-y-auto rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 p-2.5' : 'overflow-hidden'}`}
+          style={{ maxHeight: chatExpanded ? 'min(70vh, calc(100vh - 190px))' : '58%' }}>
           <div className="space-y-1.5">
-            {messages.slice(-14).map((msg, i, arr) => (
-              <div key={i} className="flex items-start gap-2 transition-opacity duration-1000" style={{ opacity: ageOpacity(msg.ts) }}>
+            {(chatExpanded ? messages : messages.slice(-14)).map((msg, i, arr) => (
+              <div key={i} className="flex items-start gap-2 transition-opacity duration-1000" style={{ opacity: chatExpanded ? 1 : ageOpacity(msg.ts) }}>
                 <div className="max-w-full text-[13px] leading-relaxed px-3 py-1.5 rounded-2xl text-white shadow-[0_1px_4px_rgba(0,0,0,0.4)] bg-black/85">
                   <span className={`font-bold mr-1.5 ${
                     msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'
@@ -539,10 +546,14 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       <div className="md:hidden absolute inset-0 pointer-events-none z-10">
         {/* 채팅 스택 + 입력 — 접으면 왼쪽으로 슬라이드 */}
         <div className="absolute inset-0 transition-transform duration-400 ease-[cubic-bezier(.2,.8,.2,1)]" style={{ transform: mChatOpen ? 'translateX(0)' : 'translateX(-110%)' }}>
-          <div className="chat-fade absolute left-2 right-[136px] bottom-[58px] max-h-[42%] flex flex-col justify-end overflow-hidden">
+          <button onClick={() => setChatExpanded(v => !v)} className="pointer-events-auto absolute left-2 bottom-[60px] z-10 h-6 px-2.5 rounded-full bg-black/65 backdrop-blur-md border border-white/15 text-white/90 text-[10.5px] font-semibold flex items-center gap-1">
+            <svg viewBox="0 0 24 24" className={`w-3 h-3 transition-transform ${chatExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
+            {chatExpanded ? '접기' : `펼치기${messages.length ? ` ${messages.length}` : ''}`}
+          </button>
+          <div className={`${chatExpanded ? '' : 'chat-fade'} absolute left-2 right-[136px] bottom-[86px] flex flex-col justify-end ${chatExpanded ? 'overflow-y-auto rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 p-2' : 'overflow-hidden'}`} style={{ maxHeight: chatExpanded ? '52vh' : '42%' }}>
             <div className="space-y-1">
-              {messages.slice(-10).map((msg, i) => (
-                <div key={i} className="flex transition-opacity duration-1000" style={{ opacity: ageOpacity(msg.ts) }}>
+              {(chatExpanded ? messages : messages.slice(-10)).map((msg, i) => (
+                <div key={i} className="flex transition-opacity duration-1000" style={{ opacity: chatExpanded ? 1 : ageOpacity(msg.ts) }}>
                   <div className="max-w-full text-[12px] leading-snug px-2.5 py-1 rounded-2xl text-white bg-black/80 shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
                     <span className={`font-bold mr-1 ${msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'}`}>{msg.role === 'assistant' ? ajChatName : msg.source === 'agent' ? maskName(msg.agentName ?? 'AGENT') : '나'}</span>{msg.content}
                   </div>
