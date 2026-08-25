@@ -125,6 +125,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   }, [gameId])
   const [canJoin, setCanJoin] = useState(false)
   const [chatExpanded, setChatExpanded] = useState(false)  // 채팅 전체 내역 펼치기
+  const [showTips, setShowTips] = useState(false)  // 코칭 추천 문구 — 평소 숨김, 💡 버튼으로만 펼침
   // 음성 입력 — 브라우저 음성인식(한국어)으로 말하면 채팅에 텍스트로 입력된다. (지원 브라우저에서만 버튼 노출)
   const [listening, setListening] = useState(false)
   const recogRef = useRef<{ start: () => void; stop: () => void } | null>(null)
@@ -468,15 +469,18 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
         </div>
         {/* 좌하단 입력 바 — 유리 알약 */}
         <div className="absolute left-4 bottom-4 w-[360px] pointer-events-auto">
-          {joined && !!gameFrame() && (
+          {joined && !!gameFrame() && showTips && (
             <div className="flex flex-wrap gap-1.5 mb-2">
               {coachTipsFor(genre).map(t => (
-                <button key={t.label} onClick={() => sendMessage(t.say)} title={t.say}
+                <button key={t.label} onClick={() => { sendMessage(t.say); setShowTips(false) }} title={t.say}
                   className="rounded-full bg-black/55 backdrop-blur-md border border-white/15 text-white/90 text-[11.5px] font-semibold px-2.5 py-1 hover:bg-black/75 transition-colors">{t.label}</button>
               ))}
             </div>
           )}
           <div className="flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full pl-4 pr-1.5 py-1.5 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
+            {joined && !!gameFrame() && (
+              <button onClick={() => setShowTips(v => !v)} aria-label="코칭 팁" title="AI 에게 가르칠 추천 문구" className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[15px] transition ${showTips ? 'bg-white/25' : 'hover:bg-white/15'}`}>💡</button>
+            )}
             <input
               type="text"
               value={input}
@@ -562,14 +566,17 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
             </div>
           </div>
           <div className="absolute left-2 right-[150px] bottom-2.5 pointer-events-auto">
-            {joined && !!gameFrame() && (
+            {joined && !!gameFrame() && showTips && (
               <div className="flex gap-1.5 mb-1.5 overflow-x-auto no-scrollbar">
                 {coachTipsFor(genre).map(t => (
-                  <button key={t.label} onClick={() => sendMessage(t.say)} className="shrink-0 rounded-full bg-black/55 backdrop-blur-md border border-white/15 text-white/90 text-[11px] font-semibold px-2.5 py-1 whitespace-nowrap">{t.label}</button>
+                  <button key={t.label} onClick={() => { sendMessage(t.say); setShowTips(false) }} className="shrink-0 rounded-full bg-black/55 backdrop-blur-md border border-white/15 text-white/90 text-[11px] font-semibold px-2.5 py-1 whitespace-nowrap">{t.label}</button>
                 ))}
               </div>
             )}
-            <div className="flex items-center gap-1.5 bg-black/55 backdrop-blur-md rounded-full pl-3.5 pr-1 py-1 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
+            <div className="flex items-center gap-1.5 bg-black/55 backdrop-blur-md rounded-full pl-2 pr-1 py-1 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
+              {joined && !!gameFrame() && (
+                <button onClick={() => setShowTips(v => !v)} aria-label="코칭 팁" className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[14px] ${showTips ? 'bg-white/25' : ''}`}>💡</button>
+              )}
               <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
                 placeholder={joined ? 'AI에게 가르치기…' : 'AJ에게 말걸기...'} className="flex-1 min-w-0 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none" />
               {renderMic(32)}
