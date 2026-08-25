@@ -57,16 +57,6 @@ interface EditingGame {
 
 type Tab = 'profile' | 'password' | 'agent' | 'learning' | 'games' | 'collections' | 'billing' | 'notices'
 const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', games: '내 게임', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
-const TAB_META: Record<Tab, { eyebrow: string; desc: string; accent: string }> = {
-  profile: { eyebrow: 'ACCOUNT', desc: '계정 기본 정보와 표시 국가', accent: '#2563eb' },
-  password: { eyebrow: 'SECURITY', desc: '비밀번호 변경', accent: '#0891b2' },
-  agent: { eyebrow: 'AVATAR', desc: '내 AJ 아바타 외모 설정', accent: '#7c3aed' },
-  learning: { eyebrow: 'NEURO-EVOLUTION', desc: 'AI 아바타 학습 현황', accent: '#0ea5e9' },
-  games: { eyebrow: 'STUDIO', desc: '내가 만든 게임 관리·홍보', accent: '#059669' },
-  collections: { eyebrow: 'LIBRARY', desc: '좋아요·컬렉션', accent: '#e11d48' },
-  billing: { eyebrow: 'BILLING', desc: '결제 내역·영수증', accent: '#d97706' },
-  notices: { eyebrow: 'NOTICE', desc: '서비스 공지사항', accent: '#2563eb' },
-}
 const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'games', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
 
 export default function ProfilePage() {
@@ -299,18 +289,6 @@ export default function ProfilePage() {
         {(Object.keys(TAB_LABEL) as Tab[]).map(t => <a key={t} href={`#${t}`} className={`h-8 px-3.5 rounded-full text-[12.5px] font-semibold whitespace-nowrap flex items-center transition-colors ${tab === t ? 'bg-white text-[#241f17] shadow-sm' : 'text-[#6b6152]'}`}>{TAB_LABEL[t]}</a>)}
       </nav>
 
-      {/* 탭 헤더 밴드 — AJ 학습 톤 (프로필 탭은 히어로가 대신) */}
-      {tab !== 'profile' && (
-        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] px-5 md:px-6 py-4 relative overflow-hidden">
-          <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(140% 120% at 100% 0%, ${TAB_META[tab].accent}14, transparent 55%)` }} />
-          <div className="relative">
-            <p className="text-[10px] font-bold tracking-[0.3em] uppercase" style={{ color: TAB_META[tab].accent }}>{TAB_META[tab].eyebrow}</p>
-            <h2 className="text-[19px] md:text-[21px] font-extrabold tracking-tight text-[#241f17] mt-0.5">{TAB_LABEL[tab]}</h2>
-            <p className="text-[12.5px] text-[#857a68] mt-0.5">{TAB_META[tab].desc}</p>
-          </div>
-        </div>
-      )}
-
       {/* ── Profile ── */}
       {tab === 'profile' && <section id="profile" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-6">
 
@@ -375,103 +353,27 @@ export default function ProfilePage() {
       </section>}
 
       {/* ── My Agent ── */}
-      {tab === 'agent' && <section id="agent" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-5">
-        <div>
-          <p className="text-xs text-[#857a68] mt-1.5 leading-relaxed">
-            게임을 플레이하는 동안 <span className="text-[#2563eb] font-semibold">나 대신 AI 스트리머 AJ와 실시간으로 대화</span>해주는 나만의 AI 에이전트예요.<br />
-            당신이 게임에 집중하는 사이, 에이전트가 AJ와 채팅하며 방송의 흥을 이어가줍니다.
-          </p>
-          <div className="mt-3 rounded-xl border border-[#2563eb]/15 bg-[#2563eb]/5 px-4 py-3 space-y-1">
-            <p className="text-[11px] font-bold text-[#2563eb]">에이전트란?</p>
-            <p className="text-[11px] text-[#6b6152] leading-relaxed">• 이름과 성격을 부여하면 그대로 행동하는 AI</p>
-            <p className="text-[11px] text-[#6b6152] leading-relaxed">• 게임 방송 중 18초마다 AJ에게 말을 걸어줌</p>
-            <p className="text-[11px] text-[#6b6152] leading-relaxed">• 게임 진입 시 AGENT 설정이 필요해요</p>
+      {tab === 'agent' && <section id="agent" className="space-y-4">
+        {/* 소개 스트립 */}
+        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] px-5 md:px-6 py-4 flex items-start gap-3">
+          <span className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center text-[16px]">🎙️</span>
+          <div>
+            <p className="text-[13.5px] font-bold text-[#241f17]">내 AJ — 나 대신 방송하고 게임하는 AI 아바타</p>
+            <p className="text-[12px] text-[#857a68] mt-0.5 leading-relaxed">외모(아바타)와 성격을 정하면, 내가 게임에 집중하는 동안 AJ와 실시간으로 대화하고 게임도 대신 플레이해요.</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          {/* ── Col 1: 에이전트 설정 ── */}
-          <div className="space-y-5">
-            {/* Avatar */}
-            <div>
-              <p className="text-[12px] font-semibold text-[#6b6152] mb-1.5">에이전트 프로필 사진</p>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full border border-dashed border-[#ddd3bf] overflow-hidden bg-gray-900/50 shrink-0 flex items-center justify-center">
-                  {(agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl) ? (
-                    <Image
-                      src={agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl}
-                      alt="agent avatar"
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <span className="font-pixel text-[10px] text-[#9d9280] tracking-widest">사진</span>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/gif,image/webp"
-                    onChange={e => setAgentAvatarFile(e.target.files?.[0] ?? null)}
-                    className="w-full bg-[#ffffff] border border-[#ddd3bf] px-3 py-2 text-xs text-[#6b6152]
-                      file:mr-3 file:py-1 file:px-3 file:border-0
-                      file:bg-[#241f17] file:text-white file:text-[12px] file:font-semibold file:rounded-md file:cursor-pointer
-                      file:hover:bg-[#3a332a] file:transition-colors rounded-lg"
-                  />
-                  {agentAvatarFile && <p className="text-[11px] text-[#857a68] mt-1">{agentAvatarFile.name}</p>}
-                </div>
-              </div>
-            </div>
 
-            <div>
-              <p className="text-[12px] font-semibold text-[#6b6152] mb-1.5">에이전트 이름</p>
-              <input
-                className={inputClass}
-                value={agentName}
-                onChange={e => setAgentName(e.target.value)}
-                placeholder="예: 도라에몽, 철수, ..."
-                maxLength={20}
-              />
-            </div>
-            <div>
-              <p className="text-[12px] font-semibold text-[#6b6152] mb-1.5">성격 / 말투</p>
-              <textarea
-                className={inputClass + ' resize-y !h-auto min-h-[140px] py-3 leading-relaxed'}
-                rows={6}
-                value={agentPersona}
-                onChange={e => setAgentPersona(e.target.value)}
-                placeholder="예: 항상 긍정적이고 열정적인 게이머. 재밌으면 크게 리액션함."
-                maxLength={100}
-              />
-              <p className="text-[11px] text-[#9d9280] mt-1">{agentPersona.length}/100</p>
-            </div>
-            {agentMsg && <p className={`text-xs font-pixel tracking-widest ${agentMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{agentMsg.text}</p>}
-            <button
-              onClick={handleSaveAgent}
-              disabled={isPending || (!agentName.trim() && !agentPersona.trim())}
-              className="inline-flex items-center h-10 px-6 rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 shadow-[0_2px_8px_rgba(37,99,235,0.25)]"
-            >
-              {isPending ? '저장 중…' : '에이전트 저장'}
-            </button>
-            {agentName.trim() && (
-              <div className="rounded-xl border border-[#2563eb]/15 bg-[#2563eb]/5 px-4 py-3 flex items-center gap-3">
-                {agentAvatarUrl && (
-                  <div className="w-8 h-8 rounded-full border border-purple-700/50 overflow-hidden bg-gray-900 shrink-0">
-                    <Image src={agentAvatarUrl} alt={agentName} width={32} height={32} className="w-full h-full object-cover" unoptimized />
-                  </div>
-                )}
-                <span className="text-[13px] font-bold text-[#2563eb] shrink-0">{agentName}</span>
-                {agentPersona && <span className="text-xs text-[#857a68] truncate">{agentPersona}</span>}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,360px)_1fr] gap-4 items-start">
+          {/* ── 아바타 쇼케이스 스테이지 ── */}
+          <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4 relative overflow-hidden">
+            <div aria-hidden className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: 'radial-gradient(120% 80% at 50% 0%, rgba(37,99,235,0.10), transparent 65%)' }} />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-bold tracking-[0.28em] uppercase text-[#7c3aed]">My Avatar</p>
+                {myAvatarConfig && <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#e11d48]"><span className="w-1.5 h-1.5 rounded-full bg-[#e11d48] animate-pulse" />방송 BJ</span>}
               </div>
-            )}
-          </div>
-
-          {/* ── Col 2: 내 아바타 (게임 방송 BJ) ── */}
-          <div className="space-y-3">
-            <p className="text-[12px] font-semibold text-[#6b6152]">내 캐릭터 · 게임 방송 BJ</p>
-            <div className="relative w-full max-w-[260px] aspect-[3/4] avatar-wave rounded-2xl overflow-hidden">
-              {myAvatarConfig ? (
+              <div className="relative w-full aspect-[4/5] avatar-wave rounded-2xl overflow-hidden shadow-[0_18px_40px_-20px_rgba(37,99,235,0.5)]">
+                {myAvatarConfig ? (
                 <JeumtoView
                   config={myAvatarConfig}
                   onLoaded={async (snapshot) => {
@@ -492,21 +394,73 @@ export default function ProfilePage() {
                     if (!error) setMyAvatarConfig(next)
                   }}
                 />
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
-                  <span className="text-3xl">🧍</span>
-                  <p className="text-[11px] text-[#857a68]">아직 저장한 아바타가 없어요</p>
-                </div>
-              )}
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4 bg-white/40 backdrop-blur-sm">
+                    <span className="text-4xl">🧍</span>
+                    <p className="text-[12px] font-semibold text-[#241f17]">아직 아바타가 없어요</p>
+                    <p className="text-[11px] text-[#857a68]">나만의 3D 캐릭터를 만들어 보세요</p>
+                  </div>
+                )}
+                {/* 이름 오버레이 */}
+                {agentName.trim() && (
+                  <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/55 to-transparent">
+                    <p className="text-white font-extrabold text-[15px] leading-tight drop-shadow">{agentName}</p>
+                    {agentPersona && <p className="text-white/75 text-[11px] truncate">{agentPersona}</p>}
+                  </div>
+                )}
+              </div>
+              <a href="/avatar" className="mt-3 flex items-center justify-center gap-2 h-11 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-[13.5px] font-bold shadow-[0_8px_20px_-8px_rgba(37,99,235,0.6)] hover:brightness-110 transition">
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14" /></svg>
+                {myAvatarConfig ? '아바타 수정' : '아바타 만들기'}
+              </a>
+              <p className="text-[11px] text-[#9d9280] mt-2 leading-relaxed text-center">저장한 아바타는 내 게임의 <b className="text-[#4a4337]">방송 BJ</b>로 등장하고, 게임에 참여시켜 <b className="text-[#4a4337]">AI 플레이</b>도 해요.</p>
             </div>
-            <a href="/avatar" className="inline-flex items-center h-10 px-5 rounded-lg bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-[13px] font-semibold shadow-[0_6px_18px_rgba(37,99,235,0.3)] hover:opacity-90 transition-opacity">
-              아바타 만들기 · 수정
-            </a>
-            <p className="text-[11px] text-[#857a68] leading-relaxed">저장한 아바타가 내가 만든 게임의 방송 BJ로 등장해요. 게임 목록엔 아이디 대신 <span className="text-[#2563eb] font-semibold">에이전트 이름</span>이 표시됩니다.</p>
+          </div>
+
+          {/* ── 정체성 · 성격 설정 ── */}
+          <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-5 md:p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <div><p className="text-[10px] font-bold tracking-[0.28em] uppercase text-[#2563eb]">Identity</p><h3 className="text-[17px] font-extrabold text-[#241f17] mt-0.5">AJ 정체성</h3></div>
+              {agentMsg && <span className={`text-[12px] font-semibold ${agentMsg.ok ? 'text-[#059669]' : 'text-red-500'}`}>{agentMsg.text}</span>}
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl border border-dashed border-[#ddd3bf] overflow-hidden bg-[#f6f2ea] shrink-0 flex items-center justify-center">
+                {(agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl) ? (
+                  <Image src={agentAvatarFile ? URL.createObjectURL(agentAvatarFile) : agentAvatarUrl} alt="agent avatar" width={64} height={64} className="w-full h-full object-cover" unoptimized />
+                ) : <span className="text-[20px]">🖼️</span>}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] font-semibold text-[#4a4337] mb-1">채팅 프로필 사진 <span className="text-[#9d9280] font-normal">(선택)</span></p>
+                <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={e => setAgentAvatarFile(e.target.files?.[0] ?? null)}
+                  className="w-full text-xs text-[#6b6152] file:mr-3 file:py-1.5 file:px-3 file:border-0 file:bg-[#241f17] file:text-white file:text-[12px] file:font-semibold file:rounded-lg file:cursor-pointer file:hover:bg-[#3a332a] file:transition-colors" />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[12px] font-semibold text-[#4a4337] mb-1.5 block">에이전트 이름</label>
+              <input className={inputClass + ' !h-12 !text-[15px] !font-semibold'} value={agentName} onChange={e => setAgentName(e.target.value)} placeholder="예: 도라에몽, 코무, ..." maxLength={20} />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5"><label className="text-[12px] font-semibold text-[#4a4337]">성격 · 말투</label><span className="text-[11px] text-[#9d9280]">{agentPersona.length}/100</span></div>
+              <textarea className={inputClass + ' resize-y !h-auto min-h-[150px] py-3 leading-relaxed'} rows={6} value={agentPersona} onChange={e => setAgentPersona(e.target.value)} placeholder="예: 항상 긍정적이고 열정적인 게이머. 재밌으면 크게 리액션하고, 실수엔 다정하게 위로해준다." maxLength={100} />
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {['긍정적이고 열정적인 게이머', '차분하고 분석적인 해설가', '장난기 많고 유쾌한 친구', '따뜻하게 응원하는 코치'].map(t => (
+                  <button key={t} onClick={() => setAgentPersona(t)} className="text-[11px] rounded-full border border-[#e6dfd0] bg-[#faf8f3] text-[#6b6152] px-2.5 py-1 hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">{t}</button>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={handleSaveAgent} disabled={isPending || (!agentName.trim() && !agentPersona.trim())}
+              className="w-full inline-flex items-center justify-center h-12 rounded-xl bg-[#2563eb] text-white text-[14px] font-bold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 shadow-[0_8px_20px_-8px_rgba(37,99,235,0.6)]">
+              {isPending ? '저장 중…' : '저장하기'}
+            </button>
           </div>
         </div>
       </section>}
-      {tab === 'learning' && <section id="learning"><AiLearningSection /></section>}
+      {tab === 'learning'
+ && <section id="learning"><AiLearningSection /></section>}
 
       {/* ── My Games ── */}
       {tab === 'games' && <section id="games" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
