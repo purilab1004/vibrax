@@ -24,11 +24,11 @@ function Section({ title, icon, games, empty, loading }: { title: string; icon: 
       {loading ? (
         <p className="text-[12px] text-[#857a68]">불러오는 중…</p>
       ) : games.length === 0 ? (
-        <div className="border border-[#ebe4d6] p-8 text-center text-[#857a68] text-sm">{empty}</div>
+        <div className="rounded-2xl bg-[#faf8f3] p-8 text-center text-[#857a68] text-sm">{empty}</div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {games.map((g) => (
-            <Link key={g.id} href={`/games/${g.id}`} className="group border border-[#ebe4d6] bg-white hover:border-[#2563eb] transition-colors overflow-hidden">
+            <Link key={g.id} href={`/games/${g.id}`} className="group rounded-xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_8px_24px_-18px_rgba(36,31,23,0.25)] hover:shadow-[0_12px_32px_-16px_rgba(36,31,23,0.35)] hover:-translate-y-0.5 transition-all overflow-hidden">
               <div className="relative aspect-video bg-gray-900">
                 <Image src={g.thumbnail_url} alt={g.title} fill className="object-cover group-hover:scale-[1.03] transition-transform" />
               </div>

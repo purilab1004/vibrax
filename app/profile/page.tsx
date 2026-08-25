@@ -57,6 +57,16 @@ interface EditingGame {
 
 type Tab = 'profile' | 'password' | 'agent' | 'learning' | 'games' | 'collections' | 'billing' | 'notices'
 const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', games: '내 게임', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
+const TAB_META: Record<Tab, { eyebrow: string; desc: string; accent: string }> = {
+  profile: { eyebrow: 'ACCOUNT', desc: '계정 기본 정보와 표시 국가', accent: '#2563eb' },
+  password: { eyebrow: 'SECURITY', desc: '비밀번호 변경', accent: '#0891b2' },
+  agent: { eyebrow: 'AVATAR', desc: '내 AJ 아바타 외모 설정', accent: '#7c3aed' },
+  learning: { eyebrow: 'NEURO-EVOLUTION', desc: 'AI 아바타 학습 현황', accent: '#0ea5e9' },
+  games: { eyebrow: 'STUDIO', desc: '내가 만든 게임 관리·홍보', accent: '#059669' },
+  collections: { eyebrow: 'LIBRARY', desc: '좋아요·컬렉션', accent: '#e11d48' },
+  billing: { eyebrow: 'BILLING', desc: '결제 내역·영수증', accent: '#d97706' },
+  notices: { eyebrow: 'NOTICE', desc: '서비스 공지사항', accent: '#2563eb' },
+}
 const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'games', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
 
 export default function ProfilePage() {
@@ -289,9 +299,20 @@ export default function ProfilePage() {
         {(Object.keys(TAB_LABEL) as Tab[]).map(t => <a key={t} href={`#${t}`} className={`h-8 px-3.5 rounded-full text-[12.5px] font-semibold whitespace-nowrap flex items-center transition-colors ${tab === t ? 'bg-white text-[#241f17] shadow-sm' : 'text-[#6b6152]'}`}>{TAB_LABEL[t]}</a>)}
       </nav>
 
+      {/* 탭 헤더 밴드 — AJ 학습 톤 (프로필 탭은 히어로가 대신) */}
+      {tab !== 'profile' && (
+        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] px-5 md:px-6 py-4 relative overflow-hidden">
+          <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(140% 120% at 100% 0%, ${TAB_META[tab].accent}14, transparent 55%)` }} />
+          <div className="relative">
+            <p className="text-[10px] font-bold tracking-[0.3em] uppercase" style={{ color: TAB_META[tab].accent }}>{TAB_META[tab].eyebrow}</p>
+            <h2 className="text-[19px] md:text-[21px] font-extrabold tracking-tight text-[#241f17] mt-0.5">{TAB_LABEL[tab]}</h2>
+            <p className="text-[12.5px] text-[#857a68] mt-0.5">{TAB_META[tab].desc}</p>
+          </div>
+        </div>
+      )}
+
       {/* ── Profile ── */}
-      {tab === 'profile' && <section id="profile" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)] space-y-6">
-        <div><h2 className="text-[17px] font-bold text-[#241f17]">프로필</h2><p className="text-[12.5px] text-[#857a68] mt-0.5">계정 기본 정보와 표시 국가를 관리해요.</p></div>
+      {tab === 'profile' && <section id="profile" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-6">
 
         {/* Email */}
         <div>
@@ -336,8 +357,7 @@ export default function ProfilePage() {
       </section>}
 
       {/* ── Password ── */}
-      {tab === 'password' && <section id="password" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)] space-y-4">
-        <div><h2 className="text-[17px] font-bold text-[#241f17]">비밀번호 변경</h2><p className="text-[12.5px] text-[#857a68] mt-0.5">6자 이상, 확인 입력과 같아야 해요.</p></div>
+      {tab === 'password' && <section id="password" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
           <div>
             <p className="text-[12px] font-semibold text-[#6b6152] mb-1.5">새 비밀번호</p>
@@ -355,9 +375,8 @@ export default function ProfilePage() {
       </section>}
 
       {/* ── My Agent ── */}
-      {tab === 'agent' && <section id="agent" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)] space-y-5">
+      {tab === 'agent' && <section id="agent" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-5">
         <div>
-          <h2 className="text-[17px] font-bold text-[#241f17]">AJ 외모</h2>
           <p className="text-xs text-[#857a68] mt-1.5 leading-relaxed">
             게임을 플레이하는 동안 <span className="text-[#2563eb] font-semibold">나 대신 AI 스트리머 AJ와 실시간으로 대화</span>해주는 나만의 AI 에이전트예요.<br />
             당신이 게임에 집중하는 사이, 에이전트가 AJ와 채팅하며 방송의 흥을 이어가줍니다.
@@ -490,7 +509,7 @@ export default function ProfilePage() {
       {tab === 'learning' && <section id="learning"><AiLearningSection /></section>}
 
       {/* ── My Games ── */}
-      {tab === 'games' && <section id="games" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]">
+      {tab === 'games' && <section id="games" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
         <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <div><h2 className="text-[17px] font-bold text-[#241f17]">내 게임 <span className="text-[#2563eb]">{games.length}</span></h2><p className="text-[12.5px] text-[#857a68] mt-0.5">게시한 게임을 수정하고 AJ 대시보드·홍보로 이동해요.</p></div>
           <div className="flex items-center gap-2">
@@ -579,8 +598,8 @@ export default function ProfilePage() {
 
       {/* ── 좋아요한 / 공유한 게임 ── */}
       {tab === 'billing' && user && <BillingSection userId={user.id} />}
-      {tab === 'notices' && <section id="notices" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]"><NoticesSection /></section>}
-      {tab === 'collections' && user && <section id="collections" className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]"><MyCollections userId={user.id} /></section>}
+      {tab === 'notices' && <section id="notices" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><NoticesSection /></section>}
+      {tab === 'collections' && user && <section id="collections" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><MyCollections userId={user.id} /></section>}
       {curriculumGame && <GameCurriculumModal gameId={curriculumGame.id} title={curriculumGame.title} onClose={() => setCurriculumGame(null)} />}
 
       {/* ── Edit Game Modal ── */}
@@ -716,7 +735,7 @@ function BillingSection({ userId }: { userId: string }) {
   const REASON: Record<string, string> = { purchase: '크레딧 구매', generation: '게임 생성·수정', refund: '생성 실패 환불', signup_bonus: '가입 보너스', admin_adjust: '관리자 조정', purchase_refund: '결제 환불 회수', chargeback: '차지백 회수' }
   return (
     <section id="billing" className="space-y-6">
-      <div className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]">
+      <div className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
           <div><h2 className="text-[17px] font-bold text-[#241f17]">결제 내역</h2><p className="text-[12.5px] text-[#857a68] mt-0.5">프롬코인 구매 기록이에요. 완료된 결제는 영수증(PDF)을 받을 수 있어요.</p></div>
           <Link href="/credits" className="inline-flex items-center h-9 px-4 rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8]">크레딧 충전</Link>
@@ -734,7 +753,7 @@ function BillingSection({ userId }: { userId: string }) {
           </ul>
         )}
       </div>
-      <div className="rounded-2xl border border-[#ebe4d6] bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.04),0_8px_24px_-16px_rgba(36,31,23,0.18)]">
+      <div className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
         <h2 className="text-[17px] font-bold text-[#241f17] mb-4">크레딧 사용 내역</h2>
         {ledger === null ? <p className="text-[13px] text-[#9d9280]">불러오는 중…</p> : ledger.length === 0 ? <p className="text-[13px] text-[#857a68]">기록이 없어요.</p> : (
           <ul className="divide-y divide-[#f0eadf]">
