@@ -8,7 +8,7 @@ export async function GET() {
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 })
   const admin = createAdminClient()
   const { data, error } = await admin.from('aj_play_policies')
-    .select('game_id,version,rules,params,best_score,best_score_at,auto_learn,auto_count,template_skill,last_skill_at,episodes,demos,updated_at,games(title,genre,thumbnail_url,studio_project_id)')
+    .select('game_id,version,rules,params,brain,best_score,best_score_at,auto_learn,auto_count,template_skill,last_skill_at,episodes,demos,updated_at,games(title,genre,thumbnail_url,studio_project_id)')
     .eq('user_id', user.id).order('updated_at', { ascending: false }).limit(100)
   if (error) return Response.json({ error: error.message, missing: /does not exist|schema cache/i.test(error.message) }, { status: 500 })
   const rows = (data ?? []) as unknown as { game_id: string; template_skill: number | null; last_skill_at: string | null; episodes: unknown[]; games: { genre: string | null; studio_project_id: string | null } | null }[]
@@ -25,8 +25,11 @@ export async function GET() {
     const epCount = Array.isArray(r.episodes) ? r.episodes.length : 0
     const needEps = Math.max(0, (learned + 1) * 2 - epCount)
     const readyAt = r.last_skill_at ? new Date(new Date(r.last_skill_at).getTime() + SKILL_INTERVAL_MS).toISOString() : null
+    let brainViz = null
+    try { const br = (r as unknown as { brain?: unknown }).brain; if (br && (br as { arch?: unknown }).arch) { const { brainWeights } = await import('@/lib/neuroevo'); brainViz = brainWeights(br as never) } } catch { /* ignore */ }
     return {
       ...r,
+      brainViz,
       curriculum: total ? {
         total, learned,
         steps: cu!.skills.map((s, i) => ({ name: s.name, done: i < learned })),

@@ -825,3 +825,6 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
 .aj-typing { position: absolute; top: 47%; right: 4%; width: 38px; height: 34px; /* 입 높이, 얼굴 우측 — 입에서 나오는 말 */ z-index: 2; transform-origin: 20% 100%; animation: aj-typing-in .35s cubic-bezier(.2,.9,.3,1.4) both; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); pointer-events: none; }
 .aj-dot { transform-box: fill-box; transform-origin: center; animation: aj-dot-bounce 1.1s ease-in-out infinite; }
 .aj-stage > .aj-typing { -webkit-mask-image: none; mask-image: none; }
+/* 신경망 발달 줄기 — 빛이 흐르는 애니메이션 */
+@keyframes nnFlow { to { stroke-dashoffset: -60; } }
+.nn-flow { stroke-dashoffset: 0; animation: nnFlow 1.4s linear infinite; }

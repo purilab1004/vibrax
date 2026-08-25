@@ -157,7 +157,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       setTimeout(async () => {
         if (win) {
           win.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*')
-          if (gameId) { try { const r = await fetch(`/api/ai-bj/coach?gameId=${gameId}`); const j = await r.json(); if (j.policy) { policyRef.current = j.policy; win.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*') } } catch { /* ignore */ } }
+          if (gameId) { try { const r = await fetch(`/api/ai-bj/coach?gameId=${gameId}`); const j = await r.json(); if (j.policy) { policyRef.current = j.policy; win.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*') } if (j.brain) win.postMessage({ type: 'vibrex:brain', brain: j.brain }, '*') } catch { /* ignore */ } }
           win.postMessage({ type: 'vibrex:autopilot', on: true }, '*')
           win.postMessage({ type: 'vibrex:manifest-request' }, '*')
         }
@@ -336,6 +336,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
         // 자동 학습 — 한 판 결과를 보내고, 스스로 개선한 새 정책이 오면 봇에 주입 + AJ 가 알려준다
         fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'episode', gameId, score: score ?? 0, cleared: name === 'clear', durationSec: (e as CustomEvent<{ sec?: number }>).detail?.sec ?? 0, manifest: manifestRef.current, genre, gameTitle }) })
           .then(r => r.json()).then(j => {
+            if (j?.brain) gameFrame()?.contentWindow?.postMessage({ type: 'vibrex:brain', brain: j.brain }, '*')
             if (j?.policy) {
               policyRef.current = j.policy
               gameFrame()?.contentWindow?.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*')

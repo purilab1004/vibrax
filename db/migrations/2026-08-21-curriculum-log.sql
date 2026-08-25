@@ -32,3 +32,5 @@ alter table public.aj_bot_curriculum add column if not exists game_id uuid;
 create index if not exists aj_bot_curriculum_game_idx on public.aj_bot_curriculum (game_id) where game_id is not null;
 
 alter table public.aj_play_policies add column if not exists best_score_at timestamptz;
+
+alter table public.aj_play_policies add column if not exists brain jsonb;

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit, tooMany, isSafeCond } from '@/lib/security/ratelimit'
 import { curriculumForAsync } from '@/lib/studio/bot-curriculum'
+import { createBrain, recordFitness, activeGenome, type Brain } from '@/lib/neuroevo'
 
 interface Manifest { title?: string; goal?: string; clearCondition?: string; controls?: { input: string; action: string }[]; inputs?: string[]; stateKeys?: string[]; sample?: Record<string, unknown> }
 interface Policy { version: number; tips: string[]; rules: { cond: string; action: string; hold?: number; why?: string }[]; params: Record<string, number>; summary: string | null }
@@ -14,8 +15,10 @@ export async function GET(req: Request) {
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 })
   const gameId = new URL(req.url).searchParams.get('gameId')
   if (!gameId) return Response.json({ error: 'bad request' }, { status: 400 })
-  const { data } = await createAdminClient().from('aj_play_policies').select('version,tips,rules,params,summary,best_score').eq('game_id', gameId).eq('user_id', user.id).maybeSingle()
-  return Response.json({ policy: data ?? null })
+  const { data } = await createAdminClient().from('aj_play_policies').select('version,tips,rules,params,summary,best_score,brain').eq('game_id', gameId).eq('user_id', user.id).maybeSingle()
+  const row = data as { brain?: unknown } | null
+  const { activeGenome: ag } = await import('@/lib/neuroevo')
+  return Response.json({ policy: data ?? null, brain: row?.brain ? ag(row.brain as never) : null })
 }
 
 export async function POST(req: Request) {
@@ -97,6 +100,21 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
   const eps: Ep[] = [...(Array.isArray(row.episodes) ? row.episodes : []), { v: row.version, score, sec: Math.round(b.durationSec ?? 0), cleared: !!b.cleared, t: new Date().toISOString() }].slice(-40)
   const patch: Record<string, unknown> = { episodes: eps, updated_at: new Date().toISOString() }
   if ((row.best_score ?? -1) < score) { const prevBest = row.best_score ?? null; patch.best_score = score; patch.best_score_at = new Date().toISOString(); void logLearn(admin, userId, gameId, 'record', `최고 점수 갱신 — ${score.toLocaleString()}점`, prevBest != null ? `이전 최고 ${prevBest.toLocaleString()}점 → ${score.toLocaleString()}점${b.cleared ? ' (클리어)' : ''}` : `첫 기록 ${score.toLocaleString()}점`, row.version) }
+  // ── 신경진화 — 상태 수치가 있는 게임은 작은 신경망을 개체군·세대로 진화(브라우저 추론, 서버는 진화만) ──
+  const mm = b.manifest ?? {}
+  const sample = (mm.sample ?? {}) as Record<string, unknown>
+  const nnInputs = (mm.stateKeys ?? Object.keys(sample)).filter(k => typeof sample[k] === 'number' && Number.isFinite(sample[k] as number)).slice(0, 6)
+  const nnOutputs = (mm.inputs ?? []).slice(0, 5)
+  if (row.auto_learn && nnInputs.length >= 2 && nnOutputs.length >= 1) {
+    const brow = row as unknown as { brain?: Brain | null }
+    let brain = brow.brain && brow.brain.arch ? brow.brain : createBrain(nnInputs, nnOutputs)
+    if (brain.inputs.join() !== nnInputs.join() || brain.outputs.join() !== nnOutputs.join()) brain = createBrain(nnInputs, nnOutputs)
+    const { evolved } = recordFitness(brain, score)
+    patch.brain = brain
+    if (evolved) { patch.auto_count = (row.auto_count ?? 0) + 1; void logLearn(admin, userId, gameId, 'reflect', `신경진화 ${brain.gen}세대 — 최고 ${Math.round(brain.best.f)}점`, `개체군 ${brain.pop.length} · ${brain.arch[0]}-${brain.arch[1]}-${brain.arch[2]} 신경망`, brain.gen) }
+    await admin.from('aj_play_policies').update(patch as never).eq('id', row.id)
+    return Response.json({ ok: true, brain: activeGenome(brain), evolved })
+  }
   const cur = eps.filter(e => e.v === row!.version)
   let changed: { policy: Policy; note: string } | null = null
   // ── 1) 템플릿 기본기 커리큘럼 — 템플릿이 미리 보유한 정석 지식을 2판마다 한 단계씩 학습 ──

@@ -7,12 +7,15 @@ import { createClient } from '@/lib/supabase/client'
 interface Curriculum { total: number; learned: number; steps: { name: string; done: boolean }[]; next: string | null; needEpisodes: number; readyAt: string | null }
 interface Rule { cond: string; action: string; hold?: number; why?: string }
 interface Episode { v: number; score: number; sec: number; cleared: boolean; t: string }
+interface BrainViz { arch: [number, number, number]; inputs: string[]; outputs: string[]; w1: number[][]; w2: number[][]; gen: number; fitness: number; history: { gen: number; best: number; avg: number }[] }
 interface Row {
-  game_id: string; version: number; rules: Rule[]; params: Record<string, number> | null
+  game_id: string; version: number; rules: Rule[]; params: Record<string, number> | null; brainViz?: BrainViz | null
   best_score: number | null; best_score_at?: string | null; auto_learn?: boolean; auto_count?: number
   template_skill?: number; episodes?: Episode[]; demos?: unknown[]; updated_at: string
   curriculum?: Curriculum | null; games: { title: string; genre: string; thumbnail_url: string | null } | null
 }
+const IN_LABEL: Record<string, string> = { ballX: '공 X', ballY: '공 Y', ballDx: '공 속도X', ballDy: '공 속도Y', paddleX: '패들 X', paddleW: '패들폭', score: '점수', lives: '목숨', stage: '스테이지', bricksLeft: '남은 벽돌', px: '조각 X', prot: '회전', ptype: '조각', level: '레벨', lines: '라인', maxH: '높이', holes: '구멍', bump: '요철', attached: '붙음' }
+const OUT_LABEL: Record<string, string> = { left: '◀ 왼쪽', right: '▶ 오른쪽', up: '▲ 위', down: '▼ 아래', action: '● 액션', action2: '○ 액션2' }
 interface LearnLog { id: string; game_id: string | null; kind: string; title: string; detail: string | null; version: number | null; created_at: string }
 const LOG_KIND: Record<string, [string, string]> = { record: ['최고 점수', '#e11d48'], curriculum: ['기본기', '#2563eb'], coach: ['프롬프트 코칭', '#7c3aed'], demo: ['내 플레이 모방', '#0891b2'], reflect: ['자기 반성', '#059669'], revert: ['복귀', '#f59e0b'], play: ['AI 플레이', '#0ea5e9'], guide: ['개발자 가이드', '#d97706'] }
 const GENRE: Record<string, { label: string; color: string }> = {
@@ -136,17 +139,20 @@ function GameDashboard({ row, logs, busy, onLearnDemo }: { row: Row; logs: Learn
         <Stat label="자기 진화" value={row.auto_count ?? 0} sub={demoN ? `내 플레이 ${demoN}` : undefined} accent="#059669" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-3">
-        {/* 세대별 성적 */}
-        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
-          <p className="text-[12px] font-bold uppercase tracking-wide text-[#857a68] mb-2">세대별 성적</p>
-          <GenerationChart episodes={eps} />
+      {/* 아바타 두뇌 — 최고 개체 신경망 (발달한 신경 줄기가 빛으로 흐른다) */}
+      <div className="rounded-2xl bg-[#0b0f1a] text-white p-4 md:p-5 relative overflow-hidden">
+        <div aria-hidden className="absolute inset-0 opacity-[0.5]" style={{ background: 'radial-gradient(120% 80% at 50% 0%, rgba(56,189,248,0.10), transparent 60%)' }} />
+        <div className="relative flex items-center justify-between mb-2">
+          <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-white/60">아바타 두뇌 · 신경망</p>
+          {row.brainViz && <span className="text-[11px] font-semibold text-[#38bdf8] tabular-nums">{row.brainViz.gen}세대 · 적합도 {Math.round(row.brainViz.fitness)}</span>}
         </div>
-        {/* 최고 개체 — 정책 신경망 */}
-        <div className="rounded-2xl bg-[#0f1420] text-white p-4">
-          <p className="text-[12px] font-bold uppercase tracking-wide text-white/50 mb-2">최고 개체 · 정책 신경망</p>
-          <PolicyNetwork rules={rules} params={row.params ?? {}} />
-        </div>
+        {row.brainViz ? <BrainNetwork b={row.brainViz} /> : <ParamGenome params={row.params ?? {}} rules={rules} />}
+      </div>
+
+      {/* 세대별 성적 */}
+      <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
+        <p className="text-[12px] font-bold uppercase tracking-wide text-[#857a68] mb-2">세대별 성적</p>
+        {row.brainViz && row.brainViz.history.length >= 2 ? <GenerationHistory history={row.brainViz.history} /> : <GenerationChart episodes={eps} />}
       </div>
 
       {/* 기본기 진행 */}
@@ -223,55 +229,85 @@ function GenerationChart({ episodes }: { episodes: Episode[] }) {
 }
 
 // 최고 개체 정책 신경망 — 상태특징(입력) → 규칙(은닉) → 행동(출력) 3층 그래프. 규칙이 없으면 파라미터 게놈 게이지.
-function PolicyNetwork({ rules, params }: { rules: Rule[]; params: Record<string, number> }) {
-  if (!rules.length) {
-    const genes: [string, number, number, number][] = [
-      ['실력(botSkill)', params.botSkill ?? 0.3, 0, 1],
-      ['반응속도', params.reactionMs ?? 120, 400, 30],  // 낮을수록 빠름 → 표시는 반전
-      ['무작위성', params.randomness ?? 0.15, 0.5, 0],
-    ]
-    return (
-      <div className="space-y-2.5 py-1">
-        <p className="text-[11.5px] text-white/60 leading-relaxed">아직 규칙이 없어요. 이 게임은 <b className="text-white/90">파라미터 게놈</b>을 진화시키는 중이에요.</p>
-        {genes.map(([label, v, lo, hi]) => { const pct = Math.max(0, Math.min(1, (v - lo) / (hi - lo))); return (
-          <div key={label}><div className="flex justify-between text-[11px] text-white/70"><span>{label}</span><span className="tabular-nums">{typeof v === 'number' ? (v < 1 ? v.toFixed(2) : Math.round(v)) : v}</span></div>
-            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-0.5"><div className="h-full rounded-full bg-gradient-to-r from-[#22d3ee] to-[#818cf8]" style={{ width: `${Math.round(pct * 100)}%` }} /></div></div>
-        ) })}
-        <p className="text-[10.5px] text-white/40 pt-1">규칙은 채팅으로 가르치거나 기본기를 배우면 생겨요.</p>
-      </div>
-    )
-  }
-  // 입력(상태 특징) 추출
-  const feats = Array.from(new Set(rules.flatMap(r => (r.cond.match(/s\.[A-Za-z_]\w*/g) ?? []).map(m => m.slice(2))))).slice(0, 6)
-  const actions = Array.from(new Set(rules.map(r => r.action)))
-  const R = rules.slice(0, 7)
-  const W = 340, H = Math.max(150, Math.max(feats.length, R.length, actions.length) * 26 + 20)
-  const colX = [40, W / 2, W - 40]
-  const yOf = (i: number, count: number) => 24 + (count <= 1 ? (H - 48) / 2 : i / (count - 1) * (H - 48))
-  const featY = (f: string) => yOf(feats.indexOf(f), feats.length)
-  const ruleY = (i: number) => yOf(i, R.length)
-  const actY = (a: string) => yOf(actions.indexOf(a), actions.length)
-  const ACT_LABEL: Record<string, string> = { left: '◀', right: '▶', up: '▲', down: '▼', action: 'A', action2: 'B' }
+// 아바타 두뇌 — 실제 가중치 신경망. 초록=양·빨강=음, 굵기/불투명도=가중치 크기.
+// 발달한(강한) 신경 줄기에는 빛이 흐른다(애니메이션). 입력=상태, 은닉, 출력=행동.
+function BrainNetwork({ b }: { b: BrainViz }) {
+  const [ni, nh, no] = b.arch
+  const W = 620, H = Math.max(170, Math.max(ni, nh, no) * 30 + 40)
+  const colX = [96, W / 2, W - 96]
+  const yOf = (i: number, c: number) => 30 + (c <= 1 ? (H - 60) / 2 : i / (c - 1) * (H - 60))
+  const maxW = Math.max(0.001, ...b.w1.flat().map(Math.abs), ...b.w2.flat().map(Math.abs))
+  const edge = (w: number) => { const a = Math.abs(w) / maxW; return { color: w >= 0 ? '#22c55e' : '#f43f5e', op: 0.12 + a * 0.7, sw: 0.4 + a * 2.4, strong: a > 0.55 } }
+  // 발달한 줄기(상위 가중치)에 빛 흐름
+  type E = { x1: number; y1: number; x2: number; y2: number; a: number; color: string }
+  const flows: E[] = []
+  b.w1.forEach((row, i) => row.forEach((w, j) => { const a = Math.abs(w) / maxW; if (a > 0.5) flows.push({ x1: colX[0], y1: yOf(i, ni), x2: colX[1], y2: yOf(j, nh), a, color: w >= 0 ? '#4ade80' : '#fb7185' }) }))
+  b.w2.forEach((row, j) => row.forEach((w, k) => { const a = Math.abs(w) / maxW; if (a > 0.5) flows.push({ x1: colX[1], y1: yOf(j, nh), x2: colX[2], y2: yOf(k, no), a, color: w >= 0 ? '#4ade80' : '#fb7185' }) }))
+  const topFlows = flows.sort((x, y) => y.a - x.a).slice(0, 10)
   return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 220 }}>
-        {/* edges: feat→rule */}
-        {R.map((r, ri) => (r.cond.match(/s\.[A-Za-z_]\w*/g) ?? []).map(m => m.slice(2)).filter(f => feats.includes(f)).map(f => (
-          <line key={`${ri}-${f}`} x1={colX[0]} y1={featY(f)} x2={colX[1]} y2={ruleY(ri)} stroke="#38bdf8" strokeOpacity="0.35" strokeWidth="1" />
-        )))}
-        {/* edges: rule→action */}
-        {R.map((r, ri) => actions.includes(r.action) && <line key={`ra-${ri}`} x1={colX[1]} y1={ruleY(ri)} x2={colX[2]} y2={actY(r.action)} stroke="#818cf8" strokeOpacity="0.5" strokeWidth="1.3" />)}
-        {/* nodes: feats */}
-        {feats.map(f => <g key={f}><circle cx={colX[0]} cy={featY(f)} r="5" fill="#22d3ee" /><text x={colX[0] - 9} y={featY(f) + 3} fontSize="9" fill="#cbd5e1" textAnchor="end">{f}</text></g>)}
-        {/* nodes: rules */}
-        {R.map((r, ri) => <circle key={ri} cx={colX[1]} cy={ruleY(ri)} r="6" fill="#a5b4fc"><title>{`${r.cond} → ${r.action}${r.why ? ` (${r.why})` : ''}`}</title></circle>)}
-        {/* nodes: actions */}
-        {actions.map(a => <g key={a}><circle cx={colX[2]} cy={actY(a)} r="9" fill="#f472b6" /><text x={colX[2]} y={actY(a) + 3.5} fontSize="9" fill="#fff" textAnchor="middle" fontWeight="700">{ACT_LABEL[a] ?? a[0]?.toUpperCase()}</text><text x={colX[2] + 13} y={actY(a) + 3} fontSize="8.5" fill="#cbd5e1">{a}</text></g>)}
-        <text x={colX[0]} y={14} fontSize="8.5" fill="#64748b" textAnchor="middle">상태</text>
-        <text x={colX[1]} y={14} fontSize="8.5" fill="#64748b" textAnchor="middle">규칙 {rules.length}</text>
-        <text x={colX[2]} y={14} fontSize="8.5" fill="#64748b" textAnchor="middle">행동</text>
-      </svg>
-      <p className="text-[10.5px] text-white/40 mt-1">상태(공 위치·속도 등)를 보고 규칙이 행동을 결정해요. 노드에 마우스를 올리면 규칙 내용이 보여요.</p>
+    <div className="relative">
+      <div className="overflow-x-auto"><svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px]" style={{ maxHeight: 260 }}>
+        <defs><filter id="nnglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs>
+        {/* 층 라벨 */}
+        <text x={colX[0]} y={16} fontSize="9" fill="#64748b" textAnchor="middle">상태(입력)</text>
+        <text x={colX[1]} y={16} fontSize="9" fill="#64748b" textAnchor="middle">은닉 {nh}</text>
+        <text x={colX[2]} y={16} fontSize="9" fill="#64748b" textAnchor="middle">행동(출력)</text>
+        {/* w1 edges */}
+        {b.w1.map((row, i) => row.map((w, j) => { const e = edge(w); return <line key={`a${i}-${j}`} x1={colX[0]} y1={yOf(i, ni)} x2={colX[1]} y2={yOf(j, nh)} stroke={e.color} strokeOpacity={e.op} strokeWidth={e.sw} /> }))}
+        {/* w2 edges */}
+        {b.w2.map((row, j) => row.map((w, k) => { const e = edge(w); return <line key={`b${j}-${k}`} x1={colX[1]} y1={yOf(j, nh)} x2={colX[2]} y2={yOf(k, no)} stroke={e.color} strokeOpacity={e.op} strokeWidth={e.sw} /> }))}
+        {/* 발달한 줄기의 빛 흐름 */}
+        {topFlows.map((f, i) => <line key={`f${i}`} x1={f.x1} y1={f.y1} x2={f.x2} y2={f.y2} stroke={f.color} strokeWidth={1 + f.a * 2} strokeOpacity="0.9" strokeLinecap="round" strokeDasharray="1 14" filter="url(#nnglow)" className="nn-flow" style={{ animationDelay: `${(i % 5) * 0.3}s` }} />)}
+        {/* 입력 노드 */}
+        {b.inputs.map((f, i) => <g key={f}><circle cx={colX[0]} cy={yOf(i, ni)} r="6" fill="#38bdf8" filter="url(#nnglow)" /><text x={colX[0] - 11} y={yOf(i, ni) + 3} fontSize="9.5" fill="#cbd5e1" textAnchor="end">{IN_LABEL[f] ?? f}</text></g>)}
+        {/* 은닉 노드 */}
+        {Array.from({ length: nh }).map((_, j) => <circle key={j} cx={colX[1]} cy={yOf(j, nh)} r="5.5" fill="#334155" stroke="#64748b" strokeWidth="1" />)}
+        {/* 출력 노드 */}
+        {b.outputs.map((a, k) => <g key={a}><circle cx={colX[2]} cy={yOf(k, no)} r="8" fill="#f472b6" filter="url(#nnglow)" /><text x={colX[2] + 12} y={yOf(k, no) + 3} fontSize="9.5" fill="#e2e8f0">{OUT_LABEL[a] ?? a}</text></g>)}
+      </svg></div>
+      <div className="flex items-center gap-3 mt-1 text-[10.5px] text-white/50 flex-wrap">
+        <span className="inline-flex items-center gap-1"><span className="w-3 h-0.5 bg-[#22c55e] inline-block" />양(+) 가중치</span>
+        <span className="inline-flex items-center gap-1"><span className="w-3 h-0.5 bg-[#f43f5e] inline-block" />음(−) 가중치</span>
+        <span>빛나는 줄기 = 발달한 신경 경로 · 선 굵기 = 가중치 크기</span>
+      </div>
+    </div>
+  )
+}
+
+// 신경망이 아직 없는(매니페스트 없는) 게임 — 파라미터 게놈 게이지
+function ParamGenome({ params, rules }: { params: Record<string, number>; rules: Rule[] }) {
+  const genes: [string, number, number, number][] = [
+    ['실력', params.botSkill ?? 0.3, 0, 1], ['반응속도', params.reactionMs ?? 120, 400, 30], ['무작위성', params.randomness ?? 0.15, 0.5, 0],
+  ]
+  return (
+    <div className="space-y-2.5 py-1 relative">
+      <p className="text-[11.5px] text-white/60 leading-relaxed">이 게임은 상태 정보(매니페스트)가 없어 <b className="text-white/90">신경망을 만들 수 없어요</b>. 대신 파라미터 게놈{rules.length ? '·규칙' : ''}을 진화 중이에요. 최신 표준 게임에선 진짜 신경망이 그려져요.</p>
+      {genes.map(([label, v, lo, hi]) => { const pct = Math.max(0, Math.min(1, (v - lo) / (hi - lo))); return (
+        <div key={label}><div className="flex justify-between text-[11px] text-white/70"><span>{label}</span><span className="tabular-nums">{v < 1 ? v.toFixed(2) : Math.round(v)}</span></div>
+          <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-0.5"><div className="h-full rounded-full bg-gradient-to-r from-[#22d3ee] to-[#818cf8]" style={{ width: `${Math.round(pct * 100)}%` }} /></div></div>
+      ) })}
+    </div>
+  )
+}
+
+// 세대별 성적 — 최고·평균 적합도의 진화(신경망 history)
+function GenerationHistory({ history }: { history: { gen: number; best: number; avg: number }[] }) {
+  const W = 560, H = 160, pad = { l: 34, r: 8, t: 10, b: 18 }
+  const n = history.length
+  const maxS = Math.max(1, ...history.map(h => h.best))
+  const x = (i: number) => pad.l + (n === 1 ? 0 : i / (n - 1) * (W - pad.l - pad.r))
+  const y = (s: number) => pad.t + (1 - s / maxS) * (H - pad.t - pad.b)
+  const line = (key: 'best' | 'avg') => history.map((h, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(h[key]).toFixed(1)}`).join(' ')
+  return (
+    <div className="overflow-x-auto"><svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[420px]" style={{ height: 176 }}>
+      {[0, 0.5, 1].map(f => <g key={f}><line x1={pad.l} x2={W - pad.r} y1={y(maxS * f)} y2={y(maxS * f)} stroke="#eef0f4" /><text x={4} y={y(maxS * f) + 3} fontSize="9" fill="#9aa1ad">{Math.round(maxS * f)}</text></g>)}
+      <path d={line('avg')} fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3 3" />
+      <path d={line('best')} fill="none" stroke="#2563eb" strokeWidth="2.4" />
+      {history.map((h, i) => <circle key={i} cx={x(i)} cy={y(h.best)} r="2.6" fill="#2563eb"><title>{`${h.gen}세대 · 최고 ${Math.round(h.best)} · 평균 ${Math.round(h.avg)}`}</title></circle>)}
+      <text x={pad.l} y={H - 4} fontSize="9" fill="#9aa1ad">1세대</text>
+      <text x={W - pad.r} y={H - 4} fontSize="9" fill="#9aa1ad" textAnchor="end">{history[n - 1].gen}세대</text>
+    </svg>
+    <div className="flex items-center gap-3 mt-1 text-[10.5px] text-[#9d9280]"><span className="inline-flex items-center gap-1"><span className="w-4 h-0.5 bg-[#2563eb] inline-block" />세대 최고</span><span className="inline-flex items-center gap-1"><span className="w-4 h-0 border-t border-dashed border-[#94a3b8] inline-block" />세대 평균</span></div>
     </div>
   )
 }
