@@ -124,6 +124,32 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     window.addEventListener('message', h); return () => window.removeEventListener('message', h)
   }, [gameId])
   const [canJoin, setCanJoin] = useState(false)
+  // 음성 입력 — 브라우저 음성인식(한국어)으로 말하면 채팅에 텍스트로 입력된다. (지원 브라우저에서만 버튼 노출)
+  const [listening, setListening] = useState(false)
+  const recogRef = useRef<{ start: () => void; stop: () => void } | null>(null)
+  const speechSupported = typeof window !== 'undefined' && !!((window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition || (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition)
+  const toggleMic = () => {
+    if (listening) { recogRef.current?.stop(); return }
+    const SR = (window as unknown as { SpeechRecognition?: new () => unknown; webkitSpeechRecognition?: new () => unknown }).SpeechRecognition || (window as unknown as { webkitSpeechRecognition?: new () => unknown }).webkitSpeechRecognition
+    if (!SR) return
+    try {
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      const rec: any = new (SR as any)()
+      rec.lang = 'ko-KR'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1
+      let finalText = ''
+      rec.onresult = (e: any) => { let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) finalText += t; else interim += t } setInput((finalText + interim).trim()) }
+      rec.onerror = () => setListening(false)
+      rec.onend = () => { setListening(false); recogRef.current = null }
+      recogRef.current = rec; setListening(true); rec.start()
+      /* eslint-enable @typescript-eslint/no-explicit-any */
+    } catch { setListening(false) }
+  }
+  const renderMic = (size = 32) => speechSupported ? (
+    <button onClick={toggleMic} aria-label={listening ? '음성 입력 중지' : '음성으로 말하기'} title={listening ? '듣는 중… (탭하면 중지)' : '음성으로 말하기'}
+      className={`shrink-0 rounded-full flex items-center justify-center transition ${listening ? 'bg-[#ef4444] text-white animate-pulse' : 'bg-white/15 text-white hover:bg-white/25'}`} style={{ width: size, height: size }}>
+      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" /></svg>
+    </button>
+  ) : null
   // 표준 게임(/play/, 같은 오리진) = 아바타가 게임 안에 들어가 직접 플레이·학습.
   // 외부 게임(다른 도메인) = 브라우저 보안상 게임 안엔 못 들어가므로, 화면 위에 떠서 응원하는 '동반 모드'로 참여한다.
   const gameFrame = () => Array.from(document.querySelectorAll('iframe')).find(f => { try { return new URL(f.src, location.href).pathname.startsWith('/play/') } catch { return false } }) ?? null
@@ -452,6 +478,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
               placeholder={joined ? "AI에게 가르치기… (위 버튼을 누르거나 직접 말해요)" : "AJ에게 말걸기..."}
               className="flex-1 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none disabled:opacity-50"
             />
+            {renderMic()}
             <button
               onClick={() => sendMessage(input)}
               disabled={!input.trim()}
@@ -534,6 +561,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
             <div className="flex items-center gap-1.5 bg-black/55 backdrop-blur-md rounded-full pl-3.5 pr-1 py-1 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
               <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
                 placeholder={joined ? 'AI에게 가르치기…' : 'AJ에게 말걸기...'} className="flex-1 min-w-0 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none" />
+              {renderMic(32)}
               <button onClick={() => sendMessage(input)} disabled={!input.trim()} aria-label="보내기" className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#06b6d4] text-white flex items-center justify-center active:scale-95 transition disabled:opacity-40 shrink-0"><svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button>
             </div>
           </div>
