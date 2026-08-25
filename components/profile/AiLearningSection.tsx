@@ -1,162 +1,264 @@
 'use client'
-// 내정보 > 내 아바타·AJ — 내 AI 아바타의 플레이 학습 현황 (게임별 정책 버전·규칙·최고점, 장르별 학습 레벨)
-// 장르별 학습 난이도: 규칙이 단순한 장르는 빨리 오르고(액션/스포츠), 전략·어드벤처는 더 많은 학습이 필요.
-import { useEffect, useState } from 'react'
+// 내정보 > AJ 학습 — 뉴로에볼루션 대시보드. 게임을 골라 그 게임 AI 의 학습 현황·세대별 성적·최고 개체(정책 신경망)·학습 기록을 본다.
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 interface Curriculum { total: number; learned: number; steps: { name: string; done: boolean }[]; next: string | null; needEpisodes: number; readyAt: string | null }
-interface Row { game_id: string; version: number; rules: unknown[]; tips: string[]; best_score: number | null; best_score_at?: string | null; auto_learn?: boolean; auto_count?: number; template_skill?: number; episodes?: { v: number; score: number }[]; demos?: unknown[]; updated_at: string; curriculum?: Curriculum | null; games: { title: string; genre: string; thumbnail_url: string | null } | null }
-const GENRE: Record<string, { label: string; color: string; difficulty: number; why: string }> = {
-  action: { label: 'ACTION', color: '#dc2626', difficulty: 2, why: '반사 규칙 위주 — 빨리 배움' },
-  sports: { label: 'SPORTS', color: '#059669', difficulty: 2, why: '타이밍·위치 규칙' },
-  adventure: { label: 'ADVENTURE', color: '#d97706', difficulty: 3, why: '탐험·선택이 많아 규칙이 복잡' },
-  strategy: { label: 'STRATEGY', color: '#2563eb', difficulty: 4, why: '수읽기·자원 관리 — 가장 오래 걸림' },
+interface Rule { cond: string; action: string; hold?: number; why?: string }
+interface Episode { v: number; score: number; sec: number; cleared: boolean; t: string }
+interface Row {
+  game_id: string; version: number; rules: Rule[]; params: Record<string, number> | null
+  best_score: number | null; best_score_at?: string | null; auto_learn?: boolean; auto_count?: number
+  template_skill?: number; episodes?: Episode[]; demos?: unknown[]; updated_at: string
+  curriculum?: Curriculum | null; games: { title: string; genre: string; thumbnail_url: string | null } | null
 }
-const XP_PER_LEVEL = 40
-// 리워드 뱃지 — 총 20단계. 누적 XP(전 장르 합)로 올라간다. 단계가 올라갈수록 필요 XP 가 커진다.
-const TIERS = ['새싹', '견습', '초보', '연습생', '루키', '플레이어', '도전자', '숙련', '베테랑', '프로', '에이스', '엘리트', '마스터', '그랜드마스터', '챔피언', '전설', '신화', '오라클', '초월', '비브렉스'] as const
-const TIER_COLORS = ['#9ca3af', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#fbbf24', '#fde047', '#ffffff']
-const tierNeed = (i: number) => Math.round(60 * Math.pow(1.28, i))   // 1→2 단계 60XP … 19→20 약 4,300XP
-const tierOf = (xp: number) => { let t = 0, acc = 0; while (t < TIERS.length - 1 && xp >= acc + tierNeed(t)) { acc += tierNeed(t); t++ } return { tier: t, into: xp - acc, need: tierNeed(t), maxed: t === TIERS.length - 1 } }
-const xpOf = (r: Row) => r.version * 10 + (Array.isArray(r.rules) ? r.rules.length : 0) * 6 + (r.template_skill ?? 0) * 15 + (r.best_score && r.best_score > 0 ? 12 : 0)
-
 interface LearnLog { id: string; game_id: string | null; kind: string; title: string; detail: string | null; version: number | null; created_at: string }
 const LOG_KIND: Record<string, [string, string]> = { record: ['최고 점수', '#e11d48'], curriculum: ['기본기', '#2563eb'], coach: ['프롬프트 코칭', '#7c3aed'], demo: ['내 플레이 모방', '#0891b2'], reflect: ['자기 반성', '#059669'], revert: ['복귀', '#f59e0b'], play: ['AI 플레이', '#0ea5e9'], guide: ['개발자 가이드', '#d97706'] }
+const GENRE: Record<string, { label: string; color: string }> = {
+  action: { label: 'ACTION', color: '#dc2626' }, sports: { label: 'SPORTS', color: '#059669' },
+  adventure: { label: 'ADVENTURE', color: '#d97706' }, strategy: { label: 'STRATEGY', color: '#2563eb' },
+}
+// 리워드 뱃지 — 누적 XP 20단계
+const TIERS = ['새싹', '견습', '초보', '연습생', '루키', '플레이어', '도전자', '숙련', '베테랑', '프로', '에이스', '엘리트', '마스터', '그랜드마스터', '챔피언', '전설', '신화', '오라클', '초월', '비브렉스'] as const
+const TIER_COLORS = ['#9ca3af', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#fbbf24', '#fde047', '#facc15']
+const tierNeed = (i: number) => Math.round(60 * Math.pow(1.28, i))
+const tierOf = (xp: number) => { let t = 0, acc = 0; while (t < TIERS.length - 1 && xp >= acc + tierNeed(t)) { acc += tierNeed(t); t++ } return { tier: t, into: xp - acc, need: tierNeed(t), maxed: t === TIERS.length - 1 } }
+const xpOf = (r: Row) => r.version * 10 + (Array.isArray(r.rules) ? r.rules.length : 0) * 6 + (r.template_skill ?? 0) * 15 + (r.best_score && r.best_score > 0 ? 12 : 0)
+const fmtDT = (iso: string) => new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 
 export default function AiLearningSection() {
   const [rows, setRows] = useState<Row[] | null>(null)
-  const [logs, setLogs] = useState<LearnLog[] | null>(null)
+  const [logs, setLogs] = useState<LearnLog[]>([])
   const [missing, setMissing] = useState(false)
+  const [sel, setSel] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
-  const [openSteps, setOpenSteps] = useState<string | null>(null)
-  const learnFromDemo = async (gameId: string) => { setBusy(gameId); try { const r = await fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'learnFromDemo', gameId }) }); const j = await r.json(); if (r.ok && j.policy) setRows(rs => (rs ?? []).map(x => x.game_id === gameId ? { ...x, version: j.policy.version, rules: j.policy.rules, tips: j.policy.tips } : x)); else alert(j.error ?? '실패') } finally { setBusy(null) } }
   useEffect(() => {
     fetch('/api/ai-bj/learning').then(r => r.json())
-      .then(j => { if (j.error) { setMissing(true); setRows([]) } else setRows((j.rows as Row[]) ?? []) })
+      .then(j => { if (j.error) { setMissing(true); setRows([]) } else { const rs = (j.rows as Row[]) ?? []; setRows(rs); setSel(s => s ?? rs[0]?.game_id ?? null) } })
       .catch(() => { setMissing(true); setRows([]) })
-    createClient().from('aj_learn_log').select('*').order('created_at', { ascending: false }).limit(300).then(({ data }) => setLogs((data as LearnLog[] | null) ?? []))
+    createClient().from('aj_learn_log').select('*').order('created_at', { ascending: false }).limit(400).then(({ data }) => setLogs((data as LearnLog[] | null) ?? []))
   }, [])
-  const [logModal, setLogModal] = useState<{ id: string; title: string } | null>(null)
-  if (rows === null) return <div className="h-28 rounded-xl bg-[#f6f2ea] animate-pulse" />
-  const byGenre: Record<string, { xp: number; games: number }> = {}
-  for (const r of rows) { const g = r.games?.genre ?? 'action'; const b = (byGenre[g] ??= { xp: 0, games: 0 }); b.xp += xpOf(r); b.games++ }
-  const totalXp = rows.reduce((a, r) => a + xpOf(r), 0)
-  const totalRules = rows.reduce((a, r) => a + (Array.isArray(r.rules) ? r.rules.length : 0), 0)
-  const totalLessons = rows.reduce((a, r) => a + r.version, 0)
-  const totalAuto = rows.reduce((a, r) => a + (r.auto_count ?? 0), 0)
-  const allAuto = rows.length === 0 || rows.every(r => r.auto_learn !== false)
-  const toggleAuto = async (on: boolean) => { setRows(rs => (rs ?? []).map(r => ({ ...r, auto_learn: on }))); await createClient().from('aj_play_policies').update({ auto_learn: on } as never).in('game_id', rows.map(r => r.game_id)); try { localStorage.setItem('aj-auto-learn', on ? '1' : '0') } catch { /* ignore */ } }
+
+  const totalXp = useMemo(() => (rows ?? []).reduce((a, r) => a + xpOf(r), 0), [rows])
+  const allAuto = !rows || rows.length === 0 || rows.every(r => r.auto_learn !== false)
+  const toggleAuto = async (on: boolean) => { setRows(rs => (rs ?? []).map(r => ({ ...r, auto_learn: on }))); await createClient().from('aj_play_policies').update({ auto_learn: on } as never).in('game_id', (rows ?? []).map(r => r.game_id)) }
+  const learnFromDemo = async (gameId: string) => { setBusy(gameId); try { const r = await fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'learnFromDemo', gameId }) }); const j = await r.json(); if (r.ok && j.policy) setRows(rs => (rs ?? []).map(x => x.game_id === gameId ? { ...x, version: j.policy.version, rules: j.policy.rules } : x)); else alert(j.error ?? '실패') } finally { setBusy(null) } }
+
+  if (rows === null) return <div className="h-40 rounded-2xl bg-[#f6f2ea] animate-pulse" />
+  const cur = rows.find(r => r.game_id === sel) ?? null
+  const t = tierOf(totalXp)
+
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div><p className="font-pixel text-[9px] tracking-[0.3em] text-[#2563eb]">AI PLAY LEARNING</p><h3 className="text-[15px] font-bold text-[#241f17] mt-1">내 아바타 플레이 학습 현황</h3><p className="text-[12px] text-[#857a68] mt-0.5">게임에 아바타를 참여시키고 채팅으로 가르치거나, 내가 직접 플레이한 기록(인간 데모)으로 배우게 할 수 있어요. 장르마다 학습 난이도가 달라 레벨이 오르는 속도가 다릅니다.</p></div>
-        <div className="flex gap-2">
-          {[['가르친 횟수', totalLessons], ['자동 학습', totalAuto], ['학습된 규칙', totalRules], ['학습한 게임', rows.length]].map(([l, v]) => <div key={l as string} className="rounded-xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_8px_24px_-18px_rgba(36,31,23,0.25)] px-3 py-2 min-w-[78px] text-center"><p className="text-[10px] text-[#857a68] font-semibold">{l}</p><p className="text-[18px] font-extrabold text-[#241f17] leading-none mt-0.5 tabular-nums">{v as number}</p></div>)}
+      {/* 헤더 — 타이틀 + 리워드 뱃지 + 자동학습 */}
+      <div className="rounded-2xl bg-[#0f1420] text-white p-4 md:p-5 relative overflow-hidden">
+        <div aria-hidden className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+        <div className="relative flex items-center gap-4 flex-wrap">
+          <TierBadge tier={t.tier} size={54} />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold tracking-[0.25em] text-white/50 uppercase">Neuro-Evolution · Reward {t.tier + 1}/20</p>
+            <p className="text-[18px] font-extrabold leading-tight">{TIERS[t.tier]} <span className="text-[12px] font-semibold text-white/50">· 누적 {totalXp} XP · 학습 게임 {rows.length}</span></p>
+            {!t.maxed && <div className="mt-1.5 h-1.5 max-w-[320px] rounded-full bg-white/10 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.round(t.into / t.need * 100)}%`, background: TIER_COLORS[t.tier] }} /></div>}
+          </div>
+          <label className="flex items-center gap-2 text-[12px] text-white/80 cursor-pointer shrink-0">
+            <input type="checkbox" checked={allAuto} onChange={e => toggleAuto(e.target.checked)} className="accent-[#22d3ee]" />자동 학습
+          </label>
         </div>
       </div>
-      <label className="flex items-start gap-2.5 rounded-xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_8px_24px_-18px_rgba(36,31,23,0.25)] px-3.5 py-3 cursor-pointer">
-        <input type="checkbox" checked={allAuto} onChange={e => toggleAuto(e.target.checked)} className="mt-0.5" />
-        <span className="text-[12.5px] text-[#374151]"><b className="text-[#241f17]">자동 학습</b> — 아바타가 대신 플레이하는 동안 3판마다 결과를 스스로 돌아보고 규칙을 조금씩 고쳐요(점수가 떨어지면 잘되던 방식으로 자동 복귀). 내가 채팅으로 가르친 내용은 항상 우선 지켜요.</span>
-      </label>
-      {/* 리워드 뱃지 — 20단계 */}
-      {(() => { const t = tierOf(totalXp); const c = TIER_COLORS[t.tier]; return (
-        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
-          <div className="flex items-center gap-3">
-            <TierBadge tier={t.tier} size={56} />
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold tracking-[0.2em] text-[#9d9280] uppercase">Reward Badge · {t.tier + 1} / 20</p>
-              <p className="text-[16px] font-extrabold text-[#241f17] leading-tight">{TIERS[t.tier]} <span className="text-[12px] font-semibold text-[#857a68]">· 누적 {totalXp} XP</span></p>
-              {t.maxed ? <p className="text-[11.5px] text-[#857a68] mt-0.5">최고 단계 달성!</p> : <><div className="mt-1.5 h-2 rounded-full bg-[#f1ece2] overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.round(t.into / t.need * 100)}%`, background: c }} /></div><p className="text-[11px] text-[#9d9280] mt-1 tabular-nums">다음 &ldquo;{TIERS[t.tier + 1]}&rdquo; 까지 {t.need - t.into} XP</p></>}
-            </div>
-          </div>
-          <div className="mt-3 grid grid-cols-10 gap-1.5">
-            {TIERS.map((name, i) => <div key={name} className="flex flex-col items-center gap-0.5" title={`${i + 1}단계 ${name}`}><TierBadge tier={i} size={26} locked={i > t.tier} /><span className={`text-[8.5px] leading-none ${i <= t.tier ? 'text-[#4a4337] font-semibold' : 'text-[#c9c0ad]'}`}>{name}</span></div>)}
-          </div>
+
+      {missing && <p className="rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-[13px] px-4 py-3">학습 테이블이 아직 준비되지 않았어요. <code>db/migrations/2026-08-21-curriculum-log.sql</code> 을 실행하세요.</p>}
+
+      {rows.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-[#e6dfd0] bg-white p-10 text-center">
+          <p className="text-[15px] font-bold text-[#241f17]">아직 학습한 게임이 없어요</p>
+          <p className="text-[12.5px] text-[#857a68] mt-1">게임을 열고 <b>게임 참여</b>로 AI 를 플레이시키거나 직접 플레이하면 학습이 시작돼요. <Link href="/games" className="text-[#2563eb] font-semibold">게임 보러 가기 →</Link></p>
         </div>
-      ) })()}
-      {/* 장르별 레벨 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {Object.entries(GENRE).map(([g, meta]) => {
-          const b = byGenre[g] ?? { xp: 0, games: 0 }
-          const need = XP_PER_LEVEL * meta.difficulty
-          const level = Math.floor(b.xp / need) + 1, into = b.xp % need, pct = Math.round(into / need * 100)
-          return (
-            <div key={g} className="rounded-xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_8px_24px_-18px_rgba(36,31,23,0.25)] px-3.5 py-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2"><span className="font-pixel text-[9px] px-1.5 py-0.5 rounded text-white" style={{ background: meta.color }}>{meta.label}</span><span className="text-[12px] text-[#857a68]">난이도 {'★'.repeat(meta.difficulty)}{'☆'.repeat(4 - meta.difficulty)}</span></div>
-                <span className="text-[13px] font-extrabold text-[#241f17]">Lv.{level}</span>
-              </div>
-              <div className="mt-2 h-2 rounded-full bg-[#f1ece2] overflow-hidden"><div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: meta.color }} /></div>
-              <div className="mt-1 flex items-center justify-between text-[11px] text-[#9d9280]"><span>{meta.why}</span><span className="tabular-nums">{into}/{need} XP · 게임 {b.games}</span></div>
-            </div>
-          )
-        })}
-      </div>
-      {/* 게임별 */}
-      {missing ? <p className="text-[12px] text-[#9d9280]">학습 테이블이 아직 준비되지 않았어요.</p> : rows.length === 0 ? (
-        <p className="text-[12.5px] text-[#857a68] rounded-lg border border-dashed border-[#e6dfd0] px-4 py-5 text-center">아직 학습한 게임이 없어요. 게임을 열고 <b>게임 참여</b> → 채팅으로 &ldquo;공이 오른쪽이면 미리 오른쪽으로&rdquo;처럼 가르쳐 보세요. <Link href="/games" className="text-[#2563eb] font-semibold hover:underline">게임 보러 가기 →</Link></p>
       ) : (
-        <ul className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] px-4 divide-y divide-[#f1ece2]">
-          {rows.map(r => { const g = GENRE[r.games?.genre ?? 'action'] ?? GENRE.action; const n = Array.isArray(r.rules) ? r.rules.length : 0; return (
-            <li key={r.game_id} className="flex items-center gap-3 py-2.5">
-              <div className="w-12 h-8 rounded-md overflow-hidden bg-[#f1ece2] shrink-0">{r.games?.thumbnail_url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={r.games.thumbnail_url} alt="" className="w-full h-full object-cover" />}</div>
-              <div className="min-w-0 flex-1">
-                <Link href={`/games/${r.game_id}`} className="text-[13.5px] font-semibold text-[#241f17] hover:text-[#2563eb] truncate block">{r.games?.title ?? '게임'}</Link>
-                <p className="text-[11px] text-[#9d9280] truncate">{r.tips?.slice(-1)[0] ? `최근 가르침: ${r.tips.slice(-1)[0]}` : '가르친 내용 없음'}</p>
-                {r.curriculum && (
-                  <button onClick={() => setOpenSteps(openSteps === r.game_id ? null : r.game_id)} className="mt-1 flex items-center gap-1.5 w-full max-w-[280px] group">
-                    <div className="flex-1 h-1.5 rounded-full bg-[#f1ece2] overflow-hidden"><div className="h-full rounded-full bg-[#2563eb] transition-all" style={{ width: `${Math.round(r.curriculum.learned / r.curriculum.total * 100)}%` }} /></div>
-                    <span className="shrink-0 text-[10.5px] font-bold text-[#2563eb] tabular-nums group-hover:underline">기본기 {r.curriculum.learned}/{r.curriculum.total} {openSteps === r.game_id ? '▴' : '▾'}</span>
-                  </button>
-                )}
-                {r.curriculum && openSteps === r.game_id && (
-                  <ol className="mt-1.5 space-y-0.5">
-                    {r.curriculum.steps.map((st, i) => <li key={i} className={`text-[11px] flex items-center gap-1.5 ${st.done ? 'text-[#059669]' : 'text-[#9d9280]'}`}><span>{st.done ? '✓' : '○'}</span>{i + 1}. {st.name}{!st.done && i === r.curriculum!.learned && <span className="text-[#2563eb] font-semibold">← 다음{r.curriculum!.needEpisodes > 0 ? ` (플레이 ${r.curriculum!.needEpisodes}판 더)` : r.curriculum!.readyAt && new Date(r.curriculum!.readyAt) > new Date() ? ` (${new Date(r.curriculum!.readyAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 이후)` : ' (다음 판에 학습)'}</span>}</li>)}
-                  </ol>
-                )}
-              </div>
-              <span className="font-pixel text-[8px] px-1.5 py-0.5 rounded text-white shrink-0" style={{ background: g.color }}>{g.label}</span>
-              <div className="text-right shrink-0"><p className="text-[12.5px] font-bold text-[#241f17] tabular-nums">학습 v{r.version} · 규칙 {n}{(r.template_skill ?? 0) > 0 ? ` · 기본기 ${r.template_skill}단계` : ''}{(r.auto_count ?? 0) > 0 ? ` · 자동 ${r.auto_count}` : ''}</p><p className="text-[11px] text-[#9d9280] tabular-nums">{r.best_score != null ? `🏆 최고 ${r.best_score.toLocaleString()}점${r.best_score_at ? ` · ${new Date(r.best_score_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}` : '기록 없음'} · XP {xpOf(r)}{Array.isArray(r.demos) && r.demos.length > 0 ? ` · 내 플레이 ${r.demos.length}샘플` : ''}</p>
-                <div className="mt-1 flex items-center gap-1.5 justify-end">
-                  <button onClick={() => setLogModal({ id: r.game_id, title: r.games?.title ?? '게임' })} className="h-6 px-2 rounded-full border border-[#e6dfd0] text-[10.5px] font-semibold text-[#6b6152] hover:border-[#241f17]">기록 보기</button>
-                  {Array.isArray(r.demos) && r.demos.length >= 20 && <button onClick={() => learnFromDemo(r.game_id)} disabled={busy === r.game_id} className="h-6 px-2 rounded-full bg-[#241f17] text-white text-[10.5px] font-bold disabled:opacity-50">{busy === r.game_id ? '학습 중…' : '내 플레이로 학습'}</button>}
-                </div>
-              </div>
-            </li>) })}
-        </ul>
-      )}
-      {/* 게임별 학습 기록 — '기록 보기'를 누른 게임만 모달로 */}
-      {logModal && (() => { const shown = (logs ?? []).filter(l => l.game_id === logModal.id); return (
-        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/60 px-3 sm:px-4" onClick={() => setLogModal(null)}>
-          <div className="w-full max-w-lg rounded-t-2xl sm:rounded-2xl bg-white p-5 md:p-6 max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="flex items-start justify-between gap-3 mb-1 shrink-0">
-              <div><p className="font-pixel text-[9px] tracking-[0.3em] text-[#2563eb]">LEARNING LOG</p><h3 className="text-[16px] font-bold text-[#241f17] mt-1">{logModal.title} · 학습 기록</h3></div>
-              <button onClick={() => setLogModal(null)} className="text-[#9d9280] hover:text-[#241f17] text-lg leading-none">✕</button>
-            </div>
-            <div className="flex flex-wrap gap-1.5 my-2 shrink-0">{Object.entries(LOG_KIND).map(([k, [lb, c]]) => <span key={k} className="inline-flex items-center gap-1 text-[10px] text-[#6b6152]"><span className="w-2 h-2 rounded-full" style={{ background: c }} />{lb}</span>)}</div>
-            {!shown.length ? <p className="text-[12.5px] text-[#9d9280] py-8 text-center">이 게임의 학습 기록이 아직 없어요. 아바타를 참여시켜 AI 가 플레이하거나 직접 플레이해 보세요.</p> : (
-              <ul className="space-y-1.5 overflow-y-auto pr-1 -mr-1">
-                {shown.map(l => { const [lb, c] = LOG_KIND[l.kind] ?? [l.kind, '#6b7280']; return (
-                  <li key={l.id} className="flex items-start gap-2 text-[12px]">
-                    <span className="shrink-0 mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold text-white" style={{ background: c }}>{lb}</span>
-                    <span className="min-w-0 flex-1 text-[#374151]"><b className="text-[#241f17]">{l.title}</b>{l.detail ? <span className="block text-[11px] text-[#9d9280] truncate">{l.detail}</span> : null}</span>
-                    <span className="shrink-0 text-[10.5px] text-[#9d9280] tabular-nums">{new Date(l.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}{l.version ? ` · v${l.version}` : ''}</span>
-                  </li>) })}
-              </ul>
-            )}
+        <>
+          {/* 게임 선택 */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
+            {rows.map(r => (
+              <button key={r.game_id} onClick={() => setSel(r.game_id)}
+                className={`shrink-0 flex items-center gap-2 h-9 pl-1 pr-3 rounded-full border transition-colors ${sel === r.game_id ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white border-[#e6dfd0] text-[#4a4337] hover:border-[#241f17]'}`}>
+                <span className="w-7 h-7 rounded-full overflow-hidden bg-[#f1ece2] shrink-0">{r.games?.thumbnail_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={r.games.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                ) : null}</span>
+                <span className="text-[12.5px] font-semibold whitespace-nowrap max-w-[140px] truncate">{r.games?.title ?? '게임'}</span>
+              </button>
+            ))}
           </div>
-        </div>
-      ) })()}
+
+          {cur && <GameDashboard row={cur} logs={logs.filter(l => l.game_id === cur.game_id)} busy={busy === cur.game_id} onLearnDemo={() => learnFromDemo(cur.game_id)} />}
+        </>
+      )}
     </div>
   )
 }
 
-/** 단계 뱃지 — SVG 메달. 단계가 오를수록 색·광택·별 개수가 늘어난다 */
+function GameDashboard({ row, logs, busy, onLearnDemo }: { row: Row; logs: LearnLog[]; busy: boolean; onLearnDemo: () => void }) {
+  const eps = Array.isArray(row.episodes) ? row.episodes : []
+  const rules = Array.isArray(row.rules) ? row.rules : []
+  const g = GENRE[row.games?.genre ?? 'action'] ?? GENRE.action
+  const demoN = Array.isArray(row.demos) ? row.demos.length : 0
+  const clears = eps.filter(e => e.cleared).length
+  return (
+    <div className="space-y-3">
+      {/* 학습 현황 — 스탯 카드 */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+        <Stat label="세대(버전)" value={`v${row.version}`} accent={g.color} />
+        <Stat label="최고 점수" value={row.best_score != null ? row.best_score.toLocaleString() : '—'} sub={row.best_score_at ? fmtDT(row.best_score_at) : undefined} accent="#e11d48" />
+        <Stat label="플레이 판수" value={eps.length} sub={clears > 0 ? `클리어 ${clears}` : undefined} accent="#0ea5e9" />
+        <Stat label="학습 규칙" value={rules.length} accent="#7c3aed" />
+        <Stat label="기본기" value={row.curriculum ? `${row.curriculum.learned}/${row.curriculum.total}` : '—'} accent="#2563eb" />
+        <Stat label="자기 진화" value={row.auto_count ?? 0} sub={demoN ? `내 플레이 ${demoN}` : undefined} accent="#059669" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-3">
+        {/* 세대별 성적 */}
+        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
+          <p className="text-[12px] font-bold uppercase tracking-wide text-[#857a68] mb-2">세대별 성적</p>
+          <GenerationChart episodes={eps} />
+        </div>
+        {/* 최고 개체 — 정책 신경망 */}
+        <div className="rounded-2xl bg-[#0f1420] text-white p-4">
+          <p className="text-[12px] font-bold uppercase tracking-wide text-white/50 mb-2">최고 개체 · 정책 신경망</p>
+          <PolicyNetwork rules={rules} params={row.params ?? {}} />
+        </div>
+      </div>
+
+      {/* 기본기 진행 */}
+      {row.curriculum && (
+        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
+          <div className="flex items-center justify-between mb-2"><p className="text-[12px] font-bold uppercase tracking-wide text-[#857a68]">기본기 커리큘럼</p><span className="text-[12px] font-bold text-[#2563eb]">{row.curriculum.learned}/{row.curriculum.total}</span></div>
+          <div className="h-2 rounded-full bg-[#f1ece2] overflow-hidden mb-2"><div className="h-full rounded-full bg-[#2563eb]" style={{ width: `${row.curriculum.total ? Math.round(row.curriculum.learned / row.curriculum.total * 100) : 0}%` }} /></div>
+          <ol className="grid sm:grid-cols-2 gap-x-4 gap-y-0.5">
+            {row.curriculum.steps.map((st, i) => <li key={i} className={`text-[12px] flex items-center gap-1.5 ${st.done ? 'text-[#059669]' : 'text-[#9d9280]'}`}><span>{st.done ? '✓' : '○'}</span>{i + 1}. {st.name}{!st.done && i === row.curriculum!.learned && <span className="text-[#2563eb] font-semibold text-[11px]">← 다음{row.curriculum!.needEpisodes > 0 ? ` (${row.curriculum!.needEpisodes}판 더)` : row.curriculum!.readyAt && new Date(row.curriculum!.readyAt) > new Date() ? ` (${new Date(row.curriculum!.readyAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 이후)` : ''}</span>}</li>)}
+          </ol>
+        </div>
+      )}
+
+      {/* 학습 기록 */}
+      <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4">
+        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+          <p className="text-[12px] font-bold uppercase tracking-wide text-[#857a68]">학습 기록</p>
+          {demoN >= 20 && <button onClick={onLearnDemo} disabled={busy} className="h-7 px-3 rounded-full bg-[#241f17] text-white text-[11px] font-bold disabled:opacity-50">{busy ? '학습 중…' : '내 플레이로 학습'}</button>}
+        </div>
+        {logs.length === 0 ? <p className="text-[12.5px] text-[#9d9280] py-6 text-center">이 게임의 학습 기록이 아직 없어요.</p> : (
+          <ul className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+            {logs.map(l => { const [lb, c] = LOG_KIND[l.kind] ?? [l.kind, '#6b7280']; return (
+              <li key={l.id} className="flex items-start gap-2 text-[12px]">
+                <span className="shrink-0 mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold text-white whitespace-nowrap" style={{ background: c }}>{lb}</span>
+                <span className="min-w-0 flex-1 text-[#374151]"><b className="text-[#241f17]">{l.title}</b>{l.detail ? <span className="block text-[11px] text-[#9d9280] truncate">{l.detail}</span> : null}</span>
+                <span className="shrink-0 text-[10.5px] text-[#9d9280] tabular-nums">{fmtDT(l.created_at)}{l.version ? ` · v${l.version}` : ''}</span>
+              </li>) })}
+          </ul>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Stat({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: string }) {
+  return (
+    <div className="rounded-xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_8px_24px_-18px_rgba(36,31,23,0.25)] px-3 py-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-[#9aa1ad]">{label}</p>
+      <p className="text-[19px] font-extrabold leading-none mt-1 tabular-nums truncate" style={{ color: accent ?? '#1f2430' }}>{value}</p>
+      {sub && <p className="text-[10px] text-[#9d9280] mt-1 truncate">{sub}</p>}
+    </div>
+  )
+}
+
+// 세대별 성적 — 판마다 점수(점), 지금까지 최고점(계단선). 세대(버전) 경계는 배경 밴드.
+function GenerationChart({ episodes }: { episodes: Episode[] }) {
+  if (episodes.length < 2) return <div className="h-40 flex items-center justify-center text-[12.5px] text-[#9d9280]">판을 2번 이상 플레이하면 성적 그래프가 나와요.</div>
+  const W = 560, H = 160, pad = { l: 34, r: 8, t: 10, b: 18 }
+  const n = episodes.length
+  const maxS = Math.max(1, ...episodes.map(e => e.score))
+  const x = (i: number) => pad.l + (n === 1 ? 0 : i / (n - 1) * (W - pad.l - pad.r))
+  const y = (s: number) => pad.t + (1 - s / maxS) * (H - pad.t - pad.b)
+  // best-so-far 계단선
+  const bestPts: (readonly [number, number])[] = []; let bAcc = 0; for (let i = 0; i < episodes.length; i++) { bAcc = Math.max(bAcc, episodes[i].score); bestPts.push([x(i), y(bAcc)] as const) }
+  const bestPath = bestPts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ')
+  // 세대(버전) 색
+  const versions = Array.from(new Set(episodes.map(e => e.v)))
+  const vColor = (v: number) => TIER_COLORS[versions.indexOf(v) % TIER_COLORS.length]
+  return (
+    <div className="overflow-x-auto"><svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[420px]" style={{ height: 176 }}>
+      {[0, 0.5, 1].map(f => <g key={f}><line x1={pad.l} x2={W - pad.r} y1={y(maxS * f)} y2={y(maxS * f)} stroke="#eef0f4" /><text x={4} y={y(maxS * f) + 3} fontSize="9" fill="#9aa1ad">{Math.round(maxS * f)}</text></g>)}
+      <path d={bestPath} fill="none" stroke="#e11d48" strokeWidth="2" strokeDasharray="1 0" opacity="0.9" />
+      {episodes.map((e, i) => <circle key={i} cx={x(i)} cy={y(e.score)} r={e.cleared ? 4 : 2.6} fill={vColor(e.v)} stroke={e.cleared ? '#fff' : 'none'} strokeWidth="1.2"><title>{`판 ${i + 1} · v${e.v} · ${e.score}점${e.cleared ? ' · 클리어' : ''}`}</title></circle>)}
+      <text x={pad.l} y={H - 4} fontSize="9" fill="#9aa1ad">1판</text>
+      <text x={W - pad.r} y={H - 4} fontSize="9" fill="#9aa1ad" textAnchor="end">{n}판</text>
+    </svg>
+    <div className="flex items-center gap-3 mt-1 text-[10.5px] text-[#9d9280] flex-wrap">
+      <span className="inline-flex items-center gap-1"><span className="w-4 h-0.5 bg-[#e11d48] inline-block" />최고 기록</span>
+      <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full ring-2 ring-white inline-block" style={{ background: '#0ea5e9' }} />클리어</span>
+      <span>점 색 = 세대(버전)</span>
+    </div>
+    </div>
+  )
+}
+
+// 최고 개체 정책 신경망 — 상태특징(입력) → 규칙(은닉) → 행동(출력) 3층 그래프. 규칙이 없으면 파라미터 게놈 게이지.
+function PolicyNetwork({ rules, params }: { rules: Rule[]; params: Record<string, number> }) {
+  if (!rules.length) {
+    const genes: [string, number, number, number][] = [
+      ['실력(botSkill)', params.botSkill ?? 0.3, 0, 1],
+      ['반응속도', params.reactionMs ?? 120, 400, 30],  // 낮을수록 빠름 → 표시는 반전
+      ['무작위성', params.randomness ?? 0.15, 0.5, 0],
+    ]
+    return (
+      <div className="space-y-2.5 py-1">
+        <p className="text-[11.5px] text-white/60 leading-relaxed">아직 규칙이 없어요. 이 게임은 <b className="text-white/90">파라미터 게놈</b>을 진화시키는 중이에요.</p>
+        {genes.map(([label, v, lo, hi]) => { const pct = Math.max(0, Math.min(1, (v - lo) / (hi - lo))); return (
+          <div key={label}><div className="flex justify-between text-[11px] text-white/70"><span>{label}</span><span className="tabular-nums">{typeof v === 'number' ? (v < 1 ? v.toFixed(2) : Math.round(v)) : v}</span></div>
+            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-0.5"><div className="h-full rounded-full bg-gradient-to-r from-[#22d3ee] to-[#818cf8]" style={{ width: `${Math.round(pct * 100)}%` }} /></div></div>
+        ) })}
+        <p className="text-[10.5px] text-white/40 pt-1">규칙은 채팅으로 가르치거나 기본기를 배우면 생겨요.</p>
+      </div>
+    )
+  }
+  // 입력(상태 특징) 추출
+  const feats = Array.from(new Set(rules.flatMap(r => (r.cond.match(/s\.[A-Za-z_]\w*/g) ?? []).map(m => m.slice(2))))).slice(0, 6)
+  const actions = Array.from(new Set(rules.map(r => r.action)))
+  const R = rules.slice(0, 7)
+  const W = 340, H = Math.max(150, Math.max(feats.length, R.length, actions.length) * 26 + 20)
+  const colX = [40, W / 2, W - 40]
+  const yOf = (i: number, count: number) => 24 + (count <= 1 ? (H - 48) / 2 : i / (count - 1) * (H - 48))
+  const featY = (f: string) => yOf(feats.indexOf(f), feats.length)
+  const ruleY = (i: number) => yOf(i, R.length)
+  const actY = (a: string) => yOf(actions.indexOf(a), actions.length)
+  const ACT_LABEL: Record<string, string> = { left: '◀', right: '▶', up: '▲', down: '▼', action: 'A', action2: 'B' }
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 220 }}>
+        {/* edges: feat→rule */}
+        {R.map((r, ri) => (r.cond.match(/s\.[A-Za-z_]\w*/g) ?? []).map(m => m.slice(2)).filter(f => feats.includes(f)).map(f => (
+          <line key={`${ri}-${f}`} x1={colX[0]} y1={featY(f)} x2={colX[1]} y2={ruleY(ri)} stroke="#38bdf8" strokeOpacity="0.35" strokeWidth="1" />
+        )))}
+        {/* edges: rule→action */}
+        {R.map((r, ri) => actions.includes(r.action) && <line key={`ra-${ri}`} x1={colX[1]} y1={ruleY(ri)} x2={colX[2]} y2={actY(r.action)} stroke="#818cf8" strokeOpacity="0.5" strokeWidth="1.3" />)}
+        {/* nodes: feats */}
+        {feats.map(f => <g key={f}><circle cx={colX[0]} cy={featY(f)} r="5" fill="#22d3ee" /><text x={colX[0] - 9} y={featY(f) + 3} fontSize="9" fill="#cbd5e1" textAnchor="end">{f}</text></g>)}
+        {/* nodes: rules */}
+        {R.map((r, ri) => <circle key={ri} cx={colX[1]} cy={ruleY(ri)} r="6" fill="#a5b4fc"><title>{`${r.cond} → ${r.action}${r.why ? ` (${r.why})` : ''}`}</title></circle>)}
+        {/* nodes: actions */}
+        {actions.map(a => <g key={a}><circle cx={colX[2]} cy={actY(a)} r="9" fill="#f472b6" /><text x={colX[2]} y={actY(a) + 3.5} fontSize="9" fill="#fff" textAnchor="middle" fontWeight="700">{ACT_LABEL[a] ?? a[0]?.toUpperCase()}</text><text x={colX[2] + 13} y={actY(a) + 3} fontSize="8.5" fill="#cbd5e1">{a}</text></g>)}
+        <text x={colX[0]} y={14} fontSize="8.5" fill="#64748b" textAnchor="middle">상태</text>
+        <text x={colX[1]} y={14} fontSize="8.5" fill="#64748b" textAnchor="middle">규칙 {rules.length}</text>
+        <text x={colX[2]} y={14} fontSize="8.5" fill="#64748b" textAnchor="middle">행동</text>
+      </svg>
+      <p className="text-[10.5px] text-white/40 mt-1">상태(공 위치·속도 등)를 보고 규칙이 행동을 결정해요. 노드에 마우스를 올리면 규칙 내용이 보여요.</p>
+    </div>
+  )
+}
+
 function TierBadge({ tier, size = 40, locked = false }: { tier: number; size?: number; locked?: boolean }) {
   const c = locked ? '#d9d2c3' : TIER_COLORS[tier]
   const stars = Math.min(5, Math.floor(tier / 4) + 1)
-  const id = `tb${tier}${locked ? 'l' : ''}`
+  const id = `tb${tier}${locked ? 'l' : ''}${size}`
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden style={{ filter: locked ? 'grayscale(1) opacity(.55)' : `drop-shadow(0 2px 6px ${c}66)` }}>
       <defs><linearGradient id={id} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff" stopOpacity=".85" /><stop offset=".35" stopColor={c} /><stop offset="1" stopColor={c} stopOpacity=".7" /></linearGradient></defs>
