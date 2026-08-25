@@ -15,10 +15,12 @@ export async function GET(req: Request) {
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 })
   const gameId = new URL(req.url).searchParams.get('gameId')
   if (!gameId) return Response.json({ error: 'bad request' }, { status: 400 })
-  const { data } = await createAdminClient().from('aj_play_policies').select('version,tips,rules,params,summary,best_score,brain').eq('game_id', gameId).eq('user_id', user.id).maybeSingle()
+  const res = await createAdminClient().from('aj_play_policies').select('version,tips,rules,params,summary,best_score,brain').eq('game_id', gameId).eq('user_id', user.id).maybeSingle()
+  const data = res.error ? (await createAdminClient().from('aj_play_policies').select('version,tips,rules,params,summary,best_score').eq('game_id', gameId).eq('user_id', user.id).maybeSingle()).data : res.data
   const row = data as { brain?: unknown } | null
-  const { activeGenome: ag } = await import('@/lib/neuroevo')
-  return Response.json({ policy: data ?? null, brain: row?.brain ? ag(row.brain as never) : null })
+  let brain = null
+  try { if (row?.brain) { const { activeGenome: ag } = await import('@/lib/neuroevo'); brain = ag(row.brain as never) } } catch { /* ignore */ }
+  return Response.json({ policy: data ?? null, brain })
 }
 
 export async function POST(req: Request) {
@@ -112,8 +114,14 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
     const { evolved } = recordFitness(brain, score)
     patch.brain = brain
     if (evolved) { patch.auto_count = (row.auto_count ?? 0) + 1; void logLearn(admin, userId, gameId, 'reflect', `신경진화 ${brain.gen}세대 — 최고 ${Math.round(brain.best.f)}점`, `개체군 ${brain.pop.length} · ${brain.arch[0]}-${brain.arch[1]}-${brain.arch[2]} 신경망`, brain.gen) }
-    await admin.from('aj_play_policies').update(patch as never).eq('id', row.id)
-    return Response.json({ ok: true, brain: activeGenome(brain), evolved })
+    const upd = await admin.from('aj_play_policies').update(patch as never).eq('id', row.id)
+    if (upd.error && /brain|column|schema cache/i.test(upd.error.message)) {
+      // brain 컬럼 미생성 — 신경진화 비활성, 나머지 학습은 계속 (일반 경로로 폴백)
+      delete (patch as { brain?: unknown }).brain
+      await admin.from('aj_play_policies').update(patch as never).eq('id', row.id)
+    } else {
+      return Response.json({ ok: true, brain: activeGenome(brain), evolved })
+    }
   }
   const cur = eps.filter(e => e.v === row!.version)
   let changed: { policy: Policy; note: string } | null = null

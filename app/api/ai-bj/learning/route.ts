@@ -7,9 +7,9 @@ export async function GET() {
   const { data: { user } } = await (await createClient()).auth.getUser()
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 })
   const admin = createAdminClient()
-  const { data, error } = await admin.from('aj_play_policies')
-    .select('game_id,version,rules,params,brain,best_score,best_score_at,auto_learn,auto_count,template_skill,last_skill_at,episodes,demos,updated_at,games(title,genre,thumbnail_url,studio_project_id)')
-    .eq('user_id', user.id).order('updated_at', { ascending: false }).limit(100)
+  const sel = (cols: string) => admin.from('aj_play_policies').select(cols).eq('user_id', user.id).order('updated_at', { ascending: false }).limit(100)
+  let { data, error } = await sel('game_id,version,rules,params,brain,best_score,best_score_at,auto_learn,auto_count,template_skill,last_skill_at,episodes,demos,updated_at,games(title,genre,thumbnail_url,studio_project_id)')
+  if (error && /brain|column|schema cache/i.test(error.message)) ({ data, error } = await sel('game_id,version,rules,params,best_score,best_score_at,auto_learn,auto_count,template_skill,last_skill_at,episodes,demos,updated_at,games(title,genre,thumbnail_url,studio_project_id)'))
   if (error) return Response.json({ error: error.message, missing: /does not exist|schema cache/i.test(error.message) }, { status: 500 })
   const rows = (data ?? []) as unknown as { game_id: string; template_skill: number | null; last_skill_at: string | null; episodes: unknown[]; games: { genre: string | null; studio_project_id: string | null } | null }[]
   const SKILL_INTERVAL_MS = 3600_000
