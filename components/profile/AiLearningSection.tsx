@@ -55,18 +55,18 @@ export default function AiLearningSection() {
 
   return (
     <div className="space-y-4">
-      {/* 헤더 — 타이틀 + 리워드 뱃지 + 자동학습 */}
-      <div className="rounded-2xl bg-[#0f1420] text-white p-4 md:p-5 relative overflow-hidden">
-        <div aria-hidden className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+      {/* 헤더 — 리워드 뱃지 + 자동학습 (밝은 톤, 프로필과 통일) */}
+      <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4 md:p-5 relative overflow-hidden">
+        <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(140% 100% at 100% 0%, ${TIER_COLORS[t.tier]}14, transparent 55%)` }} />
         <div className="relative flex items-center gap-4 flex-wrap">
           <TierBadge tier={t.tier} size={54} />
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold tracking-[0.25em] text-white/50 uppercase">Neuro-Evolution · Reward {t.tier + 1}/20</p>
-            <p className="text-[18px] font-extrabold leading-tight">{TIERS[t.tier]} <span className="text-[12px] font-semibold text-white/50">· 누적 {totalXp} XP · 학습 게임 {rows.length}</span></p>
-            {!t.maxed && <div className="mt-1.5 h-1.5 max-w-[320px] rounded-full bg-white/10 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.round(t.into / t.need * 100)}%`, background: TIER_COLORS[t.tier] }} /></div>}
+            <p className="text-[10px] font-bold tracking-[0.25em] text-[#9aa1ad] uppercase">Neuro-Evolution · Reward {t.tier + 1}/20</p>
+            <p className="text-[18px] font-extrabold leading-tight text-[#241f17]">{TIERS[t.tier]} <span className="text-[12px] font-semibold text-[#9d9280]">· 누적 {totalXp} XP · 학습 게임 {rows.length}</span></p>
+            {!t.maxed && <div className="mt-1.5 h-1.5 max-w-[320px] rounded-full bg-[#f1ece2] overflow-hidden"><div className="h-full rounded-full" style={{ width: `${Math.round(t.into / t.need * 100)}%`, background: TIER_COLORS[t.tier] }} /></div>}
           </div>
-          <label className="flex items-center gap-2 text-[12px] text-white/80 cursor-pointer shrink-0">
-            <input type="checkbox" checked={allAuto} onChange={e => toggleAuto(e.target.checked)} className="accent-[#22d3ee]" />자동 학습
+          <label className="flex items-center gap-2 text-[12.5px] font-semibold text-[#4a4337] cursor-pointer shrink-0">
+            <input type="checkbox" checked={allAuto} onChange={e => toggleAuto(e.target.checked)} className="accent-[#2563eb]" />자동 학습
           </label>
         </div>
       </div>
@@ -140,7 +140,7 @@ function GameDashboard({ row, logs, busy, onLearnDemo }: { row: Row; logs: Learn
       </div>
 
       {/* ── 신경망 — 독립 섹션 ── */}
-      <div className="rounded-3xl bg-gradient-to-b from-[#0a1120] to-[#070b14] text-white relative overflow-hidden ring-1 ring-white/5">
+      <div className="rounded-3xl bg-gradient-to-b from-[#141a2e] to-[#0b1020] text-white relative overflow-hidden ring-1 ring-[#2563eb]/20 shadow-[0_20px_60px_-28px_rgba(37,99,235,0.5)]">
         <div aria-hidden className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-16 left-1/4 w-[440px] h-[440px] rounded-full bg-[radial-gradient(closest-side,rgba(56,189,248,0.18),transparent)] blur-2xl" />
           <div className="absolute -bottom-24 right-1/4 w-[420px] h-[420px] rounded-full bg-[radial-gradient(closest-side,rgba(244,114,182,0.14),transparent)] blur-2xl" />
