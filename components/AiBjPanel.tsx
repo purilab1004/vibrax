@@ -449,7 +449,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) sendMessage(input) }}
               placeholder={joined ? "AI에게 가르치기… (위 버튼을 누르거나 직접 말해요)" : "AJ에게 말걸기..."}
               className="flex-1 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none disabled:opacity-50"
             />
@@ -531,7 +531,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
           </div>
           <div className="absolute left-2 right-[150px] bottom-2.5 pointer-events-auto">
             <div className="flex items-center gap-1.5 bg-black/55 backdrop-blur-md rounded-full pl-3.5 pr-1 py-1 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
-              <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
+              <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) sendMessage(input) }}
                 placeholder={joined ? 'AI에게 가르치기…' : 'AJ에게 말걸기...'} className="flex-1 min-w-0 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none" />
               {renderMic(32)}
               <button onClick={() => sendMessage(input)} disabled={!input.trim()} aria-label="보내기" className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#06b6d4] text-white flex items-center justify-center active:scale-95 transition disabled:opacity-40 shrink-0"><svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button>
