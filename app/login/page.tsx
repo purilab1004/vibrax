@@ -1,5 +1,6 @@
 'use client'
 
+import { isNativeAppUA } from '@/lib/isNativeApp'
 import { useState, useTransition, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -33,8 +34,11 @@ function LoginForm() {
   }
   const google = async () => {
     setOauthPending(true); setError(null)
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirect)}`, queryParams: { prompt: 'select_account' } } })
-    if (error) { setError(error.message); setOauthPending(false) }
+    const inApp = isNativeAppUA()
+    const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: inApp ? `vibrexcup://auth?next=${encodeURIComponent(redirect)}` : `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirect)}`, queryParams: { prompt: 'select_account' }, skipBrowserRedirect: inApp } })
+    if (error) { setError(error.message); setOauthPending(false); return }
+    // 앱(WebView): OAuth URL 을 네이티브에 넘겨 시스템 브라우저로 로그인 → 앱이 세션을 받아 다시 콜백을 로드한다
+    if (inApp && data?.url) { const w = window as unknown as { ReactNativeWebView?: { postMessage: (m: string) => void } }; w.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'oauth', url: data.url })) }
   }
 
   return (

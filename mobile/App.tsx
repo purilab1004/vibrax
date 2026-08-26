@@ -33,11 +33,28 @@ export default function App() {
   // 구글 OAuth·외부 링크는 시스템 브라우저(ASWebAuthenticationSession/Custom Tabs)로 — 웹뷰 내 OAuth 는 구글이 차단
   const onShouldStart = useCallback((req: WebViewNavigation) => {
     const url = req.url
+    // 구글/OAuth 등 외부는 시스템 브라우저로 (웹뷰 내 OAuth 는 구글이 차단)
     if (url.startsWith('http') && !isInternal(url)) {
       WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url))
       return false
     }
     return true
+  }, [])
+
+  // 웹에서 온 OAuth 요청 처리 — 시스템 인증 세션으로 로그인 후 앱으로 복귀, 세션 코드를 웹뷰 콜백에 전달
+  const onMessage = useCallback(async (e: { nativeEvent: { data: string } }) => {
+    try {
+      const msg = JSON.parse(e.nativeEvent.data) as { type?: string; url?: string }
+      if (msg.type === 'oauth' && msg.url) {
+        const result = await WebBrowser.openAuthSessionAsync(msg.url, 'vibrexcup://auth')
+        if (result.type === 'success' && result.url) {
+          const ret = new URL(result.url)
+          const code = ret.searchParams.get('code')
+          const next = ret.searchParams.get('next') || '/'
+          if (code) webRef.current?.injectJavaScript(`location.replace(${JSON.stringify(`${SITE}/auth/callback?code=${encodeURIComponent(code)}&next=${encodeURIComponent(next)}`)});true;`)
+        }
+      }
+    } catch { /* ignore */ }
   }, [])
 
   return (
@@ -52,6 +69,7 @@ export default function App() {
             onLoadEnd={() => { setLoading(false); SplashScreen.hideAsync().catch(() => {}) }}
             onNavigationStateChange={(s) => setCanGoBack(s.canGoBack)}
             onShouldStartLoadWithRequest={onShouldStart}
+            onMessage={onMessage}
             allowsInlineMediaPlayback
             mediaPlaybackRequiresUserAction={false}
             domStorageEnabled
@@ -60,8 +78,7 @@ export default function App() {
             pullToRefreshEnabled
             originWhitelist={['https://*', 'vibrexcup://*']}
             setSupportMultipleWindows={false}
-            // 카메라·마이크(방송) 권한 자동 허용 (앱 권한은 시스템이 별도 요청)
-            onPermissionRequest={(e: any) => e?.grant?.(e?.resources)}
+            mediaCapturePermissionGrantType="grant"
             userAgent={`VibrexcupApp/${Constants.expoConfig?.version} (${Platform.OS})`}
           />
           {loading && (
