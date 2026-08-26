@@ -6,6 +6,7 @@ import NavBar from '@/components/NavBar'
 import MobileNav from '@/components/MobileNav'
 import SiteFooter from '@/components/SiteFooter'
 import Telemetry from '@/components/Telemetry'
+import PwaRegister from '@/components/PwaRegister'
 import BlockedGate from '@/components/BlockedGate'
 import Sidebar, { type SidebarChannel } from '@/components/Sidebar'
 import { Suspense } from 'react'
@@ -107,6 +108,12 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true },
   },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Vibrexcup' },
+  icons: { apple: '/apple-touch-icon.png' },
+}
+
+export const viewport = {
+  themeColor: '#2563eb',
 }
 
 async function detectLang(): Promise<Lang> {
@@ -223,6 +230,7 @@ export default async function RootLayout({
           <main className="flex-1 md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">{blocked !== null ? <BlockedGate email={blocked} /> : children}</main>
           <SiteFooter />
           <Telemetry />
+          <PwaRegister />
           <MobileNav />
         </LangProvider>
       </body>
