@@ -96,6 +96,17 @@ export default function StudioChat({
                 </button>
               ))}
             </div>
+            {/* AI가 잘 배우는 게임 만드는 법 — 초등학생도 이해할 수준 */}
+            <div className="mt-4 rounded-2xl border border-[#2563eb]/15 bg-gradient-to-b from-[#eff5ff] to-white px-4 py-3.5 text-left">
+              <p className="text-[12.5px] font-bold text-[#2563eb] flex items-center gap-1.5">🤖 AI가 대신 플레이하고 <b className="text-[#241f17]">점점 잘해지는</b> 게임 만들기</p>
+              <p className="text-[11.5px] text-[#6b6152] mt-1.5 leading-relaxed">아래 4가지만 이야기하듯 적어주면, AI가 우리 게임을 배워서 대신 플레이해요. (어려운 말 필요 없어요!)</p>
+              <ul className="mt-2 space-y-1 text-[12px] text-[#4a4337]">
+                <li>🎯 <b>목표</b> — 어떻게 하면 이겨요? <span className="text-[#9d9280]">예: 벽돌 다 깨기</span></li>
+                <li>🎮 <b>움직임</b> — 무슨 키로 뭘 해요? <span className="text-[#9d9280]">예: ←→ 이동, 스페이스 점프</span></li>
+                <li>⚠️ <b>피할 것</b> — 뭘 만나면 죽어요? <span className="text-[#9d9280]">예: 가시, 적, 낭떠러지</span></li>
+                <li>⭐ <b>모을 것</b> — 뭘 먹으면 좋아요? <span className="text-[#9d9280]">예: 코인, 아이템</span></li>
+              </ul>
+            </div>
           </div>
         )}
         {messages.map((m, i) => (
