@@ -52,3 +52,15 @@ export function hardenHtml(html: string): string {
   if (j >= 0) { const end = html.indexOf('>', j) + 1; return html.slice(0, end) + '<head>' + LS_SHIM + '</head>' + html.slice(end) }
   return LS_SHIM + html
 }
+
+// 사운드 주입 — 스튜디오에서 첨부한 오디오를 게임에서 재생 가능하게 window.VIBREX_SOUNDS + playSound() 로 심는다.
+// LLM 은 오디오를 '듣지' 못하므로 파일 이름·역할만 프롬프트로 알려주고, 실제 데이터는 여기서 HTML 에 주입한다.
+export function injectSounds(html: string, sounds: { name: string; media_type: string; data: string }[]): string {
+  if (!sounds?.length) return html
+  const map: Record<string, string> = {}
+  for (const s of sounds) map[s.name] = `data:${s.media_type};base64,${s.data}`
+  const shim = `<script>window.VIBREX_SOUNDS=${JSON.stringify(map)};window.playSound=function(n,o){try{var s=window.VIBREX_SOUNDS&&window.VIBREX_SOUNDS[n];if(!s)return null;var a=new Audio(s);o=o||{};if(o.loop)a.loop=true;if(o.volume!=null)a.volume=o.volume;var p=a.play();if(p&&p.catch)p.catch(function(){});return a}catch(e){return null}};</script>`
+  const i = html.search(/<head[^>]*>/i)
+  if (i >= 0) { const end = html.indexOf('>', i) + 1; return html.slice(0, end) + shim + html.slice(end) }
+  return shim + html
+}

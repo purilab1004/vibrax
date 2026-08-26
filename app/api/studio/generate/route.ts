@@ -13,7 +13,7 @@ import { rankTemplates } from '@/lib/studio/similarity'
 import { loadMl, logMapping, learnKeyword } from '@/lib/studio/mlpilot'
 import { aiJudgeTemplate } from '@/lib/studio/ai-judge'
 import { loadAutomation, logAutomation } from '@/lib/automation'
-import { hardenHtml } from '@/lib/studio/harden'
+import { hardenHtml, injectSounds } from '@/lib/studio/harden'
 import { personalizeTemplate } from '@/lib/studio/personalize'
 import { logUsage } from '@/lib/llm/usage'
 import { GENERATION_MAX_TOKENS } from '@/lib/llm/pricing'
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   } catch {
     return new Response('bad request', { status: 400 })
   }
-  const { projectId, prompt, images: rawImages } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown }
+  const { projectId, prompt, images: rawImages, sounds: rawSounds } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown; sounds?: unknown }
   // 첨부 이미지 — 최대 3장, jpeg/png/webp/gif, 각 5MB(base64 ~7M자) 이내
   const ALLOWED_MEDIA = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
   const images = (Array.isArray(rawImages) ? rawImages : [])
@@ -39,6 +39,15 @@ export async function POST(req: Request) {
       !!i && typeof i.media_type === 'string' && ALLOWED_MEDIA.includes(i.media_type) &&
       typeof i.data === 'string' && i.data.length > 0 && i.data.length < 7_000_000)
     .slice(0, 3)
+  // 첨부 사운드 — 최대 2개, mp3/wav/ogg/m4a, 각 2MB(base64 ~2.7M자). LLM 엔 이름·역할만 전달하고 데이터는 게임 HTML 에 주입.
+  const ALLOWED_AUDIO = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/mp4', 'audio/aac', 'audio/webm']
+  const sounds = (Array.isArray(rawSounds) ? rawSounds : [])
+    .filter((x): x is { name: string; media_type: string; data: string; role?: string } =>
+      !!x && typeof x.name === 'string' && typeof x.media_type === 'string' && ALLOWED_AUDIO.includes(x.media_type) &&
+      typeof x.data === 'string' && x.data.length > 0 && x.data.length < 2_800_000)
+    .slice(0, 2)
+    .map(x => ({ name: String(x.name).slice(0, 60), media_type: x.media_type, data: x.data, role: typeof (x as { role?: string }).role === 'string' ? String((x as { role?: string }).role).slice(0, 20) : '' }))
+  const hasAttach = images.length > 0 || sounds.length > 0
 
   if (typeof projectId !== 'string' || typeof prompt !== 'string' || !projectId || !prompt.trim()) {
     return new Response('bad request', { status: 400 })
@@ -123,12 +132,12 @@ export async function POST(req: Request) {
   // 정적 템플릿 + 관리자 승인 DB 템플릿(처음 만들어진 게임들) 모두 매칭 대상
   const staticList = await effectiveStaticTemplates()
   const auto = await loadAutomation()
-  const dbList = !latest && images.length === 0 ? await loadDbTemplates() : []
-  let tmatch = !latest && images.length === 0 ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(dbList, prompt)) : null
+  const dbList = !latest && !hasAttach ? await loadDbTemplates() : []
+  let tmatch = !latest && !hasAttach ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(dbList, prompt)) : null
   let mapMethod: 'keyword' | 'similarity' | 'ml' | 'none' = tmatch ? 'keyword' : 'none'
   let mapConf: number | null = tmatch ? 1 : null
   // MLPilot: 키워드로 못 잡으면 유사도 매퍼(문자 n-gram, LLM 없음)로 가장 가까운 템플릿을 고른다
-  if (!tmatch && !latest && images.length === 0) {
+  if (!tmatch && !latest && !hasAttach) {
     const ml = await loadMl()
     ml.aiJudge = ml.aiJudge && auto['mlpilot.aiJudge']; ml.autoLearn = ml.autoLearn && auto['mlpilot.autoLearn']
     if (ml.enabled) {
@@ -156,6 +165,11 @@ export async function POST(req: Request) {
   void logMapping({ userId: user.id, projectId, prompt, templateSlug: tmatch?.template.slug ?? null, method: mapMethod, confidence: mapConf, usedLlm: !(tmatch && (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword))) })
   let baseHtml: string | null = latest?.html ?? null
   let effectivePrompt = prompt
+  // 첨부 사운드 — 이름·역할만 프롬프트로 (데이터는 HTML 주입). LLM 이 적절한 상황에 재생 코드를 넣게 한다.
+  if (sounds.length > 0) {
+    const list = sounds.map(x => `"${x.name}"${x.role ? `(${x.role})` : ''}`).join(', ')
+    effectivePrompt += `\n\n[첨부 사운드] 사용자가 오디오를 첨부했다: ${list}. 이 사운드들은 window.VIBREX_SOUNDS['파일이름'] 로 재생 가능하고, window.playSound('파일이름', {loop:true}) 헬퍼도 있다(이미 주입됨, 직접 정의하지 말 것). 역할/이름에 맞는 상황에 재생 코드를 넣어라 — 예: 배경음은 게임 시작 시 window.playSound('${sounds[0].name}', {loop:true, volume:0.5}), 점프/획득/타격/게임오버 효과음은 해당 이벤트에서 window.playSound(...). 첫 사용자 입력(키/탭) 이후에 재생을 시작해 브라우저 자동재생 정책을 지킨다.`
+  }
   let templateNote = ''
   if (tmatch) {
     if (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword)) {
@@ -266,7 +280,7 @@ export async function POST(req: Request) {
         } else {
           const nextVersion = (latest?.version ?? 0) + 1
           const { data: vIns, error: vErr } = await supabase.from('studio_versions').insert([
-            { project_id: projectId, version: nextVersion, html: hardenHtml(parsed.html) },
+            { project_id: projectId, version: nextVersion, html: hardenHtml(injectSounds(parsed.html, sounds)) },
           ] as never).select('id').maybeSingle()
           if (vErr) {
             await refund()
@@ -286,7 +300,7 @@ export async function POST(req: Request) {
                 { project_id: projectId, role: 'assistant', content: parsed.description },
               ] as never)
               if (mErr) console.error('[studio/generate] messages insert failed', mErr)
-              if (nextVersion === 1 && !tmatch && images.length === 0) {
+              if (nextVersion === 1 && !tmatch && !hasAttach) {
                 // 처음 만들어진 게임 → 템플릿 후보로 저장 (관리자 승인 후 재사용 → 다음부턴 LLM 비용 0)
                 void saveTemplateCandidate({ prompt, title: extractTitle(parsed.html), description: parsed.description, html: hardenHtml(parsed.html), projectId, userId: user.id, autoApprove: auto['templates.autoApprove'] })
               }

@@ -17,7 +17,7 @@ export default function StudioChat({
   usage?: { input: number; output: number; credits?: number; balance?: number } | null
   generationCost?: number
   error: string | null
-  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[]) => void
+  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[]) => void
   busy: boolean
   /* 외부(학습 노트 '다음 도전')에서 입력창에 채워 넣을 문장 */
   draft?: string | null
@@ -31,7 +31,21 @@ export default function StudioChat({
   if (draft && draft !== seenDraft) { setSeenDraft(draft); setInput(draft); onDraftConsumed?.() }
   // 첨부 이미지 — 레퍼런스를 보여주면 AI가 보고 만든다 (최대 3장, 각 5MB)
   const [attachments, setAttachments] = useState<{ media_type: string; data: string; previewUrl: string }[]>([])
+  const [sounds, setSounds] = useState<{ name: string; media_type: string; data: string; role: string }[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
+  const soundRef = useRef<HTMLInputElement>(null)
+  const addSounds = (files: FileList | null) => {
+    if (!files) return
+    Array.from(files).slice(0, 2).forEach(file => {
+      if (!file.type.startsWith('audio/')) { alert('오디오 파일만 첨부할 수 있어요 (mp3·wav·ogg).'); return }
+      if (file.size > 2 * 1024 * 1024) { alert('사운드는 2MB 이하만 첨부할 수 있어요.'); return }
+      const nm = file.name.toLowerCase()
+      const role = /bgm|back|music|배경|테마|theme/.test(nm) ? '배경음' : /jump|점프/.test(nm) ? '점프' : /hit|타격|맞|shoot|발사|슛/.test(nm) ? '효과음' : /coin|item|획득|먹/.test(nm) ? '획득' : /over|die|죽|실패/.test(nm) ? '게임오버' : '효과음'
+      const reader = new FileReader()
+      reader.onload = () => { const b64 = (reader.result as string).split(',')[1]; setSounds(prev => prev.length >= 2 ? prev : [...prev, { name: file.name, media_type: file.type, data: b64, role }]) }
+      reader.readAsDataURL(file)
+    })
+  }
 
   const addFiles = (files: FileList | null) => {
     if (!files) return
@@ -77,8 +91,9 @@ export default function StudioChat({
     if (!p || busy) return
     setInput('')
     const imgs = attachments
-    setAttachments([])
-    onSend(p, imgs.length > 0 ? imgs : undefined)
+    const snds = sounds
+    setAttachments([]); setSounds([])
+    onSend(p, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
   }
 
   return (
@@ -230,6 +245,21 @@ export default function StudioChat({
               ))}
             </div>
           )}
+          {/* 첨부 사운드 */}
+          {sounds.length > 0 && (
+            <div className="flex flex-wrap gap-2 px-4 pb-1">
+              {sounds.map((sd, i) => (
+                <div key={i} className="flex items-center gap-1.5 rounded-full bg-[#f1ede4] pl-2.5 pr-1.5 py-1 border border-[#e6dfd0]">
+                  <span className="text-[13px]">🔊</span>
+                  <span className="text-[11.5px] text-[#4a4337] max-w-[120px] truncate">{sd.name}</span>
+                  <select value={sd.role} onChange={e => setSounds(prev => prev.map((x, j) => j === i ? { ...x, role: e.target.value } : x))} className="text-[10.5px] bg-white border border-[#e6dfd0] rounded px-1 py-0.5 text-[#6b6152]">
+                    {['배경음', '점프', '효과음', '획득', '게임오버'].map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                  <button type="button" onClick={() => setSounds(prev => prev.filter((_, j) => j !== i))} className="w-4 h-4 rounded-full bg-[#241f17] text-white text-[9px] flex items-center justify-center" aria-label="사운드 제거">✕</button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-center justify-between px-3 pb-2.5">
             <div className="flex items-center gap-2">
               {/* 이미지 첨부 */}
@@ -244,6 +274,13 @@ export default function StudioChat({
                 <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.5" /><path d="m21 15-4.5-4.5L9 18" />
                 </svg>
+              </button>
+              {/* 사운드 첨부 */}
+              <input ref={soundRef} type="file" accept="audio/*" multiple className="hidden" onChange={e => { addSounds(e.target.files); e.target.value = '' }} />
+              <button type="button" onClick={() => soundRef.current?.click()} disabled={sounds.length >= 2}
+                title="사운드 첨부 — 배경음·효과음을 넣으면 AI가 게임에 재생 코드를 넣어줘요 (mp3·wav, 2MB)"
+                className="w-8 h-8 rounded-full border border-[#ddd3bf] text-[#6b6152] hover:border-[#7c3aed] hover:text-[#7c3aed] flex items-center justify-center transition-colors disabled:opacity-40">
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z" /><path d="M16 9a5 5 0 0 1 0 6" /></svg>
               </button>
               <p className="text-[11px] text-[#9d9280]">{s.costNote}</p>
             </div>
