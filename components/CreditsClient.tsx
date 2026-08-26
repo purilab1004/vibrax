@@ -6,6 +6,7 @@ import { initializePaddle, type Paddle } from '@paddle/paddle-js'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import { CREDIT_PACKS, packPriceId } from '@/lib/studio/constants'
+import { useIsNativeApp } from '@/lib/isNativeApp'
 import { PromptCreditIcon } from '@/components/CurrencyBadge'
 
 // Paddle 미설정(키/가격 ID 없음)이면 구매 버튼 대신 준비 중 안내를 보여준다
@@ -25,6 +26,7 @@ export default function CreditsClient({ countryCode }: { countryCode: string | n
   const supabase = createClient()
   const { T, lang } = useLang()
   const c = T.credits
+  const isApp = useIsNativeApp()  // 앱(스토어) 안에서는 정책상 코인 구매를 숨긴다
 
   const refreshBalance = async () => {
     const { data } = await supabase.rpc('credit_balance' as never)
@@ -151,6 +153,13 @@ export default function CreditsClient({ countryCode }: { countryCode: string | n
         {status === 'done' && <p className="mb-6 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 text-[13px] px-4 py-3">{c.done}</p>}
         {status === 'error' && <p className="mb-6 rounded-xl border border-rose-300 bg-rose-50 text-rose-700 text-[13px] px-4 py-3">결제창을 여는 중 문제가 생겼어요. 잠시 후 다시 시도하거나 dev@puritechlab.com 으로 알려주세요.</p>}
 
+        {isApp ? (
+          <div className="rounded-2xl border border-[#2563eb]/20 bg-[#2563eb]/5 px-5 py-6 text-center">
+            <p className="text-[15px] font-bold text-[#241f17]">프롬코인 충전은 웹에서 할 수 있어요</p>
+            <p className="text-[13px] text-[#6b6152] mt-1.5 leading-relaxed">앱에서는 충전이 지원되지 않아요. 브라우저에서 <b className="text-[#2563eb]">vibrexcup.com/credits</b> 로 접속해 충전하면, 앱에서도 바로 사용할 수 있어요.</p>
+          </div>
+        ) : (
+        <>
         {/* 팩 카드 */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {CREDIT_PACKS.map((p, i) => {
@@ -186,6 +195,8 @@ export default function CreditsClient({ countryCode }: { countryCode: string | n
           <span className="inline-flex items-center gap-1.5"><svg viewBox="0 0 24 24" className="w-4 h-4 text-[#2563eb]" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M4 12a8 8 0 0 1 14-5M20 12a8 8 0 0 1-14 5" /><path d="M18 3v4h-4M6 21v-4h4" /></svg>14일 내 미사용 시 전액 환불</span>
           <a href="/refund" className="underline underline-offset-2 hover:text-[#2563eb]">환불 정책</a>
         </div>
+        </>
+        )}
 
         {/* 결제 내역 */}
         <section className="mt-12">
