@@ -12,8 +12,11 @@ const VARIANTS: Record<string, { replace: string[]; titles: Variant[] }> = {
   runner: { replace: ['🦖 무한 러너', '공룡 무한 러너'], titles: [{ title: '공룡 무한 러너' }, { title: '다이노 대시' }, { title: '사막 질주' }, { title: '점프 렉스' }, { title: '러너 익스프레스' }, { title: '카툰 다이노 런' }, { title: '무한 질주 챔피언' }] },
   shooter: { replace: ['스타 디펜더'], titles: [{ title: '스타 디펜더' }, { title: '갤럭시 가디언' }, { title: '네뷸라 스트라이크' }, { title: '코스모 블래스터' }, { title: '스타쉽 서바이버' }, { title: '오리온 디펜스' }, { title: '아스트로 파이터' }] },
   pong: { replace: ['레트로 퐁'], titles: [{ title: '레트로 패들' }, { title: '네온 패들' }, { title: '핑퐁 듀얼' }, { title: '레이저 패들' }, { title: '아케이드 랠리' }, { title: '스피드 랠리' }, { title: '픽셀 라켓' }] },
+  stock: { replace: ['떡상 주식왕'], titles: [{ title: '떡상 주식왕' }, { title: '투더문 트레이더' }, { title: '불장 서퍼' }, { title: '차트 라이더' }, { title: '개미의 역습' }, { title: '황소장 질주' }, { title: '스톡 로켓' }] },
 }
 const HUES = [0, 35, 70, 110, 150, 195, 240, 285, 320]
+// 빨강=하락·초록=상승처럼 색이 게임 의미를 갖는 템플릿은 hue-rotate 를 걸지 않는다
+const NO_HUE = new Set(['stock'])
 
 export function personalizeTemplate(slug: string, html: string, seed: string): { html: string; title: string } {
   const v = VARIANTS[slug]
@@ -21,7 +24,7 @@ export function personalizeTemplate(slug: string, html: string, seed: string): {
   let out = html
   if (!v) {
     // DB 템플릿(변형 목록 없음): 색조만 살짝 다르게
-    const hue0 = HUES[(h >> 3) % HUES.length]
+    const hue0 = NO_HUE.has(slug) ? 0 : HUES[(h >> 3) % HUES.length]
     if (hue0 !== 0) { const css0 = `<style id="vx-theme">html{filter:hue-rotate(${hue0}deg) saturate(1.05)}</style>`; out = out.includes('</head>') ? out.replace('</head>', `${css0}</head>`) : css0 + out }
     const t = out.match(/<title>([^<]*)<\/title>/i)?.[1] ?? ''
     return { html: out, title: t }
@@ -35,7 +38,7 @@ export function personalizeTemplate(slug: string, html: string, seed: string): {
   }
   out = out.replace(/<title>[^<]*<\/title>/i, `<title>${pick.title}</title>`)
   // 색조 변형 — 첫 번째 변형(원본)은 그대로, 나머지는 hue-rotate 로 팔레트 전체를 돌린다
-  const hue = HUES[(h >> 3) % HUES.length]
+  const hue = NO_HUE.has(slug) ? 0 : HUES[(h >> 3) % HUES.length]
   if (hue !== 0) {
     const css = `<style id="vx-theme">html{filter:hue-rotate(${hue}deg) saturate(1.05)}</style>`
     out = out.includes('</head>') ? out.replace('</head>', `${css}</head>`) : css + out

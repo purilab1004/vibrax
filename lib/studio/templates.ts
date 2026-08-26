@@ -9,6 +9,7 @@ import flappy from './templates/flappy.json'
 import runner from './templates/runner.json'
 import shooter from './templates/shooter.json'
 import pong from './templates/pong.json'
+import stock from './templates/stock.json'
 import { matchTemplateIn } from './template-match'
 
 export interface GameTemplate {
@@ -20,7 +21,7 @@ export interface GameTemplate {
   html: string
 }
 
-export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, shooter, pong] as GameTemplate[]
+export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, shooter, pong, stock] as GameTemplate[]
 
 export { templateOnly, extrasOf } from './template-match'
 export function matchTemplate(prompt: string): { template: GameTemplate; keyword: string } | null {
