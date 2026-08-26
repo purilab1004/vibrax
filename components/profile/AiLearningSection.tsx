@@ -158,7 +158,7 @@ function GameDashboard({ row, logs, busy, onLearnDemo }: { row: Row; logs: Learn
                 <div key={l} className="text-center px-3 py-1.5 rounded-xl bg-white/5 border border-white/10"><p className="text-[15px] font-extrabold leading-none tabular-nums">{v}</p><p className="text-[9px] text-white/45 mt-1 uppercase tracking-wide">{l}</p></div>
               ))}
             </div>
-          ) : <span className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/50">학습 전 · 미리보기</span>}
+          ) : <span className="text-[11px] px-2.5 py-1 rounded-full bg-amber-400/15 border border-amber-300/30 text-amber-200 font-semibold">예시 · 실제 신경망 아님</span>}
         </div>
         <BrainNetwork3D b={row.brainViz ?? null} />
         {row.brainViz ? (

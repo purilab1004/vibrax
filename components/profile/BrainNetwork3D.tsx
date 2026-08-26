@@ -128,6 +128,11 @@ export default function BrainNetwork3D({ b, height = 340 }: { b: Brain3D | null;
         <span className="text-[10px] text-white/40">드래그 회전 · 스크롤 확대</span>
         <button onClick={() => ref.current?.dispatchEvent(new CustomEvent('vbx-brain-reset'))} className="pointer-events-auto text-[10.5px] font-semibold text-white/70 bg-white/10 border border-white/15 rounded-full px-2.5 py-1 hover:bg-white/20">리셋</button>
       </div>
+      {!b && (
+        <div className="absolute top-2 left-3 flex items-center gap-1.5 pointer-events-none">
+          <span className="text-[10px] font-extrabold tracking-wide text-amber-300 bg-amber-400/15 border border-amber-300/30 rounded-full px-2 py-0.5">예시 (실제 아님)</span>
+        </div>
+      )}
     </div>
   )
 }
