@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Vibrexcup",
+    "slug": "vibrexcup",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "vibrexcup",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#fcfaf5"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.puritechlab.vibrexcup",
+      "infoPlist": {
+        "NSCameraUsageDescription": "게임 방송을 위해 카메라를 사용합니다.",
+        "NSMicrophoneUsageDescription": "게임 방송을 위해 마이크를 사용합니다.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.puritechlab.vibrexcup",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2563eb"
+      },
+      "permissions": ["CAMERA", "RECORD_AUDIO", "INTERNET"]
+    },
+    "web": { "favicon": "./assets/favicon.png" },
+    "plugins": ["expo-web-browser"],
+    "extra": {
+      "siteUrl": "https://vibrexcup.com",
+      "eas": { "projectId": "" }
+    }
+  }
+}
