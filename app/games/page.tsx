@@ -20,7 +20,13 @@ async function GameGrid({ genre, q, creator }: { genre?: string; q?: string; cre
   const games = await selectGamesWithCreator<GameWithCreator[]>(supabase, query => {
     let x = query.order('created_at', { ascending: false })
     if (validGenre) x = x.eq('genre', validGenre)
-    if (term) x = x.ilike('title', `%${term}%`)
+    if (term) {
+      // 제목만이 아니라 주제 문구(티저)·설명까지, 키워드 단위로 매칭 (예: "떨어지는 블록", "멈추면 패배")
+      const cols = ['title', 'teaser', 'teaser_en', 'description']
+      const tokens = term.split(/[\s,]+/).map(t => t.replace(/[%*(),.]/g, '').trim()).filter(t => t.length >= 1).slice(0, 6)
+      const orStr = (tokens.length ? tokens : [term.replace(/[%*(),.]/g, '')]).flatMap(tok => cols.map(c => `${c}.ilike.*${tok}*`)).join(',')
+      if (orStr) x = x.or(orStr)
+    }
     if (creator) x = x.eq('user_id', creator)
     return x
   })
