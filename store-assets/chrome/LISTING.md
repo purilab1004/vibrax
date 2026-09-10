@@ -1,13 +1,13 @@
 # Chrome 웹스토어 등록 문안 — Vibrexcup AJ 확장 프로그램
 
-업로드 파일: `store-assets/chrome/vibrexcup-aj-chrome-store-1.1.0.zip` (manifest.json 이 zip 루트)
+업로드 파일: `store-assets/chrome/vibrexcup-aj-chrome-store-1.2.0.zip` (manifest.json 이 zip 루트)
 개발자 콘솔: https://chrome.google.com/webstore/devconsole (개발자 등록 1회 $5)
 
 ## 스토어 등록 정보
 
 | 항목 | 값 |
 |---|---|
-| 이름 | Vibrexcup AJ — 내 AI 스트리머 캐릭터 |
+| 이름 | Vibrexcup AJ — 내 AI 스트리머 · 미니게임 · 학습 |
 | 요약(132자 이내) | 내 Vibrexcup AJ 캐릭터가 웹페이지 위에 나타나 돌아다니고, 클릭하면 대화해요. 지금 보는 페이지를 읽고 반응합니다. 무료. |
 | 카테고리 | 생산성 (Productivity) 또는 소셜 및 커뮤니케이션 |
 | 언어 | 한국어(기본), 영어 |
@@ -39,7 +39,7 @@ Get started: sign up at vibrexcup.com → My Page → AJ API → "Issue Chrome e
 
 ## 단일 목적(Single purpose)
 
-Vibrexcup 회원의 개인 AI 스트리머(AJ) 캐릭터를 웹페이지 위에 띄워 함께 있게 하고(걷기·반응·대화), 사용자가 원할 때 현재 탭의 내용을 대화 컨텍스트로 전달한다.
+Vibrexcup 회원의 개인 AI 스트리머(AJ)를 브라우저 동반자로 제공한다: 사이드 패널에서 AJ 와 대화하고, Vibrexcup 미니게임을 하고, 현재 페이지로 학습(설명·퀴즈)하며, 원하면 AJ 캐릭터를 페이지 위에 띄운다. 사용자가 켠 경우에만 현재 탭의 내용을 대화 컨텍스트로 전달한다.
 
 ## 권한 사유(Permissions justification)
 
@@ -48,7 +48,8 @@ Vibrexcup 회원의 개인 AI 스트리머(AJ) 캐릭터를 웹페이지 위에 
 | `storage` | 사용자가 붙여넣은 API 키와 최근 대화 이력(최대 20턴), 체크박스 설정을 저장 |
 | `activeTab` | 사용자가 팝업을 열었을 때만 현재 탭의 제목·URL을 읽어 대화 컨텍스트로 전달 |
 | `scripting` | 사용자가 "이 페이지에 AJ 소환"을 눌렀을 때 현재 탭에 캐릭터 스크립트(companion.js)를 심고, 체크박스가 켜져 있으면 본문 텍스트 최대 1,500자를 읽음. 페이지 DOM 은 캐릭터 컨테이너(Shadow DOM) 1개만 추가 |
-| host `https://vibrexcup.com/*` | AJ API 호출(프로필·대화) 대상 도메인 — 백그라운드에서만 호출 |
+| `sidePanel` | 브라우저 옆 사이드 패널에 대화·미니게임·학습 화면을 표시 |
+| host `https://vibrexcup.com/*` | AJ API 호출(프로필·대화)과 미니게임 iframe(vibrexcup.com/play/…) 로드 대상 도메인 |
 | optional `<all_urls>` | 사용자가 팝업에서 "모든 사이트에서 자동 등장"을 켤 때만 요청(선택 권한). 허용 시 캐릭터가 페이지마다 자동 등장 |
 
 원격 코드 실행 없음. 콘텐츠 스크립트 상시 주입 없음(사용자 동작 시 1회 실행).

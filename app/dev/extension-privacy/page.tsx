@@ -26,10 +26,16 @@ const SECTIONS: [string, string[]][] = [
     '발화 품질 개선을 위해 AJ의 답변 문장과 상황 라벨이 샘플링되어 저장될 수 있습니다(개인 식별 정보·페이지 내용은 포함하지 않습니다).',
     '호출 횟수는 키별 일일 한도 관리를 위해 집계됩니다.',
   ]],
+  ['사이드 패널·미니게임·학습', [
+    '사이드 패널(대화·게임·학습)은 확장 내부 화면이며, 게임 탭은 vibrexcup.com 의 게임 페이지(/play/…)를 iframe 으로 표시합니다. 게임 플레이 정보(점수 등)는 게임 iframe 이 패널에 보내는 이벤트로만 사용되고 서버에 별도 저장하지 않습니다.',
+    '학습 탭의 "쉽게 설명해줘"·"퀴즈 내줘"는 사용자가 버튼을 눌렀을 때만 현재 탭의 제목·URL·본문 최대 1,500자를 읽어 대화 요청에 포함합니다.',
+  ]],
   ['권한 사용 이유', [
     'storage: 위 "저장하는 데이터"를 위해 사용합니다.',
     'activeTab · scripting: 사용자가 팝업을 열고 메시지를 보낼 때 현재 탭의 제목·URL·본문 일부를 읽기 위해서만 사용합니다. 페이지를 수정하거나 상시 스크립트를 주입하지 않습니다.',
-    'vibrexcup.com 호스트 권한: AJ API 호출 대상입니다.',
+    'sidePanel: 브라우저 옆 사이드 패널 화면을 표시합니다.',
+    'vibrexcup.com 호스트 권한: AJ API 호출과 미니게임 iframe 로드 대상입니다.',
+    '모든 사이트 접근(선택 권한): "모든 사이트에서 자동 등장" 또는 학습 탭에서 본문 읽기를 켤 때만 사용자가 직접 허용합니다. 허용하지 않아도 대화·게임은 동작합니다.',
   ]],
   ['사용자의 선택', [
     '페이지 공유는 언제든 체크박스로 끌 수 있습니다.',
@@ -44,7 +50,7 @@ export default function ExtensionPrivacyPage() {
     <div className="max-w-3xl mx-auto px-6 py-12">
       <p className="font-pixel text-[10px] tracking-[0.3em] text-[#2563eb]">CHROME EXTENSION · PRIVACY</p>
       <h1 className="mt-2 text-[28px] md:text-[34px] font-extrabold tracking-tight text-[#241f17]">Vibrexcup AJ 확장 프로그램 개인정보처리방침</h1>
-      <p className="mt-2 text-[12.5px] text-[#857a68]">시행일 2026-09-10 · 확장 버전 1.0.0</p>
+      <p className="mt-2 text-[12.5px] text-[#857a68]">시행일 2026-09-10 · 확장 버전 1.2.0</p>
       <div className="mt-8 space-y-7">
         {SECTIONS.map(([h, ps]) => (
           <section key={h}>

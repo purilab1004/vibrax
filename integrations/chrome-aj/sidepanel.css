@@ -1,0 +1,30 @@
+body.panel{width:auto;min-width:320px;max-width:none;height:100vh;min-height:0;max-height:none}
+.tabs{display:flex;gap:4px;padding:8px 10px 0;background:#fff;border-bottom:1px solid var(--rule)}
+.tab{flex:1;height:34px;border:0;border-bottom:2px solid transparent;background:transparent;font:inherit;font-size:12.5px;font-weight:700;color:var(--mute);cursor:pointer;border-radius:8px 8px 0 0}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent);background:#eef3ff}
+.view{flex:1;display:none;flex-direction:column;min-height:0}
+.view:not([hidden]){display:flex}
+.ctxrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px 6px}
+.chip{font-size:10.5px;color:var(--mute);background:#f5efe3;border-radius:999px;padding:2px 8px;max-width:45%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.section-t{margin:12px 14px 6px;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--mute)}
+.gamepick{flex:1;overflow-y:auto;padding-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;padding:0 14px}
+.gcard{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid var(--rule);background:#fff;border-radius:12px;padding:6px;cursor:pointer;font:inherit}
+.gcard:hover{border-color:var(--accent)}
+.thumb{display:block;aspect-ratio:16/9;border-radius:8px;background:#e8efff center/cover no-repeat}
+.gt{font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gg{font-size:10.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{margin:0 14px;font-size:12px;color:var(--mute)}
+.gameplay{flex:1;display:flex;flex-direction:column;min-height:0}
+.gameplay[hidden]{display:none}
+.gamebar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border-bottom:1px solid var(--rule)}
+.gametitle{flex:1;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn.small{height:28px;padding:0 10px;font-size:11.5px}
+#gameframe{flex:1;width:100%;border:0;background:#000;min-height:0}
+.gamesay{min-height:22px;padding:6px 12px;font-size:12px;color:var(--ink);background:#fff;border-top:1px solid var(--rule)}
+.gamesay:empty{display:none}
+.learnhead{padding:6px 0 8px;background:#fff;border-bottom:1px solid var(--rule)}
+.learnpage{margin:0 14px 8px;font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.wrap{flex-wrap:wrap;padding:0 14px}
+.btn.alt{background:var(--clay)}
+.m.sys{align-self:center;background:transparent;color:var(--mute);font-size:11.5px}

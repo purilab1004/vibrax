@@ -3,7 +3,7 @@
 // stream=true → text/plain 청크 스트리밍, 아니면 JSON { reply, name, quota }
 import Anthropic from '@anthropic-ai/sdk'
 import { authenticateApi, apiJson, apiError, preflight, CORS, refundApiCharge } from '@/lib/aj/api-auth'
-import { buildExternalSystem, loadMyGames, ajDisplayName, type ChatContext } from '@/lib/aj/external'
+import { buildExternalSystem, loadMyGames, ajDisplayName, MODE_MAX_TOKENS, type ChatContext, type ChatMode } from '@/lib/aj/external'
 import { logTalk } from '@/lib/mlpilot/talk'
 import { logUsage } from '@/lib/llm/usage'
 
@@ -14,7 +14,8 @@ export const OPTIONS = () => preflight()
 interface Msg { role: 'user' | 'assistant'; content: string }
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => null) as { message?: unknown; history?: unknown; context?: ChatContext; stream?: unknown } | null
+  const body = await req.json().catch(() => null) as { message?: unknown; history?: unknown; context?: ChatContext; stream?: unknown; mode?: unknown } | null
+  const mode: ChatMode = (['chat', 'quiz', 'explain', 'game'] as const).includes(body?.mode as ChatMode) ? (body!.mode as ChatMode) : 'chat'
   const message = typeof body?.message === 'string' ? body.message.trim() : ''
   if (!message || message.length > 2000) return apiError(400, 'message required (≤2000 chars)')
   const id = await authenticateApi(req, 'chat')
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
 
   const ctx: ChatContext = body?.context && typeof body.context === 'object' ? body.context : {}
   const games = await loadMyGames(id.userId, 6)
-  const { system, exampleIds, ruleIds, emotion, genre, situation } = await buildExternalSystem(id, games, ctx, message)
+  const { system, exampleIds, ruleIds, emotion, genre, situation } = await buildExternalSystem(id, games, ctx, message, mode)
 
   // 역할 교대 정리 (Claude 는 user 로 시작, 교대 필수). 최근 12턴만.
   const sanitized: Msg[] = []
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const model = 'claude-haiku-4-5-20251001'
-  const stream = client.messages.stream({ model, max_tokens: 220, system, messages })
+  const stream = client.messages.stream({ model, max_tokens: MODE_MAX_TOKENS[mode], system, messages })
   const finish = async (full: string) => {
     let usedIn = 0, usedOut = 0
     try { const fin = await stream.finalMessage(); usedIn = fin.usage?.input_tokens ?? 0; usedOut = fin.usage?.output_tokens ?? 0 } catch { /* ignore */ }

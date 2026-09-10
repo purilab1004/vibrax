@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Vibrexcup AJ</title>
+<link rel="stylesheet" href="popup.css">
+<link rel="stylesheet" href="sidepanel.css">
+</head>
+<body class="panel">
+<header class="top">
+  <img id="avatar" class="avatar" alt="" hidden>
+  <div class="who">
+    <div id="name" class="name">내 AJ</div>
+    <div id="sub" class="sub">vibrexcup.com</div>
+  </div>
+  <button id="summon" class="icon" title="이 페이지에 AJ 캐릭터 소환" aria-label="캐릭터 소환">🧩</button>
+  <button id="gear" class="icon" title="설정" aria-label="설정">⚙</button>
+</header>
+
+<section id="setup" class="setup" hidden>
+  <p class="setup-title">키를 붙여넣어 내 AJ를 연결하세요</p>
+  <p class="setup-help">vibrexcup.com → 내 정보 → <b>AJ API</b> → “크롬 확장 키 발급 (무료)”</p>
+  <input id="key" class="input" placeholder="vxaj_…" autocomplete="off" spellcheck="false">
+  <div class="row">
+    <button id="save" class="btn primary">연결</button>
+    <a class="btn ghost" href="https://vibrexcup.com/profile#api" target="_blank" rel="noopener">키 발급하러 가기</a>
+  </div>
+  <p id="setup-err" class="err" hidden></p>
+</section>
+
+<nav id="tabs" class="tabs" hidden>
+  <button class="tab on" data-tab="chat">💬 대화</button>
+  <button class="tab" data-tab="game">🎮 게임</button>
+  <button class="tab" data-tab="learn">📚 학습</button>
+</nav>
+
+<main id="chat" class="chat view on" hidden>
+  <div id="log" class="log" aria-live="polite"></div>
+  <div class="ctxrow">
+    <label class="ctx"><input id="usectx" type="checkbox" checked> 지금 보는 페이지 보여주기</label>
+    <span id="pagechip" class="chip" hidden></span>
+  </div>
+  <form id="form" class="composer">
+    <textarea id="msg" rows="1" placeholder="AJ에게 말 걸기… (Enter 전송)"></textarea>
+    <button id="send" class="btn primary" type="submit">보내기</button>
+  </form>
+  <div class="foot"><span id="quota"></span><a href="https://vibrexcup.com" target="_blank" rel="noopener">vibrexcup.com ↗</a></div>
+</main>
+
+<main id="game" class="view" hidden>
+  <div id="gamepick" class="gamepick">
+    <p class="section-t">검색하다 잠깐, 한 판</p>
+    <div id="mygames" class="grid"></div>
+    <p class="section-t">인기 게임</p>
+    <div id="topgames" class="grid"></div>
+  </div>
+  <div id="gameplay" class="gameplay" hidden>
+    <div class="gamebar"><button id="gameback" class="btn ghost small">← 목록</button><span id="gametitle" class="gametitle"></span><a id="gamelink" class="btn ghost small" target="_blank" rel="noopener">사이트에서 ↗</a></div>
+    <iframe id="gameframe" allow="fullscreen; autoplay" sandbox="allow-scripts allow-pointer-lock allow-same-origin"></iframe>
+    <div id="gamesay" class="gamesay"></div>
+  </div>
+</main>
+
+<main id="learn" class="view" hidden>
+  <div class="learnhead">
+    <p class="section-t">지금 보는 페이지로 배우기</p>
+    <p id="learnpage" class="learnpage">페이지를 읽는 중…</p>
+    <div class="row wrap">
+      <button id="btn-explain" class="btn primary">쉽게 설명해줘</button>
+      <button id="btn-quiz" class="btn primary alt">퀴즈 내줘</button>
+      <button id="btn-learnreset" class="btn ghost">초기화</button>
+    </div>
+  </div>
+  <div id="learnlog" class="log" aria-live="polite"></div>
+  <form id="learnform" class="composer">
+    <textarea id="learnmsg" rows="1" placeholder="답을 적거나 더 물어보기… (Enter 전송)"></textarea>
+    <button id="learnsend" class="btn primary" type="submit">보내기</button>
+  </form>
+</main>
+<script src="sidepanel.js"></script>
+</body>
+</html>

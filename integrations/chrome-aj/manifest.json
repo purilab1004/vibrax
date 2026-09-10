@@ -2,13 +2,35 @@
   "manifest_version": 3,
   "name": "Vibrexcup AJ — 내 AI 스트리머 캐릭터",
   "short_name": "Vibrexcup AJ",
-  "description": "내 Vibrexcup AJ 캐릭터가 웹페이지 위에 나타나 돌아다니고, 클릭하면 대화해요. 지금 보는 페이지를 읽고 반응합니다. 무료.",
-  "version": "1.1.0",
+  "description": "내 Vibrexcup AJ 캐릭터가 페이지 위에 나타나고, 사이드 패널에서 대화·미니게임·학습까지. 지금 보는 페이지를 읽고 반응해요. 무료.",
+  "version": "1.2.0",
   "homepage_url": "https://vibrexcup.com/dev",
-  "action": { "default_popup": "popup.html", "default_title": "AJ 소환 · 대화" },
-  "background": { "service_worker": "background.js" },
-  "icons": { "16": "icon16.png", "32": "icon32.png", "48": "icon48.png", "128": "icon128.png" },
-  "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["https://vibrexcup.com/*"],
-  "optional_host_permissions": ["<all_urls>"]
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "AJ 열기"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://vibrexcup.com/*"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>"
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  }
 }

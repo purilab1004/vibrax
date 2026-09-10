@@ -2,7 +2,7 @@
 const API = 'https://vibrexcup.com/api/v1/aj'
 const EXT_HEADER = { 'X-Vibrex-Ext': `chrome-aj/${chrome.runtime.getManifest().version}` }
 const $ = (id) => document.getElementById(id)
-const el = { setup: $('setup'), chat: $('chat'), key: $('key'), save: $('save'), setupErr: $('setup-err'), gear: $('gear'), log: $('log'), form: $('form'), msg: $('msg'), send: $('send'), usectx: $('usectx'), quota: $('quota'), name: $('name'), sub: $('sub'), avatar: $('avatar'), summon: $('summon'), optAlways: $('opt-always'), optVoice: $('opt-voice'), optAuto: $('opt-auto') }
+const el = { setup: $('setup'), chat: $('chat'), key: $('key'), save: $('save'), setupErr: $('setup-err'), gear: $('gear'), log: $('log'), form: $('form'), msg: $('msg'), send: $('send'), usectx: $('usectx'), quota: $('quota'), name: $('name'), sub: $('sub'), avatar: $('avatar'), summon: $('summon'), openpanel: $('openpanel'), optAlways: $('opt-always'), optVoice: $('opt-voice'), optAuto: $('opt-auto') }
 let state = { key: null, me: null, history: [], busy: false }
 
 async function loadStorage() { return new Promise((r) => chrome.storage.sync.get(['ajKey', 'ajHistory', 'ajUseCtx', 'ajAlwaysOn', 'ajVoice', 'ajAutoComment'], r)) }
@@ -84,7 +84,8 @@ el.form.addEventListener('submit', (e) => { e.preventDefault(); send(el.msg.valu
 el.msg.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(el.msg.value) } })
 el.msg.addEventListener('input', autosize)
 el.usectx.addEventListener('change', () => saveStorage({ ajUseCtx: el.usectx.checked }))
-// ── 페이지 위 캐릭터 소환 + 설정 ──
+// ── 사이드 패널 / 페이지 위 캐릭터 소환 + 설정 ──
+el.openpanel.addEventListener('click', async () => { try { const w = await chrome.windows.getCurrent(); await chrome.sidePanel.open({ windowId: w.id }); window.close() } catch (e) { el.openpanel.textContent = '사이드 패널을 열 수 없어요 (Chrome 114+)' } })
 const bg = (msg) => new Promise((r) => chrome.runtime.sendMessage(msg, r))
 el.summon.addEventListener('click', async () => { el.summon.disabled = true; const r = await bg({ type: 'summon' }); el.summon.disabled = false; if (r?.ok) window.close(); else el.summon.textContent = '이 페이지엔 소환할 수 없어요 (chrome:// 등)' })
 el.optAlways.addEventListener('change', async () => {
