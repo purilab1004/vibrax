@@ -2,7 +2,9 @@
 
 import NoticesSection from '@/components/profile/NoticesSection'
 import AiLearningSection from '@/components/profile/AiLearningSection'
+import AjApiSection from '@/components/profile/AjApiSection'
 import GameCurriculumModal from '@/components/profile/GameCurriculumModal'
+import MascotLoader from '@/components/MascotLoader'
 import { useEffect, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
@@ -55,9 +57,9 @@ interface EditingGame {
   newManual?: File | null
 }
 
-type Tab = 'profile' | 'password' | 'agent' | 'learning' | 'games' | 'collections' | 'billing' | 'notices'
-const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', games: '내 게임', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
-const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'games', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
+type Tab = 'profile' | 'password' | 'agent' | 'learning' | 'api' | 'games' | 'collections' | 'billing' | 'notices'
+const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', api: 'AJ API', games: '내 게임', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
+const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'api', 'games', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
 
 export default function ProfilePage() {
   // 사이드 메뉴 탭 — 해시(#games 등)에 따라 해당 섹션만 표시 (스크롤 아님)
@@ -252,19 +254,16 @@ export default function ProfilePage() {
 
   const inputClass = 'w-full h-10 rounded-lg bg-white border border-[#ddd3bf] focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 px-3.5 text-[14px] outline-none transition text-[#241f17] placeholder-[#a1957f]'
 
-  if (loading) return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest">LOADING...</p>
-    </div>
-  )
+  if (loading) return <MascotLoader />
+
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-6 sm:space-y-8">
       {/* 헤더 — 프로필 탭에서만 노출 */}
       {tab === 'profile' && (
       <div className="relative overflow-hidden rounded-3xl bg-[#171b26] text-white shadow-[0_24px_60px_-28px_rgba(23,27,38,0.6)]">
         <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-24 -left-10 w-72 h-72 rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.55),transparent)] blur-2xl" /><div className="absolute -bottom-28 right-10 w-80 h-80 rounded-full bg-[radial-gradient(closest-side,rgba(245,158,11,0.35),transparent)] blur-2xl" /><div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '18px 18px' }} /></div>
-        <div className="relative px-6 md:px-8 py-6 flex items-center gap-5 flex-wrap">
+        <div className="relative px-5 md:px-8 py-5 md:py-6 flex items-center gap-4 sm:gap-5 flex-wrap">
           <span className="avatar-ring shrink-0"><span className="avatar-wave w-20 h-20 rounded-full overflow-hidden flex items-center justify-center bg-white">
             {myAvatarConfig?.previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -290,7 +289,7 @@ export default function ProfilePage() {
       </nav>
 
       {/* ── Profile ── */}
-      {tab === 'profile' && <section id="profile" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-6">
+      {tab === 'profile' && <section id="profile" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-6">
 
         {/* Email */}
         <div>
@@ -335,7 +334,7 @@ export default function ProfilePage() {
       </section>}
 
       {/* ── Password ── */}
-      {tab === 'password' && <section id="password" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-4">
+      {tab === 'password' && <section id="password" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
           <div>
             <p className="text-[12px] font-semibold text-[#6b6152] mb-1.5">새 비밀번호</p>
@@ -459,11 +458,12 @@ export default function ProfilePage() {
           </div>
         </div>
       </section>}
+      {tab === 'api' && <section id="api"><AjApiSection /></section>}
       {tab === 'learning'
  && <section id="learning"><AiLearningSection /></section>}
 
       {/* ── My Games ── */}
-      {tab === 'games' && <section id="games" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
+      {tab === 'games' && <section id="games" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
         <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <div><h2 className="text-[17px] font-bold text-[#241f17]">내 게임 <span className="text-[#2563eb]">{games.length}</span></h2><p className="text-[12.5px] text-[#857a68] mt-0.5">게시한 게임을 수정하고 AJ 대시보드·홍보로 이동해요.</p></div>
           <div className="flex items-center gap-2">
@@ -552,8 +552,8 @@ export default function ProfilePage() {
 
       {/* ── 좋아요한 / 공유한 게임 ── */}
       {tab === 'billing' && user && <BillingSection userId={user.id} />}
-      {tab === 'notices' && <section id="notices" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><NoticesSection /></section>}
-      {tab === 'collections' && user && <section id="collections" className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><MyCollections userId={user.id} /></section>}
+      {tab === 'notices' && <section id="notices" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><NoticesSection /></section>}
+      {tab === 'collections' && user && <section id="collections" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><MyCollections userId={user.id} /></section>}
       {curriculumGame && <GameCurriculumModal gameId={curriculumGame.id} title={curriculumGame.title} onClose={() => setCurriculumGame(null)} />}
 
       {/* ── Edit Game Modal ── */}
@@ -689,12 +689,12 @@ function BillingSection({ userId }: { userId: string }) {
   const REASON: Record<string, string> = { purchase: '크레딧 구매', generation: '게임 생성·수정', refund: '생성 실패 환불', signup_bonus: '가입 보너스', admin_adjust: '관리자 조정', purchase_refund: '결제 환불 회수', chargeback: '차지백 회수' }
   return (
     <section id="billing" className="space-y-6">
-      <div className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
+      <div className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
           <div><h2 className="text-[17px] font-bold text-[#241f17]">결제 내역</h2><p className="text-[12.5px] text-[#857a68] mt-0.5">프롬코인 구매 기록이에요. 완료된 결제는 영수증(PDF)을 받을 수 있어요.</p></div>
           <Link href="/credits" className="inline-flex items-center h-9 px-4 rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8]">크레딧 충전</Link>
         </div>
-        {pays === null ? <p className="text-[13px] text-[#9d9280]">불러오는 중…</p> : pays.length === 0 ? <p className="rounded-xl bg-[#faf8f3] p-8 text-center text-[13px] text-[#857a68]">아직 결제 내역이 없어요.</p> : (
+        {pays === null ? <MascotLoader size={40} className="py-8" /> : pays.length === 0 ? <p className="rounded-xl bg-[#faf8f3] p-8 text-center text-[13px] text-[#857a68]">아직 결제 내역이 없어요.</p> : (
           <ul className="divide-y divide-[#f0eadf]">
             {pays.map(h => { const [l, c] = ST[h.status] ?? [h.status, 'bg-[#f1ece2] text-[#6b6152]']; return (
               <li key={h.id} className="flex items-center gap-4 py-3 text-[13px]">
@@ -707,9 +707,9 @@ function BillingSection({ userId }: { userId: string }) {
           </ul>
         )}
       </div>
-      <div className="rounded-2xl bg-white p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
+      <div className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
         <h2 className="text-[17px] font-bold text-[#241f17] mb-4">크레딧 사용 내역</h2>
-        {ledger === null ? <p className="text-[13px] text-[#9d9280]">불러오는 중…</p> : ledger.length === 0 ? <p className="text-[13px] text-[#857a68]">기록이 없어요.</p> : (
+        {ledger === null ? <MascotLoader size={40} className="py-8" /> : ledger.length === 0 ? <p className="text-[13px] text-[#857a68]">기록이 없어요.</p> : (
           <ul className="divide-y divide-[#f0eadf]">
             {ledger.map(l => (
               <li key={l.id} className="flex items-center gap-4 py-2.5 text-[13px]">

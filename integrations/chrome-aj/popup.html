@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Vibrexcup AJ</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<header class="top">
+  <img id="avatar" class="avatar" alt="" hidden>
+  <div class="who">
+    <div id="name" class="name">내 AJ</div>
+    <div id="sub" class="sub">vibrexcup.com</div>
+  </div>
+  <button id="gear" class="icon" title="설정" aria-label="설정">⚙</button>
+</header>
+
+<section id="setup" class="setup" hidden>
+  <p class="setup-title">키를 붙여넣어 내 AJ를 연결하세요</p>
+  <p class="setup-help">vibrexcup.com → 내 정보 → <b>AJ API</b> → “크롬 확장 키 발급 (무료)”</p>
+  <input id="key" class="input" placeholder="vxaj_…" autocomplete="off" spellcheck="false">
+  <div class="row">
+    <button id="save" class="btn primary">연결</button>
+    <a class="btn ghost" href="https://vibrexcup.com/profile#api" target="_blank" rel="noopener">키 발급하러 가기</a>
+  </div>
+  <p id="setup-err" class="err" hidden></p>
+</section>
+
+<main id="chat" class="chat" hidden>
+  <div id="log" class="log" aria-live="polite"></div>
+  <label class="ctx"><input id="usectx" type="checkbox" checked> 지금 보는 페이지를 AJ에게 보여주기</label>
+  <form id="form" class="composer">
+    <textarea id="msg" rows="1" placeholder="AJ에게 말 걸기… (Enter 전송, Shift+Enter 줄바꿈)"></textarea>
+    <button id="send" class="btn primary" type="submit">보내기</button>
+  </form>
+  <div class="foot"><span id="quota"></span><a id="site" href="https://vibrexcup.com" target="_blank" rel="noopener">vibrexcup.com ↗</a></div>
+</main>
+<script src="popup.js"></script>
+</body>
+</html>

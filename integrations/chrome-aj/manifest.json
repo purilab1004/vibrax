@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Vibrexcup AJ — 내 AI 스트리머",
+  "description": "내 Vibrexcup AJ와 어디서든 대화해요. 지금 보는 페이지를 읽고 반응합니다.",
+  "version": "1.0.0",
+  "action": { "default_popup": "popup.html", "default_title": "내 AJ와 대화" },
+  "icons": { "128": "icon128.png" },
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["https://vibrexcup.com/*"]
+}
