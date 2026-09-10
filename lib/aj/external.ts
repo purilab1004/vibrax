@@ -12,6 +12,13 @@ export type ChatMode = 'chat' | 'quiz' | 'explain' | 'game'
 export const MODE_MAX_TOKENS: Record<ChatMode, number> = { chat: 220, quiz: 700, explain: 700, game: 220 }
 
 const SITE = 'https://vibrexcup.com'
+/** 확장 사이드 패널 등에서 iframe 으로 띄울 수 있는 URL — 스튜디오 게임(/play/{project}) 또는 우리 오리진의 /play 링크만 */
+export function embedUrlOf(projectId: string | null | undefined, playUrl: string | null | undefined, gameId?: string | null): string | null {
+  if (projectId) return `${SITE}/play/${projectId}`
+  if (playUrl && /^https:\/\/(www\.)?vibrexcup\.com\/play\//.test(playUrl)) return playUrl.replace('https://www.', 'https://')
+  if (playUrl && /^https:\/\//.test(playUrl) && gameId) return `${SITE}/play/ext/${gameId}`   // 외부 게임은 프록시(브리지 주입, 우리 오리진)
+  return null
+}
 const MODE_RULES: Record<ChatMode, string> = {
   chat: '- 1~3문장, 120자 이내. 페이지 컨텍스트가 있으면 그걸 보고 반응하거나 도와준다(요약·의견·다음 행동 제안). 없으면 그냥 대화.',
   quiz: `- 학습 모드(퀴즈). 페이지 컨텍스트를 바탕으로 핵심 개념을 묻는 문제를 낸다. 첫 요청이면 문제 3개를 번호 붙여 내고(객관식이면 보기 4개, 정답은 아직 공개하지 않음) 마지막에 "답 골라봐!" 한마디.
@@ -21,9 +28,9 @@ const MODE_RULES: Record<ChatMode, string> = {
 }
 
 export async function loadMyGames(userId: string, limit = 6): Promise<MyGame[]> {
-  const { data } = await createAdminClient().from('games').select('id,title,genre,teaser,view_count,studio_project_id,thumbnail_url').eq('user_id', userId).order('view_count', { ascending: false }).limit(limit)
-  return ((data ?? []) as { id: string; title: string; genre: string; teaser: string | null; view_count: number | null; studio_project_id: string | null; thumbnail_url: string | null }[])
-    .map(g => ({ id: g.id, title: g.title, genre: g.genre, url: `${SITE}/games/${g.id}`, embedUrl: g.studio_project_id ? `${SITE}/play/${g.studio_project_id}` : null, thumbnail: g.thumbnail_url, teaser: g.teaser, views: g.view_count ?? 0 }))
+  const { data } = await createAdminClient().from('games').select('id,title,genre,teaser,view_count,studio_project_id,thumbnail_url,play_url').eq('user_id', userId).order('view_count', { ascending: false }).limit(limit)
+  return ((data ?? []) as { id: string; title: string; genre: string; teaser: string | null; view_count: number | null; studio_project_id: string | null; thumbnail_url: string | null; play_url: string | null }[])
+    .map(g => ({ id: g.id, title: g.title, genre: g.genre, url: `${SITE}/games/${g.id}`, embedUrl: embedUrlOf(g.studio_project_id, g.play_url, g.id), thumbnail: g.thumbnail_url, teaser: g.teaser, views: g.view_count ?? 0 }))
 }
 
 export async function loadLearningStats(userId: string): Promise<{ learnedGames: number; bestScore: number | null; generations: number }> {
