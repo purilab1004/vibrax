@@ -25,6 +25,7 @@ export default function GenreSidebar() {
     ['/tournament', `🏆 ${T.nav.tournament}`],
     ['/blog', T.nav.blog],
     ['/partner', T.nav.partner],
+    ['/dev', T.nav.dev],
     ['/about', T.nav.about],
   ]
 

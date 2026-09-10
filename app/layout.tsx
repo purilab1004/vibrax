@@ -4,6 +4,7 @@ import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
 import './globals.css'
 import NavBar from '@/components/NavBar'
 import MobileNav from '@/components/MobileNav'
+import NativeBridge from '@/components/NativeBridge'
 import SiteFooter from '@/components/SiteFooter'
 import Telemetry from '@/components/Telemetry'
 import PwaRegister from '@/components/PwaRegister'
@@ -186,6 +187,7 @@ export default async function RootLayout({
       { name: 'Tournament', description: '개인·학교·세계·회사 4개 부문 게임 제작 토너먼트', url: 'https://vibrexcup.com/tournament' },
       { name: 'Blog', description: '바이브코딩 가이드·프롬프트 팁·플랫폼 소식', url: 'https://vibrexcup.com/blog' },
       { name: 'Partner', description: '학교·기업·단체·기관 파트너 모집', url: 'https://vibrexcup.com/partner' },
+      { name: 'Dev', description: 'AJ API · 크롬 확장 개발자 가이드', url: 'https://vibrexcup.com/dev' },
       { name: 'About', description: 'Vibrexcup 소개', url: 'https://vibrexcup.com/about' },
     ].map((x, i) => ({
       '@type': 'SiteNavigationElement',
@@ -232,6 +234,7 @@ export default async function RootLayout({
           <Telemetry />
           <PwaRegister />
           <MobileNav />
+          <NativeBridge />
         </LangProvider>
       </body>
     </html>

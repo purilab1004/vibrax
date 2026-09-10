@@ -221,6 +221,7 @@ export default function NavBar() {
               </Link>
               {navLinkDesktop('/blog', T.nav.blog)}
               {navLinkDesktop('/partner', T.nav.partner)}
+              {navLinkDesktop('/dev', T.nav.dev)}
               {navLinkDesktop('/about', T.nav.about)}
             </div>
             )}
@@ -356,6 +357,7 @@ export default function NavBar() {
             </Link>
             {navLinkMobile('/blog', T.nav.blog)}
             {navLinkMobile('/partner', T.nav.partner)}
+            {navLinkMobile('/dev', T.nav.dev)}
             {navLinkMobile('/about', T.nav.about)}
             {user ? (
               <>
