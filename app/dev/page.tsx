@@ -13,17 +13,17 @@ const COPY = {
   ko: {
     badge: 'DEVELOPERS',
     heading: '내 AJ를 어디서든',
-    tagline: '크롬 확장으로 무료로 대화하거나, 개발자 API로 내 앱·봇·사이트에 붙이세요.\n이름·성격·말투·내 게임 지식을 가진 나만의 AJ가 그대로 따라옵니다.',
+    tagline: '크롬 확장을 켜면 내 AJ 캐릭터가 웹페이지 위에 나타나 걸어 다니고, 클릭하면 대화해요.\n개발자 API로는 내 앱·봇·사이트에 붙일 수 있습니다. 이름·성격·말투·내 게임 지식이 그대로 따라옵니다.',
     cta1: '크롬 확장 내려받기', cta2: '키 발급하러 가기 (내 정보 → AJ API)',
     toc: ['시작하기', '크롬 확장 설치', '개발자 API 키', 'API 레퍼런스', '코드 예제', '요금·한도', '자주 묻는 질문'],
     start: { h: '시작하기', p: '두 가지 방법이 있어요. 목적에 맞게 고르세요.', rows: [
-      ['크롬 확장', '어느 사이트에서든 팝업을 열어 AJ와 대화. 지금 보는 페이지를 읽고 반응', '무료 · 하루 200회', '크롬 확장 키'],
+      ['크롬 확장', '내 AJ 캐릭터가 페이지 위에 등장해 걷고·깜빡이고·대화. 지금 보는 페이지를 읽고 반응, 드래그로 이동, 브라우저 음성', '무료 · 하루 200회', '크롬 확장 키'],
       ['개발자 API', '웹·앱·디스코드 봇·자동화에서 REST로 호출. 스트리밍·목소리(TTS) 지원', '프롬코인 과금 · 채팅 1 · TTS 2', '개발자 API 키'],
     ] },
     chrome: { h: '크롬 확장 프로그램 설치', store: 'Chrome 웹스토어에서 추가', storePending: '웹스토어 심사 중 — 게시되면 여기 버튼이 활성화됩니다. 그때까지는 아래 "개발자 모드로 설치"를 쓰세요.', manual: '개발자 모드로 설치 (미리 써보기)', steps: [
       ['Chrome 웹스토어에서 "Chrome에 추가"', '아래 버튼을 누르고 "Chrome에 추가"를 확인하면 툴바에 AJ 아이콘이 생깁니다. 별도 파일 다운로드 없음.'],
       ['키 발급 후 붙여넣기', '내 정보 → AJ API → "크롬 확장 키 발급 (무료)" → 팝업의 키 입력란에 붙여넣고 연결.'],
-      ['대화 시작', '"지금 보는 페이지를 AJ에게 보여주기"를 켜면 페이지 제목·URL·본문 일부를 함께 보내 요약·의견을 받을 수 있어요.'],
+      ['AJ 소환', '툴바 아이콘 → "이 페이지에 AJ 소환". 캐릭터가 화면 아래에 나타나요. 클릭하면 말풍선 대화, 드래그로 이동. "모든 사이트에서 자동 등장"을 켜면 페이지마다 따라옵니다.'],
     ], manualSteps: [
       ['확장 파일 내려받기', 'zip을 받아 압축을 풀어 두세요. 폴더 안에 manifest.json 이 있으면 됩니다.'],
       ['개발자 모드 켜기', '크롬 주소창에 chrome://extensions 를 입력하고 우상단 "개발자 모드"를 켭니다.'],
@@ -73,17 +73,17 @@ X-AJ-Name: <AJ 이름(URL 인코딩)>   X-AJ-Charged: 1   X-AJ-Quota: 13/5000` }
   en: {
     badge: 'DEVELOPERS',
     heading: 'Your AJ, everywhere',
-    tagline: 'Chat for free from the Chrome extension, or wire your AJ into your own app, bot or site with the developer API.\nYour AJ keeps its name, personality, tone and knowledge of your games.',
+    tagline: 'Turn on the Chrome extension and your AJ character appears on any web page — walking around, and chatting when you click it.\nThe developer API lets you wire your AJ into your own app, bot or site. Name, personality, tone and game knowledge come along.',
     cta1: 'Download Chrome extension', cta2: 'Get a key (My Page → AJ API)',
     toc: ['Get started', 'Install the Chrome extension', 'Developer API key', 'API reference', 'Code examples', 'Pricing & limits', 'FAQ'],
     start: { h: 'Get started', p: 'Two ways in. Pick the one that fits.', rows: [
-      ['Chrome extension', 'Open the popup on any site and talk to your AJ. It can read the page you are on.', 'Free · 200 calls/day', 'Chrome extension key'],
+      ['Chrome extension', 'Your AJ character lives on the page: walks, blinks, chats. Reads the page you are on, drag to move, optional browser voice.', 'Free · 200 calls/day', 'Chrome extension key'],
       ['Developer API', 'Call REST from web, apps, Discord bots or automations. Streaming and voice (TTS) included.', 'Prompt credits · chat 1 · TTS 2', 'Developer API key'],
     ] },
     chrome: { h: 'Install the Chrome extension', store: 'Add from the Chrome Web Store', storePending: 'Under Web Store review — this button goes live once published. Until then use "Install in developer mode" below.', manual: 'Install in developer mode (early access)', steps: [
       ['"Add to Chrome" from the Web Store', 'Click the button and confirm "Add to Chrome". The AJ icon appears in your toolbar. No file download.'],
       ['Issue a key and paste it', 'My Page → AJ API → "Issue Chrome extension key (free)" → paste it into the popup.'],
-      ['Start talking', 'Enable "Show AJ the current page" to send the tab title, URL and an excerpt for summaries and opinions.'],
+      ['Summon AJ', 'Toolbar icon → "Summon AJ on this page". The character appears at the bottom; click to chat, drag to move. Turn on "Appear on every site" to have it follow you.'],
     ], manualSteps: [
       ['Download the extension', 'Grab the zip and unpack it. The folder should contain manifest.json.'],
       ['Turn on Developer mode', 'Go to chrome://extensions and switch on "Developer mode" at the top right.'],

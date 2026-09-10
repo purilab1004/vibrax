@@ -31,7 +31,7 @@ export function generateKey(): { raw: string; prefix: string; hash: string } {
 export const CORS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Vibrex-Ext',
   'Access-Control-Max-Age': '86400',
 }
 export const preflight = () => new Response(null, { status: 204, headers: CORS })
@@ -67,13 +67,16 @@ export async function authenticateApi(req: Request, scope: Scope, opts: { count?
   if (!k || k.revoked_at) return apiError(401, 'invalid or revoked api key')
   if (!k.scopes.includes(scope)) return apiError(403, `scope '${scope}' not granted`)
   const s = await loadApiSettings()
-  // 크롬 확장 키는 브라우저 확장에서 온 요청만 (Origin: chrome-extension:// | moz-extension://). 그 외 사용은 유료 API 키로.
+  // 크롬 확장 키는 브라우저 확장에서 온 요청만. 확장의 GET 요청엔 Origin 이 안 붙으므로
+  // Origin(chrome-extension://…) 또는 확장이 항상 보내는 X-Vibrex-Ext 헤더 중 하나로 식별한다. 그 외 사용은 유료 API 키로.
   if (k.kind === 'chrome') {
     const origin = req.headers.get('origin') ?? ''
-    if (!/^(chrome|moz|safari-web)-extension:\/\//.test(origin)) return apiError(403, 'this key works only inside the browser extension — use a developer API key for other clients')
-    // 웹스토어 게시 후 CHROME_EXTENSION_IDS(쉼표 구분) 를 설정하면 공식 확장 ID 에서 온 요청만 허용
+    const extHeader = req.headers.get('x-vibrex-ext') ?? ''
+    const fromExtOrigin = /^(chrome|moz|safari-web)-extension:\/\//.test(origin)
+    if (!fromExtOrigin && !/^chrome-aj\/\d+\.\d+/.test(extHeader)) return apiError(403, 'this key works only inside the browser extension — use a developer API key for other clients')
+    // 웹스토어 게시 후 CHROME_EXTENSION_IDS(쉼표 구분) 를 설정하면 공식 확장 ID 에서 온 요청만 허용 (Origin 이 있는 요청에 적용)
     const allowed = (process.env.CHROME_EXTENSION_IDS ?? '').split(',').map(x => x.trim()).filter(Boolean)
-    if (allowed.length && !allowed.some(idv => origin === `chrome-extension://${idv}`)) return apiError(403, 'unofficial extension build')
+    if (allowed.length && fromExtOrigin && !allowed.some(idv => origin === `chrome-extension://${idv}`)) return apiError(403, 'unofficial extension build')
   }
   if (!rateLimit(`ajapi:${k.id}`, s.perMinute, 60_000).ok) return apiError(429, 'rate limited', { perMinute: s.perMinute })
   const dailyQuota = k.kind === 'chrome' ? s.chromeDailyQuota : s.apiDailyQuota

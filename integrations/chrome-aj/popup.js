@@ -1,10 +1,11 @@
 // Vibrexcup AJ 크롬 확장 — 팝업. 키는 chrome.storage.sync 에만 저장되고 vibrexcup.com 외 어디에도 전송되지 않는다.
 const API = 'https://vibrexcup.com/api/v1/aj'
+const EXT_HEADER = { 'X-Vibrex-Ext': `chrome-aj/${chrome.runtime.getManifest().version}` }
 const $ = (id) => document.getElementById(id)
-const el = { setup: $('setup'), chat: $('chat'), key: $('key'), save: $('save'), setupErr: $('setup-err'), gear: $('gear'), log: $('log'), form: $('form'), msg: $('msg'), send: $('send'), usectx: $('usectx'), quota: $('quota'), name: $('name'), sub: $('sub'), avatar: $('avatar') }
+const el = { setup: $('setup'), chat: $('chat'), key: $('key'), save: $('save'), setupErr: $('setup-err'), gear: $('gear'), log: $('log'), form: $('form'), msg: $('msg'), send: $('send'), usectx: $('usectx'), quota: $('quota'), name: $('name'), sub: $('sub'), avatar: $('avatar'), summon: $('summon'), optAlways: $('opt-always'), optVoice: $('opt-voice'), optAuto: $('opt-auto') }
 let state = { key: null, me: null, history: [], busy: false }
 
-async function loadStorage() { return new Promise((r) => chrome.storage.sync.get(['ajKey', 'ajHistory', 'ajUseCtx'], r)) }
+async function loadStorage() { return new Promise((r) => chrome.storage.sync.get(['ajKey', 'ajHistory', 'ajUseCtx', 'ajAlwaysOn', 'ajVoice', 'ajAutoComment'], r)) }
 async function saveStorage(patch) { return new Promise((r) => chrome.storage.sync.set(patch, r)) }
 
 function show(setup) { el.setup.hidden = !setup; el.chat.hidden = setup }
@@ -16,7 +17,7 @@ function addMsg(role, text) {
 }
 
 async function fetchMe() {
-  const r = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${state.key}` } })
+  const r = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${state.key}`, ...EXT_HEADER } })
   if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || `HTTP ${r.status}`) }
   return r.json()
 }
@@ -53,7 +54,7 @@ async function send(text) {
   try {
     const r = await fetch(`${API}/chat`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${state.key}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${state.key}`, 'Content-Type': 'application/json', ...EXT_HEADER },
       body: JSON.stringify({ message: text, history: state.history.slice(-10), context, stream: true }),
     })
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error === 'daily quota exceeded' ? '오늘 무료 횟수를 다 썼어요. 내일 다시!' : (j.error || `HTTP ${r.status}`)) }
@@ -83,10 +84,24 @@ el.form.addEventListener('submit', (e) => { e.preventDefault(); send(el.msg.valu
 el.msg.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(el.msg.value) } })
 el.msg.addEventListener('input', autosize)
 el.usectx.addEventListener('change', () => saveStorage({ ajUseCtx: el.usectx.checked }))
+// ── 페이지 위 캐릭터 소환 + 설정 ──
+const bg = (msg) => new Promise((r) => chrome.runtime.sendMessage(msg, r))
+el.summon.addEventListener('click', async () => { el.summon.disabled = true; const r = await bg({ type: 'summon' }); el.summon.disabled = false; if (r?.ok) window.close(); else el.summon.textContent = '이 페이지엔 소환할 수 없어요 (chrome:// 등)' })
+el.optAlways.addEventListener('change', async () => {
+  if (el.optAlways.checked) {
+    // 권한 요청은 사용자 클릭 컨텍스트(팝업)에서만 가능
+    const ok = await chrome.permissions.request({ origins: ['<all_urls>'] }).catch(() => false)
+    if (!ok) { el.optAlways.checked = false; return }
+  }
+  await bg({ type: 'alwaysOn', on: el.optAlways.checked })
+})
+el.optVoice.addEventListener('change', () => saveStorage({ ajVoice: el.optVoice.checked }))
+el.optAuto.addEventListener('change', () => saveStorage({ ajAutoComment: el.optAuto.checked }))
 
 ;(async () => {
   const st = await loadStorage()
   if (typeof st.ajUseCtx === 'boolean') el.usectx.checked = st.ajUseCtx
+  el.optAlways.checked = !!st.ajAlwaysOn; el.optVoice.checked = !!st.ajVoice; el.optAuto.checked = !!st.ajAutoComment
   state.history = Array.isArray(st.ajHistory) ? st.ajHistory : []
   for (const m of state.history.slice(-10)) addMsg(m.role === 'user' ? 'user' : 'aj', m.content)
   if (st.ajKey) { const ok = await connect(st.ajKey); if (ok && state.history.length === 0 && state.me?.greeting) addMsg('aj', state.me.greeting) }

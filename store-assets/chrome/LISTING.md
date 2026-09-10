@@ -1,14 +1,14 @@
 # Chrome 웹스토어 등록 문안 — Vibrexcup AJ 확장 프로그램
 
-업로드 파일: `store-assets/chrome/vibrexcup-aj-chrome-store-1.0.0.zip` (manifest.json 이 zip 루트)
+업로드 파일: `store-assets/chrome/vibrexcup-aj-chrome-store-1.1.0.zip` (manifest.json 이 zip 루트)
 개발자 콘솔: https://chrome.google.com/webstore/devconsole (개발자 등록 1회 $5)
 
 ## 스토어 등록 정보
 
 | 항목 | 값 |
 |---|---|
-| 이름 | Vibrexcup AJ — 내 AI 스트리머와 대화 |
-| 요약(132자 이내) | 내 Vibrexcup AJ(AI 스트리머)와 어느 사이트에서든 대화해요. 지금 보는 페이지를 읽고 요약·반응합니다. 무료. |
+| 이름 | Vibrexcup AJ — 내 AI 스트리머 캐릭터 |
+| 요약(132자 이내) | 내 Vibrexcup AJ 캐릭터가 웹페이지 위에 나타나 돌아다니고, 클릭하면 대화해요. 지금 보는 페이지를 읽고 반응합니다. 무료. |
 | 카테고리 | 생산성 (Productivity) 또는 소셜 및 커뮤니케이션 |
 | 언어 | 한국어(기본), 영어 |
 | 공식 URL | https://vibrexcup.com/dev |
@@ -17,7 +17,7 @@
 
 ## 자세한 설명 (한국어)
 
-Vibrexcup에서 만든 나만의 AI 스트리머 "AJ"를 크롬 어디서든 불러 대화하세요.
+Vibrexcup에서 만든 나만의 AI 스트리머 "AJ" 캐릭터가 웹페이지 위에 나타납니다. 바닥을 걸어 다니고, 깜빡이고, 클릭하면 말풍선으로 대화해요. 드래그로 옮길 수 있고, 브라우저 음성으로 말하게 할 수도 있어요.
 
 • 내 AJ 그대로 — 내 정보에서 정한 이름·성격·말투, 내가 게시한 게임 지식을 가진 AJ가 답합니다.
 • 페이지를 읽는 대화 — "지금 보는 페이지를 AJ에게 보여주기"를 켜면 탭 제목·URL·본문 일부를 함께 보내 요약, 의견, 다음 행동을 제안받을 수 있어요. (끄면 아무것도 보내지 않습니다)
@@ -28,7 +28,7 @@ Vibrexcup에서 만든 나만의 AI 스트리머 "AJ"를 크롬 어디서든 불
 
 ## Detailed description (English)
 
-Talk to your own AI streamer "AJ" from Vibrexcup, anywhere in Chrome.
+Your own AI streamer "AJ" from Vibrexcup shows up on any web page as a little character: it walks along the bottom, blinks, and chats in a speech bubble when you click it. Drag to move, optional browser voice.
 
 • Your AJ, as you made it — name, personality and tone from your profile, plus knowledge of the games you published.
 • Page-aware chat — turn on "Show AJ the current page" to send the tab title, URL and an excerpt for summaries, opinions and next steps. (Off = nothing is sent.)
@@ -39,7 +39,7 @@ Get started: sign up at vibrexcup.com → My Page → AJ API → "Issue Chrome e
 
 ## 단일 목적(Single purpose)
 
-Vibrexcup 회원의 개인 AI 스트리머(AJ)와 팝업에서 대화하고, 사용자가 원할 때 현재 탭의 내용을 대화 컨텍스트로 전달한다.
+Vibrexcup 회원의 개인 AI 스트리머(AJ) 캐릭터를 웹페이지 위에 띄워 함께 있게 하고(걷기·반응·대화), 사용자가 원할 때 현재 탭의 내용을 대화 컨텍스트로 전달한다.
 
 ## 권한 사유(Permissions justification)
 
@@ -47,8 +47,9 @@ Vibrexcup 회원의 개인 AI 스트리머(AJ)와 팝업에서 대화하고, 사
 |---|---|
 | `storage` | 사용자가 붙여넣은 API 키와 최근 대화 이력(최대 20턴), 체크박스 설정을 저장 |
 | `activeTab` | 사용자가 팝업을 열었을 때만 현재 탭의 제목·URL을 읽어 대화 컨텍스트로 전달 |
-| `scripting` | 체크박스가 켜져 있을 때 현재 탭 본문 텍스트 최대 1,500자를 읽음(`document.body.innerText`). 페이지를 수정하지 않음 |
-| host `https://vibrexcup.com/*` | AJ API 호출(프로필·대화) 대상 도메인 |
+| `scripting` | 사용자가 "이 페이지에 AJ 소환"을 눌렀을 때 현재 탭에 캐릭터 스크립트(companion.js)를 심고, 체크박스가 켜져 있으면 본문 텍스트 최대 1,500자를 읽음. 페이지 DOM 은 캐릭터 컨테이너(Shadow DOM) 1개만 추가 |
+| host `https://vibrexcup.com/*` | AJ API 호출(프로필·대화) 대상 도메인 — 백그라운드에서만 호출 |
+| optional `<all_urls>` | 사용자가 팝업에서 "모든 사이트에서 자동 등장"을 켤 때만 요청(선택 권한). 허용 시 캐릭터가 페이지마다 자동 등장 |
 
 원격 코드 실행 없음. 콘텐츠 스크립트 상시 주입 없음(사용자 동작 시 1회 실행).
 
@@ -61,8 +62,10 @@ Vibrexcup 회원의 개인 AI 스트리머(AJ)와 팝업에서 대화하고, 사
 ## 이미지 자산
 
 - 아이콘 128×128: `integrations/chrome-aj/icon128.png`
-- 스크린샷 1280×800: `store-assets/chrome/screenshot-1.png` (팝업 대화), `screenshot-2.png` (키 연결)
+- 스크린샷 1280×800 (24비트 PNG, 알파 없음): `store-assets/chrome/screenshot-1.png` — 실제 페이지 위 캐릭터·말풍선
 - 소형 프로모 타일 440×280: `store-assets/chrome/promo-small.png`
+- 마키 프로모 1400×560: `store-assets/chrome/promo-marquee.png`
+- 스토어 아이콘 128×128: `store-assets/chrome/store-icon-128.png`
 
 ## 게시 후 할 일
 
