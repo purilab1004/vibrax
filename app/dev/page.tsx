@@ -6,6 +6,8 @@ import { useLang } from '@/lib/i18n/context'
 
 const SITE = 'https://vibrexcup.com'
 const ZIP = '/downloads/vibrexcup-aj-chrome.zip'
+// Chrome 웹스토어 게시 후 실제 항목 URL 로 교체 (null 이면 '심사 중' 표시)
+const CHROME_STORE_URL: string | null = null
 
 const COPY = {
   ko: {
@@ -18,12 +20,14 @@ const COPY = {
       ['크롬 확장', '어느 사이트에서든 팝업을 열어 AJ와 대화. 지금 보는 페이지를 읽고 반응', '무료 · 하루 200회', '크롬 확장 키'],
       ['개발자 API', '웹·앱·디스코드 봇·자동화에서 REST로 호출. 스트리밍·목소리(TTS) 지원', '프롬코인 과금 · 채팅 1 · TTS 2', '개발자 API 키'],
     ] },
-    chrome: { h: '크롬 확장 설치', steps: [
+    chrome: { h: '크롬 확장 프로그램 설치', store: 'Chrome 웹스토어에서 추가', storePending: '웹스토어 심사 중 — 게시되면 여기 버튼이 활성화됩니다. 그때까지는 아래 "개발자 모드로 설치"를 쓰세요.', manual: '개발자 모드로 설치 (미리 써보기)', steps: [
+      ['Chrome 웹스토어에서 "Chrome에 추가"', '아래 버튼을 누르고 "Chrome에 추가"를 확인하면 툴바에 AJ 아이콘이 생깁니다. 별도 파일 다운로드 없음.'],
+      ['키 발급 후 붙여넣기', '내 정보 → AJ API → "크롬 확장 키 발급 (무료)" → 팝업의 키 입력란에 붙여넣고 연결.'],
+      ['대화 시작', '"지금 보는 페이지를 AJ에게 보여주기"를 켜면 페이지 제목·URL·본문 일부를 함께 보내 요약·의견을 받을 수 있어요.'],
+    ], manualSteps: [
       ['확장 파일 내려받기', 'zip을 받아 압축을 풀어 두세요. 폴더 안에 manifest.json 이 있으면 됩니다.'],
       ['개발자 모드 켜기', '크롬 주소창에 chrome://extensions 를 입력하고 우상단 "개발자 모드"를 켭니다.'],
       ['압축해제된 확장 프로그램을 로드', '버튼을 누르고 방금 푼 폴더를 선택하면 툴바에 AJ 아이콘이 생깁니다.'],
-      ['키 발급 후 붙여넣기', '내 정보 → AJ API → "크롬 확장 키 발급 (무료)" → 팝업의 키 입력란에 붙여넣고 연결.'],
-      ['대화 시작', '"지금 보는 페이지를 AJ에게 보여주기"를 켜면 페이지 제목·URL·본문 일부를 함께 보내 요약·의견을 받을 수 있어요.'],
     ], note: '키는 크롬 계정 동기화 저장소에만 저장되고 vibrexcup.com 외 어디에도 전송되지 않습니다. 크롬 확장 키는 확장 밖(curl·다른 앱)에서 쓰면 403 으로 거절됩니다.' },
     api: { h: '개발자 API 키', p: '프롬코인 잔액이 있어야 발급되고, 호출마다 차감됩니다. 키는 발급 시 한 번만 표시되니 안전한 곳에 보관하세요.', steps: [
       ['프롬코인 충전', '/credits 에서 팩을 구매합니다. 이미 잔액이 있으면 건너뜁니다.'],
@@ -62,7 +66,7 @@ X-AJ-Name: <AJ 이름(URL 인코딩)>   X-AJ-Charged: 1   X-AJ-Quota: 13/5000` }
       ['AJ가 어떤 걸 알고 있나요?', '내 정보에서 정한 AJ 이름·성격, 내가 게시한 게임 목록과 훅 문구, MLPilot에서 학습한 말투 예시, 그리고 요청에 넣어준 context 입니다. 게임 플레이 학습(정책·신경망)은 게임 안에서만 쓰입니다.'],
       ['다른 사람의 AJ도 부를 수 있나요?', '아니요. 키는 발급한 회원의 AJ에만 연결됩니다.'],
       ['키가 유출되면?', '내 정보 → AJ API 에서 즉시 폐기하고 새로 발급하세요. 폐기된 키는 바로 401 을 받습니다.'],
-      ['크롬 웹스토어에는 언제 올라오나요?', '지금은 개발자 모드로 설치하는 방식이고, 웹스토어 등록을 준비 중입니다. 설치 방식만 바뀌고 키·API는 그대로입니다.'],
+      ['크롬 웹스토어 심사 중이라는데 지금은 못 쓰나요?', '쓸 수 있어요. "개발자 모드로 설치"를 펼쳐 zip으로 설치하면 동일하게 동작합니다. 웹스토어에 게시되면 "Chrome에 추가" 한 번으로 설치되고, 키·API는 그대로입니다.'],
       ['웹훅이나 게임 이벤트 API는 없나요?', '현재는 프로필·채팅·TTS 세 가지입니다. 필요하신 엔드포인트는 파트너 페이지로 알려주세요.'],
     ] },
   },
@@ -76,12 +80,14 @@ X-AJ-Name: <AJ 이름(URL 인코딩)>   X-AJ-Charged: 1   X-AJ-Quota: 13/5000` }
       ['Chrome extension', 'Open the popup on any site and talk to your AJ. It can read the page you are on.', 'Free · 200 calls/day', 'Chrome extension key'],
       ['Developer API', 'Call REST from web, apps, Discord bots or automations. Streaming and voice (TTS) included.', 'Prompt credits · chat 1 · TTS 2', 'Developer API key'],
     ] },
-    chrome: { h: 'Install the Chrome extension', steps: [
+    chrome: { h: 'Install the Chrome extension', store: 'Add from the Chrome Web Store', storePending: 'Under Web Store review — this button goes live once published. Until then use "Install in developer mode" below.', manual: 'Install in developer mode (early access)', steps: [
+      ['"Add to Chrome" from the Web Store', 'Click the button and confirm "Add to Chrome". The AJ icon appears in your toolbar. No file download.'],
+      ['Issue a key and paste it', 'My Page → AJ API → "Issue Chrome extension key (free)" → paste it into the popup.'],
+      ['Start talking', 'Enable "Show AJ the current page" to send the tab title, URL and an excerpt for summaries and opinions.'],
+    ], manualSteps: [
       ['Download the extension', 'Grab the zip and unpack it. The folder should contain manifest.json.'],
       ['Turn on Developer mode', 'Go to chrome://extensions and switch on "Developer mode" at the top right.'],
       ['Load unpacked', 'Click "Load unpacked" and pick the folder. The AJ icon appears in your toolbar.'],
-      ['Issue a key and paste it', 'My Page → AJ API → "Issue Chrome extension key (free)" → paste it into the popup.'],
-      ['Start talking', 'Enable "Show AJ the current page" to send the tab title, URL and an excerpt for summaries and opinions.'],
     ], note: 'The key is stored only in Chrome sync storage and is sent to vibrexcup.com only. Chrome extension keys are rejected (403) outside the extension.' },
     api: { h: 'Developer API key', p: 'Requires a prompt-credit balance; every call is charged. The key is shown once at issue time.', steps: [
       ['Top up prompt credits', 'Buy a pack at /credits. Skip if you already have a balance.'],
@@ -120,7 +126,7 @@ X-AJ-Name: <url-encoded name>   X-AJ-Charged: 1   X-AJ-Quota: 13/5000` },
       ['What does my AJ know?', 'The name and personality you set in My Page, your published games and their hooks, tone examples learned in MLPilot, plus whatever context you pass. In-game play learning (policies, neural nets) stays inside games.'],
       ['Can I call someone else\'s AJ?', 'No. A key is bound to the member who issued it.'],
       ['My key leaked.', 'Revoke it in My Page → AJ API and issue a new one. Revoked keys get 401 immediately.'],
-      ['Chrome Web Store?', 'Developer-mode install for now; store listing is in progress. Only the install step changes.'],
+      ['It says the Web Store listing is in review — can I use it now?', 'Yes. Expand "Install in developer mode" and load the zip; it works the same. Once published, it is a one-click "Add to Chrome" and keys/API stay the same.'],
       ['Webhooks or game-event APIs?', 'Profile, chat and TTS for now. Tell us what you need on the Partner page.'],
     ] },
   },
@@ -186,7 +192,10 @@ export default function DevPage() {
         <h1 className="mt-2 text-[34px] md:text-[46px] leading-[1.08] font-extrabold tracking-tight text-[#241f17]">{c.heading}</h1>
         <p className="mt-3 text-[14.5px] text-[#4a4337] whitespace-pre-line max-w-2xl">{c.tagline}</p>
         <div className="mt-5 flex flex-wrap gap-2">
-          <a href={ZIP} className="inline-flex items-center h-11 px-5 rounded-xl bg-[#241f17] text-white text-[13.5px] font-bold hover:bg-[#3a332a]">⬇ {c.cta1}</a>
+          {CHROME_STORE_URL
+            ? <a href={CHROME_STORE_URL} target="_blank" rel="noopener" className="inline-flex items-center h-11 px-5 rounded-xl bg-[#241f17] text-white text-[13.5px] font-bold hover:bg-[#3a332a]">🧩 {c.chrome.store}</a>
+            : <span className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-[#241f17]/60 text-white text-[13.5px] font-bold cursor-default" title={c.chrome.storePending}>🧩 {c.chrome.store} <span className="text-[10px] font-pixel tracking-widest bg-white/20 rounded px-1.5 py-0.5">{lang === 'ko' ? '심사 중' : 'IN REVIEW'}</span></span>}
+          <a href={ZIP} className="inline-flex items-center h-11 px-5 rounded-xl bg-white border border-[#ddd3bf] text-[13.5px] font-semibold text-[#241f17] hover:border-[#2563eb] hover:text-[#2563eb]">⬇ {c.cta1}</a>
           <Link href="/profile#api" className="inline-flex items-center h-11 px-5 rounded-xl bg-white border border-[#ddd3bf] text-[13.5px] font-semibold text-[#241f17] hover:border-[#2563eb] hover:text-[#2563eb]">{c.cta2}</Link>
         </div>
       </section>
@@ -218,15 +227,27 @@ export default function DevPage() {
           {/* 크롬 확장 */}
           <section className="space-y-4">
             <H id="chrome">{c.chrome.h}</H>
+            {!CHROME_STORE_URL && <p className="text-[12.5px] text-[#b45309] bg-[#f59e0b]/10 border border-[#f59e0b]/30 rounded-xl px-4 py-3">{c.chrome.storePending}</p>}
             <ol className="space-y-3">
               {c.chrome.steps.map(([t, d], i) => (
                 <li key={t} className="flex gap-4 rounded-2xl border border-[#ebe4d6] bg-white p-4">
                   <span className="shrink-0 w-8 h-8 rounded-full bg-[#241f17] text-white text-[13px] font-black flex items-center justify-center">{i + 1}</span>
-                  <div><p className="text-[14.5px] font-bold text-[#241f17]">{t}{i === 0 && <> · <a href={ZIP} className="text-[#2563eb] underline">vibrexcup-aj-chrome.zip</a></>}</p><p className="mt-1 text-[13px] text-[#4a4337]">{d}</p></div>
+                  <div><p className="text-[14.5px] font-bold text-[#241f17]">{t}{i === 0 && CHROME_STORE_URL && <> · <a href={CHROME_STORE_URL} target="_blank" rel="noopener" className="text-[#2563eb] underline">Chrome Web Store</a></>}</p><p className="mt-1 text-[13px] text-[#4a4337]">{d}</p></div>
                 </li>
               ))}
             </ol>
-            <p className="text-[12.5px] text-[#857a68] bg-[#faf8f3] border border-[#ebe4d6] rounded-xl px-4 py-3">{c.chrome.note}</p>
+            <details className="group rounded-2xl border border-[#ebe4d6] bg-[#faf8f3] px-4 py-3">
+              <summary className="cursor-pointer list-none flex items-center justify-between text-[13.5px] font-semibold text-[#241f17]">{c.chrome.manual}<span className="text-[#9d9280] group-open:rotate-45 transition-transform">+</span></summary>
+              <ol className="mt-3 space-y-2">
+                {c.chrome.manualSteps.map(([t, d], i) => (
+                  <li key={t} className="flex gap-3">
+                    <span className="shrink-0 w-6 h-6 rounded-full bg-[#ddd3bf] text-[#241f17] text-[11px] font-black flex items-center justify-center">{i + 1}</span>
+                    <div><p className="text-[13.5px] font-semibold text-[#241f17]">{t}{i === 0 && <> · <a href={ZIP} className="text-[#2563eb] underline">vibrexcup-aj-chrome.zip</a></>}</p><p className="text-[12.5px] text-[#4a4337]">{d}</p></div>
+                  </li>
+                ))}
+              </ol>
+            </details>
+            <p className="text-[12.5px] text-[#857a68] bg-[#faf8f3] border border-[#ebe4d6] rounded-xl px-4 py-3">{c.chrome.note} <Link href="/dev/extension-privacy" className="text-[#2563eb] underline">{lang === 'ko' ? '확장 개인정보처리방침' : 'Extension privacy policy'}</Link></p>
           </section>
 
           {/* 개발자 키 */}

@@ -71,6 +71,9 @@ export async function authenticateApi(req: Request, scope: Scope, opts: { count?
   if (k.kind === 'chrome') {
     const origin = req.headers.get('origin') ?? ''
     if (!/^(chrome|moz|safari-web)-extension:\/\//.test(origin)) return apiError(403, 'this key works only inside the browser extension — use a developer API key for other clients')
+    // 웹스토어 게시 후 CHROME_EXTENSION_IDS(쉼표 구분) 를 설정하면 공식 확장 ID 에서 온 요청만 허용
+    const allowed = (process.env.CHROME_EXTENSION_IDS ?? '').split(',').map(x => x.trim()).filter(Boolean)
+    if (allowed.length && !allowed.some(idv => origin === `chrome-extension://${idv}`)) return apiError(403, 'unofficial extension build')
   }
   if (!rateLimit(`ajapi:${k.id}`, s.perMinute, 60_000).ok) return apiError(429, 'rate limited', { perMinute: s.perMinute })
   const dailyQuota = k.kind === 'chrome' ? s.chromeDailyQuota : s.apiDailyQuota
