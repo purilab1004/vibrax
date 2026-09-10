@@ -4,6 +4,7 @@
 // style 'simple': 예전 파란 한 줄 공지
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { BannerSetting } from '@/lib/supabase/types'
 
@@ -12,6 +13,7 @@ const DISMISS_KEY = 'vx_banner_dismissed'
 export default function HomeBanner() {
   const [banner, setBanner] = useState<BannerSetting | null>(null)
   const [closed, setClosed] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     const supabase = createClient()
@@ -24,7 +26,7 @@ export default function HomeBanner() {
       })
   }, [])
 
-  if (!banner || closed) return null
+  if (pathname !== '/' || !banner || closed) return null
   const dismiss = () => { setClosed(true); try { localStorage.setItem(DISMISS_KEY, String(banner.version ?? '')) } catch { /* ignore */ } }
   const isExternal = /^https?:\/\//.test(banner.link ?? '')
 

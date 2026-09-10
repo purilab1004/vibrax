@@ -3,6 +3,7 @@ import { Press_Start_2P } from 'next/font/google'
 import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
 import './globals.css'
 import NavBar from '@/components/NavBar'
+import HomeBanner from '@/components/HomeBanner'
 import MobileNav from '@/components/MobileNav'
 import NativeBridge from '@/components/NativeBridge'
 import SiteFooter from '@/components/SiteFooter'
@@ -225,6 +226,7 @@ export default async function RootLayout({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(navJsonLd) }} />
         <LangProvider initialLang={lang}>
+          <HomeBanner />
           <NavBar />
           <Suspense fallback={null}>
             <Sidebar newGenres={newGenres} channels={channels} tournament={tournament} />
