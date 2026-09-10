@@ -214,18 +214,24 @@ td code,th code{white-space:nowrap}
 <li class="l3"><a href="#s16-15">KPI</a></li>
 <li class="l3"><a href="#s16-16">리스크</a></li>
 <li class="l3"><a href="#s16-17">다음 단계로의 연결</a></li>
-<li class="l2"><a href="#s17"><span class="num">17</span>부록</a></li>
-<li class="l3"><a href="#s17-1">환경변수(이름만)</a></li>
-<li class="l3"><a href="#s17-2">LLM 사용 총괄</a></li>
-<li class="l3"><a href="#s17-3">주요 파일 인덱스</a></li>
-<li class="l3"><a href="#s17-4">용어집</a></li></ul></nav>
+<li class="l2"><a href="#s17"><span class="num">17</span>2026-09-10 변경 이력: 구현 완료·추가 기능</a></li>
+<li class="l3"><a href="#s17-1">AJ 외부 API와 키 2종</a></li>
+<li class="l3"><a href="#s17-2">크롬 확장 &quot;Vibrexcup AJ&quot; (웹스토어 심사 중, v1.2.0)</a></li>
+<li class="l3"><a href="#s17-3">인프라·운영 사실</a></li>
+<li class="l3"><a href="#s17-4">홈·About·관리자 UI</a></li>
+<li class="l3"><a href="#s17-5">기술부채 추가</a></li>
+<li class="l2"><a href="#s18"><span class="num">18</span>부록</a></li>
+<li class="l3"><a href="#s18-1">환경변수(이름만)</a></li>
+<li class="l3"><a href="#s18-2">LLM 사용 총괄</a></li>
+<li class="l3"><a href="#s18-3">주요 파일 인덱스</a></li>
+<li class="l3"><a href="#s18-4">용어집</a></li></ul></nav>
 </aside>
 <main class="doc" id="top">
   <header class="head">
     <p class="eyebrow">Purilab · Vibrexcup · 내부 문서</p>
     <h1>Vibrexcup 통합 설계·기획서</h1>
     <div class="intro"><p><strong>문서 성격</strong>: 현재 구축된 시스템 전체(설계·구현·운영)와 사업 기획(서비스 기획서 · BM 기획서 · 마케팅 기획서)을 한 파일에 담은 마스터 문서</p>
-<p><strong>기준일</strong>: 2026-09-09 (코드베이스 <code>master</code> 브랜치 실측 기준)</p>
+<p><strong>기준일</strong>: 2026-09-10 (코드베이스 <code>master</code> 브랜치 실측 기준 · 9-10 변경분은 17장에 정리)</p>
 <p><strong>운영사</strong>: Purilab(퓨리랩) · 도메인 <code>vibrexcup.com</code> · 문의 <code>dev@puritechlab.com</code></p>
 <p><strong>작성 방식</strong>: 소스 코드·마이그레이션·설계 스펙(<code>docs/superpowers/specs</code>)·기존 학습 가이드(<code>docs/vibrex-ai-learning-guide.html</code>)를 전수 조사해 작성. 코드에 없는 내용(제안·로드맵)은 &quot;제안&quot;으로 명시.</p>
 </div>
@@ -434,8 +440,18 @@ td code,th code{white-space:nowrap}
 <td>✅ (스토어 심사 대기)</td>
 </tr>
 <tr>
+<td>AI</td>
+<td>자율 게임 디자이너 루프(리포트→자동 수정→20% 카나리→지표 판정→채택/복귀), 크리에이터 opt-in 패널, 일 크론</td>
+<td>✅ (2026-09-09)</td>
+</tr>
+<tr>
+<td>외부</td>
+<td>AJ 외부 API(<code>/api/v1/aj</code>), 키 2종(크롬 무료·개발자 과금), 크롬 확장(페이지 위 캐릭터 + 사이드 패널 대화·미니게임·학습), DEV 가이드</td>
+<td>✅ (2026-09-10, 웹스토어 심사 중)</td>
+</tr>
+<tr>
 <td>미구현</td>
-<td>게임코인 충전, 크리에이터 현금 정산, AJ 방송 내 광고 삽입, 온체인 앵커링, Vercel Cron</td>
+<td>게임코인 충전, 크리에이터 현금 정산, AJ 방송 내 광고 삽입, 온체인 앵커링</td>
 <td>⏳</td>
 </tr>
 </tbody></table></div>
@@ -650,7 +666,11 @@ td code,th code{white-space:nowrap}
 </tr>
 <tr>
 <td>AJ</td>
-<td><code>/api/ai-bj/{chat,coach,learning}</code>, <code>/api/aj/analyze</code>, <code>/api/user-agent/chat</code>, <code>/api/games/curriculum</code></td>
+<td><code>/api/ai-bj/{chat,coach,learning}</code>, <code>/api/aj/analyze</code>, <code>/api/aj/design</code>(자율 튜닝 제어), <code>/api/user-agent/chat</code>, <code>/api/games/curriculum</code></td>
+</tr>
+<tr>
+<td>AJ 외부 API</td>
+<td><code>/api/v1/aj/{me,chat,tts}</code>(Bearer 키·CORS), <code>/api/aj-keys</code>(키 발급·폐기, 세션), <code>/api/cron/aj-design</code>(일 크론)</td>
 </tr>
 <tr>
 <td>광고</td>
@@ -666,7 +686,7 @@ td code,th code{white-space:nowrap}
 </tr>
 <tr>
 <td>서빙</td>
-<td><code>/play/[id]</code>, <code>/play/ext/[id]</code>, <code>/llms.txt</code>, <code>/llms-full.txt</code>, <code>/rss.xml</code>, <code>/robots.txt</code>, <code>/sitemap.xml</code>, <code>/manifest.webmanifest</code></td>
+<td><code>/play/[id]</code>(live/canary 버전 선택·버전 꼬리표), <code>/play/ext/[id]</code>, <code>/llms.txt</code>, <code>/llms-full.txt</code>, <code>/rss.xml</code>, <code>/robots.txt</code>, <code>/sitemap.xml</code>, <code>/manifest.webmanifest</code></td>
 </tr>
 </tbody></table></div>
 <h3 id="s3-5">데이터 모델</h3>
@@ -711,8 +731,8 @@ td code,th code{white-space:nowrap}
 </tr>
 <tr>
 <td>AJ/학습</td>
-<td><code>game_sessions</code>, <code>game_coin_events</code>, <code>aj_reports</code>, <code>aj_play_policies</code>(rules/params/brain/episodes/demos…), <code>aj_bot_curriculum</code>, <code>aj_learn_log</code>, <code>aj_talk_examples/rules/sources/feedback</code></td>
-<td></td>
+<td><code>game_sessions</code>(+<code>version_id</code>), <code>game_coin_events</code>, <code>aj_reports</code>, <code>aj_play_policies</code>(rules/params/brain/episodes/demos…), <code>aj_bot_curriculum</code>, <code>aj_learn_log</code>(+kind <code>design</code>), <code>aj_talk_examples/rules/sources/feedback</code>, <strong><code>aj_experiments</code></strong>(카나리 실험), <strong><code>aj_api_keys</code></strong>(외부 API 키, 해시만)</td>
+<td>2026-09-09/10 추가</td>
 </tr>
 <tr>
 <td>수익</td>
@@ -1338,6 +1358,11 @@ td code,th code{white-space:nowrap}
 <td>주간 AJ 리포트(예정)</td>
 </tr>
 <tr>
+<td><code>aj.autoDesign</code></td>
+<td>off</td>
+<td>자율 게임 튜닝(카나리 실험 자동 시작, 16장)</td>
+</tr>
+<tr>
 <td><code>payments.autoRevoke</code></td>
 <td>on</td>
 <td>환불·차지백 시 크레딧 자동 회수</td>
@@ -1555,6 +1580,13 @@ td code,th code{white-space:nowrap}
 <td>LLM 원가 라우팅 추정</td>
 <td>Bearer 키</td>
 <td>과금 미구현</td>
+</tr>
+<tr>
+<td>프롬코인(신규 용도)</td>
+<td><strong>AJ 개발자 API</strong></td>
+<td>외부 앱에서 내 AJ 호출(채팅 1코인·TTS 2코인/호출, 실패 시 자동 환불, 원장 reason <code>api</code>)</td>
+<td>개발자 키(잔액 필요)</td>
+<td><strong>실매출 원천 추가</strong> · 크롬 확장 키는 무료(일 200회)</td>
 </tr>
 </tbody></table></div>
 <h3 id="s11-2">가격표</h3>
@@ -1842,6 +1874,16 @@ td code,th code{white-space:nowrap}
 <td>심사 준비</td>
 </tr>
 <tr>
+<td><strong>크롬 웹스토어</strong></td>
+<td>확장 &quot;Vibrexcup AJ&quot;(캐릭터·사이드 패널·미니게임·학습), 등록 문안·스크린샷·프로모 타일(<code>store-assets/chrome/</code>), <code>/dev</code> 유입</td>
+<td>심사 제출(2026-09-10)</td>
+</tr>
+<tr>
+<td><strong>홈 프로모 배너</strong></td>
+<td>관리자 설정으로 켜는 상단 플로팅 배너(강조 문구·코드·CTA·닫기)</td>
+<td>✅</td>
+</tr>
+<tr>
 <td><strong>PWA</strong></td>
 <td>홈 화면 추가, 오프라인 셸, <code>utm_source=pwa</code></td>
 <td>✅</td>
@@ -2093,7 +2135,7 @@ td code,th code{white-space:nowrap}
 </tbody></table></div>
 <h2 id="s16"><span class="num">16</span>AGI 로드맵 ①: 자율 게임 디자이너 루프</h2>
 <blockquote>
-<p><strong>상태</strong>: 설계 스펙(미구현). 본 장은 코드에 없는 제안이며, 기존 부품(AJ 리포트·생성 API·세션 텔레메트리·복귀 규칙·자동화 스위치)을 어떻게 이어 붙이는지 정의한다.</p>
+<p><strong>상태</strong>: <strong>구현 완료(2026-09-09, 프로덕션 배포)</strong>. 구현 위치: <code>lib/aj/designer.ts</code>(루프), <code>lib/aj/design-score.ts</code>(판정 순수 함수·테스트 9개), <code>app/api/aj/design</code>(크리에이터 제어), <code>app/api/cron/aj-design</code>(매일 18:00 UTC), <code>components/aj/AutoDesignPanel.tsx</code>, <code>db/migrations/2026-09-09-aj-design.sql</code>. 스펙과의 차이: 검증 게이트 중 헤드리스 스모크는 미구현(구조·계약·안전 게이트만), 라이브 버전은 &quot;지정 live_version 과 최신 사람 버전 중 더 새로운 것&quot; 규칙(크리에이터 수동 수정이 항상 우선), 크리에이터가 실험 중 새 버전을 올리면 실험 자동 종료, 카나리 배정은 <code>/play</code> 쿠키 버킷(<code>vx_cb</code>).</p>
 </blockquote>
 <h3 id="s16-1">목표</h3>
 <p><strong>게임이 스스로 더 재미있어진다.</strong> AJ가 게시된 게임의 플레이 지표를 읽고, 개선 프롬프트를 만들고, 새 버전을 생성해 일부 플레이어에게 먼저 보여 준 뒤, 지표가 실제로 좋아졌을 때만 채택한다. 사람은 켜고 끄기, 예산, 거부권만 가진다.</p>
@@ -2424,10 +2466,123 @@ td code,th code{white-space:nowrap}
 </tbody></table></div>
 <h3 id="s16-17">다음 단계로의 연결</h3>
 <p>이 루프가 돌면 <code>aj_experiments</code>에 &quot;어떤 가설이 어떤 장르에서 효과가 있었나&quot;가 쌓인다. 이는 (a) MLPilot v1 템플릿의 기본 난이도 곡선 개선, (b) 시스템 프롬프트의 장르별 튜닝 지침 자동 갱신, (c) AGI 로드맵 ②(게임 간 전이 두뇌)에서 새 버전에도 두뇌를 유지하는 규칙의 근거 데이터가 된다.</p>
-<h2 id="s17"><span class="num">17</span>부록</h2>
-<h3 id="s17-1">환경변수(이름만)</h3>
-<p><code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code>, <code>ANTHROPIC_API_KEY</code>, <code>NEXT_PUBLIC_PADDLE_ENV</code>, <code>NEXT_PUBLIC_PADDLE_CLIENT_TOKEN</code>, <code>NEXT_PUBLIC_PADDLE_PRICE_SMALL/MEDIUM/LARGE</code>, <code>PADDLE_WEBHOOK_SECRET</code>, <code>PADDLE_API_KEY</code>, <code>PADDLE_SANDBOX_API_KEY</code>, <code>TOKENPILOT_API_KEYS</code>, <code>RESEND_API_KEY</code>, <code>MAIL_FROM</code>, <code>ADMIN_NOTIFY_EMAIL</code>, <code>ELEVENLABS_API_KEY</code>, <code>IP_HASH_SALT</code>, <code>ADMIN_HOST</code>, <code>NEXT_PUBLIC_APP_MODE</code>, <code>NODE_ENV</code>.</p>
-<h3 id="s17-2">LLM 사용 총괄</h3>
+<h2 id="s17"><span class="num">17</span>2026-09-10 변경 이력: 구현 완료·추가 기능</h2>
+<blockquote>
+<p>16장 작성 이후 이틀간 실제로 배포된 것들. 본문 각 장의 표에도 반영했고, 여기에는 설계 결정과 운영 사실만 모아 둔다.</p>
+</blockquote>
+<h3 id="s17-1">AJ 외부 API와 키 2종</h3>
+<div class="tablewrap"><table><thead><tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead><tbody><tr>
+<td>엔드포인트</td>
+<td><code>GET /api/v1/aj/me</code>(프로필·아바타 3프레임·내 게임·학습 통계·할당량), <code>POST /api/v1/aj/chat</code>(스트리밍, <code>history</code>·<code>context{title,url,text}</code>·<code>mode</code>), <code>POST /api/v1/aj/tts</code>(mp3)</td>
+</tr>
+<tr>
+<td>인증</td>
+<td><code>Authorization: Bearer vxaj_…</code>. 키 원문은 저장하지 않고 sha256 해시만(<code>aj_api_keys</code>). 발급 시 1회만 표시</td>
+</tr>
+<tr>
+<td>크롬 확장 키</td>
+<td>무료, 회원당 1개, 일 200회. 확장에서 온 요청만 통과 — Origin <code>chrome-extension://</code> <strong>또는</strong> <code>X-Vibrex-Ext</code> 헤더(확장의 GET 요청엔 Origin이 안 붙음). 웹스토어 게시 후 <code>CHROME_EXTENSION_IDS</code>로 공식 ID만 허용 가능</td>
+</tr>
+<tr>
+<td>개발자 API 키</td>
+<td>프롬코인 잔액이 있어야 발급, 호출마다 차감(채팅 1·TTS 2, <code>site_settings.aj_api</code>로 조정), LLM/TTS 실패 시 자동 환불(원장 <code>+N</code>, ref <code>…:refund</code>), 일 5,000회·분당 30회</td>
+</tr>
+<tr>
+<td>대화 모드</td>
+<td><code>chat</code>(1~3문장) · <code>quiz</code>(페이지로 3문제 출제·채점) · <code>explain</code>(중학생 눈높이 설명) · <code>game</code>(미니게임 훈수). 모드별 <code>max_tokens</code> 220/700</td>
+</tr>
+<tr>
+<td>페르소나</td>
+<td>회원이 정한 AJ 이름·성격 + 게시한 게임(임베드 URL 포함) + MLPilot 말투 KB + 요청 컨텍스트. 상대 언어로 답함</td>
+</tr>
+<tr>
+<td>관리 UI</td>
+<td>내 정보 → <strong>AJ API</strong> 탭(발급·폐기·사용량), <code>/dev</code> 개발자 가이드(레퍼런스·예제·요금·FAQ)</td>
+</tr>
+<tr>
+<td>마이그레이션</td>
+<td><code>db/migrations/2026-09-10-aj-api-keys.sql</code> — <code>aj_api_keys</code>, <code>aj_api_hit()</code>(일 할당량 원자 카운트), <code>spend_credits_for()</code>(service role 과금), <code>credit_ledger.reason</code> 에 <code>api</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="s17-2">크롬 확장 &quot;Vibrexcup AJ&quot; (웹스토어 심사 중, v1.2.0)</h3>
+<ul>
+<li><strong>페이지 위 캐릭터</strong>(<code>companion.js</code>, Shadow DOM): 회원 점토 아바타 프레임(기본/깜빡임/말하기)이 바닥을 걷고·점프하고·깜빡임. 클릭하면 말풍선 대화, 드래그로 이동(위치 기억), 브라우저 음성(Web Speech) 옵션, &quot;페이지 열면 한마디&quot; 옵션.</li>
+<li><strong>사이드 패널</strong>(Chrome Side Panel API): 💬 대화 / 🎮 게임(내 게임·인기 게임을 패널 안 iframe으로 플레이, AJ가 15초 뒤 훈수·게임오버·클리어에 반응) / 📚 학습(현재 페이지로 &quot;쉽게 설명&quot;·&quot;퀴즈 3문제&quot; 후 답 채점).</li>
+<li><strong>아키텍처</strong>: 모든 API 호출은 백그라운드 서비스 워커가 대행(키 비노출, 아바타 이미지 data URL 캐시로 사이트 CSP 무관). 페이지 본문 읽기와 &quot;모든 사이트 자동 등장&quot;은 선택 권한 <code>&lt;all_urls&gt;</code>를 사용자가 켤 때만 요청.</li>
+<li><strong>서버 변경</strong>: <code>/play</code>·<code>/play/ext</code> CSP <code>frame-ancestors</code>에 <code>chrome-extension:</code> 허용, 카탈로그·프로필에 <code>embed_url</code>(내부 <code>/play/{project}</code>, 외부는 <code>/play/ext/{id}</code> 프록시).</li>
+<li><strong>스토어 자산</strong>: <code>store-assets/chrome/</code>(업로드 zip, 문안 LISTING.md, 스크린샷 1280×800·타일 440×280·마키 1400×560은 알파 없는 PNG, 아이콘 128), 개인정보처리방침 <code>/dev/extension-privacy</code>.</li>
+<li><strong>E2E</strong>: 브랜드 Chrome 137+는 <code>--load-extension</code>을 막으므로 Playwright 번들 Chromium + manifest <code>key</code>로 ID 고정해 검증.</li>
+<li>게시 후 할 일: 스토어 URL → <code>app/dev/page.tsx</code>의 <code>CHROME_STORE_URL</code>, 확장 ID → Vercel <code>CHROME_EXTENSION_IDS</code>.</li>
+</ul>
+<h3 id="s17-3">인프라·운영 사실</h3>
+<div class="tablewrap"><table><thead><tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead><tbody><tr>
+<td>리전</td>
+<td>Supabase DB = 싱가포르(ap-southeast-1). Vercel 함수 리전을 iad1 → <strong>sin1</strong>로 이동(<code>vercel.json regions</code>). 한국 TTFB: <code>/play</code> 1.4s→0.35s, <code>/games</code> 0.6~1.3s→0.35s, 홈 0.8s→0.45s</td>
+</tr>
+<tr>
+<td>플랜</td>
+<td>Vercel Hobby(Pro 업그레이드 논의). 함수 메모리 standard, Fluid on</td>
+</tr>
+<tr>
+<td>크론</td>
+<td><code>vercel.json crons</code> — <code>/api/cron/aj-design</code> 매일 18:00 UTC, 인증 <code>CRON_SECRET</code></td>
+</tr>
+<tr>
+<td>장애 발견</td>
+<td>프로덕션 <code>ANTHROPIC_API_KEY</code>가 빈 값이라 8/27 이후 LLM 기능 전부 실패 중이었음(템플릿 경로가 가려 미발견). 9/10 새 키로 교체·복구. 키가 대화창에 붙여넣어졌으므로 안정화 후 로테이션 권고</td>
+</tr>
+<tr>
+<td>보류</td>
+<td><code>ELEVENLABS_API_KEY</code>가 권한 제한 키라 TTS 401 → 게임 내 AJ 목소리·<code>/api/v1/aj/tts</code> 502. Text to Speech 권한 있는 새 키 필요(사용자 보류)</td>
+</tr>
+<tr>
+<td>캐시</td>
+<td>페이지 전부 dynamic(<code>no-store</code>) — 레이아웃이 세션을 읽음. 엣지 캐시는 사용자 의존 부분을 클라이언트로 빼야 가능(미착수)</td>
+</tr>
+</tbody></table></div>
+<h3 id="s17-4">홈·About·관리자 UI</h3>
+<ul>
+<li>홈 상단 <strong>프로모 배너</strong>: 관리자 <code>/admin/settings</code>에서 스타일(프로모/심플)·문구(<code>{highlight}</code> <code>{code}</code> 자리표시자)·강조·코드·버튼·링크·닫기 허용 편집. 네비 아래 중앙 플로팅 카드로 위에서 내려오는 애니메이션, 닫기는 저장 버전별로 기억.</li>
+<li>홈 히어로 <strong>&quot;다음 플랫폼의 게임과 크리에이터에게서 영감을 받았습니다&quot;</strong> 로고 마퀴(TOP AI AVATAR 위, 반대 방향, simple-icons CC0).</li>
+<li>About <strong>대표 인사</strong> 섹션(&quot;벌다&quot; 다음): 사진·한/영 메시지·직함·이메일.</li>
+<li>게임 화면 접힌 채팅: 최근 3줄 항상 선명(px 마스크), 시간 페이드 제외.</li>
+<li><code>/admin/aj</code>: 게임 칩 줄바꿈(12개 초과는 &quot;+N개 더 보기&quot;). 자동화 패널: 검토 대기·오류 항목의 <strong>내용·사유·확인 버튼</strong> 표시(예: &quot;알림 메일 미발송 — 메일 서비스 미설정&quot;).</li>
+<li><strong>DEV 메뉴</strong>(네비·사이드바·사이트맵) 신설.</li>
+</ul>
+<h3 id="s17-5">기술부채 추가</h3>
+<div class="tablewrap"><table><thead><tr>
+<th>항목</th>
+<th>메모</th>
+</tr>
+</thead><tbody><tr>
+<td>크롬 키 식별이 휴리스틱(Origin 또는 헤더)</td>
+<td>curl로 흉내 가능. 남용 억지력 목적. 게시 후 <code>CHROME_EXTENSION_IDS</code>로 강화</td>
+</tr>
+<tr>
+<td>회원가입 알림 메일 미설정(<code>RESEND_API_KEY</code> 없음)</td>
+<td>신청서 접수 알림이 매번 &quot;검토 대기&quot;로 쌓임 → Resend 키 설정 필요</td>
+</tr>
+<tr>
+<td>사이드 패널 게임 탭의 외부 게임은 <code>/play/ext</code> 프록시 의존</td>
+<td>프록시가 502면 iframe 빈 화면. 원본 URL 폴백 UI 미구현</td>
+</tr>
+<tr>
+<td><code>/dev</code>·문서에 &quot;심사 중&quot; 하드코딩</td>
+<td>게시 시 <code>CHROME_STORE_URL</code> 수동 교체</td>
+</tr>
+</tbody></table></div>
+<h2 id="s18"><span class="num">18</span>부록</h2>
+<h3 id="s18-1">환경변수(이름만)</h3>
+<p><code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code>, <code>ANTHROPIC_API_KEY</code>, <code>NEXT_PUBLIC_PADDLE_ENV</code>, <code>NEXT_PUBLIC_PADDLE_CLIENT_TOKEN</code>, <code>NEXT_PUBLIC_PADDLE_PRICE_SMALL/MEDIUM/LARGE</code>, <code>PADDLE_WEBHOOK_SECRET</code>, <code>PADDLE_API_KEY</code>, <code>PADDLE_SANDBOX_API_KEY</code>, <code>TOKENPILOT_API_KEYS</code>, <code>RESEND_API_KEY</code>, <code>MAIL_FROM</code>, <code>ADMIN_NOTIFY_EMAIL</code>, <code>ELEVENLABS_API_KEY</code>, <code>IP_HASH_SALT</code>, <code>ADMIN_HOST</code>, <code>NEXT_PUBLIC_APP_MODE</code>, <code>NODE_ENV</code>, <code>CRON_SECRET</code>(크론 인증, 2026-09-09), <code>CHROME_EXTENSION_IDS</code>(선택, 웹스토어 게시 후).</p>
+<h3 id="s18-2">LLM 사용 총괄</h3>
 <div class="tablewrap"><table><thead><tr>
 <th>용도</th>
 <th>모델</th>
@@ -2500,7 +2655,7 @@ td code,th code{white-space:nowrap}
 </tr>
 </tbody></table></div>
 <p>단가(USD/1M tok): sonnet-5 3/15, haiku-4.5 1/5, opus-5 5/25. <code>KRW_PER_USD 1380</code>.</p>
-<h3 id="s17-3">주요 파일 인덱스</h3>
+<h3 id="s18-3">주요 파일 인덱스</h3>
 <div class="tablewrap"><table><thead><tr>
 <th>영역</th>
 <th>경로</th>
@@ -2562,7 +2717,7 @@ td code,th code{white-space:nowrap}
 <td><code>docs/superpowers/specs/*</code>, <code>docs/superpowers/plans/*</code></td>
 </tr>
 </tbody></table></div>
-<h3 id="s17-4">용어집</h3>
+<h3 id="s18-4">용어집</h3>
 <div class="tablewrap"><table><thead><tr>
 <th>용어</th>
 <th>뜻</th>

@@ -1,7 +1,7 @@
 # Vibrexcup 통합 설계·기획서
 
 > **문서 성격**: 현재 구축된 시스템 전체(설계·구현·운영)와 사업 기획(서비스 기획서 · BM 기획서 · 마케팅 기획서)을 한 파일에 담은 마스터 문서
-> **기준일**: 2026-09-09 (코드베이스 `master` 브랜치 실측 기준)
+> **기준일**: 2026-09-10 (코드베이스 `master` 브랜치 실측 기준 · 9-10 변경분은 17장에 정리)
 > **운영사**: Purilab(퓨리랩) · 도메인 `vibrexcup.com` · 문의 `dev@puritechlab.com`
 > **작성 방식**: 소스 코드·마이그레이션·설계 스펙(`docs/superpowers/specs`)·기존 학습 가이드(`docs/vibrex-ai-learning-guide.html`)를 전수 조사해 작성. 코드에 없는 내용(제안·로드맵)은 "제안"으로 명시.
 
@@ -25,7 +25,8 @@
 14. [운영·배포·보안·법무](#14-운영배포보안법무)
 15. [리스크·기술부채·로드맵](#15-리스크기술부채로드맵)
 16. [AGI 로드맵 ①: 자율 게임 디자이너 루프](#16-agi-로드맵--자율-게임-디자이너-루프)
-17. [부록](#17-부록)
+17. [2026-09-10 변경 이력: 구현 완료·추가 기능](#17-2026-09-10-변경-이력-구현-완료추가-기능)
+18. [부록](#18-부록)
 
 ---
 
@@ -122,7 +123,9 @@ flowchart LR
 | 성장 | 토너먼트 4부문 신청, 파트너 인바운드, 블로그(자동 출시 노트), 공지, SEO·AI SEO(llms.txt) | ✅ |
 | 운영 | 관리자 22개 화면, AI 대시보드(automation 13 스위치), 원가 대시보드, 보안·해시체인·로그 | ✅ |
 | 앱 | Expo WebView 셸(iOS/Android), 구글 로그인 딥링크, 네이티브 탭바, 스토어 정책 대응 | ✅ (스토어 심사 대기) |
-| 미구현 | 게임코인 충전, 크리에이터 현금 정산, AJ 방송 내 광고 삽입, 온체인 앵커링, Vercel Cron | ⏳ |
+| AI | 자율 게임 디자이너 루프(리포트→자동 수정→20% 카나리→지표 판정→채택/복귀), 크리에이터 opt-in 패널, 일 크론 | ✅ (2026-09-09) |
+| 외부 | AJ 외부 API(`/api/v1/aj`), 키 2종(크롬 무료·개발자 과금), 크롬 확장(페이지 위 캐릭터 + 사이드 패널 대화·미니게임·학습), DEV 가이드 | ✅ (2026-09-10, 웹스토어 심사 중) |
+| 미구현 | 게임코인 충전, 크리에이터 현금 정산, AJ 방송 내 광고 삽입, 온체인 앵커링 | ⏳ |
 
 ### 2.5 사용자 여정 플로우차트
 
@@ -307,11 +310,12 @@ sequenceDiagram
 | 관리자 | `/api/admin/{access,automation,broadcasts,costs,legal,llmpilot,logs,members,mlpilot,mlpilot/talk,payments,roles,security,templates,tokenpilot}` |
 | 인증 | `/api/auth/{signup,forgot,consent}`, `/auth/callback` |
 | 스튜디오·LLM | `/api/studio/{generate,plan,explain}`, `/api/teaser`, `/api/avatar/from-image`, `/api/tts`, `/api/tokenpilot/estimate` |
-| AJ | `/api/ai-bj/{chat,coach,learning}`, `/api/aj/analyze`, `/api/user-agent/chat`, `/api/games/curriculum` |
+| AJ | `/api/ai-bj/{chat,coach,learning}`, `/api/aj/analyze`, `/api/aj/design`(자율 튜닝 제어), `/api/user-agent/chat`, `/api/games/curriculum` |
+| AJ 외부 API | `/api/v1/aj/{me,chat,tts}`(Bearer 키·CORS), `/api/aj-keys`(키 발급·폐기, 세션), `/api/cron/aj-design`(일 크론) |
 | 광고 | `/api/ads/{auto,campaigns,serve,event}` |
 | 콘텐츠 | `/api/blog/{list,game-post}`, `/api/games/screen`, `/api/catalog`, `/api/applications/notify`, `/api/map`, `/api/mlpilot/ingest`, `/api/payments/receipt` |
 | 로깅·결제 | `/api/log/{visit,error}`, `/api/geo/track`, `/api/webhooks/paddle` |
-| 서빙 | `/play/[id]`, `/play/ext/[id]`, `/llms.txt`, `/llms-full.txt`, `/rss.xml`, `/robots.txt`, `/sitemap.xml`, `/manifest.webmanifest` |
+| 서빙 | `/play/[id]`(live/canary 버전 선택·버전 꼬리표), `/play/ext/[id]`, `/llms.txt`, `/llms-full.txt`, `/rss.xml`, `/robots.txt`, `/sitemap.xml`, `/manifest.webmanifest` |
 
 ### 3.5 데이터 모델
 
@@ -347,7 +351,7 @@ erDiagram
 |---|---|---|
 | 코어 | `profiles`(vcoin default 1000, role, admin_role_id, banned_at, avatar_config, 동의 시각), `games`(coin_cost, teaser/teaser_en, studio_project_id, country), `game_likes`, `game_views` | 선행 테이블, ALTER로 확장 |
 | 스튜디오 | `studio_projects`, `studio_messages`, `studio_versions`(html, notes), `credit_ledger`(합산 잔액, reason CHECK 7종), `studio_templates`, `prompt_mappings`, `llm_usage` | |
-| AJ/학습 | `game_sessions`, `game_coin_events`, `aj_reports`, `aj_play_policies`(rules/params/brain/episodes/demos…), `aj_bot_curriculum`, `aj_learn_log`, `aj_talk_examples/rules/sources/feedback` | |
+| AJ/학습 | `game_sessions`(+`version_id`), `game_coin_events`, `aj_reports`, `aj_play_policies`(rules/params/brain/episodes/demos…), `aj_bot_curriculum`, `aj_learn_log`(+kind `design`), `aj_talk_examples/rules/sources/feedback`, **`aj_experiments`**(카나리 실험), **`aj_api_keys`**(외부 API 키, 해시만) | 2026-09-09/10 추가 |
 | 수익 | `payments`, `payment_events`, `ad_campaigns`, `ad_events`, `game_coin_ledger`(해시체인), `chain_blocks`, `wallets` | |
 | 콘텐츠 | `blog_categories`, `blog_posts`, `blog_post_likes`, `notices`, `legal_docs`, `site_settings`(kv) | |
 | 성장 | `tournament_applications`, `partner_applications`, `game_shares`, `geo_events` | |
@@ -735,6 +739,7 @@ sequenceDiagram
 | `adpilot.autoCreative` | on | 광고 크리에이티브 자동 |
 | `blog.autoPost` | on | 게임 출시 블로그 자동 게시 |
 | `aj.autoReport` | off | 주간 AJ 리포트(예정) |
+| `aj.autoDesign` | off | 자율 게임 튜닝(카나리 실험 자동 시작, 16장) |
 | `payments.autoRevoke` | on | 환불·차지백 시 크레딧 자동 회수 |
 | `broadcasts.autoOff` | off | 24h 초과 방송 자동 종료 |
 | `security.autoBlock` | off | 이상 트래픽 자동 차단 |
@@ -801,6 +806,7 @@ sequenceDiagram
 | `credit_ledger` | **프롬코인(Credits)** | 생성·수정·템플릿 로드(1회 10) | Paddle 결제, 가입 30, admin_adjust | **유일한 실매출** |
 | `profiles.vcoin` | **게임코인(VC)** | 코인 넣기(게임당 1~100), 광고 예산 | 가입 1,000, 캠페인 환급 | 미판매(해시체인 기록, 토큰 스냅샷 대비) |
 | 외부 B2B | **TokenPilot API** | LLM 원가 라우팅 추정 | Bearer 키 | 과금 미구현 |
+| 프롬코인(신규 용도) | **AJ 개발자 API** | 외부 앱에서 내 AJ 호출(채팅 1코인·TTS 2코인/호출, 실패 시 자동 환불, 원장 reason `api`) | 개발자 키(잔액 필요) | **실매출 원천 추가** · 크롬 확장 키는 무료(일 200회) |
 
 ### 11.2 가격표
 
@@ -928,6 +934,8 @@ flowchart LR
 | **콘텐츠 자동화** | 게임 출시 자동 블로그, 시스템 커밋 요약 블로그(스크립트), 티저 자동 생성 | ✅ |
 | **소셜 공유** | OG 이미지, 카드 공유 버튼(`navigator.share`/클립보드), 공유 컬렉션 | ✅ |
 | **앱 스토어** | Play Console 자산(아이콘·기능 그래픽·스크린샷·설명), iOS 워크스페이스 | 심사 준비 |
+| **크롬 웹스토어** | 확장 "Vibrexcup AJ"(캐릭터·사이드 패널·미니게임·학습), 등록 문안·스크린샷·프로모 타일(`store-assets/chrome/`), `/dev` 유입 | 심사 제출(2026-09-10) |
+| **홈 프로모 배너** | 관리자 설정으로 켜는 상단 플로팅 배너(강조 문구·코드·CTA·닫기) | ✅ |
 | **PWA** | 홈 화면 추가, 오프라인 셸, `utm_source=pwa` | ✅ |
 | **토너먼트** | 4부문 신청 퍼널(가입 유도), 스폰서 명단 | OPENING SOON |
 | **파트너/교육** | 학교·기업 인바운드, 3일 내 응답 SLA | ✅ |
@@ -1034,7 +1042,7 @@ flowchart LR
 
 ## 16. AGI 로드맵 ①: 자율 게임 디자이너 루프
 
-> **상태**: 설계 스펙(미구현). 본 장은 코드에 없는 제안이며, 기존 부품(AJ 리포트·생성 API·세션 텔레메트리·복귀 규칙·자동화 스위치)을 어떻게 이어 붙이는지 정의한다.
+> **상태**: **구현 완료(2026-09-09, 프로덕션 배포)**. 구현 위치: `lib/aj/designer.ts`(루프), `lib/aj/design-score.ts`(판정 순수 함수·테스트 9개), `app/api/aj/design`(크리에이터 제어), `app/api/cron/aj-design`(매일 18:00 UTC), `components/aj/AutoDesignPanel.tsx`, `db/migrations/2026-09-09-aj-design.sql`. 스펙과의 차이: 검증 게이트 중 헤드리스 스모크는 미구현(구조·계약·안전 게이트만), 라이브 버전은 "지정 live_version 과 최신 사람 버전 중 더 새로운 것" 규칙(크리에이터 수동 수정이 항상 우선), 크리에이터가 실험 중 새 버전을 올리면 실험 자동 종료, 카나리 배정은 `/play` 쿠키 버킷(`vx_cb`).
 
 ### 16.1 목표
 
@@ -1241,13 +1249,71 @@ sequenceDiagram
 
 ---
 
-## 17. 부록
+## 17. 2026-09-10 변경 이력: 구현 완료·추가 기능
 
-### 17.1 환경변수(이름만)
+> 16장 작성 이후 이틀간 실제로 배포된 것들. 본문 각 장의 표에도 반영했고, 여기에는 설계 결정과 운영 사실만 모아 둔다.
 
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_PADDLE_ENV`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_PRICE_SMALL/MEDIUM/LARGE`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_API_KEY`, `PADDLE_SANDBOX_API_KEY`, `TOKENPILOT_API_KEYS`, `RESEND_API_KEY`, `MAIL_FROM`, `ADMIN_NOTIFY_EMAIL`, `ELEVENLABS_API_KEY`, `IP_HASH_SALT`, `ADMIN_HOST`, `NEXT_PUBLIC_APP_MODE`, `NODE_ENV`.
+### 17.1 AJ 외부 API와 키 2종
 
-### 17.2 LLM 사용 총괄
+| 항목 | 내용 |
+|---|---|
+| 엔드포인트 | `GET /api/v1/aj/me`(프로필·아바타 3프레임·내 게임·학습 통계·할당량), `POST /api/v1/aj/chat`(스트리밍, `history`·`context{title,url,text}`·`mode`), `POST /api/v1/aj/tts`(mp3) |
+| 인증 | `Authorization: Bearer vxaj_…`. 키 원문은 저장하지 않고 sha256 해시만(`aj_api_keys`). 발급 시 1회만 표시 |
+| 크롬 확장 키 | 무료, 회원당 1개, 일 200회. 확장에서 온 요청만 통과 — Origin `chrome-extension://` **또는** `X-Vibrex-Ext` 헤더(확장의 GET 요청엔 Origin이 안 붙음). 웹스토어 게시 후 `CHROME_EXTENSION_IDS`로 공식 ID만 허용 가능 |
+| 개발자 API 키 | 프롬코인 잔액이 있어야 발급, 호출마다 차감(채팅 1·TTS 2, `site_settings.aj_api`로 조정), LLM/TTS 실패 시 자동 환불(원장 `+N`, ref `…:refund`), 일 5,000회·분당 30회 |
+| 대화 모드 | `chat`(1~3문장) · `quiz`(페이지로 3문제 출제·채점) · `explain`(중학생 눈높이 설명) · `game`(미니게임 훈수). 모드별 `max_tokens` 220/700 |
+| 페르소나 | 회원이 정한 AJ 이름·성격 + 게시한 게임(임베드 URL 포함) + MLPilot 말투 KB + 요청 컨텍스트. 상대 언어로 답함 |
+| 관리 UI | 내 정보 → **AJ API** 탭(발급·폐기·사용량), `/dev` 개발자 가이드(레퍼런스·예제·요금·FAQ) |
+| 마이그레이션 | `db/migrations/2026-09-10-aj-api-keys.sql` — `aj_api_keys`, `aj_api_hit()`(일 할당량 원자 카운트), `spend_credits_for()`(service role 과금), `credit_ledger.reason` 에 `api` |
+
+### 17.2 크롬 확장 "Vibrexcup AJ" (웹스토어 심사 중, v1.2.0)
+
+- **페이지 위 캐릭터**(`companion.js`, Shadow DOM): 회원 점토 아바타 프레임(기본/깜빡임/말하기)이 바닥을 걷고·점프하고·깜빡임. 클릭하면 말풍선 대화, 드래그로 이동(위치 기억), 브라우저 음성(Web Speech) 옵션, "페이지 열면 한마디" 옵션.
+- **사이드 패널**(Chrome Side Panel API): 💬 대화 / 🎮 게임(내 게임·인기 게임을 패널 안 iframe으로 플레이, AJ가 15초 뒤 훈수·게임오버·클리어에 반응) / 📚 학습(현재 페이지로 "쉽게 설명"·"퀴즈 3문제" 후 답 채점).
+- **아키텍처**: 모든 API 호출은 백그라운드 서비스 워커가 대행(키 비노출, 아바타 이미지 data URL 캐시로 사이트 CSP 무관). 페이지 본문 읽기와 "모든 사이트 자동 등장"은 선택 권한 `<all_urls>`를 사용자가 켤 때만 요청.
+- **서버 변경**: `/play`·`/play/ext` CSP `frame-ancestors`에 `chrome-extension:` 허용, 카탈로그·프로필에 `embed_url`(내부 `/play/{project}`, 외부는 `/play/ext/{id}` 프록시).
+- **스토어 자산**: `store-assets/chrome/`(업로드 zip, 문안 LISTING.md, 스크린샷 1280×800·타일 440×280·마키 1400×560은 알파 없는 PNG, 아이콘 128), 개인정보처리방침 `/dev/extension-privacy`.
+- **E2E**: 브랜드 Chrome 137+는 `--load-extension`을 막으므로 Playwright 번들 Chromium + manifest `key`로 ID 고정해 검증.
+- 게시 후 할 일: 스토어 URL → `app/dev/page.tsx`의 `CHROME_STORE_URL`, 확장 ID → Vercel `CHROME_EXTENSION_IDS`.
+
+### 17.3 인프라·운영 사실
+
+| 항목 | 내용 |
+|---|---|
+| 리전 | Supabase DB = 싱가포르(ap-southeast-1). Vercel 함수 리전을 iad1 → **sin1**로 이동(`vercel.json regions`). 한국 TTFB: `/play` 1.4s→0.35s, `/games` 0.6~1.3s→0.35s, 홈 0.8s→0.45s |
+| 플랜 | Vercel Hobby(Pro 업그레이드 논의). 함수 메모리 standard, Fluid on |
+| 크론 | `vercel.json crons` — `/api/cron/aj-design` 매일 18:00 UTC, 인증 `CRON_SECRET` |
+| 장애 발견 | 프로덕션 `ANTHROPIC_API_KEY`가 빈 값이라 8/27 이후 LLM 기능 전부 실패 중이었음(템플릿 경로가 가려 미발견). 9/10 새 키로 교체·복구. 키가 대화창에 붙여넣어졌으므로 안정화 후 로테이션 권고 |
+| 보류 | `ELEVENLABS_API_KEY`가 권한 제한 키라 TTS 401 → 게임 내 AJ 목소리·`/api/v1/aj/tts` 502. Text to Speech 권한 있는 새 키 필요(사용자 보류) |
+| 캐시 | 페이지 전부 dynamic(`no-store`) — 레이아웃이 세션을 읽음. 엣지 캐시는 사용자 의존 부분을 클라이언트로 빼야 가능(미착수) |
+
+### 17.4 홈·About·관리자 UI
+
+- 홈 상단 **프로모 배너**: 관리자 `/admin/settings`에서 스타일(프로모/심플)·문구(`{highlight}` `{code}` 자리표시자)·강조·코드·버튼·링크·닫기 허용 편집. 네비 아래 중앙 플로팅 카드로 위에서 내려오는 애니메이션, 닫기는 저장 버전별로 기억.
+- 홈 히어로 **"다음 플랫폼의 게임과 크리에이터에게서 영감을 받았습니다"** 로고 마퀴(TOP AI AVATAR 위, 반대 방향, simple-icons CC0).
+- About **대표 인사** 섹션("벌다" 다음): 사진·한/영 메시지·직함·이메일.
+- 게임 화면 접힌 채팅: 최근 3줄 항상 선명(px 마스크), 시간 페이드 제외.
+- `/admin/aj`: 게임 칩 줄바꿈(12개 초과는 "+N개 더 보기"). 자동화 패널: 검토 대기·오류 항목의 **내용·사유·확인 버튼** 표시(예: "알림 메일 미발송 — 메일 서비스 미설정").
+- **DEV 메뉴**(네비·사이드바·사이트맵) 신설.
+
+### 17.5 기술부채 추가
+
+| 항목 | 메모 |
+|---|---|
+| 크롬 키 식별이 휴리스틱(Origin 또는 헤더) | curl로 흉내 가능. 남용 억지력 목적. 게시 후 `CHROME_EXTENSION_IDS`로 강화 |
+| 회원가입 알림 메일 미설정(`RESEND_API_KEY` 없음) | 신청서 접수 알림이 매번 "검토 대기"로 쌓임 → Resend 키 설정 필요 |
+| 사이드 패널 게임 탭의 외부 게임은 `/play/ext` 프록시 의존 | 프록시가 502면 iframe 빈 화면. 원본 URL 폴백 UI 미구현 |
+| `/dev`·문서에 "심사 중" 하드코딩 | 게시 시 `CHROME_STORE_URL` 수동 교체 |
+
+---
+
+## 18. 부록
+
+### 18.1 환경변수(이름만)
+
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_PADDLE_ENV`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_PRICE_SMALL/MEDIUM/LARGE`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_API_KEY`, `PADDLE_SANDBOX_API_KEY`, `TOKENPILOT_API_KEYS`, `RESEND_API_KEY`, `MAIL_FROM`, `ADMIN_NOTIFY_EMAIL`, `ELEVENLABS_API_KEY`, `IP_HASH_SALT`, `ADMIN_HOST`, `NEXT_PUBLIC_APP_MODE`, `NODE_ENV`, `CRON_SECRET`(크론 인증, 2026-09-09), `CHROME_EXTENSION_IDS`(선택, 웹스토어 게시 후).
+
+### 18.2 LLM 사용 총괄
 
 | 용도 | 모델 | max_tokens |
 |---|---|---|
@@ -1267,7 +1333,7 @@ sequenceDiagram
 
 단가(USD/1M tok): sonnet-5 3/15, haiku-4.5 1/5, opus-5 5/25. `KRW_PER_USD 1380`.
 
-### 17.3 주요 파일 인덱스
+### 18.3 주요 파일 인덱스
 
 | 영역 | 경로 |
 |---|---|
@@ -1286,7 +1352,7 @@ sequenceDiagram
 | DB | `db/migrations/*.sql` |
 | 설계 스펙 | `docs/superpowers/specs/*`, `docs/superpowers/plans/*` |
 
-### 17.4 용어집
+### 18.4 용어집
 
 | 용어 | 뜻 |
 |---|---|
