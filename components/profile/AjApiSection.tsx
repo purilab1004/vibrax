@@ -82,9 +82,9 @@ const { reply } = await r.json()`
             <span className="shrink-0 rounded-full bg-[#059669]/10 text-[#059669] text-[11px] font-bold px-2.5 py-1">무료</span>
           </div>
           <ol className="mt-4 space-y-1.5 text-[12.5px] text-[#4a4337] list-decimal pl-5">
-            <li><a href="/downloads/vibrexcup-aj-chrome.zip" className="text-[#2563eb] font-semibold underline">확장 파일(zip) 내려받기</a> → 압축 해제</li>
-            <li>크롬 주소창에 <code className="bg-[#f5efe3] px-1 rounded">chrome://extensions</code> → 우상단 <b>개발자 모드</b> 켜기 → <b>압축해제된 확장 프로그램을 로드</b> → 폴더 선택</li>
+            <li>Chrome 웹스토어에서 <b>Vibrexcup AJ</b> 설치 (<Link href="/dev" className="text-[#2563eb] underline">DEV 페이지</Link>에서 바로 가기 · 현재 심사 중)</li>
             <li>아래 버튼으로 키를 발급해 확장 팝업에 붙여넣기</li>
+            <li>팝업에서 "사이드 패널 열기" 또는 "이 페이지에 AJ 캐릭터 소환"</li>
           </ol>
           <div className="mt-4 flex items-center gap-2 flex-wrap">
             {chromeKey ? (
