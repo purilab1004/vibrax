@@ -230,6 +230,45 @@ export default function AboutPage() {
         </section>
       ))}
 
+      {/* ── 대표 인사 — 벌다(PHASE 03) 다음 ── */}
+      <section id="founder" className="max-w-6xl mx-auto px-6 pb-20 pt-6 scroll-mt-20">
+        <Reveal>
+          <div className="relative rounded-3xl border border-[#ebe4d6] bg-white/70 backdrop-blur-sm overflow-hidden grid md:grid-cols-[300px_1fr] gap-8 md:gap-12 items-center p-6 md:p-10 shadow-[0_24px_60px_-30px_rgba(36,31,23,0.35)]">
+            <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.14),transparent)]" />
+            <div className="relative mx-auto md:mx-0 w-56 md:w-full aspect-[4/5] rounded-2xl overflow-hidden ring-1 ring-black/5 shadow-[0_18px_40px_-18px_rgba(36,31,23,0.45)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/about/founder.jpg" alt={ko ? 'Vibrexcup 대표' : 'Founder of Vibrexcup'} className="w-full h-full object-cover object-top" />
+            </div>
+            <div className="relative">
+              <p className="font-pixel text-[10px] tracking-[0.3em] text-[#2563eb]">{ko ? 'FROM THE FOUNDER' : 'FROM THE FOUNDER'}</p>
+              <h2 className="mt-2 text-[24px] md:text-[30px] font-extrabold tracking-tight text-[#241f17] leading-tight">
+                {ko ? '게임을 만드는 즐거움을, 코드 없이 누구에게나.' : 'The joy of making games — for anyone, no code required.'}
+              </h2>
+              <div className="mt-4 space-y-3 text-[14.5px] md:text-[15.5px] leading-relaxed text-[#4a4337] max-w-2xl">
+                {ko ? (
+                  <>
+                    <p>어릴 적 처음 만든 게임을 친구들이 돌려가며 하던 순간을 잊지 못합니다. 그 설렘을 더 많은 사람이 느끼길 바라며 Vibrexcup을 만들었습니다. 프롬프트 한 줄이면 게임이 되고, AI 스트리머 AJ가 그 게임을 대신 방송하고, 내 아바타가 스스로 배워 대신 뛰어줍니다.</p>
+                    <p>기술은 어렵지 않아야 하고, 만든 사람은 보상받아야 합니다. 여러분이 만든 게임과 AJ가 이 무대 위에서 자라는 모습을 함께 지켜보겠습니다.</p>
+                  </>
+                ) : (
+                  <>
+                    <p>I still remember friends passing around the first game I ever made. I built Vibrexcup so more people could feel that thrill: one prompt becomes a game, AI streamer AJ broadcasts it for you, and your avatar learns to play on your behalf.</p>
+                    <p>Technology should be easy, and creators should be rewarded. I can&apos;t wait to watch your games and your AJ grow on this stage.</p>
+                  </>
+                )}
+              </div>
+              <div className="mt-6 flex items-center gap-3">
+                <div>
+                  <p className="text-[15px] font-extrabold text-[#241f17]">{ko ? '안성준' : 'Sungjun Ahn'}</p>
+                  <p className="text-[12.5px] text-[#857a68]">{ko ? 'Vibrexcup 대표 · Purilab' : 'CEO, Vibrexcup · Purilab'}</p>
+                </div>
+                <a href="mailto:dev@puritechlab.com" className="ml-auto inline-flex items-center h-9 px-4 rounded-lg border border-[#ddd3bf] bg-white text-[12.5px] font-semibold text-[#241f17] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">dev@puritechlab.com</a>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ── 마지막 CTA — 오로라 피날레 ── */}
       <section className="max-w-6xl mx-auto px-6 pb-24 pt-8">
         <Reveal>

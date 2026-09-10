@@ -31,7 +31,7 @@ export default function HomeBanner() {
   useEffect(() => {
     const root = document.documentElement
     if (visible) root.style.setProperty('--banner-h', (banner?.style ?? 'simple') === 'promo' ? '48px' : '38px'); else root.style.removeProperty('--banner-h')
-    return () => root.style.removeProperty('--banner-h')
+    return () => { root.style.removeProperty('--banner-h') }
   }, [visible, banner?.style])
   if (!visible || !banner) return null
   const dismiss = () => { setClosed(true); try { localStorage.setItem(DISMISS_KEY, String(banner.version ?? '')) } catch { /* ignore */ } }
