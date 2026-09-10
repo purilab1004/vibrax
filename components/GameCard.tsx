@@ -14,6 +14,7 @@ import AiBjPanel from './AiBjPanel'
 import PlayHeader from './PlayHeader'
 import type { AvatarConfig, AvatarFrames } from '@/lib/jeumto/config'
 import { useImageBounds } from '@/lib/jeumto/useImageBounds'
+import { useIsNativeApp } from '@/lib/isNativeApp'
 import { useLiveBroadcasts, liveForGame } from '@/lib/live/useLiveBroadcasts'
 import { useGameTelemetry } from '@/lib/aj/telemetry'
 const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m.LiveView), { ssr: false })
@@ -148,6 +149,7 @@ const CLAY_LINES = ['안녕! 놀러 와~', '이 게임 재밌어!', '한 판 할
 const CLAY_ACTS = ['clay-hop', 'clay-tilt', 'clay-look', 'clay-wiggle'] as const
 function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
   const { url, blinkUrl, talkUrl } = frames
+  const isApp = useIsNativeApp() // 앱에서는 타이머·눈깜빡임·말하기 없이 정적으로 렌더 → 스크롤 부드럽게
   const [line, setLine] = useState<string | null>(null)
   const [act, setAct] = useState<string>('')
   const [blink, setBlink] = useState(false)
@@ -157,6 +159,7 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
   const enterRef = useRef<HTMLDivElement>(null)
   const [entered, setEntered] = useState(false)
   useEffect(() => {
+    if (isApp) { setEntered(true); return } // 앱: 등장 애니메이션 없이 즉시 표시
     const el = enterRef.current
     if (!el) return
     const io = new IntersectionObserver((es) => {
@@ -164,7 +167,7 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
     }, { threshold: 0.35 })
     io.observe(el)
     return () => io.disconnect()
-  }, [])
+  }, [isApp])
   // 말하는 동안 입 벌린 프레임과 번갈아 (뻥긋뻥긋)
   useEffect(() => {
     if (!line || !talkUrl) return
@@ -174,7 +177,7 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
   }, [line, talkUrl])
   // 눈 깜빡임 — 눈 감은 프레임이 있으면 2.5~5초마다 120ms 동안 교체 (가끔 두 번 연속)
   useEffect(() => {
-    if (!blinkUrl) return
+    if (isApp || !blinkUrl) return
     let alive = true
     let t: ReturnType<typeof setTimeout>
     const loop = () => {
@@ -190,8 +193,9 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
     }
     loop()
     return () => { alive = false; clearTimeout(t) }
-  }, [blinkUrl])
+  }, [blinkUrl, isApp])
   useEffect(() => {
+    if (isApp) return // 앱: 말하기/동작 타이머 비활성 (정적 캐릭터)
     let alive = true
     let t1: ReturnType<typeof setTimeout>, t2: ReturnType<typeof setTimeout>
     const seed = hashOf(id)
@@ -214,7 +218,7 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
     }
     loop()
     return () => { alive = false; clearTimeout(t1); clearTimeout(t2) }
-  }, [id])
+  }, [id, isApp])
   const delay = `${(hashOf(id) % 30) / 10}s`
   return (
     <div ref={enterRef} className={`absolute inset-0 flex items-center justify-center pointer-events-none ${entered ? 'clay-enter' : 'opacity-0'}`} aria-hidden>
@@ -264,6 +268,7 @@ function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
 export function RoomScene({ id, views, avatar, live }: { id: string; views: number; avatar?: AvatarFrames | null; live?: LiveInfo | null }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const eyesRef = useRef<SVGGElement>(null)
+  const isApp = useIsNativeApp() // 앱: 눈동자 추적 리스너(스크롤/마우스/터치) 비활성 → 스크롤 부드럽게
 
   // 광량 — 0뷰: 은은한 흰 빛, 800뷰+: 최대 밝기.
   // 금빛 물들기는 2000뷰부터 시작해 4000뷰에서 완전한 황금색이 된다
@@ -276,6 +281,7 @@ export function RoomScene({ id, views, avatar, live }: { id: string; views: numb
 
   // 눈동자 — PC: 마우스 따라, 모바일: 터치 위치 + 스크롤 방향 따라 (rAF 스로틀)
   useEffect(() => {
+    if (isApp) return // 앱에서는 눈동자 추적 리스너를 달지 않는다(스크롤 성능)
     let raf = 0
     const lookAt = (clientX: number, clientY: number) => {
       cancelAnimationFrame(raf)
@@ -326,7 +332,7 @@ export function RoomScene({ id, views, avatar, live }: { id: string; views: numb
       cancelAnimationFrame(raf)
       if (decay) clearTimeout(decay)
     }
-  }, [])
+  }, [isApp])
 
   return (
     <>
@@ -541,6 +547,15 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = prev }
   }, [open, agentGate])
+
+  // 게임 열리면 iframe 에 포커스 — 안 그러면 스페이스(하드드롭 등)가 부모 페이지 스크롤로 먹힌다
+  const playFrameRef = useRef<HTMLIFrameElement>(null)
+  const focusFrame = () => { try { playFrameRef.current?.focus(); playFrameRef.current?.contentWindow?.focus() } catch { /* cross-origin */ } }
+  useEffect(() => {
+    if (!open) return
+    const t = setTimeout(focusFrame, 120)
+    return () => clearTimeout(t)
+  }, [open])
 
   const handlePlay = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -867,10 +882,12 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="flex-1 min-h-0 pb-[53px] md:pb-0">
               <iframe
+                ref={playFrameRef}
                 src={playSrc(game)}
                 className="w-full h-full border-0"
                 allow="fullscreen; autoplay"
                 title={game.title}
+                onLoad={focusFrame}
                 onError={(e) => { const f = e.currentTarget; if (f.src !== game.play_url) f.src = game.play_url }}
               />
             </div>

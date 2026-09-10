@@ -67,16 +67,8 @@ export default async function GamesPage({ searchParams }: Props) {
           {term && (
             <p className="hidden md:block text-xs text-[#4a4337] mb-2">🔍 &quot;{term}&quot;</p>
           )}
-          <Suspense
-            key={`${genre ?? ''}-${term ?? ''}-${creator ?? ''}`}
-            fallback={
-              <div className="text-center text-[#4a4337] text-xs py-24 font-pixel tracking-widest">
-                LOADING...
-              </div>
-            }
-          >
-            <GameGrid genre={genre} q={q} creator={creator} />
-          </Suspense>
+          {/* 그리드를 별도 스트리밍하지 않고 라우트 로더(app/loading.tsx)로 덮는다 → 마스코트 1회만 */}
+          <GameGrid genre={genre} q={q} creator={creator} />
         </div>
       </div>
     </div>

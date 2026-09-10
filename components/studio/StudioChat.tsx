@@ -17,7 +17,7 @@ export default function StudioChat({
   usage?: { input: number; output: number; credits?: number; balance?: number } | null
   generationCost?: number
   error: string | null
-  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[]) => void
+  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string) => void
   busy: boolean
   /* 외부(학습 노트 '다음 도전')에서 입력창에 채워 넣을 문장 */
   draft?: string | null
@@ -85,21 +85,93 @@ export default function StudioChat({
     if (el) el.scrollTop = el.scrollHeight
   }, [messages.length, streaming?.description, streaming?.htmlBytes])
 
+  // ── 조작 선택 흐름 — 첫 게임 설명 시, 설계 AI가 장르별 조작안을 제안하면 사용자가 고른다 ──
+  type PlanOpt = { id: string; label: string; desc: string; keys: string; variantSlug?: string }
+  const [planning, setPlanning] = useState(false)
+  const [planData, setPlanData] = useState<{ genre: string; options: PlanOpt[]; pending: { prompt: string; imgs: typeof attachments; snds: typeof sounds } } | null>(null)
+  // 이미 조작을 적었으면 제안 단계를 건너뛴다
+  const hasControlWords = (p: string) => /(화살표|방향키|스페이스|스페이스바|점프|슬라이드|왼쪽|오른쪽|위아래|wasd|키로|클릭|드래그|마우스|탭으로|터치로|조작(은|을|법|키|방식|은요)|버튼으로|arrow|space|jump)/i.test(p)
+
+  const runPlan = async (prompt: string, imgs: typeof attachments, snds: typeof sounds) => {
+    setPlanning(true)
+    try {
+      const res = await fetch('/api/studio/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) })
+      const data = await res.json() as { genre?: string; options?: PlanOpt[]; skip?: boolean }
+      // skip = 기존 템플릿 매칭(조작 고정) → 조작 카드 없이 바로 생성
+      if (!data?.skip && (data?.options?.length ?? 0) >= 2) setPlanData({ genre: data.genre!, options: data.options!, pending: { prompt, imgs, snds } })
+      else onSend(prompt, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
+    } catch {
+      onSend(prompt, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
+    } finally {
+      setPlanning(false)
+    }
+  }
+  // 조작 카드 선택 → 그 조작을 프롬프트에 붙여 생성 (opt=null 이면 AI 자동)
+  const pickControl = (opt: PlanOpt | null) => {
+    if (!planData) return
+    const { prompt, imgs, snds } = planData.pending
+    // 변형 템플릿(variantSlug)이면 프롬프트는 그대로 두고 그 템플릿을 강제. 아니면 조작 설명을 프롬프트에 붙임.
+    const augmented = (opt && !opt.variantSlug) ? `${prompt}\n\n[조작 방식] ${opt.label} — ${opt.desc} (키: ${opt.keys})` : prompt
+    setPlanData(null)
+    onSend(augmented, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined, opt?.variantSlug)
+  }
+  // 직접 정하기 → 카드 닫고 원래 설명을 입력창에 되살려 사용자가 이어서 조작을 적게 한다
+  const editControls = () => {
+    if (!planData) return
+    setInput(planData.pending.prompt + ' · 조작: ')
+    setPlanData(null)
+  }
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     const p = input.trim()
-    if (!p || busy) return
+    if (!p || busy || planning || planData) return
     setInput('')
     const imgs = attachments
     const snds = sounds
     setAttachments([]); setSounds([])
+    // 첫 게임 설명이고 조작을 안 적었으면 → 조작안 제안 단계
+    if (messages.length === 0 && !hasControlWords(p)) { runPlan(p, imgs, snds); return }
     onSend(p, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
   }
 
   return (
     <div className="flex flex-col h-full border-r border-[#ebe4d6]">
       <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {messages.length === 0 && !streaming && (
+        {/* 조작안 제안 중 */}
+        {messages.length === 0 && !streaming && planning && (
+          <div className="pt-16 text-center max-w-md mx-auto">
+            <span className="avatar-wave w-14 h-14 rounded-full inline-flex items-center justify-center text-2xl shadow-md overflow-hidden" aria-hidden>{ajAvatarUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={ajAvatarUrl} alt="" className="w-full h-full object-cover" /> : '🧸'}</span>
+            <p className="mt-4 text-[14px] font-semibold text-[#241f17] flex items-center justify-center gap-2">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 animate-spin text-[#2563eb]" fill="none" aria-hidden><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+              어울리는 조작 방식을 고르는 중…
+            </p>
+          </div>
+        )}
+        {/* 조작안 카드 — 사용자가 선택 */}
+        {messages.length === 0 && !streaming && planData && (
+          <div className="pt-10 max-w-md mx-auto">
+            <p className="text-center text-[13px] text-[#9d9280]"><b className="text-[#2563eb]">{planData.genre}</b> 게임이네요! 조작 방식을 골라주세요</p>
+            <div className="mt-4 space-y-2">
+              {planData.options.map((o, i) => (
+                <button key={o.id} type="button" onClick={() => pickControl(o)} className="w-full text-left rounded-2xl border border-[#ddd3bf] bg-white px-4 py-3 hover:border-[#2563eb] hover:bg-[#f7faff] transition-colors group">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13.5px] font-bold text-[#241f17] group-hover:text-[#2563eb]">{o.label}</span>
+                    {i === 0 && <span className="text-[10px] font-bold text-[#2563eb] bg-[#2563eb]/10 px-1.5 py-0.5 rounded-full">추천</span>}
+                  </div>
+                  <p className="mt-0.5 text-[12px] text-[#6b6152]">{o.desc}</p>
+                  <p className="mt-1 text-[11px] font-semibold text-[#9d9280]">🎮 {o.keys}</p>
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center justify-center gap-3 text-[12px]">
+              <button type="button" onClick={() => pickControl(null)} className="font-semibold text-[#2563eb] hover:underline">그냥 알아서 만들어줘</button>
+              <span className="text-[#ddd3bf]">·</span>
+              <button type="button" onClick={editControls} className="text-[#9d9280] hover:text-[#4a4337]">직접 정할래요</button>
+            </div>
+          </div>
+        )}
+        {messages.length === 0 && !streaming && !planning && !planData && (
           <div className="pt-10 text-center max-w-md mx-auto">
             <span className="avatar-wave w-14 h-14 rounded-full inline-flex items-center justify-center text-2xl shadow-md overflow-hidden" aria-hidden>{ajAvatarUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={ajAvatarUrl} alt="" className="w-full h-full object-cover" /> : '🧸'}</span>
             <p className="mt-3 text-[15px] font-semibold text-[#241f17]">{s.emptyPreview}</p>
@@ -111,16 +183,11 @@ export default function StudioChat({
                 </button>
               ))}
             </div>
-            {/* AI가 잘 배우는 게임 만드는 법 — 초등학생도 이해할 수준 */}
+            {/* 간단 안내 — 조작은 선택(장르 자동) */}
             <div className="mt-4 rounded-2xl border border-[#2563eb]/15 bg-gradient-to-b from-[#eff5ff] to-white px-4 py-3.5 text-left">
-              <p className="text-[12.5px] font-bold text-[#2563eb] flex items-center gap-1.5">🤖 AI가 대신 플레이하고 <b className="text-[#241f17]">점점 잘해지는</b> 게임 만들기</p>
-              <p className="text-[11.5px] text-[#6b6152] mt-1.5 leading-relaxed">아래 4가지만 이야기하듯 적어주면, AI가 우리 게임을 배워서 대신 플레이해요. (어려운 말 필요 없어요!)</p>
-              <ul className="mt-2 space-y-1 text-[12px] text-[#4a4337]">
-                <li>🎯 <b>목표</b> — 어떻게 하면 이겨요? <span className="text-[#9d9280]">예: 벽돌 다 깨기</span></li>
-                <li>🎮 <b>움직임</b> — 무슨 키로 뭘 해요? <span className="text-[#9d9280]">예: ←→ 이동, 스페이스 점프</span></li>
-                <li>⚠️ <b>피할 것</b> — 뭘 만나면 죽어요? <span className="text-[#9d9280]">예: 가시, 적, 낭떠러지</span></li>
-                <li>⭐ <b>모을 것</b> — 뭘 먹으면 좋아요? <span className="text-[#9d9280]">예: 코인, 아이템</span></li>
-              </ul>
+              <p className="text-[12.5px] font-bold text-[#241f17] flex items-center gap-1.5">🎮 만들고 싶은 게임을 <b className="text-[#2563eb]">자유롭게</b> 설명하면 돼요</p>
+              <p className="text-[11.5px] text-[#6b6152] mt-1.5 leading-relaxed"><b className="text-[#4a4337]">조작 방식은 안 적어도 돼요.</b> 장르에 맞는 익숙한 조작을 자동으로 넣어드려요. <span className="text-[#9d9280]">(러너=점프 · 슈팅=이동+발사 · 퍼즐=방향키)</span></p>
+              <p className="text-[11.5px] text-[#9d9280] mt-1.5 leading-relaxed">💡 이기는 <b className="text-[#6b6152]">목표</b>나 <b className="text-[#6b6152]">피할 것</b>을 곁들이면 AI가 더 잘 배워요. <span className="text-[#b3a78f]">(선택)</span></p>
             </div>
           </div>
         )}
@@ -286,7 +353,7 @@ export default function StudioChat({
             </div>
             <button
               type="submit"
-              disabled={busy || !input.trim()}
+              disabled={busy || planning || !input.trim()}
               aria-label={s.send}
               className="w-9 h-9 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-30"
             >

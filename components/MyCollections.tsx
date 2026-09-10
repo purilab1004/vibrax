@@ -1,4 +1,5 @@
 'use client'
+import MascotLoader from '@/components/MascotLoader'
 // 내 페이지 — 좋아요한 게임 / 공유한 게임 모아보기 (항목 삭제 가능)
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -24,7 +25,7 @@ function Section({ title, icon, games, empty, loading, onRemove, removeLabel }: 
     <section>
       <h2 className="font-pixel text-[11px] text-[#6b6152] tracking-widest mb-4">{icon} {title} <span className="text-[#2563eb]">({games.length})</span></h2>
       {loading ? (
-        <p className="text-[12px] text-[#857a68]">불러오는 중…</p>
+        <MascotLoader size={40} className="py-8" />
       ) : games.length === 0 ? (
         <div className="rounded-2xl bg-[#faf8f3] p-8 text-center text-[#857a68] text-sm">{empty}</div>
       ) : (

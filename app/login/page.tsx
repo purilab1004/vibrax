@@ -47,7 +47,7 @@ function LoginForm() {
       <button type="button" onClick={google} disabled={oauthPending} className="w-full h-11 rounded-xl border border-[#ddd3bf] bg-white text-[14px] font-semibold text-[#241f17] hover:bg-[#faf8f3] hover:border-[#cfc4ab] transition-colors flex items-center justify-center gap-2.5 disabled:opacity-60">
         <GoogleIcon className="w-[18px] h-[18px]" />{oauthPending ? (ko ? 'Google 로 이동 중…' : 'Redirecting…') : (ko ? 'Google 로 계속하기' : 'Continue with Google')}
       </button>
-      <div className="my-5 flex items-center gap-3 text-[11px] text-[#a1957f]"><span className="h-px flex-1 bg-[#ebe4d6]" />{ko ? '또는 이메일로' : 'or with email'}<span className="h-px flex-1 bg-[#ebe4d6]" /></div>
+      <div className="my-4 flex items-center gap-3 text-[11px] text-[#a1957f]"><span className="h-px flex-1 bg-[#ebe4d6]" />{ko ? '또는 이메일로' : 'or with email'}<span className="h-px flex-1 bg-[#ebe4d6]" /></div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div><label className={authLabel}>{ko ? '이메일' : 'Email'}</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" className={authInput} /></div>
         <div>
@@ -57,7 +57,7 @@ function LoginForm() {
         {(error || oauthErr) && <p className="rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-[13px] px-3.5 py-2.5">{error ?? (ko ? 'Google 로그인에 실패했어요. 다시 시도해 주세요.' : 'Google sign-in failed. Please try again.')}</p>}
         <button type="submit" disabled={isPending} className={authPrimary}>{isPending ? (ko ? '로그인 중…' : 'Signing in…') : (ko ? '로그인' : 'Sign in')}</button>
       </form>
-      <p className="mt-5 text-[11.5px] text-[#9d9280] leading-relaxed">{ko ? '로그인하면 ' : 'By continuing you agree to our '}<Link href="/terms" className="underline hover:text-[#2563eb]">{ko ? '이용약관' : 'Terms'}</Link>{ko ? '과 ' : ' and '}<Link href="/privacy" className="underline hover:text-[#2563eb]">{ko ? '개인정보처리방침' : 'Privacy Policy'}</Link>{ko ? '에 동의하는 것으로 봅니다.' : '.'}</p>
+      <p className="mt-4 text-[11.5px] text-[#9d9280] leading-relaxed">{ko ? '로그인하면 ' : 'By continuing you agree to our '}<Link href="/terms" className="underline hover:text-[#2563eb]">{ko ? '이용약관' : 'Terms'}</Link>{ko ? '과 ' : ' and '}<Link href="/privacy" className="underline hover:text-[#2563eb]">{ko ? '개인정보처리방침' : 'Privacy Policy'}</Link>{ko ? '에 동의하는 것으로 봅니다.' : '.'}</p>
     </AuthShell>
   )
 }

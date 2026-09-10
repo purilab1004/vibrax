@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useLang } from '@/lib/i18n/context'
+import { useIsNativeApp } from '@/lib/isNativeApp'
 
 const ICON = 'w-6 h-6'
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
@@ -11,7 +12,10 @@ const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeL
 export default function MobileNav() {
   const pathname = usePathname()
   const { T } = useLang()
+  const isApp = useIsNativeApp()
 
+  // 네이티브 앱에서는 RN 하단 탭바가 대신하므로 웹 내비는 숨김 (App.tsx 주입 CSS 와 이중 안전장치)
+  if (isApp) return null
   // 관리자·스튜디오 화면에서는 숨김
   if (pathname.startsWith('/admin') || pathname.startsWith('/studio')) return null
 

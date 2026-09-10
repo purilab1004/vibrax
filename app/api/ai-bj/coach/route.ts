@@ -105,8 +105,10 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
   // ── 신경진화 — 상태 수치가 있는 게임은 작은 신경망을 개체군·세대로 진화(브라우저 추론, 서버는 진화만) ──
   const mm = b.manifest ?? {}
   const sample = (mm.sample ?? {}) as Record<string, unknown>
-  const nnInputs = (mm.stateKeys ?? Object.keys(sample)).filter(k => typeof sample[k] === 'number' && Number.isFinite(sample[k] as number)).slice(0, 6)
-  const nnOutputs = (mm.inputs ?? []).slice(0, 5)
+  // 신경망 관찰(입력) — 표준 관찰 슬롯 + 아이템 슬롯을 담도록 넉넉히
+  const nnInputs = (mm.stateKeys ?? Object.keys(sample)).filter(k => typeof sample[k] === 'number' && Number.isFinite(sample[k] as number)).slice(0, 10)
+  // 신경망 행동(출력) = 게임이 선언한 UAS 채널(정규 순서). 아이템 슬롯까지 담도록 최대 12채널.
+  const nnOutputs = (mm.inputs ?? []).slice(0, 12)
   if (row.auto_learn && nnInputs.length >= 2 && nnOutputs.length >= 1) {
     const brow = row as unknown as { brain?: Brain | null }
     let brain = brow.brain && brow.brain.arch ? brow.brain : createBrain(nnInputs, nnOutputs)

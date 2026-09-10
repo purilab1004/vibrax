@@ -7,6 +7,7 @@ import breakout from './templates/breakout.json'
 import snake from './templates/snake.json'
 import flappy from './templates/flappy.json'
 import runner from './templates/runner.json'
+import runnerDouble from './templates/runner-double.json'
 import shooter from './templates/shooter.json'
 import pong from './templates/pong.json'
 import stock from './templates/stock.json'
@@ -19,9 +20,13 @@ export interface GameTemplate {
   prompt: string      // 템플릿을 만들 때 쓴 프롬프트 (참고용)
   description: string // 모델이 남긴 설명
   html: string
+  // 조작 변형 템플릿: 같은 genreGroup 끼리 조작만 다른 변형. 조작 선택 카드로 고른다.
+  genreGroup?: string   // 예: 'runner' — 같은 장르 그룹
+  controlLabel?: string // 예: '이단 점프' — 이 변형의 조작 이름 (카드 라벨)
+  controls?: { label: string; keys: string; desc?: string } // 이 템플릿의 조작 설명
 }
 
-export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, shooter, pong, stock] as GameTemplate[]
+export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, runnerDouble, shooter, pong, stock] as GameTemplate[]
 
 export { templateOnly, extrasOf } from './template-match'
 export function matchTemplate(prompt: string): { template: GameTemplate; keyword: string } | null {

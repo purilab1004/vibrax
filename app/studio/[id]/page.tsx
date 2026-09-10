@@ -1,4 +1,5 @@
 'use client'
+import MascotLoader from '@/components/MascotLoader'
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
@@ -155,7 +156,7 @@ export default function StudioComposerPage() {
     }
   }
 
-  const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[]) => {
+  const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string) => {
     setError(null)
     setMessages(m => [...m, { role: 'user', content: prompt, images: images?.map(i => i.previewUrl) }])
     balanceBeforeRef.current = balance
@@ -172,6 +173,7 @@ export default function StudioComposerPage() {
           prompt,
           images: images?.map(i => ({ media_type: i.media_type, data: i.data })),
           sounds: sounds?.map(x => ({ name: x.name, media_type: x.media_type, data: x.data, role: x.role })),
+          variantSlug,
         }),
       })
 
@@ -312,13 +314,8 @@ export default function StudioComposerPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  if (!project) {
-    return (
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest">{s.loading}</p>
-      </div>
-    )
-  }
+  if (!project) return <MascotLoader />
+
 
   return (
     <div className="flex flex-col" style={{ height: '100svh' }}>

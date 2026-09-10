@@ -12,6 +12,7 @@ import Reveal from '@/components/Reveal'
 import ViewerIcon from '@/components/ViewerIcon'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
+import { useIsNativeApp } from '@/lib/isNativeApp'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
@@ -23,11 +24,15 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
   const { T, lang } = useLang()
   const router = useRouter()
   const supabase = createClient()
+  const isApp = useIsNativeApp()
   const [coinState, setCoinState] = useState<'idle' | 'drop' | 'ready'>('idle')
 
   const creatorName = game.profiles?.agent_name ?? game.profiles?.username ?? 'unknown'
   const avatarUrl = avatarPreviewUrl(game.profiles?.avatar_config)
   const avatarFramesV = avatarFrames(game.profiles?.avatar_config)
+  const teaser = lang === 'en'
+    ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
+    : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
 
   const insertCoin = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -56,12 +61,8 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
     setTimeout(() => router.push(`/games/${game.id}`), 250)
   }
 
-  return (
-    <div
-      className="feed-snap grain relative h-[100svh] overflow-hidden"
-      style={auroraOf(game.id, golden)}
-    >
-      <Reveal className="absolute inset-0">
+  const inner = (
+    <>
       {/* 조회수 랭킹 배지 — 상단 우측 */}
       {rank && rank <= 10 && (
         <span className={`absolute top-4 right-4 z-10 font-pixel text-[13px] px-3 py-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.25)] ${
@@ -72,22 +73,15 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       )}
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
       <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]">
-        <h3 className={`${titleFont.className} text-[48px] leading-[1.25] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
-          {lang === 'en'
-            ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
-            : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])}
-        </h3>
+        <h3 className={`${titleFont.className} text-[48px] leading-[1.25] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>{teaser}</h3>
       </div>
-      {/* 방 디오라마 — 캐릭터는 중앙 */}
+      {/* 방 디오라마 — 캐릭터는 중앙 (앱에서는 정적 렌더로 부드럽게) */}
       <div className="absolute inset-x-1 top-[24%] bottom-[26%]">
         <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />
       </div>
       {/* 우측 액션 레일 — 틱톡 스타일 */}
-      <div className="absolute right-3 bottom-[34%] z-10 flex flex-col items-center gap-4">
-        <div
-          className="bg-white/85 backdrop-blur-sm rounded-full px-3 py-2 shadow-[0_2px_10px_rgba(0,0,0,0.12)]"
-          onClick={e => e.stopPropagation()}
-        >
+      <div className="absolute right-3 bottom-[38%] z-10 flex flex-col items-center gap-4">
+        <div className="bg-white/85 rounded-full px-3 py-2 shadow-[0_2px_10px_rgba(0,0,0,0.12)]" onClick={e => e.stopPropagation()}>
           <LikeButton gameId={game.id} size="lg" />
         </div>
         <div className="flex flex-col items-center gap-0.5 text-white/85 drop-shadow">
@@ -95,8 +89,8 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
           <span className="text-[12px] font-bold">{formatViewers(game.view_count ?? 0)}</span>
         </div>
       </div>
-      {/* 하단 정보 + 아케이드 코인 플로우 */}
-      <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-24 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
+      {/* 하단 정보 + 아케이드 코인 플로우 — 앱에서는 하단 내비와 겹치지 않게 더 위로 */}
+      <div className={`absolute inset-x-0 bottom-0 z-10 px-5 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent ${isApp ? 'pb-28' : 'pb-24'}`}>
         <p className="flex items-center gap-2 text-[13px] font-semibold text-white/75">
           <span className="avatar-ring" style={flagRingStyle(game.country ?? game.profiles?.country)}><span className="avatar-wave w-6 h-6 shrink-0 rounded-full overflow-hidden inline-flex items-center justify-center">
             {avatarUrl ? (
@@ -157,7 +151,16 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
           </div>
         </div>
       </div>
-      </Reveal>
+    </>
+  )
+
+  return (
+    <div
+      className="feed-snap grain relative h-[100svh] overflow-hidden"
+      style={auroraOf(game.id, golden)}
+    >
+      {/* 앱에서는 등장 애니메이션(Reveal) 없이 즉시 표시 → 스크롤 부드럽게 */}
+      {isApp ? inner : <Reveal className="absolute inset-0">{inner}</Reveal>}
     </div>
   )
 }

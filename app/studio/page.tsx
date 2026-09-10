@@ -1,4 +1,5 @@
 'use client'
+import MascotLoader from '@/components/MascotLoader'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -144,13 +145,8 @@ export default function StudioPage() {
     }
   }
 
-  if (projects === null) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <p className="font-pixel text-[11px] text-[#6b6152] tracking-widest animate-pulse">{s.loading}</p>
-      </div>
-    )
-  }
+  if (projects === null) return <MascotLoader />
+
 
   const publishedCount = Object.keys(published).length
 

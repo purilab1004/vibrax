@@ -47,17 +47,17 @@ export default function AuthShell({ eyebrow, title, subtitle, children, footer }
         </div>
         <p className="relative text-[11px] text-white/35">VIBREX © COPYRIGHT {new Date().getFullYear()} · Sponsored by Purilab</p>
       </aside>
-      {/* 우측 — 카드 */}
-      <main className="relative flex items-center justify-center px-5 py-10 bg-[#f4efe6] overflow-hidden">
+      {/* 우측 — 카드 (모바일에서는 상단 정렬 + 여백 축소로 스크롤 없이 한 화면에) */}
+      <main className="relative flex items-start lg:items-center justify-center px-4 py-4 lg:px-5 lg:py-10 bg-[#f4efe6] overflow-hidden">
         <div aria-hidden className="pointer-events-none absolute -top-32 right-[-120px] w-[420px] h-[420px] rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.18),transparent)] blur-2xl" />
         <div aria-hidden className="pointer-events-none absolute bottom-[-140px] left-[-100px] w-[380px] h-[380px] rounded-full bg-[radial-gradient(closest-side,rgba(245,158,11,0.18),transparent)] blur-2xl" />
-        <div className="relative w-full max-w-[560px] rounded-3xl bg-white border border-white/70 shadow-[0_30px_80px_-30px_rgba(36,31,23,0.35),0_2px_6px_rgba(36,31,23,0.06)] p-8 md:p-12">
-          <div className="lg:hidden flex items-center gap-2 mb-6"><LogoMark className="w-8 h-8" /><span className="text-[18px] font-extrabold tracking-tight text-[#241f17]">vibrex<span className="text-[#2563eb]">cup</span></span></div>
+        <div className="relative w-full max-w-[560px] rounded-3xl bg-white border border-white/70 shadow-[0_30px_80px_-30px_rgba(36,31,23,0.35),0_2px_6px_rgba(36,31,23,0.06)] p-5 md:p-12">
+          <div className="lg:hidden flex items-center gap-2 mb-3 md:mb-6"><LogoMark className="w-8 h-8" /><span className="text-[18px] font-extrabold tracking-tight text-[#241f17]">vibrex<span className="text-[#2563eb]">cup</span></span></div>
           <p className="font-pixel text-[10px] tracking-[0.3em] text-[#2563eb]">{eyebrow}</p>
-          <h1 className="mt-2 text-[30px] font-extrabold tracking-tight text-[#241f17] leading-tight">{title}</h1>
-          {subtitle && <p className="mt-2 text-[13.5px] text-[#6b6152]">{subtitle}</p>}
-          <div className="mt-7">{children}</div>
-          {footer && <div className="mt-7 pt-5 border-t border-[#f0eadf] text-[13px] text-[#6b6152]">{footer}</div>}
+          <h1 className="mt-1.5 lg:mt-2 text-[24px] lg:text-[30px] font-extrabold tracking-tight text-[#241f17] leading-tight">{title}</h1>
+          {subtitle && <p className="mt-1 lg:mt-2 text-[13px] lg:text-[13.5px] text-[#6b6152]">{subtitle}</p>}
+          <div className="mt-4 lg:mt-7">{children}</div>
+          {footer && <div className="mt-4 pt-4 lg:mt-7 lg:pt-5 border-t border-[#f0eadf] text-[13px] text-[#6b6152]">{footer}</div>}
         </div>
       </main>
     </div>

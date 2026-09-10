@@ -31,7 +31,8 @@ export async function POST(req: Request) {
   } catch {
     return new Response('bad request', { status: 400 })
   }
-  const { projectId, prompt, images: rawImages, sounds: rawSounds } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown; sounds?: unknown }
+  const { projectId, prompt, images: rawImages, sounds: rawSounds, variantSlug: rawVariantSlug } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown; sounds?: unknown; variantSlug?: unknown }
+  const variantSlug = typeof rawVariantSlug === 'string' ? rawVariantSlug : null
   // 첨부 이미지 — 최대 3장, jpeg/png/webp/gif, 각 5MB(base64 ~7M자) 이내
   const ALLOWED_MEDIA = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
   const images = (Array.isArray(rawImages) ? rawImages : [])
@@ -134,6 +135,11 @@ export async function POST(req: Request) {
   const auto = await loadAutomation()
   const dbList = !latest && !hasAttach ? await loadDbTemplates() : []
   let tmatch = !latest && !hasAttach ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(dbList, prompt)) : null
+  // 조작 변형 선택: 사용자가 조작 카드로 특정 변형을 골랐으면 그 템플릿을 강제 사용 (매칭 무시)
+  if (variantSlug && !latest && !hasAttach) {
+    const vt = staticList.find(t => t.slug === variantSlug) ?? dbList.find(t => t.slug === variantSlug)
+    if (vt) tmatch = { template: vt, keyword: vt.keywords[0] ?? vt.name }
+  }
   let mapMethod: 'keyword' | 'similarity' | 'ml' | 'none' = tmatch ? 'keyword' : 'none'
   let mapConf: number | null = tmatch ? 1 : null
   // MLPilot: 키워드로 못 잡으면 유사도 매퍼(문자 n-gram, LLM 없음)로 가장 가까운 템플릿을 고른다

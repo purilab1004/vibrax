@@ -1,5 +1,5 @@
 // Vibrexcup 서비스워커 — 앱 셸 캐시(오프라인 대비) + 네트워크 우선. 게임/API/오디오는 캐시하지 않는다.
-const CACHE = 'vibrex-v1'
+const CACHE = 'vibrex-v2'
 const SHELL = ['/', '/games', '/offline', '/icon-192.png', '/icon-512.png']
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL).catch(() => {})).then(() => self.skipWaiting())) })
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())) })

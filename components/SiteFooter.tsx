@@ -11,10 +11,9 @@ export default function SiteFooter() {
   if (pathname === '/') return null
   // 관리자는 사이드바 하단 축약 푸터로 대체
   if (pathname.startsWith('/admin')) return null
-  // /games(쇼츠 피드)에서는 모바일 푸터를 숨긴다 — 데스크톱만 표시
-  const mobileHidden = pathname === '/games' || /^\/games\/[^/]+$/.test(pathname) || pathname.startsWith('/profile')
+  // 모바일에서는 푸터를 전부 숨긴다(하단 앱 내비가 있어 불필요) — 데스크톱만 표시
   return (
-    <footer className={`${mobileHidden ? 'hidden md:block' : ''} border-t border-[#ebe4d6] py-6 px-6 pb-20 md:pb-6 mt-auto md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200`}>
+    <footer className="hidden md:block border-t border-[#ebe4d6] py-6 px-6 mt-auto md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">
       <FooterLinks />
     </footer>
   )
