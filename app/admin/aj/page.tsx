@@ -73,18 +73,18 @@ export default async function AjRankingPage() {
               <div className="sm:hidden text-right shrink-0"><p className="text-[10px] text-[#9aa1ad]">오늘</p><p className="text-[15px] font-bold">{r.today}</p></div>
             </div>
             {/* 이 AJ가 운영하는 게임들 */}
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 pb-3 pl-[4.5rem]">
-              {r.games.slice(0, 8).map(({ g, today, fun }) => (
+            <div className="flex flex-wrap gap-2 px-4 pb-3 md:pl-[4.5rem]">
+              {r.games.slice(0, 12).map(({ g, today, fun }) => (
                 <Link key={g.id} href={`/aj/${g.id}`} className="shrink-0 flex items-center gap-2 rounded-lg border border-[#e3e6ec] bg-[#f7f8fa] pr-3 hover:border-[#2563eb] hover:bg-white transition-colors">
                   <span className="relative w-12 h-8 rounded-l-lg overflow-hidden bg-gray-900">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={g.thumbnail_url} alt="" className="w-full h-full object-cover" />
                   </span>
-                  <span className="text-[12px] font-semibold text-[#1f2430] max-w-[140px] truncate">{g.title}</span>
+                  <span className="text-[12px] font-semibold text-[#1f2430] max-w-[160px] truncate">{g.title}</span>
                   <span className="text-[11px] text-[#6b7280] whitespace-nowrap">코인 {today}{fun != null ? ` · FUN ${fun}` : ''}</span>
                 </Link>
               ))}
-              {r.games.length > 8 && <span className="shrink-0 self-center text-[11px] text-[#9aa1ad]">+{r.games.length - 8}</span>}
+              {r.games.length > 12 && <Link href={`/admin/aj/${r.userId}`} className="shrink-0 self-center h-8 px-3 inline-flex items-center rounded-lg border border-dashed border-[#cfd4dc] text-[11.5px] font-semibold text-[#6b7280] hover:border-[#2563eb] hover:text-[#2563eb]">+{r.games.length - 12}개 더 보기</Link>}
             </div>
           </li>
         ))}
