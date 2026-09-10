@@ -117,8 +117,14 @@ export interface SiteSetting {
 
 export interface BannerSetting {
   enabled: boolean
-  text: string
+  text: string           // promo 스타일이면 {highlight} {code} 자리표시자 사용 가능
   link: string
+  style?: 'simple' | 'promo'
+  highlight?: string     // 강조 문구 (예: 추가 10% 할인)
+  code?: string          // 프로모 코드 (예: SLTOP10)
+  cta?: string           // 버튼 문구 (예: GPT 6 Astra 체험하기)
+  dismissible?: boolean  // X 로 닫기 허용 (version 별로 기억)
+  version?: number       // 저장 시각 — 바뀌면 닫았던 사람에게도 다시 보임
 }
 
 // admin_list_members() RPC 행

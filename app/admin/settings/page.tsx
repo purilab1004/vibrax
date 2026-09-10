@@ -15,6 +15,11 @@ export default function AdminSettingsPage() {
   const [bannerEnabled, setBannerEnabled] = useState(false)
   const [bannerText, setBannerText] = useState('')
   const [bannerLink, setBannerLink] = useState('')
+  const [bannerStyle, setBannerStyle] = useState<'simple' | 'promo'>('promo')
+  const [bannerHighlight, setBannerHighlight] = useState('')
+  const [bannerCode, setBannerCode] = useState('')
+  const [bannerCta, setBannerCta] = useState('')
+  const [bannerDismissible, setBannerDismissible] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{ msg: string; kind: 'ok' | 'err' } | null>(null)
   const supabase = createClient()
@@ -31,6 +36,7 @@ export default function AdminSettingsPage() {
         if (row.key === 'banner') {
           const b = row.value as BannerSetting
           setBannerEnabled(!!b.enabled); setBannerText(b.text ?? ''); setBannerLink(b.link ?? '')
+          setBannerStyle(b.style ?? 'simple'); setBannerHighlight(b.highlight ?? ''); setBannerCode(b.code ?? ''); setBannerCta(b.cta ?? ''); setBannerDismissible(b.dismissible ?? true)
         }
       }
       setLoaded(true)
@@ -46,7 +52,7 @@ export default function AdminSettingsPage() {
       { key: 'signup_bonus', value: Math.max(0, parseInt(signupBonus, 10) || 0), updated_at: now },
       { key: 'generation_cost', value: Math.max(1, parseInt(generationCost, 10) || 1), updated_at: now },
       { key: 'tournament_prize', value: Math.max(0, parseInt(tournamentPrize, 10) || 0), updated_at: now },
-      { key: 'banner', value: { enabled: bannerEnabled, text: bannerText.trim(), link: bannerLink.trim() }, updated_at: now },
+      { key: 'banner', value: { enabled: bannerEnabled, text: bannerText.trim(), link: bannerLink.trim(), style: bannerStyle, highlight: bannerHighlight.trim(), code: bannerCode.trim(), cta: bannerCta.trim(), dismissible: bannerDismissible, version: Date.now() }, updated_at: now },
     ]
     const { error } = await supabase.from('site_settings').upsert(rows as never)
     if (error) { console.error('[admin]', error); say(a.saveFailed, 'err') } else say(a.saved)
@@ -82,6 +88,19 @@ export default function AdminSettingsPage() {
             <div className="space-y-3">
               <input value={bannerText} onChange={e => setBannerText(e.target.value)} placeholder={a.setBannerText} className={inputClass} />
               <input value={bannerLink} onChange={e => setBannerLink(e.target.value)} placeholder={a.setBannerLink} className={inputClass} />
+              <div className="flex items-center gap-2 text-[12px] text-[#4a4337]">
+                <span className="text-[#857a68]">스타일</span>
+                {(['promo', 'simple'] as const).map(s => <button key={s} type="button" onClick={() => setBannerStyle(s)} className={`h-7 px-3 rounded-full border text-[12px] font-semibold ${bannerStyle === s ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white border-[#ddd3bf] text-[#6b6152]'}`}>{s === 'promo' ? '프로모(다크 바 + 버튼)' : '심플(파란 한 줄)'}</button>)}
+                <label className="ml-auto inline-flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={bannerDismissible} onChange={e => setBannerDismissible(e.target.checked)} /> 닫기(X) 허용</label>
+              </div>
+              {bannerStyle === 'promo' && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <input value={bannerHighlight} onChange={e => setBannerHighlight(e.target.value)} placeholder="강조 문구 (예: 추가 10% 할인)" className={inputClass} />
+                  <input value={bannerCode} onChange={e => setBannerCode(e.target.value)} placeholder="코드 (예: SLTOP10)" className={inputClass} />
+                  <input value={bannerCta} onChange={e => setBannerCta(e.target.value)} placeholder="버튼 문구 (예: 지금 체험하기)" className={inputClass} />
+                </div>
+              )}
+              {bannerStyle === 'promo' && <p className="text-[11.5px] text-[#9d9280]">문구 안에 <code className="bg-[#f5efe3] px-1 rounded">{'{highlight}'}</code> <code className="bg-[#f5efe3] px-1 rounded">{'{code}'}</code> 를 넣으면 그 자리에 강조 문구·코드가 들어가고, 없으면 문구 뒤에 붙어요. 저장할 때마다 닫았던 사용자에게도 다시 보입니다.</p>}
             </div>
           </Card>
         </div>

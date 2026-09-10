@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useLang } from '@/lib/i18n/context'
 import HeroPromptInput from '@/components/HeroPromptInput'
 import HeroAvatarMarquee from '@/components/HeroAvatarMarquee'
+import InspiredBy from '@/components/InspiredBy'
 import type { GameWithCreator } from '@/lib/supabase/types'
 
 // tropica가 먼저, vecto가 다음
@@ -79,7 +80,8 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
       </div>
 
       {/* 하단 — TOP AI AVATAR 마퀴 + 스크롤 유도 */}
-      <div className="relative w-full pb-5 space-y-4">
+      <div className="relative w-full pb-5 space-y-5">
+        <InspiredBy />
         <HeroAvatarMarquee games={games} />
         <div className="flex flex-col items-center gap-1 text-[#b3a78f]" aria-hidden>
           <span className="text-[9px] font-semibold tracking-[0.3em]">SCROLL</span>
