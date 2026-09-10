@@ -26,7 +26,14 @@ export default function HomeBanner() {
       })
   }, [])
 
-  if (pathname !== '/' || !banner || closed) return null
+  const visible = pathname === '/' && !!banner && !closed
+  // 화면 상단 고정 — 네비게이션·본문은 --banner-h 만큼 내려온다 (홈 스크롤 스냅에 밀려 올라가지 않게)
+  useEffect(() => {
+    const root = document.documentElement
+    if (visible) root.style.setProperty('--banner-h', (banner?.style ?? 'simple') === 'promo' ? '48px' : '38px'); else root.style.removeProperty('--banner-h')
+    return () => root.style.removeProperty('--banner-h')
+  }, [visible, banner?.style])
+  if (!visible || !banner) return null
   const dismiss = () => { setClosed(true); try { localStorage.setItem(DISMISS_KEY, String(banner.version ?? '')) } catch { /* ignore */ } }
   const isExternal = /^https?:\/\//.test(banner.link ?? '')
 
@@ -35,8 +42,8 @@ export default function HomeBanner() {
       <p className="max-w-7xl mx-auto px-6 py-2.5 text-center text-xs text-black font-pixel tracking-widest truncate">📢 {banner.text}</p>
     )
     return banner.link
-      ? <Link href={banner.link} className="block bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors">{inner}</Link>
-      : <div className="bg-[#2563eb]">{inner}</div>
+      ? <Link href={banner.link} className="fixed top-0 left-0 right-0 z-[60] block bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors">{inner}</Link>
+      : <div className="fixed top-0 left-0 right-0 z-[60] bg-[#2563eb]">{inner}</div>
   }
 
   // promo — 문장 안의 {highlight} 자리에 강조 문구, {code} 자리에 코드 칩. 없으면 뒤에 붙인다.
@@ -50,10 +57,10 @@ export default function HomeBanner() {
       : <Link href={banner.link} className="shrink-0 inline-flex items-center h-8 px-3.5 rounded-lg bg-[#ffd21e] text-[#241f17] text-[12.5px] font-extrabold hover:bg-[#ffdf5a] transition-colors">{banner.cta}</Link>)
     : null
   return (
-    <div className="relative overflow-hidden bg-[#0f1220] text-white" role="region" aria-label="promotion">
+    <div className="fixed top-0 left-0 right-0 z-[60] overflow-hidden bg-[#0f1220] text-white" role="region" aria-label="promotion">
       {/* 배경 — 어두운 그라디언트 + 글로우 */}
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(60%_140%_at_50%_0%,rgba(37,99,235,0.35),transparent_60%),radial-gradient(40%_120%_at_10%_50%,rgba(240,90,40,0.25),transparent_60%),radial-gradient(40%_120%_at_90%_50%,rgba(124,58,237,0.3),transparent_60%)]" />
-      <div className="relative max-w-7xl mx-auto px-4 md:px-6 h-11 md:h-12 flex items-center justify-center gap-3 md:gap-4">
+      <div className="relative max-w-7xl mx-auto px-4 md:px-6 h-12 flex items-center justify-center gap-3 md:gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/aibot.png" alt="" className="hidden sm:block w-7 h-7 object-contain drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
         <p className="min-w-0 truncate text-[12.5px] md:text-[13.5px] font-semibold tracking-tight">

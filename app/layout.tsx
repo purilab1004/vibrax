@@ -231,7 +231,7 @@ export default async function RootLayout({
           <Suspense fallback={null}>
             <Sidebar newGenres={newGenres} channels={channels} tournament={tournament} />
           </Suspense>
-          <main className="flex-1 md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">{blocked !== null ? <BlockedGate email={blocked} /> : children}</main>
+          <main className="flex-1 md:pl-[var(--rail-w,0rem)] pt-[var(--banner-h,0px)] transition-[padding] duration-200">{blocked !== null ? <BlockedGate email={blocked} /> : children}</main>
           <SiteFooter />
           <Telemetry />
           <PwaRegister />

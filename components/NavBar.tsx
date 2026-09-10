@@ -135,7 +135,7 @@ export default function NavBar() {
   // 관리자 — 큰 메뉴 없이 로고 + 관리자 홈 + 복귀/로그아웃만 있는 미니 헤더 (Notion풍)
   if (pathname.startsWith('/admin')) {
     return (
-      <header className="sticky top-0 z-50 border-b border-[#e3e6ec] bg-white md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">
+      <header className="sticky top-[var(--banner-h,0px)] z-50 border-b border-[#e3e6ec] bg-white md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">
         <nav className="w-full px-4 h-12 flex items-center gap-4">
           {/* 좌: 워드마크 + 관리자 검색 */}
           <Link href="/admin" className="flex items-center gap-2 text-[#1f2430] text-[15px] font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
@@ -166,7 +166,7 @@ export default function NavBar() {
     <>
       {/* 상단: 투명(첫 섹션 배경이 뒤로 지나감) → 스크롤: 유리 배경 */}
       <header
-        className={`sticky top-0 z-50 md:pl-[var(--rail-w,0rem)] transition-[padding,background-color,box-shadow,backdrop-filter,transform] duration-200 ${
+        className={`sticky top-[var(--banner-h,0px)] z-50 md:pl-[var(--rail-w,0rem)] transition-[padding,background-color,box-shadow,backdrop-filter,transform] duration-200 ${
           (scrolled || pathname !== '/') && pathname !== '/games' ? 'bg-white/55 backdrop-blur-xl' : ''
         } ${hideMobile ? '-translate-y-full md:translate-y-0' : ''} ${pathname === '/games' || /^\/games\/[^/]+$/.test(pathname) || pathname.startsWith('/tournament') ? 'hidden md:block' : ''}`}
       >
