@@ -193,6 +193,20 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const onDragEnd = () => { const d = dragRef.current; dragRef.current = null; if (d?.moved) { try { localStorage.setItem('aj-avatar-pos', JSON.stringify({ x: Math.min(0, d.ox), y: Math.min(0, d.oy) })) } catch { /* ignore */ } } }
   useEffect(() => { try { localStorage.setItem('aj-avatar-pos', JSON.stringify(drag)) } catch { /* ignore */ } }, [drag])
 
+  // 모바일 AJ 채팅 — 플로팅 카드: 드래그 이동 + 코너 확대/축소 + 닫기(버블로). 위치·크기 기억.
+  const [chatPos, setChatPos] = useState<{ x: number; y: number }>(() => { try { const v = JSON.parse(localStorage.getItem('aj-chat-pos') ?? 'null'); return v && typeof v.x === 'number' ? v : { x: 8, y: 90 } } catch { return { x: 8, y: 90 } } })
+  const [chatSize, setChatSize] = useState<{ w: number; h: number }>(() => { try { const v = JSON.parse(localStorage.getItem('aj-chat-size') ?? 'null'); return v && typeof v.w === 'number' ? v : { w: 236, h: 300 } } catch { return { w: 236, h: 300 } } })
+  useEffect(() => { try { localStorage.setItem('aj-chat-pos', JSON.stringify(chatPos)) } catch { /* ignore */ } }, [chatPos])
+  useEffect(() => { try { localStorage.setItem('aj-chat-size', JSON.stringify(chatSize)) } catch { /* ignore */ } }, [chatSize])
+  const chatDragRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null)
+  const onChatDragStart = (e: React.PointerEvent) => { chatDragRef.current = { sx: e.clientX, sy: e.clientY, ox: chatPos.x, oy: chatPos.y }; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }
+  const onChatDragMove = (e: React.PointerEvent) => { const d = chatDragRef.current; if (!d) return; const W = window.innerWidth, H = window.innerHeight; setChatPos({ x: Math.max(4, Math.min(W - 56, d.ox + e.clientX - d.sx)), y: Math.max(4, Math.min(H - 56, d.oy + e.clientY - d.sy)) }) }
+  const onChatDragEnd = () => { chatDragRef.current = null }
+  const chatResizeRef = useRef<{ sx: number; sy: number; ow: number; oh: number } | null>(null)
+  const onChatResizeStart = (e: React.PointerEvent) => { e.stopPropagation(); chatResizeRef.current = { sx: e.clientX, sy: e.clientY, ow: chatSize.w, oh: chatSize.h }; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }
+  const onChatResizeMove = (e: React.PointerEvent) => { const d = chatResizeRef.current; if (!d) return; e.stopPropagation(); const W = window.innerWidth, H = window.innerHeight; setChatSize({ w: Math.max(180, Math.min(W - 16, d.ow + e.clientX - d.sx)), h: Math.max(150, Math.min(H - 90, d.oh + e.clientY - d.sy)) }) }
+  const onChatResizeEnd = (e: React.PointerEvent) => { e.stopPropagation(); chatResizeRef.current = null }
+
 
   const isStreamingRef = useRef(false)
   const messagesRef = useRef<Message[]>([])
@@ -425,7 +439,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
           style={{ maxHeight: chatExpanded ? 'min(70vh, calc(100vh - 190px))' : '58%' }}>
           <div className="space-y-1.5">
             {(chatExpanded ? messages : messages.slice(-14)).map((msg, i, arr) => (
-              <div key={i} className="flex items-start gap-2 transition-opacity duration-1000" style={{ opacity: chatExpanded ? 1 : ageOpacity(msg.ts) }}>
+              <div key={i} className="flex items-start gap-2 transition-opacity duration-1000" style={{ opacity: chatExpanded || i >= arr.length - 3 ? 1 : ageOpacity(msg.ts) }}>
                 <div className="max-w-full text-[13px] leading-relaxed px-3 py-1.5 rounded-2xl text-white shadow-[0_1px_4px_rgba(0,0,0,0.4)] bg-black/85">
                   <span className={`font-bold mr-1.5 ${
                     msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'
@@ -512,39 +526,52 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
 
       {/* ─── Mobile: PC 와 같은 오버레이 — 좌하단 채팅(접기), 우하단 아바타(드래그·숨기기) + 네임 배지 ─── */}
       <div className="md:hidden absolute inset-0 pointer-events-none z-10">
-        {/* 채팅 스택 + 입력 — 접으면 왼쪽으로 슬라이드 */}
-        <div className="absolute inset-0 transition-transform duration-400 ease-[cubic-bezier(.2,.8,.2,1)]" style={{ transform: mChatOpen ? 'translateX(0)' : 'translateX(-110%)' }}>
-          <button onClick={() => setChatExpanded(v => !v)} className="pointer-events-auto absolute left-2 bottom-[60px] z-10 h-6 px-2.5 rounded-full bg-black/65 backdrop-blur-md border border-white/15 text-white/90 text-[10.5px] font-semibold flex items-center gap-1">
-            <svg viewBox="0 0 24 24" className={`w-3 h-3 transition-transform ${chatExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
-            {chatExpanded ? '접기' : `펼치기${messages.length ? ` ${messages.length}` : ''}`}
-          </button>
-          <div className={`${chatExpanded ? '' : 'chat-fade'} absolute left-2 right-[136px] bottom-[86px] flex flex-col justify-end ${chatExpanded ? 'overflow-y-auto rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 p-2' : 'overflow-hidden'}`} style={{ maxHeight: chatExpanded ? '52vh' : '42%' }}>
-            <div className="space-y-1">
-              {(chatExpanded ? messages : messages.slice(-10)).map((msg, i) => (
-                <div key={i} className="flex transition-opacity duration-1000" style={{ opacity: chatExpanded ? 1 : ageOpacity(msg.ts) }}>
-                  <div className="max-w-full text-[12px] leading-snug px-2.5 py-1 rounded-2xl text-white bg-black/80 shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
+        {/* AJ 채팅 — 플로팅 카드: 헤더 드래그로 이동, 우하단 모서리로 확대/축소, X로 닫기(버블로) */}
+        {mChatOpen ? (
+          <div className="pointer-events-auto absolute rounded-2xl bg-black/72 backdrop-blur-md border border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
+            style={{ left: chatPos.x, top: chatPos.y, width: chatSize.w, height: chatSize.h }}>
+            {/* 헤더 — 드래그 핸들 */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/10 border-b border-white/10 cursor-move touch-none shrink-0"
+              onPointerDown={onChatDragStart} onPointerMove={onChatDragMove} onPointerUp={onChatDragEnd} onPointerCancel={onChatDragEnd}>
+              <span className="text-white/40 text-[11px] leading-none" aria-hidden>⣿</span>
+              <span className="font-pixel text-[10px] text-white truncate flex-1">{ajChatName}</span>
+              <button onClick={() => setMChatOpen(false)} onPointerDown={e => e.stopPropagation()} aria-label="채팅 닫기" className="w-6 h-6 rounded-full hover:bg-white/15 text-white/80 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+              </button>
+            </div>
+            {/* 채팅 내역 — 스크롤 */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {messages.map((msg, i) => (
+                <div key={i} className="flex">
+                  <div className="max-w-full text-[12px] leading-snug px-2.5 py-1 rounded-2xl text-white bg-black/60 shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
                     <span className={`font-bold mr-1 ${msg.role === 'assistant' ? 'text-sky-300' : msg.source === 'agent' ? 'text-purple-300' : 'text-[#7ef0ff]'}`}>{msg.role === 'assistant' ? ajChatName : msg.source === 'agent' ? maskName(msg.agentName ?? 'AGENT') : '나'}</span>{msg.content}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-          <div className="absolute left-2 right-[150px] bottom-2.5 pointer-events-auto">
-            <div className="flex items-center gap-1.5 bg-black/55 backdrop-blur-md rounded-full pl-3.5 pr-1 py-1 border border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.35)]">
-              <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) sendMessage(input) }}
-                placeholder={joined ? 'AI에게 가르치기…' : 'AJ에게 말걸기...'} className="flex-1 min-w-0 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none" />
-              {renderMic(32)}
-              <button onClick={() => sendMessage(input)} disabled={!input.trim()} aria-label="보내기" className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#06b6d4] text-white flex items-center justify-center active:scale-95 transition disabled:opacity-40 shrink-0"><svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button>
+            {/* 입력 */}
+            <div className="p-1.5 border-t border-white/10 shrink-0">
+              <div className="flex items-center gap-1.5 bg-white/5 rounded-full pl-3 pr-1 py-1">
+                <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) sendMessage(input) }}
+                  placeholder={joined ? 'AI에게 가르치기…' : 'AJ에게 말걸기...'} className="flex-1 min-w-0 bg-transparent text-white text-[13px] placeholder-white/50 focus:outline-none" />
+                {renderMic(30)}
+                <button onClick={() => sendMessage(input)} disabled={!input.trim()} aria-label="보내기" className="w-7 h-7 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#06b6d4] text-white flex items-center justify-center active:scale-95 transition disabled:opacity-40 shrink-0"><svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg></button>
+              </div>
+            </div>
+            {/* 확대/축소 핸들 — 우하단 모서리 */}
+            <div className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize touch-none flex items-end justify-end p-0.5 text-white/40"
+              onPointerDown={onChatResizeStart} onPointerMove={onChatResizeMove} onPointerUp={onChatResizeEnd} onPointerCancel={onChatResizeEnd} aria-label="크기 조절">
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v6h-6M21 21l-7-7M9 21H3v-6" /></svg>
             </div>
           </div>
-        </div>
-        {/* 채팅 접기/펼치기 탭 */}
-        <button onClick={() => setMChatOpen(v => !v)} aria-label={mChatOpen ? '채팅 접기' : '채팅 펼치기'}
-          className="pointer-events-auto absolute bottom-[18px] h-8 w-6 rounded-r-md bg-black/55 backdrop-blur-md border border-l-0 border-white/15 text-white/80 flex items-center justify-center transition-all duration-400"
-          style={{ left: mChatOpen ? 'calc(100% - 148px)' : 0 }}>
-          <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 transition-transform duration-400 ${mChatOpen ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
-          {!mChatOpen && unread > 0 && <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[10px] font-extrabold flex items-center justify-center animate-pulse">{unread > 99 ? '99+' : unread}</span>}
-        </button>
+        ) : (
+          /* 닫힘 — 다시 열기 버블 */
+          <button onClick={() => setMChatOpen(true)} aria-label="AJ 채팅 열기"
+            className="pointer-events-auto absolute left-3 bottom-3 w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-[0_6px_18px_rgba(0,0,0,0.4)] text-white flex items-center justify-center active:scale-95 transition">
+            <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-11.9 7.6L4 20l1-4.1A8.4 8.4 0 1 1 21 11.5Z" /></svg>
+            {unread > 0 && <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[10px] font-extrabold flex items-center justify-center animate-pulse">{unread > 99 ? '99+' : unread}</span>}
+          </button>
+        )}
         {/* 우하단 — 아바타(드래그 이동, 배지 탭으로 숨기기/보이기) + 네임 배지 */}
         <div className="absolute right-2 bottom-2.5 w-[116px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
           <div className={`relative aj-stage aj-stage-desk aj-drag ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible && !mAvatarHidden ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: camera ? 90 : 132 }}
