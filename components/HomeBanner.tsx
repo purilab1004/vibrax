@@ -36,8 +36,8 @@ export default function HomeBanner() {
       <p className="max-w-7xl mx-auto px-6 py-2.5 text-center text-xs text-black font-pixel tracking-widest truncate">📢 {banner.text}</p>
     )
     return banner.link
-      ? <Link href={banner.link} className="banner-drop fixed left-1/2 -translate-x-1/2 top-[66px] z-[45] block w-[calc(100%-1.5rem)] max-w-3xl rounded-2xl shadow-[0_16px_40px_-16px_rgba(37,99,235,0.6)] bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors">{inner}</Link>
-      : <div className="banner-drop fixed left-1/2 -translate-x-1/2 top-[66px] z-[45] w-[calc(100%-1.5rem)] max-w-3xl rounded-2xl shadow-[0_16px_40px_-16px_rgba(37,99,235,0.6)] bg-[#2563eb]">{inner}</div>
+      ? <Link href={banner.link} className="banner-drop fixed left-1/2 top-[66px] z-[45] block w-[calc(100%-1.5rem)] max-w-3xl rounded-2xl shadow-[0_16px_40px_-16px_rgba(37,99,235,0.6)] bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors">{inner}</Link>
+      : <div className="banner-drop fixed left-1/2 top-[66px] z-[45] w-[calc(100%-1.5rem)] max-w-3xl rounded-2xl shadow-[0_16px_40px_-16px_rgba(37,99,235,0.6)] bg-[#2563eb]">{inner}</div>
   }
 
   // promo — 문장 안의 {highlight} 자리에 강조 문구, {code} 자리에 코드 칩. 없으면 뒤에 붙인다.
@@ -51,7 +51,7 @@ export default function HomeBanner() {
       : <Link href={banner.link} className="shrink-0 inline-flex items-center h-8 px-3.5 rounded-lg bg-[#ffd21e] text-[#241f17] text-[12.5px] font-extrabold hover:bg-[#ffdf5a] transition-colors">{banner.cta}</Link>)
     : null
   return (
-    <div className="banner-drop fixed left-1/2 -translate-x-1/2 top-[66px] z-[45] w-[calc(100%-1.5rem)] max-w-3xl rounded-2xl overflow-hidden bg-[#0f1220] text-white shadow-[0_18px_50px_-18px_rgba(15,18,32,0.7)] ring-1 ring-white/10" role="region" aria-label="promotion">
+    <div className="banner-drop fixed left-1/2 top-[66px] z-[45] w-[calc(100%-1.5rem)] max-w-3xl rounded-2xl overflow-hidden bg-[#0f1220] text-white shadow-[0_18px_50px_-18px_rgba(15,18,32,0.7)] ring-1 ring-white/10" role="region" aria-label="promotion">
       {/* 배경 — 어두운 그라디언트 + 글로우 */}
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(60%_140%_at_50%_0%,rgba(37,99,235,0.35),transparent_60%),radial-gradient(40%_120%_at_10%_50%,rgba(240,90,40,0.25),transparent_60%),radial-gradient(40%_120%_at_90%_50%,rgba(124,58,237,0.3),transparent_60%)]" />
       <div className="relative px-4 md:px-5 pr-10 h-12 flex items-center justify-center gap-3 md:gap-4">
