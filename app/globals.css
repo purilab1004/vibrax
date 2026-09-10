@@ -873,3 +873,8 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
 html.vbx-ios { scroll-snap-type: y proximity; -webkit-overflow-scrolling: touch; }
 html.vbx-ios.home-snap { scroll-snap-type: y proximity; }
 html.vbx-ios .feed-snap { scroll-snap-stop: normal; }
+
+/* 홈 상단 프로모 배너 — 네비 아래에서 자연스럽게 내려온다 */
+.banner-drop { animation: bannerDrop .7s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes bannerDrop { from { opacity: 0; transform: translate(-50%, -140%); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .banner-drop { animation: none; } }
