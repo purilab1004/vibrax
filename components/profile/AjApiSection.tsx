@@ -84,7 +84,7 @@ const { reply } = await r.json()`
           <ol className="mt-4 space-y-1.5 text-[12.5px] text-[#4a4337] list-decimal pl-5">
             <li>Chrome 웹스토어에서 <b>Vibrexcup AJ</b> 설치 (<Link href="/dev" className="text-[#2563eb] underline">DEV 페이지</Link>에서 바로 가기 · 현재 심사 중)</li>
             <li>아래 버튼으로 키를 발급해 확장 팝업에 붙여넣기</li>
-            <li>팝업에서 "사이드 패널 열기" 또는 "이 페이지에 AJ 캐릭터 소환"</li>
+            <li>팝업에서 &ldquo;사이드 패널 열기&rdquo; 또는 &ldquo;이 페이지에 AJ 캐릭터 소환&rdquo;</li>
           </ol>
           <div className="mt-4 flex items-center gap-2 flex-wrap">
             {chromeKey ? (
