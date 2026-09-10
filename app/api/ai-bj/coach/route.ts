@@ -3,6 +3,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fitWeightsFromChoices } from '@/lib/aj/imitation'
 import { rateLimit, tooMany, isSafeCond } from '@/lib/security/ratelimit'
 import { curriculumForAsync } from '@/lib/studio/bot-curriculum'
 import { createBrain, recordFitness, activeGenome, type Brain } from '@/lib/neuroevo'
@@ -26,11 +27,14 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const { data: { user } } = await (await createClient()).auth.getUser()
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 })
-  const b = await req.json().catch(() => null) as { gameId?: string; message?: string; manifest?: Manifest | null; genre?: string; gameTitle?: string; action?: 'coach' | 'episode' | 'demo' | 'learnFromDemo'; score?: number; cleared?: boolean; durationSec?: number; samples?: { s: Record<string, number>; k: string[] }[] } | null
+  const b = await req.json().catch(() => null) as { gameId?: string; message?: string; manifest?: Manifest | null; genre?: string; gameTitle?: string; action?: 'coach' | 'episode' | 'demo' | 'learnFromDemo' | 'choice' | 'fitChoices' | 'learnAll'; score?: number; cleared?: boolean; durationSec?: number; samples?: { s: Record<string, number>; k: string[] }[] } | null
   if (!b?.gameId) return Response.json({ error: 'bad request' }, { status: 400 })
   const admin = createAdminClient()
   if (b.action === 'episode') { if (!rateLimit(`ep:${user.id}`, 120, 3600_000).ok) return tooMany(); return await autoLearn(admin, user.id, b) }
   if (b.action === 'demo') { if (!rateLimit(`demo:${user.id}`, 120, 3600_000).ok) return tooMany(); return await saveDemo(admin, user.id, b.gameId, b.samples ?? []) }
+  if (b.action === 'choice') { if (!rateLimit(`choice:${user.id}`, 600, 3600_000).ok) return tooMany(); return await saveChoice(admin, user.id, b.gameId, b as unknown as ChoiceIn) }
+  if (b.action === 'fitChoices') { if (!rateLimit(`coach:${user.id}`, 40, 3600_000).ok) return tooMany(); return await fitChoices(admin, user.id, b.gameId, true) }
+  if (b.action === 'learnAll') { if (!rateLimit(`coach:${user.id}`, 40, 3600_000).ok) return tooMany(); return await learnAll(admin, user.id, b) }
   if (b.action === 'learnFromDemo') { if (!rateLimit(`coach:${user.id}`, 40, 3600_000).ok) return tooMany(); b.message = '내가 직접 플레이한 기록(데모 요약)을 보고, 내 플레이 스타일을 따라하는 규칙을 만들어줘.' }
   if (!b.message?.trim()) return Response.json({ error: 'bad request' }, { status: 400 })
   if (b.message.length > 500) return Response.json({ error: '너무 길어요 (500자 이내)' }, { status: 400 })
@@ -49,7 +53,8 @@ export async function POST(req: Request) {
 state() 키: ${stateKeys.join(', ') || '(없음 — 규칙은 만들지 말고 params 와 tips 만)'}  예시 값: ${m.sample ? JSON.stringify(m.sample).slice(0, 400) : '-'}
 현재 정책: ${prev ? JSON.stringify({ rules: prev.rules, params: prev.params, tips: prev.tips }).slice(0, 1500) : '없음'}
 ${demoSummary((prev as unknown as { demos?: Demo[] } | null)?.demos)}
-출력 JSON 한 개만: {"rules":[{"cond":"s.ballX > s.paddleX + 8","action":"right","hold":80,"why":"공 따라가기"}],"params":{"reactionMs":60,"randomness":0.05},"tips":["사용자 조언 요약"],"summary":"AJ 가 사용자에게 하는 한 문장 답(반말, 10~25자, 무엇을 배웠는지)"}
+출력 JSON 한 개만: {"rules":[{"cond":"s.ballX > s.paddleX + 8","action":"right","hold":80,"why":"공 따라가기"}],"params":{"reactionMs":60,"randomness":0.05,"botSkill":0.9},"tips":["사용자 조언 요약"],"summary":"AJ 가 사용자에게 하는 한 문장 답(반말, 10~25자, 무엇을 배웠는지)"}
+params.botSkill(0~1) 은 내장 완성형 봇의 실력(하드드롭·반응속도·최적 수 선택 확률). 사용자가 "더 빨리", "바로 내려", "하드드롭/스페이스 써", "더 잘해", "실수 줄여" 같은 실력·속도 요구를 하면 규칙 대신 params.botSkill 을 0.8~1.0 으로, reactionMs 를 30~60 으로 설정한다(즉시 반영됨). 반대로 "천천히", "봐주면서" 면 낮춘다.
 규칙: cond 는 변수 s(state 객체)만 쓰는 JS 불리언 식, 위에서 아래로 첫 참인 규칙을 실행. 기존 규칙을 유지·수정하며 조언을 반영한다(최대 12개). state 키가 없으면 rules 는 빈 배열. 위험한 코드·함수 호출 금지.`
   let out: Policy
   try {
@@ -103,6 +108,7 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
   const patch: Record<string, unknown> = { episodes: eps, updated_at: new Date().toISOString() }
   if ((row.best_score ?? -1) < score) { const prevBest = row.best_score ?? null; patch.best_score = score; patch.best_score_at = new Date().toISOString(); void logLearn(admin, userId, gameId, 'record', `최고 점수 갱신 — ${score.toLocaleString()}점`, prevBest != null ? `이전 최고 ${prevBest.toLocaleString()}점 → ${score.toLocaleString()}점${b.cleared ? ' (클리어)' : ''}` : `첫 기록 ${score.toLocaleString()}점`, row.version) }
   // ── 신경진화 — 상태 수치가 있는 게임은 작은 신경망을 개체군·세대로 진화(브라우저 추론, 서버는 진화만) ──
+  let brainOut: { brain: ReturnType<typeof activeGenome>; evolved: boolean } | null = null
   const mm = b.manifest ?? {}
   const sample = (mm.sample ?? {}) as Record<string, unknown>
   // 신경망 관찰(입력) — 표준 관찰 슬롯 + 아이템 슬롯을 담도록 넉넉히
@@ -116,17 +122,14 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
     const { evolved } = recordFitness(brain, score)
     patch.brain = brain
     if (evolved) { patch.auto_count = (row.auto_count ?? 0) + 1; void logLearn(admin, userId, gameId, 'reflect', `신경진화 ${brain.gen}세대 — 최고 ${Math.round(brain.best.f)}점`, `개체군 ${brain.pop.length} · ${brain.arch[0]}-${brain.arch[1]}-${brain.arch[2]} 신경망`, brain.gen) }
-    const upd = await admin.from('aj_play_policies').update(patch as never).eq('id', row.id)
-    if (upd.error && /brain|column|schema cache/i.test(upd.error.message)) {
-      // brain 컬럼 미생성 — 신경진화 비활성, 나머지 학습은 계속 (일반 경로로 폴백)
-      delete (patch as { brain?: unknown }).brain
-      await admin.from('aj_play_policies').update(patch as never).eq('id', row.id)
-    } else {
-      return Response.json({ ok: true, brain: activeGenome(brain), evolved })
-    }
+    // 신경진화는 "덤" — 여기서 끝내지 않고 기본기·모방·자기 반성 경로를 계속 탄다 (예전엔 여기서 return 해 커리큘럼이 영영 안 돌았음)
+    const upd = await admin.from('aj_play_policies').update({ brain } as never).eq('id', row.id)
+    if (upd.error && /brain|column|schema cache/i.test(upd.error.message)) delete (patch as { brain?: unknown }).brain
+    else brainOut = { brain: activeGenome(brain), evolved }
   }
   const cur = eps.filter(e => e.v === row!.version)
   let changed: { policy: Policy; note: string } | null = null
+  void brainOut
   // ── 1) 템플릿 기본기 커리큘럼 — 템플릿이 미리 보유한 정석 지식을 2판마다 한 단계씩 학습 ──
   const rowX = row as typeof row & { template_skill?: number }
   const totalEps = eps.length
@@ -140,10 +143,10 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
   })().catch(() => null)
   const skillIdx = rowX.template_skill ?? 0
   // 시간차 학습 — 단계 사이 최소 1시간 (실제 사람이 배우듯 천천히)
-  const SKILL_INTERVAL_MS = 3600_000
+  const SKILL_INTERVAL_MS = 10 * 60_000   // 예전 1시간 → 10분 (사람이 보여준 게 없을 때의 보조 경로이므로 빠르게)
   const lastSkillAt = (row as unknown as { last_skill_at?: string | null }).last_skill_at
   const skillReady = !lastSkillAt || Date.now() - new Date(lastSkillAt).getTime() >= SKILL_INTERVAL_MS
-  if (row.auto_learn && cu && skillIdx < cu.skills.length && totalEps >= (skillIdx + 1) * 2 && skillReady && process.env.ANTHROPIC_API_KEY) {
+  if (row.auto_learn && cu && skillIdx < cu.skills.length && totalEps >= (skillIdx + 1) && skillReady && process.env.ANTHROPIC_API_KEY) {
     const skill = cu.skills[skillIdx]
     const m0 = b.manifest ?? {}
     const sk = (m0.stateKeys ?? (m0.sample ? Object.keys(m0.sample) : [])).slice(0, 40)
@@ -223,7 +226,7 @@ ${demoSummary((row as unknown as { demos?: Demo[] }).demos)}
   await admin.from('aj_play_policies').update(patch as never).eq('id', row.id)
   // AI 가 한 판을 끝냈다 — 플레이 기록 (정책 변화가 없어도 남긴다)
   if (!changed) void logLearn(admin, userId, gameId, 'play', `AI 플레이 ${eps.length}판째 · ${b.cleared ? '클리어' : '점수 ' + score}`, `이번 판 점수 ${score}${b.cleared ? ' (최종 클리어!)' : ''}`, row.version)
-  return Response.json({ ok: true, policy: changed?.policy ?? null, note: changed?.note ?? null, episodes: cur.length })
+  return Response.json({ ok: true, policy: changed?.policy ?? null, note: changed?.note ?? null, episodes: cur.length, brain: brainOut?.brain ?? null, evolved: brainOut?.evolved ?? false })
 }
 
 // ── 인간 플레이 데모(모방 학습) ──────────────────────────────────────────────
@@ -247,7 +250,8 @@ async function saveDemo(admin: ReturnType<typeof createAdminClient>, userId: str
   if (Math.floor(demos.length / 75) > Math.floor(before / 75)) void logLearn(admin, userId, gameId, 'demo', `내 플레이 관찰 — 누적 ${demos.length}샘플`, '사람이 어떤 상황에서 어떤 조작을 하는지 배우는 중', null)
   return Response.json({ ok: true, kept: demos.length })
 }
-function demoSummary(demos: Demo[] | null | undefined): string {
+function demoSummary(demosIn: Demo[] | null | undefined): string {
+  const demos = (demosIn ?? []).filter(d => d && (d as Demo).s && Array.isArray((d as Demo).k))
   if (!demos || demos.length < 20) return ''
   const feats = new Set<string>(); for (const d of demos) for (const k of Object.keys(d.s)) feats.add(k)
   const mean = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
@@ -275,4 +279,93 @@ function demoSummary(demos: Demo[] | null | undefined): string {
 
 async function logLearn(admin: ReturnType<typeof createAdminClient>, userId: string, gameId: string, kind: string, title: string, detail: string, version: number | null) {
   try { await admin.from('aj_learn_log').insert([{ game_id: gameId, user_id: userId, kind, title: title.slice(0, 120), detail: detail.slice(0, 500) || null, version }] as never) } catch { /* ignore */ }
+}
+
+// ── 사람 선택 모방(가중치 맞추기) ─────────────────────────────────────────────
+// 게임이 "후보 수 평가" 구조면(테트리스 등) 사람이 수를 놓을 때마다 {후보별 특징 벡터, 선택한 후보} 를 보낸다.
+// 사람의 선택이 1등이 되도록 평가 가중치를 맞추면(LLM 없음, 수백 번 시뮬레이션) 두세 판 만에 그 사람 스타일로 둔다.
+type ChoiceIn = { gameId?: string; names?: unknown; cands?: unknown; chosen?: unknown }
+type Choice = { c: 1; names: string[]; cands: { id: string; f: number[] }[]; chosen: string; t: string }
+const MAX_CHOICES = 150
+async function saveChoice(admin: ReturnType<typeof createAdminClient>, userId: string, gameId: string | undefined, b: ChoiceIn) {
+  if (!gameId) return Response.json({ error: 'bad request' }, { status: 400 })
+  const names = Array.isArray(b.names) ? (b.names as unknown[]).filter((n): n is string => typeof n === 'string' && /^\w{1,24}$/.test(n)).slice(0, 12) : []
+  const cands = (Array.isArray(b.cands) ? (b.cands as { id?: unknown; f?: unknown }[]) : []).filter(c => c && typeof c.id === 'string' && Array.isArray(c.f) && c.f.length === names.length && (c.f as unknown[]).every(v => typeof v === 'number' && Number.isFinite(v))).slice(0, 120).map(c => ({ id: String(c.id).slice(0, 24), f: (c.f as number[]).map(v => Math.round(v * 1000) / 1000) }))
+  const chosen = typeof b.chosen === 'string' ? b.chosen.slice(0, 24) : ''
+  if (!names.length || cands.length < 2 || !chosen || !cands.some(c => c.id === chosen)) return Response.json({ ok: true, kept: 0 })
+  const { data } = await admin.from('aj_play_policies').select('id,demos').eq('game_id', gameId).eq('user_id', userId).maybeSingle()
+  const row = data as { id: string; demos: unknown[] | null } | null
+  const all = (row?.demos ?? []) as unknown[]
+  const choices = all.filter(d => (d as Choice)?.c === 1) as Choice[]
+  const others = all.filter(d => (d as Choice)?.c !== 1)
+  const next: Choice = { c: 1, names, cands, chosen, t: new Date().toISOString() }
+  const merged = [...others.slice(-450), ...[...choices, next].slice(-MAX_CHOICES)]
+  if (row) await admin.from('aj_play_policies').update({ demos: merged, updated_at: new Date().toISOString() } as never).eq('id', row.id)
+  else await admin.from('aj_play_policies').insert([{ game_id: gameId, user_id: userId, version: 1, tips: [], rules: [], params: {}, demos: merged }] as never)
+  const n = choices.length + 1
+  // 20개마다 자동으로 가중치 맞추기 (즉시 반영) — 그 사이엔 모으기만
+  if (n >= 20 && n % 20 === 0) { const r = await fitChoices(admin, userId, gameId, false); return r }
+  if (n === 1) void logLearn(admin, userId, gameId, 'demo', '내 수 관찰 시작 — 어디에 놓는지 배우는 중', '20수마다 내 스타일에 맞춰 평가 가중치를 조정해요', null)
+  return Response.json({ ok: true, kept: n })
+}
+async function fitChoices(admin: ReturnType<typeof createAdminClient>, userId: string, gameId: string | undefined, manual: boolean) {
+  if (!gameId) return Response.json({ error: 'bad request' }, { status: 400 })
+  const { data } = await admin.from('aj_play_policies').select('*').eq('game_id', gameId).eq('user_id', userId).maybeSingle()
+  const row = data as (Policy & { id: string; demos: unknown[] | null }) | null
+  const choices = ((row?.demos ?? []) as unknown[]).filter(d => (d as Choice)?.c === 1) as Choice[]
+  if (!row || choices.length < 10) return Response.json({ ok: false, error: `내 수가 ${choices.length}개뿐이에요. 직접 10수 이상 두면 배울 수 있어요.` }, { status: 400 })
+  const names = choices[choices.length - 1].names
+  const baseW = names.map(n => { const v = row.params?.[`w_${n}`]; return typeof v === 'number' ? v : NaN })
+  const fit = fitWeightsFromChoices(choices, baseW.every(Number.isFinite) ? baseW : null)
+  if (!fit) return Response.json({ ok: false, error: '아직 데이터가 부족해요' }, { status: 400 })
+  // 사람 선택 일치율이 기존보다 낮아지면 채택하지 않음(사람 스타일에서 멀어지는 변화 방지)
+  if (!manual && fit.agree < fit.baseAgree) return Response.json({ ok: true, unchanged: true, agree: fit.agree })
+  const params: Record<string, number> = { ...(row.params ?? {}) }
+  names.forEach((n, i) => { params[`w_${n}`] = fit.w[i] })
+  const pol: Policy = { version: row.version + 1, tips: row.tips ?? [], rules: row.rules ?? [], params, summary: `네 수 ${choices.length}개를 보고 내 평가 기준을 맞췄어 (일치 ${Math.round(fit.agree * 100)}%)` }
+  await admin.from('aj_play_policies').update({ version: pol.version, params: pol.params, summary: pol.summary, updated_at: new Date().toISOString() } as never).eq('id', row.id)
+  void logLearn(admin, userId, gameId, 'demo', `내 수 모방 — 가중치 학습 (일치 ${Math.round(fit.agree * 100)}%)`, names.map((n, i) => `${n} ${fit.w[i]}`).join(' · '), pol.version)
+  return Response.json({ ok: true, policy: pol, agree: fit.agree, baseAgree: fit.baseAgree, choices: choices.length })
+}
+// ── 기본기 전부 즉시 배우기 (페이싱 무시, 단계마다 Haiku 1회) ────────────────────
+async function learnAll(admin: ReturnType<typeof createAdminClient>, userId: string, b: { gameId?: string; manifest?: Manifest | null; genre?: string; gameTitle?: string }) {
+  const gameId = b.gameId
+  if (!gameId || !process.env.ANTHROPIC_API_KEY) return Response.json({ error: 'bad request' }, { status: 400 })
+  const { data } = await admin.from('aj_play_policies').select('*').eq('game_id', gameId).eq('user_id', userId).maybeSingle()
+  let row = data as (Policy & { id: string; template_skill?: number }) | null
+  if (!row) { const { data: ins } = await admin.from('aj_play_policies').insert([{ game_id: gameId, user_id: userId, version: 1, tips: [], rules: [], params: {}, summary: null }] as never).select('*').maybeSingle(); row = ins as typeof row }
+  if (!row) return Response.json({ error: 'no policy' }, { status: 500 })
+  const { data: gm } = await admin.from('games').select('genre,studio_project_id').eq('id', gameId).maybeSingle()
+  const game = gm as { genre: string | null; studio_project_id: string | null } | null
+  let slug: string | null = null
+  if (game?.studio_project_id) { const { data: pm } = await admin.from('prompt_mappings').select('template_slug').eq('project_id', game.studio_project_id).not('template_slug', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle(); slug = (pm as { template_slug: string | null } | null)?.template_slug ?? null }
+  const cu = await curriculumForAsync(slug, game?.genre ?? b.genre ?? null, gameId).catch(() => null)
+  if (!cu || !cu.skills.length) return Response.json({ ok: false, error: '이 게임엔 기본기 커리큘럼이 없어요' }, { status: 400 })
+  // 매니페스트가 없으면(학습 탭에서 호출) 규칙 컴파일은 못 하지만 실력은 즉시 해제
+  const m0 = b.manifest ?? {}
+  const sk = (m0.stateKeys ?? (m0.sample ? Object.keys(m0.sample) : [])).slice(0, 40)
+  const inp = (m0.inputs ?? []).slice(0, 12)
+  let rules = row.rules ?? []
+  let skillIdx = row.template_skill ?? 0
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  let learned = 0
+  for (; skillIdx < cu.skills.length; skillIdx++) {
+    const skill = cu.skills[skillIdx]
+    if (sk.length && inp.length) {
+      try {
+        const sys = `너는 게임 봇 코치 컴파일러다. 아래 "정석 기술"을 이 게임의 상태 키와 입력으로 실행 가능한 규칙으로 바꾼다.\n게임: ${b.gameTitle ?? ''} / 목표: ${m0.goal ?? '-'} / 입력(action): ${inp.join(', ')}\nstate() 키: ${sk.join(', ')}  예시 값: ${m0.sample ? JSON.stringify(m0.sample).slice(0, 400) : '-'}\n기존 규칙(유지하며 아래 기술을 추가·정교화): ${JSON.stringify(rules).slice(0, 1200)}\n출력 JSON 한 개만: {"rules":[{"cond":"s.x > 1","action":"right","hold":80,"why":"[기본기] ..."}],"summary":"한 문장"} — cond 는 s 만 쓰는 불리언 식, 최대 12개.`
+        const msg = await client.messages.create({ model: 'claude-haiku-4-5', max_tokens: 1200, system: sys, messages: [{ role: 'user', content: `정석 기술 ${skillIdx + 1}단계 "${skill.name}": ${skill.hint}` }] })
+        const t = msg.content.map(c => (c.type === 'text' ? c.text : '')).join('')
+        const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)) as Partial<Policy>
+        const nr = (Array.isArray(j.rules) ? j.rules : []).filter(r => r && typeof r.cond === 'string' && typeof r.action === 'string' && isSafeCond(r.cond) && inp.includes(r.action)).slice(0, 12).map(r => ({ cond: r.cond.slice(0, 200), action: r.action, hold: Math.max(30, Math.min(1500, Number(r.hold ?? 100))), why: String(r.why ?? `[기본기] ${skill.name}`).slice(0, 80) }))
+        if (nr.length) rules = nr
+      } catch { /* 규칙 컴파일 실패해도 단계는 진행 */ }
+    }
+    learned++
+    void logLearn(admin, userId, gameId, 'curriculum', `기본기 ${skillIdx + 1}단계 · ${skill.name} (즉시 학습)`, skill.hint, row.version + learned)
+  }
+  const params = { ...(row.params ?? {}), botSkill: 1 }
+  const pol: Policy = { version: row.version + Math.max(1, learned), tips: row.tips ?? [], rules, params, summary: learned ? `기본기 ${cu.skills.length}단계를 한 번에 익혔어! 이제 최고 실력으로 둘게` : '이미 기본기를 다 배웠어 — 실력 최대로 설정' }
+  await admin.from('aj_play_policies').update({ version: pol.version, rules: pol.rules, params: pol.params, summary: pol.summary, template_skill: cu.skills.length, last_skill_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never).eq('id', row.id)
+  return Response.json({ ok: true, policy: pol, learned, total: cu.skills.length })
 }

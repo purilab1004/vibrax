@@ -47,6 +47,8 @@ export default function AiLearningSection() {
   const totalXp = useMemo(() => (rows ?? []).reduce((a, r) => a + xpOf(r), 0), [rows])
   const allAuto = !rows || rows.length === 0 || rows.every(r => r.auto_learn !== false)
   const toggleAuto = async (on: boolean) => { setRows(rs => (rs ?? []).map(r => ({ ...r, auto_learn: on }))); await createClient().from('aj_play_policies').update({ auto_learn: on } as never).in('game_id', (rows ?? []).map(r => r.game_id)) }
+  const learnAll = async (gameId: string) => { setBusy(gameId); try { const r = await fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'learnAll', gameId }) }); const j = await r.json(); if (r.ok && j.policy) { setRows(rs => (rs ?? []).map(x => x.game_id === gameId ? { ...x, version: j.policy.version, rules: j.policy.rules, params: j.policy.params, template_skill: j.total } : x)); alert(j.policy.summary) } else alert(j.error ?? '실패') } finally { setBusy(null) } }
+  const fitChoices = async (gameId: string) => { setBusy(gameId); try { const r = await fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'fitChoices', gameId }) }); const j = await r.json(); if (r.ok && j.policy) { setRows(rs => (rs ?? []).map(x => x.game_id === gameId ? { ...x, version: j.policy.version, params: j.policy.params } : x)); alert(j.policy.summary) } else alert(j.error ?? '실패') } finally { setBusy(null) } }
   const learnFromDemo = async (gameId: string) => { setBusy(gameId); try { const r = await fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'learnFromDemo', gameId }) }); const j = await r.json(); if (r.ok && j.policy) setRows(rs => (rs ?? []).map(x => x.game_id === gameId ? { ...x, version: j.policy.version, rules: j.policy.rules } : x)); else alert(j.error ?? '실패') } finally { setBusy(null) } }
 
   if (rows === null) return <div className="h-40 rounded-2xl bg-[#f6f2ea] animate-pulse" />
@@ -114,18 +116,19 @@ export default function AiLearningSection() {
             </div>
           </aside>
 
-          <div className="min-w-0">{cur && <GameDashboard row={cur} logs={logs.filter(l => l.game_id === cur.game_id)} busy={busy === cur.game_id} onLearnDemo={() => learnFromDemo(cur.game_id)} />}</div>
+          <div className="min-w-0">{cur && <GameDashboard row={cur} logs={logs.filter(l => l.game_id === cur.game_id)} busy={busy === cur.game_id} onLearnDemo={() => learnFromDemo(cur.game_id)} onLearnAll={() => learnAll(cur.game_id)} onFitChoices={() => fitChoices(cur.game_id)} />}</div>
         </div>
       )}
     </div>
   )
 }
 
-function GameDashboard({ row, logs, busy, onLearnDemo }: { row: Row; logs: LearnLog[]; busy: boolean; onLearnDemo: () => void }) {
+function GameDashboard({ row, logs, busy, onLearnDemo, onLearnAll, onFitChoices }: { row: Row; logs: LearnLog[]; busy: boolean; onLearnDemo: () => void; onLearnAll: () => void; onFitChoices: () => void }) {
   const eps = Array.isArray(row.episodes) ? row.episodes : []
   const rules = Array.isArray(row.rules) ? row.rules : []
   const g = GENRE[row.games?.genre ?? 'action'] ?? GENRE.action
-  const demoN = Array.isArray(row.demos) ? row.demos.length : 0
+  const demoN = Array.isArray(row.demos) ? row.demos.filter(d => !(d as { c?: number })?.c).length : 0
+  const choiceN = Array.isArray(row.demos) ? row.demos.filter(d => (d as { c?: number })?.c === 1).length : 0
   const clears = eps.filter(e => e.cleared).length
   return (
     <div className="space-y-3">
@@ -198,6 +201,8 @@ function GameDashboard({ row, logs, busy, onLearnDemo }: { row: Row; logs: Learn
         <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
           <p className="text-[12px] font-bold uppercase tracking-wide text-[#857a68]">학습 기록</p>
           {demoN >= 20 && <button onClick={onLearnDemo} disabled={busy} className="h-7 px-3 rounded-full bg-[#241f17] text-white text-[11px] font-bold disabled:opacity-50">{busy ? '학습 중…' : '내 플레이로 학습'}</button>}
+          {choiceN >= 10 && <button onClick={onFitChoices} disabled={busy} className="h-7 px-3 rounded-full bg-[#0891b2] text-white text-[11px] font-bold disabled:opacity-50" title="내가 놓은 수와 일치하도록 봇의 평가 가중치를 맞춰요">{busy ? '학습 중…' : `내 수 ${choiceN}개로 스타일 학습`}</button>}
+          <button onClick={onLearnAll} disabled={busy} className="h-7 px-3 rounded-full bg-[#2563eb] text-white text-[11px] font-bold disabled:opacity-50" title="기본기 커리큘럼 전 단계를 지금 바로 익히고 실력을 최대로">{busy ? '학습 중…' : '지금 기본기 전부 배우기'}</button>
         </div>
         {logs.length === 0 ? <p className="text-[12.5px] text-[#9d9280] py-6 text-center">이 게임의 학습 기록이 아직 없어요.</p> : (
           <ul className="space-y-1.5 max-h-72 overflow-y-auto pr-1">

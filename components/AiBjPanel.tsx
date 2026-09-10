@@ -91,10 +91,12 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const manifestRef = useRef<Record<string, unknown> | null>(null)
   useEffect(() => {
     const h = (e: MessageEvent) => {
-      const d = e.data as { type?: string; manifest?: Record<string, unknown>; samples?: unknown[] } | null
+      const d = e.data as { type?: string; manifest?: Record<string, unknown>; samples?: unknown[]; names?: unknown; cands?: unknown; chosen?: unknown } | null
       if (d?.type === 'vibrex:manifest') manifestRef.current = d.manifest ?? null
       // 인간 플레이 데모 — 사람이 직접 플레이하는 동안 (상태, 입력) 샘플이 25개씩 온다 → 서버에 저장(모방 학습 재료)
       if (d?.type === 'vibrex:demo' && Array.isArray(d.samples) && gameId && !joinedRef.current) fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'demo', gameId, samples: d.samples }), keepalive: true }).catch(() => {})
+      // 사람이 조각/수를 놓을 때마다 (후보 특징, 선택) — 모방 학습(가중치 맞추기) 재료
+      if (d?.type === 'vibrex:demo-choice' && Array.isArray(d.cands) && typeof d.chosen === 'string' && gameId && !joinedRef.current) fetch('/api/ai-bj/coach', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'choice', gameId, names: d.names, cands: d.cands, chosen: d.chosen }), keepalive: true }).catch(() => {})
     }
     window.addEventListener('message', h); return () => window.removeEventListener('message', h)
   }, [gameId])
