@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { GameMetrics } from '@/lib/aj/metrics'
 import type { AjReport } from '@/app/api/aj/analyze/route'
+import AutoDesignPanel from '@/components/aj/AutoDesignPanel'
 
 const fmtDur = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}분 ${s % 60}초` : `${s}초`)
 const pct = (v: number) => `${Math.round(v * 100)}%`
@@ -57,6 +58,9 @@ export default function AjDashboard({ gameId, projectId, canRun, initialMetrics,
       </section>
 
       {err && <p className="text-red-500 text-sm">{err}</p>}
+
+      {/* AJ 자율 튜닝 — 카나리 실험 (스튜디오 게임만) */}
+      {projectId && <AutoDesignPanel gameId={gameId} canRun={canRun} />}
 
       {!report ? (
         <div className="relative overflow-hidden rounded-3xl border border-[#ebe4d6] bg-white p-8 md:p-10">

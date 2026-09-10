@@ -4,14 +4,14 @@
 import { useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-interface Sess { id: string | null; startedAt: number; scoreMax: number | null; overs: number; firstOverSec: number | null; events: number; cleared: boolean; clearSec: number | null; autopilot: boolean }
+interface Sess { id: string | null; startedAt: number; scoreMax: number | null; overs: number; firstOverSec: number | null; events: number; cleared: boolean; clearSec: number | null; autopilot: boolean; versionId: string | null }
 
 export function useGameTelemetry(gameId: string, active: boolean) {
   const ref = useRef<Sess | null>(null)
   useEffect(() => {
     if (!active) return
     const supabase = createClient()
-    const s: Sess = { id: null, startedAt: Date.now(), scoreMax: null, overs: 0, firstOverSec: null, events: 0, cleared: false, clearSec: null, autopilot: false }
+    const s: Sess = { id: null, startedAt: Date.now(), scoreMax: null, overs: 0, firstOverSec: null, events: 0, cleared: false, clearSec: null, autopilot: false, versionId: null }
     ref.current = s
     let alive = true
     let userId: string | null = null
@@ -23,12 +23,14 @@ export function useGameTelemetry(gameId: string, active: boolean) {
     const flush = async (final = false) => {
       if (!alive && !final) return
       if (!s.id || !userId) return
-      const patch = {
+      const patch: Record<string, unknown> = {
         duration_sec: Math.round((Date.now() - s.startedAt) / 1000),
         score_max: s.scoreMax, game_overs: s.overs, first_over_sec: s.firstOverSec, events: s.events,
         cleared: s.cleared, clear_sec: s.clearSec, autopilot: s.autopilot,
         ended_at: final ? new Date().toISOString() : null,
       }
+      // AJ 자율 튜닝 카나리 — 서빙된 버전 꼬리표 (컬럼 없는 환경이면 아래에서 빼고 재시도)
+      if (s.versionId) patch.version_id = s.versionId
       try {
         if (final && typeof navigator.sendBeacon === 'function') {
           // 닫힐 때는 beacon 으로 (페이지 이탈에도 살아남게) — REST PATCH
@@ -40,7 +42,8 @@ export function useGameTelemetry(gameId: string, active: boolean) {
             return
           }
         }
-        await supabase.from('game_sessions').update(patch as never).eq('id', s.id)
+        const { error } = await supabase.from('game_sessions').update(patch as never).eq('id', s.id)
+        if (error && 'version_id' in patch && /version_id|schema cache/.test(error.message)) { delete patch.version_id; await supabase.from('game_sessions').update(patch as never).eq('id', s.id) }
       } catch { /* ignore */ }
     }
 
@@ -53,7 +56,8 @@ export function useGameTelemetry(gameId: string, active: boolean) {
     })()
 
     const onMsg = (e: MessageEvent) => {
-      const d = e.data as { type?: string; name?: string; data?: { score?: number; level?: unknown } | null; t?: number } | null
+      const d = e.data as { type?: string; name?: string; id?: string; data?: { score?: number; level?: unknown } | null; t?: number } | null
+      if (d && d.type === 'vibrex:version' && typeof d.id === 'string') { s.versionId = d.id; return }
       if (!d || d.type !== 'aj:event') return
       s.events++
       const sec = Math.round((Date.now() - s.startedAt) / 1000)

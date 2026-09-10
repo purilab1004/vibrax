@@ -17,7 +17,7 @@ interface Row {
   curriculum?: Curriculum | null; games: { title: string; genre: string; thumbnail_url: string | null } | null
 }
 interface LearnLog { id: string; game_id: string | null; kind: string; title: string; detail: string | null; version: number | null; created_at: string }
-const LOG_KIND: Record<string, [string, string]> = { record: ['최고 점수', '#e11d48'], curriculum: ['기본기', '#2563eb'], coach: ['프롬프트 코칭', '#7c3aed'], demo: ['내 플레이 모방', '#0891b2'], reflect: ['자기 반성', '#059669'], revert: ['복귀', '#f59e0b'], play: ['AI 플레이', '#0ea5e9'], guide: ['개발자 가이드', '#d97706'] }
+const LOG_KIND: Record<string, [string, string]> = { record: ['최고 점수', '#e11d48'], curriculum: ['기본기', '#2563eb'], coach: ['프롬프트 코칭', '#7c3aed'], demo: ['내 플레이 모방', '#0891b2'], reflect: ['자기 반성', '#059669'], revert: ['복귀', '#f59e0b'], play: ['AI 플레이', '#0ea5e9'], guide: ['개발자 가이드', '#d97706'], design: ['AJ 자율 튜닝', '#F05A28'] }
 const GENRE: Record<string, { label: string; color: string }> = {
   action: { label: 'ACTION', color: '#dc2626' }, sports: { label: 'SPORTS', color: '#059669' },
   adventure: { label: 'ADVENTURE', color: '#d97706' }, strategy: { label: 'STRATEGY', color: '#2563eb' },

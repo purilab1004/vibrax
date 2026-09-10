@@ -1,0 +1,11 @@
+{
+  "regions": [
+    "sin1"
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/aj-design",
+      "schedule": "0 18 * * *"
+    }
+  ]
+}
