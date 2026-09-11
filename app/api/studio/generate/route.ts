@@ -168,7 +168,7 @@ export async function POST(req: Request) {
     }
   }
   if (tmatch && !staticList.includes(tmatch.template)) void bumpTemplateUse(tmatch.template.slug)
-  void logMapping({ userId: user.id, projectId, prompt, templateSlug: tmatch?.template.slug ?? null, method: mapMethod, confidence: mapConf, usedLlm: !(tmatch && (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword))) })
+  void logMapping({ userId: user.id, projectId, prompt, templateSlug: tmatch?.template.slug ?? null, method: mapMethod, confidence: mapConf, usedLlm: !(tmatch && (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword, tmatch.template.keywords))) })
   let baseHtml: string | null = latest?.html ?? null
   let effectivePrompt = prompt
   // 첨부 사운드 — 이름·역할만 프롬프트로 (데이터는 HTML 주입). LLM 이 적절한 상황에 재생 코드를 넣게 한다.
@@ -178,7 +178,7 @@ export async function POST(req: Request) {
   }
   let templateNote = ''
   if (tmatch) {
-    if (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword)) {
+    if (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword, tmatch.template.keywords)) {
       // 회원·프로젝트마다 제목/색조를 다르게 (LLM 없이) — 같은 템플릿이라도 다른 게임처럼
       const { html, title: pTitle } = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`)
       const { error: vErr } = await supabase.from('studio_versions').insert([
@@ -229,7 +229,7 @@ export async function POST(req: Request) {
       return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
     }
     baseHtml = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`).html
-    const extras = extrasOf(prompt, tmatch.keyword)
+    const extras = extrasOf(prompt, tmatch.keyword, tmatch.template.keywords)
     effectivePrompt = `이 게임은 「${tmatch.template.name}」 이야. 반드시 이 장르와 핵심 규칙(조작·목표·진행)을 그대로 유지한 채, 아래 요구만 반영해 수정한 전체 완성본을 만들어줘. 다른 장르의 게임으로 바꾸거나 처음부터 새로 만들지 마. 요구: ${extras || prompt}`
     templateNote = `「${tmatch.template.name}」 게임을 만들면서 요청하신 내용을 함께 반영했어요. `
   }

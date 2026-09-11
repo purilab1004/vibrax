@@ -24,14 +24,24 @@ const FILLER = [
   '좀더', '더', '최고', '최고의', '잘', '제대로', '완벽하게', '완벽한', '대박', '버전', '버전으로', '느낌', '느낌으로', '느낌의', '분위기', '분위기로', '있게', '하게', '만들고', '싶어', '싶다', '싶어요', '해봐', '해보자', '해줄래', '줄래', '가능', '가능해', '가능할까', '해', '요', '응', '음', '자',
   'cool', 'nice', 'fun', 'awesome', 'different', 'new', 'unique', 'better', 'pretty', 'beautiful', 'version', 'vibe', 'i', 'want', 'to', 'can', 'you', 'for',
 ]
-export function templateOnly(prompt: string, keyword: string): boolean {
-  let p = norm(prompt).replace(keyword, ' ')
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+/** 매칭 키워드뿐 아니라 같은 템플릿의 다른 키워드도 모두 지운다 — "스타듀밸리 농장 게임" 은 둘 다 farming 키워드라 추가 요구가 아니다 */
+function stripKeywords(p: string, keyword: string, keywords?: string[]): string {
+  const all = [...new Set([keyword, ...(keywords ?? [])])].map(k => norm(k)).filter(Boolean).sort((a, b) => b.length - a.length)
+  for (const k of all) p = p.replace(new RegExp(esc(k), 'g'), ' ')
+  return p
+}
+export function templateOnly(prompt: string, keyword: string, keywords?: string[]): boolean {
+  let p = stripKeywords(norm(prompt), norm(keyword), keywords)
   for (const f of FILLER) p = p.replace(new RegExp(`(^|\\s)${f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$)`, 'g'), ' ')
   p = p.replace(/[!?.,~ㅋㅎ^♥❤️🙏]/g, ' ').replace(/\s+/g, ' ').trim()
   return p.length <= 2
 }
 
 /** 템플릿 키워드를 뺀 "추가 요구" 문장 — 수정 프롬프트로 사용 */
-export function extrasOf(prompt: string, keyword: string): string {
-  return prompt.replace(new RegExp(keyword, 'i'), '').replace(/\s+/g, ' ').trim()
+export function extrasOf(prompt: string, keyword: string, keywords?: string[]): string {
+  let p = prompt
+  const all = [...new Set([keyword, ...(keywords ?? [])])].filter(Boolean).sort((a, b) => b.length - a.length)
+  for (const k of all) p = p.replace(new RegExp(esc(k), 'ig'), ' ')
+  return p.replace(/\s+/g, ' ').trim()
 }
