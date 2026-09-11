@@ -78,10 +78,10 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
   })()
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-[56px] md:bottom-3 z-30 flex flex-col items-center gap-2 px-3">
+    <div className="pointer-events-none absolute right-3 top-[60px] z-30 flex flex-col items-end gap-2 max-w-[min(92vw,20rem)]">
       {/* 회원 TOP 10 — 이 안에 들면 transport 활성 */}
       {boardOpen && lb && (
-        <div className="pointer-events-auto w-full max-w-xs rounded-2xl bg-[#0f1219]/92 backdrop-blur-md border border-white/12 shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
+        <div className="pointer-events-auto w-72 rounded-2xl bg-[#0f1219]/92 backdrop-blur-md border border-white/12 shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
           <div className="flex items-center justify-between mb-1.5"><p className="text-white text-[12.5px] font-bold">🏆 회원 TOP {TOP_N}</p><span className="text-white/55 text-[10.5px]">{lb.full && lb.threshold != null ? `${(lb.threshold + 1).toLocaleString()}점부터 진입` : '지금 들어가면 바로 순위권'}</span></div>
           {rows.length === 0 ? <p className="text-white/55 text-[11.5px] py-2">아직 기록이 없어요. 첫 1위가 되어 보세요!</p> : (
             <ol className="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
@@ -98,21 +98,21 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
       )}
       {/* 후보 선택 카드 — 목표 달성 시 자동으로 펼쳐지고, 사람이 골라도 된다 */}
       {pickOpen && reached && (
-        <div className="pointer-events-auto w-full max-w-md rounded-2xl bg-[#0f1219]/92 backdrop-blur-md border border-white/12 shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
+        <div className="pointer-events-auto w-72 rounded-2xl bg-[#0f1219]/92 backdrop-blur-md border border-white/12 shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-white text-[13px] font-bold">{myRank > 0 ? `🏆 TOP 10 진입 (${myRank}위)! 다음 게임으로 이동할까요?` : '🎯 목표 달성! 다음 게임으로 이동할까요?'}</p>
+            <p className="text-white text-[12px] font-bold">{myRank > 0 ? `🏆 TOP 10 진입 (${myRank}위)! 다음 게임은?` : '🎯 목표 달성! 다음 게임은?'}</p>
             <button onClick={() => setPickOpen(false)} className="text-white/60 hover:text-white text-[12px]">나중에</button>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-col gap-1.5">
             {info.next.map((c, i) => (
-              <button key={c.id} onClick={() => go(c, i !== 0)} disabled={!!going} className={`group relative rounded-xl overflow-hidden border text-left transition-transform hover:scale-[1.03] disabled:opacity-60 ${i === 0 ? 'border-[#60a5fa] ring-2 ring-[#60a5fa]/40' : 'border-white/15'}`}>
+              <button key={c.id} onClick={() => go(c, i !== 0)} disabled={!!going} className={`group relative flex items-center gap-2 rounded-xl overflow-hidden border p-1 text-left transition-colors hover:bg-white/10 disabled:opacity-60 ${i === 0 ? 'border-[#60a5fa] bg-[#2563eb]/15' : 'border-white/12'}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={c.thumbnail_url} alt={c.title} className="w-full aspect-video object-cover" />
-                <div className="px-2 py-1.5 bg-black/40">
+                <img src={c.thumbnail_url} alt={c.title} className="w-16 h-10 rounded-md object-cover shrink-0" />
+                <div className="min-w-0 flex-1">
                   <p className="text-white text-[11.5px] font-semibold truncate">{c.title}</p>
-                  <p className="text-white/55 text-[10px] truncate">{c.reason}{c.coin_cost > 1 ? ` · 🪙${c.coin_cost}` : ''}</p>
+                  <p className="text-white/55 text-[10px] truncate">{i === 0 ? '추천 · ' : ''}{c.reason}{c.coin_cost > 1 ? ` · 🪙${c.coin_cost}` : ''}</p>
                 </div>
-                {i === 0 && <span className="absolute top-1 left-1 text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-[#2563eb] text-white">추천</span>}
+                <svg viewBox="0 0 24 24" className="w-4 h-4 text-white/60 shrink-0 mr-1" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                 {going === c.id && <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-[12px]">이동 중…</span>}
               </button>
             ))}
@@ -122,7 +122,7 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
       {/* 진행 바 + 이동 화살표 */}
       <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/55 backdrop-blur-md border border-white/12 pl-3 pr-1.5 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.45)]">
         {chain > 0 && <span className="text-[10.5px] font-bold text-[#fbbf24] whitespace-nowrap">🚀 {chain}연속</span>}
-        <div className="flex flex-col min-w-[120px]">
+        <div className="flex flex-col min-w-[96px]">
           <div className="flex items-baseline justify-between gap-2 text-[10.5px] text-white/80 leading-none mb-1">
             <span>{reached && myRank > 0 ? `🏆 ${myRank}위 진입` : goal ? (lb ? `TOP10 진입 ${goal.toLocaleString()}` : `목표 ${goal.toLocaleString()}`) : '한 판 끝내기'}</span>
             <span className="tabular-nums font-semibold text-white">{goal ? score.toLocaleString() : (finished ? '완료' : '진행 중')}</span>
