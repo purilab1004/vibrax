@@ -11,6 +11,34 @@ import runnerDouble from './templates/runner-double.json'
 import shooter from './templates/shooter.json'
 import pong from './templates/pong.json'
 import stock from './templates/stock.json'
+import actionAdventure from './templates/action-adventure.json'
+import autoBattler from './templates/auto-battler.json'
+import battleRoyale from './templates/battle-royale.json'
+import farming from './templates/farming.json'
+import fighting from './templates/fighting.json'
+import flight from './templates/flight.json'
+import gacha from './templates/gacha.json'
+import match3 from './templates/match3.json'
+import metroidvania from './templates/metroidvania.json'
+import mobaLane from './templates/moba-lane.json'
+import party from './templates/party.json'
+import racing from './templates/racing.json'
+import rhythm from './templates/rhythm.json'
+import roguelike from './templates/roguelike.json'
+import rpgAction from './templates/rpg-action.json'
+import rpgIdle from './templates/rpg-idle.json'
+import rpgTurn from './templates/rpg-turn.json'
+import rtsMini from './templates/rts-mini.json'
+import shooterFps from './templates/shooter-fps.json'
+import shooterLoot from './templates/shooter-loot.json'
+import shooterTopdown from './templates/shooter-topdown.json'
+import soulslike from './templates/soulslike.json'
+import sports from './templates/sports.json'
+import strategyTurn from './templates/strategy-turn.json'
+import survival from './templates/survival.json'
+import towerDefense from './templates/tower-defense.json'
+import tycoon from './templates/tycoon.json'
+import visualNovel from './templates/visual-novel.json'
 import { matchTemplateIn } from './template-match'
 
 export interface GameTemplate {
@@ -26,7 +54,7 @@ export interface GameTemplate {
   controls?: { label: string; keys: string; desc?: string } // 이 템플릿의 조작 설명
 }
 
-export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, runnerDouble, shooter, pong, stock] as GameTemplate[]
+export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, runnerDouble, shooter, pong, stock, actionAdventure, autoBattler, battleRoyale, farming, fighting, flight, gacha, match3, metroidvania, mobaLane, party, racing, rhythm, roguelike, rpgAction, rpgIdle, rpgTurn, rtsMini, shooterFps, shooterLoot, shooterTopdown, soulslike, sports, strategyTurn, survival, towerDefense, tycoon, visualNovel] as GameTemplate[]
 
 export { templateOnly, extrasOf } from './template-match'
 export function matchTemplate(prompt: string): { template: GameTemplate; keyword: string } | null {
