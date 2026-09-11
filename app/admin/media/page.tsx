@@ -34,6 +34,11 @@ export default function AdminMediaPage() {
   const [q, setQ] = useState(''); const [kind, setKind] = useState<Kind | ''>(''); const [genre, setGenre] = useState(''); const [status, setStatus] = useState<'active' | 'archived' | 'all'>('active')
   const [page, setPage] = useState(1)
   const [view, setView] = useState<'grid' | 'list' | 'genre'>('grid')
+  // 썸네일 크기 — 데이터가 많아지므로 기본은 작게 (localStorage 기억)
+  const [size, setSize] = useState<'xs' | 'sm' | 'md'>('xs')
+  useEffect(() => { try { const v = localStorage.getItem('vx_media_size'); if (v === 'xs' || v === 'sm' || v === 'md') { const t = setTimeout(() => setSize(v), 0); return () => clearTimeout(t) } } catch { /* */ } }, [])
+  const pickSize = (v: 'xs' | 'sm' | 'md') => { setSize(v); try { localStorage.setItem('vx_media_size', v) } catch { /* */ } }
+  const GRID = { xs: 'grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-1.5', sm: 'grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2', md: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3' }[size]
   const [sel, setSel] = useState<Set<string>>(new Set())
   const [detail, setDetail] = useState<Asset | null>(null)
   const [editor, setEditor] = useState<Asset | null>(null)
@@ -85,6 +90,7 @@ export default function AdminMediaPage() {
       <input ref={fileRef} type="file" multiple className="hidden" accept="image/*,audio/*,.glb,.gltf,.ttf,.otf,.woff,.woff2" onChange={e => { openUpload(e.target.files); e.target.value = '' }} />
       <button onClick={() => fileRef.current?.click()} className={btn.primary}>＋ 업로드</button>
       <Segmented value={view} onChange={setView} options={[{ value: 'grid', label: '격자' }, { value: 'genre', label: '장르별' }, { value: 'list', label: '목록' }]} />
+      {view !== 'list' && <Segmented value={size} onChange={pickSize} options={[{ value: 'xs', label: '작게' }, { value: 'sm', label: '보통' }, { value: 'md', label: '크게' }]} />}
     </div>} />
   if (err?.missing) return <div>{header}<Card className="p-6 text-[13px] text-[#6b7280]"><p className="font-semibold text-[#1f2430] mb-1">테이블이 아직 없어요.</p><p>Supabase SQL 편집기에서 <code className="bg-[#f3f5f8] px-1 rounded">db/migrations/2026-09-11-media-library.sql</code> 을 실행해 주세요 (media_assets 테이블 + media 버킷).</p></Card></div>
   if (err) return <div>{header}<Card className="p-6 text-[13px] text-[#6b7280]">{err.msg}</Card></div>
@@ -139,16 +145,16 @@ export default function AdminMediaPage() {
             return order.map(k => (
               <section key={k}>
                 <div className="flex items-center gap-2 mb-2"><h3 className="text-[13px] font-bold text-[#1f2430]">{k === '_none' ? '장르 미지정' : genreName(k)}</h3><span className="text-[11px] text-[#6b7280]">{buckets.get(k)!.length}개</span>{k !== '_none' && <button onClick={() => setGenre(k)} className="text-[11px] text-[#2563eb] hover:underline">이 장르만 보기</button>}</div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-                  {buckets.get(k)!.map(a => <AssetCard key={a.id} a={a} selected={sel.has(a.id)} onOpen={() => setDetail(a)} onToggle={() => toggleSel(a.id)} genreName={genreName} />)}
+                <div className={GRID}>
+                  {buckets.get(k)!.map(a => <AssetCard key={a.id} a={a} size={size} selected={sel.has(a.id)} onOpen={() => setDetail(a)} onToggle={() => toggleSel(a.id)} genreName={genreName} />)}
                 </div>
               </section>
             ))
           })()}
         </div>
       ) : view === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-          {items.map(a => <AssetCard key={a.id} a={a} selected={sel.has(a.id)} onOpen={() => setDetail(a)} onToggle={() => toggleSel(a.id)} genreName={genreName} />)}
+        <div className={GRID}>
+          {items.map(a => <AssetCard key={a.id} a={a} size={size} selected={sel.has(a.id)} onOpen={() => setDetail(a)} onToggle={() => toggleSel(a.id)} genreName={genreName} />)}
         </div>
       ) : (
         <Card className="overflow-x-auto"><table className="w-full text-[12.5px]"><thead><tr>{['', '', '제목 / 키', '종류', '크기', '장르', '태그', '자동', '사용'].map((h, i) => <th key={i} className="text-left text-[10.5px] font-semibold uppercase tracking-wide text-[#6b7280] px-3 py-2 bg-[#f7f8fa] border-b border-[#e3e6ec]">{h}</th>)}</tr></thead><tbody>
@@ -204,7 +210,19 @@ export default function AdminMediaPage() {
   )
 }
 
-function AssetCard({ a, selected, onOpen, onToggle, genreName }: { a: Asset; selected: boolean; onOpen: () => void; onToggle: () => void; genreName: (s: string) => string }) {
+function AssetCard({ a, size, selected, onOpen, onToggle, genreName }: { a: Asset; size: 'xs' | 'sm' | 'md'; selected: boolean; onOpen: () => void; onToggle: () => void; genreName: (s: string) => string }) {
+  if (size !== 'md') {
+    const xs = size === 'xs'
+    return (
+      <div className={`group relative rounded-lg bg-white border overflow-hidden transition-shadow hover:shadow-md ${selected ? 'border-[#2563eb] ring-2 ring-[#2563eb]/20' : 'border-[#e3e6ec]'}`} title={`${a.title} · ${kindLabel(a.kind)}${a.width ? ` · ${a.width}×${a.height}` : ''} · ${fmtBytes(a.bytes)}${a.genres.length ? ` · ${a.genres.map(genreName).join(', ')}` : ''}`}>
+        <button onClick={onOpen} className="block w-full text-left"><Thumb a={a} className="aspect-square" /></button>
+        <label className={`absolute top-1 left-1 w-4 h-4 rounded border bg-white/90 flex items-center justify-center cursor-pointer transition-opacity ${selected ? 'opacity-100 border-[#2563eb]' : 'opacity-0 group-hover:opacity-100 border-[#c5cad4]'}`}><input type="checkbox" checked={selected} onChange={onToggle} className="sr-only" />{selected && <span className="text-[#2563eb] text-[10px] font-bold">✓</span>}</label>
+        <span className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ background: KIND_COLOR[a.kind] }} />
+        {!a.auto_use && <span className="absolute bottom-[18px] right-1 text-[8px] px-1 rounded bg-[#1f2430]/80 text-white">수동</span>}
+        <p className={`px-1.5 ${xs ? 'py-0.5 text-[9.5px]' : 'py-1 text-[11px]'} font-semibold text-[#1f2430] truncate`}>{a.title}</p>
+      </div>
+    )
+  }
   return (
             <div className={`group relative rounded-xl bg-white border overflow-hidden transition-shadow hover:shadow-md ${selected ? 'border-[#2563eb] ring-2 ring-[#2563eb]/20' : 'border-[#e3e6ec]'}`}>
               <button onClick={() => onOpen()} className="block w-full text-left"><Thumb a={a} className="aspect-square" /></button>
