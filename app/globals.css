@@ -878,3 +878,10 @@ html.vbx-ios .feed-snap { scroll-snap-stop: normal; }
 .banner-drop { animation: bannerDrop .7s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes bannerDrop { from { opacity: 0; transform: translate(-50%, -140%); } to { opacity: 1; transform: translate(-50%, 0); } }
 @media (prefers-reduced-motion: reduce) { .banner-drop { animation: none; } }
+
+/* 게임 transport — 목표 달성 시 이동 버튼 글로우, 후보 카드 팝업 */
+@keyframes transport-glow { 0%,100% { box-shadow: 0 0 0 4px rgba(37,99,235,0.25), 0 0 18px rgba(6,182,212,0.45); } 50% { box-shadow: 0 0 0 7px rgba(37,99,235,0.12), 0 0 30px rgba(6,182,212,0.7); } }
+.transport-glow { animation: transport-glow 1.4s ease-in-out infinite; }
+@keyframes transport-pop { from { opacity: 0; transform: translateY(14px) scale(0.96); } to { opacity: 1; transform: none; } }
+.transport-pop { animation: transport-pop .28s cubic-bezier(.2,.9,.3,1.2) both; }
+@media (prefers-reduced-motion: reduce) { .transport-glow, .transport-pop { animation: none; } }

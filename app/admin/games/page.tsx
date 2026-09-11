@@ -20,7 +20,7 @@ export default function AdminGamesPage() {
   const [sort, setSort] = useState<'newest' | 'views'>('newest')
   const [genre, setGenre] = useState<Genre | 'all'>('all')
   const [editing, setEditing] = useState<GameWithCreator | null>(null)
-  const [form, setForm] = useState({ title: '', genre: 'action' as Genre, coin_cost: 1, teaser: '', country: '' })
+  const [form, setForm] = useState({ title: '', genre: 'action' as Genre, coin_cost: 1, teaser: '', country: '', goal_score: 0 })
   const [deleting, setDeleting] = useState<GameWithCreator | null>(null)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<{ msg: string; kind: 'ok' | 'err' } | null>(null)
@@ -43,11 +43,11 @@ export default function AdminGamesPage() {
   const [weekAgo] = useState(() => Date.now() - 7 * 864e5)
   const pager = usePager(list, 25)
 
-  const openEdit = (g: GameWithCreator) => { setEditing(g); setForm({ title: g.title, genre: g.genre, coin_cost: g.coin_cost ?? 1, teaser: g.teaser ?? '', country: g.country ?? '' }) }
+  const openEdit = (g: GameWithCreator) => { setEditing(g); setForm({ title: g.title, genre: g.genre, coin_cost: g.coin_cost ?? 1, teaser: g.teaser ?? '', country: g.country ?? '', goal_score: g.goal_score ?? 0 }) }
   const saveEdit = async () => {
     if (!editing) return
     setBusy(true)
-    const { error } = await supabase.from('games').update({ title: form.title.trim(), genre: form.genre, coin_cost: Math.max(0, form.coin_cost | 0), teaser: form.teaser.trim() || null, country: form.country || null } as never).eq('id', editing.id)
+    const { error } = await supabase.from('games').update({ title: form.title.trim(), genre: form.genre, coin_cost: Math.max(0, form.coin_cost | 0), teaser: form.teaser.trim() || null, country: form.country || null, goal_score: form.goal_score > 0 ? Math.round(form.goal_score) : null } as never).eq('id', editing.id)
     setBusy(false)
     if (error) { console.error('[admin]', error); say(a.actionFailed, 'err'); return }
     say(a.saved); setEditing(null); load()
@@ -131,6 +131,7 @@ export default function AdminGamesPage() {
               <div><label className={labelCls}>장르</label><select value={form.genre} onChange={e => setForm({ ...form, genre: e.target.value as Genre })} className={input}>{GENRES.map(x => <option key={x} value={x}>{T.genres[x]}</option>)}</select></div>
               <div><label className={labelCls}>플레이 코인</label><input type="number" min={0} value={form.coin_cost} onChange={e => setForm({ ...form, coin_cost: Number(e.target.value) })} className={input} /></div>
             </div>
+            <div><label className={labelCls}>목표 점수 (transport) — 넘기면 다음 게임 이동 활성. 0 이면 플레이 데이터로 자동(표본 5개 이상), 없으면 한 판 끝내기</label><input type="number" min={0} value={form.goal_score} onChange={e => setForm({ ...form, goal_score: Number(e.target.value) })} className={input} /></div>
             <div><label className={labelCls}>게임 국가</label><select value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} className={input}><option value="">선택 안 함</option>{COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}</select></div>
             <div><label className={labelCls}>티저 문구 (카드 훅)</label><input value={form.teaser} onChange={e => setForm({ ...form, teaser: e.target.value })} className={input} placeholder="비우면 자동 문구" /></div>
             <div className="flex justify-end gap-2 pt-1"><button onClick={() => setEditing(null)} className={btn.ghost}>{a.cancel}</button><button onClick={saveEdit} disabled={busy || !form.title.trim()} className={btn.primary}>{a.save}</button></div>

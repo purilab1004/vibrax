@@ -19,6 +19,7 @@ export interface Game {
   coin_cost?: number   // 플레이 1회당 vcoin 비용 (기본 1)
   teaser?: string | null   // 카드 앞면 훅 문구 (AI 생성)
   teaser_en?: string | null   // 훅 문구 영문판 (EN 모드 표시)
+  goal_score?: number | null   // 목표 점수 — 달성하면 다음 게임으로 이동(transport) 활성. null 이면 플레이 데이터로 자동
 }
 
 export interface GameLike {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { playSrc } from '@/lib/game-src'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
@@ -13,6 +13,7 @@ import { useGameTelemetry } from '@/lib/aj/telemetry'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 import AiBjPanel from './AiBjPanel'
 import PlayHeader from './PlayHeader'
+import TransportBar from './TransportBar'
 import { hasCoinTicket, ticketKeyOf } from './GameCard'
 
 interface Props {
@@ -84,6 +85,20 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
     supabase.rpc('increment_view_count', { game_id: game.id }).then(() => {})
   }
 
+  // transport 로 넘어온 경우(?play=1) 자동으로 플레이 시작 — 게임을 끝내면 끊기지 않고 다음 게임으로 이어진다
+  const autoRef = useRef(false)
+  useEffect(() => {
+    if (autoRef.current) return
+    let play = false
+    try { play = new URLSearchParams(window.location.search).get('play') === '1' } catch { /* */ }
+    if (!play) return
+    autoRef.current = true
+    try { window.history.replaceState(null, '', window.location.pathname) } catch { /* */ }
+    const t = setTimeout(() => { void handlePlay() }, 250)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <>
       {/* 아케이드 START — 카드 뒷면과 같은 빨간 돔 버튼, 큼직하게 */}
@@ -139,7 +154,8 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
         >
           <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} />
           <div className="relative flex flex-row flex-1 min-h-0">
-            <div className="flex-1 min-h-0 pb-[53px] md:pb-0">
+            <div className="relative flex-1 min-h-0 pb-[53px] md:pb-0">
+              <TransportBar gameId={game.id} active={open} />
               <iframe
                 src={playSrc(game)}
                 className="w-full h-full border-0"
