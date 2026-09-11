@@ -1,6 +1,7 @@
 // 게임 transport — 목표 점수(관리자 지정 또는 플레이 데이터 자동)와 다음 게임 후보. POST 는 이동 기록.
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { loadLeaderboard } from '@/lib/games/leaderboard'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,6 +35,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     if (scores.length >= 5) { goal = nice(scores[Math.min(scores.length - 1, Math.floor(scores.length * 0.6))]); goalSource = 'auto' }
   }
 
+  // 회원 TOP 10 — 진입하면 transport 활성 (관리자 목표 점수와 둘 중 하나만 만족해도 됨)
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const lbP = loadLeaderboard(admin, id, user?.id ?? null)
   // 다음 게임 후보: 같은 장르 인기 1 + 최신 1 + 무작위 1 (중복·현재 제외)
   const [{ data: sameGenre }, { data: recent }, { data: pool }] = await Promise.all([
     admin.from('games').select('id,title,genre,thumbnail_url,view_count,created_at,coin_cost').eq('genre', cur.genre).neq('id', id).order('view_count', { ascending: false }).limit(6),
@@ -48,7 +53,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const rest = ((pool ?? []) as G[]).filter(g => !used.has(g.id))
   const c = rest.length ? rest[Math.floor(Math.random() * rest.length)] : null; if (c) { used.add(c.id); next.push({ ...c, reason: '랜덤 추천' }) }
   while (next.length < 3) { const d = pick((recent ?? []) as G[], used) ?? pick((pool ?? []) as G[], used); if (!d) break; next.push({ ...d, reason: '추천' }) }
-  return Response.json({ goal, goalSource, next: next.map(g => ({ id: g.id, title: g.title, genre: g.genre, thumbnail_url: g.thumbnail_url, coin_cost: g.coin_cost ?? 1, reason: g.reason })) }, { headers: { 'Cache-Control': 'no-store' } })
+  const lb = await lbP
+  return Response.json({ goal, goalSource, leaderboard: lb, meId: user?.id ?? null, next: next.map(g => ({ id: g.id, title: g.title, genre: g.genre, thumbnail_url: g.thumbnail_url, coin_cost: g.coin_cost ?? 1, reason: g.reason })) }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {

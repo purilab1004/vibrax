@@ -70,6 +70,8 @@ export function useGameTelemetry(gameId: string, active: boolean) {
       // 최종 완료(클리어) — 게임오버와 구분. 오토파일럿 on/off 도 기록
       if (d.name === 'clear') { s.cleared = true; if (s.clearSec == null) s.clearSec = sec; if (typeof d.data?.score === 'number') s.scoreMax = Math.max(s.scoreMax ?? 0, d.data.score) }
       if (d.name === 'autopilot_on') s.autopilot = true
+      // 한 판이 끝나면 바로 저장 — TOP 10 순위표가 즉시 갱신되게
+      if (d.name === 'over' || d.name === 'clear') void flush(false)
       // AJ 중계용 — 패널이 상황(event_*)에 맞춰 한마디 한다
       if (['start', 'score', 'level', 'over', 'clear', 'combo', 'fail'].includes(d.name ?? '')) window.dispatchEvent(new CustomEvent('aj:game-event', { detail: { name: d.name, data: d.data ?? null, sec } }))
     }
