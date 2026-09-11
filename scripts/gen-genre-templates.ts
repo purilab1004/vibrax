@@ -12,7 +12,7 @@ const ROOT = '/Users/sungjunahn/Documents/vibrax'
 const OUT = path.join(ROOT, 'lib/studio/templates')
 const S = '/private/tmp/claude-501/-Users-sungjunahn-Documents-vibrax/bab984fc-b638-45e0-acc0-b10b188fdccf/scratchpad'
 const UAS = new Set(['left', 'right', 'up', 'down', 'jump', 'fire', 'guard', 'aimX', 'aimY', 'useItem', 'item1', 'item2', 'item3', 'item4', 'action', 'crouch', 'action2'])
-const SPEC = `\n\n[템플릿 기본 사양] 꾸밈 요소 없이 핵심 규칙만 — 시작 화면, 조작(키보드+터치), 점수, 게임오버·재시작, 명확한 클리어 조건. 단색 배경, 단순 도형·이모지 위주, 특정 브랜드/상표 이름·로고·실존 게임명 금지(제목은 일반 명사로). 나중에 회원이 수정 요청으로 살을 붙일 수 있게 깔끔하고 짧게. 반드시 window.vibrexBot(start/stop/setSkill) 을 구현해 오토파일럿이 스스로 플레이해 점수를 내게 하고, state() 에는 표준 관찰 슬롯을 최대한 채운다. 한 판은 1~3분 안에 끝나야 한다. **분량 제한: 전체 HTML 은 18KB(약 5,500 토큰) 이내.** 주석·빈 줄·긴 변수명 없이 압축해서 쓰고, 그래픽은 사각형·원·이모지로만, 기능은 위에 적힌 핵심만 구현한다. 설명문은 2문장.`
+const SPEC = `\n\n[템플릿 기본 사양] 꾸밈 요소 없이 핵심 규칙만 — 시작 화면, 조작(키보드+터치), 점수, 게임오버·재시작, 명확한 클리어 조건. 단색 배경, 단순 도형·이모지 위주, 특정 브랜드/상표 이름·로고·실존 게임명 금지(제목은 일반 명사로). 나중에 회원이 수정 요청으로 살을 붙일 수 있게 깔끔하고 짧게. 반드시 window.vibrexBot(start/stop/setSkill) 을 구현해 오토파일럿이 스스로 플레이해 점수를 내게 하고, state() 에는 표준 관찰 슬롯을 최대한 채운다. 한 판은 1~3분 안에 끝나야 한다. window.AJ 는 플랫폼이 주입하므로 절대 재정의하지 말고 if(window.AJ) 가드로만 호출한다(AJ.start() 게임 시작 시, AJ.score(n) 점수 변할 때, AJ.over(n)/AJ.clear(n)). VIBREX_GAME.start() 는 타이틀 화면에서 실제로 게임을 시작시켜야 하고 vibrexBot.start() 만으로도 플레이가 진행되어야 한다. **분량 제한: 전체 HTML 은 18KB(약 5,500 토큰) 이내.** 주석·빈 줄·긴 변수명 없이 압축해서 쓰고, 그래픽은 사각형·원·이모지로만, 기능은 위에 적힌 핵심만 구현한다. 설명문은 2문장.`
 
 type Spec = { slug: string; name: string; keywords: string[]; prompt: string; genreGroup?: string }
 const SPECS: Spec[] = [
@@ -58,7 +58,7 @@ const SPECS: Spec[] = [
   { slug: 'survival', name: '생존 크래프팅', keywords: ['서바이벌', '생존', '생존 게임', '팰월드', '러스트', '아크', '돈스타브', '자원 수집', '크래프팅', '밤에 몬스터', '허기', '장작', '생존 크래프트'],
     prompt: '탑다운 생존 크래프팅. 낮에는 나무·돌·열매를 모으고(fire 로 채집), 허기 게이지가 줄어 열매(useItem)로 채운다. 밤(90초 주기)이 되면 몬스터가 오므로 낮에 모은 자원으로 벽(item1)과 횃불(item2)을 설치하고 창(item3)을 만든다. 3일 밤을 살아남으면 클리어, 허기 0 또는 체력 0이면 게임오버. state(): selfX, selfY, wood, stone, food, hunger(0~1), health, isNight, dayIndex, dangerDX/DY/Dist, targetDX/DY/Dist(가장 가까운 자원), progress(dayIndex/3), score, itemCount. vibrexBot: 낮엔 가장 가까운 자원 채집·허기 낮으면 먹기, 저녁엔 벽·횃불 설치, 밤엔 횃불 옆에서 창으로 방어.' },
   { slug: 'sandbox', name: '블록 샌드박스', keywords: ['샌드박스', '마인크래프트', '마크', '테라리아', '블록 캐기', '블록 쌓기 세계', '건축', '자유 건축', '픽셀 채굴', '2D 마인크래프트', '크리에이티브'],
-    prompt: '2D 사이드뷰 블록 샌드박스. 절차 생성 지형(흙·돌·나무·광석), 조작: left/right 이동, jump 점프, fire 블록 캐기(바라보는 방향), useItem 블록 설치, item1~item4 인벤토리 슬롯 선택(흙/돌/나무/광석). 목표: 광석 10개를 캐고 높이 12칸의 탑을 쌓으면 클리어(진행률 표시). 낮밤 전환, 밤엔 슬라임이 나온다. state(): selfX, selfY, onGround, facing, ore, height(내가 쌓은 최고 높이), inventoryTotal, activeItem, slot0Ready~slot3Ready, dangerDX/DY/Dist, health, progress, score. vibrexBot: 광석 방향으로 파고, 광석 10개 후엔 제자리에서 블록 쌓으며 위로 점프.' },
+    prompt: '2D 사이드뷰 블록 샌드박스. 블록을 캘 때마다 +1점, 광석은 +10점, 블록을 쌓아 높이가 오를 때마다 +5점으로 점수가 즉시 오르고 AJ.score 를 호출한다(봇이 시작 5초 안에 점수를 내야 함). 절차 생성 지형(흙·돌·나무·광석), 조작: left/right 이동, jump 점프, fire 블록 캐기(바라보는 방향), useItem 블록 설치, item1~item4 인벤토리 슬롯 선택(흙/돌/나무/광석). 목표: 광석 10개를 캐고 높이 12칸의 탑을 쌓으면 클리어(진행률 표시). 낮밤 전환, 밤엔 슬라임이 나온다. state(): selfX, selfY, onGround, facing, ore, height(내가 쌓은 최고 높이), inventoryTotal, activeItem, slot0Ready~slot3Ready, dangerDX/DY/Dist, health, progress, score. vibrexBot: 광석 방향으로 파고, 광석 10개 후엔 제자리에서 블록 쌓으며 위로 점프.' },
   { slug: 'tycoon', name: '경영 타이쿤', keywords: ['타이쿤', '경영', '경영 시뮬레이션', '심시티', '시티 빌더', '건설 시뮬', '매장 운영', '가게 운영', '카페 운영', '롤러코스터 타이쿤', '회사 경영', '돈 벌기 게임', '음식점 경영'],
     prompt: '탑다운 매장 경영 타이쿤. 손님이 줄지어 들어와 카운터에서 주문하고 기다린다. 돈으로 시설을 산다: item1 카운터 추가, item2 좌석 추가, item3 직원 고용(자동 서빙), useItem 광고(손님 증가). fire 로 내가 직접 서빙(커서 이동 4방향으로 손님 선택). 손님이 너무 오래 기다리면 나가며 평판 감소. 5분 안에 매출 목표(₩50,000) 달성 시 클리어, 평판 0이면 게임오버. state(): money, reputation(0~1), customersWaiting, staff, counters, seats, progress(매출/목표), score, targetDX/DY/Dist(가장 오래 기다린 손님), timeLeft. vibrexBot: 대기 손님 있으면 서빙, 돈 모이면 직원→카운터→광고 순 구매.' },
   { slug: 'farming', name: '힐링 농장', keywords: ['농장', '농장 게임', '농경', '스타듀밸리', '스타듀 밸리', '동물의 숲', '힐링 게임', '힐링', '채집', '농사', '작물 키우기', '목장', '하베스트 문', '일상 시뮬'],
@@ -109,9 +109,11 @@ async function smoke(html: string): Promise<string | null> {
     await page.evaluate(() => { try { (window as unknown as { vibrexBot: { start: () => void } }).vibrexBot.start() } catch (e) { throw new Error('bot start: ' + (e as Error).message) } })
     await page.waitForTimeout(9000)
     const c2 = await page.evaluate(() => { const G = (window as unknown as { VIBREX_GAME: { phase: () => string; state: () => Record<string, unknown> } }).VIBREX_GAME; return { phase: G.phase(), ev: (window as unknown as { __ev: string[] }).__ev, score: G.state().score } })
-    if (errors.length) return `런타임 오류: ${errors[0].slice(0, 160)}`
-    if (!['playing', 'over', 'cleared', 'paused'].includes(c2.phase)) return `봇 시작 후 phase=${c2.phase}`
-    if (!c2.ev.length) return 'AJ 이벤트가 하나도 없음(AJ.start/score 호출 필요)'
+    const diag = `phase=${c2.phase} score=${String(c2.score)} ev=${JSON.stringify(c2.ev.slice(0, 6))} errors=${JSON.stringify(errors.slice(0, 2))}`
+    if (errors.length) return `런타임 오류: ${errors[0].slice(0, 160)} [${diag}]`
+    if (!['playing', 'over', 'cleared', 'paused'].includes(c2.phase)) return `봇 시작 후 phase=${c2.phase} (start()/vibrexBot.start() 가 실제로 게임을 시작시켜야 함) [${diag}]`
+    const scored = typeof c2.score === 'number' && c2.score > 0
+    if (!c2.ev.some(n => n !== 'load') && !scored) return `AJ 이벤트가 없고 점수도 0 — window.AJ 를 덮어쓰지 말고 if(window.AJ) 가드로 AJ.start()/AJ.score(n) 를 호출해야 하며, 봇이 실제로 점수를 내야 함 [${diag}]`
     return null
   } catch (e) { return 'smoke 예외: ' + (e as Error).message.slice(0, 160) }
   finally { await ctx.close(); fs.rmSync(f, { force: true }) }
@@ -131,7 +133,7 @@ async function gen(spec: Spec): Promise<void> {
     if (!parsed.html) { const trunc = msg.stop_reason === 'max_tokens'; feedback = trunc ? `출력이 너무 길어 ${msg.usage.output_tokens} 토큰에서 잘렸음. 기능을 절반으로 줄이고 코드를 압축해 12KB 이내로 완성하라` : '게임 HTML 이 <game>…</game> 태그 안에 완결되어 있지 않았음'; console.log(`✗ ${spec.slug} #${attempt}: no html (stop=${msg.stop_reason}, out ${msg.usage.output_tokens}, thinking ${(msg.usage as { output_tokens_details?: { thinking_tokens?: number } }).output_tokens_details?.thinking_tokens ?? '?'}) tail=${JSON.stringify(text.slice(-120))}`); continue }
     const html = hardenHtml(parsed.html)
     const err = await smoke(html)
-    if (err) { feedback = err; console.log(`✗ ${spec.slug} #${attempt}: ${err} (${Math.round((Date.now() - t0) / 1000)}s, out ${msg.usage.output_tokens} tok)`); continue }
+    if (err) { feedback = err; fs.writeFileSync(path.join(S, `fail-${spec.slug}-${attempt}.html`), html); console.log(`✗ ${spec.slug} #${attempt}: ${err} (${Math.round((Date.now() - t0) / 1000)}s, out ${msg.usage.output_tokens} tok)`); continue }
     const rec = { slug: spec.slug, name: spec.name, keywords: spec.keywords, prompt: spec.prompt, description: parsed.description.slice(0, 500), html, ...(spec.genreGroup ? { genreGroup: spec.genreGroup } : {}) }
     fs.writeFileSync(out, JSON.stringify(rec, null, 2))
     console.log(`✓ ${spec.slug} (${extractTitle(html)}) ${Math.round(html.length / 1024)}KB · ${Math.round((Date.now() - t0) / 1000)}s · out ${msg.usage.output_tokens} tok (thinking ${(msg.usage as { output_tokens_details?: { thinking_tokens?: number } }).output_tokens_details?.thinking_tokens ?? '?'})`)

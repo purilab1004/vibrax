@@ -29,6 +29,7 @@ import rpgAction from './templates/rpg-action.json'
 import rpgIdle from './templates/rpg-idle.json'
 import rpgTurn from './templates/rpg-turn.json'
 import rtsMini from './templates/rts-mini.json'
+import sandbox from './templates/sandbox.json'
 import shooterFps from './templates/shooter-fps.json'
 import shooterLoot from './templates/shooter-loot.json'
 import shooterTopdown from './templates/shooter-topdown.json'
@@ -54,7 +55,7 @@ export interface GameTemplate {
   controls?: { label: string; keys: string; desc?: string } // 이 템플릿의 조작 설명
 }
 
-export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, runnerDouble, shooter, pong, stock, actionAdventure, autoBattler, battleRoyale, farming, fighting, flight, gacha, match3, metroidvania, mobaLane, party, racing, rhythm, roguelike, rpgAction, rpgIdle, rpgTurn, rtsMini, shooterFps, shooterLoot, shooterTopdown, soulslike, sports, strategyTurn, survival, towerDefense, tycoon, visualNovel] as GameTemplate[]
+export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, runnerDouble, shooter, pong, stock, actionAdventure, autoBattler, battleRoyale, farming, fighting, flight, gacha, match3, metroidvania, mobaLane, party, racing, rhythm, roguelike, rpgAction, rpgIdle, rpgTurn, rtsMini, sandbox, shooterFps, shooterLoot, shooterTopdown, soulslike, sports, strategyTurn, survival, towerDefense, tycoon, visualNovel] as GameTemplate[]
 
 export { templateOnly, extrasOf } from './template-match'
 export function matchTemplate(prompt: string): { template: GameTemplate; keyword: string } | null {
