@@ -32,3 +32,14 @@ export function rankFor(lb: Pick<Leaderboard, 'top' | 'full'>, score: number, me
   for (const r of others) { if (r.best >= score) rank++ }
   return rank <= TOP_N ? rank : 0
 }
+
+/** 다음 목표 — 현재 순위(0=밖)와, 한 단계 위(밖이면 10위 진입)까지 필요한 점수 */
+export function nextTarget(lb: Pick<Leaderboard, 'top' | 'full'>, score: number, meId?: string | null): { rank: number; target: number | null; remain: number; toRank: number | null } {
+  const others = (meId ? lb.top.filter(r => r.user_id !== meId) : lb.top).slice().sort((a, b) => b.best - a.best)
+  const rank = rankFor(lb, score, meId)
+  if (rank === 1) return { rank, target: null, remain: 0, toRank: null }
+  if (rank > 1) { const above = others[rank - 2]; const target = above.best + 1; return { rank, target, remain: Math.max(0, target - score), toRank: rank - 1 } }
+  // 순위 밖: 10명이 차 있으면 10위 점수를 넘어야, 아니면 1점부터
+  const target = others.length >= TOP_N ? others[TOP_N - 1].best + 1 : 1
+  return { rank: 0, target, remain: Math.max(0, target - score), toRank: Math.min(TOP_N, others.length + 1) }
+}

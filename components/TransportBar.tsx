@@ -3,7 +3,7 @@
 // 점수는 게임이 부모로 보내는 aj:event(score/over/clear) 를 텔레메트리가 window 'aj:game-event' 로 재발행한 것을 듣는다.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { rankFor, TOP_N, type Leaderboard } from '@/lib/games/leaderboard'
+import { rankFor, nextTarget, TOP_N, type Leaderboard } from '@/lib/games/leaderboard'
 
 interface Cand { id: string; title: string; genre: string; thumbnail_url: string; coin_cost: number; reason: string }
 interface Info { goal: number | null; goalSource: 'admin' | 'auto' | 'finish'; next: Cand[]; leaderboard?: Leaderboard; meId?: string | null }
@@ -65,10 +65,13 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
   }, [gameId, going, info, router, score])
 
   if (!active || !info || info.next.length === 0) return null
-  // 진입 기준 점수: 10명이 차 있으면 10위 점수 + 1, 아니면 1점. 관리자 목표가 더 낮으면 그쪽.
-  const need = lb ? (lb.full && lb.threshold != null ? lb.threshold + 1 : 1) : null
-  const goal = need != null ? (info.goalSource === 'admin' && info.goal ? Math.min(info.goal, need) : need) : info.goal
-  const pct = goal ? Math.min(100, Math.round((score / goal) * 100)) : (finished ? 100 : 0)
+  // 다음 목표: 순위 밖이면 10위 진입 점수, 순위 안이면 한 단계 위 점수. 점수가 오를수록 목표도 한 칸씩 올라간다.
+  const nt = lb ? nextTarget(lb, score, info.meId) : null
+  const goal = nt ? nt.target : info.goal
+  const pct = nt ? (nt.target == null ? 100 : Math.min(100, Math.round((score / nt.target) * 100))) : goal ? Math.min(100, Math.round((score / goal) * 100)) : (finished ? 100 : 0)
+  const label = nt
+    ? (nt.rank === 1 ? '🏆 1위!' : nt.rank > 0 ? `${nt.rank}위 · ${nt.toRank}위까지 ${nt.remain.toLocaleString()}점` : `${nt.toRank}위 진입까지 ${nt.remain.toLocaleString()}점`)
+    : goal ? `목표 ${goal.toLocaleString()}` : '한 판 끝내기'
   const primary = info.next[0]
   const rows = (() => {
     if (!lb) return []
@@ -122,12 +125,12 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
       {/* 진행 바 + 이동 화살표 */}
       <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/55 backdrop-blur-md border border-white/12 pl-3 pr-1.5 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.45)]">
         {chain > 0 && <span className="text-[10.5px] font-bold text-[#fbbf24] whitespace-nowrap">🚀 {chain}연속</span>}
-        <div className="flex flex-col min-w-[96px]">
+        <div className="flex flex-col min-w-[150px]">
           <div className="flex items-baseline justify-between gap-2 text-[10.5px] text-white/80 leading-none mb-1">
-            <span>{reached && myRank > 0 ? `🏆 ${myRank}위 진입` : goal ? (lb ? `TOP10 진입 ${goal.toLocaleString()}` : `목표 ${goal.toLocaleString()}`) : '한 판 끝내기'}</span>
-            <span className="tabular-nums font-semibold text-white">{goal ? score.toLocaleString() : (finished ? '완료' : '진행 중')}</span>
+            <span className={nt && nt.rank > 0 ? 'text-[#fbbf24] font-bold' : ''}>{label}</span>
+            <span className="tabular-nums font-semibold text-white">{lb || goal ? score.toLocaleString() : (finished ? '완료' : '진행 중')}</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-white/15 overflow-hidden"><div className={`h-full rounded-full transition-[width] duration-500 ${reached ? 'bg-[#22c55e]' : 'bg-[#60a5fa]'}`} style={{ width: `${pct}%` }} /></div>
+          <div className="h-1.5 w-full rounded-full bg-white/15 overflow-hidden"><div className={`h-full rounded-full transition-[width] duration-500 ${nt && nt.rank === 1 ? 'bg-[#fbbf24]' : reached ? 'bg-[#22c55e]' : 'bg-[#60a5fa]'}`} style={{ width: `${pct}%` }} /></div>
         </div>
         {lb && <button onClick={() => setBoardOpen(v => !v)} title="회원 TOP 10" aria-label="순위표" className={`h-9 w-9 rounded-full flex items-center justify-center text-[15px] transition-colors ${boardOpen ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}>🏆</button>}
         <button
