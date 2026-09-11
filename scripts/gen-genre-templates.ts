@@ -50,7 +50,7 @@ const SPECS: Spec[] = [
     prompt: '사이드뷰 탐색형 플랫포머(메트로배니아). 좌우로 이어진 5개 구역, 처음엔 갈 수 없는 길(높은 벽, 좁은 틈, 잠긴 문)이 있고 능력을 얻으면 열린다: 이단 점프(2구역), 대시(3구역), 미사일(4구역). 조작: left/right, jump(능력 후 공중 1회 더), guard 대시, fire 공격/미사일. 최종 구역의 코어를 파괴하면 클리어. 미니맵에 방문 구역 표시. state(): selfX, selfY, selfVX, selfVY, onGround, groundDist, targetDX/DY/Dist(다음 목표), dangerDX/DY/Dist, abilities(0~3), health, progress(abilities+구역/8), score, facing. vibrexBot: 다음 목표 방향으로 이동·점프, 벽 앞에서 능력 사용, 적은 공격.' },
   { slug: 'soulslike', name: '소울라이크 보스전', keywords: ['소울라이크', '소울 라이크', '다크소울', '다크 소울', '엘든 링 보스', '피의 거짓', '세키로', '패링', '회피', '구르기', '보스전', '스태미나', '고난도 액션', '블러드본'],
     prompt: '사이드뷰 소울라이크 보스전. 보스 1마리(3페이즈)와 1대1. 보스는 공격 전 예비 동작(빨간 깜빡임 0.5초 / 파란 깜빡임 = 패링 가능)을 보이고 광역·돌진·내려찍기 패턴을 쓴다. 조작: left/right 이동, guard 구르기(무적 0.3초, 스태미나 소모), jump 패링(파란 예비동작 타이밍 맞추면 보스 경직+큰 피해), fire 공격(스태미나 소모), useItem 회복 물약(3개). 스태미나 자동 회복. 보스 처치 시 클리어, 5회 죽으면 게임오버(죽으면 보스 HP 유지 옵션 없음, 처음부터). state(): selfX, targetDX/Dist, bossHp(0~1), bossPhase, bossIntent(0 없음/1 공격 예고/2 패링 가능 예고), dangerETA(0~1), health, stamina(0~1), itemCount, lives, score, progress(1-bossHp). vibrexBot: 예고 1이면 구르기, 예고 2면 패링, 스태미나 있으면 근접 공격, 체력 40% 이하면 물약.' },
-  { slug: 'roguelike', name: '로그라이크 던전', keywords: ['로그라이크', '로그라이트', '로그 라이크', '하데스', '슬레이 더 스파이어', '뱀서라이크', '뱀파이어 서바이버', '무작위 던전', '랜덤 던전', '영구 사망', '절차 생성', '아이작', '엔터 더 건전'],
+  { slug: 'roguelike', name: '로그라이크 던전', keywords: ['로그라이크', '로그라이트', '로그 라이크', '하데스', '뱀서라이크', '뱀파이어 서바이버', '무작위 던전', '랜덤 던전', '영구 사망', '절차 생성', '아이작', '엔터 더 건전'],
     prompt: '탑다운 로그라이크. 매 판 무작위로 생성되는 방 8개(랜덤 배치·적·보물), 방을 클리어하면 3개 중 하나의 강화(공격력/이동속도/체력)를 고른다(item1~item3). 죽으면 처음부터(영구 사망), 8번째 방 보스 처치 시 클리어. 조작: 이동 4방향, fire 자동 조준 원거리 공격, guard 대시. state(): selfX, selfY, roomIndex, targetDX/DY/Dist, dangerDX/DY/Dist, dangerCount, health, score, progress(roomIndex/8), upgrades, fireReady. vibrexBot: 적과 거리 유지하며 사격, 다수 근접 시 대시, 강화 선택은 체력 낮으면 체력·아니면 공격력.' },
   { slug: 'fighting', name: '대전 격투', keywords: ['격투', '대전 격투', '격투 게임', '철권', '스트리트 파이터', '스파', '킹오파', '더킹오브파이터즈', '1대1 대전', '콤보', '필살기', '모탈컴뱃', '스매시'],
     prompt: '사이드뷰 1대1 대전 격투. 3판 2선승, 라운드 60초. 조작: left/right 이동, jump 점프, guard 막기(뒤로 이동 겸), fire 약공격, useItem 강공격(느리지만 큰 피해), 약→약→강 콤보. 기 게이지가 차면 item1 필살기. AI 상대는 거리별 행동. 2라운드 먼저 이기면 클리어. state(): selfX, targetDX/Dist, health, enemyHp(0~1), meter(0~1), enemyIntent(0 대기/1 공격/2 점프), dangerETA, round, score, progress(내 승수/2), facing, onGround. vibrexBot: 거리 멀면 접근, 상대 공격 예고면 막기, 근접 시 콤보, 기 차면 필살기.' },
@@ -78,8 +78,61 @@ const SPECS: Spec[] = [
     prompt: '비주얼 노벨. 배경(단색)과 캐릭터(도형+이모지 표정) 위에 대사 창, 클릭/fire 로 다음 대사, 선택지 2~3개는 up/down 으로 고르고 fire 확정. 짧은 미스터리 스토리(폐교의 밤): 12장면, 선택에 따라 호감도·단서 수치가 바뀌고 3개 엔딩(진엔딩=클리어, 나머지는 재시도 가능). 대사 자동 타이핑 효과, 로그 보기(guard). state(): scene, clues, affinity, progress(scene/12), score, choiceCount, choiceIndex. vibrexBot: 대사를 넘기고 선택지는 단서가 많아지는 쪽(각 선택지의 단서 효과를 후보 평가)을 고른다.' },
   { slug: 'party', name: '파티 미니게임', keywords: ['파티', '파티 게임', '미니게임', '미니게임 모음', '멀티플레이', '2인용', '둘이서', '폴가이즈', '어몽어스', '마리오 파티', '술자리 게임', '친구랑', '같은 키보드'],
     prompt: '한 키보드 2인용 파티 미니게임 모음(AI 상대도 가능). 3가지 미니게임을 연속으로: (1) 버튼 연타 줄다리기 (2) 떨어지는 장애물 피하기 (3) 신호 뜨면 빨리 누르기. 1P: left/right/jump, 2P: A/D/W(터치는 화면 좌우 분할). 2P 미접속(5초 무입력)이면 AI 가 대신. 3판 중 2승이면 클리어. state(): game(0~2), myScore, otherScore, progress(game/3), score, signal(0/1), dangerDX/DY/Dist(장애물), selfX, targetDX(줄다리기 방향). vibrexBot: 1P 를 조작 — 연타, 장애물 회피, 신호 반응.' },
-  { slug: 'sports', name: '미니 축구', keywords: ['축구', '축구 게임', '스포츠', '스포츠 게임', 'FC 온라인', '피파', '농구', '야구', '골 넣기', '슛', '페널티킥', '축구 경기', '풋볼', '핀볼 축구'],
+  { slug: 'sports', name: '미니 축구', keywords: ['축구', '축구 게임', '스포츠', '스포츠 게임', 'FC 온라인', '피파', '야구', '골 넣기', '슛', '페널티킥', '축구 경기', '풋볼', '핀볼 축구'],
     prompt: '탑다운 미니 축구 3대3(내 팀 1명 조작, 나머지 AI). 90초 전후반, 조작: 이동 4방향, fire 슛/태클, jump 패스(가장 가까운 아군), guard 스프린트. 공을 가진 선수가 없으면 가까운 선수로 자동 전환. 경기 종료 시 이기면 클리어, 지면 재도전, 비기면 승부차기(fire 타이밍). state(): selfX, selfY, ballDX/DY/Dist, goalDX/goalDist(상대 골대), hasBall(0/1), myGoals, theirGoals, timeLeft, progress(경과율), score, dangerDist(가장 가까운 상대). vibrexBot: 공 없으면 공으로, 공 있으면 골대 방향 드리블·거리 가까우면 슛, 상대 근접 시 패스.' },
+  // ── 추가 26종 (캐주얼·퍼즐·교육·아케이드) ──
+  { slug: 'puzzle-2048', name: '2048 숫자 합치기', keywords: ['2048', '숫자 합치기', '숫자 퍼즐', '타일 합치기', '같은 숫자 합치기', '2048 게임'],
+    prompt: '4x4 격자 2048. left/right/up/down 으로 전체 타일을 밀어 같은 숫자를 합친다. 2048 타일을 만들면 클리어, 움직일 수 없으면 게임오버. 점수=합친 값 누적. state(): score, maxTile, emptyCells, progress(maxTile/2048), movesLeftPossible(0~4 방향 중 가능한 수), bestMoveGain(0~1). vibrexBot: 4방향 시뮬레이션 후 빈칸 수·단조성이 가장 좋은 방향(후보 평가형 → setWeights/candidates 노출).' },
+  { slug: 'minesweeper', name: '지뢰찾기', keywords: ['지뢰찾기', '지뢰 찾기', '마인스위퍼', 'minesweeper', '지뢰 게임', '깃발 꽂기'],
+    prompt: '9x9 지뢰 10개 지뢰찾기. 커서 이동 4방향, fire 열기, useItem 깃발 토글. 첫 클릭은 안전. 지뢰 아닌 칸을 모두 열면 클리어, 지뢰를 열면 게임오버. 점수=연 칸 수, 남은 시간 보너스. state(): opened, flags, minesLeft, progress(opened/71), score, cursorX, cursorY, safeMoves(논리적으로 안전한 칸 수), timeSec. vibrexBot: 숫자 규칙으로 확실히 안전한 칸 열기, 확실한 지뢰엔 깃발, 없으면 확률 낮은 칸.' },
+  { slug: 'sudoku', name: '스도쿠', keywords: ['스도쿠', 'sudoku', '숫자 채우기', '9x9 퍼즐', '스도쿠 게임'],
+    prompt: '9x9 스도쿠(쉬움 난이도, 매 판 무작위 생성·유일해). 커서 이동 4방향, item1~item4 로 숫자 1~4, item 다시 누르면 5~9 순환(터치는 숫자 패드 표시), fire 확정, guard 지우기. 틀린 입력은 빨간 표시(실수 3회면 게임오버). 전부 채우면 클리어. state(): filled, empty, mistakes, progress(filled/81), score(시간 보너스), cursorX, cursorY, candidatesAtCursor. vibrexBot: 단일 후보 칸부터 채우기.' },
+  { slug: 'sliding-puzzle', name: '슬라이딩 15퍼즐', keywords: ['15퍼즐', '슬라이딩 퍼즐', '슬라이드 퍼즐', '숫자 맞추기 퍼즐', '타일 밀기', '퍼즐 맞추기'],
+    prompt: '4x4 슬라이딩 15퍼즐. 방향키로 빈칸 쪽 타일을 민다. 순서대로 맞추면 클리어, 이동 수·시간으로 점수. 무작위 섞기는 풀 수 있는 배치만. state(): moves, correctTiles, progress(correct/15), manhattan(총 맨해튼 거리 정규화 0~1), score, timeSec, blankX, blankY. vibrexBot: 맨해튼 거리를 줄이는 방향 우선(간단 탐욕+무작위).' },
+  { slug: 'gomoku', name: '오목', keywords: ['오목', '틱택토', '삼목', '5목', '렌주', '바둑알 게임', '다섯 개 연속', '틱택토 게임'],
+    prompt: '15x15 오목(AI 상대). 커서 이동 4방향 + fire 착수, 흑이 선공(플레이어). 5개 연속이면 승리=클리어, 상대가 먼저 만들면 게임오버. AI 는 공격/방어 점수 평가. state(): turn, myStones, enemyStones, threatLevel(0~1, 상대 4목 위협), myBest(0~1, 내 최고 연속), progress(myBest), score, cursorX, cursorY. vibrexBot: 후보 칸 평가(연속·차단)로 착수(후보 평가형 → setWeights/candidates 노출).' },
+  { slug: 'memory-match', name: '짝맞추기 카드', keywords: ['짝맞추기', '짝 맞추기', '메모리 게임', '카드 뒤집기', '같은 그림 찾기', '기억력 게임', '카드 짝'],
+    prompt: '4x4 이모지 카드 짝맞추기(8쌍). 커서 이동 4방향 + fire 뒤집기, 두 장이 같으면 유지. 모두 맞추면 클리어, 시도 횟수·시간으로 점수, 20회 초과 실패 시 게임오버 없음(60초 제한). state(): matched, attempts, progress(matched/8), knownPairs(뒤집어 봐서 아는 쌍 수), score, timeLeft, cursorX, cursorY. vibrexBot: 본 카드를 기억해 아는 쌍부터 맞추기.' },
+  { slug: 'wordle', name: '단어 맞추기', keywords: ['워들', 'wordle', '단어 맞추기', '단어 게임', '영단어 맞추기', '5글자 단어', '단어 퍼즐'],
+    prompt: '5글자 영단어 맞추기(워들). 내장 단어 200개 중 정답 1개, 6번 시도. 조작: left/right 로 알파벳 선택(화면 키보드 하이라이트), up/down 으로 행 이동, fire 글자 입력, guard 지우기, jump 제출. 초록/노랑/회색 판정. 맞히면 클리어, 6회 실패면 게임오버. state(): attempt, greens, yellows, progress(greens/5), score, candidatesLeft(가능 정답 수), cursorLetter. vibrexBot: 남은 후보 단어 중 정보량 높은 단어 제출.' },
+  { slug: 'typing', name: '타자 연습', keywords: ['타자 연습', '타자 게임', '타이핑', 'typing', '키보드 연습', '떨어지는 단어', '산성비', '한컴타자'],
+    prompt: '떨어지는 단어 타자 게임(영단어 150개). 단어가 위에서 내려오고, 키보드로 입력해 Enter 로 없앤다(터치는 화면 키보드). 바닥에 닿으면 생명 -1(3개), 60초 동안 점수 최대. 60초 완주면 클리어. 조작은 실제 키보드 입력 + fire=Enter. state(): score, lives, wpm, accuracy(0~1), wordsOnScreen, lowestWordY(0~1), progress(경과/60), typedLen. vibrexBot: 가장 낮은 단어를 글자 단위로 입력(실력 낮으면 오타).' },
+  { slug: 'quiz', name: '상식 퀴즈', keywords: ['퀴즈', '상식 퀴즈', 'OX 퀴즈', '4지선다', '객관식 퀴즈', '퀴즈 게임', '문제 풀기', '골든벨'],
+    prompt: '상식 퀴즈 20문제(내장 문제은행 60개, 한국어, 4지선다 + OX 섞음). up/down 또는 item1~item4 로 보기 선택, fire 확정, 문제당 10초 타이머. 정답 +100 + 남은 시간 보너스, 3회 틀리면 게임오버, 20문제 완주 시 클리어. state(): questionIndex, correct, wrong, timeLeft, progress(index/20), score, streak, selected. vibrexBot: 정답 인덱스를 알고 있지만 실력(skill)에 따라 확률적으로 맞힘.' },
+  { slug: 'edu-quiz', name: '학습 퀴즈', keywords: ['구구단', '영단어', '영단어 퀴즈', '학습 게임', '교육 게임', '수학 게임', '덧셈 게임', '단어 암기', '어린이 학습'],
+    prompt: '교육용 학습 퀴즈: 시작 화면에서 모드 선택(item1 구구단, item2 덧셈·뺄셈, item3 영단어 뜻 맞추기). 문제가 나오고 4지선다(up/down 또는 item1~item4 선택, fire 확정), 15초 제한. 30문제 중 25개 이상 맞히면 클리어. 연속 정답 콤보 보너스. state(): mode, questionIndex, correct, streak, timeLeft, progress(index/30), score, selected. vibrexBot: 실력에 따라 정답률이 달라짐.' },
+  { slug: 'whack-a-mole', name: '두더지 잡기', keywords: ['두더지 잡기', '두더지', '두더지 게임', 'whack a mole', '튀어나오는', '망치 게임'],
+    prompt: '3x3 구멍 두더지 잡기. 두더지가 무작위로 튀어나오고 커서를 옮겨(4방향) fire 로 때린다(터치는 구멍 탭). 폭탄 두더지는 때리면 감점. 60초 안에 목표 30마리면 클리어. state(): score, hits, misses, activeMoles, targetDX/DY/Dist(가장 오래된 두더지), timeLeft, progress(hits/30), cursorX, cursorY, bombActive. vibrexBot: 가장 오래된 두더지로 이동해 타격, 폭탄은 피함.' },
+  { slug: 'reaction', name: '반응속도 테스트', keywords: ['반응속도', '반응 속도', '반응속도 테스트', '리액션', '순발력', '순발력 게임', '초록불 누르기'],
+    prompt: '반응속도 테스트 5라운드. 화면이 빨강→(무작위 1~4초)→초록으로 바뀌면 최대한 빨리 fire(또는 탭). 초록 전에 누르면 실격 라운드. 5라운드 평균 ms 표시, 평균 300ms 이하면 클리어(등급 표시). state(): round, lastMs, avgMs, signal(0/1), progress(round/5), score(낮은 ms = 높은 점수), falseStarts. vibrexBot: 신호 뜨면 실력에 따른 지연(120~400ms)으로 반응.' },
+  { slug: 'stack', name: '스택 쌓기', keywords: ['스택', '블록 쌓기 타이밍', '스택 게임', 'stack', '타이밍 쌓기', '탑 쌓기', '높이 쌓기'],
+    prompt: '좌우로 움직이는 블록을 타이밍 맞춰(fire) 떨어뜨려 아래 블록 위에 쌓는 스택 게임. 어긋난 부분은 잘려 블록이 좁아지고, 완전히 놓치면 게임오버. 30층 쌓으면 클리어, 정확히 맞추면 콤보 보너스. state(): height, width(0~1), offset(-1~1, 현재 블록과 아래 블록의 어긋남), speed, combo, progress(height/30), score, movingX. vibrexBot: offset 이 0 에 가까울 때 fire(실력 낮으면 오차).' },
+  { slug: 'helix-jump', name: '헬릭스 점프', keywords: ['헬릭스 점프', '헬릭스', '나선 탑', '공 떨어뜨리기', '탑 내려가기', '회전 탑'],
+    prompt: '헬릭스 점프: 공이 나선 탑을 따라 떨어지고, left/right 로 탑을 회전시켜 틈으로 통과시킨다. 빨간 구간에 닿으면 게임오버. 연속으로 여러 층을 통과하면 무적·보너스. 50층 도달 시 클리어. state(): floor, gapDX(-1~1, 가장 가까운 틈 방향), gapDist, dangerDist, combo, progress(floor/50), score, ballY. vibrexBot: 틈 방향으로 회전.' },
+  { slug: 'crossy-road', name: '길 건너기', keywords: ['길 건너기', '크로시 로드', '크로시로드', '프로거', '도로 건너기', '차 피하기', '닭 길 건너기', '강 건너기'],
+    prompt: '길 건너기(크로시 로드). 위로 한 칸씩 전진(up), 좌우 이동, 도로(자동차)와 강(통나무 타기)을 건넌다. 차에 치이거나 물에 빠지면 게임오버, 뒤로 너무 처지면 게임오버. 50칸 전진하면 클리어, 전진 칸 수=점수. state(): selfX, row, dangerDX/Dist(가장 가까운 차), dangerETA, laneType(0 잔디/1 도로/2 강), logDX, progress(row/50), score, safeAhead(0/1). vibrexBot: 앞 줄이 안전하면 전진, 아니면 대기·좌우 회피.' },
+  { slug: 'rhythm-jump', name: '리듬 점프', keywords: ['지오메트리 대시', '지오메트리대시', '리듬 점프', '큐브 점프', '한 버튼 점프', '가시 피하기', '원버튼 러너', '비트 러너'],
+    prompt: '지오메트리 대시 스타일 원버튼 리듬 러너. 큐브가 자동으로 달리고 jump 로 점프해 가시·틈을 넘고, 비트에 맞춘 장애물 배치(120BPM). 부딪히면 처음부터(시도 횟수 표시), 레벨 끝(60초 분량)에 도달하면 클리어. 진행률 바 표시. state(): selfX, onGround, dangerDX/Dist(다음 장애물), dangerETA, obstacleType(0 가시/1 틈/2 블록), progress, attempts, score. vibrexBot: dangerETA 가 임계 이하일 때 점프.' },
+  { slug: 'doodle-jump', name: '두들 점프', keywords: ['두들 점프', '두들점프', '위로 점프', '발판 점프', '무한 점프', '수직 점프', '발판 밟기'],
+    prompt: '두들 점프: 캐릭터가 자동으로 튀고 left/right 로 발판을 밟아 위로 올라간다(화면 좌우 워프). 깨지는 발판·움직이는 발판·스프링. 화면 아래로 떨어지면 게임오버, 높이 5000 도달 시 클리어. state(): selfX, selfVY, targetDX/DY/Dist(밟을 다음 발판), platformType, height, progress(height/5000), score, springNear(0/1). vibrexBot: 다음 발판 x 로 이동.' },
+  { slug: 'pacman', name: '미로 먹기', keywords: ['팩맨', '팩맨 게임', '미로 먹기', '점 먹기', '유령 피하기', '미로 게임', '도트 먹기'],
+    prompt: '팩맨 스타일 미로 먹기. 19x15 미로의 점을 모두 먹으면 클리어, 유령 4마리(추격/매복/무작위)에 잡히면 생명 -1(3개). 파워 알약을 먹으면 10초간 유령을 먹을 수 있음. 조작 4방향(방향 예약 입력). state(): selfX, selfY, dotsLeft, dangerDX/DY/Dist(가장 가까운 유령), dangerCount, powered(0/1), poweredLeft, targetDX/DY/Dist(가장 가까운 점), lives, progress(1-dotsLeft/total), score. vibrexBot: BFS 로 가장 가까운 점, 유령이 근접하면 반대로.' },
+  { slug: 'asteroids', name: '소행성 격파', keywords: ['아스테로이드', '소행성', '소행성 격파', '우주선 회전 슈팅', '운석 파괴', '아스테로이드 게임', '관성 우주선'],
+    prompt: '아스테로이드: 우주선을 left/right 로 회전, up 추진(관성), fire 발사. 큰 소행성은 맞으면 둘로 쪼개진다. 화면 가장자리 워프. 소행성을 모두 없애면 다음 웨이브, 5웨이브 클리어 시 클리어, 충돌 시 생명 -1(3개). state(): selfX, selfY, selfVX, selfVY, facing(-1~1), targetDX/DY/Dist(가장 가까운 소행성), dangerETA, asteroidsLeft, wave, lives, progress(wave/5), score, fireReady. vibrexBot: 가장 가까운 소행성 조준·사격, 근접 시 추진 회피.' },
+  { slug: 'bomberman', name: '폭탄 미로', keywords: ['봄버맨', '폭탄 게임', '폭탄 미로', '폭탄 설치', '봄버맨 게임', '벽 부수기 폭탄'],
+    prompt: '봄버맨 스타일. 격자 미로에서 4방향 이동, fire 로 폭탄 설치(2초 후 십자 폭발), 부서지는 벽 뒤에 아이템(폭탄 수·화력 증가). 적 6마리를 모두 없애고 출구에 도달하면 클리어, 폭발·적 접촉 시 생명 -1(3개). state(): selfX, selfY, bombs, power, enemiesLeft, dangerDX/DY/Dist(가장 가까운 적 또는 폭발 예정 칸), dangerETA, targetDX/DY/Dist, lives, progress(1-enemiesLeft/6), score. vibrexBot: 벽·적 옆에 폭탄 설치 후 안전 칸으로 대피.' },
+  { slug: 'maze', name: '미로 탈출', keywords: ['미로', '미로 탈출', '미로 게임', '미로 찾기', '탈출 게임', '방 탈출 미로', '라비린스'],
+    prompt: '절차 생성 미로 탈출(21x21). 4방향 이동, 시야 제한(주변만 밝음), 열쇠 3개를 모아 출구 문을 열면 클리어, 90초 제한 초과 시 게임오버. 미니맵은 방문한 곳만. state(): selfX, selfY, keys, targetDX/DY/Dist(다음 열쇠 또는 출구, BFS 거리), timeLeft, progress(keys/3 + 출구 근접), score, deadEndAhead(0/1). vibrexBot: BFS 로 다음 목표까지 최단 경로.' },
+  { slug: 'slingshot', name: '새총 물리 발사', keywords: ['앵그리버드', '새총', '물리 발사', '발사 게임', '구조물 무너뜨리기', '포물선 게임', '투석기'],
+    prompt: '앵그리버드 스타일 새총 물리 게임(자체 간단 물리: 중력·충돌·블록 넘어짐). 각도(up/down)와 파워(left/right, 또는 드래그)를 정해 fire 로 발사, 새 5마리로 목표 돼지 6마리를 모두 없애면 클리어, 못 없애면 재도전. 남은 새 보너스. state(): birdsLeft, targetsLeft, aimAngle(0~1), aimPower(0~1), targetDX/DY/Dist(가장 가까운 목표), progress(1-targetsLeft/6), score, lastHit(0/1). vibrexBot: 각 목표에 대한 발사 각·파워를 시뮬레이션해 최적값(후보 평가형).' },
+  { slug: 'tank-duel', name: '탱크 포격 대전', keywords: ['탱크 게임', '탱크 대전', '포격 게임', '포탄 각도', '웜즈', '포트리스', '대포 게임', '각도 맞추기'],
+    prompt: '포트리스/웜즈 스타일 턴제 탱크 포격 대전(1대1 AI). 언덕 지형(파괴됨), 바람. 내 턴에 left/right 이동(연료 제한), up/down 각도, guard 파워 조절, fire 발사. 상대 HP 0 이면 클리어(3판 중 2승), 내 HP 0 이면 게임오버. state(): selfX, targetDX/Dist, angle(0~1), power(0~1), wind(-1~1), health, enemyHp(0~1), turn, progress(내 승수/2), score, lastShotError(-1~1, 짧음/넘김). vibrexBot: 이전 착탄 오차로 각·파워를 보정해 발사.' },
+  { slug: 'io-eat', name: '먹고 커지기', keywords: ['아가리오', 'agar.io', 'io 게임', '먹고 커지기', '세포 게임', '먹이 먹기 성장', '슬리더', '커지는 게임'],
+    prompt: '아가리오 스타일 탑다운 성장 게임. 내 세포를 4방향(또는 aimX/aimY)으로 움직여 먹이를 먹고 커지며, 나보다 작은 AI 세포를 먹고 큰 세포는 피한다. guard 로 분열 대시(작아짐). 크기 1위가 되거나 목표 크기 도달 시 클리어, 먹히면 게임오버. state(): selfX, selfY, size(0~1), targetDX/DY/Dist(가장 가까운 먹이 또는 작은 세포), dangerDX/DY/Dist(큰 세포), rank, progress(size), score, aliveCells. vibrexBot: 위험 세포 반대 방향, 아니면 가장 가까운 먹이.' },
+  { slug: 'deckbuilder', name: '덱빌딩 카드 배틀', keywords: ['덱빌딩', '덱 빌딩', '카드 배틀', '카드 게임', '슬레이 더 스파이어', '카드 전투', '로그라이크 카드', '턴제 카드'],
+    prompt: '덱빌딩 카드 배틀. 시작 덱 10장(공격/방어/특수), 매 턴 5장 뽑고 에너지 3 안에서 카드 사용(left/right 카드 선택, fire 사용, guard 턴 종료). 적 3마리를 차례로 이기고 전투 후 카드 3장 중 1장 추가(item1~item3). 마지막 보스를 이기면 클리어, HP 0 이면 게임오버. 적은 다음 행동을 예고. state(): health, block, energy, handSize, enemyHp(0~1), enemyIntent(0 공격/1 방어/2 강공격), deckSize, encounter, progress(encounter/4), score, bestCardValue. vibrexBot: 예고가 공격이면 방어 우선, 아니면 최대 피해 조합.' },
+  { slug: 'sports-shot', name: '농구 슛 · 골프 퍼팅', keywords: ['농구', '농구 게임', '농구 슛', '3점슛', '골프', '골프 게임', '퍼팅', '슛 게임', '미니 골프'],
+    prompt: '두 모드 미니 스포츠(시작 화면에서 item1 농구 슛 / item2 골프 퍼팅 선택). 농구: 파워 게이지 타이밍(fire)과 각도(up/down)로 60초 안에 최대 득점, 거리 랜덤, 20점이면 클리어. 골프: 9홀 미니 골프, 각도(left/right)·파워(길게 누른 fire)로 퍼팅, 장애물·경사, 총 타수 par 이하면 클리어. state(): mode, angle(0~1), power(0~1), targetDX/DY/Dist, windOrSlope(-1~1), attempts, score, progress, timeLeft. vibrexBot: 거리별 최적 각·파워(실력 낮으면 오차).' },
 ]
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -99,7 +152,9 @@ async function smoke(html: string): Promise<string | null> {
   try {
     await page.goto('file://' + f, { waitUntil: 'load', timeout: 20000 })
     await page.waitForTimeout(1200)
-    const c1 = await page.evaluate(() => { const G = (window as unknown as { VIBREX_GAME?: Record<string, unknown> }).VIBREX_GAME; return { has: !!G, phase: typeof G?.phase === 'function' ? (G.phase as () => string)() : null, inputs: G?.inputs ? Object.keys(G.inputs as object) : [], state: typeof G?.state === 'function' ? Object.keys(((G.state as () => object)() || {})) : [], bot: !!(window as unknown as { vibrexBot?: unknown }).vibrexBot } })
+    let c1: { has: boolean; phase: string | null; inputs: string[]; state: string[]; bot: boolean }
+    try { c1 = await page.evaluate(() => { const G = (window as unknown as { VIBREX_GAME?: Record<string, unknown> }).VIBREX_GAME; return { has: !!G, phase: typeof G?.phase === 'function' ? (G.phase as () => string)() : null, inputs: G?.inputs ? Object.keys(G.inputs as object) : [], state: typeof G?.state === 'function' ? Object.keys(((G.state as () => object)() || {})) : [], bot: !!(window as unknown as { vibrexBot?: unknown }).vibrexBot } }) }
+    catch (e) { return `로드 직후(게임 시작 전) VIBREX_GAME.state()/phase() 호출이 예외를 던짐: ${(e as Error).message.replace('page.evaluate: ', '').slice(0, 120)} — 모든 배열·객체(격자, 플레이어, 적 목록)를 스크립트 로드 시점에 초기화하고, state() 는 시작 전에도 항상 숫자 슬롯을 반환해야 함(옵셔널 체이닝·기본값 사용)` }
     if (!c1.has) return 'VIBREX_GAME 없음'
     if (!c1.bot) return 'vibrexBot 없음'
     const bad = c1.inputs.filter(k => !UAS.has(k)); if (bad.length) return `UAS 외 입력: ${bad.join(',')}`
@@ -108,12 +163,14 @@ async function smoke(html: string): Promise<string | null> {
     await page.waitForTimeout(500)
     await page.evaluate(() => { try { (window as unknown as { vibrexBot: { start: () => void } }).vibrexBot.start() } catch (e) { throw new Error('bot start: ' + (e as Error).message) } })
     await page.waitForTimeout(9000)
-    const c2 = await page.evaluate(() => { const G = (window as unknown as { VIBREX_GAME: { phase: () => string; state: () => Record<string, unknown> } }).VIBREX_GAME; return { phase: G.phase(), ev: (window as unknown as { __ev: string[] }).__ev, score: G.state().score } })
+    let c2: { phase: string; ev: string[]; score: unknown }
+    try { c2 = await page.evaluate(() => { const G = (window as unknown as { VIBREX_GAME: { phase: () => string; state: () => Record<string, unknown> } }).VIBREX_GAME; return { phase: G.phase(), ev: (window as unknown as { __ev: string[] }).__ev, score: G.state().score } }) }
+    catch (e) { return `봇 플레이 9초 후 state()/phase() 호출이 예외를 던짐: ${(e as Error).message.replace('page.evaluate: ', '').slice(0, 120)} — 게임오버·클리어·씬 전환 후에도 state() 가 undefined 객체를 참조하지 않도록 방어할 것` }
     const diag = `phase=${c2.phase} score=${String(c2.score)} ev=${JSON.stringify(c2.ev.slice(0, 6))} errors=${JSON.stringify(errors.slice(0, 2))}`
     if (errors.length) return `런타임 오류: ${errors[0].slice(0, 160)} [${diag}]`
     if (!['playing', 'over', 'cleared', 'paused'].includes(c2.phase)) return `봇 시작 후 phase=${c2.phase} (start()/vibrexBot.start() 가 실제로 게임을 시작시켜야 함) [${diag}]`
     const scored = typeof c2.score === 'number' && c2.score > 0
-    if (!c2.ev.some(n => n !== 'load') && !scored) return `AJ 이벤트가 없고 점수도 0 — window.AJ 를 덮어쓰지 말고 if(window.AJ) 가드로 AJ.start()/AJ.score(n) 를 호출해야 하며, 봇이 실제로 점수를 내야 함 [${diag}]`
+    if (!c2.ev.some(n => n !== 'load') && !scored) return `AJ 이벤트가 없고 점수도 0 — (1) VIBREX_GAME.start() 가 호출되면 시작 화면·모드 선택을 건너뛰고 즉시 플레이 상태로 들어가며 그 시점에 if(window.AJ) AJ.start() 를 호출할 것, (2) window.AJ 를 절대 재정의하지 말 것, (3) vibrexBot.start() 후 봇이 1초 안에 실제 행동을 시작해 9초 안에 점수(state().score>0)를 내야 함(턴제면 봇이 자동으로 턴을 진행·확정) [${diag}]`
     return null
   } catch (e) { return 'smoke 예외: ' + (e as Error).message.slice(0, 160) }
   finally { await ctx.close(); fs.rmSync(f, { force: true }) }
