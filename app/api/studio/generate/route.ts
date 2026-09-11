@@ -133,8 +133,11 @@ export async function POST(req: Request) {
   // 정적 템플릿 + 관리자 승인 DB 템플릿(처음 만들어진 게임들) 모두 매칭 대상
   const staticList = await effectiveStaticTemplates()
   const auto = await loadAutomation()
-  const dbList = !latest && !hasAttach ? await loadDbTemplates() : []
-  let tmatch = !latest && !hasAttach ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(dbList, prompt)) : null
+  const dbList = !hasAttach ? await loadDbTemplates() : []
+  let tmatch = !hasAttach ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(dbList, prompt)) : null
+  // 이미 게임이 있는 프로젝트에서도 "로그라이크 던전 만들어줘" 처럼 장르 이름뿐인 새 게임 요청이면 템플릿을 다음 버전으로 그대로 불러온다(LLM 0).
+  // 반면 "테트리스처럼 블록이 떨어지게 해줘" 같은 수정 요청(추가 문장 있음)은 기존 게임 수정 경로를 유지한다.
+  if (latest && tmatch && !templateOnly(prompt, tmatch.keyword, tmatch.template.keywords)) tmatch = null
   // 조작 변형 선택: 사용자가 조작 카드로 특정 변형을 골랐으면 그 템플릿을 강제 사용 (매칭 무시)
   if (variantSlug && !latest && !hasAttach) {
     const vt = staticList.find(t => t.slug === variantSlug) ?? dbList.find(t => t.slug === variantSlug)
@@ -181,21 +184,23 @@ export async function POST(req: Request) {
     if (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword, tmatch.template.keywords)) {
       // 회원·프로젝트마다 제목/색조를 다르게 (LLM 없이) — 같은 템플릿이라도 다른 게임처럼
       const { html, title: pTitle } = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`)
+      const tplVersion = (latest?.version ?? 0) + 1
       const { error: vErr } = await supabase.from('studio_versions').insert([
-        { project_id: projectId, version: 1, html },
+        { project_id: projectId, version: tplVersion, html },
       ] as never)
       if (vErr) { await refund(); return new Response('save failed', { status: 500 }) }
       // 실제 생성처럼 보이게: 설명을 문장 단위로, HTML 을 조각으로 천천히 스트리밍하고, 토큰 사용량은 실측 대신 추정치로 표시
+      const switched = latest ? '새 게임으로 바꿨어요(이전 버전은 버전 목록에 남아 있어요). ' : ''
       const desc = tmatch.template.description
-        ? `「${pTitle || tmatch.template.name}」 을(를) 만들었어요. ${tmatch.template.description} 이어서 "배경을 우주로", "속도를 더 빠르게" 처럼 말하면 그 위에 바꿔 드릴게요.`
-        : `요청하신 「${pTitle || tmatch.template.name}」 게임을 만들었어요. 이어서 원하는 변경을 말씀해 주시면 바로 반영할게요.`
+        ? `${switched}「${pTitle || tmatch.template.name}」 을(를) 만들었어요. ${tmatch.template.description} 이어서 "배경을 우주로", "속도를 더 빠르게" 처럼 말하면 그 위에 바꿔 드릴게요.`
+        : `${switched}요청하신 「${pTitle || tmatch.template.name}」 게임을 만들었어요. 이어서 원하는 변경을 말씀해 주시면 바로 반영할게요.`
       await supabase.from('studio_messages').insert([
         { project_id: projectId, role: 'user', content: prompt },
         { project_id: projectId, role: 'assistant', content: desc },
       ] as never)
       const title = extractTitle(html)
       if (title) await supabase.from('studio_projects').update({ title } as never).eq('id', projectId)
-      const { data: vrow } = await supabase.from('studio_versions').select('id').eq('project_id', projectId).eq('version', 1).maybeSingle()
+      const { data: vrow } = await supabase.from('studio_versions').select('id').eq('project_id', projectId).eq('version', tplVersion).maybeSingle()
       await logUsage({ userId: user.id, projectId, versionId: (vrow as { id: string } | null)?.id ?? null, kind: 'template', model: 'none', credits: chargeUser ? cost : 0, templateSlug: tmatch.template.slug })
       const estIn = 1400 + Math.round(prompt.length / 2)
       const estOut = Math.round(html.length / 3.6) + Math.round(desc.length / 2)
