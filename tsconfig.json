@@ -39,6 +39,5 @@
   "exclude": [
     "node_modules",
     "**/*.test.ts",
-    "mobile"
-  ]
+    "mobile", "scripts"]
 }
