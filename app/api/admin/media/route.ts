@@ -83,11 +83,12 @@ export async function POST(req: Request) {
   const kind = (fd.get('kind') as string | null) || null
   const description = (fd.get('description') as string | null) || null
   const auto_use = fd.get('auto_use') !== '0'
+  const role = (fd.get('role') as string | null) || null
   const dims: Record<string, { w: number; h: number }> = (() => { try { return JSON.parse(String(fd.get('dims') ?? '{}')) } catch { return {} } })()
   const items: unknown[] = []; const errors: string[] = []
   for (const f of files.slice(0, 30)) {
     const d = dims[f.name]
-    const r = await uploadOne(g, f, { kind, genres, tags, description, width: d?.w ?? null, height: d?.h ?? null, auto_use, title: files.length === 1 ? (fd.get('title') as string | null) : null, name: files.length === 1 ? (fd.get('name') as string | null) : null })
+    const r = await uploadOne(g, f, { kind, genres, tags, description, width: d?.w ?? null, height: d?.h ?? null, auto_use, meta: role ? { role } : {}, title: files.length === 1 ? (fd.get('title') as string | null) : null, name: files.length === 1 ? (fd.get('name') as string | null) : null })
     if ('error' in r && r.error) errors.push(r.error); else items.push((r as { item: unknown }).item)
   }
   return Response.json({ items, errors })

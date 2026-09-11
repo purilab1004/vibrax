@@ -4,9 +4,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, ConfirmModal, Toast, Modal, Toggle, btn, input, label as labelCls } from '@/components/admin/ui'
 import MediaEditor from '@/components/admin/MediaEditor'
+import { AUDIO_ROLES, audioRoleLabel } from '@/lib/media/assets'
 
 type Kind = 'character' | 'background' | 'tile' | 'item' | 'ui' | 'effect' | 'sprite' | 'audio' | 'model3d' | 'font' | 'other'
-interface Asset { id: string; kind: Kind; name: string; title: string; description: string | null; genres: string[]; tags: string[]; url: string; mime: string | null; bytes: number; width: number | null; height: number | null; meta: { frames?: { cols: number; rows: number; fps?: number } } & Record<string, unknown>; auto_use: boolean; status: 'active' | 'archived'; uses: number; created_at: string }
+interface Asset { id: string; kind: Kind; name: string; title: string; description: string | null; genres: string[]; tags: string[]; url: string; mime: string | null; bytes: number; width: number | null; height: number | null; meta: { frames?: { cols: number; rows: number; fps?: number }; role?: string } & Record<string, unknown>; auto_use: boolean; status: 'active' | 'archived'; uses: number; created_at: string }
 interface Genre { slug: string; name: string; group?: string }
 interface Data { items: Asset[]; total: number; genres: Genre[]; stats: { byKind: Record<string, number>; totalBytes: number; archived: number } }
 
@@ -32,7 +33,7 @@ export default function AdminMediaPage() {
   const [err, setErr] = useState<{ msg: string; missing?: boolean } | null>(null)
   const [q, setQ] = useState(''); const [kind, setKind] = useState<Kind | ''>(''); const [genre, setGenre] = useState(''); const [status, setStatus] = useState<'active' | 'archived' | 'all'>('active')
   const [page, setPage] = useState(1)
-  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [view, setView] = useState<'grid' | 'list' | 'genre'>('grid')
   const [sel, setSel] = useState<Set<string>>(new Set())
   const [detail, setDetail] = useState<Asset | null>(null)
   const [editor, setEditor] = useState<Asset | null>(null)
@@ -42,7 +43,7 @@ export default function AdminMediaPage() {
   // 업로드
   const fileRef = useRef<HTMLInputElement>(null)
   const [drop, setDrop] = useState(false)
-  const [up, setUp] = useState<{ files: File[]; kind: Kind | ''; genres: string[]; tags: string; description: string; auto: boolean; title: string; name: string } | null>(null)
+  const [up, setUp] = useState<{ files: File[]; kind: Kind | ''; genres: string[]; tags: string; description: string; auto: boolean; title: string; name: string; role: string } | null>(null)
   const [uploading, setUploading] = useState(false)
   const [bulk, setBulk] = useState<{ genres: string[]; tags: string } | null>(null)
 
@@ -57,12 +58,12 @@ export default function AdminMediaPage() {
   const genreName = (slug: string) => genres.find(g => g.slug === slug)?.name ?? slug
   const groups = useMemo(() => { const m = new Map<string, Genre[]>(); for (const g of genres) { const k = g.group ?? '기타'; if (!m.has(k)) m.set(k, []); m.get(k)!.push(g) } return m }, [genres])
 
-  const openUpload = async (files: FileList | File[] | null) => { const arr = Array.from(files ?? []).filter(f => f.size > 0); if (!arr.length) return; setUp({ files: arr, kind: kind || '', genres: genre ? [genre] : [], tags: '', description: '', auto: true, title: arr.length === 1 ? arr[0].name.replace(/\.[a-z0-9]+$/i, '') : '', name: '' }) }
+  const openUpload = async (files: FileList | File[] | null) => { const arr = Array.from(files ?? []).filter(f => f.size > 0); if (!arr.length) return; setUp({ files: arr, kind: kind || (arr.every(f => f.type.startsWith('audio/')) ? 'audio' : ''), genres: genre ? [genre] : [], tags: '', description: '', auto: true, title: arr.length === 1 ? arr[0].name.replace(/\.[a-z0-9]+$/i, '') : '', name: '', role: '' }) }
   const doUpload = async () => {
     if (!up) return; setUploading(true)
     const fd = new FormData(); for (const f of up.files) fd.append('files', f)
     const dims: Record<string, { w: number; h: number }> = {}; for (const f of up.files) { const d = await readDims(f); if (d) dims[f.name] = d }
-    fd.set('dims', JSON.stringify(dims)); fd.set('kind', up.kind); fd.set('genres', up.genres.join(',')); fd.set('tags', up.tags); fd.set('description', up.description); fd.set('auto_use', up.auto ? '1' : '0'); if (up.title) fd.set('title', up.title); if (up.name) fd.set('name', up.name)
+    fd.set('dims', JSON.stringify(dims)); fd.set('kind', up.kind); fd.set('genres', up.genres.join(',')); fd.set('tags', up.tags); fd.set('description', up.description); fd.set('auto_use', up.auto ? '1' : '0'); if (up.title) fd.set('title', up.title); if (up.name) fd.set('name', up.name); if (up.role) fd.set('role', up.role)
     const r = await fetch('/api/admin/media', { method: 'POST', body: fd }); const j = await r.json().catch(() => ({})); setUploading(false)
     if (!r.ok) { say(j.error ?? '업로드 실패', 'err'); return }
     setUp(null); say(`${(j.items ?? []).length}개 추가${j.errors?.length ? ` · 실패 ${j.errors.length}` : ''}`, j.errors?.length ? 'err' : 'ok'); if (j.errors?.length) console.warn(j.errors); load()
@@ -79,11 +80,11 @@ export default function AdminMediaPage() {
   const items = data?.items ?? []
   const pages = Math.max(1, Math.ceil((data?.total ?? 0) / 60))
 
-  const header = <PageHeader title="미디어 라이브러리" desc="장르별 캐릭터·배경·아이템·오디오를 모아두면, 게임 생성 시 프롬프트·장르에 맞는 에셋이 자동으로 들어가고 스튜디오에서 직접 고를 수도 있어요."
+  const header = <PageHeader title="미디어 라이브러리" desc="장르별 캐릭터·배경·아이템·오디오(배경음·효과음)를 모아두면, 게임 생성 시 프롬프트·장르에 맞는 에셋이 자동으로 들어가고 스튜디오에서 직접 고를 수도 있어요. 「장르별」 보기로 카테고리 안을 장르로 묶어 볼 수 있어요."
     actions={<div className="flex items-center gap-2">
       <input ref={fileRef} type="file" multiple className="hidden" accept="image/*,audio/*,.glb,.gltf,.ttf,.otf,.woff,.woff2" onChange={e => { openUpload(e.target.files); e.target.value = '' }} />
       <button onClick={() => fileRef.current?.click()} className={btn.primary}>＋ 업로드</button>
-      <Segmented value={view} onChange={setView} options={[{ value: 'grid', label: '격자' }, { value: 'list', label: '목록' }]} />
+      <Segmented value={view} onChange={setView} options={[{ value: 'grid', label: '격자' }, { value: 'genre', label: '장르별' }, { value: 'list', label: '목록' }]} />
     </div>} />
   if (err?.missing) return <div>{header}<Card className="p-6 text-[13px] text-[#6b7280]"><p className="font-semibold text-[#1f2430] mb-1">테이블이 아직 없어요.</p><p>Supabase SQL 편집기에서 <code className="bg-[#f3f5f8] px-1 rounded">db/migrations/2026-09-11-media-library.sql</code> 을 실행해 주세요 (media_assets 테이블 + media 버킷).</p></Card></div>
   if (err) return <div>{header}<Card className="p-6 text-[13px] text-[#6b7280]">{err.msg}</Card></div>
@@ -129,21 +130,25 @@ export default function AdminMediaPage() {
       {/* 본문 */}
       {items.length === 0 ? (
         <Card className="p-2"><EmptyState icon="🗂️" title="아직 에셋이 없어요" desc="파일을 여기로 끌어다 놓거나 업로드 버튼을 눌러 캐릭터·배경·아이템을 추가하세요. PNG(투명) 권장, 게임 주입은 450KB 이하만." action={<button onClick={() => fileRef.current?.click()} className={btn.primary}>＋ 업로드</button>} /></Card>
+      ) : view === 'genre' ? (
+        <div className="flex flex-col gap-5">
+          {(() => {
+            const buckets = new Map<string, Asset[]>()
+            for (const a of items) { const keys = a.genres.length ? a.genres : ['_none']; for (const k of keys) { if (!buckets.has(k)) buckets.set(k, []); buckets.get(k)!.push(a) } }
+            const order = [...buckets.keys()].sort((x, y) => x === '_none' ? 1 : y === '_none' ? -1 : genreName(x).localeCompare(genreName(y), 'ko'))
+            return order.map(k => (
+              <section key={k}>
+                <div className="flex items-center gap-2 mb-2"><h3 className="text-[13px] font-bold text-[#1f2430]">{k === '_none' ? '장르 미지정' : genreName(k)}</h3><span className="text-[11px] text-[#6b7280]">{buckets.get(k)!.length}개</span>{k !== '_none' && <button onClick={() => setGenre(k)} className="text-[11px] text-[#2563eb] hover:underline">이 장르만 보기</button>}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+                  {buckets.get(k)!.map(a => <AssetCard key={a.id} a={a} selected={sel.has(a.id)} onOpen={() => setDetail(a)} onToggle={() => toggleSel(a.id)} genreName={genreName} />)}
+                </div>
+              </section>
+            ))
+          })()}
+        </div>
       ) : view === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-          {items.map(a => (
-            <div key={a.id} className={`group relative rounded-xl bg-white border overflow-hidden transition-shadow hover:shadow-md ${sel.has(a.id) ? 'border-[#2563eb] ring-2 ring-[#2563eb]/20' : 'border-[#e3e6ec]'}`}>
-              <button onClick={() => setDetail(a)} className="block w-full text-left"><Thumb a={a} className="aspect-square" /></button>
-              <label className={`absolute top-2 left-2 w-5 h-5 rounded-md border bg-white/90 flex items-center justify-center cursor-pointer transition-opacity ${sel.has(a.id) ? 'opacity-100 border-[#2563eb]' : 'opacity-0 group-hover:opacity-100 border-[#c5cad4]'}`}><input type="checkbox" checked={sel.has(a.id)} onChange={() => toggleSel(a.id)} className="sr-only" />{sel.has(a.id) && <span className="text-[#2563eb] text-[12px] font-bold">✓</span>}</label>
-              <span className="absolute top-2 right-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-md text-white" style={{ background: KIND_COLOR[a.kind] }}>{kindLabel(a.kind)}</span>
-              {!a.auto_use && <span className="absolute bottom-[52px] right-2 text-[9.5px] px-1.5 py-0.5 rounded bg-[#1f2430]/80 text-white">수동</span>}
-              <div className="px-2.5 py-2">
-                <p className="text-[12.5px] font-semibold text-[#1f2430] truncate" title={a.title}>{a.title}</p>
-                <p className="text-[10.5px] text-[#6b7280] truncate">{a.width ? `${a.width}×${a.height} · ` : ''}{fmtBytes(a.bytes)}{a.uses ? ` · ${a.uses}회` : ''}</p>
-                {a.genres.length > 0 && <p className="text-[10px] text-[#2563eb] truncate mt-0.5">{a.genres.map(genreName).join(' · ')}</p>}
-              </div>
-            </div>
-          ))}
+          {items.map(a => <AssetCard key={a.id} a={a} selected={sel.has(a.id)} onOpen={() => setDetail(a)} onToggle={() => toggleSel(a.id)} genreName={genreName} />)}
         </div>
       ) : (
         <Card className="overflow-x-auto"><table className="w-full text-[12.5px]"><thead><tr>{['', '', '제목 / 키', '종류', '크기', '장르', '태그', '자동', '사용'].map((h, i) => <th key={i} className="text-left text-[10.5px] font-semibold uppercase tracking-wide text-[#6b7280] px-3 py-2 bg-[#f7f8fa] border-b border-[#e3e6ec]">{h}</th>)}</tr></thead><tbody>
@@ -152,7 +157,7 @@ export default function AdminMediaPage() {
             <td className="px-2 py-1.5"><Thumb a={a} className="w-10 h-10 rounded-md" /></td>
             <td className="px-3 py-1.5"><p className="font-semibold text-[#1f2430]">{a.title}</p><p className="text-[11px] text-[#6b7280] font-mono">{a.name}</p></td>
             <td className="px-3 py-1.5"><Badge color={KIND_COLOR[a.kind]}>{kindLabel(a.kind)}</Badge></td>
-            <td className="px-3 py-1.5 text-[#6b7280] whitespace-nowrap">{a.width ? `${a.width}×${a.height}` : '—'} · {fmtBytes(a.bytes)}</td>
+            <td className="px-3 py-1.5 text-[#6b7280] whitespace-nowrap">{a.kind === 'audio' ? (audioRoleLabel(a.meta?.role) || '—') : a.width ? `${a.width}×${a.height}` : '—'} · {fmtBytes(a.bytes)}</td>
             <td className="px-3 py-1.5 text-[#2563eb]">{a.genres.map(genreName).join(', ')}</td>
             <td className="px-3 py-1.5 text-[#6b7280]">{a.tags.join(', ')}</td>
             <td className="px-3 py-1.5">{a.auto_use ? '✓' : '—'}</td>
@@ -169,6 +174,7 @@ export default function AdminMediaPage() {
           <div className="flex gap-2 overflow-x-auto pb-1">{up.files.slice(0, 12).map((f, i) => <div key={i} className="shrink-0 w-16"><div className="w-16 h-16 rounded-lg bg-[#f3f5f8] flex items-center justify-center overflow-hidden">{f.type.startsWith('image/') ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={URL.createObjectURL(f)} alt="" className="max-w-full max-h-full object-contain" /> : <span className="text-2xl">{f.type.startsWith('audio/') ? '🎵' : '📦'}</span>}</div><p className="text-[10px] text-[#6b7280] truncate mt-0.5">{f.name}</p></div>)}{up.files.length > 12 && <span className="text-[12px] text-[#6b7280] self-center">+{up.files.length - 12}</span>}</div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className={labelCls}>종류</label><select value={up.kind} onChange={e => setUp({ ...up, kind: e.target.value as Kind })} className={input}><option value="">자동 감지 (이미지는 기타)</option>{KINDS.filter(k => k[0]).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+            {(up.kind === 'audio' || up.files.every(f => f.type.startsWith('audio/'))) && <div><label className={labelCls}>오디오 역할 (AI 가 재생 시점을 정해요)</label><select value={up.role} onChange={e => setUp({ ...up, role: e.target.value })} className={input}><option value="">선택 안 함</option>{AUDIO_ROLES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>}
             {up.files.length === 1 && <div><label className={labelCls}>제목</label><input value={up.title} onChange={e => setUp({ ...up, title: e.target.value })} className={input} /></div>}
             {up.files.length === 1 && <div><label className={labelCls}>키 (코드에서 쓰는 이름, 영문)</label><input value={up.name} onChange={e => setUp({ ...up, name: e.target.value })} placeholder="비우면 파일명으로" className={input} /></div>}
             <div className="col-span-2"><label className={labelCls}>태그 (쉼표)</label><input value={up.tags} onChange={e => setUp({ ...up, tags: e.target.value })} placeholder="기사, 검, 픽셀, 어두운, 판타지" className={input} /></div>
@@ -198,6 +204,22 @@ export default function AdminMediaPage() {
   )
 }
 
+function AssetCard({ a, selected, onOpen, onToggle, genreName }: { a: Asset; selected: boolean; onOpen: () => void; onToggle: () => void; genreName: (s: string) => string }) {
+  return (
+            <div className={`group relative rounded-xl bg-white border overflow-hidden transition-shadow hover:shadow-md ${selected ? 'border-[#2563eb] ring-2 ring-[#2563eb]/20' : 'border-[#e3e6ec]'}`}>
+              <button onClick={() => onOpen()} className="block w-full text-left"><Thumb a={a} className="aspect-square" /></button>
+              <label className={`absolute top-2 left-2 w-5 h-5 rounded-md border bg-white/90 flex items-center justify-center cursor-pointer transition-opacity ${selected ? 'opacity-100 border-[#2563eb]' : 'opacity-0 group-hover:opacity-100 border-[#c5cad4]'}`}><input type="checkbox" checked={selected} onChange={() => onToggle()} className="sr-only" />{selected && <span className="text-[#2563eb] text-[12px] font-bold">✓</span>}</label>
+              <span className="absolute top-2 right-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-md text-white" style={{ background: KIND_COLOR[a.kind] }}>{kindLabel(a.kind)}</span>
+              {!a.auto_use && <span className="absolute bottom-[52px] right-2 text-[9.5px] px-1.5 py-0.5 rounded bg-[#1f2430]/80 text-white">수동</span>}
+              <div className="px-2.5 py-2">
+                <p className="text-[12.5px] font-semibold text-[#1f2430] truncate" title={a.title}>{a.title}</p>
+                <p className="text-[10.5px] text-[#6b7280] truncate">{a.kind === 'audio' && a.meta?.role ? `${audioRoleLabel(a.meta.role)} · ` : a.width ? `${a.width}×${a.height} · ` : ''}{fmtBytes(a.bytes)}{a.uses ? ` · ${a.uses}회` : ''}</p>
+                {a.genres.length > 0 && <p className="text-[10px] text-[#2563eb] truncate mt-0.5">{a.genres.map(genreName).join(' · ')}</p>}
+              </div>
+            </div>
+  )
+}
+
 function GenrePicker({ genres, groups, value, onChange }: { genres: Genre[]; groups: Map<string, Genre[]>; value: string[]; onChange: (v: string[]) => void }) {
   const [q, setQ] = useState('')
   const toggle = (s: string) => onChange(value.includes(s) ? value.filter(x => x !== s) : [...value, s])
@@ -214,10 +236,10 @@ function GenrePicker({ genres, groups, value, onChange }: { genres: Genre[]; gro
 }
 
 function DetailModal({ a, genres, groups, onClose, onPatch, onDelete, onEdit, onDuplicate }: { a: Asset; genres: Genre[]; groups: Map<string, Genre[]>; onClose: () => void; onPatch: (b: Record<string, unknown>) => Promise<void>; onDelete: () => void; onEdit: () => void; onDuplicate: () => void }) {
-  const [f, setF] = useState({ title: a.title, name: a.name, description: a.description ?? '', kind: a.kind as Kind, genres: a.genres, tags: a.tags.join(', '), auto_use: a.auto_use, cols: a.meta?.frames?.cols ?? 0, rows: a.meta?.frames?.rows ?? 1, fps: a.meta?.frames?.fps ?? 8 })
+  const [f, setF] = useState({ title: a.title, name: a.name, description: a.description ?? '', kind: a.kind as Kind, genres: a.genres, tags: a.tags.join(', '), auto_use: a.auto_use, cols: a.meta?.frames?.cols ?? 0, rows: a.meta?.frames?.rows ?? 1, fps: a.meta?.frames?.fps ?? 8, role: a.meta?.role ?? '' })
   const [saving, setSaving] = useState(false)
-  const save = async () => { setSaving(true); await onPatch({ title: f.title, name: f.name, description: f.description || null, kind: f.kind, genres: f.genres, tags: f.tags.split(',').map(x => x.trim()).filter(Boolean), auto_use: f.auto_use, meta: { ...a.meta, ...(f.cols > 0 ? { frames: { cols: f.cols, rows: f.rows || 1, fps: f.fps || 8 } } : { frames: undefined }) } }); setSaving(false) }
-  const snippet = a.kind === 'audio' ? `getAsset('${a.name}').play()` : `drawAsset(ctx, '${a.name}', x, y${a.width ? `, ${a.width}, ${a.height}` : ''}${f.cols > 0 ? ', frameIndex' : ''})`
+  const save = async () => { setSaving(true); await onPatch({ title: f.title, name: f.name, description: f.description || null, kind: f.kind, genres: f.genres, tags: f.tags.split(',').map(x => x.trim()).filter(Boolean), auto_use: f.auto_use, meta: { ...a.meta, ...(f.cols > 0 ? { frames: { cols: f.cols, rows: f.rows || 1, fps: f.fps || 8 } } : { frames: undefined }), role: f.role || undefined } }); setSaving(false) }
+  const snippet = a.kind === 'audio' ? `playAsset('${a.name}'${f.role === 'bgm' ? ', { loop: true, volume: 0.5 }' : ''})` : `drawAsset(ctx, '${a.name}', x, y${a.width ? `, ${a.width}, ${a.height}` : ''}${f.cols > 0 ? ', frameIndex' : ''})`
   const injectable = ['character', 'background', 'tile', 'item', 'ui', 'effect', 'sprite', 'audio'].includes(a.kind) && a.bytes <= 450_000
   return (
     <Modal open onClose={onClose} title={a.title} width="max-w-4xl">
@@ -244,6 +266,7 @@ function DetailModal({ a, genres, groups, onClose, onPatch, onDelete, onEdit, on
           <div><label className={labelCls}>설명 (AI 용)</label><textarea value={f.description} onChange={e => setF({ ...f, description: e.target.value })} rows={2} className={`${input} h-auto py-1.5`} /></div>
           <div><label className={labelCls}>태그 (쉼표)</label><input value={f.tags} onChange={e => setF({ ...f, tags: e.target.value })} className={input} /></div>
           <GenrePicker genres={genres} groups={groups} value={f.genres} onChange={g => setF({ ...f, genres: g })} />
+          {a.kind === 'audio' && <div><label className={labelCls}>오디오 역할</label><select value={f.role} onChange={e => setF({ ...f, role: e.target.value })} className={input}><option value="">선택 안 함</option>{AUDIO_ROLES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>}
           {isImg(a) && <div><label className={labelCls}>스프라이트시트 (프레임 열 × 행 · fps, 0이면 단일 이미지)</label><div className="grid grid-cols-3 gap-2"><input type="number" min={0} value={f.cols} onChange={e => setF({ ...f, cols: Number(e.target.value) })} className={input} placeholder="열" /><input type="number" min={1} value={f.rows} onChange={e => setF({ ...f, rows: Number(e.target.value) })} className={input} placeholder="행" /><input type="number" min={1} value={f.fps} onChange={e => setF({ ...f, fps: Number(e.target.value) })} className={input} placeholder="fps" /></div></div>}
           <Toggle checked={f.auto_use} onChange={v => setF({ ...f, auto_use: v })} label="프롬프트·장르가 맞으면 자동 주입" />
           <button onClick={save} className={btn.primary} disabled={saving}>{saving ? '저장 중…' : '저장'}</button>

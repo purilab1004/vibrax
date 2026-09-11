@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 
 export interface PickedAsset { id: string; kind: string; name: string; title: string; url: string }
-interface Item extends PickedAsset { description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number }
+interface Item extends PickedAsset { description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string } }
+const ROLE: Record<string, string> = { bgm: '배경음', jump: '점프', hit: '타격', coin: '획득', shoot: '발사', explosion: '폭발', powerup: '파워업', gameover: '게임오버', clear: '클리어', click: 'UI', ambient: '환경음', other: '기타' }
 
 const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '오디오']]
 
@@ -55,7 +56,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
                   </div>
                   <div className="px-2 py-1.5">
                     <p className="text-[12px] font-semibold text-[#241f17] truncate">{it.title}</p>
-                    <p className="text-[10.5px] text-[#9d9280] truncate">{KINDS.find(k => k[0] === it.kind)?.[1] ?? it.kind}{it.width ? ` · ${it.width}×${it.height}` : ''}</p>
+                    <p className="text-[10.5px] text-[#9d9280] truncate">{KINDS.find(k => k[0] === it.kind)?.[1] ?? it.kind}{it.kind === 'audio' && it.meta?.role ? ` · ${ROLE[it.meta.role] ?? it.meta.role}` : it.width ? ` · ${it.width}×${it.height}` : ''}</p>
                   </div>
                   {has(it.id) && <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#2563eb] text-white text-[11px] flex items-center justify-center">✓</span>}
                 </button>
