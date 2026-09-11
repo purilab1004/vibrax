@@ -15,6 +15,7 @@ import actionAdventure from './templates/action-adventure.json'
 import asteroids from './templates/asteroids.json'
 import autoBattler from './templates/auto-battler.json'
 import battleRoyale from './templates/battle-royale.json'
+import bomberman from './templates/bomberman.json'
 import crossyRoad from './templates/crossy-road.json'
 import deckbuilder from './templates/deckbuilder.json'
 import doodleJump from './templates/doodle-jump.json'
@@ -27,6 +28,7 @@ import gomoku from './templates/gomoku.json'
 import helixJump from './templates/helix-jump.json'
 import ioEat from './templates/io-eat.json'
 import match3 from './templates/match3.json'
+import maze from './templates/maze.json'
 import memoryMatch from './templates/memory-match.json'
 import metroidvania from './templates/metroidvania.json'
 import minesweeper from './templates/minesweeper.json'
@@ -57,6 +59,7 @@ import stack from './templates/stack.json'
 import strategyTurn from './templates/strategy-turn.json'
 import sudoku from './templates/sudoku.json'
 import survival from './templates/survival.json'
+import tankDuel from './templates/tank-duel.json'
 import towerDefense from './templates/tower-defense.json'
 import tycoon from './templates/tycoon.json'
 import typing from './templates/typing.json'
@@ -78,7 +81,7 @@ export interface GameTemplate {
   controls?: { label: string; keys: string; desc?: string } // 이 템플릿의 조작 설명
 }
 
-export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, runnerDouble, shooter, pong, stock, actionAdventure, asteroids, autoBattler, battleRoyale, crossyRoad, deckbuilder, doodleJump, eduQuiz, farming, fighting, flight, gacha, gomoku, helixJump, ioEat, match3, memoryMatch, metroidvania, minesweeper, mobaLane, pacman, party, puzzle2048, quiz, racing, reaction, rhythm, rhythmJump, roguelike, rpgAction, rpgIdle, rpgTurn, rtsMini, sandbox, shooterFps, shooterLoot, shooterTopdown, slidingPuzzle, slingshot, soulslike, sports, sportsShot, stack, strategyTurn, sudoku, survival, towerDefense, tycoon, typing, visualNovel, whackAMole, wordle] as GameTemplate[]
+export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, runnerDouble, shooter, pong, stock, actionAdventure, asteroids, autoBattler, battleRoyale, bomberman, crossyRoad, deckbuilder, doodleJump, eduQuiz, farming, fighting, flight, gacha, gomoku, helixJump, ioEat, match3, maze, memoryMatch, metroidvania, minesweeper, mobaLane, pacman, party, puzzle2048, quiz, racing, reaction, rhythm, rhythmJump, roguelike, rpgAction, rpgIdle, rpgTurn, rtsMini, sandbox, shooterFps, shooterLoot, shooterTopdown, slidingPuzzle, slingshot, soulslike, sports, sportsShot, stack, strategyTurn, sudoku, survival, tankDuel, towerDefense, tycoon, typing, visualNovel, whackAMole, wordle] as GameTemplate[]
 
 export { templateOnly, extrasOf } from './template-match'
 export function matchTemplate(prompt: string): { template: GameTemplate; keyword: string } | null {

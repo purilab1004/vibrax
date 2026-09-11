@@ -1,7 +1,8 @@
 // 장르별 정적 템플릿 일괄 생성기 — Sonnet 1회 생성 → 계약 검사 → 헤드리스 실행 검증 → lib/studio/templates/<slug>.json 저장
-// 실행: node --disable-warning=ExperimentalWarning --import ./scripts/ts-resolve.mjs scripts/gen-genre-templates.ts [slug ...]  (FORCE=1 로 덮어쓰기)
+// 실행: node --disable-warning=ExperimentalWarning --import ./scripts/ts-resolve.mjs scripts/gen-genre-templates.ts [slug ...]  (FORCE=1 덮어쓰기, USE_MAX=1 이면 API 크레딧 대신 `claude -p`(Max 구독)로 생성)
 import Anthropic from '@anthropic-ai/sdk'
 import fs from 'node:fs'
+import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { SYSTEM_PROMPT, buildMessages } from '../lib/studio/prompt'
 import { parseGeneration, extractTitle } from '../lib/studio/parse'
@@ -176,6 +177,14 @@ async function smoke(html: string): Promise<string | null> {
   finally { await ctx.close(); fs.rmSync(f, { force: true }) }
 }
 
+/** USE_MAX=1: API 크레딧 대신 Claude Code 헤드리스(`claude -p`, Max 구독 인증)로 생성. 사용량 토큰은 알 수 없어 0 처리 */
+function genViaMax(prompt: string): { text: string; stop_reason: string; usage: { input_tokens: number; output_tokens: number } } {
+  const env = { ...process.env }; delete env.CLAUDECODE; delete env.CLAUDE_CODE_ENTRYPOINT; delete env.ANTHROPIC_API_KEY
+  const r = spawnSync('claude', ['-p', '--tools', '', '--model', 'sonnet', '--output-format', 'text', '--no-session-persistence', '--effort', 'medium', '--system-prompt', SYSTEM_PROMPT], { input: `요청: ${prompt}`, env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 900_000 })
+  if (r.status !== 0) throw new Error(`claude -p 실패(${r.status}): ${(r.stderr || r.stdout || '').slice(0, 300)}`)
+  return { text: r.stdout, stop_reason: 'end_turn', usage: { input_tokens: 0, output_tokens: Math.round(r.stdout.length / 3) } }
+}
+
 async function gen(spec: Spec): Promise<void> {
   const out = path.join(OUT, `${spec.slug}.json`)
   if (fs.existsSync(out) && !process.env.FORCE) { console.log(`skip ${spec.slug} (exists)`); return }
@@ -183,9 +192,11 @@ async function gen(spec: Spec): Promise<void> {
   for (let attempt = 1; attempt <= 3; attempt++) {
     const t0 = Date.now()
     const prompt = spec.prompt + SPEC + (feedback ? `\n\n[이전 시도의 문제 — 반드시 고칠 것] ${feedback}` : '')
-    const msg = await client.messages.stream({ model: 'claude-sonnet-5', max_tokens: 32000, thinking: { type: 'adaptive' }, output_config: { effort: 'medium' }, system: SYSTEM_PROMPT, messages: buildMessages({ prompt, currentHtml: null, history: [], images: [] }) as never }).finalMessage()
+    const msg = process.env.USE_MAX
+      ? genViaMax(prompt)
+      : await client.messages.stream({ model: 'claude-sonnet-5', max_tokens: 32000, thinking: { type: 'adaptive' }, output_config: { effort: 'medium' }, system: SYSTEM_PROMPT, messages: buildMessages({ prompt, currentHtml: null, history: [], images: [] }) as never }).finalMessage().then(m => ({ text: m.content.map(c => (c.type === 'text' ? c.text : '')).join(''), stop_reason: String(m.stop_reason), usage: { input_tokens: m.usage.input_tokens, output_tokens: m.usage.output_tokens, output_tokens_details: (m.usage as { output_tokens_details?: { thinking_tokens?: number } }).output_tokens_details } }))
     totalIn += msg.usage.input_tokens; totalOut += msg.usage.output_tokens
-    const text = msg.content.map(c => (c.type === 'text' ? c.text : '')).join('')
+    const text = msg.text
     const parsed = parseGeneration(text)
     if (!parsed.html) { const trunc = msg.stop_reason === 'max_tokens'; feedback = trunc ? `출력이 너무 길어 ${msg.usage.output_tokens} 토큰에서 잘렸음. 기능을 절반으로 줄이고 코드를 압축해 12KB 이내로 완성하라` : '게임 HTML 이 <game>…</game> 태그 안에 완결되어 있지 않았음'; console.log(`✗ ${spec.slug} #${attempt}: no html (stop=${msg.stop_reason}, out ${msg.usage.output_tokens}, thinking ${(msg.usage as { output_tokens_details?: { thinking_tokens?: number } }).output_tokens_details?.thinking_tokens ?? '?'}) tail=${JSON.stringify(text.slice(-120))}`); continue }
     const html = hardenHtml(parsed.html)
