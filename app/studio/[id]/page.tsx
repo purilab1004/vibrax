@@ -156,7 +156,7 @@ export default function StudioComposerPage() {
     }
   }
 
-  const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string) => {
+  const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[]) => {
     setError(null)
     setMessages(m => [...m, { role: 'user', content: prompt, images: images?.map(i => i.previewUrl) }])
     balanceBeforeRef.current = balance
@@ -174,6 +174,7 @@ export default function StudioComposerPage() {
           images: images?.map(i => ({ media_type: i.media_type, data: i.data })),
           sounds: sounds?.map(x => ({ name: x.name, media_type: x.media_type, data: x.data, role: x.role })),
           variantSlug,
+          assetIds,
         }),
       })
 

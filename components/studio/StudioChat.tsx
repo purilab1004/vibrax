@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import MediaPicker, { type PickedAsset } from '@/components/studio/MediaPicker'
 import { useLang } from '@/lib/i18n/context'
 
 export interface ChatMsg {
@@ -17,7 +18,7 @@ export default function StudioChat({
   usage?: { input: number; output: number; credits?: number; balance?: number } | null
   generationCost?: number
   error: string | null
-  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string) => void
+  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[]) => void
   busy: boolean
   /* 외부(학습 노트 '다음 도전')에서 입력창에 채워 넣을 문장 */
   draft?: string | null
@@ -32,6 +33,11 @@ export default function StudioChat({
   // 첨부 이미지 — 레퍼런스를 보여주면 AI가 보고 만든다 (최대 3장, 각 5MB)
   const [attachments, setAttachments] = useState<{ media_type: string; data: string; previewUrl: string }[]>([])
   const [sounds, setSounds] = useState<{ name: string; media_type: string; data: string; role: string }[]>([])
+  // 미디어 라이브러리에서 고른 에셋 — 전송 시 id 만 보낸다 (서버가 게임 HTML 에 주입)
+  const [picked, setPicked] = useState<PickedAsset[]>([])
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const assetIdsRef = useRef<string[]>([])
+  const go = (p: string, imgs?: { media_type: string; data: string; previewUrl: string }[], snds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string) => onSend(p, imgs, snds, variantSlug, assetIdsRef.current.length ? assetIdsRef.current : undefined)
   const fileRef = useRef<HTMLInputElement>(null)
   const soundRef = useRef<HTMLInputElement>(null)
   const addSounds = (files: FileList | null) => {
@@ -99,9 +105,9 @@ export default function StudioChat({
       const data = await res.json() as { genre?: string; options?: PlanOpt[]; skip?: boolean }
       // skip = 기존 템플릿 매칭(조작 고정) → 조작 카드 없이 바로 생성
       if (!data?.skip && (data?.options?.length ?? 0) >= 2) setPlanData({ genre: data.genre!, options: data.options!, pending: { prompt, imgs, snds } })
-      else onSend(prompt, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
+      else go(prompt, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
     } catch {
-      onSend(prompt, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
+      go(prompt, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
     } finally {
       setPlanning(false)
     }
@@ -113,7 +119,7 @@ export default function StudioChat({
     // 변형 템플릿(variantSlug)이면 프롬프트는 그대로 두고 그 템플릿을 강제. 아니면 조작 설명을 프롬프트에 붙임.
     const augmented = (opt && !opt.variantSlug) ? `${prompt}\n\n[조작 방식] ${opt.label} — ${opt.desc} (키: ${opt.keys})` : prompt
     setPlanData(null)
-    onSend(augmented, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined, opt?.variantSlug)
+    go(augmented, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined, opt?.variantSlug)
   }
   // 직접 정하기 → 카드 닫고 원래 설명을 입력창에 되살려 사용자가 이어서 조작을 적게 한다
   const editControls = () => {
@@ -130,9 +136,10 @@ export default function StudioChat({
     const imgs = attachments
     const snds = sounds
     setAttachments([]); setSounds([])
+    assetIdsRef.current = picked.map(a => a.id); setPicked([])
     // 첫 게임 설명이고 조작을 안 적었으면 → 조작안 제안 단계
     if (messages.length === 0 && !hasControlWords(p)) { runPlan(p, imgs, snds); return }
-    onSend(p, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
+    go(p, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
   }
 
   return (
@@ -327,6 +334,18 @@ export default function StudioChat({
               ))}
             </div>
           )}
+          {/* 미디어 라이브러리 에셋 */}
+          {picked.length > 0 && (
+            <div className="flex flex-wrap gap-2 px-4 pb-1">
+              {picked.map(a => (
+                <div key={a.id} className="flex items-center gap-1.5 rounded-full bg-[#eef4ff] pl-1 pr-1.5 py-0.5 border border-[#cfdcff]">
+                  {a.kind === 'audio' ? <span className="text-[13px] px-1">🎵</span> : /* eslint-disable-next-line @next/next/no-img-element */ <img src={a.url} alt="" className="w-6 h-6 rounded object-contain bg-white" />}
+                  <span className="text-[11.5px] text-[#1e3a8a] max-w-[120px] truncate">{a.title}</span>
+                  <button type="button" onClick={() => setPicked(prev => prev.filter(x => x.id !== a.id))} className="w-4 h-4 rounded-full bg-[#241f17] text-white text-[9px] flex items-center justify-center" aria-label="에셋 제거">✕</button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-center justify-between px-3 pb-2.5">
             <div className="flex items-center gap-2">
               {/* 이미지 첨부 */}
@@ -349,6 +368,12 @@ export default function StudioChat({
                 className="w-8 h-8 rounded-full border border-[#ddd3bf] text-[#6b6152] hover:border-[#7c3aed] hover:text-[#7c3aed] flex items-center justify-center transition-colors disabled:opacity-40">
                 <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z" /><path d="M16 9a5 5 0 0 1 0 6" /></svg>
               </button>
+              {/* 미디어 라이브러리 */}
+              <button type="button" onClick={() => setPickerOpen(true)} disabled={picked.length >= 10}
+                title="미디어 라이브러리 — 캐릭터·배경·아이템 에셋을 골라 게임에 바로 넣어요"
+                className="w-8 h-8 rounded-full border border-[#ddd3bf] text-[#6b6152] hover:border-[#0891b2] hover:text-[#0891b2] flex items-center justify-center transition-colors disabled:opacity-40">
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><path d="M17.5 14v7M14 17.5h7" /></svg>
+              </button>
               <p className="text-[11px] text-[#9d9280]">{s.costNote}</p>
             </div>
             <button
@@ -364,6 +389,7 @@ export default function StudioChat({
           </div>
         </div>
       </form>
+      <MediaPicker open={pickerOpen} onClose={() => setPickerOpen(false)} picked={picked} onChange={setPicked} />
     </div>
   )
 }

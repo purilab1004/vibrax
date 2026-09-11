@@ -14,6 +14,7 @@ import { loadMl, logMapping, learnKeyword } from '@/lib/studio/mlpilot'
 import { aiJudgeTemplate } from '@/lib/studio/ai-judge'
 import { loadAutomation, logAutomation } from '@/lib/automation'
 import { hardenHtml, injectSounds } from '@/lib/studio/harden'
+import { extractAssetIds, stripAssets, injectAssets, assetPromptNote, scoreAssets, listAutoAssets, getAssetsByIds, loadAssetData, type MediaAssetLite } from '@/lib/media/assets'
 import { personalizeTemplate } from '@/lib/studio/personalize'
 import { logUsage } from '@/lib/llm/usage'
 import { GENERATION_MAX_TOKENS } from '@/lib/llm/pricing'
@@ -31,7 +32,9 @@ export async function POST(req: Request) {
   } catch {
     return new Response('bad request', { status: 400 })
   }
-  const { projectId, prompt, images: rawImages, sounds: rawSounds, variantSlug: rawVariantSlug } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown; sounds?: unknown; variantSlug?: unknown }
+  const { projectId, prompt, images: rawImages, sounds: rawSounds, variantSlug: rawVariantSlug, assetIds: rawAssetIds } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown; sounds?: unknown; variantSlug?: unknown; assetIds?: unknown }
+  // 미디어 라이브러리 에셋 (스튜디오에서 고른 것) — 최대 10개
+  const assetIds = (Array.isArray(rawAssetIds) ? rawAssetIds : []).filter((x): x is string => typeof x === 'string' && /^[0-9a-f-]{36}$/i.test(x)).slice(0, 10)
   const variantSlug = typeof rawVariantSlug === 'string' ? rawVariantSlug : null
   // 첨부 이미지 — 최대 3장, jpeg/png/webp/gif, 각 5MB(base64 ~7M자) 이내
   const ALLOWED_MEDIA = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -239,6 +242,29 @@ export async function POST(req: Request) {
     templateNote = `「${tmatch.template.name}」 게임을 만들면서 요청하신 내용을 함께 반영했어요. `
   }
 
+  // ── 미디어 라이브러리 — 이전 버전에 주입돼 있던 에셋은 유지하고, 고른 것 + 프롬프트·장르에 맞는 것(auto_use)을 더한다. LLM 에는 base64 대신 이름·용도만 보낸다.
+  const prevAssetIds = extractAssetIds(latest?.html)
+  let mediaAssets: MediaAssetLite[] = []
+  try {
+    const adminDb = createAdminClient()
+    const genreSlugs = tmatch ? [tmatch.template.slug, ...(tmatch.template.genreGroup ? [tmatch.template.genreGroup] : [])] : (variantSlug ? [variantSlug] : [])
+    const [prevA, pickedA, autoPool] = await Promise.all([
+      getAssetsByIds(adminDb, prevAssetIds),
+      getAssetsByIds(adminDb, assetIds),
+      assetIds.length ? Promise.resolve([] as MediaAssetLite[]) : listAutoAssets(adminDb),
+    ])
+    const autoA = assetIds.length ? [] : scoreAssets(autoPool, { prompt, genreSlugs })
+    const seen = new Set<string>()
+    for (const a of [...prevA, ...pickedA, ...autoA]) { if (!seen.has(a.id)) { seen.add(a.id); mediaAssets.push(a) } }
+    mediaAssets = mediaAssets.slice(0, 10)
+    const fresh = mediaAssets.filter(a => !prevAssetIds.includes(a.id)).map(a => a.id)
+    if (fresh.length) void adminDb.rpc('media_assets_touch', { ids: fresh })
+  } catch (e) { console.error('[studio/generate] media pick failed', e); mediaAssets = [] }
+  if (mediaAssets.length) {
+    const titles: Record<string, { title: string; description: string | null }> = {}
+    for (const a of mediaAssets) titles[a.name] = { title: a.title, description: a.description }
+    effectivePrompt += assetPromptNote(mediaAssets.map(a => ({ name: a.name, kind: a.kind, width: a.width, height: a.height, meta: a.meta ?? {} })), titles)
+  }
   // 차감은 이미 성공했다 — 여기서 동기적으로 던지면(예: ANTHROPIC_API_KEY 누락)
   // 환불 없이 크레딧만 사라지므로 반드시 감싼다.
   // TokenPilot 라우팅 — 작업 종류·크기에 따라 모델 선택 (기본: Sonnet 5)
@@ -254,7 +280,7 @@ export async function POST(req: Request) {
       // Sonnet 5 는 기본으로 적응형 사고가 켜져 있고 그 토큰이 max_tokens 에 포함된다 — effort 로 사고 분량을 제한해 본문이 잘리지 않게
       ...(chosenModel.startsWith('claude-sonnet-5') || chosenModel.startsWith('claude-opus-5') ? { thinking: { type: 'adaptive' as const }, output_config: { effort: 'medium' as const } } : {}),
       system: SYSTEM_PROMPT,
-      messages: buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml, history, images }) as never,
+      messages: buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml ? stripAssets(baseHtml) : baseHtml, history, images }) as never,
     })
   } catch (e) {
     await refund()
@@ -293,7 +319,7 @@ export async function POST(req: Request) {
         } else {
           const nextVersion = (latest?.version ?? 0) + 1
           const { data: vIns, error: vErr } = await supabase.from('studio_versions').insert([
-            { project_id: projectId, version: nextVersion, html: hardenHtml(injectSounds(parsed.html, sounds)) },
+            { project_id: projectId, version: nextVersion, html: hardenHtml(injectAssets(injectSounds(parsed.html, sounds), mediaAssets.length ? await loadAssetData(mediaAssets) : [])) },
           ] as never).select('id').maybeSingle()
           if (vErr) {
             await refund()
