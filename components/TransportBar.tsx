@@ -84,10 +84,10 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
   })()
 
   return (
-    <div className="pointer-events-none absolute right-3 top-[60px] z-30 flex flex-col items-end gap-2 max-w-[min(92vw,20rem)]">
+    <div className="pointer-events-none absolute z-30 flex flex-col items-end gap-2 inset-x-0 bottom-[53px] md:inset-x-auto md:bottom-auto md:right-3 md:top-[60px] md:max-w-[min(92vw,20rem)]">
       {/* 회원 TOP 10 — 이 안에 들면 transport 활성 */}
       {boardOpen && lb && (
-        <div className="pointer-events-auto w-72 rounded-2xl bg-[#0f1219]/92 backdrop-blur-md border border-white/12 shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
+        <div className="pointer-events-auto w-full md:w-72 rounded-t-2xl md:rounded-2xl bg-[#0f1219]/95 backdrop-blur-md border border-white/12 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] md:shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
           <div className="flex items-center justify-between mb-1.5"><p className="text-white text-[12.5px] font-bold">🏆 회원 TOP {TOP_N}</p><span className="text-white/55 text-[10.5px]">{lb.full && lb.threshold != null ? `${(lb.threshold + 1).toLocaleString()}점부터 진입` : '지금 들어가면 바로 순위권'}</span></div>
           {rows.length === 0 ? <p className="text-white/55 text-[11.5px] py-2">아직 기록이 없어요. 첫 1위가 되어 보세요!</p> : (
             <ol className="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
@@ -104,7 +104,7 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
       )}
       {/* 후보 선택 카드 — 목표 달성 시 자동으로 펼쳐지고, 사람이 골라도 된다 */}
       {pickOpen && reached && (
-        <div className="pointer-events-auto w-72 rounded-2xl bg-[#0f1219]/92 backdrop-blur-md border border-white/12 shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
+        <div className="pointer-events-auto w-full md:w-72 rounded-t-2xl md:rounded-2xl bg-[#0f1219]/95 backdrop-blur-md border border-white/12 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] md:shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
           <div className="flex items-center justify-between mb-2">
             <p className="text-white text-[12px] font-bold">{myRank > 0 ? `🏆 TOP 10 진입 (${myRank}위)! 다음 게임은?` : '🎯 목표 달성! 다음 게임은?'}</p>
             <button onClick={() => setPickOpen(false)} className="text-white/60 hover:text-white text-[12px]">나중에</button>
@@ -126,24 +126,24 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
         </div>
       )}
       {/* 진행 바 + 이동 화살표 */}
-      <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/55 backdrop-blur-md border border-white/12 pl-3 pr-1.5 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.45)]">
+      <div className="pointer-events-auto flex items-center gap-2 w-full h-7 px-3 bg-[#0f1219] border-t border-white/10 md:w-auto md:h-auto md:rounded-full md:bg-black/55 md:backdrop-blur-md md:border md:border-white/12 md:pl-3 md:pr-1.5 md:py-1.5 md:shadow-[0_6px_20px_rgba(0,0,0,0.45)]">
         {chain > 0 && <span className="text-[10.5px] font-bold text-[#fbbf24] whitespace-nowrap">🚀 {chain}연속</span>}
-        <div className="flex flex-col min-w-[150px]">
-          <div className="flex items-baseline justify-between gap-2 text-[10.5px] text-white/80 leading-none mb-1">
+        <button type="button" onClick={() => lb && setBoardOpen(v => !v)} className="flex flex-col flex-1 md:flex-none min-w-0 md:min-w-[150px] text-left">
+          <div className="flex items-baseline justify-between gap-2 text-[10px] md:text-[10.5px] text-white/80 leading-none mb-0.5 md:mb-1">
             <span className={nt && nt.rank > 0 ? 'text-[#fbbf24] font-bold' : ''}>{label}</span>
             <span className="tabular-nums font-semibold text-white">{lb || goal ? score.toLocaleString() : (finished ? '완료' : '진행 중')}</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-white/15 overflow-hidden"><div className={`h-full rounded-full transition-[width] duration-500 ${nt && nt.rank === 1 ? 'bg-[#fbbf24]' : reached ? 'bg-[#22c55e]' : 'bg-[#60a5fa]'}`} style={{ width: `${pct}%` }} /></div>
-        </div>
-        {lb && <button onClick={() => setBoardOpen(v => !v)} title="회원 TOP 10" aria-label="순위표" className={`h-9 w-9 rounded-full flex items-center justify-center text-[15px] transition-colors ${boardOpen ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}>🏆</button>}
+          <div className="h-1 md:h-1.5 w-full rounded-full bg-white/15 overflow-hidden"><div className={`h-full rounded-full transition-[width] duration-500 ${nt && nt.rank === 1 ? 'bg-[#fbbf24]' : reached ? 'bg-[#22c55e]' : 'bg-[#60a5fa]'}`} style={{ width: `${pct}%` }} /></div>
+        </button>
+        {lb && <button onClick={() => setBoardOpen(v => !v)} title="회원 TOP 10" aria-label="순위표" className={`hidden md:flex h-9 w-9 rounded-full flex items-center justify-center text-[15px] transition-colors ${boardOpen ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}>🏆</button>}
         <button
           onClick={() => reached ? (pickOpen ? go(primary, false) : setPickOpen(true)) : undefined}
           disabled={!reached || !!going}
           title={reached ? `다음 게임: ${primary.title}` : (goal ? `목표 ${goal.toLocaleString()}점을 넘기면 열려요` : '한 판을 끝내면 열려요')}
           aria-label="다음 게임으로 이동"
-          className={`h-9 pl-3 pr-2.5 rounded-full flex items-center gap-1.5 text-[12px] font-bold transition-all ${reached ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white shadow-[0_0_0_4px_rgba(37,99,235,0.25)] transport-glow' : 'bg-white/10 text-white/35 cursor-not-allowed'}`}
+          className={`h-5 md:h-9 px-2 md:pl-3 md:pr-2.5 rounded-full flex items-center gap-1 md:gap-1.5 text-[10.5px] md:text-[12px] font-bold transition-all ${reached ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white shadow-[0_0_0_4px_rgba(37,99,235,0.25)] transport-glow' : 'bg-white/10 text-white/35 cursor-not-allowed'}`}
         >
-          <span className="hidden sm:inline">다음 게임</span>
+          <span>다음 게임</span>
           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </button>
       </div>

@@ -33,7 +33,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const [cur, setCur] = useState<{ game: Game; genreColor: string; genreLabel: string; bjName?: string | null }>({ game: initialGame, genreColor: initialColor, genreLabel: initialLabel, bjName: initialBj })
   const game = cur.game, genreColor = cur.genreColor, genreLabel = cur.genreLabel, bjName = cur.bjName
   const [open, setOpen] = useState(false)
-  const [warp, setWarp] = useState<'out' | 'in' | null>(null)   // 텔레포트 연출 단계
+  const [warp, setWarp] = useState<'out' | 'hold' | 'in' | null>(null)   // 텔레포트 연출 단계
   useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록 (게임이 바뀌면 새 세션)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
@@ -97,32 +97,43 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   }
 
   // 텔레포트 — TransportBar 가 고른 다음 게임으로 오버레이 안에서 바로 전환 (START 화면을 거치지 않음)
+  //  out(현재 게임 빨려들어감, 그동안 코인 차감·다음 게임 iframe 을 뒤에서 미리 로드) → hold(로드 끝날 때까지 파동만) → in(새 게임 튀어나옴)
+  const [pending, setPending] = useState<Game | null>(null)
+  const pendingLoaded = useRef(false)
   useEffect(() => {
     if (!open) return
+    const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
     const h = async (e: Event) => {
       const c = (e as CustomEvent<Cand>).detail
-      if (!c?.id || !c.play_url) return
+      if (!c?.id || !c.play_url || warp) return
       e.preventDefault()
-      setWarp('out')
-      // 코인 — 로그인 사용자는 평소처럼 차감 (부족하면 이동 취소)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { error: coinError } = await supabase.rpc('spend_vcoin', { p_game_id: c.id } as never)
-        if (coinError?.message.includes('insufficient_vcoin')) { setWarp(null); alert(T.games.insufficientCoin); return }
-      }
-      await new Promise(r => setTimeout(r, 520))
       const g: Game = { ...game, id: c.id, title: c.title, genre: c.genre as Game['genre'], thumbnail_url: c.thumbnail_url, play_url: c.play_url, user_id: c.user_id, description: c.description, language: c.language, coin_cost: c.coin_cost, studio_project_id: null, teaser: null, teaser_en: null, goal_score: null }
+      pendingLoaded.current = false
+      setPending(g); setWarp('out')
+      // 코인 — 로그인 사용자는 평소처럼 차감 (부족하면 이동 취소). 애니메이션과 동시에 진행해 멈칫하지 않게
+      const pay = (async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) return true
+        const { error } = await supabase.rpc('spend_vcoin', { p_game_id: c.id } as never)
+        return !(error?.message.includes('insufficient_vcoin'))
+      })()
+      const [ok] = await Promise.all([pay, sleep(560)])
+      if (!ok) { setWarp(null); setPending(null); alert(T.games.insufficientCoin); return }
+      setWarp('hold')
+      for (let i = 0; i < 50 && !pendingLoaded.current; i++) await sleep(50)   // 최대 2.5초 — 로드가 끝나면 즉시
       setCur({ game: g, genreColor: GENRE_COLORS[c.genre] ?? 'bg-gray-700', genreLabel: (GENRE_LABELS[c.genre] ?? c.genre).toUpperCase(), bjName: null })
+      setPending(null)
       loadAvatarConfig(supabase, c.user_id).then(setBjAvatarConfig).catch(() => {})
       supabase.rpc('increment_view_count', { game_id: c.id }).then(() => {})
       try { window.history.replaceState(null, '', `/games/${c.id}`) } catch { /* */ }
       setWarp('in')
-      setTimeout(() => setWarp(null), 650)
+      await sleep(720)
+      setWarp(null)
     }
     window.addEventListener('vibrex:teleport', h)
     return () => window.removeEventListener('vibrex:teleport', h)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, game])
+  }, [open, game, warp])
 
   // transport 로 넘어온 경우(?play=1) 자동으로 플레이 시작 — 게임을 끝내면 끊기지 않고 다음 게임으로 이어진다
   const autoRef = useRef(false)
@@ -193,17 +204,31 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
         >
           <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} />
           <div className="relative flex flex-row flex-1 min-h-0">
-            <div className="relative flex-1 min-h-0 pb-[53px] md:pb-0">
+            <div className="relative flex-1 min-h-0">
               <TransportBar key={game.id} gameId={game.id} active={open} />
-              {warp && <div className={`teleport-warp ${warp === 'out' ? 'teleport-warp-out' : 'teleport-warp-in'}`} aria-hidden><span className="teleport-ring" /><span className="teleport-ring" style={{ animationDelay: '.12s' }} /><span className="teleport-ring" style={{ animationDelay: '.24s' }} /><span className="teleport-flash" />{warp === 'out' && <span className="teleport-text">TELEPORT ▶ {game.title}</span>}</div>}
-              <iframe
-                key={game.id}
-                src={playSrc(game)}
-                className={`w-full h-full border-0 ${warp === 'out' ? 'teleport-out' : warp === 'in' ? 'teleport-in' : ''}`}
-                allow="fullscreen; autoplay"
-                title={game.title}
-                onError={(e) => { const f = e.currentTarget; if (f.src !== game.play_url) f.src = game.play_url }}
-              />
+              <div className="absolute inset-x-0 top-0 bottom-[81px] md:bottom-0">
+              {warp && (
+                <div className={`teleport-warp teleport-${warp}`} aria-hidden>
+                  <span className="teleport-ring" /><span className="teleport-ring" style={{ animationDelay: '.3s' }} /><span className="teleport-ring" style={{ animationDelay: '.6s' }} />
+                  <span className="teleport-flash" />
+                  {warp !== 'in' && <span className="teleport-text">{warp === 'out' ? `TELEPORT ▶ ${pending?.title ?? ''}` : 'TELEPORTING…'}</span>}
+                </div>
+              )}
+              {[game, ...(pending ? [pending] : [])].map((g) => {
+                const isPending = pending?.id === g.id && g.id !== game.id
+                return (
+                  <iframe
+                    key={g.id}
+                    src={playSrc(g)}
+                    className={`absolute inset-0 w-full h-full border-0 ${isPending ? 'opacity-0 pointer-events-none' : warp === 'out' ? 'teleport-out' : warp === 'hold' ? 'opacity-0' : warp === 'in' ? 'teleport-in' : ''}`}
+                    allow="fullscreen; autoplay"
+                    title={g.title}
+                    onLoad={() => { if (isPending) pendingLoaded.current = true }}
+                    onError={(e) => { const f = e.currentTarget; if (f.src !== g.play_url) f.src = g.play_url }}
+                  />
+                )
+              })}
+            </div>
             </div>
             {isGuest ? (
               <>
