@@ -53,7 +53,11 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     return () => { document.body.style.overflow = prev }
   }, [open, agentGate])
 
+  const playLock = useRef(false)
   const handlePlay = async () => {
+    if (playLock.current || open) return   // 두 번 눌러도 코인은 한 번만
+    playLock.current = true
+    setTimeout(() => { playLock.current = false }, 1500)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       // 게스트 플레이 — 공유 링크로 온 방문자는 로그인 없이 게임만 바로 플레이.

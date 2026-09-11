@@ -512,24 +512,32 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
   // 아케이드 코인 투입 — idle(INSERT COIN) → drop(동전 떨어짐) → ready(PRESS START)
   const [coinState, setCoinState] = useState<'idle' | 'drop' | 'ready'>('idle')
 
+  // 이미 투입한 티켓이 있으면(뒤로가기·재렌더) 바로 READY — 다시 눌러도 이중 차감되지 않게
+  useEffect(() => { if (hasCoinTicket(game.id)) { const t = setTimeout(() => setCoinState('ready'), 0); return () => clearTimeout(t) } }, [game.id])
+  const coinLock = useRef(false)
   const insertCoin = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (coinState !== 'idle') return
+    // 클릭 즉시 잠금 + 상태 전환 — 네트워크 대기 중 두 번 눌러도 한 번만 차감
+    if (coinLock.current || coinState !== 'idle') return
     if (hasCoinTicket(game.id)) { setCoinState('ready'); return }
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setAgentGate('login'); return }
+    coinLock.current = true
     setCoinState('drop')
-    playCoinSound()
-    const { error } = await supabase.rpc('spend_vcoin', { p_game_id: game.id } as never)
-    if (error) {
-      if (error.message.includes('insufficient_vcoin')) {
-        alert(T.games.insufficientCoin)
-        setCoinState('idle')
-        return
+    try {
+      // 로컬 세션으로 로그인 판정(네트워크 왕복 없음) → 즉시 반응
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) { setCoinState('idle'); setAgentGate('login'); return }
+      playCoinSound()
+      const { error } = await supabase.rpc('spend_vcoin', { p_game_id: game.id } as never)
+      if (error) {
+        if (error.message.includes('insufficient_vcoin')) {
+          alert(T.games.insufficientCoin)
+          setCoinState('idle')
+          return
+        }
+        console.warn('vcoin spend skipped:', error.message)
       }
-      console.warn('vcoin spend skipped:', error.message)
-    }
-    try { sessionStorage.setItem(ticketKeyOf(game.id), String(Date.now())) } catch {}
+      try { sessionStorage.setItem(ticketKeyOf(game.id), String(Date.now())) } catch {}
+    } finally { coinLock.current = false }
     // 코인이 슬릿에 들어가고 찰그랑 소리가 끝날 때쯤 READY
     setTimeout(() => setCoinState('ready'), 900)
   }
