@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { rankFor, nextTarget, TOP_N, type Leaderboard } from '@/lib/games/leaderboard'
 
-interface Cand { id: string; title: string; genre: string; thumbnail_url: string; coin_cost: number; reason: string }
+export interface Cand { id: string; title: string; genre: string; thumbnail_url: string; coin_cost: number; reason: string; play_url: string; user_id: string; description: string | null; language: string | null }
 interface Info { goal: number | null; goalSource: 'admin' | 'auto' | 'finish'; next: Cand[]; leaderboard?: Leaderboard; meId?: string | null }
 const CHAIN_KEY = 'vx_transport_chain'
 
@@ -60,8 +60,11 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
     if (going) return
     setGoing(c.id)
     try { sessionStorage.setItem(CHAIN_KEY, String(readChain() + 1)) } catch { /* */ }
-    try { await fetch(`/api/games/${gameId}/transport`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: c.id, score, goal: info?.goal ?? null, picked }), keepalive: true }) } catch { /* */ }
-    router.push(`/games/${c.id}?play=1`)
+    void fetch(`/api/games/${gameId}/transport`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: c.id, score, goal: info?.goal ?? null, picked }), keepalive: true }).catch(() => {})
+    // 페이지를 갈아타지 않고 오버레이 안에서 게임만 바꿔 끼운다(텔레포트 연출) — 플레이어가 이벤트를 받아 처리. 못 받으면 페이지 이동 폴백.
+    const ev = new CustomEvent('vibrex:teleport', { detail: c, cancelable: true })
+    const handled = !window.dispatchEvent(ev)
+    if (!handled) router.push(`/games/${c.id}?play=1`)
   }, [gameId, going, info, router, score])
 
   if (!active || !info || info.next.length === 0) return null

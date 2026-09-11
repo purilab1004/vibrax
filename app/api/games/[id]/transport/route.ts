@@ -5,7 +5,7 @@ import { loadLeaderboard } from '@/lib/games/leaderboard'
 
 export const dynamic = 'force-dynamic'
 
-interface G { id: string; title: string; genre: string; thumbnail_url: string; view_count: number; created_at: string; goal_score?: number | null; coin_cost?: number | null }
+interface G { id: string; title: string; genre: string; thumbnail_url: string; view_count: number; created_at: string; goal_score?: number | null; coin_cost?: number | null; play_url?: string; user_id?: string; description?: string | null; language?: string | null }
 
 /** 보기 좋은 목표 숫자로 반올림 (1,234 → 1,200 / 87 → 90 / 12 → 10) */
 function nice(n: number): number {
@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   let cur: G | null = null
   {
     const r = await admin.from('games').select('id,title,genre,thumbnail_url,view_count,created_at,goal_score,coin_cost').eq('id', id).maybeSingle()
-    if (r.error && /goal_score/.test(r.error.message)) { const r2 = await admin.from('games').select('id,title,genre,thumbnail_url,view_count,created_at,coin_cost').eq('id', id).maybeSingle(); cur = (r2.data as G | null) }
+    if (r.error && /goal_score/.test(r.error.message)) { const r2 = await admin.from('games').select('id,title,genre,thumbnail_url,view_count,created_at,coin_cost,play_url,user_id,description,language').eq('id', id).maybeSingle(); cur = (r2.data as G | null) }
     else cur = (r.data as G | null)
   }
   if (!cur) return Response.json({ error: 'not found' }, { status: 404 })
@@ -41,9 +41,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const lbP = loadLeaderboard(admin, id, user?.id ?? null)
   // 다음 게임 후보: 같은 장르 인기 1 + 최신 1 + 무작위 1 (중복·현재 제외)
   const [{ data: sameGenre }, { data: recent }, { data: pool }] = await Promise.all([
-    admin.from('games').select('id,title,genre,thumbnail_url,view_count,created_at,coin_cost').eq('genre', cur.genre).neq('id', id).order('view_count', { ascending: false }).limit(6),
-    admin.from('games').select('id,title,genre,thumbnail_url,view_count,created_at,coin_cost').neq('id', id).order('created_at', { ascending: false }).limit(6),
-    admin.from('games').select('id,title,genre,thumbnail_url,view_count,created_at,coin_cost').neq('id', id).order('view_count', { ascending: false }).limit(40),
+    admin.from('games').select('id,title,genre,thumbnail_url,view_count,created_at,coin_cost,play_url,user_id,description,language').eq('genre', cur.genre).neq('id', id).order('view_count', { ascending: false }).limit(6),
+    admin.from('games').select('id,title,genre,thumbnail_url,view_count,created_at,coin_cost,play_url,user_id,description,language').neq('id', id).order('created_at', { ascending: false }).limit(6),
+    admin.from('games').select('id,title,genre,thumbnail_url,view_count,created_at,coin_cost,play_url,user_id,description,language').neq('id', id).order('view_count', { ascending: false }).limit(40),
   ])
   const pick = (arr: G[] | null, used: Set<string>) => { for (const g of (arr ?? [])) if (!used.has(g.id)) { used.add(g.id); return g } return null }
   const used = new Set<string>([id])
@@ -54,7 +54,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const c = rest.length ? rest[Math.floor(Math.random() * rest.length)] : null; if (c) { used.add(c.id); next.push({ ...c, reason: '랜덤 추천' }) }
   while (next.length < 3) { const d = pick((recent ?? []) as G[], used) ?? pick((pool ?? []) as G[], used); if (!d) break; next.push({ ...d, reason: '추천' }) }
   const lb = await lbP
-  return Response.json({ goal, goalSource, leaderboard: lb, meId: user?.id ?? null, next: next.map(g => ({ id: g.id, title: g.title, genre: g.genre, thumbnail_url: g.thumbnail_url, coin_cost: g.coin_cost ?? 1, reason: g.reason })) }, { headers: { 'Cache-Control': 'no-store' } })
+  return Response.json({ goal, goalSource, leaderboard: lb, meId: user?.id ?? null, next: next.map(g => ({ id: g.id, title: g.title, genre: g.genre, thumbnail_url: g.thumbnail_url, coin_cost: g.coin_cost ?? 1, reason: g.reason, play_url: g.play_url ?? '', user_id: g.user_id ?? '', description: g.description ?? null, language: g.language ?? null })) }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {

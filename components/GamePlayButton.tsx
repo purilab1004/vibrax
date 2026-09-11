@@ -13,8 +13,11 @@ import { useGameTelemetry } from '@/lib/aj/telemetry'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 import AiBjPanel from './AiBjPanel'
 import PlayHeader from './PlayHeader'
-import TransportBar from './TransportBar'
+import TransportBar, { type Cand } from './TransportBar'
 import { hasCoinTicket, ticketKeyOf } from './GameCard'
+
+const GENRE_LABELS: Record<string, string> = { action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS' }
+const GENRE_COLORS: Record<string, string> = { action: 'bg-red-700', adventure: 'bg-amber-700', strategy: 'bg-blue-700', sports: 'bg-green-700' }
 
 interface Props {
   game: Game
@@ -25,9 +28,13 @@ interface Props {
 
 interface AgentConfig { name: string; persona: string; avatarUrl?: string }
 
-export default function GamePlayButton({ game, genreColor, genreLabel, bjName }: Props) {
+export default function GamePlayButton({ game: initialGame, genreColor: initialColor, genreLabel: initialLabel, bjName: initialBj }: Props) {
+  // transport 로 게임이 바뀌면 오버레이는 그대로 두고 이 상태만 갈아끼운다
+  const [cur, setCur] = useState<{ game: Game; genreColor: string; genreLabel: string; bjName?: string | null }>({ game: initialGame, genreColor: initialColor, genreLabel: initialLabel, bjName: initialBj })
+  const game = cur.game, genreColor = cur.genreColor, genreLabel = cur.genreLabel, bjName = cur.bjName
   const [open, setOpen] = useState(false)
-  useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록
+  const [warp, setWarp] = useState<'out' | 'in' | null>(null)   // 텔레포트 연출 단계
+  useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록 (게임이 바뀌면 새 세션)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
   const [bjAvatarConfig, setBjAvatarConfig] = useState<AvatarConfig | null>(null)
@@ -84,6 +91,34 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
     setOpen(true)
     supabase.rpc('increment_view_count', { game_id: game.id }).then(() => {})
   }
+
+  // 텔레포트 — TransportBar 가 고른 다음 게임으로 오버레이 안에서 바로 전환 (START 화면을 거치지 않음)
+  useEffect(() => {
+    if (!open) return
+    const h = async (e: Event) => {
+      const c = (e as CustomEvent<Cand>).detail
+      if (!c?.id || !c.play_url) return
+      e.preventDefault()
+      setWarp('out')
+      // 코인 — 로그인 사용자는 평소처럼 차감 (부족하면 이동 취소)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { error: coinError } = await supabase.rpc('spend_vcoin', { p_game_id: c.id } as never)
+        if (coinError?.message.includes('insufficient_vcoin')) { setWarp(null); alert(T.games.insufficientCoin); return }
+      }
+      await new Promise(r => setTimeout(r, 520))
+      const g: Game = { ...game, id: c.id, title: c.title, genre: c.genre as Game['genre'], thumbnail_url: c.thumbnail_url, play_url: c.play_url, user_id: c.user_id, description: c.description, language: c.language, coin_cost: c.coin_cost, studio_project_id: null, teaser: null, teaser_en: null, goal_score: null }
+      setCur({ game: g, genreColor: GENRE_COLORS[c.genre] ?? 'bg-gray-700', genreLabel: (GENRE_LABELS[c.genre] ?? c.genre).toUpperCase(), bjName: null })
+      loadAvatarConfig(supabase, c.user_id).then(setBjAvatarConfig).catch(() => {})
+      supabase.rpc('increment_view_count', { game_id: c.id }).then(() => {})
+      try { window.history.replaceState(null, '', `/games/${c.id}`) } catch { /* */ }
+      setWarp('in')
+      setTimeout(() => setWarp(null), 650)
+    }
+    window.addEventListener('vibrex:teleport', h)
+    return () => window.removeEventListener('vibrex:teleport', h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, game])
 
   // transport 로 넘어온 경우(?play=1) 자동으로 플레이 시작 — 게임을 끝내면 끊기지 않고 다음 게임으로 이어진다
   const autoRef = useRef(false)
@@ -155,10 +190,12 @@ export default function GamePlayButton({ game, genreColor, genreLabel, bjName }:
           <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} />
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0 pb-[53px] md:pb-0">
-              <TransportBar gameId={game.id} active={open} />
+              <TransportBar key={game.id} gameId={game.id} active={open} />
+              {warp && <div className={`teleport-warp ${warp === 'out' ? 'teleport-warp-out' : 'teleport-warp-in'}`} aria-hidden><span className="teleport-ring" /><span className="teleport-ring" style={{ animationDelay: '.12s' }} /><span className="teleport-ring" style={{ animationDelay: '.24s' }} /><span className="teleport-flash" />{warp === 'out' && <span className="teleport-text">TELEPORT ▶ {game.title}</span>}</div>}
               <iframe
+                key={game.id}
                 src={playSrc(game)}
-                className="w-full h-full border-0"
+                className={`w-full h-full border-0 ${warp === 'out' ? 'teleport-out' : warp === 'in' ? 'teleport-in' : ''}`}
                 allow="fullscreen; autoplay"
                 title={game.title}
                 onError={(e) => { const f = e.currentTarget; if (f.src !== game.play_url) f.src = game.play_url }}
