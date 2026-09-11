@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         import('@anthropic-ai/sdk'), import('@/lib/studio/prompt'), import('@/lib/studio/parse'), import('@/lib/studio/harden'), import('@/lib/llm/pricing')])
       const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
       const effective = b.basicSpec === false ? prompt : `${prompt}\n\n[템플릿 기본 사양] 꾸밈 요소 없이 핵심 규칙만 — 시작 화면, 조작(키보드+터치), 점수, 게임오버·재시작. 단색 배경, 단순 도형 위주, 특정 브랜드/상표 이름·로고 금지. 나중에 회원이 수정 요청으로 살을 붙일 수 있게 깔끔하고 짧게.`
-      const msg = await client.messages.stream({ model: 'claude-sonnet-5', max_tokens: GENERATION_MAX_TOKENS, system: SYSTEM_PROMPT, messages: buildMessages({ prompt: effective, currentHtml: null, history: [], images: [] }) as never }).finalMessage()
+      const msg = await client.messages.stream({ model: 'claude-sonnet-5', max_tokens: GENERATION_MAX_TOKENS, thinking: { type: 'adaptive' }, output_config: { effort: 'medium' }, system: SYSTEM_PROMPT, messages: buildMessages({ prompt: effective, currentHtml: null, history: [], images: [] }) as never }).finalMessage()
       const text = msg.content.map(c => (c.type === 'text' ? c.text : '')).join('')
       const parsed = parseGeneration(text)
       if (!parsed.html) return Response.json({ error: '생성 결과에 게임 HTML 이 없어요. 프롬프트를 바꿔 다시 시도하세요.', detail: parsed.description.slice(0, 300) }, { status: 502 })

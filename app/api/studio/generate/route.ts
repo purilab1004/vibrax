@@ -246,6 +246,8 @@ export async function POST(req: Request) {
     stream = client.messages.stream({
       model: chosenModel,
       max_tokens: GENERATION_MAX_TOKENS,
+      // Sonnet 5 는 기본으로 적응형 사고가 켜져 있고 그 토큰이 max_tokens 에 포함된다 — effort 로 사고 분량을 제한해 본문이 잘리지 않게
+      ...(chosenModel.startsWith('claude-sonnet-5') || chosenModel.startsWith('claude-opus-5') ? { thinking: { type: 'adaptive' as const }, output_config: { effort: 'medium' as const } } : {}),
       system: SYSTEM_PROMPT,
       messages: buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml, history, images }) as never,
     })

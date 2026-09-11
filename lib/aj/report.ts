@@ -52,7 +52,8 @@ export async function buildAjReport(admin: SupabaseClient, g: ReportGame, create
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const res = await client.messages.create({
     model: 'claude-sonnet-5',
-    max_tokens: 4000,
+    max_tokens: 8000,
+    thinking: { type: 'adaptive' }, output_config: { effort: 'low' },
     system: SYSTEM,
     messages: [{ role: 'user', content: `게임: ${g.title} (${g.genre}) · 코인 ${g.coin_cost ?? 1}/판\n설명: ${g.description ?? ''}\n훅 문구: ${g.teaser ?? ''}\n\n제작 프롬프트(시간순):\n${prompts.map((p, i) => `${i + 1}. ${p}`).join('\n') || '(없음)'}\n\n최근 ${metrics.days}일 지표(JSON):\n${JSON.stringify(metrics)}\n\n게임 코드:\n${codeSnippet}` }],
   })

@@ -122,7 +122,7 @@ export async function runDesignCycle(gameId: string, opts: { force?: boolean; ac
     const routed = routeModel({ task: 'edit', promptChars: prompt.length, htmlChars: live.html.length }, await loadPolicy())
     model = routed.model
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-    const res = await client.messages.create({ model, max_tokens: GENERATION_MAX_TOKENS, system: SYSTEM_PROMPT, messages: buildMessages({ prompt, currentHtml: live.html, history: [] }) as never })
+    const res = await client.messages.stream({ model, max_tokens: GENERATION_MAX_TOKENS, ...(model.startsWith('claude-sonnet-5') || model.startsWith('claude-opus-5') ? { thinking: { type: 'adaptive' as const }, output_config: { effort: 'medium' as const } } : {}), system: SYSTEM_PROMPT, messages: buildMessages({ prompt, currentHtml: live.html, history: [] }) as never }).finalMessage()
     usedIn = res.usage?.input_tokens ?? 0; usedOut = res.usage?.output_tokens ?? 0
     const text = res.content.map(c => (c.type === 'text' ? c.text : '')).join('')
     const parsed = parseGeneration(text)

@@ -52,7 +52,8 @@ export async function POST(req: Request) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const res = await client.messages.create({
     model: 'claude-sonnet-5',
-    max_tokens: 800,
+    max_tokens: 3000,
+    thinking: { type: 'adaptive' }, output_config: { effort: 'low' },   // Sonnet 5 사고 토큰이 800 을 다 먹지 않게
     system: SYSTEM,
     messages: [{
       role: 'user',
