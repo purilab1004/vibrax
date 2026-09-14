@@ -464,10 +464,10 @@ export default function ProfilePage() {
 
       {/* ── My Games ── */}
       {tab === 'games' && <section id="games" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
-        <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+        <div className="flex items-center justify-between mb-5 sm:mb-6 gap-3 flex-wrap">
           <div><h2 className="text-[17px] font-bold text-[#241f17]">내 게임 <span className="text-[#2563eb]">{games.length}</span></h2><p className="text-[12.5px] text-[#857a68] mt-0.5">게시한 게임을 수정하고 AJ 대시보드·홍보로 이동해요.</p></div>
-          <div className="flex items-center gap-2">
-            {gameMsg && <p className={`text-xs font-pixel tracking-widest ${gameMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{gameMsg.text}</p>}
+          <div className="flex items-center gap-2 w-full sm:w-auto [&>a]:flex-1 sm:[&>a]:flex-none [&>a]:justify-center">
+            {gameMsg && <p className={`w-full sm:w-auto text-xs font-pixel tracking-widest ${gameMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{gameMsg.text}</p>}
             {/* 방송 추가 — 폰 카메라로 내 게임 BJ 방송 (켜져 있는 동안 아바타 대신 영상) */}
             <a
               href="/broadcast"
@@ -484,12 +484,12 @@ export default function ProfilePage() {
         </div>
 
         {onAirGames.map((onAirGame) => (
-          <div key={`onair-${onAirGame.id}`} className="mb-3 rounded-xl border border-[#e11d48]/40 bg-[#fff1f4] flex items-center gap-4 p-4">
+          <div key={`onair-${onAirGame.id}`} className="mb-3 rounded-xl border border-[#e11d48]/40 bg-[#fff1f4] flex flex-wrap items-center gap-3 sm:gap-4 p-3 sm:p-4 [&>a]:flex-1 sm:[&>a]:flex-none [&>a]:justify-center">
             <div className="relative w-20 h-12 shrink-0 overflow-hidden rounded-lg bg-gray-900">
               <Image src={onAirGame.thumbnail_url} alt={onAirGame.title} fill className="object-cover" />
               <span className="absolute top-1 left-1 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[8px] px-1.5 py-0.5 tracking-widest"><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />LIVE</span>
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 basis-40">
               <p className="text-[11px] font-bold text-[#e11d48] mb-0.5">● ON AIR · 방송 중인 게임{onAirGame.user_id !== user?.id ? ' (다른 사람 게임)' : ''}</p>
               <p className="text-sm text-[#241f17] truncate font-medium">{onAirGame.title}</p>
             </div>
@@ -507,8 +507,9 @@ export default function ProfilePage() {
           <div className="space-y-3">
             {games.map(game => (
               <div key={game.id} className="rounded-xl border border-[#ebe4d6] bg-white hover:border-[#cfc4ab] hover:shadow-[0_6px_18px_-10px_rgba(36,31,23,0.2)] transition-all">
-                <div className="flex items-center gap-4 p-4">
-                  <div className="relative w-24 h-14 shrink-0 overflow-hidden rounded-lg bg-gray-900">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4">
+                  <div className="flex items-center gap-3 sm:contents">
+                  <div className="relative w-20 h-12 sm:w-24 sm:h-14 shrink-0 overflow-hidden rounded-lg bg-gray-900">
                     <Image src={game.thumbnail_url} alt={game.title} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -524,7 +525,9 @@ export default function ProfilePage() {
                     <p className="text-[14px] text-[#241f17] truncate font-bold">{game.title}</p>
                     <p className="text-[11.5px] text-[#9d9280] truncate mt-0.5">조회 {(game.view_count ?? 0).toLocaleString()} · {new Date(game.created_at).toLocaleDateString()}</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  </div>
+                  {/* 액션 — 모바일에선 아래 줄에 가로로 꽉 차게, 데스크톱은 오른쪽 */}
+                  <div className="flex items-center gap-1.5 sm:gap-2 sm:shrink-0 [&>a]:flex-1 [&>button]:flex-1 sm:[&>a]:flex-none sm:[&>button]:flex-none [&>a]:justify-center [&>button]:justify-center">
                     <a href={`/aj/${game.id}`} title="AJ 대시보드 — 지표·분석·업데이트 제안" className="inline-flex items-center h-8 px-3 rounded-lg border border-[#2563eb]/40 bg-[#2563eb]/5 text-[12.5px] font-semibold text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors">AJ</a>
                     <a href={`/ads?game=${game.id}`} title="AJ AdPilot — 홍보 캠페인" className="inline-flex items-center h-8 px-3 rounded-lg border border-[#ddd3bf] bg-white text-[12.5px] font-medium text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">홍보</a>
                     <button onClick={() => setCurriculumGame({ id: game.id, title: game.title })} title="AJ 학습 가이드 — 내 게임의 정석 플레이를 등록하면 모든 회원의 AI 가 배워요" className="inline-flex items-center h-8 px-3 rounded-lg border border-[#7c3aed]/40 bg-[#7c3aed]/5 text-[12.5px] font-semibold text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white transition-colors">학습</button>
@@ -535,7 +538,7 @@ export default function ProfilePage() {
                       수정
                     </button>
                     {deleteConfirm === game.id ? (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-1 sm:flex-none [&>button]:flex-1 sm:[&>button]:flex-none [&>button]:justify-center">
                         <button onClick={() => handleDeleteGame(game.id)} disabled={isPending} className="inline-flex items-center h-8 px-3 rounded-lg bg-[#e11d48] text-white text-[12.5px] font-semibold hover:bg-[#be123c] disabled:opacity-50">삭제 확인</button>
                         <button onClick={() => setDeleteConfirm(null)} className="inline-flex items-center h-8 px-3 rounded-lg border border-[#ddd3bf] bg-white text-[12.5px] font-medium text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">취소</button>
                       </div>
