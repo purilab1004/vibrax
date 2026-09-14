@@ -47,24 +47,32 @@ export default function StudyPanel({ versionId, html, initialTab = 'code', onClo
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 md:p-8" onClick={onClose}>
       <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
       <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-4xl h-[88vh] bg-[#fcfaf5] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        <div className="flex items-center gap-4 px-5 h-14 border-b border-[#ebe4d6] bg-white">
-          <div className="min-w-0">
-            <p className="font-pixel text-[10px] text-[#9d9280] tracking-[0.25em]">STUDY NOTE</p>
-            <p className="text-[13px] font-semibold text-[#241f17] truncate">이 게임은 어떻게 만들어졌을까?</p>
+        {/* 헤더 — 좁은 화면에선 제목 줄과 탭 줄로 나뉜다. 탭은 가로 스크롤, 닫기는 넉넉한 원형 */}
+        <div className="border-b border-[#ebe4d6] bg-white">
+          <div className="flex items-center gap-3 px-4 md:px-5 pt-3 md:pt-0 md:h-14">
+            <div className="min-w-0 flex-1">
+              <p className="font-pixel text-[10px] text-[#9d9280] tracking-[0.25em]">STUDY NOTE</p>
+              <p className="text-[13px] font-semibold text-[#241f17] truncate">이 게임은 어떻게 만들어졌을까?</p>
+            </div>
+            <div className="hidden md:flex items-center gap-1 rounded-lg bg-[#f3ecdf] p-1 shrink-0">
+              {tabBtn('scenario', '시나리오')}
+              {tabBtn('code', '코드')}
+              {tabBtn('prompt', '프롬프트')}
+              {tabBtn('source', '전체 소스')}
+            </div>
+            <button onClick={onClose} aria-label="닫기" className="w-11 h-11 shrink-0 rounded-full bg-[#f3ecdf] text-[#4a4337] hover:bg-[#241f17] hover:text-white flex items-center justify-center transition-colors">
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
           </div>
-          <div className="flex-1" />
-          <div className="flex items-center gap-1 rounded-lg bg-[#f3ecdf] p-1">
+          <div className="md:hidden flex items-center gap-1 rounded-lg bg-[#f3ecdf] p-1 mx-4 my-3 overflow-x-auto [&>button]:shrink-0 [&>button]:whitespace-nowrap">
             {tabBtn('scenario', '시나리오')}
             {tabBtn('code', '코드')}
             {tabBtn('prompt', '프롬프트')}
             {tabBtn('source', '전체 소스')}
           </div>
-          <button onClick={onClose} aria-label="닫기" className="w-9 h-9 rounded-md border border-[#ddd3bf] hover:border-[#241f17] text-[#6b6152] hover:text-[#241f17] flex items-center justify-center transition-colors">
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto p-5 md:p-7">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-7 break-words [overflow-wrap:anywhere]">
           {tab !== 'source' && !notes && !err && (
             <div className="h-full flex flex-col items-center justify-center gap-3 text-[#857a68]">
               <div className="w-8 h-8 border-2 border-[#2563eb] border-t-transparent rounded-full animate-spin" />
@@ -80,7 +88,7 @@ export default function StudyPanel({ versionId, html, initialTab = 'code', onClo
                 {notes.scenario.map((sct, i) => (
                   <li key={i} className="flex gap-3 rounded-2xl bg-white border border-[#ebe4d6] p-4">
                     <span className="w-8 h-8 shrink-0 rounded-full bg-gradient-to-br from-[#2563eb] to-[#06b6d4] text-white font-pixel text-[11px] flex items-center justify-center">{i + 1}</span>
-                    <div><p className="font-bold text-[#241f17] text-[15px]">{sct.title}</p><p className="text-[13.5px] text-[#4a4337] leading-relaxed mt-1 whitespace-pre-wrap">{sct.body}</p></div>
+                    <div className="min-w-0 flex-1"><p className="font-bold text-[#241f17] text-[15px]">{sct.title}</p><p className="text-[13.5px] text-[#4a4337] leading-relaxed mt-1 whitespace-pre-wrap">{sct.body}</p></div>
                   </li>
                 ))}
               </ol>
