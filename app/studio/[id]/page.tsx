@@ -44,14 +44,13 @@ export default function StudioComposerPage() {
   const [publishedGameId, setPublishedGameId] = useState<string | null>(null)
   // 보기 모드 — 채팅 전체 / 게임 전체 / 분할(데스크톱). 모바일은 채팅·게임 둘 중 하나만.
   const [view, setView] = useState<'chat' | 'game' | 'split'>('split')
+  // 기본값: PC 는 항상 반반, 모바일은 항상 채팅 (세션 안에서 바꾼 건 그대로, 새로 열면 기본값)
   useEffect(() => {
-    let v: string | null = null
-    try { v = localStorage.getItem('vx_studio_view') } catch { /* */ }
     const mobile = window.matchMedia('(max-width: 767px)').matches
-    const t = setTimeout(() => setView(mobile ? (v === 'game' ? 'game' : 'chat') : (v === 'chat' || v === 'game' || v === 'split' ? v : 'split')), 0)
+    const t = setTimeout(() => setView(mobile ? 'chat' : 'split'), 0)
     return () => clearTimeout(t)
   }, [])
-  const pickView = (v: 'chat' | 'game' | 'split') => { setView(v); try { localStorage.setItem('vx_studio_view', v) } catch { /* */ } }
+  const pickView = (v: 'chat' | 'game' | 'split') => setView(v)
   // 채팅 열기 = 모바일은 채팅 전체, 데스크톱은 채팅+게임 분할 / 닫기 = 헤더만 남기고 게임 전체
   const openChat = () => pickView(window.matchMedia('(max-width: 767px)').matches ? 'chat' : 'split')
   const chatCollapsed = view === 'game'
