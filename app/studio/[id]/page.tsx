@@ -52,6 +52,9 @@ export default function StudioComposerPage() {
     return () => clearTimeout(t)
   }, [])
   const pickView = (v: 'chat' | 'game' | 'split') => { setView(v); try { localStorage.setItem('vx_studio_view', v) } catch { /* */ } }
+  // 채팅 열기 = 모바일은 채팅 전체, 데스크톱은 채팅+게임 분할 / 닫기 = 헤더만 남기고 게임 전체
+  const openChat = () => pickView(window.matchMedia('(max-width: 767px)').matches ? 'chat' : 'split')
+  const closeChat = () => pickView('game')
   const chatCollapsed = view === 'game'
   // 좌측 사이드바 — 최근 프로젝트 (클로드 스타일)
   const [myProjects, setMyProjects] = useState<StudioProject[]>([])
@@ -350,13 +353,16 @@ export default function StudioComposerPage() {
         </button>
         <div className="flex-1" />
         {(html || versions.length > 0) && (
-          <div className="flex items-center rounded-lg border border-[#ddd3bf] bg-white p-0.5 text-[12px] font-semibold" role="tablist" aria-label="보기">
-            {([['chat', '채팅', 'M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z'], ['split', '분할', 'M4 5h16v14H4zM12 5v14'], ['game', '게임', 'M8 5v14l11-7z']] as const).map(([v, l, d]) => (
-              <button key={v} role="tab" aria-selected={view === v} onClick={() => pickView(v)} className={`h-7 px-2.5 rounded-md flex items-center gap-1.5 transition-colors ${v === 'split' ? 'hidden md:flex' : ''} ${view === v ? 'bg-[#241f17] text-white' : 'text-[#6b6152] hover:text-[#241f17]'}`}>
-                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>{l}
-              </button>
-            ))}
-          </div>
+          <button
+            onClick={() => (view === 'game' ? openChat() : closeChat())}
+            aria-label={view === 'game' ? '채팅 열기' : '채팅 닫기 (게임 전체 화면)'}
+            title={view === 'game' ? '채팅 열기' : '채팅 닫기 — 게임 전체 화면'}
+            className={`w-9 h-9 rounded-md border flex items-center justify-center transition-colors ${view === 'game' ? 'border-[#ddd3bf] bg-white text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb]' : 'border-[#241f17] bg-[#241f17] text-white hover:bg-[#2563eb] hover:border-[#2563eb]'}`}
+          >
+            {view === 'game'
+              ? <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /></svg>
+              : <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /><path d="M9.5 9.5l5 5M14.5 9.5l-5 5" /></svg>}
+          </button>
         )}
         <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬코인 충전"><PromptCreditBadge amount={balance ?? 0} size="sm" /></Link>
       </div>
@@ -410,8 +416,8 @@ export default function StudioComposerPage() {
             {view !== 'game' && (
               <div className="relative order-2 md:order-1 h-full flex-1 min-h-0 min-w-0">
                 {view === 'chat' && html && (
-                  <button onClick={() => pickView('game')} className="absolute right-4 top-3 z-10 h-9 pl-3 pr-3.5 rounded-full bg-[#241f17] text-white text-[12.5px] font-bold shadow-[0_6px_18px_rgba(36,31,23,0.35)] hover:bg-[#2563eb] transition-colors flex items-center gap-1.5">
-                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>게임 열기
+                  <button onClick={closeChat} aria-label="게임 전체 화면" title="게임 전체 화면" className="absolute right-4 top-3 z-10 w-10 h-10 rounded-full bg-[#241f17] text-white shadow-[0_6px_18px_rgba(36,31,23,0.35)] hover:bg-[#2563eb] transition-colors flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
                   </button>
                 )}
                 <StudioChat
@@ -443,8 +449,8 @@ export default function StudioComposerPage() {
             {view !== 'chat' && (
             <div className={`relative order-1 md:order-3 min-h-0 h-full ${view === 'game' ? 'flex-1' : 'md:w-[var(--pw)] shrink-0'} ${dragging ? 'pointer-events-none select-none' : ''}`}>
               {view === 'game' && (
-                <button onClick={() => pickView('chat')} title="채팅으로 돌아가기" className="absolute left-3 bottom-3 z-10 h-10 pl-3 pr-4 rounded-full bg-white/95 text-[#241f17] text-[12.5px] font-bold border border-[#ddd3bf] shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center gap-1.5">
-                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /></svg>채팅으로
+                <button onClick={openChat} aria-label="채팅 열기" title="채팅 열기" className="absolute left-3 bottom-3 z-10 w-11 h-11 rounded-full bg-white/95 text-[#241f17] border border-[#ddd3bf] shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /></svg>
                 </button>
               )}
               <GamePreview
