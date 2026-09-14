@@ -54,7 +54,6 @@ export default function StudioComposerPage() {
   const pickView = (v: 'chat' | 'game' | 'split') => { setView(v); try { localStorage.setItem('vx_studio_view', v) } catch { /* */ } }
   // 채팅 열기 = 모바일은 채팅 전체, 데스크톱은 채팅+게임 분할 / 닫기 = 헤더만 남기고 게임 전체
   const openChat = () => pickView(window.matchMedia('(max-width: 767px)').matches ? 'chat' : 'split')
-  const closeChat = () => pickView('game')
   const chatCollapsed = view === 'game'
   // 좌측 사이드바 — 최근 프로젝트 (클로드 스타일)
   const [myProjects, setMyProjects] = useState<StudioProject[]>([])
@@ -353,16 +352,18 @@ export default function StudioComposerPage() {
         </button>
         <div className="flex-1" />
         {(html || versions.length > 0) && (
-          <button
-            onClick={() => (view === 'game' ? openChat() : closeChat())}
-            aria-label={view === 'game' ? '채팅 열기' : '채팅 닫기 (게임 전체 화면)'}
-            title={view === 'game' ? '채팅 열기' : '채팅 닫기 — 게임 전체 화면'}
-            className={`w-9 h-9 rounded-md border flex items-center justify-center transition-colors ${view === 'game' ? 'border-[#ddd3bf] bg-white text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb]' : 'border-[#241f17] bg-[#241f17] text-white hover:bg-[#2563eb] hover:border-[#2563eb]'}`}
-          >
-            {view === 'game'
-              ? <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /></svg>
-              : <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /><path d="M9.5 9.5l5 5M14.5 9.5l-5 5" /></svg>}
-          </button>
+          <div className="flex items-center rounded-lg border border-[#ddd3bf] bg-white p-0.5" role="tablist" aria-label="보기 모드">
+            {([
+              ['chat', '채팅', <path key="c" d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" />],
+              ['split', '반반 (채팅 + 게임)', <g key="s"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M12 4v16" /></g>],
+              ['game', '게임 전체 화면', <g key="g"><rect x="2.5" y="7" width="19" height="11" rx="4" /><path d="M7.5 11v3M6 12.5h3M15 11.5h.01M17.5 13.5h.01" /></g>],
+            ] as const).map(([v, l, icon]) => (
+              <button key={v} role="tab" aria-selected={view === v} aria-label={l} title={l} onClick={() => pickView(v)}
+                className={`w-8 h-7 rounded-md items-center justify-center transition-colors ${v === 'split' ? 'hidden md:flex' : 'flex'} ${view === v ? 'bg-[#241f17] text-white' : 'text-[#8a7f6a] hover:text-[#241f17] hover:bg-[#241f17]/5'}`}>
+                <svg viewBox="0 0 24 24" className="w-[17px] h-[17px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
+              </button>
+            ))}
+          </div>
         )}
         <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬코인 충전"><PromptCreditBadge amount={balance ?? 0} size="sm" compact /></Link>
       </div>
