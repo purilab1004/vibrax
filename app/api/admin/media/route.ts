@@ -52,12 +52,14 @@ async function uploadOne(g: { admin: SupabaseClient; user: { id: string } }, fil
   if (file.size > UPLOAD_MAX) return { error: `${file.name}: 8MB 를 넘어요` }
   const ext = (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin'
   const kind = kindOf(mime, fields.kind)
-  let name = toAssetName(fields.name || file.name)
+  // 키: 명시한 이름 > 제목(영문이면) > 파일명 — 제목에 background_basic 처럼 적으면 그게 그대로 코드 키가 된다
+  const titleKey = fields.title ? toAssetName(fields.title) : ''
+  let name = toAssetName(fields.name || (titleKey && titleKey !== 'asset' ? fields.title! : file.name))
   // 이름 충돌 시 접미사
   for (let i = 0; i < 20; i++) {
     const { data: dup } = await admin.from('media_assets').select('id').eq('name', name).maybeSingle()
     if (!dup) break
-    name = `${toAssetName(fields.name || file.name).slice(0, 34)}_${Math.random().toString(36).slice(2, 6)}`
+    name = `${name.slice(0, 34)}_${Math.random().toString(36).slice(2, 6)}`
   }
   // 이미지는 WebP 로 변환·축소 (로딩 속도·게임 주입 용량) — 애니 GIF·SVG 는 그대로
   const raw = Buffer.from(await file.arrayBuffer())
