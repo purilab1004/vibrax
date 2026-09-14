@@ -15,8 +15,11 @@ if (!process.env.__TS_RESOLVE_REGISTERED) {
   register(import.meta.url)
 }
 
+const ROOT = new URL('../', import.meta.url).href
 export async function resolve(specifier, context, next) {
-  if (/^\.\.?\//.test(specifier) && !/\.[mc]?[jt]s$/.test(specifier)) {
+  // `@/x` 별칭 → 프로젝트 루트 (tsconfig paths 와 동일)
+  if (specifier.startsWith('@/')) specifier = ROOT + specifier.slice(2)
+  if ((/^\.\.?\//.test(specifier) || specifier.startsWith('file:')) && !/\.[mc]?[jt]s$/.test(specifier)) {
     try {
       return await next(specifier + '.ts', context)
     } catch {

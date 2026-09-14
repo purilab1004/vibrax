@@ -14,6 +14,7 @@ import { loadMl, logMapping, learnKeyword } from '@/lib/studio/mlpilot'
 import { aiJudgeTemplate } from '@/lib/studio/ai-judge'
 import { loadAutomation, logAutomation } from '@/lib/automation'
 import { hardenHtml, injectSounds } from '@/lib/studio/harden'
+import { loadControls } from '@/lib/controls-server'
 import { extractAssetIds, stripAssets, injectAssets, assetPromptNote, scoreAssets, listAutoAssets, getAssetsByIds, loadAssetData, type MediaAssetLite } from '@/lib/media/assets'
 import { personalizeTemplate } from '@/lib/studio/personalize'
 import { logUsage } from '@/lib/llm/usage'
@@ -319,7 +320,7 @@ export async function POST(req: Request) {
         } else {
           const nextVersion = (latest?.version ?? 0) + 1
           const { data: vIns, error: vErr } = await supabase.from('studio_versions').insert([
-            { project_id: projectId, version: nextVersion, html: hardenHtml(injectAssets(injectSounds(parsed.html, sounds), mediaAssets.length ? await loadAssetData(mediaAssets) : [])) },
+            { project_id: projectId, version: nextVersion, html: hardenHtml(injectAssets(injectSounds(parsed.html, sounds), mediaAssets.length ? await loadAssetData(mediaAssets) : []), { controls: await loadControls() }) },
           ] as never).select('id').maybeSingle()
           if (vErr) {
             await refund()

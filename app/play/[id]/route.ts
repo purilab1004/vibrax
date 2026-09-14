@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hardenHtml } from '@/lib/studio/harden'
+import { loadControls } from '@/lib/controls-server'
 
 // 게시된 스튜디오 게임 HTML 서빙.
 // studio_versions는 RLS로 소유자만 읽을 수 있으므로 admin 클라이언트를 쓰되,
@@ -58,7 +59,7 @@ export async function GET(
 
   // 서빙된 버전 꼬리표 — 부모(텔레메트리)가 세션에 version_id 를 기록한다
   const tag = `<script>window.VIBREX_VERSION_ID=${JSON.stringify(version.id)};try{parent.postMessage({type:'vibrex:version',id:window.VIBREX_VERSION_ID},'*')}catch(e){}</script>`
-  let html = hardenHtml(version.html)
+  let html = hardenHtml(version.html, { controls: await loadControls() })
   html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (h) => h + tag) : tag + html
 
   const headers: Record<string, string> = {

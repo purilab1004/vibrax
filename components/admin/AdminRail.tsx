@@ -29,6 +29,7 @@ export default function AdminRail() {
       ['/admin/notices', a.navNotices, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 10v4l10 4V6L4 10Z" /><path d="M14 8.5a3.5 3.5 0 0 1 0 7M6.5 14.5V19" /></svg>],
       ['/admin/templates', '템플릿', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="4" width="7" height="7" rx="1.5" /><rect x="14" y="4" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><path d="M17.5 14v7M14 17.5h7" /></svg>],
       ['/admin/media', '미디어 라이브러리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10" r="1.5" /><path d="m21 15-4.5-4.5L9 18" /></svg>],
+      ['/admin/controls', '컨트롤러', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="2.5" y="7" width="19" height="11" rx="4" /><path d="M7.5 11v3M6 12.5h3M15 11.5h.01M17.5 13.5h.01" /></svg>],
     ] },
     { title: '사람·활동', items: [
       ['/admin/members', a.navMembers, <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="9" cy="8.5" r="3" /><path d="M3.5 19c1-3 3.2-4.5 5.5-4.5s4.5 1.5 5.5 4.5" /><circle cx="17" cy="9.5" r="2.3" /><path d="M16 14.7c2.5.2 4 1.6 4.5 4.3" /></svg>],

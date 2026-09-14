@@ -3,6 +3,7 @@
 // <base> 로 상대 경로 에셋은 원본 도메인에서 로드. 실패(비HTML·차단·사설망·크기초과)면 502 → 클라이언트는 원본 iframe 으로 폴백.
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hardenHtml } from '@/lib/studio/harden'
+import { loadControls } from '@/lib/controls-server'
 
 export const maxDuration = 30
 // SSRF 방지 — 사설/링크로컬/루프백 대역 차단 (등록된 게임 URL 만, 그리고 https 공인 호스트만 프록시)
@@ -39,7 +40,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     else html = baseTag + html
   }
   // vibrex 브리지 주입 (아바타·오토파일럿·터치·AJ·localStorage 폴백)
-  html = hardenHtml(html)
+  html = hardenHtml(html, { controls: await loadControls() })
   return new Response(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
