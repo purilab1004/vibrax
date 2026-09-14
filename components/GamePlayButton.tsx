@@ -206,7 +206,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0">
               <TransportBar key={game.id} gameId={game.id} active={open} />
-              <div className="absolute inset-x-0 top-[76px] bottom-[53px] md:top-0 md:bottom-0">
+              <div className="absolute inset-x-0 top-0 bottom-[53px] md:bottom-0">
               {warp && (
                 <div className={`teleport-warp teleport-${warp}`} aria-hidden>
                   <span className="teleport-ring" /><span className="teleport-ring" style={{ animationDelay: '.3s' }} /><span className="teleport-ring" style={{ animationDelay: '.6s' }} />

@@ -19,7 +19,7 @@ export default function PlayHeader({ genreLabel, genreColor, title, gameId, onCl
       <div className="flex items-center gap-3 px-3 sm:px-4 pt-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className={`pointer-events-auto font-pixel text-[10px] px-2 py-1 text-white rounded-md shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.45)] ${genreColor}`}>{genreLabel}</span>
-          <div className="relative min-w-0 flex-1 h-6 overflow-hidden">
+          <div className="relative min-w-0 flex-1 h-6 overflow-hidden hidden md:block">
             {line && (
               <div key={key} className="absolute inset-x-0 bottom-0 truncate text-[13.5px] font-semibold text-white leading-6 [text-shadow:0_1px_6px_rgba(0,0,0,0.8)] play-line" title={line}>{line}</div>
             )}
