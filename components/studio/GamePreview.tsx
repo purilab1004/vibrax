@@ -1,17 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLang } from '@/lib/i18n/context'
 import type { StudioVersionMeta } from '@/lib/supabase/types'
 import { prefetchStudyNotes } from '@/components/studio/StudyPanel'
 
 type Viewport = 'pc' | 'tablet' | 'mobile'
 
-// 디바이스별 프리뷰 사이즈 — 높이는 화면에 맞게 줄어들되 폭은 실제 기기 폭 유지
-const VIEWPORT_STYLE: Record<Viewport, string> = {
-  pc: 'w-full h-full',
-  tablet: 'w-[768px] max-w-full h-full max-h-[1024px] rounded-2xl border border-[#ddd3bf] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)]',
-  mobile: 'w-[390px] max-w-full h-full max-h-[844px] rounded-3xl border border-[#ddd3bf] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)]',
+// 디바이스별 실제 뷰포트(CSS px). 프레임은 이 크기로 렌더하고, 컨테이너에 안 들어가면 transform 으로 축소해 항상 전부 보이게 한다. 가로 모드는 폭·높이를 바꾼다.
+const DEVICE: Record<Exclude<Viewport, 'pc'>, { w: number; h: number; radius: string }> = {
+  tablet: { w: 768, h: 1024, radius: 'rounded-2xl' },
+  mobile: { w: 390, h: 844, radius: 'rounded-3xl' },
 }
 
 const ICON = 'w-4 h-4'
@@ -37,6 +36,18 @@ export default function GamePreview({
 }) {
   const [frameKey, setFrameKey] = useState(0)
   const [viewport, setViewport] = useState<Viewport>('pc')
+  const [landscape, setLandscape] = useState(false)
+  // 컨테이너 크기를 재서 기기 프레임 축소 배율 계산
+  const boxRef = useRef<HTMLDivElement>(null)
+  const [box, setBox] = useState({ w: 0, h: 0 })
+  useEffect(() => {
+    const el = boxRef.current; if (!el) return
+    const ro = new ResizeObserver(([e]) => { const r = e.contentRect; setBox({ w: r.width, h: r.height }) })
+    ro.observe(el); return () => ro.disconnect()
+  }, [])
+  const dev = viewport === 'pc' ? null : DEVICE[viewport]
+  const fw = dev ? (landscape ? dev.h : dev.w) : 0, fh = dev ? (landscape ? dev.w : dev.h) : 0
+  const scale = dev && box.w > 0 ? Math.min(1, (box.w - 24) / fw, (box.h - 24) / fh) : 1
   const { T } = useLang()
   const s = T.studio
 
@@ -83,6 +94,11 @@ export default function GamePreview({
               {VIEWPORT_ICON[v]}
             </button>
           ))}
+          {viewport !== 'pc' && (
+            <button onClick={() => setLandscape(v => !v)} disabled={!html} aria-label={landscape ? '세로로 보기' : '가로로 보기'} title={landscape ? '세로로 보기' : '가로로 보기'} className={`h-full px-2.5 border-l border-[#ddd3bf] transition-colors ${landscape ? 'bg-[#2563eb]/15 text-[#2563eb]' : 'text-[#857a68] hover:text-[#241f17]'}`}>
+              <svg viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M16.5 3.5 20 7l-3.5 3.5" /><path d="M20 7H9a5 5 0 0 0-5 5v1" /><path d="M7.5 20.5 4 17l3.5-3.5" /><path d="M4 17h11a5 5 0 0 0 5-5v-1" /></svg>
+            </button>
+          )}
         </div>
         <div className="flex-1" />
         {/* 학습 노트 — 시나리오 / 코드 (세그먼트) */}
@@ -104,19 +120,18 @@ export default function GamePreview({
           {s.publish}
         </button>
       </div>
-      <div className="flex-1 bg-black min-h-0">
+      <div ref={boxRef} className="flex-1 bg-black min-h-0 relative overflow-hidden">
         {html ? (
-          <div className={`w-full h-full ${viewport === 'pc' ? '' : 'flex items-center justify-center py-4'}`}>
-            <div className={VIEWPORT_STYLE[viewport]}>
-              <iframe
-                key={frameKey}
-                sandbox="allow-scripts allow-pointer-lock"
-                srcDoc={html}
-                className="w-full h-full border-0"
-                title="game preview"
-              />
+          dev ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className={`${dev.radius} border border-[#ddd3bf] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] bg-black shrink-0`} style={{ width: fw, height: fh, transform: `scale(${scale})`, transformOrigin: 'center', transition: 'width .25s ease, height .25s ease' }}>
+                <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" srcDoc={html} className="w-full h-full border-0" title="game preview" style={{ width: fw, height: fh }} />
+              </div>
+              <span className="absolute bottom-2 right-3 text-[10.5px] text-white/50 tabular-nums">{fw}×{fh}{scale < 1 ? ` · ${Math.round(scale * 100)}%` : ''}</span>
             </div>
-          </div>
+          ) : (
+            <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" srcDoc={html} className="w-full h-full border-0" title="game preview" />
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <p className="font-pixel text-[11px] text-[#b3a78f] tracking-widest">{s.emptyPreview}</p>
