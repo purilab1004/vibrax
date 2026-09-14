@@ -42,8 +42,17 @@ export default function StudioComposerPage() {
   const [aj, setAj] = useState<{ url: string | null; name: string | null }>({ url: null, name: null }) // 채팅의 AJ = 내 점토 아바타
   const [draftPrompt, setDraftPrompt] = useState<string | null>(() => searchParams.get('prompt')) // 학습 노트/AJ 제안 → 채팅 입력에 채우기
   const [publishedGameId, setPublishedGameId] = useState<string | null>(null)
-  // 채팅 접기/펼치기 — 접으면 프리뷰가 전체를 쓴다
-  const [chatCollapsed, setChatCollapsed] = useState(false)
+  // 보기 모드 — 채팅 전체 / 게임 전체 / 분할(데스크톱). 모바일은 채팅·게임 둘 중 하나만.
+  const [view, setView] = useState<'chat' | 'game' | 'split'>('split')
+  useEffect(() => {
+    let v: string | null = null
+    try { v = localStorage.getItem('vx_studio_view') } catch { /* */ }
+    const mobile = window.matchMedia('(max-width: 767px)').matches
+    const t = setTimeout(() => setView(mobile ? (v === 'game' ? 'game' : 'chat') : (v === 'chat' || v === 'game' || v === 'split' ? v : 'split')), 0)
+    return () => clearTimeout(t)
+  }, [])
+  const pickView = (v: 'chat' | 'game' | 'split') => { setView(v); try { localStorage.setItem('vx_studio_view', v) } catch { /* */ } }
+  const chatCollapsed = view === 'game'
   // 좌측 사이드바 — 최근 프로젝트 (클로드 스타일)
   const [myProjects, setMyProjects] = useState<StudioProject[]>([])
   // 채팅/프리뷰 분할 — 드래그로 조절 (프리뷰 폭 %, 로컬 저장)
@@ -244,7 +253,7 @@ export default function StudioComposerPage() {
       const parsed = parseGeneration(full)
       setMessages(m => [...m, { role: 'assistant', content: parsed.description }])
       optimisticPending = false
-      if (parsed.html) setHtml(parsed.html)
+      if (parsed.html) { setHtml(parsed.html); if (view === 'chat') setView('game') }   // 완성되면 게임 화면으로
       // 이 시점에는 서버에 이미 저장 완료 — 후처리 실패해도 롤백하지 않는다
       try {
         const list = await refreshVersions()
@@ -341,13 +350,13 @@ export default function StudioComposerPage() {
         </button>
         <div className="flex-1" />
         {(html || versions.length > 0) && (
-          <button
-            onClick={() => setChatCollapsed(v => !v)}
-            className="h-8 px-3 rounded-md border border-[#ddd3bf] bg-white text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center gap-1.5"
-          >
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /></svg>
-            {chatCollapsed ? '채팅 펼치기' : '채팅 접기'}
-          </button>
+          <div className="flex items-center rounded-lg border border-[#ddd3bf] bg-white p-0.5 text-[12px] font-semibold" role="tablist" aria-label="보기">
+            {([['chat', '채팅', 'M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z'], ['split', '분할', 'M4 5h16v14H4zM12 5v14'], ['game', '게임', 'M8 5v14l11-7z']] as const).map(([v, l, d]) => (
+              <button key={v} role="tab" aria-selected={view === v} onClick={() => pickView(v)} className={`h-7 px-2.5 rounded-md flex items-center gap-1.5 transition-colors ${v === 'split' ? 'hidden md:flex' : ''} ${view === v ? 'bg-[#241f17] text-white' : 'text-[#6b6152] hover:text-[#241f17]'}`}>
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>{l}
+              </button>
+            ))}
+          </div>
         )}
         <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬코인 충전"><PromptCreditBadge amount={balance ?? 0} size="sm" /></Link>
       </div>
@@ -398,8 +407,13 @@ export default function StudioComposerPage() {
         ) : (
           /* 게임 생성 후 — 중앙 채팅 / 드래그 리사이저 / 우측 프리뷰 (모바일: 상 프리뷰 / 하 채팅) */
           <div ref={splitRef} className="flex-1 flex flex-col md:flex-row min-h-0" style={{ ['--pw' as string]: `${previewPct}%` }}>
-            {!chatCollapsed && (
-              <div className="order-2 md:order-1 h-[55%] md:h-full md:flex-1 min-h-0 md:min-w-0">
+            {view !== 'game' && (
+              <div className="relative order-2 md:order-1 h-full flex-1 min-h-0 min-w-0">
+                {view === 'chat' && html && (
+                  <button onClick={() => pickView('game')} className="absolute right-4 top-3 z-10 h-9 pl-3 pr-3.5 rounded-full bg-[#241f17] text-white text-[12.5px] font-bold shadow-[0_6px_18px_rgba(36,31,23,0.35)] hover:bg-[#2563eb] transition-colors flex items-center gap-1.5">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>게임 열기
+                  </button>
+                )}
                 <StudioChat
                   messages={messages}
                   streaming={streaming}
@@ -415,7 +429,7 @@ export default function StudioComposerPage() {
               </div>
             )}
             {/* 드래그 리사이저 — 잡고 끌면 분할 폭이 바뀐다 */}
-            {!chatCollapsed && (
+            {view === 'split' && (
               <div
                 onMouseDown={startDrag}
                 className={`hidden md:flex order-2 md:order-2 w-2 shrink-0 cursor-col-resize items-center justify-center group/rs ${dragging ? 'bg-[#2563eb]/20' : 'hover:bg-[#2563eb]/10'} transition-colors`}
@@ -426,7 +440,13 @@ export default function StudioComposerPage() {
                 <span className={`w-[3px] h-10 rounded-full ${dragging ? 'bg-[#2563eb]' : 'bg-[#ddd3bf] group-hover/rs:bg-[#2563eb]/60'} transition-colors`} />
               </div>
             )}
-            <div className={`order-1 md:order-3 min-h-0 border-b md:border-b-0 border-[#ebe4d6] ${chatCollapsed ? 'h-full flex-1' : 'h-[45%] md:h-full md:w-[var(--pw)] shrink-0'} ${dragging ? 'pointer-events-none select-none' : ''}`}>
+            {view !== 'chat' && (
+            <div className={`relative order-1 md:order-3 min-h-0 h-full ${view === 'game' ? 'flex-1' : 'md:w-[var(--pw)] shrink-0'} ${dragging ? 'pointer-events-none select-none' : ''}`}>
+              {view === 'game' && (
+                <button onClick={() => pickView('chat')} title="채팅으로 돌아가기" className="absolute left-3 bottom-3 z-10 h-10 pl-3 pr-4 rounded-full bg-white/95 text-[#241f17] text-[12.5px] font-bold border border-[#ddd3bf] shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center gap-1.5">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /></svg>채팅으로
+                </button>
+              )}
               <GamePreview
                 html={html}
                 versions={versions}
@@ -438,6 +458,7 @@ export default function StudioComposerPage() {
                 ajHref={publishedGameId ? `/aj/${publishedGameId}` : null}
               />
             </div>
+            )}
           </div>
         )}
       </div>
