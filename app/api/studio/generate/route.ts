@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logServerError } from '@/lib/log/server'
 import { GENERATION_COST } from '@/lib/studio/constants'
-import { SYSTEM_PROMPT, buildMessages, type ChatTurn } from '@/lib/studio/prompt'
+import { buildSystemPrompt, buildMessages, type ChatTurn } from '@/lib/studio/prompt'
 import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER } from '@/lib/studio/parse'
 import { templateOnly, extrasOf } from '@/lib/studio/templates'
 import { matchTemplateIn } from '@/lib/studio/template-match'
@@ -280,7 +280,7 @@ export async function POST(req: Request) {
       max_tokens: GENERATION_MAX_TOKENS,
       // Sonnet 5 는 기본으로 적응형 사고가 켜져 있고 그 토큰이 max_tokens 에 포함된다 — effort 로 사고 분량을 제한해 본문이 잘리지 않게
       ...(chosenModel.startsWith('claude-sonnet-5') || chosenModel.startsWith('claude-opus-5') ? { thinking: { type: 'adaptive' as const }, output_config: { effort: 'medium' as const } } : {}),
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(await loadControls()),
       messages: buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml ? stripAssets(baseHtml) : baseHtml, history, images }) as never,
     })
   } catch (e) {

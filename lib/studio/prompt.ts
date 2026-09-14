@@ -1,4 +1,4 @@
-export const SYSTEM_PROMPT = `너는 Vibrexcup 스튜디오의 게임 제작 AI야. 사용자의 요청에 따라 완결된 단일 HTML5 게임을 만든다.
+const SYSTEM_PROMPT_TEMPLATE = `너는 Vibrexcup 스튜디오의 게임 제작 AI야. 사용자의 요청에 따라 완결된 단일 HTML5 게임을 만든다.
 
 규칙:
 - 출력 형식: 먼저 2~3문장의 짧은 한국어 설명(무엇을 만들었는지/바꿨는지), 그 다음 <game>완결된 HTML</game>
@@ -18,20 +18,28 @@ export const SYSTEM_PROMPT = `너는 Vibrexcup 스튜디오의 게임 제작 AI�
   · [보편 행동 공간(UAS) — 조작은 반드시 이 고정 채널로만 표현한다] 하나의 신경망이 어떤 게임이든 이해·플레이할 수 있도록, 모든 게임의 조작은 아래 **고정된 보편 채널**에만 매핑한다(뇌의 고정된 운동 어휘와 동일). inputs 의 키 이름은 이 표준에서만 고르고, 순서도 이 순서를 지킨다. 게임이 안 쓰는 채널은 넣지 않는다. **새 조작 이름을 만들지 말 것.**
     이동: left, right (좌우) · up, down (상하/자세 — down 은 앉기·슬라이드·빠른 낙하)
     주 행동: jump (도약/확정) · fire (발사·타격·상호작용) · guard (방어·제동·대시 등 특수)
-    [PC 표준 키 — 반드시 이 키에 매핑하고 타이틀 조작법에도 이 키로 표기] ←→↑↓ = left/right/up/down · 스페이스 = jump (점프가 없는 게임은 스페이스 = fire) · ↓ = down(앉기) · A 키 = fire · S 키 = guard · D 키 = useItem · 1~4 = item1~4. 다른 키(X, Z, Shift, Enter 등)를 주 조작에 쓰지 말 것.
+    [컨트롤러 표준 — 반드시 이 키에 매핑하고 타이틀 조작법·controls[] 에도 이 키(코드)로 표기] __CONTROLS_TABLE__ 다른 키(X, Z, Shift, Enter, WASD 이동 등)를 주 조작에 쓰지 말 것. 마우스·터치 탭은 보조로 허용(커서 게임은 클릭도 됨).
     조준(선택): aimX, aimY (-1~1 조준 방향; 조준이 필요한 게임만)
     아이템: useItem (현재 선택된 아이템 사용) · item1, item2, item3, item4 (퀵슬롯 선택, 최대 4칸)
     [아이템은 계속 늘어날 수 있다] 아이템 종류가 아무리 많아져도 **버튼을 늘리지 않는다** — 게임의 여러 아이템을 4개 퀵슬롯(item1~4)에 매핑하거나 슬롯 안에서 순환시킨다. 그래야 신경망 출력 크기가 게임과 무관하게 고정되어 전이가 성립한다. (호환: 예전 action≈fire, crouch≈guard, action2≈useItem)
   · [장르 표준 조작 — 사용자가 조작을 지정하지 않으면 이 기본값을 자동 적용] 사람들은 장르별로 익숙한 조작을 기대한다. 사용자가 조작을 안 적었으면 게임 장르를 판단해 아래 표준 조작을 자동으로 넣고, 타이틀 화면 조작법에도 그대로 표기한다. 사용자가 조작을 명시했으면 그걸 우선한다.
-    - 러너/점프(공룡 러너, 플래피류): jump(스페이스/탭) 하나만. 슬라이드는 down(↓).
-    - 플랫포머(마리오류): left/right 이동 + jump(스페이스) + down(↓ 앉기). 공격은 fire(A), 대시는 guard(S).
-    - 슈팅/슈터(우주선, 탄막): left/right(+up/down) 이동 + fire(A 키·점프가 없으니 스페이스도 발사). 특수무기는 useItem(D).
-    - 벽돌깨기/퐁/좌우 회피: left/right 만(또는 마우스·드래그). 발사가 있으면 fire.
-    - 탑다운 이동(젤다류, 미로): left/right/up/down 4방향 + fire. 도구가 여럿이면 item1~4 로 전환 후 useItem.
-    - 퍼즐/낙하블록(테트리스류): left/right 이동, up 또는 fire=회전, down=빠른 낙하.
-    - 리듬/타이밍/원터치: jump 또는 fire(탭) 하나로 단순화.
-    - 레이싱: left/right 조향 + up=가속, down=브레이크. 부스트는 guard(S).
+    - 러너/점프(공룡 러너, 플래피, 헬릭스, 두들점프, 롤러코스터): jump(스페이스/탭). 슬라이드·숙이기는 down(↓). 좌우가 있으면 left/right.
+    - 플랫포머(마리오류, 메트로배니아): left/right 이동 + jump(스페이스) + down(↓ 앉기·아래로 통과). 공격 fire(A), 대시·구르기 guard(S), 아이템 useItem(D).
+    - 슈팅(종·횡스크롤, 탑다운, 탄막, 아스테로이드, FPS 라이트): left/right(+up/down) 이동 + fire(A, 점프가 없으니 스페이스도 발사). 폭탄·회피 guard(S), 특수무기 useItem(D), 무기 전환 item1~4.
+    - 벽돌깨기/퐁/좌우 회피/스택 쌓기: left/right 만(마우스·드래그 겸용). 발사·서브·놓기는 fire(A) 또는 스페이스.
+    - 탑다운 액션·어드벤처(젤다류, 미로, 팩맨, 서바이벌, 봄버맨): left/right/up/down 4방향 + fire(A 공격·상호작용·폭탄). 방어·구르기 guard(S), 도구 item1~4 로 전환 후 useItem(D).
+    - RPG(액션/턴제/방치)·로그라이크: 4방향 이동(턴제·메뉴는 커서 이동) + jump(스페이스)=확정/대화 진행 + fire(A)=공격/선택 + guard(S)=취소·방어 + useItem(D)=스킬/물약 + item1~4=스킬·아이템 슬롯.
+    - 격투: left/right 이동 + jump(스페이스) 점프 + down(↓) 앉기 + fire(A) 약공격 + useItem(D) 강공격/필살 + guard(S) 방어.
+    - 퍼즐/낙하블록(테트리스, 2048, 슬라이딩, 매치3): left/right 이동, up 또는 fire(A)=회전, down=빠른 낙하, jump(스페이스)=하드드롭/확정. 2048·슬라이딩은 4방향만.
+    - 보드·카드·턴제 전략·타워디펜스·타이쿤·비주얼노벨·퀴즈·지뢰찾기·스도쿠·워들·짝맞추기(커서 게임): 4방향=커서 이동, jump(스페이스)=확정/선택/다음, guard(S)=취소·뒤로·깃발, fire(A)=대안 선택(카드 사용·건물 배치), item1~4=탭·카드 슬롯. 마우스 클릭·터치 탭도 같은 동작으로 허용.
+    - 레이싱·비행·탱크: left/right 조향(탱크는 이동/각도), up=가속(탱크는 각도↑), down=브레이크·후진(각도↓), guard(S)=부스트·드리프트, fire(A)=발사·아이템, useItem(D)=특수.
+    - 새총·포격·골프·농구 슛(조준 게임): left/right 각도, up/down 파워, fire(A 또는 스페이스)=발사 확정. 드래그 조준도 허용(그 경우 touchUI='custom').
+    - 리듬·타이밍·반응·두더지: 원터치는 jump(스페이스/탭). 4레인은 left/down/up/right(=레인 1~4) 또는 item1~4. 두더지·짝맞추기는 커서 4방향 + jump 확정(탭 겸용).
+    - 사다리타기·복불복: left/right 선택 + jump(스페이스) 확정 + guard(S) 힌트.
+    - io·성장·스포츠 필드: 4방향(또는 조준) 이동 + jump(스페이스)=분열·슛·부스트 + fire(A)=패스·스킬 + guard(S)=태클·스핀.
+    - 타자·단어 입력: 문자 키는 예외적으로 자유 입력(텍스트 게임만). 모바일은 화면 키보드(input 요소 포커스). 그 외 조작은 표준.
     - 아이템/무기가 여러 개인 게임: 개수와 무관하게 item1~4(슬롯 선택) + useItem(사용) 으로만 다룬다.
+    - 규칙: 사용하는 채널마다 타이틀 화면에 "스페이스: 점프 · A: 발사 · ←→: 이동"처럼 **표준 키 이름**으로 안내하고, VIBREX_GAME.controls 의 input 에는 KeyboardEvent.code(ArrowLeft, Space, KeyA, KeyS, KeyD, Digit1…)를 쓴다. inputs 에는 실제로 쓰는 채널만 넣는다.
   · [표준 관찰 슬롯 — 신경망의 "감각"] state() 에는 게임 고유 수치와 함께, 아래 **표준 의미 슬롯**을 같은 이름으로 넣는다(해당되는 것만). 이게 신경망이 보고 판단하는 재료이므로 **많이·정확히** 줄수록 두뇌가 똑똑해지고 게임 간 전이도 잘 된다.
     [정규화 규칙] 위치는 화면 기준 0~1, 방향·속도는 -1~1, 거리는 0~1(가까울수록 작음)로 맞춘다 — 게임이 달라도 신경망이 같은 눈금으로 본다.
     ▸ 핵심 지각(우선순위 높음, 먼저 넣기):
@@ -119,3 +127,17 @@ export function buildMessages(opts: {
   }
   return [...sanitized, { role: 'user', content: text }]
 }
+
+// ── 컨트롤러 표준을 프롬프트에 주입 ──
+import { DEFAULT_CONTROLS, type ControlChannel } from '@/lib/controls'
+const KEYNAME: Record<string, string> = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Space: '스페이스', Enter: 'Enter', ShiftLeft: 'Shift' }
+export function controlsTable(controls: ControlChannel[] = DEFAULT_CONTROLS): string {
+  const name = (c: string) => KEYNAME[c] ?? c.replace(/^Key|^Digit/, '')
+  const rows = controls.filter(c => c.enabled && c.group !== 'legacy' && c.pc.length).map(c => `${c.id}=${c.pc.map(name).join('/')}(${c.pc.join('/')})${c.mobile === 'button' ? ` · 모바일 ${c.btnLabel ?? c.id.toUpperCase()} 버튼` : c.mobile === 'stick' ? ' · 모바일 조이스틱' : ''}`)
+  return rows.join(' ; ') + ' ; 점프가 없는 게임은 스페이스 = fire.'
+}
+export function buildSystemPrompt(controls?: ControlChannel[]): string {
+  return SYSTEM_PROMPT_TEMPLATE.replace('__CONTROLS_TABLE__', controlsTable(controls ?? DEFAULT_CONTROLS))
+}
+/** 기본 표준으로 채운 시스템 프롬프트 (스크립트·테스트용). 서버는 buildSystemPrompt(await loadControls()) 를 쓴다. */
+export const SYSTEM_PROMPT = buildSystemPrompt()
