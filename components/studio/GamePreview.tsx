@@ -121,7 +121,7 @@ export default function GamePreview({
         </button>
       </div>
       <div ref={boxRef} className="flex-1 bg-black min-h-0 relative overflow-hidden">
-        {html ? (
+        {html && box.w === 0 ? null : html ? (
           dev ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className={`${dev.radius} border border-[#ddd3bf] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] bg-black shrink-0`} style={{ width: fw, height: fh, transform: `scale(${scale})`, transformOrigin: 'center', transition: 'width .25s ease, height .25s ease' }}>
