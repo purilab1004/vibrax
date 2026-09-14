@@ -51,8 +51,6 @@ export default function StudioComposerPage() {
     return () => clearTimeout(t)
   }, [])
   const pickView = (v: 'chat' | 'game' | 'split') => setView(v)
-  // 채팅 열기 = 모바일은 채팅 전체, 데스크톱은 채팅+게임 분할 / 닫기 = 헤더만 남기고 게임 전체
-  const openChat = () => pickView(window.matchMedia('(max-width: 767px)').matches ? 'chat' : 'split')
   const chatCollapsed = view === 'game'
   // 좌측 사이드바 — 최근 프로젝트 (클로드 스타일)
   const [myProjects, setMyProjects] = useState<StudioProject[]>([])
@@ -443,11 +441,6 @@ export default function StudioComposerPage() {
             )}
             {view !== 'chat' && (
             <div className={`relative order-1 md:order-3 min-h-0 h-full ${view === 'game' ? 'flex-1' : 'md:w-[var(--pw)] shrink-0'} ${dragging ? 'pointer-events-none select-none' : ''}`}>
-              {view === 'game' && (
-                <button onClick={openChat} aria-label="채팅 열기" title="채팅 열기" className="absolute left-3 bottom-3 z-10 w-11 h-11 rounded-full bg-white/95 text-[#241f17] border border-[#ddd3bf] shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /></svg>
-                </button>
-              )}
               <GamePreview
                 html={html}
                 versions={versions}
