@@ -187,7 +187,15 @@ export async function POST(req: Request) {
   if (tmatch) {
     if (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword, tmatch.template.keywords)) {
       // 회원·프로젝트마다 제목/색조를 다르게 (LLM 없이) — 같은 템플릿이라도 다른 게임처럼
-      const { html, title: pTitle } = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`)
+      const personalized = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`)
+      let html = personalized.html; const pTitle = personalized.title
+      // 미디어 라이브러리 — 이 템플릿(장르)에 등록된 자동 사용 에셋(배경·캐릭터 등)을 템플릿 경로에서도 주입 (예: 우빈 롤러코스터의 background_basic)
+      try {
+        const adminDb = createAdminClient()
+        const pool = await listAutoAssets(adminDb)
+        const picked = scoreAssets(pool, { prompt, genreSlugs: [tmatch.template.slug, ...(tmatch.template.genreGroup ? [tmatch.template.genreGroup] : [])] })
+        if (picked.length) { html = injectAssets(html, await loadAssetData(picked)); void adminDb.rpc('media_assets_touch', { ids: picked.map(a => a.id) }) }
+      } catch (e) { console.error('[studio/generate] template asset inject failed', e) }
       const tplVersion = (latest?.version ?? 0) + 1
       const { error: vErr } = await supabase.from('studio_versions').insert([
         { project_id: projectId, version: tplVersion, html },
