@@ -71,7 +71,7 @@ export default function AdminMediaPage() {
     fd.set('dims', JSON.stringify(dims)); fd.set('kind', up.kind); fd.set('genres', up.genres.join(',')); fd.set('tags', up.tags); fd.set('description', up.description); fd.set('auto_use', up.auto ? '1' : '0'); if (up.title) fd.set('title', up.title); if (up.name) fd.set('name', up.name); if (up.role) fd.set('role', up.role)
     const r = await fetch('/api/admin/media', { method: 'POST', body: fd }); const j = await r.json().catch(() => ({})); setUploading(false)
     if (!r.ok) { say(j.error ?? '업로드 실패', 'err'); return }
-    setUp(null); say(`${(j.items ?? []).length}개 추가${j.errors?.length ? ` · 실패 ${j.errors.length}` : ''}`, j.errors?.length ? 'err' : 'ok'); if (j.errors?.length) console.warn(j.errors); load()
+    setUp(null); say(`${(j.items ?? []).length}개 추가${j.savedBytes > 1024 ? ` · WebP 변환으로 ${fmtBytes(j.savedBytes)} 절약` : ''}${j.errors?.length ? ` · 실패 ${j.errors.length}` : ''}`, j.errors?.length ? 'err' : 'ok'); if (j.errors?.length) console.warn(j.errors); load()
   }
   const patch = async (body: Record<string, unknown>, okMsg = '저장했어요.') => { const r = await fetch('/api/admin/media', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json().catch(() => ({})); if (r.ok) { say(okMsg); load(); return j } say(j.error ?? '실패', 'err'); return null }
   const remove = async (ids: string[]) => { const r = await fetch('/api/admin/media', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) }); if (r.ok) { say(`${ids.length}개 삭제`); setSel(new Set()); setDetail(null); load() } else say('삭제 실패', 'err'); setDel(null) }

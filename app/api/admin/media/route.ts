@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/admin/guard'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { TEMPLATES } from '@/lib/studio/templates'
 import { MEDIA_KINDS, toAssetName, type MediaKind } from '@/lib/media/assets'
+import { optimizeImage } from '@/lib/media/optimize'
 
 export const runtime = 'nodejs'
 const BUCKET = 'media'
@@ -58,15 +59,18 @@ async function uploadOne(g: { admin: SupabaseClient; user: { id: string } }, fil
     if (!dup) break
     name = `${toAssetName(fields.name || file.name).slice(0, 34)}_${Math.random().toString(36).slice(2, 6)}`
   }
-  const path = `${kind}/${crypto.randomUUID()}.${ext}`
-  const buf = Buffer.from(await file.arrayBuffer())
-  const { error: upErr } = await admin.storage.from(BUCKET).upload(path, buf, { contentType: mime, upsert: false, cacheControl: '31536000' })
+  // 이미지는 WebP 로 변환·축소 (로딩 속도·게임 주입 용량) — 애니 GIF·SVG 는 그대로
+  const raw = Buffer.from(await file.arrayBuffer())
+  const opt = mime.startsWith('image/') ? await optimizeImage(raw, mime) : { buf: raw, mime, ext, width: fields.width ?? null, height: fields.height ?? null, converted: false, from: raw.length }
+  const buf = opt.buf; const outMime = opt.mime
+  const path = `${kind}/${crypto.randomUUID()}.${opt.converted ? 'webp' : ext}`
+  const { error: upErr } = await admin.storage.from(BUCKET).upload(path, buf, { contentType: outMime, upsert: false, cacheControl: '31536000' })
   if (upErr) return { error: `${file.name}: 업로드 실패 — ${upErr.message}` }
   const url = admin.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
   const row = {
     kind, name, title: (fields.title || file.name.replace(/\.[a-z0-9]+$/i, '')).slice(0, 80), description: fields.description?.slice(0, 500) || null,
-    genres: fields.genres, tags: fields.tags, path, url, mime, bytes: buf.length, width: fields.width ?? null, height: fields.height ?? null,
-    meta: fields.meta ?? {}, auto_use: fields.auto_use ?? true, created_by: g.user.id,
+    genres: fields.genres, tags: fields.tags, path, url, mime: outMime, bytes: buf.length, width: opt.width ?? fields.width ?? null, height: opt.height ?? fields.height ?? null,
+    meta: { ...(fields.meta ?? {}), ...(opt.converted ? { original: { mime, bytes: opt.from } } : {}) }, auto_use: fields.auto_use ?? true, created_by: g.user.id,
   }
   const { data, error } = await admin.from('media_assets').insert([row] as never).select('*').maybeSingle()
   if (error) { await admin.storage.from(BUCKET).remove([path]); return { error: `${file.name}: ${error.message}` } }
@@ -91,7 +95,8 @@ export async function POST(req: Request) {
     const r = await uploadOne(g, f, { kind, genres, tags, description, width: d?.w ?? null, height: d?.h ?? null, auto_use, meta: role ? { role } : {}, title: files.length === 1 ? (fd.get('title') as string | null) : null, name: files.length === 1 ? (fd.get('name') as string | null) : null })
     if ('error' in r && r.error) errors.push(r.error); else items.push((r as { item: unknown }).item)
   }
-  return Response.json({ items, errors })
+  const saved = (items as { meta?: { original?: { bytes: number } }; bytes: number }[]).reduce((a, it) => a + Math.max(0, (it.meta?.original?.bytes ?? it.bytes) - it.bytes), 0)
+  return Response.json({ items, errors, savedBytes: saved })
 }
 
 export async function PATCH(req: Request) {
@@ -111,14 +116,14 @@ export async function PATCH(req: Request) {
       if ('error' in r && r.error) return Response.json({ error: r.error }, { status: 400 })
       return Response.json({ item: (r as { item: unknown }).item })
     }
-    const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '')
-    const path = `${c.kind}/${crypto.randomUUID()}.${ext}`
-    const buf = Buffer.from(await file.arrayBuffer())
-    if (buf.length > UPLOAD_MAX) return Response.json({ error: '8MB 초과' }, { status: 400 })
-    const { error: upErr } = await g.admin.storage.from(BUCKET).upload(path, buf, { contentType: file.type || 'image/png', upsert: false, cacheControl: '31536000' })
+    const raw = Buffer.from(await file.arrayBuffer())
+    if (raw.length > UPLOAD_MAX) return Response.json({ error: '8MB 초과' }, { status: 400 })
+    const opt = await optimizeImage(raw, file.type || 'image/png')
+    const path = `${c.kind}/${crypto.randomUUID()}.${opt.converted ? 'webp' : ((file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png')}`
+    const { error: upErr } = await g.admin.storage.from(BUCKET).upload(path, opt.buf, { contentType: opt.mime, upsert: false, cacheControl: '31536000' })
     if (upErr) return Response.json({ error: upErr.message }, { status: 500 })
     const url = g.admin.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
-    const { data, error } = await g.admin.from('media_assets').update({ path, url, mime: file.type || 'image/png', bytes: buf.length, width: dims?.w ?? null, height: dims?.h ?? null, updated_at: new Date().toISOString() } as never).eq('id', id).select('*').maybeSingle()
+    const { data, error } = await g.admin.from('media_assets').update({ path, url, mime: opt.mime, bytes: opt.buf.length, width: opt.width ?? dims?.w ?? null, height: opt.height ?? dims?.h ?? null, updated_at: new Date().toISOString() } as never).eq('id', id).select('*').maybeSingle()
     if (error) return Response.json({ error: error.message }, { status: 500 })
     await g.admin.storage.from(BUCKET).remove([c.path]).catch(() => null)
     return Response.json({ item: data })
