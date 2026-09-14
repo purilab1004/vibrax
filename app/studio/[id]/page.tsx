@@ -364,7 +364,7 @@ export default function StudioComposerPage() {
               : <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" /><path d="M9.5 9.5l5 5M14.5 9.5l-5 5" /></svg>}
           </button>
         )}
-        <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬코인 충전"><PromptCreditBadge amount={balance ?? 0} size="sm" /></Link>
+        <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬코인 충전"><PromptCreditBadge amount={balance ?? 0} size="sm" compact /></Link>
       </div>
       <div className="flex-1 flex min-h-0">
         {/* 좌측 — 최근 프로젝트 사이드바 (클로드 스타일, 데스크톱) */}
@@ -415,11 +415,6 @@ export default function StudioComposerPage() {
           <div ref={splitRef} className="flex-1 flex flex-col md:flex-row min-h-0" style={{ ['--pw' as string]: `${previewPct}%` }}>
             {view !== 'game' && (
               <div className="relative order-2 md:order-1 h-full flex-1 min-h-0 min-w-0">
-                {view === 'chat' && html && (
-                  <button onClick={closeChat} aria-label="게임 전체 화면" title="게임 전체 화면" className="absolute right-4 top-3 z-10 w-10 h-10 rounded-full bg-[#241f17] text-white shadow-[0_6px_18px_rgba(36,31,23,0.35)] hover:bg-[#2563eb] transition-colors flex items-center justify-center">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                  </button>
-                )}
                 <StudioChat
                   messages={messages}
                   streaming={streaming}
