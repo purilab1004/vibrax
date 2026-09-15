@@ -21,6 +21,12 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
   const [going, setGoing] = useState<string | null>(null)
   const [chain, setChain] = useState(0)
   const [boardOpen, setBoardOpen] = useState(false)
+  // 모바일: 시트(아래에서 올라옴) + 티커(후보 제목 회전). 데스크톱: 우상단 카드
+  const [mobile, setMobile] = useState(false)
+  useEffect(() => { const mq = window.matchMedia('(max-width: 767px)'); const f = () => setMobile(mq.matches); const t = setTimeout(f, 0); mq.addEventListener('change', f); return () => { clearTimeout(t); mq.removeEventListener('change', f) } }, [])
+  const [tick, setTick] = useState(0)
+  useEffect(() => { if (!reached || !mobile) return; const iv = setInterval(() => setTick(t => t + 1), 2600); return () => clearInterval(iv) }, [reached, mobile])
+  const [sheetShownOnFinish, setSheetShownOnFinish] = useState(false)
   const reachedAt = useRef<number | null>(null)
 
   useEffect(() => {
@@ -52,9 +58,14 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
     if (!info) return
     const ok = (lb ? myRank > 0 : finished) || (info.goalSource === 'admin' && !!info.goal && score >= info.goal)
     if (!ok || reached) return
-    const t = setTimeout(() => { setReached(true); reachedAt.current = Date.now(); setPickOpen(true) }, 0)
+    const t = setTimeout(() => { setReached(true); reachedAt.current = Date.now(); if (!mobile) setPickOpen(true) }, 0)
     return () => clearTimeout(t)
-  }, [info, lb, myRank, score, finished, reached])
+  }, [info, lb, myRank, score, finished, reached, mobile])
+  useEffect(() => {
+    if (!mobile || !reached || !finished || sheetShownOnFinish) return
+    const t = setTimeout(() => { setPickOpen(true); setSheetShownOnFinish(true) }, 400)
+    return () => clearTimeout(t)
+  }, [mobile, reached, finished, sheetShownOnFinish])
 
   const go = useCallback(async (c: Cand, picked: boolean) => {
     if (going) return
@@ -83,11 +94,9 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
     return [...others.map(r => ({ ...r, me: false })), ...mine].sort((a, b) => b.best - a.best).slice(0, TOP_N)
   })()
 
-  return (
-    <div className="pointer-events-none absolute z-30 flex flex-col-reverse md:flex-col items-end gap-2 left-[84px] right-[108px] top-3 md:left-auto md:right-3 md:top-[60px] md:max-w-[min(92vw,20rem)]">
-      {/* 회원 TOP 10 — 이 안에 들면 transport 활성 */}
-      {boardOpen && lb && (
-        <div className="pointer-events-auto w-[calc(100vw-24px)] md:w-72 rounded-2xl bg-[#0f1219]/95 backdrop-blur-md border border-white/12 shadow-[0_8px_30px_rgba(0,0,0,0.5)] md:shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
+  const tickerTitle = reached ? info.next[tick % info.next.length].title : ''
+  const boardPanel = lb && (
+        <div className="pointer-events-auto w-full md:w-72 rounded-2xl bg-[#0f1219]/95 backdrop-blur-md border border-white/12 shadow-[0_8px_30px_rgba(0,0,0,0.5)] md:shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
           <div className="flex items-center justify-between mb-1.5"><p className="text-white text-[12.5px] font-bold">🏆 회원 TOP {TOP_N}</p><span className="text-white/55 text-[10.5px]">{lb.full && lb.threshold != null ? `${(lb.threshold + 1).toLocaleString()}점부터 진입` : '지금 들어가면 바로 순위권'}</span></div>
           {rows.length === 0 ? <p className="text-white/55 text-[11.5px] py-2">아직 기록이 없어요. 첫 1위가 되어 보세요!</p> : (
             <ol className="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
@@ -101,13 +110,12 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
             </ol>
           )}
         </div>
-      )}
-      {/* 후보 선택 카드 — 목표 달성 시 자동으로 펼쳐지고, 사람이 골라도 된다 */}
-      {pickOpen && reached && (
-        <div className="pointer-events-auto w-[calc(100vw-24px)] md:w-72 rounded-2xl bg-[#0f1219]/95 backdrop-blur-md border border-white/12 shadow-[0_8px_30px_rgba(0,0,0,0.5)] md:shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
+  )
+  const pickPanel = reached && (
+        <div className="pointer-events-auto w-full md:w-72 rounded-2xl bg-[#0f1219]/95 backdrop-blur-md border border-white/12 shadow-[0_8px_30px_rgba(0,0,0,0.5)] md:shadow-[0_14px_40px_rgba(0,0,0,0.55)] p-3 transport-pop">
           <div className="flex items-center justify-between mb-2">
             <p className="text-white text-[12px] font-bold">{myRank > 0 ? `🏆 TOP 10 진입 (${myRank}위)! 다음 게임은?` : '🎯 목표 달성! 다음 게임은?'}</p>
-            <button onClick={() => setPickOpen(false)} className="text-white/60 hover:text-white text-[12px]">나중에</button>
+            <button onClick={() => setPickOpen(false)} className="text-white/60 hover:text-white text-[12px]">{finished ? '닫기' : '나중에'}</button>
           </div>
           <div className="flex flex-col gap-1.5">
             {info.next.map((c, i) => (
@@ -124,20 +132,35 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
             ))}
           </div>
         </div>
-      )}
+  )
+
+  return (
+    <>
+    {/* 모바일 시트 — 게임 영역 아래쪽에서 올라옴 (화면 밖으로 나가지 않게 전체 폭) */}
+    {mobile && (pickOpen && reached || boardOpen) && (
+      <div className="md:hidden absolute inset-0 z-40 flex flex-col justify-end pointer-events-none">
+        <div className="pointer-events-auto absolute inset-0 bg-black/35" onClick={() => { setPickOpen(false); setBoardOpen(false) }} />
+        <div className="relative px-2 pb-[60px] flex flex-col gap-2">{boardOpen ? boardPanel : pickPanel}</div>
+      </div>
+    )}
+    <div className="pointer-events-none absolute z-30 flex flex-col-reverse md:flex-col items-end gap-2 left-[84px] right-[108px] top-3 md:left-auto md:right-3 md:top-[60px] md:max-w-[min(92vw,20rem)]">
+      {!mobile && boardOpen && boardPanel}
+      {!mobile && pickOpen && pickPanel}
       {/* 진행 바 + 이동 화살표 */}
       <div className="pointer-events-auto flex items-center gap-2 w-full h-9 pl-2.5 pr-1 rounded-full bg-black/55 backdrop-blur-md border border-white/12 shadow-[0_2px_10px_rgba(0,0,0,0.35)] md:w-auto md:h-auto md:pl-3 md:pr-1.5 md:py-1.5 md:shadow-[0_6px_20px_rgba(0,0,0,0.45)]">
         {chain > 0 && <span className="text-[10.5px] font-bold text-[#fbbf24] whitespace-nowrap">🚀 {chain}연속</span>}
-        <button type="button" onClick={() => lb && setBoardOpen(v => !v)} className="flex flex-col flex-1 md:flex-none min-w-0 md:min-w-[150px] text-left">
+        <button type="button" onClick={() => { if (mobile && reached) { setPickOpen(v => !v); setBoardOpen(false) } else if (lb) setBoardOpen(v => !v) }} className="flex flex-col flex-1 md:flex-none min-w-0 md:min-w-[150px] text-left">
           <div className="flex items-baseline justify-between gap-2 text-[10px] md:text-[10.5px] text-white/80 leading-none mb-0.5 md:mb-1">
-            <span className={nt && nt.rank > 0 ? 'text-[#fbbf24] font-bold' : ''}>{label}</span>
+            {mobile && reached
+              ? <span key={tick} className="text-white font-bold truncate transport-ticker">다음 → {tickerTitle}</span>
+              : <span className={nt && nt.rank > 0 ? 'text-[#fbbf24] font-bold' : ''}>{label}</span>}
             <span className="tabular-nums font-semibold text-white">{lb || goal ? score.toLocaleString() : (finished ? '완료' : '진행 중')}</span>
           </div>
           <div className="h-1 md:h-1.5 w-full rounded-full bg-white/15 overflow-hidden"><div className={`h-full rounded-full transition-[width] duration-500 ${nt && nt.rank === 1 ? 'bg-[#fbbf24]' : reached ? 'bg-[#22c55e]' : 'bg-[#60a5fa]'}`} style={{ width: `${pct}%` }} /></div>
         </button>
         {lb && <button onClick={() => setBoardOpen(v => !v)} title="회원 TOP 10" aria-label="순위표" className={`hidden md:flex h-9 w-9 rounded-full flex items-center justify-center text-[15px] transition-colors ${boardOpen ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}>🏆</button>}
         <button
-          onClick={() => reached ? (pickOpen ? go(primary, false) : setPickOpen(true)) : undefined}
+          onClick={() => reached ? (mobile ? setPickOpen(v => !v) : (pickOpen ? go(primary, false) : setPickOpen(true))) : undefined}
           disabled={!reached || !!going}
           title={reached ? `다음 게임: ${primary.title}` : (goal ? `목표 ${goal.toLocaleString()}점을 넘기면 열려요` : '한 판을 끝내면 열려요')}
           aria-label="다음 게임으로 이동"
@@ -148,5 +171,6 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
         </button>
       </div>
     </div>
+    </>
   )
 }

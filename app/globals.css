@@ -903,3 +903,7 @@ html.vbx-ios .feed-snap { scroll-snap-stop: normal; }
 .teleport-text { position: relative; z-index: 1; color: #fff; font-weight: 800; font-size: 13px; letter-spacing: .22em; text-shadow: 0 0 12px rgba(6,182,212,.9), 0 2px 8px rgba(0,0,0,.8); animation: teleport-text .6s ease-out both; }
 @keyframes teleport-text { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .teleport-out, .teleport-in, .teleport-ring, .teleport-flash, .teleport-text { animation-duration: .01s; } }
+
+/* 모바일 transport 티커 — 후보 제목이 아래에서 올라오며 교체 */
+@keyframes transport-ticker { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.transport-ticker { display: inline-block; animation: transport-ticker .35s ease-out both; }
