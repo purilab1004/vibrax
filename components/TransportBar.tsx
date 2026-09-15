@@ -150,11 +150,11 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
       <div className="pointer-events-auto flex items-center gap-2 w-full h-9 pl-2.5 pr-1 rounded-full bg-black/55 backdrop-blur-md border border-white/12 shadow-[0_2px_10px_rgba(0,0,0,0.35)] md:w-auto md:h-auto md:pl-3 md:pr-1.5 md:py-1.5 md:shadow-[0_6px_20px_rgba(0,0,0,0.45)]">
         {chain > 0 && <span className="text-[10.5px] font-bold text-[#fbbf24] whitespace-nowrap">🚀 {chain}연속</span>}
         <button type="button" onClick={() => { if (mobile && reached) { setPickOpen(v => !v); setBoardOpen(false) } else if (lb) setBoardOpen(v => !v) }} className="flex flex-col flex-1 md:flex-none min-w-0 md:min-w-[150px] text-left">
-          <div className="flex items-baseline justify-between gap-2 text-[10px] md:text-[10.5px] text-white/80 leading-none mb-0.5 md:mb-1">
+          <div className="flex items-baseline justify-between gap-2 text-[10px] md:text-[10.5px] text-white/80 leading-none mb-0.5 md:mb-1 whitespace-nowrap min-w-0">
             {mobile && reached
               ? <span key={tick} className="text-white font-bold truncate transport-ticker">다음 → {tickerTitle}</span>
-              : <span className={nt && nt.rank > 0 ? 'text-[#fbbf24] font-bold' : ''}>{label}</span>}
-            <span className="tabular-nums font-semibold text-white">{lb || goal ? score.toLocaleString() : (finished ? '완료' : '진행 중')}</span>
+              : <span className={`truncate ${nt && nt.rank > 0 ? 'text-[#fbbf24] font-bold' : ''}`}>{label}</span>}
+            <span className="tabular-nums font-semibold text-white shrink-0">{lb || goal ? score.toLocaleString() : (finished ? '완료' : '진행 중')}</span>
           </div>
           <div className="h-1 md:h-1.5 w-full rounded-full bg-white/15 overflow-hidden"><div className={`h-full rounded-full transition-[width] duration-500 ${nt && nt.rank === 1 ? 'bg-[#fbbf24]' : reached ? 'bg-[#22c55e]' : 'bg-[#60a5fa]'}`} style={{ width: `${pct}%` }} /></div>
         </button>
