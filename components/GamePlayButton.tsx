@@ -241,10 +241,9 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       {open && (
         <div
           className="fixed inset-0 z-[70] flex flex-col bg-black"
-          style={{ paddingTop: `max(env(safe-area-inset-top, 0px), ${safe.top}px)`, paddingBottom: `max(env(safe-area-inset-bottom, 0px), ${safe.bottom}px)` }}
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
-          <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={rotStyle} data-rotated={rotated ? '1' : undefined}>
+          <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={{ ...(rotStyle ?? {}), ['--vbx-safe-top' as string]: rotated ? '0px' : `max(env(safe-area-inset-top, 0px), ${safe.top}px)`, ['--vbx-safe-bottom' as string]: rotated ? '0px' : `max(env(safe-area-inset-bottom, 0px), ${safe.bottom}px)` } as React.CSSProperties} data-rotated={rotated ? '1' : undefined}>
           <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} />
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0 overflow-hidden">
@@ -267,7 +266,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                     allow="fullscreen; autoplay"
                     title={g.title}
                     ref={el => { if (!isPending) frameRef.current = el }}
-                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:host', pause: true, bottomInset: window.matchMedia('(max-width: 767px)').matches ? 56 : 0 }, '*') } catch { /* */ } }}
+                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:host', pause: true, bottomInset: (window.matchMedia('(max-width: 767px)').matches ? 56 : 0) + (rotated ? 0 : safe.bottom) }, '*') } catch { /* */ } }}
                     onError={(e) => { const f = e.currentTarget; if (f.src !== g.play_url) f.src = g.play_url }}
                   />
                 )
@@ -289,7 +288,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                   </Link>
                 </div>
                 {/* 게스트 — 모바일 하단 안내 바 */}
-                <div className="md:hidden absolute bottom-0 inset-x-0 bg-[#fcfaf5]/95 backdrop-blur-sm border-t border-[#ebe4d6] px-4 py-3 flex items-center justify-between gap-3">
+                <div style={{ paddingBottom: 'calc(0.75rem + var(--vbx-safe-bottom, 0px))' }} className="md:hidden absolute bottom-0 inset-x-0 bg-[#fcfaf5]/95 backdrop-blur-sm border-t border-[#ebe4d6] px-4 pt-3 flex items-center justify-between gap-3">
                   <span className="text-[12px] text-[#4a4337] font-medium">🔒 AJ 방송·채팅은 로그인 후 이용 가능</span>
                   <Link href="/login" className="shrink-0 text-[13px] font-bold text-[#2563eb]">로그인</Link>
                 </div>

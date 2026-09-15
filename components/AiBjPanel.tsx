@@ -535,7 +535,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       </div>
 
       {/* ─── Mobile: PC 와 같은 오버레이 — 좌하단 채팅(접기), 우하단 아바타(드래그·숨기기) + 네임 배지 ─── */}
-      <div className="md:hidden absolute inset-0 pointer-events-none z-10">
+      <div className="md:hidden absolute inset-x-0 top-0 pointer-events-none z-10" style={{ bottom: 'var(--vbx-safe-bottom, 0px)' }}>
         {/* AJ 채팅 — 플로팅 카드: 헤더 드래그로 이동, 우하단 모서리로 확대/축소, X로 닫기(버블로) */}
         {mChatOpen ? (
           <div className="pointer-events-auto absolute rounded-2xl bg-black/72 backdrop-blur-md border border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"

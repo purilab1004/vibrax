@@ -16,7 +16,7 @@ export default function PlayHeader({ title, onClose, paused, onTogglePause, rota
   }, [])
   return (
     <div className="absolute inset-x-0 top-0 z-20 pointer-events-none">
-      <div className="flex items-center gap-3 px-3 sm:px-4 pt-3">
+      <div className="flex items-center gap-3 px-3 sm:px-4" style={{ paddingTop: 'calc(0.75rem + var(--vbx-safe-top, 0px))' }}>
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {onTogglePause && (
             <button onClick={onTogglePause} aria-label={paused ? '계속하기' : '일시정지'} title={paused ? '계속하기' : '일시정지'} className={`pointer-events-auto h-9 w-9 rounded-full backdrop-blur-md border text-white flex items-center justify-center shrink-0 shadow-[0_2px_10px_rgba(0,0,0,0.35)] transition-colors ${paused ? 'bg-[#2563eb] border-[#2563eb]' : 'bg-black/45 border-white/15 hover:bg-white hover:text-black'}`}>
