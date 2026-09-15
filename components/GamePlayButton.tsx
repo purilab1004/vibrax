@@ -87,7 +87,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     ? { '--vbx-safe-top': `${safe.top ? 20 : 0}px`, '--vbx-safe-bottom': `${safe.top ? 20 : 0}px`, '--vbx-safe-left': `${safe.top}px`, '--vbx-safe-right': `${safe.top ? 21 : 0}px` }
     : { '--vbx-safe-top': `max(env(safe-area-inset-top, 0px), ${safe.top}px)`, '--vbx-safe-bottom': `max(env(safe-area-inset-bottom, 0px), ${safe.bottom}px)`, '--vbx-safe-left': '0px', '--vbx-safe-right': '0px' }
   // 게임에 알리는 호스트 정보 — bottomInset: 하단 AJ 띠+홈바(조이스틱 위치), topInset: AI PLAYING 배지 위치(헤더가 겹칠 때 56, 띠일 땐 8)
-  const hostMsg = () => ({ type: 'vibrex:host', pause: true, bottomInset: (window.matchMedia('(max-width: 767px)').matches ? 56 : 0) + (rotated ? (safe.top ? 20 : 0) : safe.bottom), topInset: headerBottom })
+  const hostMsg = () => ({ type: 'vibrex:host', pause: true, bottomInset: (window.matchMedia('(max-width: 767px)').matches ? 56 : 0) + (rotated ? (safe.top ? 20 : 0) : safe.bottom), topInset: headerBottom, leftInset: rotated ? 44 : 0 })  // 가로: 조이스틱을 기기 위쪽(카메라 쪽) 모서리에서 조금 더 안쪽으로
   useEffect(() => {
     if (!open) return
     try { frameRef.current?.contentWindow?.postMessage({ ...hostMsg(), pause: undefined }, '*') } catch { /* */ }
