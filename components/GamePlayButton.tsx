@@ -216,7 +216,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0">
               <TransportBar key={game.id} gameId={game.id} active={open} />
-              <div className="absolute inset-x-0 top-0 bottom-[53px] md:bottom-0">
+              <div className="absolute inset-0">
               {warp && (
                 <div className={`teleport-warp teleport-${warp}`} aria-hidden>
                   <span className="teleport-ring" /><span className="teleport-ring" style={{ animationDelay: '.3s' }} /><span className="teleport-ring" style={{ animationDelay: '.6s' }} />
@@ -234,11 +234,13 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                     allow="fullscreen; autoplay"
                     title={g.title}
                     ref={el => { if (!isPending) frameRef.current = el }}
-                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:host', pause: true }, '*') } catch { /* */ } }}
+                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:host', pause: true, bottomInset: window.matchMedia('(max-width: 767px)').matches ? 56 : 0 }, '*') } catch { /* */ } }}
                     onError={(e) => { const f = e.currentTarget; if (f.src !== g.play_url) f.src = g.play_url }}
                   />
                 )
               })}
+              {/* 모바일: 하단 AJ 위젯 영역이 게임과 딱 나뉘지 않게 — 게임 위로 검정이 서서히 내려오는 그라데이션 */}
+              <div className="md:hidden absolute inset-x-0 bottom-0 h-[120px] bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none" />
             </div>
             </div>
             {isGuest ? (
