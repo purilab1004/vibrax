@@ -190,8 +190,12 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   // PC: 아바타 드래그로 위치 이동 (오프셋은 브라우저에 기억)
   const [drag, setDrag] = useState<{ x: number; y: number }>(() => { try { const v = JSON.parse(localStorage.getItem('aj-avatar-pos') ?? 'null'); return v && typeof v.x === 'number' ? v : { x: 0, y: 0 } } catch { return { x: 0, y: 0 } } })
   const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number; moved: boolean } | null>(null)
+  // 가로 전환(오버레이 90° 회전) 중에는 포인터 델타의 축이 바뀐다 — 내부 좌표로 보정
+  const rotOf = (el: EventTarget | null) => !!(el as HTMLElement | null)?.closest?.('[data-rotated="1"]')
+  const dlt = (e: React.PointerEvent, sx: number, sy: number) => { const dx = e.clientX - sx, dy = e.clientY - sy; return rotOf(e.currentTarget) ? { dx: dy, dy: -dx } : { dx, dy } }
+  const vpOf = (e: React.PointerEvent) => rotOf(e.currentTarget) ? { W: window.innerHeight, H: window.innerWidth } : { W: window.innerWidth, H: window.innerHeight }
   const onDragStart = (e: React.PointerEvent) => { if (e.button !== 0) return; dragRef.current = { sx: e.clientX, sy: e.clientY, ox: drag.x, oy: drag.y, moved: false }; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }
-  const onDragMove = (e: React.PointerEvent) => { const d = dragRef.current; if (!d) return; const nx = d.ox + e.clientX - d.sx, ny = d.oy + e.clientY - d.sy; d.moved = true; setDrag({ x: Math.max(-(window.innerWidth - 220), Math.min(0, nx)), y: Math.max(-(window.innerHeight - 300), Math.min(0, ny)) }) }
+  const onDragMove = (e: React.PointerEvent) => { const d = dragRef.current; if (!d) return; const { dx, dy } = dlt(e, d.sx, d.sy); const { W, H } = vpOf(e); const nx = d.ox + dx, ny = d.oy + dy; d.moved = true; setDrag({ x: Math.max(-(W - 220), Math.min(0, nx)), y: Math.max(-(H - 300), Math.min(0, ny)) }) }
   const onDragEnd = () => { const d = dragRef.current; dragRef.current = null; if (d?.moved) { try { localStorage.setItem('aj-avatar-pos', JSON.stringify({ x: Math.min(0, d.ox), y: Math.min(0, d.oy) })) } catch { /* ignore */ } } }
   useEffect(() => { try { localStorage.setItem('aj-avatar-pos', JSON.stringify(drag)) } catch { /* ignore */ } }, [drag])
 
@@ -202,11 +206,11 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   useEffect(() => { try { localStorage.setItem('aj-chat-size', JSON.stringify(chatSize)) } catch { /* ignore */ } }, [chatSize])
   const chatDragRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null)
   const onChatDragStart = (e: React.PointerEvent) => { chatDragRef.current = { sx: e.clientX, sy: e.clientY, ox: chatPos.x, oy: chatPos.y }; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }
-  const onChatDragMove = (e: React.PointerEvent) => { const d = chatDragRef.current; if (!d) return; const W = window.innerWidth, H = window.innerHeight; setChatPos({ x: Math.max(4, Math.min(W - 56, d.ox + e.clientX - d.sx)), y: Math.max(4, Math.min(H - 56, d.oy + e.clientY - d.sy)) }) }
+  const onChatDragMove = (e: React.PointerEvent) => { const d = chatDragRef.current; if (!d) return; const { dx, dy } = dlt(e, d.sx, d.sy); const { W, H } = vpOf(e); setChatPos({ x: Math.max(4, Math.min(W - 56, d.ox + dx)), y: Math.max(4, Math.min(H - 56, d.oy + dy)) }) }
   const onChatDragEnd = () => { chatDragRef.current = null }
   const chatResizeRef = useRef<{ sx: number; sy: number; ow: number; oh: number } | null>(null)
   const onChatResizeStart = (e: React.PointerEvent) => { e.stopPropagation(); chatResizeRef.current = { sx: e.clientX, sy: e.clientY, ow: chatSize.w, oh: chatSize.h }; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }
-  const onChatResizeMove = (e: React.PointerEvent) => { const d = chatResizeRef.current; if (!d) return; e.stopPropagation(); const W = window.innerWidth, H = window.innerHeight; setChatSize({ w: Math.max(180, Math.min(W - 16, d.ow + e.clientX - d.sx)), h: Math.max(150, Math.min(H - 90, d.oh + e.clientY - d.sy)) }) }
+  const onChatResizeMove = (e: React.PointerEvent) => { const d = chatResizeRef.current; if (!d) return; e.stopPropagation(); const { dx, dy } = dlt(e, d.sx, d.sy); const { W, H } = vpOf(e); setChatSize({ w: Math.max(180, Math.min(W - 16, d.ow + dx)), h: Math.max(150, Math.min(H - 90, d.oh + dy)) }) }
   const onChatResizeEnd = (e: React.PointerEvent) => { e.stopPropagation(); chatResizeRef.current = null }
 
 

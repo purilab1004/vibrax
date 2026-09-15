@@ -224,7 +224,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           className="fixed inset-0 z-[70] flex flex-col bg-black"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
-          <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={rotStyle}>
+          <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={rotStyle} data-rotated={rotated ? '1' : undefined}>
           <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} />
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0 overflow-hidden">
