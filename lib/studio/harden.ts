@@ -54,11 +54,9 @@ export function hardenHtml(html: string, opts: { controls?: ControlChannel[] } =
     if (i >= 0) { const end = out.indexOf('>', i) + 1; out = out.slice(0, end) + AVATAR_SHIM + out.slice(end) }
     else out = AVATAR_SHIM + out
   }
-  if (!out.includes("parent.postMessage({type:'aj:event'")) {
-    const i = out.search(/<head[^>]*>/i)
-    if (i >= 0) { const end = out.indexOf('>', i) + 1; out = out.slice(0, end) + AJ_SHIM + out.slice(end) }
-    else out = AJ_SHIM + out
-  }
+  // AJ 브리지 — 항상 최신으로 갈아끼운다. (예전엔 'aj:event' 문자열로 존재 여부를 판단했는데 오토파일럿 shim 에도 그 문자열이 있어 브리지가 빠지는 버그가 있었음)
+  out = out.replace(/<script>\(function\(\)\{var t0=Date\.now\(\);function post\(n,d\)[\s\S]*?<\/script>/, '')
+  { const i = out.search(/<head[^>]*>/i); out = i >= 0 ? out.slice(0, out.indexOf('>', i) + 1) + AJ_SHIM + out.slice(out.indexOf('>', i) + 1) : AJ_SHIM + out }
   html = out
   if (html.includes("localStorage.getItem('__t')")) return html
   const i = html.search(/<head[^>]*>/i)
