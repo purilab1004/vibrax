@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import LikeButton from './LikeButton'
 
-export default function PlayHeader({ genreLabel, genreColor, title, gameId, onClose, paused, onTogglePause }: { genreLabel: string; genreColor: string; title: string; gameId: string; onClose: () => void; paused?: boolean; onTogglePause?: () => void }) {
+// genreLabel/genreColor 는 헤더에서 더 이상 표시하지 않지만(모바일·PC 동일 배치) 호출부 호환을 위해 받는다
+export default function PlayHeader({ title, gameId, onClose, paused, onTogglePause }: { genreLabel?: string; genreColor?: string; title: string; gameId: string; onClose: () => void; paused?: boolean; onTogglePause?: () => void }) {
   const [line, setLine] = useState<string | null>(title)
   const [key, setKey] = useState(0)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -25,8 +26,8 @@ export default function PlayHeader({ genreLabel, genreColor, title, gameId, onCl
                 : <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><rect x="5" y="4" width="5" height="16" rx="1.5" /><rect x="14" y="4" width="5" height="16" rx="1.5" /></svg>}
             </button>
           )}
-          <span className={`pointer-events-auto hidden md:inline-block font-pixel text-[10px] px-2 py-1 text-white rounded-md shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.45)] ${genreColor}`}>{genreLabel}</span>
-          <div className="relative min-w-0 flex-1 h-6 overflow-hidden hidden md:block">
+
+          <div className="relative min-w-0 flex-1 h-6 overflow-hidden hidden">
             {line && (
               <div key={key} className="absolute inset-x-0 bottom-0 truncate text-[13.5px] font-semibold text-white leading-6 [text-shadow:0_1px_6px_rgba(0,0,0,0.8)] play-line" title={line}>{line}</div>
             )}
