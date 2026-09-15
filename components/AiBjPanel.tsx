@@ -156,17 +156,19 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       flyInto(image, rect, { spin: true })
       ackRef.current = false
       const win = f?.contentWindow
-      setTimeout(async () => {
+      // 정책·두뇌는 미리(병렬) 요청 — 도착하면 봇에 뒤따라 전달. 참여 자체는 기다리지 않는다
+      const policyP = gameId ? fetch(`/api/ai-bj/coach?gameId=${gameId}`).then(r => r.json()).catch(() => null) : Promise.resolve(null)
+      setTimeout(() => {
         if (win) {
           win.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*')
-          if (gameId) { try { const r = await fetch(`/api/ai-bj/coach?gameId=${gameId}`); const j = await r.json(); if (j.policy) { policyRef.current = j.policy; win.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*') } if (j.brain) win.postMessage({ type: 'vibrex:brain', brain: j.brain }, '*') } catch { /* ignore */ } }
           win.postMessage({ type: 'vibrex:autopilot', on: true }, '*')
           win.postMessage({ type: 'vibrex:manifest-request' }, '*')
+          void policyP.then(j => { if (!j || !joinedRef.current) return; if (j.policy) { policyRef.current = j.policy; win.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*') } if (j.brain) win.postMessage({ type: 'vibrex:brain', brain: j.brain }, '*') })
         }
         setJoined(true)
         // 브리지가 심어졌으면(우리 오리진·프록시 성공) ack 가 온다 → 진짜 AI 참여. 안 오면(순수 외부) 동반 모드로 표시.
         setTimeout(() => { if (!ackRef.current) setCompanion({ image }); else setCompanion(null) }, 1200)
-      }, 700)
+      }, 350)
     }
     window.addEventListener('avatar:snapshot', onSnap)
     return () => window.removeEventListener('avatar:snapshot', onSnap)
@@ -521,9 +523,11 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
               <p className="text-[9px] font-bold tracking-[0.14em] text-[#ff6b6b] mt-0.5">LIVE</p>
             </div>
             {canJoin && (
-              <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()}
-                className={`h-7 px-3 rounded-full text-[11px] font-bold tracking-wide shrink-0 transition ${joined ? 'bg-white/15 text-white hover:bg-white/25' : 'bg-white text-[#111] hover:bg-[#e8f1ff]'}`}>
-                {joined ? '복귀' : '게임 참여'}
+              <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()} aria-label={joined ? '복귀' : '게임 참여'} title={joined ? '복귀 — AI 플레이 중지' : '게임 참여 — 내 AJ 가 대신 플레이'}
+                className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center transition ${joined ? 'bg-white/15 text-white hover:bg-white/25' : 'bg-white text-[#111] hover:bg-[#e8f1ff] shadow-[0_0_0_3px_rgba(255,255,255,0.15)]'}`}>
+                {joined
+                  ? <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg>
+                  : <svg viewBox="0 0 24 24" className="w-4 h-4 ml-0.5" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" /></svg>}
               </button>
             )}
           </div>
@@ -592,7 +596,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
               <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-black/80 ${mAvatarHidden ? 'bg-[#9ca3af]' : 'bg-[#ef4444] animate-pulse'}`} />
             </button>
             <div className="min-w-0 flex-1 leading-tight"><p className="font-pixel text-[9px] text-white truncate">{bjLabel}</p><p className="text-[8px] font-bold tracking-[0.12em] text-[#ff6b6b]">{mAvatarHidden ? 'HIDDEN' : 'LIVE'}</p></div>
-            {canJoin && <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()} className={`h-6 px-2 rounded-full text-[10px] font-bold shrink-0 ${joined ? 'bg-white/15 text-white' : 'bg-white text-[#111]'}`}>{joined ? '복귀' : '참여'}</button>}
+            {canJoin && <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()} aria-label={joined ? '복귀' : '게임 참여'} className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center ${joined ? 'bg-white/15 text-white' : 'bg-white text-[#111]'}`}>{joined ? <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg> : <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 ml-0.5" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" /></svg>}</button>}
           </div>
         </div>
       </div>
