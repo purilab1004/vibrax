@@ -56,6 +56,14 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     window.addEventListener('message', h); return () => window.removeEventListener('message', h)
   }, [open])
   useEffect(() => { if (open) return; const t = setTimeout(() => setPaused(false), 0); return () => clearTimeout(t) }, [open])
+  // 네이티브 앱(iOS/Android) — 플레이 중엔 하단 탭바·상단 상태바 영역을 없애 게임이 전체 화면을 채우게 한다
+  useEffect(() => {
+    if (!open) return
+    const w = window as unknown as { ReactNativeWebView?: { postMessage: (m: string) => void } }
+    const post = (on: boolean) => { try { w.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'play', on })) } catch { /* */ } }
+    post(true)
+    return () => post(false)
+  }, [open])
   useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록 (게임이 바뀌면 새 세션)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
@@ -222,6 +230,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       {open && (
         <div
           className="fixed inset-0 z-[70] flex flex-col bg-black"
+          style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
           <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={rotStyle} data-rotated={rotated ? '1' : undefined}>

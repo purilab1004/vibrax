@@ -54,6 +54,7 @@ function Shell() {
   const [canGoBack, setCanGoBack] = useState(false)
   const [active, setActive] = useState<string | null>('/')
   const [tabBarHidden, setTabBarHidden] = useState(false)
+  const [playing, setPlaying] = useState(false) // 게임 플레이 중 — 탭바·상태바 숨기고 전체 화면
   const [booting, setBooting] = useState(true)
   const [splashGone, setSplashGone] = useState(false)
   const [navLoading, setNavLoading] = useState(false)
@@ -98,7 +99,8 @@ function Shell() {
   // 웹 → 네이티브 메시지: 라우트 동기화(탭 활성/숨김) + OAuth
   const onMessage = useCallback(async (e: { nativeEvent: { data: string } }) => {
     try {
-      const msg = JSON.parse(e.nativeEvent.data) as { type?: string; url?: string; path?: string; hideTabBar?: boolean }
+      const msg = JSON.parse(e.nativeEvent.data) as { type?: string; url?: string; path?: string; hideTabBar?: boolean; on?: boolean }
+      if (msg.type === 'play') { setPlaying(!!msg.on); return }
       if (msg.type === 'route') {
         if (typeof msg.path === 'string') setActive(matchTab(msg.path))
         setTabBarHidden(!!msg.hideTabBar)
@@ -124,9 +126,9 @@ function Shell() {
   }, [stopNavLoading])
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="dark" />
-      <SafeAreaView style={styles.safe} edges={['top']}>
+    <View style={[styles.root, playing && styles.safePlaying]}>
+      <StatusBar style={playing ? 'light' : 'dark'} hidden={playing} />
+      <SafeAreaView style={[styles.safe, playing && styles.safePlaying]} edges={playing ? [] : ['top']}>
         <WebView
           ref={webRef}
           source={{ uri: SITE }}
@@ -152,7 +154,7 @@ function Shell() {
         />
       </SafeAreaView>
 
-      {!tabBarHidden && <TabBar active={active} onPress={go} bottomInset={insets.bottom} />}
+      {!tabBarHidden && !playing && <TabBar active={active} onPress={go} bottomInset={insets.bottom} />}
 
       {splashGone && navLoading && <MiniMascotLoader />}
 
@@ -283,6 +285,7 @@ function MiniMascotLoader() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fcfaf5' },
   safe: { flex: 1, backgroundColor: '#fcfaf5' },
+  safePlaying: { backgroundColor: '#000' },
   web: { flex: 1, backgroundColor: '#fcfaf5' },
   tabbar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',

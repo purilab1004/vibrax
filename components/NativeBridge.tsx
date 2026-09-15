@@ -14,6 +14,11 @@ export default function NativeBridge() {
     if (typeof navigator === 'undefined' || !/VibrexcupApp/i.test(navigator.userAgent)) return
     const w = window as unknown as { __vibexNav?: (p: string) => void }
     w.__vibexNav = (path: string) => { try { router.push(path) } catch { /* noop */ } }
+    // 앱에서는 노치·홈바 영역까지 웹뷰가 차지할 수 있게(viewport-fit=cover) → 게임 플레이 시 env(safe-area-inset-*) 로 여백 계산
+    try {
+      const m = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null
+      if (m && !/viewport-fit/.test(m.content)) m.content = `${m.content}, viewport-fit=cover`
+    } catch { /* noop */ }
     return () => { delete w.__vibexNav }
   }, [router])
 
