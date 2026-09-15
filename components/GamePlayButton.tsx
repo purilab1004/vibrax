@@ -81,10 +81,10 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     return () => clearTimeout(t)
   }, [open])
   // 헤더가 게임 위에 겹치므로, 게임 쪽 상단 UI(AI PLAYING 배지·HUD)가 피해야 할 높이 = safe-area + 버튼 줄(56)
-  const headerBottom = (rotated ? (safe.top ? 20 : 0) : safe.top) + 56
+  const headerBottom = (rotated ? (safe.top ? 6 : 0) : safe.top) + 56
   // safe-area 변수 — 세로: 위 카메라·아래 홈바. 가로(90° 회전): 회전된 위/아래 = 기기 좌/우 모서리(라운드) → 20px, 회전된 왼쪽 = 기기 위(카메라), 오른쪽 = 기기 아래(홈바 21)
   const safeVars: Record<string, string> = rotated
-    ? { '--vbx-safe-top': `${safe.top ? 20 : 0}px`, '--vbx-safe-bottom': `${safe.top ? 20 : 0}px`, '--vbx-safe-left': `${safe.top}px`, '--vbx-safe-right': `${safe.top ? 21 : 0}px` }
+    ? { '--vbx-safe-top': `${safe.top ? 6 : 0}px`, '--vbx-safe-bottom': `${safe.top ? 20 : 0}px`, '--vbx-safe-left': `${safe.top}px`, '--vbx-safe-right': `${safe.top ? 21 : 0}px` }
     : { '--vbx-safe-top': `max(env(safe-area-inset-top, 0px), ${safe.top}px)`, '--vbx-safe-bottom': `max(env(safe-area-inset-bottom, 0px), ${safe.bottom}px)`, '--vbx-safe-left': '0px', '--vbx-safe-right': '0px' }
   // 게임에 알리는 호스트 정보 — bottomInset: 하단 AJ 띠+홈바(조이스틱 위치), topInset: AI PLAYING 배지 위치(헤더가 겹칠 때 56, 띠일 땐 8)
   const hostMsg = () => ({ type: 'vibrex:host', pause: true, bottomInset: (window.matchMedia('(max-width: 767px)').matches ? 56 : 0) + (rotated ? (safe.top ? 20 : 0) : safe.bottom), topInset: headerBottom, leftInset: rotated ? 44 : 0 })  // 가로: 조이스틱을 기기 위쪽(카메라 쪽) 모서리에서 조금 더 안쪽으로
