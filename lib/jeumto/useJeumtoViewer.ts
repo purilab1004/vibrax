@@ -21,8 +21,11 @@ export function useJeumtoViewer(
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const v = createJeumtoViewer(el, { interactive, shadows, zoom }) as unknown as JeumtoViewerHandle
+    // WebGL 컨텍스트를 못 만드는 환경(GPU 차단·컨텍스트 한도 초과 등)에서 예외가 페이지 전체를 오류 화면으로 떨어뜨리지 않게 — 아바타만 비운다
+    let v: JeumtoViewerHandle | null = null
+    try { v = createJeumtoViewer(el, { interactive, shadows, zoom }) as unknown as JeumtoViewerHandle }
+    catch (e) { console.warn('[jeumto] viewer unavailable (WebGL)', e); el.innerHTML = ''; return }
     viewerRef.current = v
-    return () => { viewerRef.current = null; v.dispose() }
+    return () => { viewerRef.current = null; try { v?.dispose() } catch { /* */ } }
   }, [containerRef, viewerRef, interactive, shadows, zoom])
 }

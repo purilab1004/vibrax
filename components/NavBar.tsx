@@ -15,6 +15,12 @@ export default function NavBar() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
+  // 검색 결과 페이지에서는 현재 검색어(?q=)를 입력창에 그대로 보여준다 (별도 안내 줄 없이). useSearchParams 는 Suspense 요구가 있어 location 으로 읽는다.
+  useEffect(() => {
+    const read = () => { try { setQuery(new URLSearchParams(window.location.search).get('q') ?? '') } catch { /* */ } }
+    const t = setTimeout(read, 0); window.addEventListener('popstate', read)
+    return () => { clearTimeout(t); window.removeEventListener('popstate', read) }
+  }, [pathname])
   const [scrolled, setScrolled] = useState(false)
   const [vcoin, setVcoin] = useState<number | null>(null)
   const [hideMobile, setHideMobile] = useState(false)
