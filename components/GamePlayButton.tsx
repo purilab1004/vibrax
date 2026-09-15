@@ -213,7 +213,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       {/* 아케이드 START — 카드 뒷면과 같은 빨간 돔 버튼, 큼직하게 */}
       <button
         onClick={handlePlay}
-        className="shrink-0 rounded-full bg-gradient-to-b from-[#ff6a52] to-[#d92c1a] text-white font-pixel text-[15px] tracking-[0.2em] px-12 py-5 shadow-[inset_0_3px_6px_rgba(255,255,255,0.35),0_6px_0_#8f1508,0_12px_22px_rgba(0,0,0,0.35)] active:translate-y-1.5 active:shadow-[inset_0_3px_6px_rgba(255,255,255,0.35),0_2px_0_#8f1508] transition-all whitespace-nowrap"
+        className="shrink-0 rounded-full bg-gradient-to-b from-[#ff6a52] to-[#d92c1a] text-white font-pixel text-[13px] tracking-[0.2em] px-10 h-12 flex items-center justify-center shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),0_4px_0_#8f1508,0_8px_16px_rgba(0,0,0,0.3)] active:translate-y-[2px] active:shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),0_2px_0_#8f1508] transition-all whitespace-nowrap"
       >
         ▶ START
       </button>
