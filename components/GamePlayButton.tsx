@@ -36,6 +36,18 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const [warp, setWarp] = useState<'out' | 'hold' | 'in' | null>(null)   // 텔레포트 연출 단계
   // 플랫폼 공통 일시정지 — 게임 iframe 에 {type:'vibrex:pause'} 를 보내면 PAUSE_SHIM 이 루프·타이머·오디오를 멈춘다
   const [paused, setPaused] = useState(false)
+  // 가로/세로 전환(모바일) — 화면 방향 잠금 API 는 iOS 가 지원하지 않아, 게임 박스를 90° 회전시켜 가로 뷰포트로 보여준다
+  const [rotated, setRotated] = useState(false)
+  const gameAreaRef = useRef<HTMLDivElement | null>(null)
+  const [area, setArea] = useState({ w: 0, h: 0 })
+  useEffect(() => {
+    if (!open) return
+    const el = gameAreaRef.current; if (!el) return
+    const ro = new ResizeObserver(([e]) => { const r = e.contentRect; setArea({ w: r.width, h: r.height }) })
+    ro.observe(el); return () => ro.disconnect()
+  }, [open])
+  useEffect(() => { if (open) return; const t = setTimeout(() => setRotated(false), 0); return () => clearTimeout(t) }, [open])
+  const rotStyle: React.CSSProperties | undefined = rotated && area.w > 0 ? { width: area.h, height: area.w, top: (area.h - area.w) / 2, left: (area.w - area.h) / 2, transform: 'rotate(90deg)', transformOrigin: 'center', inset: 'auto' } : undefined
   const frameRef = useRef<HTMLIFrameElement | null>(null)
   const togglePause = () => { const next = !paused; setPaused(next); try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:pause', on: next }, '*') } catch { /* */ } }
   useEffect(() => {
@@ -212,11 +224,11 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           className="fixed inset-0 z-[70] flex flex-col bg-black"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
-          <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} paused={paused} onTogglePause={togglePause} />
+          <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} />
           <div className="relative flex flex-row flex-1 min-h-0">
-            <div className="relative flex-1 min-h-0">
+            <div ref={gameAreaRef} className="relative flex-1 min-h-0 overflow-hidden">
               <TransportBar key={game.id} gameId={game.id} active={open} />
-              <div className="absolute inset-0">
+              <div className={`absolute inset-0 ${rotated ? "bg-black" : ""}`} style={rotStyle}>
               {warp && (
                 <div className={`teleport-warp teleport-${warp}`} aria-hidden>
                   <span className="teleport-ring" /><span className="teleport-ring" style={{ animationDelay: '.3s' }} /><span className="teleport-ring" style={{ animationDelay: '.6s' }} />
