@@ -569,21 +569,20 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
         ) : (
           /* 닫힘 — 다시 열기 버블 */
           <button onClick={() => setMChatOpen(true)} aria-label="AJ 채팅 열기"
-            className="pointer-events-auto absolute left-3 bottom-3 w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-[0_6px_18px_rgba(0,0,0,0.4)] text-white flex items-center justify-center active:scale-95 transition">
+            className="pointer-events-auto absolute left-3 bottom-1 w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-[0_6px_18px_rgba(0,0,0,0.4)] text-white flex items-center justify-center active:scale-95 transition">
             <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-11.9 7.6L4 20l1-4.1A8.4 8.4 0 1 1 21 11.5Z" /></svg>
             {unread > 0 && <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[10px] font-extrabold flex items-center justify-center animate-pulse">{unread > 99 ? '99+' : unread}</span>}
           </button>
         )}
         {/* 우하단 — 아바타(드래그 이동, 배지 탭으로 숨기기/보이기) + 네임 배지 */}
-        <div className="absolute right-2 bottom-2.5 w-[116px] pointer-events-auto select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
-          <div className={`relative aj-stage aj-stage-desk aj-drag ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible && !mAvatarHidden ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: camera ? 90 : 132 }}
-            onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
+        <div className="absolute right-2 bottom-1.5 w-[116px] pointer-events-none select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
+          <div className={`relative aj-stage aj-stage-desk pointer-events-none ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible && !mAvatarHidden ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: camera ? 90 : 132 }}>
             {isMobile && bjAvatar}
             {speaking && !camera && !mAvatarHidden && (
               <div className="aj-typing" aria-hidden><svg viewBox="0 0 64 56" className="w-full h-full"><path d="M32 6c14.9 0 26 9 26 20.5S46.9 47 32 47c-2.1 0-4.2-.2-6.2-.5L14 53l2.4-10.8C9.9 38.4 6 32.8 6 26.5 6 15 17.1 6 32 6Z" fill="rgba(10,12,18,0.6)" stroke="#ffffff" strokeWidth="3.5" strokeLinejoin="round" /><circle cx="21" cy="27" r="3.6" fill="#ffffff" className="aj-dot" /><circle cx="32" cy="27" r="3.6" fill="#ffffff" className="aj-dot" style={{ animationDelay: '.18s' }} /><circle cx="43" cy="27" r="3.6" fill="#ffffff" className="aj-dot" style={{ animationDelay: '.36s' }} /></svg></div>
             )}
           </div>
-          <div className="aj-drag relative flex items-center gap-1.5 bg-black/45 backdrop-blur-md rounded-full pl-1 pr-1 py-1 border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.45)]" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
+          <div className="aj-drag pointer-events-auto relative flex items-center gap-1.5 bg-black/45 backdrop-blur-md rounded-full pl-1 pr-1 py-1 border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.45)]" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
             <button onClick={e => { e.stopPropagation(); setMAvatarHidden(v => !v) }} onPointerDown={e => e.stopPropagation()} className="relative shrink-0" aria-label={mAvatarHidden ? '아바타 보이기' : '아바타 숨기기'} title={mAvatarHidden ? '아바타 보이기' : '아바타 숨기기'}>
               <div className="avatar-ring"><div className="avatar-wave w-7 h-7 rounded-full overflow-hidden"><Image src={bjPic ?? '/aibot.png'} alt={bjLabel} width={28} height={28} className={`w-full h-full object-cover ${bjPic ? 'avatar-bob object-top' : ''}`} unoptimized /></div></div>
               <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-black/80 ${mAvatarHidden ? 'bg-[#9ca3af]' : 'bg-[#ef4444] animate-pulse'}`} />
