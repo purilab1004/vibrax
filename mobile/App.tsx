@@ -147,7 +147,7 @@ function Shell() {
           overScrollMode="never"
           androidLayerType="hardware"
           nestedScrollEnabled
-          decelerationRate="normal"
+          decelerationRate="fast"
           userAgent={`VibrexcupApp/${Constants.expoConfig?.version} (${Platform.OS})`}
         />
       </SafeAreaView>

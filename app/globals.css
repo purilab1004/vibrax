@@ -868,11 +868,11 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
 @keyframes vbxLoadWinkClosed { 0%,70%,100% { opacity: 0 } 76%,88% { opacity: 1 } }
 @media (prefers-reduced-motion: reduce) { .vbx-load, .vbx-eye-open, .vbx-eye-wink { animation: none } .vbx-eye-wink { opacity: 0 } }
 
-/* iOS 카드 스크롤 완화 — iOS WebView/Safari 는 문서 레벨 mandatory 스냅 + scroll-snap-stop:always 를
-   무겁게(뻑뻑하게) 처리한다. iOS 에서만 proximity + stop:normal 로 바꿔 안드로이드/웹처럼 가볍게 굴러가게. */
-html.vbx-ios { scroll-snap-type: y proximity; -webkit-overflow-scrolling: touch; }
-html.vbx-ios.home-snap { scroll-snap-type: y proximity; }
-html.vbx-ios .feed-snap { scroll-snap-stop: normal; }
+/* iOS(앱·Safari)도 PC·안드로이드와 동일하게 한 장씩 강제 스냅 — 예전 proximity 완화 규칙은 카드가 계속 굴러가 버려 제거.
+   부드러움은 앱 WebView 의 decelerationRate="fast" 로 확보 (플릭이 빨리 멈추고 다음 카드에 안착). */
+html.vbx-ios { scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; }
+html.vbx-ios.home-snap { scroll-snap-type: y mandatory; }
+html.vbx-ios .feed-snap { scroll-snap-align: start; scroll-snap-stop: always; }
 
 /* 홈 상단 프로모 배너 — 네비 아래에서 자연스럽게 내려온다 */
 .banner-drop { animation: bannerDrop .7s cubic-bezier(.2, .8, .2, 1) both; }

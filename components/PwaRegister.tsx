@@ -2,7 +2,7 @@
 // 서비스워커 등록 — 프로덕션에서만. PWA 설치 프롬프트/오프라인 지원.
 import { useEffect } from 'react'
 export default function PwaRegister() {
-  // iOS 감지 — iOS WebView/Safari 는 문서 스냅 스크롤이 무겁게 느껴져, .vbx-ios 로 스냅을 부드럽게 완화한다(globals.css)
+  // iOS 감지 — .vbx-ios 로 iOS 전용 스크롤 규칙(globals.css: 한 장씩 mandatory 스냅 + 터치 스크롤)을 적용한다
   useEffect(() => {
     if (typeof navigator === 'undefined') return
     const ua = navigator.userAgent
