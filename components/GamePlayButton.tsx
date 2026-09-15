@@ -69,12 +69,28 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   useEffect(() => {
     if (!open) return
     const w = window as unknown as { VIBREX_INSETS?: { top?: number; bottom?: number } }
-    if (w.VIBREX_INSETS) { setSafe({ top: w.VIBREX_INSETS.top ?? 0, bottom: w.VIBREX_INSETS.bottom ?? 0 }); return }
-    if (!/VibrexcupApp\/[\d.]+ \(ios\)/i.test(navigator.userAgent)) return
-    const h = Math.max(window.screen.width, window.screen.height)
-    const top = h >= 870 ? 62 : h === 852 || h === 932 ? 59 : h >= 812 ? 47 : 0
-    setSafe({ top, bottom: top ? 34 : 0 })
+    const calc = () => {
+      if (w.VIBREX_INSETS) return { top: w.VIBREX_INSETS.top ?? 0, bottom: w.VIBREX_INSETS.bottom ?? 0 }
+      if (!/VibrexcupApp\/[\d.]+ \(ios\)/i.test(navigator.userAgent)) return { top: 0, bottom: 0 }
+      const h = Math.max(window.screen.width, window.screen.height)
+      const top = h >= 870 ? 62 : h === 852 || h === 932 ? 59 : h >= 812 ? 47 : 0
+      return { top, bottom: top ? 34 : 0 }
+    }
+    const t = setTimeout(() => setSafe(calc()), 0)
+    return () => clearTimeout(t)
   }, [open])
+  const banded = !rotated && vp.w > 0 && vp.w < 768
+  // safe-area 변수 — 세로: 위 카메라·아래 홈바. 가로(90° 회전): 회전된 위/아래 = 기기 좌/우 모서리(라운드) → 20px, 회전된 왼쪽 = 기기 위(카메라), 오른쪽 = 기기 아래(홈바 21)
+  const safeVars: Record<string, string> = rotated
+    ? { '--vbx-safe-top': `${safe.top ? 20 : 0}px`, '--vbx-safe-bottom': `${safe.top ? 20 : 0}px`, '--vbx-safe-left': `${safe.top}px`, '--vbx-safe-right': `${safe.top ? 21 : 0}px` }
+    : { '--vbx-safe-top': `max(env(safe-area-inset-top, 0px), ${safe.top}px)`, '--vbx-safe-bottom': `max(env(safe-area-inset-bottom, 0px), ${safe.bottom}px)`, '--vbx-safe-left': '0px', '--vbx-safe-right': '0px' }
+  // 게임에 알리는 호스트 정보 — bottomInset: 하단 AJ 띠+홈바(조이스틱 위치), topInset: AI PLAYING 배지 위치(헤더가 겹칠 때 56, 띠일 땐 8)
+  const hostMsg = () => ({ type: 'vibrex:host', pause: true, bottomInset: (window.matchMedia('(max-width: 767px)').matches ? 56 : 0) + (rotated ? (safe.top ? 20 : 0) : safe.bottom), topInset: banded ? 8 : 56 + (rotated && safe.top ? 20 : 0) })
+  useEffect(() => {
+    if (!open) return
+    try { frameRef.current?.contentWindow?.postMessage({ ...hostMsg(), pause: undefined }, '*') } catch { /* */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [banded, safe.bottom])
   useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록 (게임이 바뀌면 새 세션)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
@@ -243,12 +259,13 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           className="fixed inset-0 z-[70] flex flex-col bg-black"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
-          <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={{ ...(rotStyle ?? {}), ['--vbx-safe-top' as string]: rotated ? '0px' : `max(env(safe-area-inset-top, 0px), ${safe.top}px)`, ['--vbx-safe-bottom' as string]: rotated ? '0px' : `max(env(safe-area-inset-bottom, 0px), ${safe.bottom}px)` } as React.CSSProperties} data-rotated={rotated ? '1' : undefined}>
+          <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={{ ...(rotStyle ?? {}), ...safeVars } as React.CSSProperties} data-rotated={rotated ? '1' : undefined}>
           <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} />
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0 overflow-hidden">
               <TransportBar key={game.id} gameId={game.id} active={open} />
-              <div className="absolute inset-0">
+              {/* 모바일 세로: 헤더(카메라 여백 + 버튼 줄)는 띠로 두고 게임은 그 아래부터 — 게임의 점수판·AI PLAYING 배지가 헤더에 가리지 않게. 가로·PC 는 헤더가 게임 위에 겹침 */}
+              <div className="absolute inset-0" style={banded ? { top: 'calc(var(--vbx-safe-top, 0px) + 3.75rem)' } : undefined}>
               {warp && (
                 <div className={`teleport-warp teleport-${warp}`} aria-hidden>
                   <span className="teleport-ring" /><span className="teleport-ring" style={{ animationDelay: '.3s' }} /><span className="teleport-ring" style={{ animationDelay: '.6s' }} />
@@ -266,7 +283,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                     allow="fullscreen; autoplay"
                     title={g.title}
                     ref={el => { if (!isPending) frameRef.current = el }}
-                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:host', pause: true, bottomInset: (window.matchMedia('(max-width: 767px)').matches ? 56 : 0) + (rotated ? 0 : safe.bottom) }, '*') } catch { /* */ } }}
+                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage(hostMsg(), '*') } catch { /* */ } }}
                     onError={(e) => { const f = e.currentTarget; if (f.src !== g.play_url) f.src = g.play_url }}
                   />
                 )
