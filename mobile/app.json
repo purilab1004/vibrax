@@ -2,7 +2,7 @@
   "expo": {
     "name": "Vibrexcup",
     "slug": "vibrexcup",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "vibrexcup",
@@ -22,7 +22,8 @@
         "NSCameraUsageDescription": "게임 방송을 위해 카메라를 사용합니다.",
         "NSMicrophoneUsageDescription": "게임 방송을 위해 마이크를 사용합니다.",
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "2"
     },
     "android": {
       "package": "com.puritechlab.vibrexcup",
@@ -34,7 +35,8 @@
         "CAMERA",
         "RECORD_AUDIO",
         "INTERNET"
-      ]
+      ],
+      "versionCode": 11
     },
     "web": {
       "favicon": "./assets/favicon.png"
