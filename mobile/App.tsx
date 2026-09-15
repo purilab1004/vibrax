@@ -27,7 +27,7 @@ const TABS: TabDef[] = [
   { key: '/', label: 'Home', icon: require('./assets/nav-home.png') },
   { key: '/games', label: 'Games', icon: require('./assets/nav-games.png') },
   { key: '/studio', label: 'Create', center: true },
-  { key: '/tournament', label: 'Reward', icon: require('./assets/nav-trophy.png') },
+  { key: '/tournament', label: 'Event', icon: require('./assets/nav-trophy.png') },
   { key: '/profile', label: 'My', icon: require('./assets/nav-profile.png') },
 ]
 

@@ -34,7 +34,7 @@ export default function FooterLinks() {
           <span className={head}>MENU</span>
           <Link href="/games" className={item}>GAMES</Link>
           <Link href="/studio" className={item}>STUDIO</Link>
-          <Link href="/tournament" className={item}>TOURNAMENT</Link>
+          <Link href="/tournament" className={item}>EVENT</Link>
           <Link href="/blog" className={item}>BLOG</Link>
           <Link href="/tech" className={item}>ENGINEERING</Link>
         </nav>
