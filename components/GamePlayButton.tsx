@@ -47,7 +47,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     ro.observe(el); return () => ro.disconnect()
   }, [open])
   useEffect(() => { if (open) return; const t = setTimeout(() => setRotated(false), 0); return () => clearTimeout(t) }, [open])
-  const rotStyle: React.CSSProperties | undefined = rotated && area.w > 0 ? { width: area.h, height: area.w, top: (area.h - area.w) / 2, left: (area.w - area.h) / 2, transform: 'rotate(90deg)', transformOrigin: 'center', inset: 'auto' } : undefined
+  const rotStyle: React.CSSProperties | undefined = rotated && area.w > 0 ? { inset: 'auto', top: (area.h - area.w) / 2, left: (area.w - area.h) / 2, width: area.h, height: area.w, transform: 'rotate(90deg)', transformOrigin: 'center' } : undefined
   const frameRef = useRef<HTMLIFrameElement | null>(null)
   const togglePause = () => { const next = !paused; setPaused(next); try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:pause', on: next }, '*') } catch { /* */ } }
   useEffect(() => {
