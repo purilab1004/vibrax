@@ -41,9 +41,10 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const [vp, setVp] = useState({ w: 0, h: 0 })
   useEffect(() => {
     if (!open) return
-    const read = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    const t = setTimeout(read, 0); window.addEventListener('resize', read)
-    return () => { clearTimeout(t); window.removeEventListener('resize', read) }
+    const read = () => setVp(v => (v.w === window.innerWidth && v.h === window.innerHeight) ? v : { w: window.innerWidth, h: window.innerHeight })
+    const ts = [0, 250, 600, 1200, 2500].map(ms => setTimeout(read, ms))
+    window.addEventListener('resize', read); window.visualViewport?.addEventListener('resize', read)
+    return () => { ts.forEach(clearTimeout); window.removeEventListener('resize', read); window.visualViewport?.removeEventListener('resize', read) }
   }, [open])
   useEffect(() => { if (open) return; const t = setTimeout(() => setRotated(false), 0); return () => clearTimeout(t) }, [open])
   // 오버레이 전체(헤더·게이지·게임·AJ 채팅/아바타)를 90° 회전 — 폭·높이를 맞바꿔 가로 화면처럼
@@ -79,18 +80,19 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     const t = setTimeout(() => setSafe(calc()), 0)
     return () => clearTimeout(t)
   }, [open])
-  const banded = !rotated && vp.w > 0 && vp.w < 768
+  // 헤더가 게임 위에 겹치므로, 게임 쪽 상단 UI(AI PLAYING 배지·HUD)가 피해야 할 높이 = safe-area + 버튼 줄(56)
+  const headerBottom = (rotated ? (safe.top ? 20 : 0) : safe.top) + 56
   // safe-area 변수 — 세로: 위 카메라·아래 홈바. 가로(90° 회전): 회전된 위/아래 = 기기 좌/우 모서리(라운드) → 20px, 회전된 왼쪽 = 기기 위(카메라), 오른쪽 = 기기 아래(홈바 21)
   const safeVars: Record<string, string> = rotated
     ? { '--vbx-safe-top': `${safe.top ? 20 : 0}px`, '--vbx-safe-bottom': `${safe.top ? 20 : 0}px`, '--vbx-safe-left': `${safe.top}px`, '--vbx-safe-right': `${safe.top ? 21 : 0}px` }
     : { '--vbx-safe-top': `max(env(safe-area-inset-top, 0px), ${safe.top}px)`, '--vbx-safe-bottom': `max(env(safe-area-inset-bottom, 0px), ${safe.bottom}px)`, '--vbx-safe-left': '0px', '--vbx-safe-right': '0px' }
   // 게임에 알리는 호스트 정보 — bottomInset: 하단 AJ 띠+홈바(조이스틱 위치), topInset: AI PLAYING 배지 위치(헤더가 겹칠 때 56, 띠일 땐 8)
-  const hostMsg = () => ({ type: 'vibrex:host', pause: true, bottomInset: (window.matchMedia('(max-width: 767px)').matches ? 56 : 0) + (rotated ? (safe.top ? 20 : 0) : safe.bottom), topInset: banded ? 8 : 56 + (rotated && safe.top ? 20 : 0) })
+  const hostMsg = () => ({ type: 'vibrex:host', pause: true, bottomInset: (window.matchMedia('(max-width: 767px)').matches ? 56 : 0) + (rotated ? (safe.top ? 20 : 0) : safe.bottom), topInset: headerBottom })
   useEffect(() => {
     if (!open) return
     try { frameRef.current?.contentWindow?.postMessage({ ...hostMsg(), pause: undefined }, '*') } catch { /* */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [banded, safe.bottom])
+  }, [headerBottom, safe.bottom])
   useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록 (게임이 바뀌면 새 세션)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
@@ -264,8 +266,8 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0 overflow-hidden">
               <TransportBar key={game.id} gameId={game.id} active={open} />
-              {/* 모바일 세로: 헤더(카메라 여백 + 버튼 줄)는 띠로 두고 게임은 그 아래부터 — 게임의 점수판·AI PLAYING 배지가 헤더에 가리지 않게. 가로·PC 는 헤더가 게임 위에 겹침 */}
-              <div className="absolute inset-0" style={banded ? { top: 'calc(var(--vbx-safe-top, 0px) + 3.75rem)' } : undefined}>
+              {/* 게임은 항상 화면 전체(카메라·홈바 뒤까지) — 헤더는 그 위에 겹친다. 게임엔 topInset(헤더 아래 y) 을 알려 AI PLAYING 배지·HUD 를 헤더 밑에 두게 한다 */}
+              <div className="absolute inset-0">
               {warp && (
                 <div className={`teleport-warp teleport-${warp}`} aria-hidden>
                   <span className="teleport-ring" /><span className="teleport-ring" style={{ animationDelay: '.3s' }} /><span className="teleport-ring" style={{ animationDelay: '.6s' }} />
