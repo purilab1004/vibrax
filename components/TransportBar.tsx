@@ -147,7 +147,7 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
       {!mobile && boardOpen && boardPanel}
       {!mobile && pickOpen && pickPanel}
       {/* 진행 바 + 이동 화살표 */}
-      <div className="pointer-events-auto flex items-center gap-2 w-full h-9 pl-2.5 pr-1 rounded-full bg-black/55 backdrop-blur-md border border-white/12 shadow-[0_2px_10px_rgba(0,0,0,0.35)] md:pl-3 md:pr-1">
+      <div className="pointer-events-auto flex items-center gap-2 w-full h-9 pl-2.5 pr-0 rounded-full bg-black/55 backdrop-blur-md border border-white/12 shadow-[0_2px_10px_rgba(0,0,0,0.35)] md:pl-3 overflow-hidden">
         {chain > 0 && <span className="text-[10.5px] font-bold text-[#fbbf24] whitespace-nowrap">🚀 {chain}연속</span>}
         <button type="button" onClick={() => { if (mobile && reached) { setPickOpen(v => !v); setBoardOpen(false) } else if (lb) setBoardOpen(v => !v) }} className="flex flex-col flex-1 min-w-0 text-left">
           <div className="flex items-baseline justify-between gap-2 text-[10px] md:text-[10.5px] text-white/80 leading-none mb-0.5 md:mb-1 whitespace-nowrap min-w-0">
@@ -164,7 +164,7 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
           disabled={!reached || !!going}
           title={reached ? `다음 게임: ${primary.title}` : (goal ? `목표 ${goal.toLocaleString()}점을 넘기면 열려요` : '한 판을 끝내면 열려요')}
           aria-label="다음 게임으로 이동"
-          className={`h-5 md:h-9 px-2 md:pl-3 md:pr-2.5 rounded-full flex items-center gap-1 md:gap-1.5 text-[10.5px] md:text-[12px] font-bold whitespace-nowrap shrink-0 transition-all ${reached ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white shadow-[0_0_0_4px_rgba(37,99,235,0.25)] transport-glow' : 'bg-white/10 text-white/35 cursor-not-allowed'}`}
+          className={`h-full px-3 md:pl-4 md:pr-3.5 rounded-full flex items-center gap-1 md:gap-1.5 text-[10.5px] md:text-[12px] font-bold whitespace-nowrap shrink-0 transition-all ${reached ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white shadow-[0_0_0_4px_rgba(37,99,235,0.25)] transport-glow' : 'bg-white/10 text-white/35 cursor-not-allowed'}`}
         >
           <span className="whitespace-nowrap">다음 게임</span>
           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
