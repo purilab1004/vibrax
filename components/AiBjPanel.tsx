@@ -524,10 +524,10 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
             </div>
             {canJoin && (
               <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()} aria-label={joined ? '복귀' : '게임 참여'} title={joined ? '복귀 — AI 플레이 중지' : '게임 참여 — 내 AJ 가 대신 플레이'}
-                className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center transition ${joined ? 'bg-white/15 text-white hover:bg-white/25' : 'bg-white text-[#111] hover:bg-[#e8f1ff] shadow-[0_0_0_3px_rgba(255,255,255,0.15)]'}`}>
+                className={`aj-join w-9 h-9 rounded-full shrink-0 flex items-center justify-center transition active:scale-95 ${joined ? 'bg-white/15 text-white hover:bg-white/25 border border-white/20' : 'aj-join-on bg-gradient-to-br from-[#3b82f6] via-[#22d3ee] to-[#a855f7] text-white shadow-[0_6px_18px_rgba(34,211,238,0.45)]'}`}>
                 {joined
-                  ? <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg>
-                  : <svg viewBox="0 0 24 24" className="w-4 h-4 ml-0.5" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" /></svg>}
+                  ? <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3.5" /></svg>
+                  : <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M13.5 2.5 4.5 13.5h6l-1.2 8 9.2-11.5h-6l1-7.5Z" /></svg>}
               </button>
             )}
           </div>
@@ -596,7 +596,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
               <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-black/80 ${mAvatarHidden ? 'bg-[#9ca3af]' : 'bg-[#ef4444] animate-pulse'}`} />
             </button>
             <div className="min-w-0 flex-1 leading-tight"><p className="font-pixel text-[9px] text-white truncate">{bjLabel}</p><p className="text-[8px] font-bold tracking-[0.12em] text-[#ff6b6b]">{mAvatarHidden ? 'HIDDEN' : 'LIVE'}</p></div>
-            {canJoin && <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()} aria-label={joined ? '복귀' : '게임 참여'} className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center ${joined ? 'bg-white/15 text-white' : 'bg-white text-[#111]'}`}>{joined ? <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg> : <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 ml-0.5" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" /></svg>}</button>}
+            {canJoin && <button onClick={e => { e.stopPropagation(); joined ? leaveGame() : joinGame() }} onPointerDown={e => e.stopPropagation()} aria-label={joined ? '복귀' : '게임 참여'} className={`aj-join w-7 h-7 rounded-full shrink-0 flex items-center justify-center active:scale-95 ${joined ? 'bg-white/15 text-white border border-white/20' : 'aj-join-on bg-gradient-to-br from-[#3b82f6] via-[#22d3ee] to-[#a855f7] text-white shadow-[0_4px_12px_rgba(34,211,238,0.45)]'}`}>{joined ? <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="3.5" /></svg> : <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"><path d="M13.5 2.5 4.5 13.5h6l-1.2 8 9.2-11.5h-6l1-7.5Z" /></svg>}</button>}
           </div>
         </div>
       </div>

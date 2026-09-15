@@ -44,7 +44,7 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
   )
   return (
     // 데스크톱: 히어로 다음 한 화면짜리 스냅 섹션 안에 /games 와 똑같은 피드 박스(헤더 높이만큼 뺀 높이)를 둔다
-    <div ref={rootRef} className="w-full md:h-[100svh] md:pt-[3.75rem] md:box-border feed-snap">
+    <div ref={rootRef} className="home-feed-wrap w-full md:h-[100svh] md:pt-[3.75rem] md:box-border feed-snap">
       {/* 모바일 — /games 처럼 우상단 검색 아이콘 → 패널(검색은 /games 로 이동, 카테고리 = 전체/영상/게임) */}
       <MobileGamesTools categories={pills} visible={inFeed} />
       <div className="md:flex md:gap-6 md:px-6">

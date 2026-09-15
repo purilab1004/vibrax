@@ -873,6 +873,11 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], 
 html.vbx-ios { scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; }
 html.vbx-ios.home-snap { scroll-snap-type: y mandatory; }
 html.vbx-ios .feed-snap { scroll-snap-align: start; scroll-snap-stop: always; }
+/* 모바일 홈 — 피드 전체를 감싸는 래퍼(수십 화면 높이)가 스냅 영역이 되면 WebKit 이 '영역 안 어디든 스냅 위치'로 봐서
+   카드 단위 스냅이 풀린다(홈만 계속 굴러가던 원인). 래퍼는 데스크톱(한 화면 높이)에서만 스냅 대상. */
+@media (max-width: 767px) {
+  .home-feed-wrap { scroll-snap-align: none !important; scroll-snap-stop: normal !important; }
+}
 
 /* 홈 상단 프로모 배너 — 네비 아래에서 자연스럽게 내려온다 */
 .banner-drop { animation: bannerDrop .7s cubic-bezier(.2, .8, .2, 1) both; }
@@ -907,3 +912,9 @@ html.vbx-ios .feed-snap { scroll-snap-align: start; scroll-snap-stop: always; }
 /* 모바일 transport 티커 — 후보 제목이 아래에서 올라오며 교체 */
 @keyframes transport-ticker { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .transport-ticker { display: inline-block; animation: transport-ticker .35s ease-out both; }
+
+/* AJ 참여 버튼 — 그라데이션 번개(AI 가 대신 플레이) + 은은한 링 펄스, 참여 중엔 정지(■)로 복귀 */
+.aj-join-on { position: relative; }
+.aj-join-on::after { content: ""; position: absolute; inset: -3px; border-radius: 9999px; border: 2px solid rgba(34,211,238,0.6); animation: ajJoinRing 1.8s ease-out infinite; pointer-events: none; }
+@keyframes ajJoinRing { 0% { transform: scale(0.85); opacity: 0.9 } 70% { transform: scale(1.35); opacity: 0 } 100% { transform: scale(1.35); opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .aj-join-on::after { animation: none; display: none } }

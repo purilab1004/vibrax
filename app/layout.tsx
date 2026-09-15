@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Press_Start_2P } from 'next/font/google'
 import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
 import './globals.css'
@@ -114,8 +114,12 @@ export const metadata: Metadata = {
   icons: { apple: '/apple-touch-icon.png' },
 }
 
-export const viewport = {
-  themeColor: '#2563eb',
+// 네이티브 앱(WebView)에서는 viewport-fit=cover 를 첫 HTML 에 넣어야 env(safe-area-inset-*) 가 계산된다
+// (뒤늦게 meta 를 바꾸면 iOS 가 무시) — 게임 플레이 전체 화면 시 카메라(다이내믹 아일랜드) 아래로 헤더를 내리는 데 필요.
+// 일반 Safari/PWA 는 그대로(cover 를 켜면 가로 모드에서 노치 뒤로 콘텐츠가 들어감).
+export async function generateViewport(): Promise<Viewport> {
+  const ua = (await headers()).get('user-agent') ?? ''
+  return { themeColor: '#2563eb', ...(/VibrexcupApp/i.test(ua) ? { viewportFit: 'cover' as const } : {}) }
 }
 
 async function detectLang(): Promise<Lang> {
