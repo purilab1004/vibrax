@@ -64,6 +64,17 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     post(true)
     return () => post(false)
   }, [open])
+  // 앱 전체 화면일 때 카메라(다이내믹 아일랜드)·홈바 여백 — 새 앱은 window.VIBREX_INSETS(실측), 구 앱은 iPhone 화면 높이(pt) 로 추정, 그 외 env() 만
+  const [safe, setSafe] = useState({ top: 0, bottom: 0 })
+  useEffect(() => {
+    if (!open) return
+    const w = window as unknown as { VIBREX_INSETS?: { top?: number; bottom?: number } }
+    if (w.VIBREX_INSETS) { setSafe({ top: w.VIBREX_INSETS.top ?? 0, bottom: w.VIBREX_INSETS.bottom ?? 0 }); return }
+    if (!/VibrexcupApp\/[\d.]+ \(ios\)/i.test(navigator.userAgent)) return
+    const h = Math.max(window.screen.width, window.screen.height)
+    const top = h >= 870 ? 62 : h === 852 || h === 932 ? 59 : h >= 812 ? 47 : 0
+    setSafe({ top, bottom: top ? 34 : 0 })
+  }, [open])
   useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록 (게임이 바뀌면 새 세션)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
@@ -230,7 +241,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       {open && (
         <div
           className="fixed inset-0 z-[70] flex flex-col bg-black"
-          style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          style={{ paddingTop: `max(env(safe-area-inset-top, 0px), ${safe.top}px)`, paddingBottom: `max(env(safe-area-inset-bottom, 0px), ${safe.bottom}px)` }}
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
           <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={rotStyle} data-rotated={rotated ? '1' : undefined}>

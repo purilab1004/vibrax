@@ -577,13 +577,13 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
         ) : (
           /* 닫힘 — 다시 열기 버블 */
           <button onClick={() => setMChatOpen(true)} aria-label="AJ 채팅 열기"
-            className="pointer-events-auto absolute left-3 bottom-1 w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-[0_6px_18px_rgba(0,0,0,0.4)] text-white flex items-center justify-center active:scale-95 transition">
+            className="pointer-events-auto absolute left-4 bottom-2 w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-[0_6px_18px_rgba(0,0,0,0.4)] text-white flex items-center justify-center active:scale-95 transition">
             <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-11.9 7.6L4 20l1-4.1A8.4 8.4 0 1 1 21 11.5Z" /></svg>
             {unread > 0 && <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[10px] font-extrabold flex items-center justify-center animate-pulse">{unread > 99 ? '99+' : unread}</span>}
           </button>
         )}
         {/* 우하단 — 아바타(드래그 이동, 배지 탭으로 숨기기/보이기) + 네임 배지 */}
-        <div className="absolute right-2 bottom-1.5 w-[116px] pointer-events-none select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
+        <div className="absolute right-3 bottom-2 w-[116px] pointer-events-none select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
           <div className={`relative aj-stage aj-stage-desk pointer-events-none ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible && !mAvatarHidden ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: camera ? 90 : 132 }}>
             {isMobile && bjAvatar}
             {speaking && !camera && !mAvatarHidden && (

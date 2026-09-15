@@ -137,7 +137,7 @@ function Shell() {
           onNavigationStateChange={(s) => setCanGoBack(s.canGoBack)}
           onShouldStartLoadWithRequest={onShouldStart}
           onMessage={onMessage}
-          injectedJavaScriptBeforeContentLoaded={APP_TWEAKS}
+          injectedJavaScriptBeforeContentLoaded={`${APP_TWEAKS}window.VIBREX_INSETS=${JSON.stringify({ top: insets.top, bottom: insets.bottom })};true;`}
           allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
           domStorageEnabled
