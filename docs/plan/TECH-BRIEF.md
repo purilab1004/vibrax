@@ -1,4 +1,8 @@
-# Vibrexcup 기술 브리프 (LLM 평가용 — 그대로 붙여 넣기)
+# Vibrexcup 기술 브리프 — 내부용(전체판). 외부에 붙여 넣을 땐 공개판 /llms-engineering.txt 를 쓸 것
+
+> 이 파일은 내부 식별자·조정값을 포함합니다. 저장소 밖으로 내보내지 마세요.
+
+# (원문)
 
 아래 내용을 ChatGPT / Gemini / Claude 에 붙여 넣고 이렇게 물어보세요:
 

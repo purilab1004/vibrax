@@ -13,38 +13,38 @@ const STATS: [string, string][] = [['27k', 'TypeScript LOC'], ['58', 'API 라우
 
 const SECTIONS: { id: string; h: string; en: string; p: string[]; code?: string }[] = [
   { id: 'contract', h: '게임 계약 — 하나의 에이전트가 모든 게임을 이해하는 이유', en: 'Game contract & Universal Action Space', p: [
-    '생성되는 모든 게임은 window.VIBREX_GAME 을 노출합니다. 매니페스트(제목·장르·목표·클리어 조건·조작), phase()·progress()·state(), 그리고 inputs 맵. 게임은 주입된 window.AJ 브리지로 start / score / level / over / clear 를 보고하고, 플레이어가 이를 텔레메트리 세션으로 저장합니다.',
+    '생성되는 모든 게임은 window.VIBREX_GAME 을 노출합니다. 매니페스트(제목·장르·목표·클리어 조건·조작), phase()·progress()·state(), 그리고 inputs 맵. 게임은 주입된 브리지로 start / score / level / over / clear 를 보고하고, 플레이어가 이를 텔레메트리 세션으로 저장합니다.',
     '보편 행동 공간(UAS): 조작은 고정 어휘로만 표현합니다 — left, right, up, down, jump, fire, guard, aimX/aimY, useItem, item1~4. 아이템이 몇 종이든 버튼은 늘지 않고 4개 퀵슬롯에 매핑됩니다. 행동 차원이 게임과 무관하게 고정되므로 하나의 신경망 정책이 게임 사이를 전이합니다.',
     '표준 관찰 슬롯: state() 는 targetDX/DY, dangerETA, groundDist, fireReady, health, progress 같은 의미 슬롯을 같은 눈금(위치 0~1, 방향 -1~1, 거리 0~1)으로 돌려줍니다.',
-    '컨트롤러 표준: 관리자 표(site_settings.controls)가 채널을 PC 키(방향키·스페이스·A·S·D·1~4)와 모바일 버튼에 매핑합니다. 플랫폼이 서빙 시점에 키 브리지와 터치 UI 를 모든 게임에 주입하므로, 기존 게임도 재생성 없이 새 표준을 따릅니다. 생성 프롬프트도 같은 표에서 만들어집니다.',
-  ], code: `window.VIBREX_GAME = {\n  title, genre, goal, clearCondition, controls: [{ input: 'Space', action: '점프' }],\n  phase: () => 'title' | 'playing' | 'paused' | 'over' | 'cleared',\n  progress: () => 0..1,\n  state: () => ({ score, lives, dangerETA, groundDist, onGround, fireReady, ... }),\n  inputs: { left(on), right(on), jump(on), fire(on), guard(on), useItem(on), item1(on) },\n  start(), restart()\n}\nwindow.vibrexBot = { start(), stop(), setWeights(w), getWeights(), featureNames(), candidates() }` },
+    '컨트롤러 표준: 관리자가 편집하는 매핑 표가 채널을 PC 키(방향키·스페이스·A·S·D·1~4)와 모바일 버튼에 매핑합니다. 플랫폼이 서빙 시점에 키 브리지와 터치 UI 를 모든 게임에 주입하므로, 기존 게임도 재생성 없이 새 표준을 따릅니다. 생성 프롬프트도 같은 표에서 만들어집니다.',
+  ], code: `window.GAME = {\n  title, genre, goal, clearCondition, controls: [{ input: 'Space', action: '점프' }],\n  phase: () => 'title' | 'playing' | 'paused' | 'over' | 'cleared',\n  progress: () => 0..1,\n  state: () => ({ score, lives, dangerETA, groundDist, onGround, fireReady, ... }),\n  inputs: { left(on), right(on), jump(on), fire(on), guard(on), useItem(on), item1(on) },\n  start(), restart()\n}` },
   { id: 'pipeline', h: '스튜디오 생성 파이프라인', en: 'Generation pipeline with cost routing and zero-cost templates', p: [
     '프롬프트(이미지·사운드 첨부 포함)는 먼저 템플릿과 대조됩니다 — 가장 긴 키워드 일치, 유사도 순위, 그리고 학습된 키워드→템플릿 매핑(MLPilot). 템플릿 적중은 LLM 토큰 0 이며 회원·프로젝트별로 제목·색조를 개인화해 서로 달라 보입니다.',
-    '그 외에는 TokenPilot 이 작업 종류(create / edit / template_edit)와 크기로 모델을 라우팅하고, 지출 가드와 호출별 사용량 로그를 남깁니다. Sonnet 5 의 적응형 사고는 effort 로 제한해 본문이 잘리지 않게 합니다.',
+    '그 외에는 TokenPilot 이 작업 종류(생성 / 수정 / 템플릿 수정)와 크기로 모델을 라우팅하고, 지출 가드와 호출별 사용량 로그를 남깁니다. 모델의 사고 예산은 제한해 본문이 잘리지 않게 합니다.',
     '출력은 파싱 → 하드닝(샌드박스 localStorage 폴백, AJ 텔레메트리, 아바타 참여, 오토파일럿, 터치, 키 브리지, 미디어·사운드 주입) → 버전 저장. 실패 시 서버가 크레딧을 환불합니다.',
     '첫 생성물은 템플릿 후보가 되고 AI 심사 + 관리자 승인으로 승격되어 다음 동일 요청은 무료가 됩니다. 오프라인 생성기는 파싱·UAS 검사·매니페스트/봇 존재·상태 슬롯 수·9초 헤드리스 크로미움 스모크(봇이 실제로 플레이해 점수를 내야 통과)를 최대 3회 피드백 루프로 돌립니다.',
   ] },
   { id: 'aj', h: 'AJ — 회원마다 하나씩 붙는 AI 에이전트', en: 'Per-user agent: broadcaster, player, analyst, external API', p: [
     '방송: 이미지→아바타 설정 생성, 장르별 페르소나, 게임 이벤트에 반응하는 실시간 중계 채팅, TTS.',
-    '플레이: 모든 템플릿은 가중치 API(setWeights/getWeights/featureNames/candidates)를 가진 vibrexBot 을 싣습니다. 학습은 (a) 커리큘럼 페이싱 신경진화, (b) 모방 우선 — 사람이 둔 수를 vibrex:demo-choice 로 기록하고 랜덤 서치로 가중치를 맞춤(fitWeightsFromChoices), (c) 코칭 — 자연어 요청이 botSkill 과 가중치를 조정, 세 가지를 합칩니다.',
-    '분석: /api/aj/analyze 가 실제 세션 지표로 게임별 사업 리포트(재미 점수, 퍼널, 이탈 구간, 스튜디오에 바로 넣을 튜닝 프롬프트, 방송 대본, 수익화 아이디어)를 씁니다.',
-    '외부: /api/v1/aj/{me,chat,tts} — 해시 저장 API 키(크롬 확장 키 무료, 개발자 키 프롬코인 과금), CORS, LLM·TTS 실패 시 환불. 크롬 확장(Manifest V3, 사이드 패널, 페이지 위 동반 캐릭터)이 이 API 를 씁니다.',
+    '플레이: 모든 템플릿은 가중치 API 를 가진 내장 봇을 싣습니다. 학습은 (a) 커리큘럼 페이싱 신경진화, (b) 모방 우선 — 사람이 둔 수를 기록하고 그 선택을 가장 잘 재현하는 가중치를 탐색, (c) 코칭 — 자연어 요청이 숙련도와 가중치를 조정, 세 가지를 합칩니다.',
+    '분석: 실제 세션 지표로 게임별 사업 리포트(재미 점수, 퍼널, 이탈 구간, 스튜디오에 바로 넣을 튜닝 프롬프트, 방송 대본, 수익화 아이디어)를 씁니다.',
+    '외부: 공개 REST API — 해시 저장 API 키(크롬 확장 키 무료, 개발자 키 프롬코인 과금), CORS, LLM·TTS 실패 시 환불. 크롬 확장(Manifest V3, 사이드 패널, 페이지 위 동반 캐릭터)이 이 API 를 씁니다.',
   ] },
   { id: 'designer', h: '자율 게임 디자이너 — 닫힌 루프', en: 'Autonomous designer: canary A/B with statistical adoption', p: [
-    '크론이 게임마다 루프를 돕니다: 리포트 → 튜닝 가설 → 후보 버전 생성 → 일부 플레이어에게 카나리 서빙(쿠키 vx_cb, X-Vibrex-Version, 세션에 version_id 태깅) → 복합 지표로 채점.',
-    '지표 가중치: 초반 이탈 0.35, 체류 0.25, 재시작 0.20, 클리어 0.20. 채택 ≥ +0.08, 되돌림 ≤ −0.05, 이탈 1.5배면 조기 되돌림, 최소 30세션, 7일 창. 실험은 aj_experiments 에 남고, 라이브 버전은 채택된 카나리와 최신 사람 버전 중 더 새 것입니다.',
+    '크론이 게임마다 루프를 돕니다: 리포트 → 튜닝 가설 → 후보 버전 생성 → 일부 플레이어에게 카나리 서빙(세션마다 어떤 버전을 봤는지 태깅) → 복합 지표로 채점.',
+    '복합 지표(초반 이탈·체류·재시작·클리어 가중 합)로 채점해 임계치를 넘으면 채택, 나빠지면 되돌리며, 이탈이 급증하면 조기 되돌림합니다. 최소 표본과 관찰 기간을 채워야 판정하고, 모든 실험은 기록으로 남습니다.',
   ] },
   { id: 'play', h: '플레이·발견·경제', en: 'Play, discovery, economy', p: [
-    '플레이 오버레이: AJ 패널, 아바타 참여, 텔레메트리 세션(최고점·체류·게임오버·클리어·자동플레이 여부·기기·지역).',
-    '게임별 회원 TOP 10(RPC, 자동플레이 제외). 10위권 진입(또는 관리자 목표 점수)이 "transport" 를 엽니다 — 같은 오버레이 안에서 다음 게임으로 순간이동(iframe 프리로드·교체, 코인 차감 병행, 연출), 후보는 같은 장르 인기·최신·랜덤.',
+    '플레이 오버레이: AJ 패널, 아바타 참여, 텔레메트리 세션(최고점·체류·게임오버·클리어·자동플레이 여부 등).',
+    '게임별 회원 TOP 10(자동플레이 제외). 10위권 진입(또는 관리자 목표 점수)이 "transport" 를 엽니다 — 같은 오버레이 안에서 다음 게임으로 순간이동(iframe 프리로드·교체, 코인 차감 병행, 연출), 후보는 같은 장르 인기·최신·랜덤.',
     '2중 화폐: 게임 코인(플레이·광고 예산)과 프롬코인(생성·API). Paddle 결제·웹훅, 가입 보너스, 토너먼트 상금, 서버 환불, 모든 테이블 RLS.',
-    '미디어 라이브러리: 캐릭터·배경·타일·아이템·UI·이펙트·스프라이트·오디오·3D. 업로드는 자동 WebP(픽셀아트·알파는 무손실, 사진은 손실, 2048px 초과 축소). 프롬프트 단어와 템플릿 장르로 점수를 매겨 게임에 data URI 로 주입(CSP 가 img-src data: 만 허용)하고 drawAsset / playAsset 헬퍼를 제공합니다.',
+    '미디어 라이브러리: 캐릭터·배경·타일·아이템·UI·이펙트·스프라이트·오디오·3D. 업로드는 자동 WebP(픽셀아트·알파는 무손실, 사진은 손실, 2048px 초과 축소). 프롬프트 단어와 템플릿 장르로 점수를 매겨 게임에 인라인으로 주입하고 그리기·재생 헬퍼를 제공합니다.',
     '홍보·운영: AdPilot 캠페인과 클릭 귀속, 관리자 편집 홈 배너, 블로그·공지, ko/en, PWA, 스토어 정책에 맞춰 디지털 재화 구매를 숨기는 네이티브 셸(iOS/Android).',
   ] },
   { id: 'ops', h: '운영', en: 'Operations', p: [
     '관리자 콘솔: 대시보드, 지도보드, 게임, 템플릿, 미디어, 컨트롤러, 회원, 파트너 신청(검토 사유), 방송, AJ 랭킹, 결제, AdPilot, TokenPilot(비용), LLMPilot(봇 접근 정책), MLPilot, 약관, 접속, 에러 로그, 보안·서버, 설정, 자동화 스위치와 상태 점.',
-    '봇 정책: robots.txt 와 미들웨어 UA 강제 — 검색 인덱서와 사용자 지시 브라우징 에이전트는 허용, 학습 크롤러는 기본 차단.',
-    '리전 정렬(Vercel sin1 ↔ Supabase 싱가포르), 크론 시크릿, 서비스 롤 격리, 엄격한 CSP 로 샌드박스 서빙.',
+    '봇 정책: robots.txt 와 서버 측 강제 — 검색 인덱서와 사용자 지시 브라우징 에이전트는 허용, 학습 크롤러는 기본 차단.',
+    '리전 정렬, 크론 인증, 서비스 롤 격리, 엄격한 CSP 로 샌드박스 서빙.',
   ] },
 ]
 
@@ -63,7 +63,7 @@ export default function TechPage() {
       <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         {STATS.map(([v, l]) => <div key={l} className="rounded-xl border border-[#ebe4d6] bg-white px-3 py-3"><p className="text-[20px] font-extrabold tabular-nums leading-none">{v}</p><p className="text-[11px] text-[#857a68] mt-1">{l}</p></div>)}
       </div>
-      <p className="mt-2 text-[11px] text-[#9d9280]">2026-09-15 저장소 기준. 스택: Next.js 16 · Supabase(싱가포르) · Vercel sin1 · Anthropic Claude · Paddle · Expo.</p>
+      <p className="mt-2 text-[11px] text-[#9d9280]">2026-09-15 저장소 기준. 스택: Next.js · Supabase · Vercel · Anthropic Claude · Paddle · Expo.</p>
 
       <nav className="mt-8 flex flex-wrap gap-2">
         {SECTIONS.map(s => <a key={s.id} href={`#${s.id}`} className="text-[12px] px-3 py-1.5 rounded-full border border-[#ddd3bf] bg-white hover:border-[#2563eb] hover:text-[#2563eb]">{s.h.split(' — ')[0]}</a>)}
