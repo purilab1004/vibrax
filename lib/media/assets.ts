@@ -106,10 +106,13 @@ export async function getAssetsByIds(admin: SupabaseClient, ids: string[]): Prom
 }
 
 /** 스토리지에서 받아 data URI 로 — 크기 제한 초과분은 버린다 */
-export async function loadAssetData(assets: MediaAssetLite[]): Promise<LoadedAsset[]> {
+export async function loadAssetData(assets: MediaAssetLite[], opts: { totalMax?: number; maxCount?: number } = {}): Promise<LoadedAsset[]> {
   const out: LoadedAsset[] = []; let total = 0
-  for (const a of assets.slice(0, ASSET_MAX_COUNT)) {
-    if (!INJECTABLE.has(a.kind) || a.bytes > ASSET_MAX_BYTES || total + a.bytes > ASSET_TOTAL_MAX_BYTES) continue
+  const totalMax = opts.totalMax ?? ASSET_TOTAL_MAX_BYTES, maxCount = opts.maxCount ?? ASSET_MAX_COUNT
+  // 배경음(bgm)은 합계 제한에 걸려 마지막에 잘리기 쉬우니 먼저 싣는다
+  const ordered = [...assets].sort((a, b) => Number(b.kind === 'audio' && b.meta?.role === 'bgm') - Number(a.kind === 'audio' && a.meta?.role === 'bgm'))
+  for (const a of ordered.slice(0, maxCount)) {
+    if (!INJECTABLE.has(a.kind) || a.bytes > ASSET_MAX_BYTES || total + a.bytes > totalMax) continue
     try {
       const r = await fetch(a.url, { cache: 'force-cache' })
       if (!r.ok) continue
