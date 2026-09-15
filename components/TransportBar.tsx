@@ -58,14 +58,14 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
     if (!info) return
     const ok = (lb ? myRank > 0 : finished) || (info.goalSource === 'admin' && !!info.goal && score >= info.goal)
     if (!ok || reached) return
-    const t = setTimeout(() => { setReached(true); reachedAt.current = Date.now(); if (!mobile) setPickOpen(true) }, 0)
+    const t = setTimeout(() => { setReached(true); reachedAt.current = Date.now() }, 0)   // 달성 즉시 자동으로 펼치지 않음 — 버튼을 누르거나 한 판이 끝날 때만
     return () => clearTimeout(t)
   }, [info, lb, myRank, score, finished, reached, mobile])
   useEffect(() => {
-    if (!mobile || !reached || !finished || sheetShownOnFinish) return
+    if (!reached || !finished || sheetShownOnFinish) return
     const t = setTimeout(() => { setPickOpen(true); setSheetShownOnFinish(true) }, 400)
     return () => clearTimeout(t)
-  }, [mobile, reached, finished, sheetShownOnFinish])
+  }, [reached, finished, sheetShownOnFinish])
 
   const go = useCallback(async (c: Cand, picked: boolean) => {
     if (going) return
