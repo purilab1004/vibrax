@@ -36,6 +36,7 @@ export default function FooterLinks() {
           <Link href="/studio" className={item}>STUDIO</Link>
           <Link href="/tournament" className={item}>TOURNAMENT</Link>
           <Link href="/blog" className={item}>BLOG</Link>
+          <Link href="/tech" className={item}>ENGINEERING</Link>
         </nav>
 
         {/* 정책 · 연락처 */}
