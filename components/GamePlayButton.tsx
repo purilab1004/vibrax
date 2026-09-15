@@ -34,6 +34,16 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const game = cur.game, genreColor = cur.genreColor, genreLabel = cur.genreLabel, bjName = cur.bjName
   const [open, setOpen] = useState(false)
   const [warp, setWarp] = useState<'out' | 'hold' | 'in' | null>(null)   // 텔레포트 연출 단계
+  // 플랫폼 공통 일시정지 — 게임 iframe 에 {type:'vibrex:pause'} 를 보내면 PAUSE_SHIM 이 루프·타이머·오디오를 멈춘다
+  const [paused, setPaused] = useState(false)
+  const frameRef = useRef<HTMLIFrameElement | null>(null)
+  const togglePause = () => { const next = !paused; setPaused(next); try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:pause', on: next }, '*') } catch { /* */ } }
+  useEffect(() => {
+    if (!open) return
+    const h = (e: MessageEvent) => { const d = e.data as { type?: string; on?: boolean } | null; if (d && d.type === 'vibrex:paused') setPaused(!!d.on) }
+    window.addEventListener('message', h); return () => window.removeEventListener('message', h)
+  }, [open])
+  useEffect(() => { if (open) return; const t = setTimeout(() => setPaused(false), 0); return () => clearTimeout(t) }, [open])
   useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록 (게임이 바뀌면 새 세션)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
@@ -121,7 +131,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       if (!ok) { setWarp(null); setPending(null); alert(T.games.insufficientCoin); return }
       setWarp('hold')
       for (let i = 0; i < 50 && !pendingLoaded.current; i++) await sleep(50)   // 최대 2.5초 — 로드가 끝나면 즉시
-      setCur({ game: g, genreColor: GENRE_COLORS[c.genre] ?? 'bg-gray-700', genreLabel: (GENRE_LABELS[c.genre] ?? c.genre).toUpperCase(), bjName: null })
+      setCur({ game: g, genreColor: GENRE_COLORS[c.genre] ?? 'bg-gray-700', genreLabel: (GENRE_LABELS[c.genre] ?? c.genre).toUpperCase(), bjName: null }); setPaused(false)
       setPending(null)
       loadAvatarConfig(supabase, c.user_id).then(setBjAvatarConfig).catch(() => {})
       supabase.rpc('increment_view_count', { game_id: c.id }).then(() => {})
@@ -202,7 +212,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           className="fixed inset-0 z-[70] flex flex-col bg-black"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
-          <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} />
+          <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} paused={paused} onTogglePause={togglePause} />
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0">
               <TransportBar key={game.id} gameId={game.id} active={open} />
@@ -223,7 +233,8 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                     className={`absolute inset-0 w-full h-full border-0 ${isPending ? 'opacity-0 pointer-events-none' : warp === 'out' ? 'teleport-out' : warp === 'hold' ? 'opacity-0' : warp === 'in' ? 'teleport-in' : ''}`}
                     allow="fullscreen; autoplay"
                     title={g.title}
-                    onLoad={() => { if (isPending) pendingLoaded.current = true }}
+                    ref={el => { if (!isPending) frameRef.current = el }}
+                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:host', pause: true }, '*') } catch { /* */ } }}
                     onError={(e) => { const f = e.currentTarget; if (f.src !== g.play_url) f.src = g.play_url }}
                   />
                 )

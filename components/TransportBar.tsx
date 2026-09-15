@@ -143,7 +143,7 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
         <div className="relative px-2 pb-[60px] flex flex-col gap-2">{boardOpen ? boardPanel : pickPanel}</div>
       </div>
     )}
-    <div className="pointer-events-none absolute z-30 flex flex-col-reverse md:flex-col items-end gap-2 left-[84px] right-[108px] top-3 md:left-auto md:right-3 md:top-[60px] md:max-w-[min(92vw,20rem)]">
+    <div className="pointer-events-none absolute z-30 flex flex-col-reverse md:flex-col items-end gap-2 left-[60px] right-[108px] top-3 md:left-auto md:right-3 md:top-[60px] md:max-w-[min(92vw,20rem)]">
       {!mobile && boardOpen && boardPanel}
       {!mobile && pickOpen && pickPanel}
       {/* 진행 바 + 이동 화살표 */}

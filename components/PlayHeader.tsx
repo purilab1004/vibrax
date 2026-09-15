@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import LikeButton from './LikeButton'
 
-export default function PlayHeader({ genreLabel, genreColor, title, gameId, onClose }: { genreLabel: string; genreColor: string; title: string; gameId: string; onClose: () => void }) {
+export default function PlayHeader({ genreLabel, genreColor, title, gameId, onClose, paused, onTogglePause }: { genreLabel: string; genreColor: string; title: string; gameId: string; onClose: () => void; paused?: boolean; onTogglePause?: () => void }) {
   const [line, setLine] = useState<string | null>(title)
   const [key, setKey] = useState(0)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -18,7 +18,14 @@ export default function PlayHeader({ genreLabel, genreColor, title, gameId, onCl
     <div className="absolute inset-x-0 top-0 z-20 pointer-events-none">
       <div className="flex items-center gap-3 px-3 sm:px-4 pt-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <span className={`pointer-events-auto font-pixel text-[10px] px-2 py-1 text-white rounded-md shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.45)] ${genreColor}`}>{genreLabel}</span>
+          {onTogglePause && (
+            <button onClick={onTogglePause} aria-label={paused ? '계속하기' : '일시정지'} title={paused ? '계속하기' : '일시정지'} className={`pointer-events-auto h-9 w-9 rounded-full backdrop-blur-md border text-white flex items-center justify-center shrink-0 shadow-[0_2px_10px_rgba(0,0,0,0.35)] transition-colors ${paused ? 'bg-[#2563eb] border-[#2563eb]' : 'bg-black/45 border-white/15 hover:bg-white hover:text-black'}`}>
+              {paused
+                ? <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" /></svg>
+                : <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><rect x="5" y="4" width="5" height="16" rx="1.5" /><rect x="14" y="4" width="5" height="16" rx="1.5" /></svg>}
+            </button>
+          )}
+          <span className={`pointer-events-auto hidden md:inline-block font-pixel text-[10px] px-2 py-1 text-white rounded-md shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.45)] ${genreColor}`}>{genreLabel}</span>
           <div className="relative min-w-0 flex-1 h-6 overflow-hidden hidden md:block">
             {line && (
               <div key={key} className="absolute inset-x-0 bottom-0 truncate text-[13.5px] font-semibold text-white leading-6 [text-shadow:0_1px_6px_rgba(0,0,0,0.8)] play-line" title={line}>{line}</div>
