@@ -69,13 +69,12 @@ export default function ShareEmbed({ gameId, title }: { gameId: string; title: s
 
   return (
     <>
-      <button onClick={share} title={ko ? '게임 공유' : 'Share'} className="shrink-0 flex items-center justify-center gap-2 rounded-full font-pixel text-[12px] bg-[#ec4899] text-white px-6 md:px-7 hover:bg-[#db2777] transition-colors whitespace-nowrap tracking-widest shadow-[0_4px_0_#9d174d] active:translate-y-[2px] active:shadow-[0_2px_0_#9d174d] h-12">
+      <button onClick={share} title={ko ? '게임 공유' : 'Share'} className="shrink-0 flex items-center justify-center gap-2 rounded-full font-pixel text-[12px] bg-[#ec4899] text-white px-5 md:px-7 hover:bg-[#db2777] transition-colors whitespace-nowrap tracking-widest shadow-[0_4px_0_#9d174d] active:translate-y-[2px] active:shadow-[0_2px_0_#9d174d] h-12">
         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" /></svg>
         {ko ? '공유' : 'SHARE'}
       </button>
-      <button onClick={openEmbed} title={ko ? '다른 사이트에 임베드' : 'Embed on your site'} className="shrink-0 flex items-center justify-center gap-2 rounded-full font-pixel text-[12px] bg-[#241f17] text-white px-6 md:px-7 hover:bg-[#3b332a] transition-colors whitespace-nowrap tracking-widest shadow-[0_4px_0_#0d0b08] active:translate-y-[2px] active:shadow-[0_2px_0_#0d0b08] h-12">
-        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" /></svg>
-        {ko ? '임베드' : 'EMBED'}
+      <button onClick={openEmbed} aria-label={ko ? '다른 사이트에 임베드' : 'Embed on your site'} title={ko ? '임베드 코드' : 'Embed code'} className="!flex-none shrink-0 h-12 w-12 flex items-center justify-center rounded-full bg-[#241f17] text-white hover:bg-[#3b332a] transition-colors shadow-[0_4px_0_#0d0b08] active:translate-y-[2px] active:shadow-[0_2px_0_#0d0b08]">
+        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" /></svg>
       </button>
 
       {open && (

@@ -127,7 +127,7 @@ export default async function GameDetailPage({ params }: Props) {
             <LikeButton gameId={game.id} size="md" />
           </div>
         </div>
-        <div className="flex flex-wrap gap-3 shrink-0 w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none">
+        <div className="flex items-center gap-2.5 md:gap-3 shrink-0 w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none">
           <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
           <ShareEmbed title={game.title} gameId={game.id} />
         </div>
