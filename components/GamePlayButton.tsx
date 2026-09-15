@@ -38,16 +38,16 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const [paused, setPaused] = useState(false)
   // 가로/세로 전환(모바일) — 화면 방향 잠금 API 는 iOS 가 지원하지 않아, 게임 박스를 90° 회전시켜 가로 뷰포트로 보여준다
   const [rotated, setRotated] = useState(false)
-  const gameAreaRef = useRef<HTMLDivElement | null>(null)
-  const [area, setArea] = useState({ w: 0, h: 0 })
+  const [vp, setVp] = useState({ w: 0, h: 0 })
   useEffect(() => {
     if (!open) return
-    const el = gameAreaRef.current; if (!el) return
-    const ro = new ResizeObserver(([e]) => { const r = e.contentRect; setArea({ w: r.width, h: r.height }) })
-    ro.observe(el); return () => ro.disconnect()
+    const read = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    const t = setTimeout(read, 0); window.addEventListener('resize', read)
+    return () => { clearTimeout(t); window.removeEventListener('resize', read) }
   }, [open])
   useEffect(() => { if (open) return; const t = setTimeout(() => setRotated(false), 0); return () => clearTimeout(t) }, [open])
-  const rotStyle: React.CSSProperties | undefined = rotated && area.w > 0 ? { inset: 'auto', top: (area.h - area.w) / 2, left: (area.w - area.h) / 2, width: area.h, height: area.w, transform: 'rotate(90deg)', transformOrigin: 'center' } : undefined
+  // 오버레이 전체(헤더·게이지·게임·AJ 채팅/아바타)를 90° 회전 — 폭·높이를 맞바꿔 가로 화면처럼
+  const rotStyle: React.CSSProperties | undefined = rotated && vp.w > 0 ? { position: 'absolute', inset: 'auto', top: (vp.h - vp.w) / 2, left: (vp.w - vp.h) / 2, width: vp.h, height: vp.w, transform: 'rotate(90deg)', transformOrigin: 'center' } : undefined
   const frameRef = useRef<HTMLIFrameElement | null>(null)
   const togglePause = () => { const next = !paused; setPaused(next); try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:pause', on: next }, '*') } catch { /* */ } }
   useEffect(() => {
@@ -224,11 +224,12 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           className="fixed inset-0 z-[70] flex flex-col bg-black"
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >
+          <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={rotStyle}>
           <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} />
           <div className="relative flex flex-row flex-1 min-h-0">
-            <div ref={gameAreaRef} className="relative flex-1 min-h-0 overflow-hidden">
+            <div className="relative flex-1 min-h-0 overflow-hidden">
               <TransportBar key={game.id} gameId={game.id} active={open} />
-              <div className={`absolute inset-0 ${rotated ? "bg-black" : ""}`} style={rotStyle}>
+              <div className="absolute inset-0">
               {warp && (
                 <div className={`teleport-warp teleport-${warp}`} aria-hidden>
                   <span className="teleport-ring" /><span className="teleport-ring" style={{ animationDelay: '.3s' }} /><span className="teleport-ring" style={{ animationDelay: '.6s' }} />
@@ -276,6 +277,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
             ) : (
               <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} myAvatarConfig={myAvatarConfig} bjName={bjName} bjLive={liveForGame(liveMap, game.id)} />
             )}
+          </div>
           </div>
         </div>
       )}
