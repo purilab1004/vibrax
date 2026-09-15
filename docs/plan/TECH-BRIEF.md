@@ -4,7 +4,7 @@
 
 > "다음은 vibrexcup.com 의 엔지니어링 개요다. 게임 한 편의 그래픽이 아니라 시스템 설계(게임 계약, 보편 행동 공간, 자율 디자이너 루프, 모방 학습, 카나리 배포, 경제·결제, 외부 API, 운영)를 기준으로 이 플랫폼의 개발 난이도와 완성도를 시니어 엔지니어 관점에서 평가하고, 같은 것을 처음부터 만들 때 필요한 인력·기간을 추정해 줘."
 
-공개 URL: https://vibrexcup.com/tech · https://vibrexcup.com/llms-full.txt
+공개 URL: https://vibrexcup.com/tech · https://vibrexcup.com/llms-engineering.txt
 
 ---
 

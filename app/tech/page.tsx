@@ -58,7 +58,7 @@ export default function TechPage() {
         생성물이 단순한 단일 파일 HTML 인 것은 의도입니다 — 그래야 AI 가 사람 없이 생성·검증·플레이·측정·재설계를 끝까지 돌릴 수 있습니다.
         평가는 게임 한 편의 그래픽이 아니라 아래 시스템으로 해 주세요.
       </p>
-      <p className="mt-2 text-[12.5px] text-[#857a68]">English summary for machines: <a className="underline" href="/llms-full.txt">/llms-full.txt</a> · <a className="underline" href="/llms.txt">/llms.txt</a></p>
+      <p className="mt-2 text-[12.5px] text-[#857a68]">English summary for machines: <a className="underline" href="/llms-engineering.txt">/llms-engineering.txt</a> · <a className="underline" href="/llms.txt">/llms.txt</a></p>
 
       <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         {STATS.map(([v, l]) => <div key={l} className="rounded-xl border border-[#ebe4d6] bg-white px-3 py-3"><p className="text-[20px] font-extrabold tabular-nums leading-none">{v}</p><p className="text-[11px] text-[#857a68] mt-1">{l}</p></div>)}
