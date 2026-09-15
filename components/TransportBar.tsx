@@ -141,9 +141,9 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
           disabled={!reached || !!going}
           title={reached ? `다음 게임: ${primary.title}` : (goal ? `목표 ${goal.toLocaleString()}점을 넘기면 열려요` : '한 판을 끝내면 열려요')}
           aria-label="다음 게임으로 이동"
-          className={`h-5 md:h-9 px-2 md:pl-3 md:pr-2.5 rounded-full flex items-center gap-1 md:gap-1.5 text-[10.5px] md:text-[12px] font-bold transition-all ${reached ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white shadow-[0_0_0_4px_rgba(37,99,235,0.25)] transport-glow' : 'bg-white/10 text-white/35 cursor-not-allowed'}`}
+          className={`h-5 md:h-9 px-2 md:pl-3 md:pr-2.5 rounded-full flex items-center gap-1 md:gap-1.5 text-[10.5px] md:text-[12px] font-bold whitespace-nowrap shrink-0 transition-all ${reached ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white shadow-[0_0_0_4px_rgba(37,99,235,0.25)] transport-glow' : 'bg-white/10 text-white/35 cursor-not-allowed'}`}
         >
-          <span>다음 게임</span>
+          <span className="whitespace-nowrap">다음 게임</span>
           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </button>
       </div>
