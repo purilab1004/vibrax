@@ -44,7 +44,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   return new Response(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'Content-Security-Policy': "frame-ancestors 'self' https://vibrexcup.com https://*.vibrexcup.com https://*.vercel.app http://localhost:* chrome-extension:;",
+      'Content-Security-Policy': "frame-ancestors *;",
       'X-Frame-Options': 'ALLOWALL',
       'Cache-Control': 'public, max-age=300',
     },

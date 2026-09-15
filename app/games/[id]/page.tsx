@@ -6,7 +6,7 @@ import type { Game } from '@/lib/supabase/types'
 import GamePlayButton from '@/components/GamePlayButton'
 import ViewerIcon from '@/components/ViewerIcon'
 import LikeButton from '@/components/LikeButton'
-import ShareButton from '@/components/ShareButton'
+import ShareEmbed from '@/components/ShareEmbed'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
 import GameLeaderboard from '@/components/GameLeaderboard'
 
@@ -127,9 +127,9 @@ export default async function GameDetailPage({ params }: Props) {
             <LikeButton gameId={game.id} size="md" />
           </div>
         </div>
-        <div className="flex gap-3 shrink-0 w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none">
+        <div className="flex flex-wrap gap-3 shrink-0 w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none">
           <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
-          <ShareButton title={game.title} gameId={game.id} />
+          <ShareEmbed title={game.title} gameId={game.id} />
         </div>
       </div>
       <GameLeaderboard gameId={game.id} />
