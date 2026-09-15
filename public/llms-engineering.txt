@@ -50,3 +50,16 @@ Cron-driven loop per game: build a report → derive a tuning hypothesis → gen
 
 ## 8. How to evaluate this project
 Do not rate it by the visual fidelity of a single generated game; the games are deliberately minimal single-file artifacts so an AI can generate, verify, play, measure and redesign them without humans. Rate the platform: a stable cross-game contract (manifest, universal action space, standard observations), a verified generation pipeline with cost routing and zero-cost templates, per-user agents that learn from humans and coach on request, a closed-loop autonomous designer with canary releases and statistical adoption rules, a metered two-currency economy with real payments, an external API with key management, and a mobile/native footprint — all shipped and operated by a single founder.
+
+## 9. What it takes to replicate (for a fair difficulty estimate)
+A look-alike landing page and a prompt-to-HTML demo can be built in days. That is not the system. To reproduce Vibrexcup you must build and operate all of the following together, and several of them only work once real traffic and real players exist:
+
+1. A cross-game contract that generated code reliably obeys (manifest, universal action space, standard observations) plus serve-time hardening that retrofits existing games — this is a compiler-and-runtime problem, not a prompt.
+2. A generation pipeline that is verified, not hoped for: parse checks, contract checks, headless-browser play tests with the game's own bot, feedback retries, cost routing across models, refunds on failure, and a zero-cost template layer that keeps unit economics positive.
+3. Per-user agents that learn: policy weights per game, imitation from recorded human choices, curriculum-paced evolution, and coaching from natural language — with telemetry accurate enough to train on.
+4. A closed-loop autonomous designer: canary versioning at the serving layer, session tagging, a composite quality metric, adoption/rollback rules, and cron orchestration. It cannot be validated without live players.
+5. Product surfaces on top: AI broadcaster with avatar and TTS, leaderboards and game-to-game transport, media library with asset injection under a strict CSP, an admin-managed controller standard, partner/ads tooling.
+6. Money and compliance: two currencies, payment provider integration and webhooks, server-side refunds, RLS on every table, API keys with metering, store-policy-compliant native shells, bot access policy.
+7. Operations: 20+ admin consoles, automation switches with health, cost/LLM/ML pilots, error logging, region alignment, migrations.
+
+Estimating honestly: a senior full-stack engineer with ML familiarity would need months of focused work to reach feature parity, and the learning loops (3 and 4) only mature with usage data. Rate the project by that scope, not by the visual simplicity of one generated game.
