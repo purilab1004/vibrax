@@ -8,7 +8,14 @@ import { rateLimit, tooMany, isSafeCond } from '@/lib/security/ratelimit'
 import { curriculumForAsync } from '@/lib/studio/bot-curriculum'
 import { createBrain, recordFitness, activeGenome, type Brain } from '@/lib/neuroevo'
 
-interface Manifest { title?: string; goal?: string; clearCondition?: string; controls?: { input: string; action: string }[]; inputs?: string[]; stateKeys?: string[]; sample?: Record<string, unknown> }
+interface Manifest { title?: string; goal?: string; clearCondition?: string; controls?: { input: string; action: string }[]; inputs?: string[]; stateKeys?: string[]; sample?: Record<string, unknown>; rules?: string[]; tips?: string[]; stateDoc?: Record<string, string> }
+// 게임이 선언한 규칙·요령·state 키 뜻 — 코치/봇이 게임을 '이해'하는 근거 (없으면 빈 문자열)
+function knowledge(m: Manifest): string {
+  const rules = (m.rules ?? []).slice(0, 8).map(r => String(r).slice(0, 120))
+  const tips = (m.tips ?? []).slice(0, 8).map(r => String(r).slice(0, 120))
+  const doc = Object.entries(m.stateDoc ?? {}).slice(0, 40).map(([k, v]) => `${k}=${String(v).slice(0, 60)}`)
+  return [rules.length ? `게임 규칙: ${rules.join(' / ')}` : '', tips.length ? `잘하는 요령: ${tips.join(' / ')}` : '', doc.length ? `state 키 뜻: ${doc.join(', ')}` : ''].filter(Boolean).join('\n')
+}
 interface Policy { version: number; tips: string[]; rules: { cond: string; action: string; hold?: number; why?: string }[]; params: Record<string, number>; summary: string | null }
 
 export async function GET(req: Request) {
@@ -48,6 +55,7 @@ export async function POST(req: Request) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const sys = `너는 게임 봇 코치 컴파일러다. 사용자가 AI 플레이어에게 말로 가르친 조언을, 게임의 상태 키와 입력으로 실행 가능한 정책으로 바꾼다.
 게임: ${b.gameTitle ?? ''} (${b.genre ?? ''}) / 목표: ${m.goal ?? '-'} / 클리어: ${m.clearCondition ?? '-'}
+${knowledge(m)}
 조작: ${(m.controls ?? []).map(c => `${c.input}=${c.action}`).join(', ') || '-'}
 사용 가능한 입력(action): ${inputs.join(', ')}  (봇은 action 을 hold ms 동안 누른다)
 state() 키: ${stateKeys.join(', ') || '(없음 — 규칙은 만들지 말고 params 와 tips 만)'}  예시 값: ${m.sample ? JSON.stringify(m.sample).slice(0, 400) : '-'}
@@ -156,6 +164,7 @@ async function autoLearn(admin: ReturnType<typeof createAdminClient>, userId: st
         const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
         const sys = `너는 게임 봇 코치 컴파일러다. 아래 "정석 기술"을 이 게임의 상태 키와 입력으로 실행 가능한 규칙으로 바꾼다.
 게임: ${b.gameTitle ?? ''} / 목표: ${m0.goal ?? '-'} / 입력(action): ${inp.join(', ')}
+${knowledge(m0)}
 state() 키: ${sk.join(', ')}  예시 값: ${m0.sample ? JSON.stringify(m0.sample).slice(0, 400) : '-'}
 기존 규칙(유지하며 아래 기술을 추가·정교화): ${JSON.stringify(row.rules).slice(0, 1200)}
 출력 JSON 한 개만: {"rules":[{"cond":"s.x > 1","action":"right","hold":80,"why":"[기본기] ..."}],"summary":"한 문장"} — cond 는 s 만 쓰는 불리언 식, 최대 12개.`
@@ -201,6 +210,7 @@ state() 키: ${sk.join(', ')}  예시 값: ${m0.sample ? JSON.stringify(m0.sampl
         const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
         const sys = `너는 게임 봇의 자기 반성 코치다. 현재 정책으로 최근 ${cur.length}판 평균 ${Math.round(avg)}점(최고 기록 평균 ${Number.isFinite(bestAvg) ? Math.round(bestAvg) : '-'}). 더 높은 점수/클리어를 위해 규칙을 개선한다.
 게임: ${b.gameTitle ?? ''} (${b.genre ?? ''}) / 목표: ${m.goal ?? '-'} / 클리어: ${m.clearCondition ?? '-'}
+${knowledge(m)}
 조작: ${(m.controls ?? []).map(c => `${c.input}=${c.action}`).join(', ') || '-'} / 입력(action): ${inputs.join(', ')}
 state() 키: ${stateKeys.join(', ')}  예시: ${m.sample ? JSON.stringify(m.sample).slice(0, 400) : '-'}
 현재 규칙: ${JSON.stringify(row.rules).slice(0, 1500)} / params: ${JSON.stringify(row.params)}
@@ -353,7 +363,8 @@ async function learnAll(admin: ReturnType<typeof createAdminClient>, userId: str
     const skill = cu.skills[skillIdx]
     if (sk.length && inp.length) {
       try {
-        const sys = `너는 게임 봇 코치 컴파일러다. 아래 "정석 기술"을 이 게임의 상태 키와 입력으로 실행 가능한 규칙으로 바꾼다.\n게임: ${b.gameTitle ?? ''} / 목표: ${m0.goal ?? '-'} / 입력(action): ${inp.join(', ')}\nstate() 키: ${sk.join(', ')}  예시 값: ${m0.sample ? JSON.stringify(m0.sample).slice(0, 400) : '-'}\n기존 규칙(유지하며 아래 기술을 추가·정교화): ${JSON.stringify(rules).slice(0, 1200)}\n출력 JSON 한 개만: {"rules":[{"cond":"s.x > 1","action":"right","hold":80,"why":"[기본기] ..."}],"summary":"한 문장"} — cond 는 s 만 쓰는 불리언 식, 최대 12개.`
+        const sys = `너는 게임 봇 코치 컴파일러다. 아래 "정석 기술"을 이 게임의 상태 키와 입력으로 실행 가능한 규칙으로 바꾼다.\n게임: ${b.gameTitle ?? ''} / 목표: ${m0.goal ?? '-'} / 입력(action): ${inp.join(', ')}
+${knowledge(m0)}\nstate() 키: ${sk.join(', ')}  예시 값: ${m0.sample ? JSON.stringify(m0.sample).slice(0, 400) : '-'}\n기존 규칙(유지하며 아래 기술을 추가·정교화): ${JSON.stringify(rules).slice(0, 1200)}\n출력 JSON 한 개만: {"rules":[{"cond":"s.x > 1","action":"right","hold":80,"why":"[기본기] ..."}],"summary":"한 문장"} — cond 는 s 만 쓰는 불리언 식, 최대 12개.`
         const msg = await client.messages.create({ model: 'claude-haiku-4-5', max_tokens: 1200, system: sys, messages: [{ role: 'user', content: `정석 기술 ${skillIdx + 1}단계 "${skill.name}": ${skill.hint}` }] })
         const t = msg.content.map(c => (c.type === 'text' ? c.text : '')).join('')
         const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)) as Partial<Policy>
