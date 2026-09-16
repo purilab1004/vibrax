@@ -13,7 +13,7 @@ import { rankTemplates } from '@/lib/studio/similarity'
 import { loadMl, logMapping, learnKeyword } from '@/lib/studio/mlpilot'
 import { aiJudgeTemplate } from '@/lib/studio/ai-judge'
 import { loadAutomation, logAutomation } from '@/lib/automation'
-import { hardenHtml, injectSounds } from '@/lib/studio/harden'
+import { hardenHtml, injectSounds, stripShims } from '@/lib/studio/harden'
 import { tryMaxJob, type MsgStream } from '@/lib/studio/max-job'
 import { extractPatches, applyPatches, validatePatchedHtml } from '@/lib/studio/patch'
 import { stripAttach } from '@/lib/studio/attach'
@@ -287,7 +287,9 @@ export async function POST(req: Request) {
   const routed = routeModel({ task: routeTask, promptChars: prompt.length, htmlChars: baseHtml?.length ?? 0 }, await loadPolicy())
   const chosenModel = images.length > 0 ? 'claude-sonnet-5' : routed.model  // 이미지 입력은 Sonnet 고정
   const systemPrompt = buildSystemPrompt(await loadControls())
-  const genMessages = buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml ? stripAssets(baseHtml) : baseHtml, history, images })
+  // 모델에는 에셋(base64)·플랫폼 shim 을 뺀 순수 게임 코드만 — 절반 이하 크기 (저장 시 다시 주입/하든)
+  const modelBase = baseHtml ? stripShims(stripAssets(baseHtml)) : null
+  const genMessages = buildMessages({ prompt: effectivePrompt, currentHtml: modelBase, history, images })
   let stream: MsgStream | null = null
   // 관리자 + MAX_WORKER=1: 로컬 Claude Code(Max 구독) 워커로 생성 (이미지 입력은 API). 워커가 없으면 API 로 폴백.
   const useMax = isAdminUser && process.env.MAX_WORKER === '1'   // 이미지 첨부도 워커가 임시 파일로 넘겨 처리
@@ -333,7 +335,7 @@ export async function POST(req: Request) {
         forward()
         if (patchMode) {
           const ex = extractPatches(raw)
-          const patchBase = baseHtml ? stripAssets(baseHtml) : null
+          const patchBase = modelBase
           const applied = patchBase && ex.blocks.length ? applyPatches(patchBase, ex.blocks) : null
           const invalid = applied && applied.failed.length === 0 ? validatePatchedHtml(applied.html) : null
           if (invalid) console.warn('[studio/generate] patched html invalid:', invalid)

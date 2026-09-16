@@ -89,7 +89,7 @@ const SYSTEM_PROMPT_TEMPLATE = `너는 Vibrexcup 스튜디오의 게임 제작 A
   >>>>>>> REPLACE
   </patch>
   블록마다 SEARCH·=======·REPLACE 는 **정확히 한 번씩**. 잘못 쓴 블록을 뒤에 다시 내지 말고(둘 다 적용된다), 처음부터 맞게 한 번만 낸다. 블록은 필요한 만큼 여러 개. 새 함수를 추가할 땐 근처의 기존 몇 줄을 SEARCH 로 잡고 그 줄들 + 새 함수를 REPLACE 로 낸다. 패치 뒤에 <game> 을 붙이지 않는다.
-  전체 완성본(<game>…</game>)을 쓰는 경우는 새 게임을 처음 만들 때, 또는 파일의 절반 이상이 바뀌는 구조 변경일 때만.
+  수정 요청에서 전체 완성본(<game>…</game>)을 다시 쓰는 것은 **금지** — 사용자가 "처음부터 다시 만들어" 처럼 명시적으로 새로 만들라고 한 경우에만 허용한다. 큰 수정도 여러 개의 패치로 낸다. "전체 완성본으로 출력합니다" 같은 판단을 스스로 하지 않는다.
 - localStorage/sessionStorage 는 샌드박스에서 막힐 수 있으니 반드시 try/catch 로 감싸고, 실패해도 게임은 계속 동작해야 한다.
 - [AJ 텔레메트리] 플랫폼이 window.AJ 를 주입한다(없을 수도 있으니 항상 if(window.AJ) 로 감싼다). 게임 코드에서 다음을 반드시 호출한다: 플레이 시작 시 AJ.start(), 점수가 바뀔 때 AJ.score(점수), 게임오버 시 AJ.over(최종점수), 레벨/스테이지가 오르면 AJ.level(레벨), 다시하기 시 AJ.restart(). 이 데이터로 AJ(AI 스트리머)가 난이도·재미를 분석한다.
 - <game> 태그 밖에는 절대 코드를 쓰지 않는다.
@@ -130,7 +130,7 @@ export function buildMessages(opts: {
   if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') sanitized.pop()
 
   const parts: string[] = []
-  if (opts.currentHtml) parts.push(`현재 게임 HTML:\n<game>${opts.currentHtml}</game>\n\n(수정은 <patch> SEARCH/REPLACE 블록으로 바뀌는 부분만 출력할 것 — 전체를 다시 쓰지 않는다)`)
+  if (opts.currentHtml) parts.push(`현재 게임 HTML:\n<game>${opts.currentHtml}</game>\n\n(수정은 <patch> SEARCH/REPLACE 블록으로 바뀌는 부분만 출력할 것 — 전체 완성본 재출력 금지. 위 HTML 에는 플랫폼 브리지 스크립트가 빠져 있으니 신경 쓰지 말 것)`)
   parts.push(`요청: ${opts.prompt}`)
   const text = parts.join('\n\n')
   // 현재 HTML 은 별도 블록 + 프롬프트 캐시 — 같은 게임을 연속 수정할 때 수만 자 입력을 다시 처리하지 않는다
