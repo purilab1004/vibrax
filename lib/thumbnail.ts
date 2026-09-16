@@ -67,6 +67,23 @@ function wrapTitle(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
   return lines
 }
 
+// 기본 배경 이미지(미디어 라이브러리 'default_background') — 한 번만 불러와 재사용. 실패하면 null → 예전 네온 배경
+let defaultBgPromise: Promise<HTMLImageElement | null> | null = null
+function loadDefaultBackground(): Promise<HTMLImageElement | null> {
+  if (defaultBgPromise) return defaultBgPromise
+  defaultBgPromise = (async () => {
+    try {
+      const r = await fetch('/api/media/default-background'); const j = await r.json() as { url?: string | null }
+      if (!j.url) return null
+      return await new Promise<HTMLImageElement | null>((resolve) => {
+        const img = new Image(); img.crossOrigin = 'anonymous'
+        img.onload = () => resolve(img); img.onerror = () => resolve(null); img.src = j.url!
+      })
+    } catch { return null }
+  })()
+  return defaultBgPromise
+}
+
 export async function generateThumbnail(title: string, genre: Genre, seed = 0): Promise<Blob> {
   const W = 1280
   const H = 720
@@ -80,6 +97,16 @@ export async function generateThumbnail(title: string, genre: Genre, seed = 0): 
 
   try { await document.fonts?.ready } catch { /* 폰트 로드 실패해도 진행 */ }
 
+  const bgImg = await loadDefaultBackground()
+  if (bgImg) {
+    // 기본 배경 이미지 — cover 로 채우고, 제목이 읽히게 아래쪽 어두운 스크림
+    const sc = Math.max(W / bgImg.naturalWidth, H / bgImg.naturalHeight)
+    const dw = bgImg.naturalWidth * sc, dh = bgImg.naturalHeight * sc
+    ctx.drawImage(bgImg, (W - dw) / 2, (H - dh) / 2, dw, dh)
+    const scrim = ctx.createLinearGradient(0, 0, 0, H)
+    scrim.addColorStop(0, 'rgba(0,0,0,0.18)'); scrim.addColorStop(0.45, 'rgba(0,0,0,0.30)'); scrim.addColorStop(1, 'rgba(0,0,0,0.62)')
+    ctx.fillStyle = scrim; ctx.fillRect(0, 0, W, H)
+  } else {
   // 배경 그라데이션
   const bg = ctx.createLinearGradient(0, 0, 0, H)
   bg.addColorStop(0, '#0e1015')
@@ -115,6 +142,7 @@ export async function generateThumbnail(title: string, genre: Genre, seed = 0): 
     ctx.fillStyle = (rng() > 0.5 ? c1 : c2) + (rng() > 0.5 ? 'cc' : '77')
     ctx.fillRect(Math.round(x), Math.round(y), Math.round(size), Math.round(size))
   }
+  }
 
   // 장르 라벨 (좌상단)
   ctx.fillStyle = c1
@@ -128,8 +156,8 @@ export async function generateThumbnail(title: string, genre: Genre, seed = 0): 
   const lines = wrapTitle(ctx, title.trim() || 'MY GAME', W - 220)
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.shadowColor = c1
-  ctx.shadowBlur = 34
+  ctx.shadowColor = bgImg ? 'rgba(0,0,0,0.85)' : c1
+  ctx.shadowBlur = bgImg ? 18 : 34
   ctx.fillStyle = '#ffffff'
   const lineH = base * 1.22
   const startY = H / 2 - ((lines.length - 1) * lineH) / 2
