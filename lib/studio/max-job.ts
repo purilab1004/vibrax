@@ -7,7 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export type MsgStream = AsyncIterable<{ type: string; delta?: { type: string; text?: string } }> & {
   finalMessage(): Promise<{ usage?: { input_tokens?: number; output_tokens?: number } }>
 }
-const PICKUP_MS = 25_000, TOTAL_MS = 280_000, POLL_MS = 1200
+const PICKUP_MS = 25_000, TOTAL_MS = 280_000, POLL_MS = 500
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
 export async function tryMaxJob(admin: SupabaseClient, job: { projectId: string; userId: string; model: string; system: string; messages: unknown }): Promise<MsgStream | null> {
@@ -17,7 +17,7 @@ export async function tryMaxJob(admin: SupabaseClient, job: { projectId: string;
   // 워커가 집어가는지 확인
   const t0 = Date.now(); let picked = false
   while (Date.now() - t0 < PICKUP_MS) {
-    await sleep(1000)
+    await sleep(400)
     const { data: row } = await admin.from('studio_jobs').select('status').eq('id', id).maybeSingle()
     const st = (row as { status?: string } | null)?.status
     if (st && st !== 'pending') { picked = true; break }

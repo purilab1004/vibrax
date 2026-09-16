@@ -108,7 +108,7 @@ export interface PromptImage {
 // Anthropic 메시지 파라미터 — 마지막 user 턴은 이미지 블록을 포함할 수 있다
 export type BuiltMessage = {
   role: 'user' | 'assistant'
-  content: string | ({ type: 'text'; text: string } | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } })[]
+  content: string | ({ type: 'text'; text: string; cache_control?: { type: 'ephemeral' } } | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } })[]
 }
 
 export function buildMessages(opts: {
@@ -133,6 +133,13 @@ export function buildMessages(opts: {
   if (opts.currentHtml) parts.push(`현재 게임 HTML:\n<game>${opts.currentHtml}</game>\n\n(수정은 <patch> SEARCH/REPLACE 블록으로 바뀌는 부분만 출력할 것 — 전체를 다시 쓰지 않는다)`)
   parts.push(`요청: ${opts.prompt}`)
   const text = parts.join('\n\n')
+  // 현재 HTML 은 별도 블록 + 프롬프트 캐시 — 같은 게임을 연속 수정할 때 수만 자 입력을 다시 처리하지 않는다
+  if (opts.currentHtml && !(opts.images && opts.images.length > 0)) {
+    return [...sanitized, { role: 'user', content: [
+      { type: 'text' as const, text: parts[0], cache_control: { type: 'ephemeral' as const } },
+      { type: 'text' as const, text: parts[1] },
+    ] }]
+  }
 
   // 이미지가 있으면 비전 블록으로 — 레퍼런스 이미지를 보고 게임을 만든다
   if (opts.images && opts.images.length > 0) {

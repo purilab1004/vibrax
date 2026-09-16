@@ -296,7 +296,7 @@ export async function POST(req: Request) {
       max_tokens: GENERATION_MAX_TOKENS,
       // Sonnet 5 는 기본으로 적응형 사고가 켜져 있고 그 토큰이 max_tokens 에 포함된다 — effort 로 사고 분량을 제한해 본문이 잘리지 않게
       ...(chosenModel.startsWith('claude-sonnet-5') || chosenModel.startsWith('claude-opus-5') ? { thinking: { type: 'adaptive' as const }, output_config: { effort: 'medium' as const } } : {}),
-      system: systemPrompt,
+      system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],  // 시스템 프롬프트(수천 토큰) 캐시
       messages: genMessages as never,
     }) as unknown as MsgStream
   } catch (e) {
@@ -341,7 +341,7 @@ export async function POST(req: Request) {
             const retry = client.messages.stream({
               model: chosenModel, max_tokens: GENERATION_MAX_TOKENS,
               ...(chosenModel.startsWith('claude-sonnet-5') || chosenModel.startsWith('claude-opus-5') ? { thinking: { type: 'adaptive' as const }, output_config: { effort: 'medium' as const } } : {}),
-              system: systemPrompt,
+              system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
               messages: [...(genMessages as { role: 'user' | 'assistant'; content: unknown }[]), { role: 'assistant', content: raw.slice(0, 4000) }, { role: 'user', content: '위 패치 중 원문이 일치하지 않는 것이 있어 적용에 실패했다. 이번엔 패치 대신 요청을 반영한 "전체 완성본" HTML 을 <game>…</game> 으로 출력해라.' }] as never,
             })
             for await (const chunk of retry) {

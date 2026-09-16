@@ -21,7 +21,7 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   console.log(new Date().toISOString(), 'job', job.id.slice(0, 8), 'model', cliModel(job.model))
   await sb.from('studio_jobs').update({ status: 'running', started_at: new Date().toISOString() }).eq('id', job.id)
   let buf = '', dirty = false, lastFlush = 0
-  const flush = async (force = false) => { if (!dirty && !force) return; if (!force && Date.now() - lastFlush < 800) return; dirty = false; lastFlush = Date.now(); await sb.from('studio_jobs').update({ result: buf }).eq('id', job.id) }
+  const flush = async (force = false) => { if (!dirty && !force) return; if (!force && Date.now() - lastFlush < 400) return; dirty = false; lastFlush = Date.now(); await sb.from('studio_jobs').update({ result: buf }).eq('id', job.id) }
   const args = ['-p', '--tools', '', '--model', cliModel(job.model), '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--no-session-persistence', '--effort', 'medium', '--system-prompt', job.system]
   const child = spawn('claude', args, { env: { ...process.env, CLAUDECODE: '' }, stdio: ['pipe', 'pipe', 'pipe'] })
   child.stdin.write(flatten(job.messages)); child.stdin.end()
@@ -53,5 +53,5 @@ for (;;) {
     const job = (data ?? [])[0] as { id: string; model: string | null; system: string; messages: Msg[] } | undefined
     if (job) await runJob(job)
   } catch (e) { console.error('worker loop', e) }
-  await new Promise(r => setTimeout(r, 1500))
+  await new Promise(r => setTimeout(r, 700))
 }
