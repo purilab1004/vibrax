@@ -64,6 +64,14 @@ export default function StudioChat({
     })
   }
 
+  // 클립보드 붙여넣기(⌘V)·드래그 앤 드롭 — 이미지는 첨부 이미지로, 오디오는 사운드로 바로 올라간다
+  const addAny = (list: FileList | File[] | null) => {
+    if (!list) return
+    const arr = Array.from(list)
+    const imgs = arr.filter(f => f.type.startsWith('image/')), auds = arr.filter(f => f.type.startsWith('audio/'))
+    if (imgs.length) { const dt = new DataTransfer(); imgs.forEach(f => dt.items.add(f)); addFiles(dt.files) }
+    if (auds.length) { const dt = new DataTransfer(); auds.forEach(f => dt.items.add(f)); addSounds(dt.files) }
+  }
   const addFiles = (files: FileList | null) => {
     if (!files) return
     Array.from(files).slice(0, 3).forEach(file => {
@@ -261,7 +269,12 @@ export default function StudioChat({
         {streaming && (
           <div className="flex items-start gap-2.5">
             <span className="avatar-wave w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] shadow-sm overflow-hidden" aria-hidden>{ajAvatarUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={ajAvatarUrl} alt="" className="w-full h-full object-cover" /> : '🧸'}</span>
-            <div className="w-full max-w-[90%] px-4 py-2.5 text-[14px] leading-relaxed bg-white border border-[#ebe4d6] text-[#241f17] whitespace-pre-wrap rounded-2xl rounded-tl-md shadow-[0_2px_10px_rgba(36,31,23,0.05)]">
+            <div className="relative w-full max-w-[90%] px-4 py-2.5 pr-10 text-[14px] leading-relaxed bg-white border border-[#ebe4d6] text-[#241f17] whitespace-pre-wrap rounded-2xl rounded-tl-md shadow-[0_2px_10px_rgba(36,31,23,0.05)]">
+              {onStop && (
+                <button type="button" onClick={onStop} aria-label="생성 취소" title="이 요청 취소 — 이전 상태로 돌아가고 크레딧은 환불됩니다" className="absolute top-2 right-2 w-7 h-7 rounded-full bg-[#f3eee3] text-[#6b6152] hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors">
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+              )}
               {streaming.description || <span key={thinkIdx} className="inline-block animate-[fadeIn_.4s_ease]">{thinkingWords[thinkIdx % thinkingWords.length]}</span>}
               {/* 코드가 오기 전 단계 — 시스템 상태 로그 */}
               {streaming.htmlBytes === 0 && (
@@ -319,7 +332,7 @@ export default function StudioChat({
       </div>
       {/* 클로드 스타일 플로팅 입력 카드 — 둥근 카드가 하단에 떠 있고 전송 버튼은 안쪽 우하단 */}
       <form ref={formRef} onSubmit={submit} className="px-4 pb-4 pt-1 shrink-0">
-        <div className="rounded-2xl bg-white border border-[#ddd3bf] focus-within:border-[#2563eb] shadow-[0_8px_28px_rgba(36,31,23,0.1)] focus-within:shadow-[0_10px_32px_rgba(37,99,235,0.16)] transition-all overflow-hidden">
+        <div onDragOver={e => { e.preventDefault() }} onDrop={e => { e.preventDefault(); addAny(e.dataTransfer?.files ?? null) }} className="rounded-2xl bg-white border border-[#ddd3bf] focus-within:border-[#2563eb] shadow-[0_8px_28px_rgba(36,31,23,0.1)] focus-within:shadow-[0_10px_32px_rgba(37,99,235,0.16)] transition-all overflow-hidden">
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -331,6 +344,7 @@ export default function StudioChat({
                 submit(e)
               }
             }}
+            onPaste={e => { const files = e.clipboardData?.files; if (files && files.length) { e.preventDefault(); addAny(files) } }}
             onCompositionEnd={() => {
               if (!pendingEnterRef.current) return
               pendingEnterRef.current = false
@@ -414,12 +428,6 @@ export default function StudioChat({
               </button>
               <p className="text-[11px] text-[#9d9280]">{s.costNote}</p>
             </div>
-            {busy && onStop ? (
-              /* 생성 중 — ✕ 를 누르면 즉시 취소: 모델 중단, 버전 저장 안 함, 크레딧 환불, 이전 상태 유지 */
-              <button type="button" onClick={onStop} aria-label="생성 취소" title="생성 취소 — 이전 상태로 돌아가고 크레딧은 환불됩니다" className="w-9 h-9 rounded-full bg-[#241f17] text-white flex items-center justify-center hover:bg-red-500 transition-colors">
-                <svg viewBox="0 0 24 24" className="w-[16px] h-[16px]" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-              </button>
-            ) : (
             <button
               type="submit"
               disabled={busy || planning || !input.trim()}
@@ -430,7 +438,6 @@ export default function StudioChat({
                 <path d="M12 19V5M5 12l7-7 7 7" />
               </svg>
             </button>
-            )}
           </div>
         </div>
       </form>
