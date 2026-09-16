@@ -175,28 +175,16 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     window.addEventListener('avatar:snapshot', onSnap)
     return () => window.removeEventListener('avatar:snapshot', onSnap)
   }, [bjLabel, gameId])
-  // 다음 게임으로 텔레포트하면 iframe 이 바뀌어 오토파일럿·아바타·정책이 사라진다 → 참여 중이었다면 새 프레임이 응답(ack)할 때까지 다시 보낸다
+  // 다음 게임으로 텔레포트하면 AI 참여를 해제한다 — 새 게임은 사람이 먼저 보고, 원하면 다시 참여 버튼을 누른다 (다음 게임 선택도 AI 가 아니라 사람만 한다)
   const prevGameRef = useRef(gameId)
   useEffect(() => {
     if (prevGameRef.current === gameId) return
     prevGameRef.current = gameId
-    if (!joinedRef.current || !lastImageRef.current) return
-    ackRef.current = false
-    const image = lastImageRef.current
-    const policyP = gameId ? fetch(`/api/ai-bj/coach?gameId=${gameId}`).then(r => r.json()).catch(() => null) : Promise.resolve(null)
-    let tries = 0
-    const iv = setInterval(() => {
-      const win = gameFrame()?.contentWindow
-      if (win) {
-        win.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*')
-        win.postMessage({ type: 'vibrex:autopilot', on: true }, '*')
-        win.postMessage({ type: 'vibrex:manifest-request' }, '*')
-        void policyP.then(j => { if (!j || !joinedRef.current) return; if (j.policy) { policyRef.current = j.policy; win.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*') } if (j.brain) win.postMessage({ type: 'vibrex:brain', brain: j.brain }, '*') })
-      }
-      if (ackRef.current || ++tries > 14) clearInterval(iv)
-    }, 700)
-    return () => clearInterval(iv)
-  }, [gameId, bjLabel])
+    if (!joinedRef.current) return
+    try { const w = gameFrame()?.contentWindow; w?.postMessage({ type: 'vibrex:autopilot', on: false }, '*'); w?.postMessage({ type: 'vibrex:avatar-remove' }, '*') } catch { /* noop */ }
+    const t = setTimeout(() => { setCompanion(null); setJoined(false) }, 0)
+    return () => clearTimeout(t)
+  }, [gameId])
   const joinGame = () => window.dispatchEvent(new CustomEvent('avatar:snapshot-request'))
   const leaveGame = () => { const w = gameFrame()?.contentWindow; w?.postMessage({ type: 'vibrex:autopilot', on: false }, '*'); w?.postMessage({ type: 'vibrex:avatar-remove' }, '*'); setCompanion(null); setJoined(false) }
   const avatarVisible = (!!camera || speaking) && !joined
