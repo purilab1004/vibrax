@@ -45,24 +45,25 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
   const setLiveSrc = (v: string) => setSrcState({ base: src, live: v })
   const yt = (func: string, args: unknown[] = []) => iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*')
   // 유튜브 플레이어 상태(재생 중=1) 를 받아 둔다 — 모바일 브라우저는 제스처 없이 소리 켠 재생을 막아 '로딩'에서 멈추므로, 소리 켜기가 실패하면 음소거로 되돌려 재생한다
-  const playingRef = useRef(false)
+  const stateRef = useRef<number | null>(null) // 마지막 플레이어 상태(-1 시작 전, 0 끝, 1 재생, 2 일시정지, 3 버퍼링, 5 큐). null = 아직 모름
   const unmuteTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     if (!isYT) return
     const onMsg = (e: MessageEvent) => {
       if (!iframeRef.current || e.source !== iframeRef.current.contentWindow) return
-      try { const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; if (d && d.event === 'infoDelivery' && d.info && typeof d.info.playerState === 'number') playingRef.current = d.info.playerState === 1 } catch { /* noop */ }
+      try { const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; if (d && d.event === 'infoDelivery' && d.info && typeof d.info.playerState === 'number') stateRef.current = d.info.playerState } catch { /* noop */ }
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
   }, [isYT])
   const listen = () => iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 'vbx' }), '*')
-  // 소리 켠 채 재생 시도 → 1.8초 안에 재생이 안 되면 음소거로 폴백
+  // 소리 켠 채 재생 시도 → 플레이어가 '막혔다'고 알려줄 때만(시작 전/일시정지/큐 상태) 음소거로 폴백. 상태를 모르면 그대로 둔다(멀쩡히 재생 중인데 꺼지는 일 방지)
   const tryUnmutedPlay = () => {
-    yt('playVideo'); yt('unMute'); yt('setVolume', [getSoundPref().volume])
+    listen(); yt('playVideo'); yt('unMute'); yt('setVolume', [getSoundPref().volume])
     if (unmuteTimer.current) clearTimeout(unmuteTimer.current)
-    playingRef.current = false
-    unmuteTimer.current = setTimeout(() => { if (!playingRef.current) { yt('mute'); yt('playVideo'); setMuted(true) } }, 1800)
+    stateRef.current = null
+    const check = (again: boolean) => { const st = stateRef.current; if (st === -1 || st === 2 || st === 5) { yt('mute'); yt('playVideo'); setMuted(true) } else if (st === 3 && again) unmuteTimer.current = setTimeout(() => check(false), 1500); else if (st === 3) { yt('mute'); yt('playVideo'); setMuted(true) } }
+    unmuteTimer.current = setTimeout(() => check(true), 1800)
   }
   const unmutedSrc = (s: string) => s.replace(/([?&])muted?=(true|1)/, '$1muted=false').replace(/([?&])mute=1/, '$1mute=0')
   const applyMute = (m: boolean) => {
@@ -70,7 +71,7 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
     if (isYT) { yt(m ? 'mute' : 'unMute'); if (!m) yt('setVolume', [volume]) }
     else setLiveSrc(m ? src : unmutedSrc(src))
   }
-  const toggleMute = () => { const next = !muted; applyMute(next); setSoundPref({ on: !next }) }
+  const toggleMute = () => { if (unmuteTimer.current) clearTimeout(unmuteTimer.current); const next = !muted; applyMute(next); setSoundPref({ on: !next }) }
   const changeVolume = (v: number) => { setVolume(v); setSoundPref({ volume: v, on: v > 0 }); if (isYT) { yt('setVolume', [v]); if (v > 0 && muted) { setMuted(false); yt('unMute') } } }
   // 카드가 화면에서 벗어나면 소리를 끄고(YouTube 는 일시정지), 다시 들어오면 음소거 상태로 재생 — 다른 카드로 넘어가도 소리가 남지 않게
   const boxRef = useRef<HTMLDivElement>(null)

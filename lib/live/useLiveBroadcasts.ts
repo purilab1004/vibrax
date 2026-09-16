@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseBroadcast, parseLinkBroadcasts, liveInfoOf, toEmbed, type LiveInfo } from '@/lib/broadcast'
 import { avatarPreviewUrl } from '@/lib/jeumto/config'
 
-export type LiveEntry = LiveInfo & { gameId: string; hostName: string; hostAvatarUrl: string | null }
+export type LiveEntry = LiveInfo & { gameId: string; hostName: string; hostAvatarUrl: string | null; hostCountry?: string | null }
 export type LiveMap = Record<string, LiveEntry> // key: `${hostId}:${gameId}:${n}`
 /** 이 게임을 대상으로 한 라이브 하나 (게임 안 BJ 용) */
 export function liveForGame(m: LiveMap, gameId: string): LiveEntry | null {
@@ -21,23 +21,24 @@ async function fetchLive(): Promise<LiveMap> {
   const supabase = createClient()
   const { data } = await supabase
     .from('profiles')
-    .select('id, username, agent_name, avatar_config')
+    .select('id, username, agent_name, avatar_config, country')
     .or('avatar_config->broadcast->>on.eq.true,avatar_config->broadcasts.not.is.null')
     .limit(300)
   const m: LiveMap = {}
-  for (const row of (data ?? []) as { id: string; username: string | null; agent_name?: string | null; avatar_config: { broadcast?: unknown } | null }[]) {
+  for (const row of (data ?? []) as { id: string; username: string | null; agent_name?: string | null; avatar_config: { broadcast?: unknown } | null; country?: string | null }[]) {
     const hostName = row.agent_name ?? row.username ?? 'LIVE'
     const hostAvatarUrl = avatarPreviewUrl(row.avatar_config)
     const b = parseBroadcast(row.avatar_config?.broadcast)
     const info = liveInfoOf(b, row.id)
-    if (info && b?.gameId) m[`${row.id}:${b.gameId}:cam`] = { ...info, gameId: b.gameId, hostName, hostAvatarUrl }
+    const hostCountry = row.country ?? null
+    if (info && b?.gameId) m[`${row.id}:${b.gameId}:cam`] = { ...info, gameId: b.gameId, hostName, hostAvatarUrl, hostCountry }
     // 링크 방송 목록 — 켜진 것만
     const links = parseLinkBroadcasts((row.avatar_config as { broadcasts?: unknown } | null)?.broadcasts)
     links.forEach((l, i) => {
       if (!l.on) return
       if (!l.gameId && l.kind !== 'video') return // 라이브 링크는 게임 필수, 일반 영상은 게임 없이도 공유 가능
       const e = toEmbed(l.url); if (!e) return
-      m[`${row.id}:${l.gameId ?? ''}:${i}`] = { kind: 'link', hostId: row.id, src: e.src, aspect: e.aspect, gameId: l.gameId ?? '', hostName, hostAvatarUrl, video: l.kind === 'video' }
+      m[`${row.id}:${l.gameId ?? ''}:${i}`] = { kind: 'link', hostId: row.id, src: e.src, aspect: e.aspect, gameId: l.gameId ?? '', hostName, hostAvatarUrl, hostCountry, video: l.kind === 'video' }
     })
   }
   cache = m; fetchedAt = Date.now()

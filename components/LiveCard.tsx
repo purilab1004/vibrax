@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import type { LiveEntry } from '@/lib/live/useLiveBroadcasts'
 import { titleFont } from '@/lib/fonts'
+import { countryFlag, flagRingStyle } from '@/lib/country'
 import { useIsNativeApp } from '@/lib/isNativeApp'
 const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m.LiveView), { ssr: false })
 
@@ -80,7 +81,19 @@ export default function LiveCard({ live, game: given, layout }: Props) {
             <img src={game.thumbnail_url} alt="" className="w-7 h-5 rounded object-cover shrink-0 ring-1 ring-white/40" />
           )}
           <span className="truncate">🎮 {game?.title ?? '방송 중인 게임'}</span>
-        </p> : <p className="flex items-center gap-2 text-[13px] font-semibold text-white/80 mb-1 min-h-[20px]"><span className="truncate">▶ {live.hostName} 님이 공유한 영상</span></p>}
+        </p> : (
+          <p className="flex items-center gap-2 text-[13px] font-semibold text-white/80 min-h-[20px]">
+            <span className="avatar-ring" style={flagRingStyle(live.hostCountry)}><span className="avatar-wave w-6 h-6 shrink-0 rounded-full overflow-hidden inline-flex items-center justify-center bg-white/20">
+              {live.hostAvatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={live.hostAvatarUrl} alt={live.hostName} className="avatar-bob w-full h-full object-cover object-top" />
+              ) : (
+                <span className="font-pixel text-[10px] text-white">{live.hostName.charAt(0).toUpperCase()}</span>
+              )}
+            </span></span>
+            <span className="truncate">{live.hostName}</span>{countryFlag(live.hostCountry) && <span className="ml-1">{countryFlag(live.hostCountry)}</span>}
+          </p>
+        )}
         {hasGame && <>
         {/* 게임 카드와 같은 INSERT COIN + 코인 넣기 + 코인 통 — 누르면 코인 투입 연출 후 게임 페이지로 */}
         <p className={`arcade-blink font-pixel text-[14px] tracking-[0.3em] ${coin === 'ready' ? 'text-[#4cff6a] drop-shadow-[0_0_6px_rgba(76,255,106,0.7)]' : 'text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.7)]'}`}>
