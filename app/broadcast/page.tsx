@@ -269,7 +269,19 @@ export default function BroadcastPage() {
           </div>
         )}
         {onAir && gameId && (
-          <span className="absolute top-3 right-3 max-w-[60%] truncate rounded-full bg-black/55 text-white/90 text-[11px] px-2.5 py-1">🎮 {games.find((g) => g.id === gameId)?.title}</span>
+          <>
+            <span className="absolute top-3 right-3 max-w-[60%] truncate rounded-full bg-black/55 text-white/90 text-[11px] px-2.5 py-1">🎮 {games.find((g) => g.id === gameId)?.title}</span>
+            {/* 카메라를 켠 채 게임 하러 가기 — 새 탭에서 게임을 열면 내 플레이 화면 방송이 자동으로 켜지고, 시청자에겐 게임 화면 + 이 카메라(BJ 자리)가 함께 나온다. 이 탭은 닫지 말 것(카메라 송출) */}
+            <div className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-1.5 px-4">
+              <button
+                onClick={() => window.open(`/games/${gameId}?play=1`, '_blank', 'noopener')}
+                className="rounded-full bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] font-bold text-[14px] px-6 py-3 shadow-[0_4px_0_#d18f00,0_8px_18px_rgba(0,0,0,.4)] active:translate-y-[2px] active:shadow-[0_2px_0_#d18f00]"
+              >
+                🎮 이 게임 하러 가기 — 내 플레이도 라이브로
+              </button>
+              <p className="text-[10.5px] text-white/70 text-center">새 탭에서 게임이 열리고 플레이 화면 방송이 자동으로 켜져요. 이 화면은 닫지 마세요(카메라 송출 중)</p>
+            </div>
+          </>
         )}
       </div>
       <div className="shrink-0 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-center gap-3">
