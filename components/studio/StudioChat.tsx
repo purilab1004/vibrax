@@ -29,6 +29,8 @@ export default function StudioChat({
   ajName?: string | null
 }) {
   const [input, setInput] = useState('')
+  const formRef = useRef<HTMLFormElement>(null)
+  const pendingEnterRef = useRef(false)   // IME 조합 중 눌린 Enter — 조합 끝나면 전송
   const [seenDraft, setSeenDraft] = useState<string | null>(null)
   if (draft && draft !== seenDraft) { setSeenDraft(draft); setInput(draft); onDraftConsumed?.() }
   // 첨부 이미지 — 레퍼런스를 보여주면 AI가 보고 만든다 (최대 3장, 각 5MB)
@@ -293,7 +295,7 @@ export default function StudioChat({
         )}
       </div>
       {/* 클로드 스타일 플로팅 입력 카드 — 둥근 카드가 하단에 떠 있고 전송 버튼은 안쪽 우하단 */}
-      <form onSubmit={submit} className="px-4 pb-4 pt-1 shrink-0">
+      <form ref={formRef} onSubmit={submit} className="px-4 pb-4 pt-1 shrink-0">
         <div className="rounded-2xl bg-white border border-[#ddd3bf] focus-within:border-[#2563eb] shadow-[0_8px_28px_rgba(36,31,23,0.1)] focus-within:shadow-[0_10px_32px_rgba(37,99,235,0.16)] transition-all overflow-hidden">
           <textarea
             value={input}
@@ -301,8 +303,15 @@ export default function StudioChat({
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
+                // 한글 IME 조합 중 Enter: 지금 보내면 조합 중인 글자가 비운 입력창에 다시 찍힌다 → 조합이 끝난 뒤 보낸다
+                if (e.nativeEvent.isComposing || e.keyCode === 229) { pendingEnterRef.current = true; return }
                 submit(e)
               }
+            }}
+            onCompositionEnd={() => {
+              if (!pendingEnterRef.current) return
+              pendingEnterRef.current = false
+              setTimeout(() => formRef.current?.requestSubmit(), 0)
             }}
             rows={3}
             placeholder={s.chatPlaceholder}
