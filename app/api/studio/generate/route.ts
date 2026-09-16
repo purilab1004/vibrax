@@ -15,7 +15,7 @@ import { aiJudgeTemplate } from '@/lib/studio/ai-judge'
 import { loadAutomation, logAutomation } from '@/lib/automation'
 import { hardenHtml, injectSounds } from '@/lib/studio/harden'
 import { tryMaxJob, type MsgStream } from '@/lib/studio/max-job'
-import { extractPatches, applyPatches } from '@/lib/studio/patch'
+import { extractPatches, applyPatches, validatePatchedHtml } from '@/lib/studio/patch'
 import { stripAttach } from '@/lib/studio/attach'
 import { buildAttachNote } from '@/lib/studio/attach-server'
 import { loadControls } from '@/lib/controls-server'
@@ -334,7 +334,9 @@ export async function POST(req: Request) {
           const ex = extractPatches(raw)
           const patchBase = baseHtml ? stripAssets(baseHtml) : null
           const applied = patchBase && ex.blocks.length ? applyPatches(patchBase, ex.blocks) : null
-          if (applied && applied.failed.length === 0) {
+          const invalid = applied && applied.failed.length === 0 ? validatePatchedHtml(applied.html) : null
+          if (invalid) console.warn('[studio/generate] patched html invalid:', invalid)
+          if (applied && applied.failed.length === 0 && !invalid) {
             const tail = `\n<game>${applied.html}</game>`
             full += tail; controller.enqueue(encoder.encode(tail))
             console.log('[studio/generate] patch mode', ex.blocks.length, 'blocks, out', raw.length, 'chars')

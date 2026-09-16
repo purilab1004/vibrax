@@ -12,14 +12,36 @@ export interface ExtractedPatches { blocks: PatchBlock[]; description: string; h
 
 const BLOCK_RE = /<patch>\s*<{7}\s*SEARCH\s*\n([\s\S]*?)\n?={7}\s*\n([\s\S]*?)\n?>{7}\s*REPLACE\s*<\/patch>/g
 
+const MARKER_LINE = /^(<{7}|={7}|>{7})(\s|$)/m
 export function extractPatches(text: string): ExtractedPatches {
-  const blocks: PatchBlock[] = []
+  const raw: PatchBlock[] = []
   let m: RegExpExecArray | null
   BLOCK_RE.lastIndex = 0
-  while ((m = BLOCK_RE.exec(text)) !== null) blocks.push({ search: m[1], replace: m[2] })
+  while ((m = BLOCK_RE.exec(text)) !== null) raw.push({ search: m[1], replace: m[2] })
+  // 같은 SEARCH 가 여러 번 나오면(모델이 "정정본" 을 다시 낸 경우) 마지막 것만 쓴다. 블록 안에 구분자 줄이 섞여 있으면(=== 두 번 등) 그 블록은 버린다 → 적용 실패 → 전체 재생성
+  const byKey = new Map<string, PatchBlock>()
+  for (const b of raw) {
+    const key = b.search.split('\n').map(l => l.trim()).join('\n')
+    if (MARKER_LINE.test(b.search) || MARKER_LINE.test(b.replace)) { byKey.set(key + '#bad', { search: '', replace: '' }); continue }
+    byKey.delete(key + '#bad')
+    byKey.set(key, b)
+  }
+  const blocks = [...byKey.values()]
   const first = text.indexOf('<patch>')
   const description = (first >= 0 ? text.slice(0, first) : text).replace(/<\/?patches?>/g, '').trim()
   return { blocks, description, hasPatch: first >= 0 }
+}
+
+/** 패치 적용 결과 검증 — 구분자 잔해가 없고, 인라인 <script> 가 모두 문법 검사(new Function)를 통과해야 한다. 실패 이유 문자열, 정상이면 null */
+export function validatePatchedHtml(html: string): string | null {
+  if (/^(<{7} SEARCH|={7}|>{7} REPLACE)\s*$/m.test(html) || /<\/?patch>/.test(html)) return 'diff markers left in html'
+  if (!/<\/html>\s*$/i.test(html.trim()) && !/<\/body>/i.test(html)) return 'html truncated'
+  for (const m of html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)) {
+    const code = m[1]
+    if (/^\s*$/.test(code)) continue
+    try { new Function(code) } catch (e) { return `script syntax: ${String((e as Error).message).slice(0, 80)}` }
+  }
+  return null
 }
 
 const normLines = (s: string) => s.split('\n').map(l => l.trim()).filter(l => l.length > 0)
