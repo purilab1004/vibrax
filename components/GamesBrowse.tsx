@@ -19,6 +19,7 @@ import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 import { countryFlag, flagRingStyle } from '@/lib/country'
 import LiveCard from '@/components/LiveCard'
+import FeedEndCard from '@/components/FeedEndCard'
 import { recordShare } from '@/lib/shares'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
@@ -274,6 +275,8 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
         {items.map((it) => it.kind === 'live'
           ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-mobile" />
           : it.ad ? adWrap(it.ad, <FeedScreen game={it.game} />, `ad-${it.ad.campaignId}`) : <FeedScreen key={it.game.id} game={it.game} />)}
+        {/* 맨 끝: 더 내려갈 게임이 없을 때 — 직접 만들기 권유 */}
+        {items.length > 0 && <FeedEndCard layout="mobile" />}
       </div>
 
       {/* 데스크톱: 중앙 세로 카드 + 우측 레일 + 위/아래 내비 */}
@@ -287,6 +290,7 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
           {items.map((it) => it.kind === 'live'
             ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-desktop" />
             : it.ad ? adWrap(it.ad, <DesktopFeedCard game={it.game} />, `ad-${it.ad.campaignId}`) : <DesktopFeedCard key={it.game.id} game={it.game} rank={it.rank} />)}
+          {items.length > 0 && <FeedEndCard layout="desktop" />}
         </div>
         {/* 위/아래 화살표 — 다음/이전 게임 */}
         <div className={`${pageScroll ? 'fixed' : 'absolute'} right-2 lg:right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30`}>
