@@ -14,6 +14,10 @@ const BLUE = '#2563eb'
 const GRAY = '#8a8172'
 
 // 앱 안에서 열 우리 도메인. 그 외(구글 로그인·외부 링크)는 시스템 브라우저로 연다.
+const EMBED_HOSTS = ['youtube.com', 'youtube-nocookie.com', 'googlevideo.com', 'ytimg.com', 'twitch.tv', 'jtvnw.net']
+const isEmbedHost = (url: string) => {
+  try { const host = new URL(url).hostname; return EMBED_HOSTS.some((h) => host === h || host.endsWith('.' + h)) } catch { return false }
+}
 const isInternal = (url: string) => {
   try { const u = new URL(url); return u.hostname.endsWith('vibrexcup.com') } catch { return false }
 }
@@ -92,6 +96,8 @@ function Shell() {
     const url = req.url
     // iframe(YouTube/Twitch 임베드 등) 안의 로드는 그대로 허용 — 최상위 페이지 이동만 외부 브라우저로
     if (req.isTopFrame === false) return true
+    // 안드로이드는 isTopFrame 이 없을 수 있어 임베드 플레이어 호스트는 항상 허용
+    if (isEmbedHost(url)) return true
     if (url.startsWith('http') && !isInternal(url)) {
       WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url))
       return false
