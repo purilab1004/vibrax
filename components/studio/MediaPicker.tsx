@@ -24,6 +24,9 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
     a.play().then(() => setPlayingId(it.id)).catch(() => setPlayingId(null))
   }
   useEffect(() => () => { audioRef.current?.pause() }, [])
+  // 닫히면(어떤 경로든) 미리듣기 정지 — 컴포넌트는 남아 있어 unmount 정리가 안 돌기 때문
+  useEffect(() => { if (!open) { audioRef.current?.pause(); const t = setTimeout(() => setPlayingId(null), 0); return () => clearTimeout(t) } }, [open])
+  const close = () => { audioRef.current?.pause(); setPlayingId(null); onClose() }
   useEffect(() => {
     if (!open) return
     if (!q && !kind) return // 검색·카테고리 선택 전에는 안내만 보여준다(렌더에서 분기)
@@ -37,7 +40,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
   }, [open, q, kind])
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { audioRef.current?.pause(); onClose() } }
     window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
   if (!open) return null
@@ -47,12 +50,12 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
     else if (picked.length < 10) onChange([...picked, { id: it.id, kind: it.kind, name: it.name, title: it.title, url: it.url }])
   }
   return (
-    <div className="fixed inset-0 z-[90] bg-[#241f17]/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[90] bg-[#241f17]/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={close}>
       <div className="w-full max-w-3xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-[#ebe4d6] max-h-[88vh] flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-3 px-4 py-3 border-b border-[#ebe4d6] shrink-0">
           <h2 className="text-[14px] font-bold text-[#241f17] shrink-0">미디어 라이브러리</h2>
           <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="검색 — 기사, 우주, 숲, 픽셀…" className="flex-1 h-8 rounded-lg border border-[#ddd3bf] px-3 text-[13px] outline-none focus:border-[#2563eb]" />
-          <button onClick={onClose} className="w-8 h-8 rounded-md text-[#6b6152] hover:bg-[#f1ede4]" aria-label="닫기">✕</button>
+          <button onClick={close} className="w-8 h-8 rounded-md text-[#6b6152] hover:bg-[#f1ede4]" aria-label="닫기">✕</button>
         </div>
         <div className="flex gap-1.5 px-4 py-2 overflow-x-auto overflow-y-hidden border-b border-[#f1ede4] shrink-0">
           {KINDS.map(([v, l]) => <button key={v} onClick={() => setKind(v)} className={`shrink-0 h-7 px-3 rounded-full text-[12px] border transition-colors ${kind === v ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white text-[#6b6152] border-[#ddd3bf] hover:border-[#241f17]'}`}>{l}</button>)}
@@ -89,7 +92,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
         </div>
         <div className="flex items-center justify-between px-4 py-3 border-t border-[#ebe4d6]">
           <p className="text-[12px] text-[#6b6152]">{picked.length}/10 선택 — 고른 에셋은 게임에 바로 들어가고, AI 가 캐릭터·배경으로 써요.</p>
-          <button onClick={onClose} className="h-8 px-4 rounded-lg bg-[#2563eb] text-white text-[12.5px] font-semibold hover:bg-[#1d4ed8]">완료</button>
+          <button onClick={close} className="h-8 px-4 rounded-lg bg-[#2563eb] text-white text-[12.5px] font-semibold hover:bg-[#1d4ed8]">완료</button>
         </div>
       </div>
     </div>
