@@ -74,7 +74,7 @@ const SYSTEM_PROMPT_TEMPLATE = `너는 Vibrexcup 스튜디오의 게임 제작 A
     - 점프/발사/공격/대시 같은 **실행 액션은 우측 하단에 둥근 반투명 버튼**(최소 56px, 여러 개면 호 모양으로 배치, 아이콘+짧은 라벨).
     - 좌우만 쓰는 게임(벽돌깨기, 런너)은 조이스틱 대신 좌/우 터치 영역 또는 드래그로 단순화. 탭 한 번으로 끝나는 게임은 조작 UI 없이 화면 전체 탭.
     - 조작 UI는 게임 화면을 가리지 않게 반투명, 게임이 시작되기 전(타이틀)에는 숨긴다.
-  · 터치 스크롤/더블탭 줌 방지: touch-action:none, preventDefault 처리.
+  · 터치 스크롤/더블탭 줌 방지: touch-action:none, preventDefault 처리. **input/textarea 는 font-size 16px 이상**(iOS 는 더 작으면 포커스 때 페이지를 확대해 플랫폼 UI 가 잘린다).
   · 폰트·히트박스·아이템 크기는 화면 크기에 비례해 조정한다(작은 화면에서 너무 작아지지 않게 최소값 확보).
   · <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">를 포함한다.
 - 기존 게임 HTML이 주어지면 요청된 수정만 반영한 "전체 완성본"을 다시 출력한다.

@@ -119,7 +119,8 @@ export const metadata: Metadata = {
 // 일반 Safari/PWA 는 그대로(cover 를 켜면 가로 모드에서 노치 뒤로 콘텐츠가 들어감).
 export async function generateViewport(): Promise<Viewport> {
   const ua = (await headers()).get('user-agent') ?? ''
-  return { themeColor: '#2563eb', ...(/VibrexcupApp/i.test(ua) ? { viewportFit: 'cover' as const } : {}) }
+  // 앱: 입력창 포커스 등으로 페이지가 확대되면 고정 오버레이(플레이 헤더·조이스틱)가 잘리므로 확대 자체를 막는다
+  return { themeColor: '#2563eb', ...(/VibrexcupApp/i.test(ua) ? { viewportFit: 'cover' as const, maximumScale: 1, userScalable: false } : {}) }
 }
 
 async function detectLang(): Promise<Lang> {
