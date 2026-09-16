@@ -24,8 +24,11 @@ const VIEWPORT_ICON: Record<Viewport, React.ReactNode> = {
 }
 
 export default function GamePreview({
-  html, versions, currentVersionId, onSelectVersion, onPublish, busy, onStudy, ajHref, netId,
+  html, versions, currentVersionId, onSelectVersion, onPublish, busy, onStudy, ajHref, netId, published, liveVersionId, onUpdateLive,
 }: {
+  published?: boolean
+  liveVersionId?: string | null
+  onUpdateLive?: (versionId: string) => void | Promise<void>
   html: string | null
   netId?: string | null   // 온라인 브리지용 프로젝트 id (미리보기에서도 멀티플레이 테스트)
   versions: StudioVersionMeta[]
@@ -115,13 +118,31 @@ export default function GamePreview({
         {ajHref && (
           <a href={ajHref} target="_blank" rel="noreferrer" title="AJ 대시보드 — 지표·분석·업데이트 제안" className="h-8 px-3.5 rounded-md border border-[#ddd3bf] bg-white text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center gap-1.5">AJ</a>
         )}
-        <button
-          onClick={onPublish}
-          disabled={!html || busy}
-          className="h-8 rounded-md px-4 text-[12px] font-bold text-white bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af] shadow-[0_2px_8px_rgba(37,99,235,0.3)] transition-all disabled:opacity-40 disabled:shadow-none"
-        >
-          {s.publish}
-        </button>
+        {published ? (
+          /* 게시된 게임 — 게시 중인 버전 표시. 다른 버전을 보고 있으면 '이 버전 게시' 로 수동 반영 (프롬프트 수정은 자동 반영되지 않음) */
+          currentVersionId && liveVersionId && currentVersionId === liveVersionId ? (
+            <span className="h-8 inline-flex items-center gap-1.5 rounded-md px-3 text-[12px] font-bold text-[#15803d] bg-[#dcfce7] border border-[#bbf7d0]" title="지금 보고 있는 버전이 게임 페이지에 서빙되는 버전입니다">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />게시 중 v{versions.find(v => v.id === liveVersionId)?.version ?? ''}
+            </span>
+          ) : (
+            <button
+              onClick={() => { if (currentVersionId && onUpdateLive) void onUpdateLive(currentVersionId) }}
+              disabled={!html || busy || !currentVersionId}
+              title={liveVersionId ? `현재 게시본 v${versions.find(v => v.id === liveVersionId)?.version ?? '?'} → 이 버전으로 교체` : '이 버전을 게시본으로 지정'}
+              className="h-8 rounded-md px-4 text-[12px] font-bold text-white bg-gradient-to-r from-[#f59e0b] to-[#ea580c] hover:from-[#ea580c] hover:to-[#c2410c] shadow-[0_2px_8px_rgba(234,88,12,0.3)] transition-all disabled:opacity-40 disabled:shadow-none"
+            >
+              이 버전 게시{liveVersionId ? ` (현재 v${versions.find(v => v.id === liveVersionId)?.version ?? '?'})` : ''}
+            </button>
+          )
+        ) : (
+          <button
+            onClick={onPublish}
+            disabled={!html || busy}
+            className="h-8 rounded-md px-4 text-[12px] font-bold text-white bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af] shadow-[0_2px_8px_rgba(37,99,235,0.3)] transition-all disabled:opacity-40 disabled:shadow-none"
+          >
+            {s.publish}
+          </button>
+        )}
       </div>
       <div ref={boxRef} className="flex-1 bg-black min-h-0 relative overflow-hidden">
         {html && box.w === 0 ? null : html ? (

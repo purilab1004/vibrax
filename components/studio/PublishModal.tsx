@@ -9,8 +9,9 @@ import { generateThumbnail } from '@/lib/thumbnail'
 const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 
 export default function PublishModal({
-  projectId, defaultTitle, onClose,
+  projectId, defaultTitle, versionId, onClose,
 }: {
+  versionId?: string | null   // 게시할 버전 (없으면 최신)
   projectId: string
   defaultTitle: string
   onClose: () => void
@@ -115,6 +116,7 @@ export default function PublishModal({
         studio_project_id: projectId,
         teaser,
         teaser_en: teaserEn,
+        ...(versionId ? { live_version_id: versionId } : {}),   // 게시 버전 고정 — 이후 수정은 '최신 버전 게시' 로만 반영
       }
       let { data: inserted, error: insertError } = await supabase.from('games').insert([row] as never).select('id').single()
       // teaser 컬럼 마이그레이션 전 — 없이 재시도

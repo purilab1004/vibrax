@@ -41,11 +41,24 @@ export default function StudioComposerPage() {
   const balanceBeforeRef = useRef<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showPublish, setShowPublish] = useState(false)
+  const loadPublished = async () => {
+    const { data } = await supabase.from('games').select('id,live_version_id').eq('studio_project_id', id).maybeSingle()
+    const g = data as { id: string; live_version_id?: string | null } | null
+    setPublishedGameId(g?.id ?? null); setLiveVersionId(g?.live_version_id ?? null)
+  }
+  // 선택한 버전을 게시본으로 — 게임 페이지가 즉시 이 버전을 서빙
+  const updateLive = async (versionId: string) => {
+    if (!publishedGameId) return
+    const { error } = await supabase.from('games').update({ live_version_id: versionId } as never).eq('id', publishedGameId)
+    if (error) { setError(error.message); return }
+    setLiveVersionId(versionId)
+  }
   const [showEdit, setShowEdit] = useState(false)
   const [study, setStudy] = useState<'code' | 'scenario' | null>(null) // 학습 노트 패널
   const [aj, setAj] = useState<{ url: string | null; name: string | null }>({ url: null, name: null }) // 채팅의 AJ = 내 점토 아바타
   const [draftPrompt, setDraftPrompt] = useState<string | null>(() => searchParams.get('prompt')) // 학습 노트/AJ 제안 → 채팅 입력에 채우기
   const [publishedGameId, setPublishedGameId] = useState<string | null>(null)
+  const [liveVersionId, setLiveVersionId] = useState<string | null>(null)   // 실제 게시(서빙) 중인 버전
   // 보기 모드 — 채팅 전체 / 게임 전체 / 분할(데스크톱). 모바일은 채팅·게임 둘 중 하나만.
   const [view, setView] = useState<'chat' | 'game' | 'split'>('split')
   // 기본값: PC 는 항상 반반, 모바일은 항상 채팅 (세션 안에서 바꾼 건 그대로, 새로 열면 기본값)
@@ -80,7 +93,7 @@ export default function StudioComposerPage() {
   }, [id])
   // 게시된 게임 id — AJ 대시보드 링크
   useEffect(() => {
-    supabase.from('games').select('id').eq('studio_project_id', id).maybeSingle().then(({ data }) => setPublishedGameId((data as { id: string } | null)?.id ?? null))
+    loadPublished()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
   useEffect(() => {
@@ -473,6 +486,9 @@ export default function StudioComposerPage() {
               <GamePreview
                 html={html}
                 netId={id}
+                published={!!publishedGameId}
+                liveVersionId={liveVersionId}
+                onUpdateLive={updateLive}
                 versions={versions}
                 currentVersionId={currentVersionId}
                 onSelectVersion={loadVersionHtml}
@@ -493,7 +509,8 @@ export default function StudioComposerPage() {
         <PublishModal
           projectId={id}
           defaultTitle={project.title}
-          onClose={() => setShowPublish(false)}
+          versionId={currentVersionId}
+          onClose={() => { setShowPublish(false); void loadPublished() }}
         />
       )}
       {showEdit && (

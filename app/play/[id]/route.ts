@@ -44,16 +44,16 @@ export async function GET(
     version = data as V | null
   }
   if (!version) {
-    // 라이브 = 지정된 live_version 과 최신 "사람이 만든" 버전 중 더 새로운 것 — 크리에이터의 수동 수정은 항상 채택본을 이긴다
-    const latestQ = withCols.error
-      ? admin.from('studio_versions').select('id,html,version').eq('project_id', id).order('version', { ascending: false }).limit(1).maybeSingle()
-      : admin.from('studio_versions').select('id,html,version').eq('project_id', id).neq('origin', 'auto').order('version', { ascending: false }).limit(1).maybeSingle()
-    const [{ data: latest }, liveRes] = await Promise.all([
-      latestQ,
-      game.live_version_id ? admin.from('studio_versions').select('id,html,version').eq('id', game.live_version_id).maybeSingle() : Promise.resolve({ data: null }),
-    ])
-    const l = latest as V | null, lv = (liveRes.data ?? null) as V | null
-    version = lv && (!l || lv.version >= l.version) ? lv : l
+    // 라이브 = 게시(업데이트) 시 지정한 live_version 그대로. 스튜디오에서 프롬프트로 수정해도 크리에이터가 '최신 버전 게시' 를 누르기 전엔 반영되지 않는다.
+    // live_version 이 없는(옛) 게임만 최신 "사람이 만든" 버전을 서빙
+    const liveRes = game.live_version_id ? await admin.from('studio_versions').select('id,html,version').eq('id', game.live_version_id).maybeSingle() : { data: null }
+    version = (liveRes.data ?? null) as V | null
+    if (!version) {
+      const latestQ = withCols.error
+        ? admin.from('studio_versions').select('id,html,version').eq('project_id', id).order('version', { ascending: false }).limit(1).maybeSingle()
+        : admin.from('studio_versions').select('id,html,version').eq('project_id', id).neq('origin', 'auto').order('version', { ascending: false }).limit(1).maybeSingle()
+      version = ((await latestQ).data ?? null) as V | null
+    }
   }
   if (!version) return new Response('Not Found', { status: 404 })
 
