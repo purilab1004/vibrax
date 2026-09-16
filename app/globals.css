@@ -918,3 +918,14 @@ html.vbx-ios .feed-snap { scroll-snap-align: start; scroll-snap-stop: always; }
 .aj-join-on::after { content: ""; position: absolute; inset: -3px; border-radius: 9999px; border: 2px solid rgba(34,211,238,0.6); animation: ajJoinRing 1.8s ease-out infinite; pointer-events: none; }
 @keyframes ajJoinRing { 0% { transform: scale(0.85); opacity: 0.9 } 70% { transform: scale(1.35); opacity: 0 } 100% { transform: scale(1.35); opacity: 0 } }
 @media (prefers-reduced-motion: reduce) { .aj-join-on::after { animation: none; display: none } }
+
+/* ── 네이티브 앱: 웹뷰가 상태바(카메라) 뒤까지 차지한다 — 흰 띠 대신 페이지가 위까지 채우고, 상단 UI 만 safe-area 만큼 내려온다 ── */
+html.vbx-app { --st: max(env(safe-area-inset-top, 0px), var(--app-top, 0px)); --sb: max(env(safe-area-inset-bottom, 0px), var(--app-bottom, 0px)); }
+.vbx-app header.sticky.top-0 { padding-top: var(--st); }                         /* 상단 네비(홈에선 투명 → 히어로 영상이 카메라 뒤까지) */
+.vbx-app section.feed-snap.-mt-14 { padding-top: calc(3.5rem + var(--st)); }      /* 홈 히어로 — 네비 높이 + safe-area */
+.vbx-app.nav-hidden:not(.feed-page) main { padding-top: var(--st); }             /* 네비가 숨는 페이지(게임 상세·토너먼트) 본문 */
+.vbx-app.feed-page .feed-snap .top-4 { top: calc(1rem + var(--st)); }             /* /games 피드 카드 상단 배지 */
+.vbx-app.feed-page .feed-snap .top-\[15\%\], .vbx-app.feed-page .feed-snap .top-\[16\%\] { margin-top: var(--st); }
+.vbx-app.feed-page .feed-snap .top-3.left-3 { top: calc(.75rem + var(--st)); }    /* 라이브 카드 상단 줄 */
+.vbx-app .fixed.top-3.right-3 { top: calc(.75rem + var(--st)); }                  /* 모바일 검색 아이콘 */
+.vbx-app .fixed.inset-x-0.top-0.z-\[64\] { padding-top: var(--st); }             /* 모바일 검색 패널 */

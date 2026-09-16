@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import GamesBrowse from '@/components/GamesBrowse'
+import HtmlClass from '@/components/HtmlClass'
+import PullToHome from '@/components/PullToHome'
 import MobileGamesTools from '@/components/MobileGamesTools'
 import GenreSidebar from '@/components/GenreSidebar'
 import { Suspense } from 'react'
@@ -50,6 +52,8 @@ export default async function GamesPage({ searchParams }: Props) {
 
   return (
     <div className="w-full md:px-6">
+      <HtmlClass name="feed-page" />
+      <PullToHome />
       {/* 모바일 — 검색·카테고리는 우상단 버튼을 눌러야 나온다 (피드를 가리지 않게) */}
       <Suspense>
         <MobileGamesTools />

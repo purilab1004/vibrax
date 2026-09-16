@@ -55,6 +55,7 @@ function Shell() {
   const [active, setActive] = useState<string | null>('/')
   const [tabBarHidden, setTabBarHidden] = useState(false)
   const [playing, setPlaying] = useState(false) // 게임 플레이 중 — 탭바·상태바 숨기고 전체 화면
+  const [darkTop, setDarkTop] = useState(false) // 어두운 페이지(/games 피드·토너먼트)에선 상태바 글자를 흰색으로
   const [booting, setBooting] = useState(true)
   const [splashGone, setSplashGone] = useState(false)
   const [navLoading, setNavLoading] = useState(false)
@@ -102,7 +103,7 @@ function Shell() {
       const msg = JSON.parse(e.nativeEvent.data) as { type?: string; url?: string; path?: string; hideTabBar?: boolean; on?: boolean }
       if (msg.type === 'play') { setPlaying(!!msg.on); return }
       if (msg.type === 'route') {
-        if (typeof msg.path === 'string') setActive(matchTab(msg.path))
+        if (typeof msg.path === 'string') { setActive(matchTab(msg.path)); setDarkTop(/^\/(games(\/|$)|tournament)/.test(msg.path)) }
         setTabBarHidden(!!msg.hideTabBar)
         stopNavLoading() // 새 페이지 도착 → 로딩 마스코트 종료
         return
@@ -127,8 +128,9 @@ function Shell() {
 
   return (
     <View style={[styles.root, playing && styles.safePlaying]}>
-      <StatusBar style={playing ? 'light' : 'dark'} hidden={playing} />
-      <SafeAreaView style={[styles.safe, playing && styles.safePlaying]} edges={playing ? [] : ['top']}>
+      {/* 웹뷰가 상태바(카메라) 뒤까지 차지 — 흰 띠 없이 페이지가 위까지 채우고, 웹이 safe-area 만큼 상단 UI 를 내린다(window.VIBREX_INSETS) */}
+      <StatusBar style={playing || darkTop ? 'light' : 'dark'} hidden={playing} translucent backgroundColor="transparent" />
+      <SafeAreaView style={[styles.safe, playing && styles.safePlaying]} edges={[]}>
         <WebView
           ref={webRef}
           source={{ uri: SITE }}

@@ -41,6 +41,12 @@ export default function NavBar() {
 
   // Close menu on route change
   useEffect(() => { setMenuOpen(false); setUserMenuOpen(false) }, [pathname])
+  // 앱(WebView)이 상태바 뒤까지 차지할 때: 헤더가 있는 페이지는 헤더가 safe-area 만큼 내려오고, 헤더가 숨는 페이지는 본문이 내려온다(/games 피드는 예외)
+  useEffect(() => {
+    const hidden = pathname === '/games' || /^\/games\/[^/]+$/.test(pathname) || pathname.startsWith('/tournament')
+    document.documentElement.classList.toggle('nav-hidden', hidden)
+    return () => document.documentElement.classList.remove('nav-hidden')
+  }, [pathname])
 
   // 상단에서는 투명, 스크롤하면 유리(글래스) 배경.
   // 모바일 홈: 쇼츠 피드로 넘어가면(히어로를 지나면) 헤더 숨김

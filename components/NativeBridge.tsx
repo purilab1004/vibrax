@@ -12,12 +12,19 @@ export default function NativeBridge() {
 
   useEffect(() => {
     if (typeof navigator === 'undefined' || !/VibrexcupApp/i.test(navigator.userAgent)) return
+    document.documentElement.classList.add('vbx-app') // 앱 표시 클래스 — 로드 전 주입분은 하이드레이션 때 지워질 수 있어 여기서도 붙인다
     const w = window as unknown as { __vibexNav?: (p: string) => void }
     w.__vibexNav = (path: string) => { try { router.push(path) } catch { /* noop */ } }
     // 앱에서는 노치·홈바 영역까지 웹뷰가 차지할 수 있게(viewport-fit=cover) → 게임 플레이 시 env(safe-area-inset-*) 로 여백 계산
     try {
       const m = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null
       if (m && !/viewport-fit/.test(m.content)) m.content = `${m.content}, viewport-fit=cover`
+    } catch { /* noop */ }
+    // 앱(새 빌드)이 주입한 실측 safe-area → CSS 변수(--app-top/--app-bottom). 구 빌드는 0 → env() 만 사용
+    try {
+      const ins = (window as unknown as { VIBREX_INSETS?: { top?: number; bottom?: number } }).VIBREX_INSETS
+      document.documentElement.style.setProperty('--app-top', `${ins?.top ?? 0}px`)
+      document.documentElement.style.setProperty('--app-bottom', `${ins?.bottom ?? 0}px`)
     } catch { /* noop */ }
     return () => { delete w.__vibexNav }
   }, [router])

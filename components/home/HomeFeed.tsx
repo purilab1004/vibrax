@@ -2,6 +2,7 @@
 // 홈 — 프롬프트(히어로) 아래: /games 처럼 한 장씩 스크롤하는 피드 + 좌측 필터(전체/영상/게임).
 // (이전 핀터레스트 매소너리는 카드를 한꺼번에 다 그려 무거웠다)
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import MobileGamesTools from '@/components/MobileGamesTools'
 import GamesBrowse, { type FeedFilter } from '@/components/GamesBrowse'
 import type { GameWithCreator } from '@/lib/supabase/types'
@@ -23,6 +24,17 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
   // 모바일: 피드 구간에 들어왔을 때만 우상단 검색 아이콘 표시 (히어로에선 숨김)
   const rootRef = useRef<HTMLDivElement>(null)
   const [inFeed, setInFeed] = useState(false)
+  // 모바일: 히어로에서 아래로 넘겨 쇼츠 첫 장에 스냅되면 /games(게임 탭)로 자연스럽게 이동 — 앱에선 하단 탭도 GAMES 로 바뀐다
+  const router = useRouter()
+  useEffect(() => {
+    if (!window.matchMedia('(max-width: 767px)').matches) return
+    const el = rootRef.current; if (!el) return
+    let t: ReturnType<typeof setTimeout> | null = null, done = false
+    const check = () => { if (done) return; const top = el.getBoundingClientRect().top; if (window.scrollY > 120 && top <= 2 && top > -40) { done = true; router.push('/games') } }
+    const onScroll = () => { if (t) clearTimeout(t); t = setTimeout(check, 140) }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { window.removeEventListener('scroll', onScroll); if (t) clearTimeout(t) }
+  }, [router])
   useEffect(() => {
     const el = rootRef.current
     if (!el) return
