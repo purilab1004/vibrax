@@ -79,9 +79,20 @@ export function isCameraOn(b: BroadcastSetting | undefined | null): b is Broadca
 }
 
 // ── WebRTC 시그널링 (Supabase Realtime broadcast 채널 `live:{hostUserId}`) ──
+// STUN 만으로는 폰(5G)↔PC(와이파이)처럼 다른 망 사이 연결이 자주 실패한다 → TURN(중계) 서버도 넣는다.
+// 환경변수 NEXT_PUBLIC_TURN_URLS(쉼표 구분)/NEXT_PUBLIC_TURN_USER/NEXT_PUBLIC_TURN_PASS 가 있으면 그것을, 없으면 Open Relay 공개 TURN 을 쓴다.
+const envTurn = (): RTCIceServer[] => {
+  const urls = (process.env.NEXT_PUBLIC_TURN_URLS ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+  if (!urls.length) return []
+  return [{ urls, username: process.env.NEXT_PUBLIC_TURN_USER ?? '', credential: process.env.NEXT_PUBLIC_TURN_PASS ?? '' }]
+}
 export const ICE_SERVERS: RTCIceServer[] = [
   { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
   { urls: 'stun:stun.cloudflare.com:3478' },
+  ...(envTurn().length ? envTurn() : [
+    { urls: 'stun:stun.relay.metered.ca:80' },
+    { urls: ['turn:global.relay.metered.ca:80', 'turn:global.relay.metered.ca:80?transport=tcp', 'turn:global.relay.metered.ca:443', 'turns:global.relay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
+  ]),
 ]
 export type Signal =
   | { type: 'join'; from: string }                            // 시청자 → 호스트

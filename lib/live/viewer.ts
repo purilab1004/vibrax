@@ -30,12 +30,17 @@ export function startViewer(
       if (payload.type === 'offer' && payload.to === me) {
         teardownPc()
         pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
-        pc.ontrack = (e) => { onStream(e.streams[0]); onState('live') }
+        // 트랙이 붙어도 ICE 연결이 끝나기 전엔 '연결 중' — 연결이 실제로 되면 그때 'live' (안 되면 검은 화면 대신 연결 중 표시 + 재시도)
+        pc.ontrack = (e) => { onStream(e.streams[0]); if (pc && pc.connectionState === 'connected') onState('live') }
         pc.onicecandidate = (e) => { if (e.candidate) send({ type: 'ice', from: me, to: 'host', candidate: e.candidate.toJSON() }) }
         pc.onconnectionstatechange = () => {
           if (!pc) return
+          if (pc.connectionState === 'connected') onState('live')
           if (pc.connectionState === 'failed' || pc.connectionState === 'closed') { teardownPc(); onState(hostOnline ? 'connecting' : 'waiting'); if (hostOnline) setTimeout(join, 1500) }
         }
+        // 15초 안에 연결이 안 되면(NAT 차단 등) 끊고 다시 시도
+        const started = pc
+        setTimeout(() => { if (pc === started && pc.connectionState !== 'connected') { teardownPc(); onState(hostOnline ? 'connecting' : 'waiting'); if (hostOnline) join() } }, 15000)
         await pc.setRemoteDescription(payload.sdp)
         const answer = await pc.createAnswer()
         await pc.setLocalDescription(answer)
