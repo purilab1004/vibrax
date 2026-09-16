@@ -72,11 +72,11 @@ export default function MobileSearch({ open, onClose, categories }: { open: bool
   return (
     <div className="md:hidden fixed inset-0 z-[90] bg-[#fcfaf5] flex flex-col" style={{ paddingTop: 'var(--st, 0px)' }} role="dialog" aria-modal="true" aria-label="검색">
       {/* 입력 줄 */}
-      <form onSubmit={(e) => { e.preventDefault(); search(q) }} className="flex items-center gap-2 px-3 pt-3 pb-2">
-        <div className="flex-1 flex items-center h-12 rounded-2xl bg-white border border-[#e3dccb] shadow-[0_2px_10px_rgba(36,31,23,0.06)] focus-within:border-[#2563eb] px-3 gap-2">
+      <form onSubmit={(e) => { e.preventDefault(); search(q) }} className="flex items-center gap-2 px-3 pt-3 pb-2 w-full max-w-full overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-hidden flex items-center h-12 rounded-2xl bg-white border border-[#e3dccb] shadow-[0_2px_10px_rgba(36,31,23,0.06)] focus-within:border-[#2563eb] px-3 gap-2">
           <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#9d9280] shrink-0" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
           <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="게임 검색" enterKeyHint="search" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-            className="flex-1 min-w-0 bg-transparent outline-none text-[16px] text-[#241f17] placeholder:text-[#b3a78f]" style={{ fontSize: 16 }} onFocus={(e) => { try { e.currentTarget.scrollIntoView({ block: 'nearest' }) } catch { /* noop */ } }} />
+            className="flex-1 w-0 min-w-0 bg-transparent outline-none text-[16px] text-[#241f17] placeholder:text-[#b3a78f]" style={{ fontSize: 16 }} onFocus={(e) => { try { e.currentTarget.scrollIntoView({ block: 'nearest' }) } catch { /* noop */ } }} />
           {q && <button type="button" onClick={() => { setQ(''); inputRef.current?.focus() }} aria-label="지우기" className="w-5 h-5 rounded-full bg-[#c9bfa8] text-white flex items-center justify-center shrink-0"><svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg></button>}
         </div>
         <button type="button" onClick={onClose} aria-label="닫기" className="h-12 px-3.5 rounded-2xl text-[#2563eb] text-[15px] font-bold shrink-0 active:opacity-60">취소</button>
