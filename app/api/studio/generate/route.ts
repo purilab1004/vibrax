@@ -260,16 +260,18 @@ export async function POST(req: Request) {
   // ── 미디어 라이브러리 — 이전 버전에 주입돼 있던 에셋은 유지하고, 고른 것 + 프롬프트·장르에 맞는 것(auto_use)을 더한다. LLM 에는 base64 대신 이름·용도만 보낸다.
   const prevAssetIds = extractAssetIds(latest?.html)
   let mediaAssets: MediaAssetLite[] = []
+  let pickedAssets: MediaAssetLite[] = []   // 사용자가 미디어 선택기에서 고른 에셋 — 채팅에 표시
   try {
     const adminDb = createAdminClient()
     const genreSlugs = tmatch ? [tmatch.template.slug, ...(tmatch.template.genreGroup ? [tmatch.template.genreGroup] : [])] : (variantSlug ? [variantSlug] : [])
-    const [prevA, pickedA, autoPool] = await Promise.all([
+    const [prevA, pickedA0, autoPool] = await Promise.all([
       getAssetsByIds(adminDb, prevAssetIds),
       getAssetsByIds(adminDb, assetIds),
       assetIds.length ? Promise.resolve([] as MediaAssetLite[]) : listAutoAssets(adminDb),
     ])
     const autoA = assetIds.length ? [] : scoreAssets(autoPool, { prompt, genreSlugs })
     const seen = new Set<string>()
+    const pickedA = pickedA0; pickedAssets = pickedA
     for (const a of [...prevA, ...pickedA, ...autoA]) { if (!seen.has(a.id)) { seen.add(a.id); mediaAssets.push(a) } }
     mediaAssets = mediaAssets.slice(0, 10)
     const fresh = mediaAssets.filter(a => !prevAssetIds.includes(a.id)).map(a => a.id)
@@ -322,17 +324,17 @@ export async function POST(req: Request) {
         if (templateNote) { full += templateNote; controller.enqueue(encoder.encode(templateNote)) }
         // 부분 패치 모드: 모델이 <patch> 블록을 내기 시작하면 그 뒤 원문은 클라이언트에 보내지 않고(설명만 보임) 끝에 조립한 <game> 을 보낸다
         let raw = '', sentUpTo = 0, patchMode = false
-        const forward = () => {
+        const forward = (final = false) => {
           if (patchMode) return
           const pi = raw.indexOf('<patch>')
-          const upto = pi >= 0 ? pi : raw.length
+          const upto = pi >= 0 ? pi : final ? raw.length : Math.max(sentUpTo, raw.length - 7)   // '<patch>' 가 잘려 오는 중일 수 있어 끝 7자는 보류
           if (pi >= 0) patchMode = true
           if (upto > sentUpTo) { const seg = raw.slice(sentUpTo, upto); sentUpTo = upto; full += seg; controller.enqueue(encoder.encode(seg)) }
         }
         for await (const chunk of stream) {
           if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { raw += chunk.delta.text ?? ''; forward() }
         }
-        forward()
+        forward(true)
         if (patchMode) {
           const ex = extractPatches(raw)
           const patchBase = modelBase
@@ -341,7 +343,7 @@ export async function POST(req: Request) {
           if (invalid) console.warn('[studio/generate] patched html invalid:', invalid)
           if (applied && applied.failed.length === 0 && !invalid) {
             const tail = `\n<game>${applied.html}</game>`
-            full += tail; controller.enqueue(encoder.encode(tail))
+            full = ex.description + tail; controller.enqueue(encoder.encode(tail))
             console.log('[studio/generate] patch mode', ex.blocks.length, 'blocks, out', raw.length, 'chars')
           } else {
             // 패치를 못 붙이면 전체 완성본으로 한 번 더 (API) — 느리지만 확실
@@ -396,7 +398,7 @@ export async function POST(req: Request) {
             })
             try {
               const { error: mErr } = await supabase.from('studio_messages').insert([
-                { project_id: projectId, role: 'user', content: prompt + attachNote },
+                { project_id: projectId, role: 'user', content: prompt + (pickedAssets.length ? await buildAttachNote(images, sounds, pickedAssets.map(a => ({ name: a.name, kind: a.kind, url: a.url }))).catch(() => attachNote) : attachNote) },
                 { project_id: projectId, role: 'assistant', content: parsed.description },
               ] as never)
               if (mErr) console.error('[studio/generate] messages insert failed', mErr)

@@ -168,9 +168,9 @@ export default function StudioComposerPage() {
     }
   }
 
-  const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[]) => {
+  const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[], pickedAssets?: { name: string; kind: string; url?: string }[]) => {
     setError(null)
-    setMessages(m => [...m, { role: 'user', content: prompt, images: images?.map(i => i.previewUrl) }])
+    setMessages(m => [...m, { role: 'user', content: prompt, images: images?.map(i => i.previewUrl), sounds: sounds?.map(x => x.name), assets: pickedAssets }])
     balanceBeforeRef.current = balance
     // 낙관적 user 메시지가 아직 롤백 대상인지 추적 (성공/GEN_ERROR 처리 후에는 롤백 금지)
     let optimisticPending = true

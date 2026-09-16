@@ -1,8 +1,8 @@
 // 서버 전용 — 첨부 이미지를 작은 WebP 썸네일(data URL)로 만들어 채팅 메시지에 함께 저장한다
 import sharp from 'sharp'
-import { encodeAttach } from './attach'
+import { encodeAttach, type AttachAsset } from './attach'
 
-export async function buildAttachNote(images: { media_type: string; data: string }[], sounds: { name: string }[]): Promise<string> {
+export async function buildAttachNote(images: { media_type: string; data: string }[], sounds: { name: string }[], assets: AttachAsset[] = []): Promise<string> {
   const thumbs: string[] = []
   for (const img of images.slice(0, 3)) {
     try {
@@ -10,5 +10,5 @@ export async function buildAttachNote(images: { media_type: string; data: string
       if (buf.length < 40_000) thumbs.push(`data:image/webp;base64,${buf.toString('base64')}`)
     } catch { /* 썸네일 실패는 무시 */ }
   }
-  return encodeAttach({ images: thumbs, sounds: sounds.map(s => s.name) })
+  return encodeAttach({ images: thumbs, sounds: sounds.map(s => s.name), assets })
 }

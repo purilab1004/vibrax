@@ -1,6 +1,6 @@
 'use client'
 
-import { parseAttach } from '@/lib/studio/attach'
+import { parseAttach, type AttachAsset } from '@/lib/studio/attach'
 import { useEffect, useRef, useState } from 'react'
 import MediaPicker, { type PickedAsset } from '@/components/studio/MediaPicker'
 import { useLang } from '@/lib/i18n/context'
@@ -12,7 +12,9 @@ const THINKING_EN = ['Thinking...', 'A cat is decoding your request...', 'A pupp
 export interface ChatMsg {
   role: 'user' | 'assistant'
   content: string
-  images?: string[]  // 첨부 이미지 미리보기 URL (낙관적 표시용, 미저장)
+  images?: string[]  // 첨부 이미지 미리보기 URL (낙관적 표시용)
+  sounds?: string[]  // 첨부 사운드 이름
+  assets?: AttachAsset[]  // 미디어 라이브러리에서 고른 에셋
 }
 
 export default function StudioChat({
@@ -23,7 +25,7 @@ export default function StudioChat({
   usage?: { input: number; output: number; credits?: number; balance?: number } | null
   generationCost?: number
   error: string | null
-  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[]) => void
+  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[], pickedAssets?: AttachAsset[]) => void
   busy: boolean
   /* 외부(학습 노트 '다음 도전')에서 입력창에 채워 넣을 문장 */
   draft?: string | null
@@ -44,7 +46,8 @@ export default function StudioChat({
   const [picked, setPicked] = useState<PickedAsset[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
   const assetIdsRef = useRef<string[]>([])
-  const go = (p: string, imgs?: { media_type: string; data: string; previewUrl: string }[], snds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string) => onSend(p, imgs, snds, variantSlug, assetIdsRef.current.length ? assetIdsRef.current : undefined)
+  const pickedMetaRef = useRef<AttachAsset[]>([])
+  const go = (p: string, imgs?: { media_type: string; data: string; previewUrl: string }[], snds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string) => onSend(p, imgs, snds, variantSlug, assetIdsRef.current.length ? assetIdsRef.current : undefined, pickedMetaRef.current.length ? pickedMetaRef.current : undefined)
   const fileRef = useRef<HTMLInputElement>(null)
   const soundRef = useRef<HTMLInputElement>(null)
   const addSounds = (files: FileList | null) => {
@@ -151,7 +154,7 @@ export default function StudioChat({
     const imgs = attachments
     const snds = sounds
     setAttachments([]); setSounds([])
-    assetIdsRef.current = picked.map(a => a.id); setPicked([])
+    assetIdsRef.current = picked.map(a => a.id); pickedMetaRef.current = picked.map(a => ({ name: a.name, kind: a.kind, url: a.url })); setPicked([])
     // 첫 게임 설명이고 조작을 안 적었으면 → 조작안 제안 단계
     if (messages.length === 0 && !hasControlWords(p)) { runPlan(p, imgs, snds); return }
     go(p, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
@@ -218,17 +221,24 @@ export default function StudioChat({
             /* 사용자 — 오른쪽, 파랑 그라데이션 말풍선 (오른쪽 아래 모서리만 각지게) */
             <div key={i} className="flex justify-end">
               <div className="max-w-[80%] px-4 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap text-white bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] rounded-2xl rounded-br-md shadow-[0_4px_14px_rgba(37,99,235,0.25)]">
-                {(() => { const a = parseAttach(m.content); const imgs = m.images && m.images.length > 0 ? m.images : a.images; return (<>
-                  {imgs.length > 0 && (
-                    <div className="flex gap-1.5 mb-2">
+                {(() => { const a = parseAttach(m.content); const imgs = m.images && m.images.length > 0 ? m.images : a.images; const snds = m.sounds && m.sounds.length > 0 ? m.sounds : a.sounds; const assets = m.assets && m.assets.length > 0 ? m.assets : a.assets; return (<>
+                  {(imgs.length > 0 || assets.some(x => x.url && /^(character|background|tile|item|ui|effect|sprite)$/.test(x.kind))) && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
                       {imgs.map((src, j) => (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img key={j} src={src} alt="첨부 이미지" className="w-16 h-16 object-cover rounded-lg ring-1 ring-white/40" />
+                        <img key={'i' + j} src={src} alt="첨부 이미지" className="w-16 h-16 object-cover rounded-lg ring-1 ring-white/40" />
+                      ))}
+                      {assets.filter(x => x.url && /^(character|background|tile|item|ui|effect|sprite)$/.test(x.kind)).map((x, j) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={'a' + j} src={x.url} alt={x.name} title={x.name} className="w-16 h-16 object-cover rounded-lg ring-1 ring-white/40 bg-black/20" />
                       ))}
                     </div>
                   )}
-                  {a.sounds.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2">{a.sounds.map((n, j) => <span key={j} className="text-[11px] bg-white/20 rounded-full px-2 py-0.5">🔊 {n}</span>)}</div>
+                  {(snds.length > 0 || assets.some(x => !(x.url && /^(character|background|tile|item|ui|effect|sprite)$/.test(x.kind)))) && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {snds.map((n, j) => <span key={'s' + j} className="text-[11px] bg-white/20 rounded-full px-2 py-0.5">🔊 {n}</span>)}
+                      {assets.filter(x => !(x.url && /^(character|background|tile|item|ui|effect|sprite)$/.test(x.kind))).map((x, j) => <span key={'k' + j} className="text-[11px] bg-white/20 rounded-full px-2 py-0.5">{x.kind === 'audio' ? '🔊' : '📦'} {x.name}</span>)}
+                    </div>
                   )}
                   {a.text}
                 </>) })()}
