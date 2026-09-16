@@ -26,6 +26,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
   useEffect(() => () => { audioRef.current?.pause() }, [])
   useEffect(() => {
     if (!open) return
+    if (!q && !kind) return // 검색·카테고리 선택 전에는 안내만 보여준다(렌더에서 분기)
     const t = setTimeout(async () => {
       try {
         const r = await fetch(`/api/media?q=${encodeURIComponent(q)}&kind=${kind}&limit=80`)
@@ -48,18 +49,19 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
   return (
     <div className="fixed inset-0 z-[90] bg-[#241f17]/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <div className="w-full max-w-3xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-[#ebe4d6] max-h-[88vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#ebe4d6]">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#ebe4d6] shrink-0">
           <h2 className="text-[14px] font-bold text-[#241f17] shrink-0">미디어 라이브러리</h2>
           <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="검색 — 기사, 우주, 숲, 픽셀…" className="flex-1 h-8 rounded-lg border border-[#ddd3bf] px-3 text-[13px] outline-none focus:border-[#2563eb]" />
           <button onClick={onClose} className="w-8 h-8 rounded-md text-[#6b6152] hover:bg-[#f1ede4]" aria-label="닫기">✕</button>
         </div>
-        <div className="flex gap-1.5 px-4 py-2 overflow-x-auto border-b border-[#f1ede4]">
+        <div className="flex gap-1.5 px-4 py-2 overflow-x-auto overflow-y-hidden border-b border-[#f1ede4] shrink-0">
           {KINDS.map(([v, l]) => <button key={v} onClick={() => setKind(v)} className={`shrink-0 h-7 px-3 rounded-full text-[12px] border transition-colors ${kind === v ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white text-[#6b6152] border-[#ddd3bf] hover:border-[#241f17]'}`}>{l}</button>)}
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">
           {err && <p className="text-[12.5px] text-red-600 mb-2">{err}</p>}
-          {items === null ? <p className="text-[13px] text-[#9d9280]">불러오는 중…</p>
-            : items.length === 0 ? <p className="text-[13px] text-[#9d9280] py-10 text-center">아직 등록된 에셋이 없어요. 관리자가 미디어 라이브러리에 추가하면 여기서 고를 수 있어요.</p>
+          {!q && !kind ? <div className="min-h-[40vh] flex flex-col items-center justify-center gap-2 text-center"><span className="text-[28px]">🔍</span><p className="text-[15px] font-bold text-[#241f17]">검색하세요</p><p className="text-[12.5px] text-[#9d9280]">위 검색창에 이름·태그를 입력하거나 카테고리를 선택하면 에셋이 나와요.</p></div>
+            : items === null ? <p className="text-[13px] text-[#9d9280]">불러오는 중…</p>
+            : items.length === 0 ? <div className="min-h-[40vh] flex flex-col items-center justify-center gap-2 text-center"><span className="text-[28px]">🗂️</span><p className="text-[15px] font-bold text-[#241f17]">{q ? '검색에 없습니다.' : '이 카테고리에 등록된 에셋이 없어요.'}</p>{q && <p className="text-[12.5px] text-[#9d9280]">다른 단어로 검색하거나 카테고리를 골라 보세요.</p>}</div>
             : <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
               {items.map(it => (
                 <button key={it.id} onClick={() => toggle(it)} className={`group relative rounded-xl border-2 overflow-hidden text-left bg-[#f8f6f1] transition-all ${has(it.id) ? 'border-[#2563eb] shadow-[0_0_0_3px_rgba(37,99,235,0.15)]' : 'border-transparent hover:border-[#ddd3bf]'}`}>
