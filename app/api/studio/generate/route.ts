@@ -395,8 +395,12 @@ export async function POST(req: Request) {
           }
         } else {
           const nextVersion = (latest?.version ?? 0) + 1
+          const loadedAssets = mediaAssets.length ? await loadAssetData(mediaAssets) : []
+          // 크기 제한 등으로 실리지 않은 에셋은 조용히 빠지지 않고 답변에 알린다 (예: 배경음 484KB > 상한)
+          const skipped = mediaAssets.filter(a => !loadedAssets.some(l => l.id === a.id))
+          const skipNote = skipped.length ? `\n\n⚠ 크기 제한으로 게임에 실리지 않은 에셋: ${skipped.map(a => `${a.name}(${Math.round(a.bytes / 1024)}KB)`).join(', ')}. 미디어 라이브러리에서 더 작은 파일(오디오 900KB·이미지 450KB 이하)로 바꿔 주세요.` : ''
           const { data: vIns, error: vErr } = await supabase.from('studio_versions').insert([
-            { project_id: projectId, version: nextVersion, html: hardenHtml(injectAssets(injectSounds(parsed.html, sounds), mediaAssets.length ? await loadAssetData(mediaAssets) : []), { controls: await loadControls() }) },
+            { project_id: projectId, version: nextVersion, html: hardenHtml(injectAssets(injectSounds(parsed.html, sounds), loadedAssets), { controls: await loadControls() }) },
           ] as never).select('id').maybeSingle()
           if (vErr) {
             await refund()
@@ -413,7 +417,7 @@ export async function POST(req: Request) {
             try {
               const { error: mErr } = await supabase.from('studio_messages').insert([
                 { project_id: projectId, role: 'user', content: prompt + (pickedAssets.length ? await buildAttachNote(images, sounds, pickedAssets.map(a => ({ name: a.name, kind: a.kind, url: a.url }))).catch(() => attachNote) : attachNote) },
-                { project_id: projectId, role: 'assistant', content: parsed.description },
+                { project_id: projectId, role: 'assistant', content: parsed.description + skipNote },
               ] as never)
               if (mErr) console.error('[studio/generate] messages insert failed', mErr)
               if (nextVersion === 1 && !tmatch && !hasAttach) {
