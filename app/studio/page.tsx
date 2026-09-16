@@ -248,7 +248,7 @@ export default function StudioPage() {
                       <h3 className={`${titleFont.className} text-white text-[21px] leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] line-clamp-2`}>{title}</h3>
                       <div className="flex items-end justify-between gap-2 mt-0.5">
                         <p className="text-[12px] text-white/80 truncate">{teasers[p.id] ? teasers[p.id] : '훅 문구를 수정에서 추가하세요'}</p>
-                        <span className="text-[10px] text-white/60 tabular-nums shrink-0">{new Date(p.created_at).toLocaleDateString()}</span>
+                        <span className="text-[10px] text-white/60 tabular-nums shrink-0 whitespace-nowrap">{(d => `${String(d.getFullYear()).slice(2)}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`)(new Date(p.created_at))}</span>
                       </div>
                     </div>
                   </Link>
@@ -259,8 +259,8 @@ export default function StudioPage() {
                       프롬프트
                     </Link>
                     {pub && (
-                      <Link href={`/games/${pub.id}`} aria-label="플레이" className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-bold text-white bg-gradient-to-r from-[#34d399] to-[#16a34a] px-3.5 h-9 rounded-full shadow-[0_6px_16px_rgba(22,163,74,0.3)] hover:shadow-[0_8px_20px_rgba(22,163,74,0.45)] hover:brightness-105 transition-all">
-                        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"><path d="M8 5.6v12.8c0 1.2 1.3 1.9 2.3 1.3l10.1-6.4a1.5 1.5 0 0 0 0-2.6L10.3 4.3C9.3 3.7 8 4.4 8 5.6Z" /></svg>
+                      <Link href={`/games/${pub.id}`} aria-label="플레이" className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-bold text-white bg-[#241f17] px-3.5 h-9 rounded-full hover:bg-[#3b332a] transition-colors">
+                        <svg viewBox="0 0 24 24" className="w-3 h-3 -ml-0.5" fill="currentColor"><path d="M6.5 5.4v13.2c0 1.1 1.2 1.8 2.2 1.2l10-6.6a1.4 1.4 0 0 0 0-2.4l-10-6.6c-1-.6-2.2.1-2.2 1.2Z" /></svg>
                         플레이
                       </Link>
                     )}
