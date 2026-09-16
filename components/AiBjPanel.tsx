@@ -134,6 +134,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const anyFrame = () => document.querySelector('iframe')
   const [companion, setCompanion] = useState<{ image: string } | null>(null)
   const ackRef = useRef(false)
+  const lastImageRef = useRef<string | null>(null)   // 참여 때 쓴 아바타 스냅샷 — 텔레포트로 게임이 바뀌면 새 게임에 다시 참여시킬 때 사용
   useEffect(() => { const iv = setInterval(() => { const ok = !camera && !!anyFrame(); setCanJoin(prev => (prev === ok ? prev : ok)) }, 700); return () => clearInterval(iv) }, [camera])
   useEffect(() => { const h = (e: MessageEvent) => { if ((e.data as { type?: string })?.type === 'vibrex:avatar-received') ackRef.current = true }; window.addEventListener('message', h); return () => window.removeEventListener('message', h) }, [])
   const flyInto = (image: string, target: DOMRect, opts: { spin?: boolean; scale?: number }) => {
@@ -151,6 +152,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   useEffect(() => {
     const onSnap = (e: Event) => {
       const image = (e as CustomEvent<{ image: string }>).detail?.image; if (!image) return
+      lastImageRef.current = image
       const f = gameFrame(); const tgt = f ?? anyFrame(); if (!tgt) return
       const rect = tgt.getBoundingClientRect()
       flyInto(image, rect, { spin: true })
@@ -173,6 +175,28 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     window.addEventListener('avatar:snapshot', onSnap)
     return () => window.removeEventListener('avatar:snapshot', onSnap)
   }, [bjLabel, gameId])
+  // 다음 게임으로 텔레포트하면 iframe 이 바뀌어 오토파일럿·아바타·정책이 사라진다 → 참여 중이었다면 새 프레임이 응답(ack)할 때까지 다시 보낸다
+  const prevGameRef = useRef(gameId)
+  useEffect(() => {
+    if (prevGameRef.current === gameId) return
+    prevGameRef.current = gameId
+    if (!joinedRef.current || !lastImageRef.current) return
+    ackRef.current = false
+    const image = lastImageRef.current
+    const policyP = gameId ? fetch(`/api/ai-bj/coach?gameId=${gameId}`).then(r => r.json()).catch(() => null) : Promise.resolve(null)
+    let tries = 0
+    const iv = setInterval(() => {
+      const win = gameFrame()?.contentWindow
+      if (win) {
+        win.postMessage({ type: 'vibrex:avatar', image, name: bjLabel }, '*')
+        win.postMessage({ type: 'vibrex:autopilot', on: true }, '*')
+        win.postMessage({ type: 'vibrex:manifest-request' }, '*')
+        void policyP.then(j => { if (!j || !joinedRef.current) return; if (j.policy) { policyRef.current = j.policy; win.postMessage({ type: 'vibrex:policy', policy: j.policy }, '*') } if (j.brain) win.postMessage({ type: 'vibrex:brain', brain: j.brain }, '*') })
+      }
+      if (ackRef.current || ++tries > 14) clearInterval(iv)
+    }, 700)
+    return () => clearInterval(iv)
+  }, [gameId, bjLabel])
   const joinGame = () => window.dispatchEvent(new CustomEvent('avatar:snapshot-request'))
   const leaveGame = () => { const w = gameFrame()?.contentWindow; w?.postMessage({ type: 'vibrex:autopilot', on: false }, '*'); w?.postMessage({ type: 'vibrex:avatar-remove' }, '*'); setCompanion(null); setJoined(false) }
   const avatarVisible = (!!camera || speaking) && !joined
