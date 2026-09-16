@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { generateThumbnail } from '@/lib/thumbnail'
+import GameEditModal from '@/components/GameEditModal'
 import type { User } from '@supabase/supabase-js'
 import { COUNTRIES } from '@/lib/countries'
 import { GameCoinBadge, PromptCreditBadge } from '@/components/CurrencyBadge'
@@ -79,7 +79,6 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [games, setGames] = useState<Game[]>([])
   const [editingGame, setEditingGame] = useState<EditingGame | null>(null)
-  const [regenThumb, setRegenThumb] = useState(false)
   const [curriculumGame, setCurriculumGame] = useState<{ id: string; title: string } | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [profileMsg, setProfileMsg] = useState<{ text: string; ok: boolean } | null>(null)
@@ -202,45 +201,6 @@ export default function ProfilePage() {
         await supabase.from('profiles').update({ agent_name: agentName.trim() || null } as never).eq('id', user.id)
       }
       flash(setAgentMsg, '에이전트가 저장되었습니다.', true)
-    })
-  }
-
-  const handleSaveGame = () => {
-    if (!editingGame || !user) return
-    startTransition(async () => {
-      let thumbnailUrl = editingGame.thumbnail_url
-
-      if (editingGame.newThumbnail) {
-        const file = editingGame.newThumbnail
-        const ext = file.name.split('.').pop() ?? 'png'
-        const path = `${user.id}/${crypto.randomUUID()}.${ext}`
-        const { error: uploadErr } = await supabase.storage.from('thumbnails').upload(path, file, { upsert: false })
-        if (uploadErr) { flash(setGameMsg, '썸네일 업로드 실패: ' + uploadErr.message, false); return }
-        const { data: { publicUrl } } = supabase.storage.from('thumbnails').getPublicUrl(path)
-        thumbnailUrl = publicUrl
-      }
-
-      let gameManual = editingGame.game_manual || null
-      if (editingGame.newManual) {
-        gameManual = await editingGame.newManual.text()
-      }
-
-      const { error } = await supabase.from('games').update({
-        title: editingGame.title,
-        genre: editingGame.genre,
-        description: editingGame.description.trim() || null,
-        language: editingGame.language || null,
-        country: editingGame.country || null,
-        game_manual: gameManual,
-        play_url: editingGame.play_url,
-        thumbnail_url: thumbnailUrl,
-        teaser: editingGame.teaser.trim() || null,
-      } as never).eq('id', editingGame.id)
-
-      if (error) { flash(setGameMsg, '저장 실패: ' + error.message, false); return }
-      setGames(prev => prev.map(g => g.id === editingGame.id ? { ...g, title: editingGame.title, genre: editingGame.genre, description: editingGame.description.trim() || null, language: editingGame.language || null, country: editingGame.country || null, game_manual: gameManual, play_url: editingGame.play_url, thumbnail_url: thumbnailUrl, teaser: editingGame.teaser.trim() || null } : g))
-      setEditingGame(null)
-      flash(setGameMsg, '수정되었습니다.', true)
     })
   }
 
@@ -568,136 +528,14 @@ export default function ProfilePage() {
       {tab === 'collections' && user && <section id="collections" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><MyCollections userId={user.id} /></section>}
       {curriculumGame && <GameCurriculumModal gameId={curriculumGame.id} title={curriculumGame.title} onClose={() => setCurriculumGame(null)} />}
 
-      {/* ── Edit Game Modal ── */}
-      {editingGame && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#241f17]/45 backdrop-blur-[2px] px-4">
-          <div className="w-full max-w-md bg-white rounded-2xl border border-[#ebe4d6] shadow-2xl max-h-[90svh] flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#ebe4d6]">
-              <p className="text-[15px] font-bold text-[#241f17]">게임 수정</p>
-              <button onClick={() => setEditingGame(null)} className="w-8 h-8 rounded-lg text-[#857a68] hover:bg-[#f4efe6] hover:text-[#241f17] transition-colors">✕</button>
-            </div>
-            <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
-              {/* Thumbnail preview + upload */}
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">썸네일</label>
-                <div className="relative w-full aspect-video mb-3 overflow-hidden rounded-xl bg-gray-900 border border-[#ebe4d6]">
-                  <Image
-                    src={editingGame.newThumbnail ? URL.createObjectURL(editingGame.newThumbnail) : editingGame.thumbnail_url}
-                    alt="thumbnail"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/gif,image/webp"
-                  onChange={e => setEditingGame(prev => prev ? { ...prev, newThumbnail: e.target.files?.[0] ?? null } : null)}
-                  className="w-full bg-[#ffffff] border border-[#ddd3bf] px-4 py-2.5 text-sm text-[#6b6152]
-                    file:mr-4 file:py-1 file:px-3 file:border-0
-                    file:bg-[#2563eb] file:text-white file:text-[11px] file:font-pixel file:cursor-pointer
-                    file:hover:bg-[#1d4ed8] file:transition-colors"
-                />
-                {editingGame.newThumbnail && <p className="text-xs text-[#6b6152] mt-1">선택됨: {editingGame.newThumbnail.name}</p>}
-                {/* 기본 배경(미디어 라이브러리 default_background) + 제목으로 썸네일을 다시 만든다 — 저장을 누르면 업로드 */}
-                <button
-                  type="button"
-                  disabled={regenThumb}
-                  onClick={async () => {
-                    setRegenThumb(true)
-                    try {
-                      const blob = await generateThumbnail(editingGame.title || '게임', editingGame.genre as never)
-                      const file = new File([blob], 'default-thumbnail.png', { type: 'image/png' })
-                      setEditingGame(prev => prev ? { ...prev, newThumbnail: file } : null)
-                    } catch (e) { console.error('[profile] regen thumbnail', e) }
-                    setRegenThumb(false)
-                  }}
-                  className="mt-2 inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-[#ddd3bf] bg-white text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors disabled:opacity-50"
-                >
-                  {regenThumb ? <span className="w-3.5 h-3.5 border-2 border-[#2563eb]/60 border-t-transparent rounded-full animate-spin" /> : <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v6h-6" /></svg>}
-                  기본 썸네일로 다시 만들기
-                </button>
-                <p className="text-[11px] text-[#9d9280] mt-1">기본 배경 이미지 위에 제목을 얹어 새로 만듭니다. 미리보기를 확인하고 아래 저장을 누르면 반영됩니다.</p>
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">TITLE</label>
-                <input className={inputClass} value={editingGame.title} onChange={e => setEditingGame(prev => prev ? { ...prev, title: e.target.value } : null)} />
-              </div>
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">
-                  카드 훅 문구 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(카드 앞면에 표시 — 비워두면 기본 문구)</span>
-                </label>
-                <input
-                  className={inputClass}
-                  maxLength={40}
-                  placeholder="예: 멈추면 죽는다 / 왕좌를 뺏어라"
-                  value={editingGame.teaser}
-                  onChange={e => setEditingGame(prev => prev ? { ...prev, teaser: e.target.value } : null)}
-                />
-              </div>
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">게임 언어</label>
-                <select className={inputClass} value={editingGame.language} onChange={e => setEditingGame(prev => prev ? { ...prev, language: e.target.value } : null)}>
-                  {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">게임 국가</label>
-                <select className={inputClass} value={editingGame.country} onChange={e => setEditingGame(prev => prev ? { ...prev, country: e.target.value } : null)}>
-                  <option value="">선택 안 함</option>
-                  {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">AI AJ 게임 설명</label>
-                <textarea
-                  rows={3}
-                  maxLength={500}
-                  className={inputClass + ' resize-none'}
-                  value={editingGame.description}
-                  onChange={e => setEditingGame(prev => prev ? { ...prev, description: e.target.value } : null)}
-                  placeholder="조작 방법, 적, 아이템, 목표 등을 설명해주세요"
-                />
-              </div>
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">
-                  게임 메뉴얼 <span className="text-[#9d9280] normal-case font-sans text-[11px]">(.md 파일)</span>
-                </label>
-                {editingGame.game_manual && !editingGame.newManual && (
-                  <p className="text-[11px] text-[#2563eb] mb-2">✓ 메뉴얼 등록됨 — 새 파일 업로드 시 교체됩니다</p>
-                )}
-                <input
-                  type="file"
-                  accept=".md,text/markdown,text/plain"
-                  onChange={e => setEditingGame(prev => prev ? { ...prev, newManual: e.target.files?.[0] ?? null } : null)}
-                  className="w-full bg-[#ffffff] border border-[#ddd3bf] px-4 py-2.5 text-sm text-[#6b6152]
-                    file:mr-4 file:py-1 file:px-3 file:border-0
-                    file:bg-[#241f17] file:text-white file:text-[12px] file:font-semibold file:rounded-md file:cursor-pointer
-                    file:hover:bg-gray-600 file:transition-colors"
-                />
-                {editingGame.newManual && <p className="text-xs text-[#6b6152] mt-1">선택됨: {editingGame.newManual.name}</p>}
-              </div>
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">GENRE</label>
-                <select className={inputClass} value={editingGame.genre} onChange={e => setEditingGame(prev => prev ? { ...prev, genre: e.target.value as Genre } : null)}>
-                  {GENRES.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">PLAY URL</label>
-                <input className={inputClass} value={editingGame.play_url} onChange={e => setEditingGame(prev => prev ? { ...prev, play_url: e.target.value } : null)} />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button onClick={handleSaveGame} disabled={isPending} className="flex-1 h-11 rounded-xl bg-[#2563eb] text-white text-[14px] font-bold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50">
-                  {isPending ? 'SAVING...' : 'SAVE'}
-                </button>
-                <button onClick={() => setEditingGame(null)} className="flex-1 h-11 rounded-xl border border-[#ddd3bf] bg-white text-[14px] font-semibold text-[#4a4337] hover:border-[#2563eb] transition-colors">
-                  CANCEL
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* ── Edit Game Modal (공용 컴포넌트) ── */}
+      {editingGame && user && (
+        <GameEditModal
+          gameId={editingGame.id}
+          userId={user.id}
+          onClose={() => setEditingGame(null)}
+          onSaved={(g) => { setGames(prev => prev.map(x => x.id === g.id ? { ...x, ...g } : x)); flash(setGameMsg, '수정되었습니다.', true) }}
+        />
       )}
     </div>
   )

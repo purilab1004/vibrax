@@ -14,7 +14,14 @@ export default function NativeBridge() {
     if (typeof navigator === 'undefined' || !/VibrexcupApp/i.test(navigator.userAgent)) return
     document.documentElement.classList.add('vbx-app') // 앱 표시 클래스 — 로드 전 주입분은 하이드레이션 때 지워질 수 있어 여기서도 붙인다
     const w = window as unknown as { __vibexNav?: (p: string) => void }
-    w.__vibexNav = (path: string) => { try { router.push(path) } catch { /* noop */ } }
+    // 같은 탭을 다시 누르면(예: 홈에서 홈) 맨 위(프롬프트 섹션)로 — 다른 경로면 이동 후 맨 위부터
+    w.__vibexNav = (path: string) => {
+      try {
+        if (window.location.pathname === path.split('?')[0]) { window.scrollTo({ top: 0, behavior: 'smooth' }); return }
+        router.push(path)
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'auto' }), 50)
+      } catch { /* noop */ }
+    }
     // 앱에서는 노치·홈바 영역까지 웹뷰가 차지할 수 있게(viewport-fit=cover) → 게임 플레이 시 env(safe-area-inset-*) 로 여백 계산
     try {
       const m = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null

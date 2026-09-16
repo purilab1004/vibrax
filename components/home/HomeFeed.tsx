@@ -29,11 +29,15 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
   useEffect(() => {
     if (!window.matchMedia('(max-width: 767px)').matches) return
     const el = rootRef.current; if (!el) return
-    let t: ReturnType<typeof setTimeout> | null = null, done = false
-    const check = () => { if (done) return; const top = el.getBoundingClientRect().top; if (window.scrollY > 120 && top <= 2 && top > -40) { done = true; router.push('/games') } }
+    let t: ReturnType<typeof setTimeout> | null = null, done = false, userMoved = false
+    const mountedAt = Date.now()
+    // 사용자가 실제로 손가락/휠로 움직인 뒤에만 넘어간다 — 홈 탭으로 들어왔을 때 스크롤 위치 복원 등으로 저절로 /games 로 튀지 않게
+    const markMoved = () => { userMoved = true }
+    const check = () => { if (done || !userMoved || Date.now() - mountedAt < 600) return; const top = el.getBoundingClientRect().top; if (window.scrollY > 120 && top <= 2 && top > -40) { done = true; router.push('/games') } }
     const onScroll = () => { if (t) clearTimeout(t); t = setTimeout(check, 140) }
+    window.addEventListener('touchmove', markMoved, { passive: true }); window.addEventListener('wheel', markMoved, { passive: true })
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => { window.removeEventListener('scroll', onScroll); if (t) clearTimeout(t) }
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('touchmove', markMoved); window.removeEventListener('wheel', markMoved); if (t) clearTimeout(t) }
   }, [router])
   useEffect(() => {
     const el = rootRef.current

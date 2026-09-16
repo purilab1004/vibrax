@@ -1,4 +1,5 @@
 import type { Genre } from '@/lib/supabase/types'
+import { titleFont } from '@/lib/fonts'   // 쇼츠 카드 제목과 같은 귀여운 글꼴(Jua)
 
 // 타이틀 기반 자동 썸네일 — Canvas로 브랜드 스타일(다크+네온) 1280×720 PNG 생성.
 // 같은 타이틀+시드는 항상 같은 결과(결정적). 시드를 바꾸면 다른 배색/배치가 나온다.
@@ -95,7 +96,8 @@ export async function generateThumbnail(title: string, genre: Genre, seed = 0): 
   const [c1, c2] = PALETTES[Math.floor(rng() * PALETTES.length)]
   const pixel = pixelFontStack()
 
-  try { await document.fonts?.ready } catch { /* 폰트 로드 실패해도 진행 */ }
+  const cute = titleFont.style.fontFamily
+  try { await document.fonts?.load(`64px ${cute}`); await document.fonts?.ready } catch { /* 폰트 로드 실패해도 진행 */ }
 
   const bgImg = await loadDefaultBackground()
   if (bgImg) {
@@ -151,8 +153,8 @@ export async function generateThumbnail(title: string, genre: Genre, seed = 0): 
   ctx.fillText(`▮ ${GENRE_LABEL[genre]}`, 56, 52)
 
   // 제목 (중앙, 최대 2줄, 길이에 따라 크기 조절)
-  const base = title.length <= 8 ? 96 : title.length <= 16 ? 76 : 60
-  ctx.font = `800 ${base}px 'Pretendard Variable', Pretendard, sans-serif`
+  const base = title.length <= 8 ? 104 : title.length <= 16 ? 84 : 66
+  ctx.font = `400 ${base}px ${cute}, 'Pretendard Variable', Pretendard, sans-serif`
   const lines = wrapTitle(ctx, title.trim() || 'MY GAME', W - 220)
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -173,11 +175,10 @@ export async function generateThumbnail(title: string, genre: Genre, seed = 0): 
   ctx.textAlign = 'right'
   ctx.textBaseline = 'alphabetic'
   ctx.font = `20px ${pixel}`
-  ctx.fillStyle = c1
-  const cupW = ctx.measureText('CUP').width
-  ctx.fillText('VIBREX', W - 56 - cupW, H - 48)
-  ctx.fillStyle = c2
-  ctx.fillText('CUP', W - 56, H - 48)
+  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8
+  ctx.fillStyle = '#ffffff'
+  ctx.fillText('VIBREXCUP', W - 56, H - 48)
+  ctx.shadowBlur = 0
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(b => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png')

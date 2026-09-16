@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PromptCreditBadge, PromptCreditIcon } from '@/components/CurrencyBadge'
 import EditInfoModal from '@/components/studio/EditInfoModal'
+import GameEditModal from '@/components/GameEditModal'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { purgeEmptyProjects } from '@/lib/studio/cleanup'
@@ -23,6 +24,7 @@ export default function StudioPage() {
   const [teasers, setTeasers] = useState<Record<string, string | null>>({})
   // 게시된 게임 (프로젝트 id → 게임) — 카드에 썸네일·게시 상태·플레이 링크
   const [published, setPublished] = useState<Record<string, { id: string; thumbnail_url: string | null; view_count: number | null }>>({})
+  const [userId, setUserId] = useState<string | null>(null)
   const [query, setQuery] = useState('') // 내 프로젝트 검색(제목·훅 문구)
 
   // 프로젝트 삭제 — 퍼블리싱된 게임이 있으면 게임까지 함께 삭제 (안내 후)
@@ -60,6 +62,9 @@ export default function StudioPage() {
       if (!user) {
         router.push('/login?redirect=/studio')
         return
+      }
+      setUserId(user.id)
+      {
       }
       // 첫 진입 보너스(멱등) — 반환값이 현재 잔액.
       // 홈 히어로에서 곧장 넘어온 신규 유저도 보너스를 먼저 받아야 첫 생성이 402가 안 난다.
@@ -281,7 +286,20 @@ export default function StudioPage() {
         )}
       </section>
 
-      {editing && (
+      {editing && published[editing.id] && userId && (
+        /* 게시된 게임 — 프로필의 '게임 수정' 과 같은 전체 편집기(썸네일·언어·국가·설명·메뉴얼·장르·URL) */
+        <GameEditModal
+          gameId={published[editing.id].id}
+          userId={userId}
+          onClose={() => setEditing(null)}
+          onSaved={(g) => {
+            setProjects(prev => prev ? prev.map(x => x.id === editing.id ? { ...x, title: g.title } : x) : prev)
+            setTeasers(prev => ({ ...prev, [editing.id]: g.teaser ?? null }))
+            setPublished(prev => ({ ...prev, [editing.id]: { ...prev[editing.id], thumbnail_url: g.thumbnail_url } }))
+          }}
+        />
+      )}
+      {editing && !(published[editing.id] && userId) && (
         <EditInfoModal
           projectId={editing.id}
           initialTitle={editing.title || ''}
