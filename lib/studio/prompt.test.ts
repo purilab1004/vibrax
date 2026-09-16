@@ -20,8 +20,11 @@ test('수정: 현재 HTML이 user 메시지에 포함된다', () => {
   })
   const last = msgs[msgs.length - 1]
   assert.equal(last.role, 'user')
-  assert.match(last.content, /<game><html>v1<\/html><\/game>/)
-  assert.match(last.content, /배경을 파랗게/)
+  const text = typeof last.content === 'string' ? last.content : last.content.map(c => c.type === 'text' ? c.text : '').join('\n')
+  assert.match(text, /<game><html>v1<\/html><\/game>/)
+  assert.match(text, /배경을 파랗게/)
+  // 현재 HTML 블록은 프롬프트 캐시 대상
+  assert.ok(typeof last.content !== 'string' && last.content[0].type === 'text' && last.content[0].cache_control?.type === 'ephemeral')
 })
 
 test('역할 교대: 연속 같은 role은 병합, 선두 assistant 제거, 마지막은 user', () => {

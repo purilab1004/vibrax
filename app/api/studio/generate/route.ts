@@ -16,6 +16,8 @@ import { loadAutomation, logAutomation } from '@/lib/automation'
 import { hardenHtml, injectSounds } from '@/lib/studio/harden'
 import { tryMaxJob, type MsgStream } from '@/lib/studio/max-job'
 import { extractPatches, applyPatches } from '@/lib/studio/patch'
+import { stripAttach } from '@/lib/studio/attach'
+import { buildAttachNote } from '@/lib/studio/attach-server'
 import { loadControls } from '@/lib/controls-server'
 import { extractAssetIds, stripAssets, injectAssets, assetPromptNote, scoreAssets, listAutoAssets, getAssetsByIds, loadAssetData, type MediaAssetLite } from '@/lib/media/assets'
 import { personalizeTemplate } from '@/lib/studio/personalize'
@@ -55,6 +57,8 @@ export async function POST(req: Request) {
     .slice(0, 2)
     .map(x => ({ name: String(x.name).slice(0, 60), media_type: x.media_type, data: x.data, role: typeof (x as { role?: string }).role === 'string' ? String((x as { role?: string }).role).slice(0, 20) : '' }))
   const hasAttach = images.length > 0 || sounds.length > 0
+  // 채팅에 남길 첨부 표시(이미지 썸네일·사운드 이름) — 메시지 content 끝에 마커로 저장
+  const attachNote = hasAttach ? await buildAttachNote(images, sounds).catch(() => '') : ''
 
   if (typeof projectId !== 'string' || typeof prompt !== 'string' || !projectId || !prompt.trim()) {
     return new Response('bad request', { status: 400 })
@@ -103,7 +107,7 @@ export async function POST(req: Request) {
     return new Response('context fetch failed', { status: 500 })
   }
   const latest = latestRes.data as { html: string; version: number } | null
-  const history = (historyRes.data ?? []) as ChatTurn[]
+  const history = ((historyRes.data ?? []) as ChatTurn[]).map(t => ({ ...t, content: stripAttach(t.content ?? '') }))  // 첨부 마커는 모델에 보내지 않는다
 
   // 크레딧 원자적 차감 — 실패 경로에서 이 ref로 환불 (관리자는 차감 없음)
   const spendRef = `gen:${projectId}:${crypto.randomUUID()}`
@@ -209,7 +213,7 @@ export async function POST(req: Request) {
         ? `${switched}「${pTitle || tmatch.template.name}」 을(를) 만들었어요. ${tmatch.template.description} 이어서 "배경을 우주로", "속도를 더 빠르게" 처럼 말하면 그 위에 바꿔 드릴게요.`
         : `${switched}요청하신 「${pTitle || tmatch.template.name}」 게임을 만들었어요. 이어서 원하는 변경을 말씀해 주시면 바로 반영할게요.`
       await supabase.from('studio_messages').insert([
-        { project_id: projectId, role: 'user', content: prompt },
+        { project_id: projectId, role: 'user', content: prompt + attachNote },
         { project_id: projectId, role: 'assistant', content: desc },
       ] as never)
       const title = extractTitle(html)
@@ -382,7 +386,7 @@ export async function POST(req: Request) {
             })
             try {
               const { error: mErr } = await supabase.from('studio_messages').insert([
-                { project_id: projectId, role: 'user', content: prompt },
+                { project_id: projectId, role: 'user', content: prompt + attachNote },
                 { project_id: projectId, role: 'assistant', content: parsed.description },
               ] as never)
               if (mErr) console.error('[studio/generate] messages insert failed', mErr)

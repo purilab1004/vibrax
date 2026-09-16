@@ -1,5 +1,6 @@
 'use client'
 
+import { parseAttach } from '@/lib/studio/attach'
 import { useEffect, useRef, useState } from 'react'
 import MediaPicker, { type PickedAsset } from '@/components/studio/MediaPicker'
 import { useLang } from '@/lib/i18n/context'
@@ -203,15 +204,20 @@ export default function StudioChat({
             /* 사용자 — 오른쪽, 파랑 그라데이션 말풍선 (오른쪽 아래 모서리만 각지게) */
             <div key={i} className="flex justify-end">
               <div className="max-w-[80%] px-4 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap text-white bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] rounded-2xl rounded-br-md shadow-[0_4px_14px_rgba(37,99,235,0.25)]">
-                {m.images && m.images.length > 0 && (
-                  <div className="flex gap-1.5 mb-2">
-                    {m.images.map((src, j) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img key={j} src={src} alt="첨부 이미지" className="w-16 h-16 object-cover rounded-lg ring-1 ring-white/40" />
-                    ))}
-                  </div>
-                )}
-                {m.content}
+                {(() => { const a = parseAttach(m.content); const imgs = m.images && m.images.length > 0 ? m.images : a.images; return (<>
+                  {imgs.length > 0 && (
+                    <div className="flex gap-1.5 mb-2">
+                      {imgs.map((src, j) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={j} src={src} alt="첨부 이미지" className="w-16 h-16 object-cover rounded-lg ring-1 ring-white/40" />
+                      ))}
+                    </div>
+                  )}
+                  {a.sounds.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">{a.sounds.map((n, j) => <span key={j} className="text-[11px] bg-white/20 rounded-full px-2 py-0.5">🔊 {n}</span>)}</div>
+                  )}
+                  {a.text}
+                </>) })()}
               </div>
             </div>
           ) : (
