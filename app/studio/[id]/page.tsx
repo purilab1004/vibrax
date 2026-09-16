@@ -256,11 +256,13 @@ export default function StudioComposerPage() {
       const parsed = parseGeneration(full)
       setMessages(m => [...m, { role: 'assistant', content: parsed.description }])
       optimisticPending = false
+      // 모델 출력(parsed.html)에는 에셋·플랫폼 브리지가 빠져 있어 그대로 띄우면 배경·캐릭터 이미지가 사라진 것처럼 보인다
+      // → 서버가 저장한 버전(에셋 주입·하든 완료)을 불러와 미리보기에 띄운다. 그 전까지만 임시로 모델 출력 표시.
       if (parsed.html) { setHtml(parsed.html); if (view === 'chat') setView('game') }   // 완성되면 게임 화면으로
       // 이 시점에는 서버에 이미 저장 완료 — 후처리 실패해도 롤백하지 않는다
       try {
         const list = await refreshVersions()
-        if (list.length > 0) setCurrentVersionId(list[0].id)
+        if (list.length > 0) { setCurrentVersionId(list[0].id); await loadVersionHtml(list[0].id) }
         await refreshBalance()
         // 첫 생성이면 서버가 제목을 갱신했을 수 있음
         const { data: proj } = await supabase
