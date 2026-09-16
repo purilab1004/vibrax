@@ -36,7 +36,7 @@ export default function PlayHeader({ title, onClose, paused, onTogglePause, rota
           {onToggleLive && (
             <button onClick={onToggleLive} aria-label={live ? '방송 종료' : '내 플레이 방송'} title={live ? '방송 종료' : '내 플레이를 라이브로 방송 (시청자는 관전만)'} className={`h-9 px-3 rounded-full backdrop-blur-md border text-white text-[12px] font-bold flex items-center gap-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-colors ${live ? 'bg-[#e11d48] border-[#e11d48]' : 'bg-black/45 border-white/15 hover:bg-white hover:text-black'}`}>
               <span className={`w-2 h-2 rounded-full ${live ? 'bg-white animate-pulse' : 'bg-[#e11d48]'}`} />
-              {live ? `LIVE · ${live.viewers}` : '방송'}
+              {live ? `LIVE · ${live.viewers}` : '내 플레이 방송'}
             </button>
           )}
           {onToggleRotate && (

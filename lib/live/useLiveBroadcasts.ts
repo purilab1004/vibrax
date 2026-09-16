@@ -22,7 +22,7 @@ async function fetchLive(): Promise<LiveMap> {
   const { data } = await supabase
     .from('profiles')
     .select('id, username, agent_name, avatar_config, country')
-    .or('avatar_config->broadcast->>on.eq.true,avatar_config->broadcasts.not.is.null')
+    .or('avatar_config->broadcast->>on.eq.true,avatar_config->broadcast->>screenOn.eq.true,avatar_config->broadcasts.not.is.null')
     .limit(300)
   const m: LiveMap = {}
   for (const row of (data ?? []) as { id: string; username: string | null; agent_name?: string | null; avatar_config: { broadcast?: unknown } | null; country?: string | null }[]) {
@@ -45,7 +45,8 @@ async function fetchLive(): Promise<LiveMap> {
   listeners.forEach((l) => l(m))
   return m
 }
-function ensure(maxAgeMs = 30_000): void {
+export function refreshLiveBroadcasts(): void { ensure(0) }
+function ensure(maxAgeMs = 10_000): void {
   if (Date.now() - fetchedAt < maxAgeMs) return
   if (!inflight) inflight = fetchLive().finally(() => { inflight = null })
 }
@@ -55,7 +56,7 @@ export function useLiveBroadcasts(): LiveMap {
   useEffect(() => {
     listeners.add(setM)
     ensure()
-    const iv = setInterval(() => ensure(), 30_000)
+    const iv = setInterval(() => ensure(), 10_000)
     return () => { listeners.delete(setM); clearInterval(iv) }
   }, [])
   return m

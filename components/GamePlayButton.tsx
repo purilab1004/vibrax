@@ -12,7 +12,7 @@ import { loadAvatarConfig, saveAvatarConfig } from '@/lib/jeumto/storage'
 import { emptyConfig } from '@/lib/jeumto/config'
 import { startHost, type HostHandle } from '@/lib/live/host'
 import dynamic from 'next/dynamic'
-import { useLiveBroadcasts, liveForGame } from '@/lib/live/useLiveBroadcasts'
+import { useLiveBroadcasts, liveForGame, refreshLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 import { useGameTelemetry } from '@/lib/aj/telemetry'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 import AiBjPanel from './AiBjPanel'
@@ -123,7 +123,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const [screenLive, setScreenLive] = useState<{ viewers: number } | null>(null)
   const screenHost = useRef<HostHandle | null>(null)
   const screenStream = useRef<MediaStream | null>(null)
-  const spectate = !!(open && !screenLive && liveEntry && liveEntry.kind === 'camera' && liveEntry.screen && liveEntry.hostId !== me)
+  const spectate = !!(open && !screenLive && liveEntry && liveEntry.kind === 'camera' && (liveEntry.screen || liveEntry.cam) && liveEntry.hostId !== me)
   const stopScreenLive = async (persist = true) => {
     screenHost.current?.stop(); screenHost.current = null
     screenStream.current?.getTracks().forEach(t => t.stop()); screenStream.current = null
@@ -221,7 +221,12 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     setAgentConfig({ name, persona: persona ?? '', avatarUrl })
     // 게임 제작자의 저장된 아바타를 BJ 로 사용 (없으면 AiBjPanel 이 기본 아바타 fallback) + 내 아바타
     loadAvatarConfig(supabase, game.user_id).then(setBjAvatarConfig).catch(() => {})
-    loadAvatarConfig(supabase, user.id).then(setMyAvatarConfig).catch(() => {})
+    loadAvatarConfig(supabase, user.id).then(cfg => {
+      setMyAvatarConfig(cfg)
+      // 내가 /broadcast 에서 이 게임으로 라이브(폰 카메라) 중이면, 게임을 열자마자 내 플레이 화면 방송도 자동으로 켠다 — 시청자에게 게임 화면 + 얼굴이 함께 나온다
+      if (cfg?.broadcast?.mode === 'camera' && cfg.broadcast.on && cfg.broadcast.gameId === game.id) setTimeout(() => { if (!screenHost.current) void startScreenLive() }, 1500)
+    }).catch(() => {})
+    refreshLiveBroadcasts()
     setOpen(true)
     supabase.rpc('increment_view_count', { game_id: game.id }).then(() => {})
   }
@@ -351,7 +356,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                 <div className="absolute inset-0 bg-black">
                   <CameraBjView hostId={liveEntry.hostId} channel="screen" fit="contain" badge={false} controls controlsClass="left-3 top-[calc(3.6rem+var(--vbx-safe-top,0px))]" />
                   <div className="absolute inset-x-0 flex justify-center pointer-events-none" style={{ top: 'calc(3.6rem + var(--vbx-safe-top, 0px))' }}>
-                    <span className="rounded-full bg-black/55 backdrop-blur px-3 py-1 text-[12px] font-semibold text-white flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#e11d48] animate-pulse" />{liveEntry.hostName} 님의 플레이를 보는 중 — 관전 모드</span>
+                    <span className="rounded-full bg-black/55 backdrop-blur px-3 py-1 text-[12px] font-semibold text-white flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#e11d48] animate-pulse" />{liveEntry.screen ? `${liveEntry.hostName} 님의 플레이를 보는 중 — 관전 모드` : `${liveEntry.hostName} 님이 라이브 중 — 게임을 시작하면 여기에 보여요`}</span>
                   </div>
                 </div>
               ) : [game, ...(pending ? [pending] : [])].map((g) => {
