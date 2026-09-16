@@ -20,8 +20,9 @@ export type MediaAssetLite = Pick<MediaAsset, 'id' | 'kind' | 'name' | 'title' |
 export const AUDIO_ROLES: [string, string][] = [['bgm', '배경음(루프)'], ['jump', '점프'], ['hit', '타격·피격'], ['coin', '획득·코인'], ['shoot', '발사'], ['explosion', '폭발'], ['powerup', '파워업'], ['gameover', '게임오버'], ['clear', '클리어·승리'], ['click', '버튼·UI'], ['ambient', '환경음'], ['other', '기타']]
 export const audioRoleLabel = (r?: unknown) => AUDIO_ROLES.find(x => x[0] === r)?.[1] ?? (typeof r === 'string' ? r : '')
 
-export const ASSET_MAX_BYTES = 450_000          // 에셋 하나 (data URI 로 인라인되므로 작게)
-export const ASSET_TOTAL_MAX_BYTES = 2_200_000  // 게임 하나에 들어가는 합계
+export const ASSET_MAX_BYTES = 450_000          // 에셋 하나 (data URI 로 인라인되므로 작게) — 이미지
+export const AUDIO_MAX_BYTES = 900_000          // 오디오 하나 (배경음은 길어서 조금 더 허용; 업로드 시 AAC 로 압축 권장)
+export const ASSET_TOTAL_MAX_BYTES = 3_000_000  // 게임 하나에 들어가는 합계
 export const ASSET_MAX_COUNT = 10
 
 const SHIM_OPEN = '<script data-vx-assets="'
@@ -112,12 +113,13 @@ export async function loadAssetData(assets: MediaAssetLite[], opts: { totalMax?:
   // 배경음(bgm)은 합계 제한에 걸려 마지막에 잘리기 쉬우니 먼저 싣는다
   const ordered = [...assets].sort((a, b) => Number(b.kind === 'audio' && b.meta?.role === 'bgm') - Number(a.kind === 'audio' && a.meta?.role === 'bgm'))
   for (const a of ordered.slice(0, maxCount)) {
-    if (!INJECTABLE.has(a.kind) || a.bytes > ASSET_MAX_BYTES || total + a.bytes > totalMax) continue
+    const cap = a.kind === 'audio' ? AUDIO_MAX_BYTES : ASSET_MAX_BYTES
+    if (!INJECTABLE.has(a.kind) || a.bytes > cap || total + a.bytes > totalMax) continue
     try {
       const r = await fetch(a.url, { cache: 'force-cache' })
       if (!r.ok) continue
       const buf = Buffer.from(await r.arrayBuffer())
-      if (buf.length > ASSET_MAX_BYTES) continue
+      if (buf.length > cap) continue
       total += buf.length
       const mime = a.mime || r.headers.get('content-type') || 'application/octet-stream'
       out.push({ id: a.id, name: a.name, kind: a.kind, dataUri: `data:${mime};base64,${buf.toString('base64')}`, width: a.width, height: a.height, meta: a.meta ?? {}, bytes: buf.length })
