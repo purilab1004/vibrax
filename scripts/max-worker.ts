@@ -9,12 +9,24 @@ for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', '
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
 const cliModel = (m: string | null) => /opus/i.test(m ?? '') ? 'opus' : /haiku/i.test(m ?? '') ? 'haiku' : 'sonnet'
 
-type Msg = { role: string; content: string | { type: string; text?: string }[] }
-function flatten(messages: Msg[]): string {
-  return messages.map(m => {
-    const text = typeof m.content === 'string' ? m.content : m.content.map(c => c.type === 'text' ? (c.text ?? '') : '[image]').join('\n')
-    return `${m.role === 'assistant' ? '[ASSISTANT]' : '[USER]'}\n${text}`
+type Msg = { role: string; content: string | { type: string; text?: string; source?: { media_type?: string; data?: string } }[] }
+// 이미지 블록은 임시 파일로 저장하고 경로를 알려 준다 — claude CLI 가 Read 도구로 열어 본다
+function flatten(messages: Msg[], tmpDir: string): { text: string; files: string[] } {
+  const files: string[] = []
+  const text = messages.map(m => {
+    const body = typeof m.content === 'string' ? m.content : m.content.map(c => {
+      if (c.type === 'text') return c.text ?? ''
+      if (c.type === 'image' && c.source?.data) {
+        const ext = (c.source.media_type ?? 'image/png').split('/')[1]?.replace('jpeg', 'jpg') ?? 'png'
+        const f = `${tmpDir}/img-${files.length + 1}.${ext}`
+        fs.writeFileSync(f, Buffer.from(c.source.data, 'base64')); files.push(f)
+        return `[첨부 이미지 ${files.length}: ${f} — Read 도구로 이 파일을 열어 내용을 확인한 뒤 요청에 반영할 것]`
+      }
+      return ''
+    }).join('\n')
+    return `${m.role === 'assistant' ? '[ASSISTANT]' : '[USER]'}\n${body}`
   }).join('\n\n') + '\n\n[ASSISTANT]\n'
+  return { text, files }
 }
 
 async function runJob(job: { id: string; model: string | null; system: string; messages: Msg[] }) {
@@ -22,9 +34,12 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   await sb.from('studio_jobs').update({ status: 'running', started_at: new Date().toISOString() }).eq('id', job.id)
   let buf = '', dirty = false, lastFlush = 0
   const flush = async (force = false) => { if (!dirty && !force) return; if (!force && Date.now() - lastFlush < 400) return; dirty = false; lastFlush = Date.now(); await sb.from('studio_jobs').update({ result: buf }).eq('id', job.id) }
-  const args = ['-p', '--tools', '', '--model', cliModel(job.model), '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--no-session-persistence', '--effort', 'medium', '--system-prompt', job.system]
+  const tmpDir = fs.mkdtempSync('/tmp/vbx-job-')
+  const { text: input, files } = flatten(job.messages, tmpDir)
+  // 이미지가 있으면 Read 도구만 허용(파일을 보기 위해), 없으면 도구 없이
+  const args = ['-p', '--tools', files.length ? 'Read' : '', '--model', cliModel(job.model), '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--no-session-persistence', '--effort', 'medium', '--system-prompt', job.system, ...(files.length ? ['--add-dir', tmpDir] : [])]
   const child = spawn('claude', args, { env: { ...process.env, CLAUDECODE: '' }, stdio: ['pipe', 'pipe', 'pipe'] })
-  child.stdin.write(flatten(job.messages)); child.stdin.end()
+  child.stdin.write(input); child.stdin.end()
   let rest = '', err = ''
   child.stdout.on('data', (d: Buffer) => {
     rest += d.toString('utf8'); const lines = rest.split('\n'); rest = lines.pop() ?? ''
@@ -41,6 +56,7 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   child.stderr.on('data', (d: Buffer) => { err += d.toString('utf8') })
   const code: number = await new Promise(res => child.on('close', res))
   await flush(true)
+  try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { /* noop */ }
   if (code !== 0 && !buf) { await sb.from('studio_jobs').update({ status: 'error', error: err.slice(0, 500) || `exit ${code}`, finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  error', err.slice(0, 200)); return }
   await sb.from('studio_jobs').update({ status: 'done', result: buf, finished_at: new Date().toISOString() }).eq('id', job.id)
   console.log('  done', buf.length, 'chars')

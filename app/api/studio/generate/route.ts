@@ -290,7 +290,8 @@ export async function POST(req: Request) {
   const genMessages = buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml ? stripAssets(baseHtml) : baseHtml, history, images })
   let stream: MsgStream | null = null
   // 관리자 + MAX_WORKER=1: 로컬 Claude Code(Max 구독) 워커로 생성 (이미지 입력은 API). 워커가 없으면 API 로 폴백.
-  if (isAdminUser && process.env.MAX_WORKER === '1' && images.length === 0) {
+  const useMax = isAdminUser && process.env.MAX_WORKER === '1'   // 이미지 첨부도 워커가 임시 파일로 넘겨 처리
+  if (useMax) {
     try { stream = await tryMaxJob(createAdminClient(), { projectId, userId: user.id, model: chosenModel, system: systemPrompt, messages: genMessages }) } catch (e) { console.error('[studio/generate] max job', e); stream = null }
   }
   if (!stream) try {
@@ -342,16 +343,21 @@ export async function POST(req: Request) {
             console.log('[studio/generate] patch mode', ex.blocks.length, 'blocks, out', raw.length, 'chars')
           } else {
             // 패치를 못 붙이면 전체 완성본으로 한 번 더 (API) — 느리지만 확실
-            console.warn('[studio/generate] patch apply failed', applied?.failed ?? 'no base', '→ full regeneration')
-            const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-            const retry = client.messages.stream({
-              model: chosenModel, max_tokens: GENERATION_MAX_TOKENS,
-              ...(chosenModel.startsWith('claude-sonnet-5') || chosenModel.startsWith('claude-opus-5') ? { thinking: { type: 'adaptive' as const }, output_config: { effort: 'medium' as const } } : {}),
-              system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-              messages: [...(genMessages as { role: 'user' | 'assistant'; content: unknown }[]), { role: 'assistant', content: raw.slice(0, 4000) }, { role: 'user', content: '위 패치 중 원문이 일치하지 않는 것이 있어 적용에 실패했다. 이번엔 패치 대신 요청을 반영한 "전체 완성본" HTML 을 <game>…</game> 으로 출력해라.' }] as never,
-            })
+            console.warn('[studio/generate] patch apply failed', applied?.failed ?? 'no base', invalid ?? '', '→ full regeneration')
+            const retryMessages = [...(genMessages as { role: 'user' | 'assistant'; content: unknown }[]), { role: 'assistant', content: raw.slice(0, 4000) }, { role: 'user', content: '위 패치 중 원문이 일치하지 않거나 적용 결과가 깨지는 것이 있어 실패했다. 이번엔 패치 대신 요청을 반영한 "전체 완성본" HTML 을 <game>…</game> 으로 출력해라.' }]
+            let retry: MsgStream | null = null
+            if (useMax) { try { retry = await tryMaxJob(createAdminClient(), { projectId, userId: user.id, model: chosenModel, system: systemPrompt, messages: retryMessages }) } catch { retry = null } }
+            if (!retry) {
+              const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+              retry = client.messages.stream({
+                model: chosenModel, max_tokens: GENERATION_MAX_TOKENS,
+                ...(chosenModel.startsWith('claude-sonnet-5') || chosenModel.startsWith('claude-opus-5') ? { thinking: { type: 'adaptive' as const }, output_config: { effort: 'medium' as const } } : {}),
+                system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+                messages: retryMessages as never,
+              }) as unknown as MsgStream
+            }
             for await (const chunk of retry) {
-              if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') { full += chunk.delta.text; controller.enqueue(encoder.encode(chunk.delta.text)) }
+              if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { const t = chunk.delta.text ?? ''; full += t; controller.enqueue(encoder.encode(t)) }
             }
           }
         }
