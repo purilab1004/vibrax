@@ -56,23 +56,51 @@ export default function GamePreview({
   const scale = dev && box.w > 0 ? Math.min(1, (box.w - 24) / fw, (box.h - 24) / fh) : 1
   const { T } = useLang()
   const s = T.studio
+  const publishNode = (
+published ? (
+          /* 게시된 게임 — 게시 중인 버전 표시. 다른 버전을 보고 있으면 '이 버전 게시' 로 수동 반영 (프롬프트 수정은 자동 반영되지 않음) */
+          currentVersionId && liveVersionId && currentVersionId === liveVersionId ? (
+            <span className="h-8 inline-flex items-center gap-1.5 rounded-md px-2.5 md:px-3 text-[11.5px] md:text-[12px] font-bold shrink-0 text-[#15803d] bg-[#dcfce7] border border-[#bbf7d0]" title="지금 보고 있는 버전이 게임 페이지에 서빙되는 버전입니다">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />게시 중 v{versions.find(v => v.id === liveVersionId)?.version ?? ''}
+            </span>
+          ) : (
+            <button
+              onClick={() => { if (currentVersionId && onUpdateLive) void onUpdateLive(currentVersionId) }}
+              disabled={!html || busy || !currentVersionId}
+              title={liveVersionId ? `현재 게시본 v${versions.find(v => v.id === liveVersionId)?.version ?? '?'} → 이 버전으로 교체` : '이 버전을 게시본으로 지정'}
+              className="h-8 rounded-md px-3 md:px-4 text-[12px] font-bold text-white bg-gradient-to-r from-[#f59e0b] to-[#ea580c] hover:from-[#ea580c] hover:to-[#c2410c] shadow-[0_2px_8px_rgba(234,88,12,0.3)] transition-all disabled:opacity-40 disabled:shadow-none"
+            >
+              이 버전 게시{liveVersionId ? <span className="hidden md:inline">{` (현재 v${versions.find(v => v.id === liveVersionId)?.version ?? '?'})`}</span> : null}
+            </button>
+          )
+        ) : (
+          <button
+            onClick={onPublish}
+            disabled={!html || busy}
+            className="h-8 rounded-md px-4 text-[12px] font-bold text-white bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af] shadow-[0_2px_8px_rgba(37,99,235,0.3)] transition-all disabled:opacity-40 disabled:shadow-none"
+          >
+            {s.publish}
+          </button>
+        )
+  )
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 border-b border-[#ebe4d6] px-3 py-2 flex-wrap">
+      <div className="flex items-center gap-1.5 md:gap-2 border-b border-[#ebe4d6] px-2 md:px-3 py-2 flex-wrap">
         <button
           onClick={() => setFrameKey(k => k + 1)}
           disabled={!html}
-          className="h-8 px-2.5 rounded-md text-[12px] font-semibold text-[#6b6152] hover:text-[#2563eb] hover:bg-[#2563eb]/8 transition-colors disabled:opacity-40 flex items-center gap-1.5"
+          className="h-8 px-2 md:px-2.5 rounded-md text-[12px] font-semibold text-[#6b6152] hover:text-[#2563eb] hover:bg-[#2563eb]/8 transition-colors disabled:opacity-40 flex items-center gap-1.5 shrink-0"
+          title={s.refresh}
         >
           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
-          {s.refresh}
+          <span className="hidden md:inline">{s.refresh}</span>
         </button>
         {versions.length > 0 && (
           <select
             value={currentVersionId ?? ''}
             onChange={e => onSelectVersion(e.target.value)}
-            className="h-8 bg-white border border-[#ddd3bf] rounded-md text-[#4a4337] text-[12px] px-2 outline-none"
+            className="h-8 bg-white border border-[#ddd3bf] rounded-md text-[#4a4337] text-[12px] px-2 outline-none flex-1 min-w-0 md:flex-none"
             aria-label={s.versions}
           >
             {versions.map(v => (
@@ -82,8 +110,10 @@ export default function GamePreview({
             ))}
           </select>
         )}
+        {/* 모바일: 여기서 줄바꿈 → 2번째 줄은 기기·게시 라벨·시나리오/코드·AJ */}
+        <span className="basis-full h-0 md:hidden" aria-hidden />
         {/* 디바이스 뷰포트 전환 — PC / 태블릿 / 모바일 */}
-        <div className="flex items-center h-8 border border-[#ddd3bf] rounded-md overflow-hidden bg-white">
+        <div className="flex items-center h-8 border border-[#ddd3bf] rounded-md overflow-hidden bg-white shrink-0">
           {(['pc', 'tablet', 'mobile'] as Viewport[]).map(v => (
             <button
               key={v}
@@ -91,7 +121,7 @@ export default function GamePreview({
               disabled={!html}
               aria-label={v}
               title={v.toUpperCase()}
-              className={`h-full px-2.5 transition-colors disabled:opacity-40 ${
+              className={`h-full px-2 md:px-2.5 transition-colors disabled:opacity-40 ${
                 viewport === v
                   ? 'bg-[#2563eb]/15 text-[#2563eb]'
                   : 'text-[#857a68] hover:text-[#241f17]'
@@ -106,47 +136,23 @@ export default function GamePreview({
             </button>
           )}
         </div>
+        <div className="order-none md:order-last contents md:flex md:items-center md:gap-2">{publishNode}</div>
         <div className="flex-1" />
         {/* 학습 노트 — 시나리오 / 코드 (세그먼트) */}
         {onStudy && (
           <div className="flex items-center h-8 border border-[#ddd3bf] rounded-md overflow-hidden bg-white text-[12px] font-semibold">
-            <button onClick={() => onStudy('scenario')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="프롬프트가 어떻게 게임 시나리오가 됐는지" className="h-full px-3.5 text-[#4a4337] hover:bg-[#2563eb]/8 hover:text-[#2563eb] transition-colors disabled:opacity-40">시나리오</button>
+            <button onClick={() => onStudy('scenario')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="프롬프트가 어떻게 게임 시나리오가 됐는지" className="h-full px-2.5 md:px-3.5 text-[#4a4337] hover:bg-[#2563eb]/8 hover:text-[#2563eb] transition-colors disabled:opacity-40">시나리오</button>
             <span className="w-px h-4 bg-[#ddd3bf]" />
-            <button onClick={() => onStudy('code')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="코드가 어떻게 짜였는지" className="h-full px-3.5 text-[#4a4337] hover:bg-[#2563eb]/8 hover:text-[#2563eb] transition-colors disabled:opacity-40">코드</button>
+            <button onClick={() => onStudy('code')} onMouseEnter={() => { if (currentVersionId) prefetchStudyNotes(currentVersionId).catch(() => {}) }} disabled={!html || !currentVersionId} title="코드가 어떻게 짜였는지" className="h-full px-2.5 md:px-3.5 text-[#4a4337] hover:bg-[#2563eb]/8 hover:text-[#2563eb] transition-colors disabled:opacity-40">코드</button>
           </div>
         )}
         {ajHref && (
-          <a href={ajHref} target="_blank" rel="noreferrer" title="AJ 대시보드 — 지표·분석·업데이트 제안" className="h-8 px-3.5 rounded-md border border-[#ddd3bf] bg-white text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center gap-1.5">AJ</a>
-        )}
-        {published ? (
-          /* 게시된 게임 — 게시 중인 버전 표시. 다른 버전을 보고 있으면 '이 버전 게시' 로 수동 반영 (프롬프트 수정은 자동 반영되지 않음) */
-          currentVersionId && liveVersionId && currentVersionId === liveVersionId ? (
-            <span className="h-8 inline-flex items-center gap-1.5 rounded-md px-3 text-[12px] font-bold text-[#15803d] bg-[#dcfce7] border border-[#bbf7d0]" title="지금 보고 있는 버전이 게임 페이지에 서빙되는 버전입니다">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />게시 중 v{versions.find(v => v.id === liveVersionId)?.version ?? ''}
-            </span>
-          ) : (
-            <button
-              onClick={() => { if (currentVersionId && onUpdateLive) void onUpdateLive(currentVersionId) }}
-              disabled={!html || busy || !currentVersionId}
-              title={liveVersionId ? `현재 게시본 v${versions.find(v => v.id === liveVersionId)?.version ?? '?'} → 이 버전으로 교체` : '이 버전을 게시본으로 지정'}
-              className="h-8 rounded-md px-4 text-[12px] font-bold text-white bg-gradient-to-r from-[#f59e0b] to-[#ea580c] hover:from-[#ea580c] hover:to-[#c2410c] shadow-[0_2px_8px_rgba(234,88,12,0.3)] transition-all disabled:opacity-40 disabled:shadow-none"
-            >
-              이 버전 게시{liveVersionId ? ` (현재 v${versions.find(v => v.id === liveVersionId)?.version ?? '?'})` : ''}
-            </button>
-          )
-        ) : (
-          <button
-            onClick={onPublish}
-            disabled={!html || busy}
-            className="h-8 rounded-md px-4 text-[12px] font-bold text-white bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] hover:from-[#1d4ed8] hover:to-[#1e40af] shadow-[0_2px_8px_rgba(37,99,235,0.3)] transition-all disabled:opacity-40 disabled:shadow-none"
-          >
-            {s.publish}
-          </button>
+          <a href={ajHref} target="_blank" rel="noreferrer" title="AJ 대시보드 — 지표·분석·업데이트 제안" className="h-8 px-2.5 md:px-3.5 rounded-md border border-[#ddd3bf] bg-white text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors flex items-center gap-1.5 shrink-0">AJ</a>
         )}
       </div>
       <div ref={boxRef} className="flex-1 bg-black min-h-0 relative overflow-hidden">
-        {html && box.w === 0 ? null : html ? (
-          dev ? (
+        {html ? (
+          dev && box.w === 0 ? null : dev ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className={`${dev.radius} border border-[#ddd3bf] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] bg-black shrink-0`} style={{ width: fw, height: fh, transform: `scale(${scale})`, transformOrigin: 'center', transition: 'width .25s ease, height .25s ease' }}>
                 <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" srcDoc={html} className="w-full h-full border-0" title="game preview" style={{ width: fw, height: fh }} />
@@ -154,7 +160,7 @@ export default function GamePreview({
               <span className="absolute bottom-2 right-3 text-[10.5px] text-white/50 tabular-nums">{fw}×{fh}{scale < 1 ? ` · ${Math.round(scale * 100)}%` : ''}</span>
             </div>
           ) : (
-            <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" srcDoc={html} className="w-full h-full border-0" title="game preview" />
+            <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" srcDoc={html} className="absolute inset-0 w-full h-full border-0" title="game preview" />
           )
         ) : (
           <div className="w-full h-full flex items-center justify-center">
