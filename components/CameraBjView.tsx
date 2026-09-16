@@ -7,6 +7,32 @@ import { startViewer, type ViewerState } from '@/lib/live/viewer'
 import type { LiveInfo } from '@/lib/broadcast'
 
 /** 링크(YouTube/Twitch) 방송 임베드 */
+// 스피커 필 — 꺼짐: '소리 켜기' 라벨, 켜짐: 움직이는 이퀄라이저 + 볼륨 슬라이더(선택). 유리 질감의 알약 모양
+export function SoundPill({ muted, onToggle, volume, onVolume, className = '' }: { muted: boolean; onToggle: () => void; volume?: number; onVolume?: (v: number) => void; className?: string }) {
+  return (
+    <div className={`absolute z-10 flex items-center gap-1 rounded-full bg-black/35 backdrop-blur-xl border border-white/20 shadow-[0_4px_16px_rgba(0,0,0,.35)] pl-1.5 pr-2 py-1 text-white ${className}`}>
+      <button onClick={onToggle} aria-label={muted ? '소리 켜기' : '음소거'} className="flex items-center gap-1.5 h-7 pl-1 pr-1.5 rounded-full active:scale-95 transition-transform">
+        {muted ? (
+          <>
+            <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" /><path d="m22 9-6 6M16 9l6 6" /></svg>
+            <span className="text-[12px] font-bold tracking-tight">소리 켜기</span>
+          </>
+        ) : (
+          <>
+            <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 5.5a9 9 0 0 1 0 13" /></svg>
+            <span className="flex items-end gap-[2px] h-[14px]" aria-hidden>
+              {[0, 1, 2, 3].map((i) => <span key={i} className="w-[3px] rounded-full bg-[#4cff6a] origin-bottom" style={{ height: 14, animation: `eq ${0.7 + i * 0.13}s ease-in-out ${i * 0.1}s infinite` }} />)}
+            </span>
+          </>
+        )}
+      </button>
+      {!muted && onVolume && typeof volume === 'number' && (
+        <input type="range" min={0} max={100} value={volume} onChange={(e) => onVolume(Number(e.target.value))} className="w-16 h-1 accent-white cursor-pointer" aria-label="볼륨" />
+      )}
+    </div>
+  )
+}
+
 export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true, controls = false, controlsClass = 'top-3 right-3' }: { src: string; aspect?: number; cover?: boolean; badge?: boolean; controls?: boolean; controlsClass?: string }) {
   // 스피커 — YouTube 는 postMessage 로 mute/unMute/setVolume, Twitch/기타는 src 의 muted 파라미터를 바꿔 다시 로드
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -72,16 +98,7 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
     <div ref={(n) => { (ref as React.MutableRefObject<HTMLDivElement | null>).current = n; (boxRef as React.MutableRefObject<HTMLDivElement | null>).current = n }} className="relative w-full h-full bg-black overflow-hidden">
       {/* controls 모드(카드)에선 iframe 클릭/호버를 막아 유튜브 자체 UI 가 뜨지 않게 — 우리 스피커 버튼만 노출 */}
       <iframe ref={iframeRef} src={liveSrc} className={`${cover && box ? '' : 'absolute inset-0 w-full h-full'} ${controls ? 'pointer-events-none' : ''}`} style={style} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
-      {controls && (
-        <div className={`absolute ${controlsClass} z-10 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur px-2 py-1`}>
-          <button onClick={toggleMute} aria-label={muted ? '소리 켜기' : '음소거'} className="text-white text-[15px] leading-none w-7 h-7 flex items-center justify-center">
-            {muted ? '🔇' : volume > 50 ? '🔊' : '🔉'}
-          </button>
-          {isYT && !muted && (
-            <input type="range" min={0} max={100} value={volume} onChange={(e) => changeVolume(Number(e.target.value))} className="w-20 accent-[#ffb62e]" aria-label="볼륨" />
-          )}
-        </div>
-      )}
+      {controls && <SoundPill muted={muted} onToggle={toggleMute} volume={isYT ? volume : undefined} onVolume={isYT ? changeVolume : undefined} className={controlsClass} />}
       {badge && (
         <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
@@ -100,6 +117,7 @@ export default function CameraBjView({ hostId, badge = true, controls = false, c
   const videoRef = useRef<HTMLVideoElement>(null)
   const [state, setState] = useState<ViewerState>('connecting')
   const [muted, setMuted] = useState(() => !getSoundPref().on) // 공용 스피커 설정을 따른다
+  const [camVol, setCamVol] = useState(100)
   const boxRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const el = boxRef.current
@@ -122,10 +140,7 @@ export default function CameraBjView({ hostId, badge = true, controls = false, c
         </span>
       )}
       {state === 'live' && (
-        <div className={`absolute z-10 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur px-2 py-1 ${controls ? controlsClass : 'bottom-1.5 right-1.5'}`}>
-          <button onClick={() => { const next = !muted; setMuted(next); setSoundPref({ on: !next }) }} aria-label={muted ? '소리 켜기' : '음소거'} className="text-white text-[15px] leading-none w-7 h-7 flex items-center justify-center">{muted ? '🔇' : '🔊'}</button>
-          {!muted && <input type="range" min={0} max={100} defaultValue={100} onChange={(e) => { if (videoRef.current) videoRef.current.volume = Number(e.target.value) / 100 }} className="w-20 accent-[#ffb62e]" aria-label="볼륨" />}
-        </div>
+        <SoundPill muted={muted} onToggle={() => { const next = !muted; setMuted(next); setSoundPref({ on: !next }) }} volume={camVol} onVolume={(v) => { setCamVol(v); if (videoRef.current) videoRef.current.volume = v / 100 }} className={controls ? controlsClass : 'bottom-1.5 right-1.5'} />
       )}
       {state !== 'live' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-white/85 text-[11px] font-pixel tracking-widest bg-black/50">

@@ -51,7 +51,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
       <div className="absolute inset-0 bg-black">
         {/* 모바일 /games 는 우상단에 검색 아이콘이 떠 있으니 스피커를 그 아래로 */}
         {near ? (
-          <LiveView live={live} cover badge={false} controls controlsClass={layout === 'feed-mobile' ? 'top-16 right-3' : 'top-3 right-3'} />
+          <LiveView live={live} cover badge={false} controls controlsClass={layout === 'feed-mobile' ? 'left-3 top-[calc(3.1rem+var(--st,0px))]' : 'left-3 top-12'} />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-white/40 font-pixel text-[10px] tracking-widest">{isVideo ? 'VIDEO' : 'LIVE'}</div>
         )}
