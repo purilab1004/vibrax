@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useNetBridge } from '@/lib/net/useNetBridge'
 import { useLang } from '@/lib/i18n/context'
 import type { StudioVersionMeta } from '@/lib/supabase/types'
 import { prefetchStudyNotes } from '@/components/studio/StudyPanel'
@@ -23,9 +24,10 @@ const VIEWPORT_ICON: Record<Viewport, React.ReactNode> = {
 }
 
 export default function GamePreview({
-  html, versions, currentVersionId, onSelectVersion, onPublish, busy, onStudy, ajHref,
+  html, versions, currentVersionId, onSelectVersion, onPublish, busy, onStudy, ajHref, netId,
 }: {
   html: string | null
+  netId?: string | null   // 온라인 브리지용 프로젝트 id (미리보기에서도 멀티플레이 테스트)
   versions: StudioVersionMeta[]
   currentVersionId: string | null
   onSelectVersion: (id: string) => void
@@ -35,6 +37,7 @@ export default function GamePreview({
   ajHref?: string | null
 }) {
   const [frameKey, setFrameKey] = useState(0)
+  useNetBridge(!!html && !!netId, () => null, netId ?? '')
   const [viewport, setViewport] = useState<Viewport>('pc')
   const [landscape, setLandscape] = useState(false)
   // 컨테이너 크기를 재서 기기 프레임 축소 배율 계산

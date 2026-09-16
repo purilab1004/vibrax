@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { playSrc } from '@/lib/game-src'
+import { useNetBridge } from '@/lib/net/useNetBridge'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -93,6 +94,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     try { frameRef.current?.contentWindow?.postMessage({ ...hostMsg(), pause: undefined }, '*') } catch { /* */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerBottom, safe.bottom])
+  useNetBridge(open, () => frameRef.current, cur.game.id) // 온라인 게임 브리지 (Realtime 중계)
   useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록 (게임이 바뀌면 새 세션)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)

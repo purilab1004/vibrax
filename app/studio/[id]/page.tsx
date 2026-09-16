@@ -443,6 +443,7 @@ export default function StudioComposerPage() {
             <div className={`relative order-1 md:order-3 min-h-0 h-full ${view === 'game' ? 'flex-1' : 'md:w-[var(--pw)] shrink-0'} ${dragging ? 'pointer-events-none select-none' : ''}`}>
               <GamePreview
                 html={html}
+                netId={id}
                 versions={versions}
                 currentVersionId={currentVersionId}
                 onSelectVersion={loadVersionHtml}

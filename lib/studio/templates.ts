@@ -62,6 +62,7 @@ import strategyTurn from './templates/strategy-turn.json'
 import sudoku from './templates/sudoku.json'
 import survival from './templates/survival.json'
 import tankDuel from './templates/tank-duel.json'
+import tetrisOnline from './templates/tetris-online.json'
 import towerDefense from './templates/tower-defense.json'
 import tycoon from './templates/tycoon.json'
 import typing from './templates/typing.json'
@@ -84,7 +85,7 @@ export interface GameTemplate {
   controls?: { label: string; keys: string; desc?: string } // 이 템플릿의 조작 설명
 }
 
-export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, runnerDouble, shooter, pong, stock, actionAdventure, asteroids, autoBattler, battleRoyale, bomberman, crossyRoad, deckbuilder, doodleJump, eduQuiz, farming, fighting, flight, gacha, gomoku, helixJump, ioEat, ladder, match3, maze, memoryMatch, metroidvania, minesweeper, mobaLane, pacman, party, puzzle2048, quiz, racing, reaction, rhythm, rhythmJump, roguelike, rollercoaster, rpgAction, rpgIdle, rpgTurn, rtsMini, sandbox, shooterFps, shooterLoot, shooterTopdown, slidingPuzzle, slingshot, soulslike, sports, sportsShot, stack, strategyTurn, sudoku, survival, tankDuel, towerDefense, tycoon, typing, visualNovel, whackAMole, woobinCoaster, wordle] as GameTemplate[]
+export const TEMPLATES: GameTemplate[] = [tetris, breakout, snake, flappy, runner, runnerDouble, shooter, pong, stock, actionAdventure, asteroids, autoBattler, battleRoyale, bomberman, crossyRoad, deckbuilder, doodleJump, eduQuiz, farming, fighting, flight, gacha, gomoku, helixJump, ioEat, ladder, match3, maze, memoryMatch, metroidvania, minesweeper, mobaLane, pacman, party, puzzle2048, quiz, racing, reaction, rhythm, rhythmJump, roguelike, rollercoaster, rpgAction, rpgIdle, rpgTurn, rtsMini, sandbox, shooterFps, shooterLoot, shooterTopdown, slidingPuzzle, slingshot, soulslike, sports, sportsShot, stack, strategyTurn, sudoku, survival, tankDuel, tetrisOnline, towerDefense, tycoon, typing, visualNovel, whackAMole, woobinCoaster, wordle] as GameTemplate[]
 
 export { templateOnly, extrasOf } from './template-match'
 export function matchTemplate(prompt: string): { template: GameTemplate; keyword: string } | null {

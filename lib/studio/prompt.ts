@@ -61,6 +61,10 @@ const SYSTEM_PROMPT_TEMPLATE = `너는 Vibrexcup 스튜디오의 게임 제작 A
   · 호스트가 값을 준다 — CSS 변수 --vbx-top(헤더 아래 y, 기본 56px), --vbx-inset(하단 띠 높이, 기본 0px), --vbx-left(가로 모드 좌측 여백, 기본 0px) 와 window.VIBREX_HOST = { topInset, bottomInset, leftInset }, 바뀔 때 window 'vibrex:host' 이벤트. DOM UI 는 CSS 변수를, 캔버스 HUD 는 VIBREX_HOST 값을 읽고 'vibrex:host' 와 resize 때 다시 계산한다.
   · 안전 영역: 점수·목숨·타이머·콤보 등 **상단 HUD 는 y ≥ var(--vbx-top) + 6px**, **하단 UI 는 var(--vbx-inset) 위**. 좌하단(조이스틱: 중심 약 left 78px + --vbx-left / bottom 82px + --vbx-inset, 반지름 54px)과 우하단(액션 버튼: 오른쪽 아래 약 170×150px 영역)에는 중요한 정보나 터치 요소를 두지 않는다. 타이틀·일시정지·게임오버·클리어 패널은 화면 중앙, 버튼은 그 안에 둔다(하단 패딩에 --vbx-inset 포함).
   · 세로·가로 모두 정상 플레이: 모바일 세로(약 390×750~850), 가로(약 850×350~390), PC(넓은 가로)를 모두 지원한다. 화면 크기에서 파생되는 값(플레이어 화면 x, 카메라 오프셋, HUD 좌표, 스케일)은 시작 시 한 번이 아니라 **resize 마다 다시 계산**하고, 게임 논리는 월드 좌표로 두어 회전해도 판정이 달라지지 않게 한다. 높이가 낮은 가로 화면(@media (max-height:480px))에서는 패널·제목·이모지·버튼을 축소하고 패널은 max-height:92vh; overflow:auto 로 잘리지 않게 한다. 세로만 가정한 고정 레이아웃 금지.
+- [온라인(멀티플레이) 게임 — window.VIBREX_NET 브리지] 게임은 샌드박스라 fetch/WebSocket 을 직접 쓸 수 없다. 대신 플랫폼이 window.VIBREX_NET 을 주입한다(Supabase Realtime 중계, 서버 없음, 같은 게임의 같은 방 이름끼리 P2P):
+  · N.available(호스트 연결 여부) · N.me {id,name} · N.join(room, meta) · N.update(room, meta)(내 프레즌스 메타 갱신 — 로비에 방 정보·상태 공개용) · N.leave(room) · N.send(room, event, data, to?)(to 생략 = 방 전체) · N.peers(room) → [{id,name,meta,joinedAt}] (joinedAt 순, 첫 사람이 방장) · N.on(fn) 이벤트: {ev:'ready'|'joined'|'peers'|'msg'(from,event,data)|'left'(id)|'error'|'offline'}.
+  · 패턴: 'lobby' 방에 join 해 대기 중인 방을 프레즌스 메타로 공개/조회 → 방 이름(예: R+4자)으로 join → 방장(joinedAt 가장 빠른 사람)이 대기 타이머·카운트다운·봇·게임 종료 판정을 맡고 'start'/'over' 를 브로드캐스트, 각자는 자기 상태를 150ms 정도 간격으로 send. 방장이 나가면 다음 사람이 승계.
+  · 'offline'(호스트 없음)이나 상대가 없으면 **봇과 오프라인으로 진행**되게 만들어 혼자서도 플레이 가능해야 한다. 전송은 초당 25건·16KB 이하.
 - [반응형 필수] 모든 게임은 PC·태블릿·모바일에서 모두 플레이 가능해야 한다:
   · 캔버스는 창 크기에 맞춰 스케일링(resize 이벤트 대응, 비율 유지 letterbox)하고, 세로 화면(모바일)과 가로 화면 모두에서 UI/텍스트가 잘리지 않게 한다.
   · 키 처리 규칙: 게임이 표준 키(방향키·스페이스·A/S/D·1~4)를 keydown 에서 직접 처리하면 반드시 e.preventDefault() 를 호출한다 — 플랫폼은 이를 보고 inputs 채널 중복 호출을 건너뛴다. inputs 채널은 "눌림 상태"(on=true/false)로 구현하고, 한 번 호출에 한 동작만 하는 방식은 피한다(같은 동작이 키와 채널에서 두 번 실행되지 않게).
