@@ -52,7 +52,22 @@ export default function LiveCard({ live, game: given, layout }: Props) {
       {/* 영상 — 카드 가득 */}
       <div className="absolute inset-0 bg-black">
         {/* 모바일 /games 는 우상단에 검색 아이콘이 떠 있으니 스피커를 그 아래로 */}
-        {near ? (
+        {live.kind === 'camera' ? (
+          /* 회원 라이브(폰 카메라·게임 화면) — 카드는 게임 썸네일 + LIVE. 영상은 게임에 들어가서(START) 본다 */
+          <div className="absolute inset-0">
+            {game?.thumbnail_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={game.thumbnail_url} alt={game.title} className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#0f172a]" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
+            <div className="absolute inset-x-0 top-[38%] flex flex-col items-center gap-2 text-white">
+              <span className="flex items-center gap-2 rounded-full bg-[#e11d48] px-4 py-1.5 font-pixel text-[11px] tracking-widest shadow-[0_0_24px_rgba(225,29,72,.7)]"><span className="w-2 h-2 rounded-full bg-white animate-pulse" />LIVE</span>
+              <span className="text-[13px] font-semibold drop-shadow">{live.screen ? `${live.hostName} 님이 플레이 중 — 들어가서 관전` : `${live.hostName} 님이 방송 중`}</span>
+            </div>
+          </div>
+        ) : near ? (
           <LiveView live={live} cover badge={false} controls controlsClass={layout === 'feed-mobile' ? 'left-3 top-[calc(3.1rem+var(--st,0px))]' : 'left-3 top-12'} />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-white/40 font-pixel text-[10px] tracking-widest">{isVideo ? 'VIDEO' : 'LIVE'}</div>

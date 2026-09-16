@@ -1,6 +1,6 @@
 // lib/live/viewer.ts — 시청자: 호스트에게 join → offer 받고 answer → 스트림 수신
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js'
-import { ICE_SERVERS, liveChannelName, type Signal } from '@/lib/broadcast'
+import { ICE_SERVERS, liveChannelName, type Signal, type LiveChannelKind } from '@/lib/broadcast'
 
 export type ViewerState = 'connecting' | 'waiting' | 'live' | 'ended'
 
@@ -9,12 +9,13 @@ export function startViewer(
   hostId: string,
   onStream: (s: MediaStream | null) => void,
   onState: (st: ViewerState) => void,
+  kind: LiveChannelKind = 'cam',
 ): () => void {
   const me = `v_${Math.random().toString(36).slice(2, 10)}`
   let pc: RTCPeerConnection | null = null
   let hostOnline = false
   let joinTimer: ReturnType<typeof setInterval> | null = null
-  const ch: RealtimeChannel = supabase.channel(liveChannelName(hostId), { config: { broadcast: { self: false }, presence: { key: me } } })
+  const ch: RealtimeChannel = supabase.channel(liveChannelName(hostId, kind), { config: { broadcast: { self: false }, presence: { key: me } } })
   const send = (payload: Signal) => ch.send({ type: 'broadcast', event: 'signal', payload })
 
   const teardownPc = () => { pc?.close(); pc = null; onStream(null) }

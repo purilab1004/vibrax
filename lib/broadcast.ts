@@ -4,6 +4,7 @@ export interface BroadcastSetting {
   url: string      // 링크 방송 원본 링크
   on: boolean      // ON AIR — 켜져 있을 때만 게임에서 영상이 나온다
   gameId?: string | null // 추천 게임 — 이 게임 카드에 방송이 나오고, 코인을 넣으면 이 게임을 플레이
+  screenOn?: boolean // 게임 화면 방송(캔버스 캡처) 중 — 시청자는 게임 페이지에서 이 회원의 플레이를 본다(직접 플레이 불가)
 }
 
 export const DEFAULT_BROADCAST: BroadcastSetting = { mode: 'avatar', url: '', on: false }
@@ -28,6 +29,7 @@ export function parseBroadcast(raw: unknown): BroadcastSetting | undefined {
     url: typeof r.url === 'string' ? r.url.slice(0, 500) : '',
     on: r.on === true,
     gameId: typeof r.gameId === 'string' ? r.gameId : null,
+    screenOn: r.screenOn === true,
   }
 }
 
@@ -65,10 +67,11 @@ export function isLinkOn(b: BroadcastSetting | undefined | null): b is Broadcast
 }
 
 /** 카드/게임에서 쓰는 라이브 정보 */
-export type LiveInfo = { kind: 'camera'; hostId: string } | { kind: 'link'; hostId: string; src: string; aspect: number; video?: boolean } // video = 라이브가 아닌 일반 영상
+export type LiveInfo = { kind: 'camera'; hostId: string; cam: boolean; screen: boolean } | { kind: 'link'; hostId: string; src: string; aspect: number; video?: boolean } // cam = 폰 카메라(BJ 자리), screen = 게임 화면 방송(관전); video = 라이브가 아닌 일반 영상
 export function liveInfoOf(b: BroadcastSetting | undefined | null, hostId: string): LiveInfo | null {
   if (!b) return null
-  if (b.mode === 'camera' && b.on) return { kind: 'camera', hostId }
+  const cam = b.mode === 'camera' && b.on, screen = !!b.screenOn
+  if (cam || screen) return { kind: 'camera', hostId, cam, screen }
   if (b.mode === 'live' && b.on) { const e = toEmbed(b.url); if (e) return { kind: 'link', hostId, src: e.src, aspect: e.aspect } }
   return null
 }
@@ -100,4 +103,5 @@ export type Signal =
   | { type: 'answer'; from: string; sdp: RTCSessionDescriptionInit }
   | { type: 'ice'; from: string; to: string; candidate: RTCIceCandidateInit }
   | { type: 'bye'; from: string }
-export const liveChannelName = (hostUserId: string) => `live:${hostUserId}`
+export type LiveChannelKind = 'cam' | 'screen'
+export const liveChannelName = (hostUserId: string, kind: LiveChannelKind = 'cam') => kind === 'screen' ? `live:${hostUserId}:screen` : `live:${hostUserId}`

@@ -99,7 +99,7 @@ export default function BroadcastPage() {
   const setBroadcast = async (on: boolean) => {
     if (!user) return
     const base = config ?? emptyConfig()
-    const next: AvatarConfig = { ...base, broadcast: { mode: 'camera', url: base.broadcast?.url ?? '', on, gameId: gameId || null } }
+    const next: AvatarConfig = { ...base, broadcast: { ...(base.broadcast ?? {}), mode: 'camera', url: base.broadcast?.url ?? '', on, gameId: gameId || null } }
     const { error } = await saveAvatarConfig(supabase, user.id, next)
     if (!error) setConfig(next)
     return error
@@ -137,7 +137,7 @@ export default function BroadcastPage() {
     if (!onAir || !user) return
     const h = () => {
       const base = config ?? emptyConfig()
-      const body = JSON.stringify({ avatar_config: { ...base, broadcast: { mode: 'camera', url: base.broadcast?.url ?? '', on: false, gameId: gameId || null } } })
+      const body = JSON.stringify({ avatar_config: { ...base, broadcast: { ...(base.broadcast ?? {}), mode: 'camera', url: base.broadcast?.url ?? '', on: false, gameId: gameId || null } } })
       // sendBeacon 은 supabase-js 를 못 쓰니 REST 로 직접 (세션 토큰 필요) — 최선의 노력
       supabase.auth.getSession().then(({ data }) => {
         const token = data.session?.access_token

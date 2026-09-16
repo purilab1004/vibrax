@@ -8,11 +8,15 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import { useLang } from '@/lib/i18n/context'
-import { loadAvatarConfig } from '@/lib/jeumto/storage'
+import { loadAvatarConfig, saveAvatarConfig } from '@/lib/jeumto/storage'
+import { emptyConfig } from '@/lib/jeumto/config'
+import { startHost, type HostHandle } from '@/lib/live/host'
+import dynamic from 'next/dynamic'
 import { useLiveBroadcasts, liveForGame } from '@/lib/live/useLiveBroadcasts'
 import { useGameTelemetry } from '@/lib/aj/telemetry'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 import AiBjPanel from './AiBjPanel'
+const CameraBjView = dynamic(() => import('./CameraBjView'), { ssr: false })
 import PlayHeader from './PlayHeader'
 import TransportBar, { type Cand } from './TransportBar'
 import { hasCoinTicket, ticketKeyOf } from './GameCard'
@@ -107,11 +111,68 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
   const [bjAvatarConfig, setBjAvatarConfig] = useState<AvatarConfig | null>(null)
   const [myAvatarConfig, setMyAvatarConfig] = useState<AvatarConfig | null>(null)  // 시청자(나)의 아바타 — 무대에 서고 게임에 참여한다
-  const liveMap = useLiveBroadcasts()
-  const [isGuest, setIsGuest] = useState(false)
-  const { T } = useLang()
   const supabase = createClient()
   const router = useRouter()
+  const liveMap = useLiveBroadcasts()
+  const [isGuest, setIsGuest] = useState(false)
+  const [me, setMe] = useState<string | null>(null)
+  // 이 게임의 회원 라이브 — 화면 방송(screen)이면 다른 회원은 관전만(방을 연 회원만 플레이), 폰 카메라(cam)는 BJ 자리에 나온다
+  const liveEntry = liveForGame(liveMap, game.id)
+  const bjLive = liveEntry && liveEntry.kind === 'camera' && !liveEntry.cam ? null : liveEntry
+  // 내 플레이 화면 방송(캔버스 캡처 → WebRTC) — 헤더의 '방송' 버튼
+  const [screenLive, setScreenLive] = useState<{ viewers: number } | null>(null)
+  const screenHost = useRef<HostHandle | null>(null)
+  const screenStream = useRef<MediaStream | null>(null)
+  const spectate = !!(open && !screenLive && liveEntry && liveEntry.kind === 'camera' && liveEntry.screen && liveEntry.hostId !== me)
+  const stopScreenLive = async (persist = true) => {
+    screenHost.current?.stop(); screenHost.current = null
+    screenStream.current?.getTracks().forEach(t => t.stop()); screenStream.current = null
+    setScreenLive(null)
+    if (!persist) return
+    try {
+      const { data: { user } } = await supabase.auth.getUser(); if (!user) return
+      const cfg = await loadAvatarConfig(supabase, user.id)
+      if (cfg?.broadcast?.screenOn) await saveAvatarConfig(supabase, user.id, { ...cfg, broadcast: { ...cfg.broadcast, screenOn: false } })
+    } catch { /* noop */ }
+  }
+  const startScreenLive = async () => {
+    const { data: { user } } = await supabase.auth.getUser(); if (!user) return
+    let stream: MediaStream | null = null
+    // 1) 게임 iframe(같은 출처)의 캔버스를 그대로 캡처 — 시청자 화면엔 헤더·채팅 없이 게임만 나온다
+    try { const cv = frameRef.current?.contentDocument?.querySelector('canvas') as (HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }) | null; if (cv?.captureStream) stream = cv.captureStream(30) } catch { /* cross-origin 등 */ }
+    // 2) 캔버스가 없으면(DOM 게임) 화면 공유로
+    if (!stream) { try { stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false, ...({ preferCurrentTab: true, selfBrowserSurface: 'include' } as object) }) } catch { return } }
+    // 마이크(있으면) — 해설 소리
+    try { const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); mic.getAudioTracks().forEach(t => stream!.addTrack(t)) } catch { /* 마이크 없이 */ }
+    screenStream.current = stream
+    stream.getVideoTracks()[0]?.addEventListener('ended', () => { void stopScreenLive() })
+    screenHost.current = startHost(supabase, user.id, stream, (n) => setScreenLive(s => (s ? { ...s, viewers: n } : s)), 'screen')
+    setScreenLive({ viewers: 0 })
+    try {
+      const cfg = (await loadAvatarConfig(supabase, user.id)) ?? emptyConfig()
+      await saveAvatarConfig(supabase, user.id, { ...cfg, broadcast: { ...(cfg.broadcast ?? { mode: 'avatar', url: '', on: false }), screenOn: true, gameId: game.id } })
+    } catch { /* noop */ }
+  }
+  const toggleScreenLive = () => { if (screenLive) void stopScreenLive(); else void startScreenLive() }
+  // 오버레이를 닫거나 다른 게임으로 넘어가면 방송 종료
+  useEffect(() => { if (!open) return; return () => { if (screenHost.current) void stopScreenLive() } // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, game.id])
+  // 페이지를 떠나면(닫기/새로고침) screenOn 을 끈다 — 최선의 노력
+  useEffect(() => {
+    if (!screenLive) return
+    const h = () => {
+      supabase.auth.getSession().then(({ data }) => {
+        const token = data.session?.access_token; const uid = data.session?.user.id; if (!token || !uid) return
+        loadAvatarConfig(supabase, uid).then(cfg => {
+          if (!cfg?.broadcast) return
+          fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}`, { method: 'PATCH', keepalive: true, headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify({ avatar_config: { ...cfg, broadcast: { ...cfg.broadcast, screenOn: false } } }) }).catch(() => {})
+        }).catch(() => {})
+      })
+    }
+    window.addEventListener('pagehide', h)
+    return () => window.removeEventListener('pagehide', h)
+  }, [screenLive, supabase])
+  const { T } = useLang()
 
   // 모달이 열리면 뒤 홈페이지 스크롤 잠금
   useEffect(() => {
@@ -127,6 +188,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     playLock.current = true
     setTimeout(() => { playLock.current = false }, 1500)
     const { data: { user } } = await supabase.auth.getUser()
+    setMe(user?.id ?? null)
     if (!user) {
       // 게스트 플레이 — 공유 링크로 온 방문자는 로그인 없이 게임만 바로 플레이.
       // AJ 방송/채팅은 로그인 안내 패널로 대체 (코인 차감 없음)
@@ -271,7 +333,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           onClick={e => { if (e.target === e.currentTarget) close() }}
         >
           <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={{ ...(rotStyle ?? {}), ...safeVars } as React.CSSProperties} data-rotated={rotated ? '1' : undefined}>
-          <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={close} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} />
+          <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={close} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} live={screenLive} onToggleLive={!isGuest && !spectate ? toggleScreenLive : undefined} />
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0 overflow-hidden">
               <TransportBar key={game.id} gameId={game.id} active={open} />
@@ -284,7 +346,15 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                   {warp !== 'in' && <span className="teleport-text">{warp === 'out' ? `TELEPORT ▶ ${pending?.title ?? ''}` : 'TELEPORTING…'}</span>}
                 </div>
               )}
-              {[game, ...(pending ? [pending] : [])].map((g) => {
+              {spectate && liveEntry ? (
+                /* 관전 — 방을 연 회원의 게임 화면. 다른 회원은 직접 플레이할 수 없다 */
+                <div className="absolute inset-0 bg-black">
+                  <CameraBjView hostId={liveEntry.hostId} channel="screen" fit="contain" badge={false} controls controlsClass="left-3 top-[calc(3.6rem+var(--vbx-safe-top,0px))]" />
+                  <div className="absolute inset-x-0 flex justify-center pointer-events-none" style={{ top: 'calc(3.6rem + var(--vbx-safe-top, 0px))' }}>
+                    <span className="rounded-full bg-black/55 backdrop-blur px-3 py-1 text-[12px] font-semibold text-white flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#e11d48] animate-pulse" />{liveEntry.hostName} 님의 플레이를 보는 중 — 관전 모드</span>
+                  </div>
+                </div>
+              ) : [game, ...(pending ? [pending] : [])].map((g) => {
                 const isPending = pending?.id === g.id && g.id !== game.id
                 return (
                   <iframe
@@ -322,7 +392,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                 </div>
               </>
             ) : (
-              <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} myAvatarConfig={myAvatarConfig} bjName={bjName} bjLive={liveForGame(liveMap, game.id)} />
+              <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} myAvatarConfig={myAvatarConfig} bjName={bjName} bjLive={bjLive} />
             )}
           </div>
           </div>

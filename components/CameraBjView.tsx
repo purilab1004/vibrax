@@ -135,7 +135,7 @@ export function LiveView({ live, cover = false, badge = true, controls = false, 
   return live.kind === 'camera' ? <CameraBjView hostId={live.hostId} badge={badge} controls={controls} controlsClass={controlsClass} /> : <LinkLiveView src={live.src} aspect={live.aspect} cover={cover} badge={badge} controls={controls} controlsClass={controlsClass} />
 }
 
-export default function CameraBjView({ hostId, badge = true, controls = false, controlsClass = 'top-3 right-3' }: { hostId: string; badge?: boolean; controls?: boolean; controlsClass?: string }) {
+export default function CameraBjView({ hostId, badge = true, controls = false, controlsClass = 'top-3 right-3', channel = 'cam', fit = 'cover' }: { hostId: string; badge?: boolean; controls?: boolean; controlsClass?: string; channel?: 'cam' | 'screen'; fit?: 'cover' | 'contain' }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [state, setState] = useState<ViewerState>('connecting')
   const [muted, setMuted] = useState(true) // 처음엔 음소거로 재생을 시작하고, 재생이 붙은 뒤 공용 스피커 설정을 적용한다
@@ -155,12 +155,12 @@ export default function CameraBjView({ hostId, badge = true, controls = false, c
       const v = videoRef.current; if (!v) return
       v.muted = true; v.srcObject = s
       v.play().then(() => { if (getSoundPref().on) { v.muted = false; setMuted(false) } }).catch(() => { v.muted = true; setMuted(true) })
-    }, setState)
+    }, setState, channel)
     return stop
-  }, [hostId])
+  }, [hostId, channel])
   return (
     <div ref={boxRef} className="relative w-full h-full bg-black">
-      <video ref={videoRef} autoPlay playsInline muted={muted} className="absolute inset-0 w-full h-full object-cover" />
+      <video ref={videoRef} autoPlay playsInline muted={muted} className={`absolute inset-0 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'}`} />
       {badge && (
         <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE

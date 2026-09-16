@@ -1,16 +1,16 @@
 // lib/live/host.ts — 방송 호스트(폰 카메라). 시청자마다 RTCPeerConnection 하나씩(P2P, 시청자 수 소규모용).
 // 시그널링은 Supabase Realtime broadcast 채널. 호스트는 presence 로 "온라인"을 알린다.
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js'
-import { ICE_SERVERS, liveChannelName, type Signal } from '@/lib/broadcast'
+import { ICE_SERVERS, liveChannelName, type Signal, type LiveChannelKind } from '@/lib/broadcast'
 
 export interface HostHandle {
   stop(): void
   viewers(): number
 }
 
-export function startHost(supabase: SupabaseClient, hostId: string, stream: MediaStream, onViewers?: (n: number) => void): HostHandle {
+export function startHost(supabase: SupabaseClient, hostId: string, stream: MediaStream, onViewers?: (n: number) => void, kind: LiveChannelKind = 'cam'): HostHandle {
   const peers = new Map<string, RTCPeerConnection>()
-  const ch: RealtimeChannel = supabase.channel(liveChannelName(hostId), { config: { broadcast: { self: false }, presence: { key: 'host' } } })
+  const ch: RealtimeChannel = supabase.channel(liveChannelName(hostId, kind), { config: { broadcast: { self: false }, presence: { key: 'host' } } })
   const send = (payload: Signal) => ch.send({ type: 'broadcast', event: 'signal', payload })
   const notify = () => onViewers?.(peers.size)
 

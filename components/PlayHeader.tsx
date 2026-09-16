@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 // genreLabel/genreColor 는 헤더에서 더 이상 표시하지 않지만(모바일·PC 동일 배치) 호출부 호환을 위해 받는다
-export default function PlayHeader({ title, onClose, paused, onTogglePause, rotated, onToggleRotate }: { genreLabel?: string; genreColor?: string; title: string; gameId?: string; onClose: () => void; paused?: boolean; onTogglePause?: () => void; rotated?: boolean; onToggleRotate?: () => void }) {
+export default function PlayHeader({ title, onClose, paused, onTogglePause, rotated, onToggleRotate, live, onToggleLive }: { genreLabel?: string; genreColor?: string; title: string; gameId?: string; onClose: () => void; paused?: boolean; onTogglePause?: () => void; rotated?: boolean; onToggleRotate?: () => void; live?: { viewers: number } | null; onToggleLive?: () => void }) {
   const [line, setLine] = useState<string | null>(title)
   const [key, setKey] = useState(0)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -33,6 +33,12 @@ export default function PlayHeader({ title, onClose, paused, onTogglePause, rota
           </div>
         </div>
         <div className="pointer-events-auto shrink-0 flex items-center gap-2">
+          {onToggleLive && (
+            <button onClick={onToggleLive} aria-label={live ? '방송 종료' : '내 플레이 방송'} title={live ? '방송 종료' : '내 플레이를 라이브로 방송 (시청자는 관전만)'} className={`h-9 px-3 rounded-full backdrop-blur-md border text-white text-[12px] font-bold flex items-center gap-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-colors ${live ? 'bg-[#e11d48] border-[#e11d48]' : 'bg-black/45 border-white/15 hover:bg-white hover:text-black'}`}>
+              <span className={`w-2 h-2 rounded-full ${live ? 'bg-white animate-pulse' : 'bg-[#e11d48]'}`} />
+              {live ? `LIVE · ${live.viewers}` : '방송'}
+            </button>
+          )}
           {onToggleRotate && (
             <button onClick={onToggleRotate} aria-label={rotated ? '세로 화면으로' : '가로 화면으로'} title={rotated ? '세로 화면으로' : '가로 화면으로'} className={`h-9 w-9 rounded-full backdrop-blur-md border text-white flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.35)] transition-colors ${rotated ? 'bg-[#2563eb] border-[#2563eb]' : 'bg-black/45 border-white/15 hover:bg-white hover:text-black'}`}>
               {rotated
