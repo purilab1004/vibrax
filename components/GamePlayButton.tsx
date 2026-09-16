@@ -95,6 +95,13 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [headerBottom, safe.bottom])
   useNetBridge(open, () => frameRef.current, cur.game.id) // 온라인 게임 브리지 (Realtime 중계)
+  // 텔레포트로 게임이 바뀌면 주소창·탭 제목을 새 게임으로 바꾼다(페이지 자체는 그대로 두어 플레이가 끊기지 않게). 닫을 때 새 게임 페이지로 이동
+  const startedId = useRef(cur.game.id)
+  useEffect(() => {
+    if (!open || cur.game.id === startedId.current) return
+    try { window.history.replaceState(window.history.state, '', `/games/${cur.game.id}`); document.title = `${cur.game.title} | Vibrexcup` } catch { /* noop */ }
+  }, [open, cur.game.id, cur.game.title])
+  const close = () => { setOpen(false); if (cur.game.id !== startedId.current) { startedId.current = cur.game.id; router.replace(`/games/${cur.game.id}`) } }
   useGameTelemetry(game.id, open) // AJ 텔레메트리 — 플레이 세션 기록 (게임이 바뀌면 새 세션)
   const [agentGate, setAgentGate] = useState<'login' | 'agent' | null>(null)
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
@@ -261,10 +268,10 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       {open && (
         <div
           className="fixed inset-0 z-[70] flex flex-col bg-black"
-          onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
+          onClick={e => { if (e.target === e.currentTarget) close() }}
         >
           <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={{ ...(rotStyle ?? {}), ...safeVars } as React.CSSProperties} data-rotated={rotated ? '1' : undefined}>
-          <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={() => setOpen(false)} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} />
+          <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={close} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} />
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0 overflow-hidden">
               <TransportBar key={game.id} gameId={game.id} active={open} />
