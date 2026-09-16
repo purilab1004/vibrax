@@ -30,6 +30,10 @@ export default function StudioComposerPage() {
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [versions, setVersions] = useState<StudioVersionMeta[]>([])
   const [currentVersionId, setCurrentVersionId] = useState<string | null>(null)
+  // 좌측 최근 항목 사이드바 접기 (기억)
+  const [sideOpen, setSideOpen] = useState(true)
+  useEffect(() => { try { const v = localStorage.getItem('studio.side'); if (v === '0') setSideOpen(false) } catch { /* noop */ } }, [])
+  useEffect(() => { try { localStorage.setItem('studio.side', sideOpen ? '1' : '0') } catch { /* noop */ } }, [sideOpen])
   const [html, setHtml] = useState<string | null>(null)
   const [balance, setBalance] = useState<number | null>(null)
   const [streaming, setStreaming] = useState<{ description: string; htmlBytes: number; codeTail: string } | null>(null)
@@ -366,15 +370,29 @@ export default function StudioComposerPage() {
       </div>
       <div className="flex-1 flex min-h-0">
         {/* 좌측 — 최근 프로젝트 사이드바 (클로드 스타일, 데스크톱) */}
-        {!chatCollapsed && (
-          <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-[#ebe4d6] bg-[#fcfaf5] min-h-0">
-            <button
-              onClick={createNewProject}
-              className="mx-3 mt-3 flex items-center gap-2 text-[13px] font-semibold text-[#4a4337] hover:text-[#2563eb] px-2.5 py-2 rounded-lg hover:bg-[#241f17]/5 transition-colors text-left"
-            >
-              <span className="w-5 h-5 rounded-md bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center text-xs" aria-hidden>＋</span>
-              새로 생성
+        {!chatCollapsed && !sideOpen && (
+          /* 접힌 사이드바 — 얇은 레일: 펼치기 + 새로 생성 */
+          <aside className="hidden lg:flex w-11 shrink-0 flex-col items-center gap-2 border-r border-[#ebe4d6] bg-[#fcfaf5] min-h-0 pt-3">
+            <button onClick={() => setSideOpen(true)} aria-label="사이드 메뉴 펼치기" title="최근 항목 펼치기" className="w-8 h-8 rounded-lg text-[#6b6152] hover:text-[#2563eb] hover:bg-[#241f17]/5 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
             </button>
+            <button onClick={createNewProject} aria-label="새로 생성" title="새로 생성" className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center text-sm shadow-sm">＋</button>
+          </aside>
+        )}
+        {!chatCollapsed && sideOpen && (
+          <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-[#ebe4d6] bg-[#fcfaf5] min-h-0">
+            <div className="mx-3 mt-3 flex items-center gap-1">
+              <button
+                onClick={createNewProject}
+                className="flex-1 flex items-center gap-2 text-[13px] font-semibold text-[#4a4337] hover:text-[#2563eb] px-2.5 py-2 rounded-lg hover:bg-[#241f17]/5 transition-colors text-left"
+              >
+                <span className="w-5 h-5 rounded-md bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center text-xs" aria-hidden>＋</span>
+                새로 생성
+              </button>
+              <button onClick={() => setSideOpen(false)} aria-label="사이드 메뉴 접기" title="접기" className="w-8 h-8 rounded-lg text-[#9d9280] hover:text-[#2563eb] hover:bg-[#241f17]/5 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+              </button>
+            </div>
             <p className="px-5 mt-4 mb-1.5 font-pixel text-[10px] text-[#9d9280] tracking-widest">최근 항목</p>
             <nav className="flex-1 overflow-y-auto scrollbar-hide px-2 pb-4 space-y-0.5">
               {myProjects.map(p => (
