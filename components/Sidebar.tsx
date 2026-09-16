@@ -125,7 +125,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
     // 게임 상세 페이지 — 메뉴 대신 뒤로가기 버튼
     if (/^\/games\/[^/]+$/.test(pathname)) {
       return (
-        <div className="fixed top-2 left-3 z-[60]">
+        <div className="fixed left-3 z-[60]" style={{ top: 'calc(0.5rem + var(--st, 0px))' }}>{/* 앱: 상태바(카메라) 아래로 */}
           <button
             onClick={() => { if (window.history.length > 1) router.back(); else router.push('/games') }}
             aria-label="back"
@@ -140,7 +140,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
       )
     }
     return (
-      <div className="hidden md:block fixed top-2 left-3 z-[60]">
+      <div className="hidden md:block fixed left-3 z-[60]" style={{ top: 'calc(0.5rem + var(--st, 0px))' }}>
         <div className="sand-float sand-button flex items-center h-9 text-[#241f17] overflow-hidden">
           {/* 로고 = 홈(이미 홈이면 프롬프트 첫 화면으로) */}
           <Link
