@@ -5,6 +5,10 @@ import { useEffect, useRef, useState } from 'react'
 import MediaPicker, { type PickedAsset } from '@/components/studio/MediaPicker'
 import { useLang } from '@/lib/i18n/context'
 
+// 생성 대기 중 돌아가며 보여 주는 문구 — 심심하지 않게, 동물 친구들이 일하는 느낌으로
+const THINKING_KO = ['생각 중...', '야옹이가 요청을 해석하는 중...', '강아지가 열심히 고민하는 중...', '픽셀을 한 알씩 고르는 중...', '토끼가 규칙을 정리하는 중...', '거북이가 코드를 차근차근 쓰는 중...', '햄스터가 쳇바퀴 돌리며 계산하는 중...', '고양이가 버그를 노려보는 중...', '펭귄이 아이디어를 굴리는 중...', '다람쥐가 점수 규칙을 모으는 중...', '여우가 조작법을 다듬는 중...', '거의 다 됐어요, 마지막 손질 중...']
+const THINKING_EN = ['Thinking...', 'A cat is decoding your request...', 'A puppy is thinking really hard...', 'Picking pixels one by one...', 'A bunny is sorting out the rules...', 'A turtle is writing code, steadily...', 'A hamster is crunching numbers...', 'A cat is staring down a bug...', 'A penguin is rolling ideas around...', 'A squirrel is gathering the scoring rules...', 'A fox is polishing the controls...', 'Almost there, final touches...']
+
 export interface ChatMsg {
   role: 'user' | 'assistant'
   content: string
@@ -75,8 +79,16 @@ export default function StudioChat({
     })
   }
   const listRef = useRef<HTMLDivElement>(null)
-  const { T } = useLang()
+  const { T, lang } = useLang()
   const s = T.studio
+  // 생성 중 재미난 상태 문구 — 설명이 도착하기 전까지 2.4초마다 바뀐다
+  const [thinkIdx, setThinkIdx] = useState(0)
+  const thinkingWords = lang === 'en' ? THINKING_EN : THINKING_KO
+  useEffect(() => {
+    if (!streaming || streaming.description) return
+    const iv = setInterval(() => setThinkIdx(i => (i + 1) % thinkingWords.length), 2400)
+    return () => clearInterval(iv)
+  }, [streaming, thinkingWords.length])
 
   // 생성 경과 시간 — 초기 단계(모델 연결·구상)에도 시스템이 일하고 있음을 보여준다
   const [elapsed, setElapsed] = useState(0)
@@ -239,7 +251,7 @@ export default function StudioChat({
           <div className="flex items-start gap-2.5">
             <span className="avatar-wave w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[13px] shadow-sm overflow-hidden" aria-hidden>{ajAvatarUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={ajAvatarUrl} alt="" className="w-full h-full object-cover" /> : '🧸'}</span>
             <div className="w-full max-w-[90%] px-4 py-2.5 text-[14px] leading-relaxed bg-white border border-[#ebe4d6] text-[#241f17] whitespace-pre-wrap rounded-2xl rounded-tl-md shadow-[0_2px_10px_rgba(36,31,23,0.05)]">
-              {streaming.description || s.thinking}
+              {streaming.description || <span key={thinkIdx} className="inline-block animate-[fadeIn_.4s_ease]">{thinkingWords[thinkIdx % thinkingWords.length]}</span>}
               {/* 코드가 오기 전 단계 — 시스템 상태 로그 */}
               {streaming.htmlBytes === 0 && (
                 <p className="mt-2 flex items-center gap-2 text-xs text-[#857a68]">

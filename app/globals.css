@@ -929,3 +929,6 @@ html.vbx-app { --st: max(env(safe-area-inset-top, 0px), var(--app-top, 0px)); --
 .vbx-app.feed-page .feed-snap .top-3.left-3 { top: calc(.75rem + var(--st)); }    /* 라이브 카드 상단 줄 */
 .vbx-app .fixed.top-3.right-3 { top: calc(.75rem + var(--st)); }                  /* 모바일 검색 아이콘 */
 .vbx-app .fixed.inset-x-0.top-0.z-\[64\] { padding-top: var(--st); }             /* 모바일 검색 패널 */
+
+/* 스튜디오 생성 대기 문구 전환 */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(3px) } to { opacity: 1; transform: none } }

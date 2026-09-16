@@ -32,7 +32,7 @@ export default function StudioComposerPage() {
   const [currentVersionId, setCurrentVersionId] = useState<string | null>(null)
   // 좌측 최근 항목 사이드바 접기 (기억)
   const [sideOpen, setSideOpen] = useState(true)
-  useEffect(() => { try { const v = localStorage.getItem('studio.side'); if (v === '0') setSideOpen(false) } catch { /* noop */ } }, [])
+  useEffect(() => { const t = setTimeout(() => { try { if (localStorage.getItem('studio.side') === '0') setSideOpen(false) } catch { /* noop */ } }, 0); return () => clearTimeout(t) }, [])
   useEffect(() => { try { localStorage.setItem('studio.side', sideOpen ? '1' : '0') } catch { /* noop */ } }, [sideOpen])
   const [html, setHtml] = useState<string | null>(null)
   const [balance, setBalance] = useState<number | null>(null)
