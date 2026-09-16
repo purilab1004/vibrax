@@ -15,6 +15,7 @@ import { aiJudgeTemplate } from '@/lib/studio/ai-judge'
 import { loadAutomation, logAutomation } from '@/lib/automation'
 import { hardenHtml, injectSounds } from '@/lib/studio/harden'
 import { tryMaxJob, type MsgStream } from '@/lib/studio/max-job'
+import { extractPatches, applyPatches } from '@/lib/studio/patch'
 import { loadControls } from '@/lib/controls-server'
 import { extractAssetIds, stripAssets, injectAssets, assetPromptNote, scoreAssets, listAutoAssets, getAssetsByIds, loadAssetData, type MediaAssetLite } from '@/lib/media/assets'
 import { personalizeTemplate } from '@/lib/studio/personalize'
@@ -312,11 +313,40 @@ export async function POST(req: Request) {
       let versionPersisted = false
       try {
         if (templateNote) { full += templateNote; controller.enqueue(encoder.encode(templateNote)) }
+        // 부분 패치 모드: 모델이 <patch> 블록을 내기 시작하면 그 뒤 원문은 클라이언트에 보내지 않고(설명만 보임) 끝에 조립한 <game> 을 보낸다
+        let raw = '', sentUpTo = 0, patchMode = false
+        const forward = () => {
+          if (patchMode) return
+          const pi = raw.indexOf('<patch>')
+          const upto = pi >= 0 ? pi : raw.length
+          if (pi >= 0) patchMode = true
+          if (upto > sentUpTo) { const seg = raw.slice(sentUpTo, upto); sentUpTo = upto; full += seg; controller.enqueue(encoder.encode(seg)) }
+        }
         for await (const chunk of stream) {
-          if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') {
-            const t = chunk.delta.text ?? ''
-            full += t
-            controller.enqueue(encoder.encode(t))
+          if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { raw += chunk.delta.text ?? ''; forward() }
+        }
+        forward()
+        if (patchMode) {
+          const ex = extractPatches(raw)
+          const patchBase = baseHtml ? stripAssets(baseHtml) : null
+          const applied = patchBase && ex.blocks.length ? applyPatches(patchBase, ex.blocks) : null
+          if (applied && applied.failed.length === 0) {
+            const tail = `\n<game>${applied.html}</game>`
+            full += tail; controller.enqueue(encoder.encode(tail))
+            console.log('[studio/generate] patch mode', ex.blocks.length, 'blocks, out', raw.length, 'chars')
+          } else {
+            // 패치를 못 붙이면 전체 완성본으로 한 번 더 (API) — 느리지만 확실
+            console.warn('[studio/generate] patch apply failed', applied?.failed ?? 'no base', '→ full regeneration')
+            const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+            const retry = client.messages.stream({
+              model: chosenModel, max_tokens: GENERATION_MAX_TOKENS,
+              ...(chosenModel.startsWith('claude-sonnet-5') || chosenModel.startsWith('claude-opus-5') ? { thinking: { type: 'adaptive' as const }, output_config: { effort: 'medium' as const } } : {}),
+              system: systemPrompt,
+              messages: [...(genMessages as { role: 'user' | 'assistant'; content: unknown }[]), { role: 'assistant', content: raw.slice(0, 4000) }, { role: 'user', content: '위 패치 중 원문이 일치하지 않는 것이 있어 적용에 실패했다. 이번엔 패치 대신 요청을 반영한 "전체 완성본" HTML 을 <game>…</game> 으로 출력해라.' }] as never,
+            })
+            for await (const chunk of retry) {
+              if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') { full += chunk.delta.text; controller.enqueue(encoder.encode(chunk.delta.text)) }
+            }
           }
         }
         // 실제 토큰 사용량을 마커로 전달 — 클라이언트가 파싱해 표시하고 본문에선 제외

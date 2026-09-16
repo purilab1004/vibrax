@@ -79,7 +79,17 @@ const SYSTEM_PROMPT_TEMPLATE = `너는 Vibrexcup 스튜디오의 게임 제작 A
   · 터치 스크롤/더블탭 줌 방지: touch-action:none, preventDefault 처리. **input/textarea 는 font-size 16px 이상**(iOS 는 더 작으면 포커스 때 페이지를 확대해 플랫폼 UI 가 잘린다).
   · 폰트·히트박스·아이템 크기는 화면 크기에 비례해 조정한다(작은 화면에서 너무 작아지지 않게 최소값 확보).
   · <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">를 포함한다.
-- 기존 게임 HTML이 주어지면 요청된 수정만 반영한 "전체 완성본"을 다시 출력한다.
+- [수정 요청은 부분 패치로 — 필수] 기존 게임 HTML 이 주어진 수정 요청은 전체를 다시 쓰지 말고, 바뀌는 부분만 <patch> 블록으로 출력한다(출력이 수십 배 짧아져 몇 초 만에 끝난다). 형식(구분선은 정확히 7개 문자):
+  짧은 설명 한 줄
+  <patch>
+  <<<<<<< SEARCH
+  (기존 HTML 에서 그대로 복사한 원문 발췌 — 파일 안에서 정확히 한 곳에만 있는 3~30줄. 공백·따옴표까지 원문과 같아야 한다)
+  =======
+  (그 자리에 들어갈 새 내용)
+  >>>>>>> REPLACE
+  </patch>
+  블록은 필요한 만큼 여러 개. 새 함수를 추가할 땐 근처의 기존 몇 줄을 SEARCH 로 잡고 그 줄들 + 새 함수를 REPLACE 로 낸다. 패치 뒤에 <game> 을 붙이지 않는다.
+  전체 완성본(<game>…</game>)을 쓰는 경우는 새 게임을 처음 만들 때, 또는 파일의 절반 이상이 바뀌는 구조 변경일 때만.
 - localStorage/sessionStorage 는 샌드박스에서 막힐 수 있으니 반드시 try/catch 로 감싸고, 실패해도 게임은 계속 동작해야 한다.
 - [AJ 텔레메트리] 플랫폼이 window.AJ 를 주입한다(없을 수도 있으니 항상 if(window.AJ) 로 감싼다). 게임 코드에서 다음을 반드시 호출한다: 플레이 시작 시 AJ.start(), 점수가 바뀔 때 AJ.score(점수), 게임오버 시 AJ.over(최종점수), 레벨/스테이지가 오르면 AJ.level(레벨), 다시하기 시 AJ.restart(). 이 데이터로 AJ(AI 스트리머)가 난이도·재미를 분석한다.
 - <game> 태그 밖에는 절대 코드를 쓰지 않는다.
@@ -120,7 +130,7 @@ export function buildMessages(opts: {
   if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') sanitized.pop()
 
   const parts: string[] = []
-  if (opts.currentHtml) parts.push(`현재 게임 HTML:\n<game>${opts.currentHtml}</game>`)
+  if (opts.currentHtml) parts.push(`현재 게임 HTML:\n<game>${opts.currentHtml}</game>\n\n(수정은 <patch> SEARCH/REPLACE 블록으로 바뀌는 부분만 출력할 것 — 전체를 다시 쓰지 않는다)`)
   parts.push(`요청: ${opts.prompt}`)
   const text = parts.join('\n\n')
 
