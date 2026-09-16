@@ -932,3 +932,6 @@ html.vbx-app { --st: max(env(safe-area-inset-top, 0px), var(--app-top, 0px)); --
 
 /* 스튜디오 생성 대기 문구 전환 */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(3px) } to { opacity: 1; transform: none } }
+
+/* 한국어 줄바꿈 — 글자 단위가 아니라 단어 단위로 (쇼츠 제목·훅 문구·제목들) */
+h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overflow-wrap: break-word; }
