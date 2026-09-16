@@ -154,7 +154,7 @@ export default function CameraBjView({ hostId, badge = true, controls = false, c
     const stop = startViewer(supabase, hostId, (s) => {
       const v = videoRef.current; if (!v) return
       v.muted = true; v.srcObject = s
-      const p = v.play(); if (p && p.catch) p.then(() => { if (getSoundPref().on) { v.muted = false; setMuted(false) } }).catch(() => { v.muted = true; setMuted(true) })
+      v.play().then(() => { if (getSoundPref().on) { v.muted = false; setMuted(false) } }).catch(() => { v.muted = true; setMuted(true) })
     }, setState)
     return stop
   }, [hostId])
