@@ -9,6 +9,7 @@ export default function SiteFooter() {
   if (pathname.startsWith('/studio')) return null
   // 홈은 페이지 푸터 대신 피드 좌측 사이드 메뉴 하단에 축약 푸터를 둔다
   if (pathname === '/') return null
+  if (pathname === '/games') return null   // 게임 피드(PC) — 한 장씩 넘기는 화면에서 푸터가 방해됨 (링크는 좌측 사이드 메뉴 하단에 있음)
   // 관리자는 사이드바 하단 축약 푸터로 대체
   if (pathname.startsWith('/admin')) return null
   // 모바일에서는 푸터를 전부 숨긴다(하단 앱 내비가 있어 불필요) — 데스크톱만 표시
