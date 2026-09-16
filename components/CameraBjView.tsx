@@ -138,7 +138,7 @@ export function LiveView({ live, cover = false, badge = true, controls = false, 
 export default function CameraBjView({ hostId, badge = true, controls = false, controlsClass = 'top-3 right-3' }: { hostId: string; badge?: boolean; controls?: boolean; controlsClass?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [state, setState] = useState<ViewerState>('connecting')
-  const [muted, setMuted] = useState(() => !getSoundPref().on) // 공용 스피커 설정을 따른다
+  const [muted, setMuted] = useState(true) // 처음엔 음소거로 재생을 시작하고, 재생이 붙은 뒤 공용 스피커 설정을 적용한다
   const [camVol, setCamVol] = useState(100)
   const boxRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -150,7 +150,12 @@ export default function CameraBjView({ hostId, badge = true, controls = false, c
   }, [])
   useEffect(() => {
     const supabase = createClient()
-    const stop = startViewer(supabase, hostId, (s) => { if (videoRef.current) videoRef.current.srcObject = s }, setState)
+    // 스트림이 붙으면 반드시 '음소거'로 먼저 재생(제스처 없이 소리 켠 자동재생은 막혀 화면이 검게 남는다) → 재생이 시작된 뒤 공용 스피커 설정이 켜져 있으면 소리를 켠다
+    const stop = startViewer(supabase, hostId, (s) => {
+      const v = videoRef.current; if (!v) return
+      v.muted = true; v.srcObject = s
+      const p = v.play(); if (p && p.catch) p.then(() => { if (getSoundPref().on) { v.muted = false; setMuted(false) } }).catch(() => { v.muted = true; setMuted(true) })
+    }, setState)
     return stop
   }, [hostId])
   return (
