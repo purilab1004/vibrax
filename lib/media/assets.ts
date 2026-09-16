@@ -69,17 +69,24 @@ export function assetPromptNote(assets: Pick<LoadedAsset, 'name' | 'kind' | 'wid
 }
 
 /** 프롬프트·장르에 맞는 에셋 자동 선택 */
+/** 프롬프트가 배경 이미지를 언급하는지 — 언급이 없으면 배경 에셋은 자동 선택하지 않는다(장르만으로 배경이 끼어드는 것 방지) */
+export function promptWantsBackground(prompt: string): boolean {
+  return /배경|백그라운드|풍경|background|backdrop|\bbg\b/i.test(prompt)
+}
 export function scoreAssets(assets: MediaAssetLite[], opts: { prompt: string; genreSlugs: string[] }): MediaAssetLite[] {
   const p = opts.prompt.toLowerCase()
   const genres = new Set(opts.genreSlugs.map(g => g.toLowerCase()))
+  const wantsBg = promptWantsBackground(opts.prompt)
   const scored = assets
     .filter(a => INJECTABLE.has(a.kind))
     .map(a => {
-      let s = 0
+      let s = 0, explicit = false
       if (a.genres.some(g => genres.has(g.toLowerCase()))) s += 3
       for (const t of a.tags) { const tt = t.toLowerCase().trim(); if (tt.length >= 2 && p.includes(tt)) s += 2 }
-      if (a.title && p.includes(a.title.toLowerCase())) s += 3
-      if (p.includes(a.name.toLowerCase())) s += 4
+      if (a.title && p.includes(a.title.toLowerCase())) { s += 3; explicit = true }
+      if (p.includes(a.name.toLowerCase())) { s += 4; explicit = true }
+      // 배경은 프롬프트에 '배경' 언급이나 에셋 이름 지정이 있을 때만 (장르 매칭만으로는 넣지 않음)
+      if (a.kind === 'background' && !wantsBg && !explicit) s = 0
       return { a, s }
     })
     .filter(x => x.s > 0)
