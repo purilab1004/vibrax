@@ -22,11 +22,14 @@ export default function MobileSearch({ open, onClose, categories }: { open: bool
 
   useEffect(() => {
     if (!open) return
-    const t = setTimeout(() => { setQ(params.get('q') ?? ''); setRecent(readRecent()); inputRef.current?.focus() }, 30)
-    const prev = document.body.style.overflow; document.body.style.overflow = 'hidden'
+    // 자동 포커스는 하지 않는다 — iOS 는 키보드가 뜨면서 화면을 입력창으로 끌어올려 튀어 보인다. 사용자가 검색창을 탭하면 그 자리에서 커서가 놓인다.
+    const t = setTimeout(() => { setQ(params.get('q') ?? ''); setRecent(readRecent()) }, 30)
+    // 뒤 페이지(피드)가 키보드와 함께 스크롤되지 않게 body 를 고정
+    const y = window.scrollY, b = document.body, prev = { position: b.style.position, top: b.style.top, width: b.style.width, overflow: b.style.overflow }
+    b.style.position = 'fixed'; b.style.top = `-${y}px`; b.style.width = '100%'; b.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
-    return () => { clearTimeout(t); document.body.style.overflow = prev; window.removeEventListener('keydown', onKey) }
+    return () => { clearTimeout(t); b.style.position = prev.position; b.style.top = prev.top; b.style.width = prev.width; b.style.overflow = prev.overflow; window.scrollTo(0, y); window.removeEventListener('keydown', onKey) }
   }, [open, onClose, params])
 
   // 인기 게임(한 번) + 실시간 제안(입력 250ms 뒤)
@@ -73,10 +76,10 @@ export default function MobileSearch({ open, onClose, categories }: { open: bool
         <div className="flex-1 flex items-center h-12 rounded-2xl bg-white border border-[#e3dccb] shadow-[0_2px_10px_rgba(36,31,23,0.06)] focus-within:border-[#2563eb] px-3 gap-2">
           <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#9d9280] shrink-0" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
           <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="게임 검색" enterKeyHint="search" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-            className="flex-1 min-w-0 bg-transparent outline-none text-[16px] text-[#241f17] placeholder:text-[#b3a78f]" />
-          {q && <button type="button" onClick={() => { setQ(''); inputRef.current?.focus() }} aria-label="지우기" className="w-6 h-6 rounded-full bg-[#d8cfbb] text-white flex items-center justify-center text-[12px] leading-none">✕</button>}
+            className="flex-1 min-w-0 bg-transparent outline-none text-[16px] text-[#241f17] placeholder:text-[#b3a78f]" style={{ fontSize: 16 }} onFocus={(e) => { try { e.currentTarget.scrollIntoView({ block: 'nearest' }) } catch { /* noop */ } }} />
+          {q && <button type="button" onClick={() => { setQ(''); inputRef.current?.focus() }} aria-label="지우기" className="w-5 h-5 rounded-full bg-[#c9bfa8] text-white flex items-center justify-center shrink-0"><svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg></button>}
         </div>
-        <button type="button" onClick={onClose} aria-label="닫기" className="h-12 w-12 rounded-2xl bg-white border border-[#e3dccb] text-[#241f17] flex items-center justify-center text-[18px] shrink-0">✕</button>
+        <button type="button" onClick={onClose} aria-label="닫기" className="h-12 px-3.5 rounded-2xl text-[#2563eb] text-[15px] font-bold shrink-0 active:opacity-60">취소</button>
       </form>
       {/* 본문 */}
       <div className="flex-1 overflow-y-auto pb-[max(24px,env(safe-area-inset-bottom))]">

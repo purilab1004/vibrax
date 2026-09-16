@@ -14,6 +14,7 @@ import { loadMl, logMapping, learnKeyword } from '@/lib/studio/mlpilot'
 import { aiJudgeTemplate } from '@/lib/studio/ai-judge'
 import { loadAutomation, logAutomation } from '@/lib/automation'
 import { hardenHtml, injectSounds } from '@/lib/studio/harden'
+import { tryMaxJob, type MsgStream } from '@/lib/studio/max-job'
 import { loadControls } from '@/lib/controls-server'
 import { extractAssetIds, stripAssets, injectAssets, assetPromptNote, scoreAssets, listAutoAssets, getAssetsByIds, loadAssetData, type MediaAssetLite } from '@/lib/media/assets'
 import { personalizeTemplate } from '@/lib/studio/personalize'
@@ -280,17 +281,23 @@ export async function POST(req: Request) {
   const routeTask = tmatch ? 'template_edit' : latest ? 'edit' : 'create'
   const routed = routeModel({ task: routeTask, promptChars: prompt.length, htmlChars: baseHtml?.length ?? 0 }, await loadPolicy())
   const chosenModel = images.length > 0 ? 'claude-sonnet-5' : routed.model  // 이미지 입력은 Sonnet 고정
-  let stream: ReturnType<Anthropic['messages']['stream']>
-  try {
+  const systemPrompt = buildSystemPrompt(await loadControls())
+  const genMessages = buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml ? stripAssets(baseHtml) : baseHtml, history, images })
+  let stream: MsgStream | null = null
+  // 관리자 + MAX_WORKER=1: 로컬 Claude Code(Max 구독) 워커로 생성 (이미지 입력은 API). 워커가 없으면 API 로 폴백.
+  if (isAdminUser && process.env.MAX_WORKER === '1' && images.length === 0) {
+    try { stream = await tryMaxJob(createAdminClient(), { projectId, userId: user.id, model: chosenModel, system: systemPrompt, messages: genMessages }) } catch (e) { console.error('[studio/generate] max job', e); stream = null }
+  }
+  if (!stream) try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     stream = client.messages.stream({
       model: chosenModel,
       max_tokens: GENERATION_MAX_TOKENS,
       // Sonnet 5 는 기본으로 적응형 사고가 켜져 있고 그 토큰이 max_tokens 에 포함된다 — effort 로 사고 분량을 제한해 본문이 잘리지 않게
       ...(chosenModel.startsWith('claude-sonnet-5') || chosenModel.startsWith('claude-opus-5') ? { thinking: { type: 'adaptive' as const }, output_config: { effort: 'medium' as const } } : {}),
-      system: buildSystemPrompt(await loadControls()),
-      messages: buildMessages({ prompt: effectivePrompt, currentHtml: baseHtml ? stripAssets(baseHtml) : baseHtml, history, images }) as never,
-    })
+      system: systemPrompt,
+      messages: genMessages as never,
+    }) as unknown as MsgStream
   } catch (e) {
     await refund()
     console.error('[studio/generate]', e)
@@ -306,9 +313,10 @@ export async function POST(req: Request) {
       try {
         if (templateNote) { full += templateNote; controller.enqueue(encoder.encode(templateNote)) }
         for await (const chunk of stream) {
-          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-            full += chunk.delta.text
-            controller.enqueue(encoder.encode(chunk.delta.text))
+          if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') {
+            const t = chunk.delta.text ?? ''
+            full += t
+            controller.enqueue(encoder.encode(t))
           }
         }
         // 실제 토큰 사용량을 마커로 전달 — 클라이언트가 파싱해 표시하고 본문에선 제외
