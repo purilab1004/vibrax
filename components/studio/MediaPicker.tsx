@@ -1,6 +1,6 @@
 'use client'
 // 스튜디오 미디어 선택기 — 관리자가 모아둔 라이브러리에서 캐릭터·배경·아이템·오디오를 골라 생성 요청에 붙인다.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export interface PickedAsset { id: string; kind: string; name: string; title: string; url: string }
 interface Item extends PickedAsset { description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string } }
@@ -12,6 +12,18 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
   const [q, setQ] = useState(''); const [kind, setKind] = useState('')
   const [items, setItems] = useState<Item[] | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  // 오디오 미리듣기 — 한 번에 하나만, 닫으면 정지
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [playingId, setPlayingId] = useState<string | null>(null)
+  const preview = (e: React.MouseEvent, it: Item) => {
+    e.stopPropagation()
+    const a = audioRef.current ?? (audioRef.current = new Audio())
+    if (playingId === it.id) { a.pause(); setPlayingId(null); return }
+    a.pause(); a.src = it.url; a.currentTime = 0; a.volume = 0.8
+    a.onended = () => setPlayingId(null)
+    a.play().then(() => setPlayingId(it.id)).catch(() => setPlayingId(null))
+  }
+  useEffect(() => () => { audioRef.current?.pause() }, [])
   useEffect(() => {
     if (!open) return
     const t = setTimeout(async () => {
@@ -52,7 +64,17 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
               {items.map(it => (
                 <button key={it.id} onClick={() => toggle(it)} className={`group relative rounded-xl border-2 overflow-hidden text-left bg-[#f8f6f1] transition-all ${has(it.id) ? 'border-[#2563eb] shadow-[0_0_0_3px_rgba(37,99,235,0.15)]' : 'border-transparent hover:border-[#ddd3bf]'}`}>
                   <div className="aspect-square flex items-center justify-center bg-[repeating-conic-gradient(#ece8df_0_25%,#f8f6f1_0_50%)] bg-[length:16px_16px]">
-                    {it.kind === 'audio' ? <span className="text-3xl">🎵</span> : /* eslint-disable-next-line @next/next/no-img-element */ <img src={it.url} alt={it.title} loading="lazy" className="max-w-full max-h-full object-contain" style={{ imageRendering: (it.width ?? 999) <= 128 ? 'pixelated' : 'auto' }} />}
+                    {it.kind === 'audio' ? (
+                      /* 미리듣기 버튼 — 선택(toggle)과 분리. 재생 중이면 ■ + 이퀄라이저 */
+                      <span role="button" tabIndex={0} onClick={(e) => preview(e, it)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); preview(e as unknown as React.MouseEvent, it) } }} aria-label={playingId === it.id ? '미리듣기 정지' : '미리듣기'} title={playingId === it.id ? '정지' : '미리듣기'}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-105 ${playingId === it.id ? 'bg-[#241f17] text-white' : 'bg-white text-[#2563eb]'}`}>
+                        {playingId === it.id ? (
+                          <span className="flex items-end gap-[3px] h-5" aria-hidden>{[0, 1, 2, 3].map(i => <i key={i} className="block w-[3px] bg-[#22d3ee] rounded-sm animate-[eq_.8s_ease-in-out_infinite]" style={{ height: '100%', animationDelay: `${i * 0.12}s` }} />)}</span>
+                        ) : (
+                          <svg viewBox="0 0 24 24" className="w-6 h-6 translate-x-[1px]" fill="currentColor"><path d="M8 5.6v12.8c0 1.2 1.3 1.9 2.3 1.3l10.1-6.4a1.5 1.5 0 0 0 0-2.6L10.3 4.3C9.3 3.7 8 4.4 8 5.6Z" /></svg>
+                        )}
+                      </span>
+                    ) : /* eslint-disable-next-line @next/next/no-img-element */ <img src={it.url} alt={it.title} loading="lazy" className="max-w-full max-h-full object-contain" style={{ imageRendering: (it.width ?? 999) <= 128 ? 'pixelated' : 'auto' }} />}
                   </div>
                   <div className="px-2 py-1.5">
                     <p className="text-[12px] font-semibold text-[#241f17] truncate">{it.title}</p>

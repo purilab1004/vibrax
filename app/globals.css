@@ -935,3 +935,6 @@ html.vbx-app { --st: max(env(safe-area-inset-top, 0px), var(--app-top, 0px)); --
 
 /* 한국어 줄바꿈 — 글자 단위가 아니라 단어 단위로 (쇼츠 제목·훅 문구·제목들) */
 h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overflow-wrap: break-word; }
+
+/* 미디어 선택기 오디오 미리듣기 이퀄라이저 */
+@keyframes eq { 0%,100% { transform: scaleY(.35) } 50% { transform: scaleY(1) } }
