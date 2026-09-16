@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import type { LiveEntry } from '@/lib/live/useLiveBroadcasts'
 import { titleFont } from '@/lib/fonts'
+import { useIsNativeApp } from '@/lib/isNativeApp'
 const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m.LiveView), { ssr: false })
 
 interface Props {
@@ -42,6 +43,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
   // 코인 투입 연출 → START → 게임 페이지 (실제 코인 차감은 게임 페이지의 기존 흐름에서)
   const insert = () => { if (coin !== 'idle') return; setCoin('drop'); setTimeout(() => setCoin('ready'), 900) }
   const isVideo = live.kind === 'link' && !!live.video // 라이브가 아닌 일반 영상 공유
+  const isApp = useIsNativeApp()
 
   const inner = (
     <>
@@ -69,7 +71,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
       </div>
       {/* 하단 — 추천 게임 + 코인 넣고 플레이 */}
       {/* 모바일 피드는 하단 내비에 가리지 않게 게임 카드와 같은 여백(pb-24) */}
-      <div className={`absolute inset-x-0 bottom-0 pt-24 bg-gradient-to-t from-black/95 via-black/70 to-transparent ${layout === 'feed-mobile' ? 'px-5 pb-[51px]' : 'px-6 pb-6'}`}>
+      <div className={`absolute inset-x-0 bottom-0 pt-24 bg-gradient-to-t from-black/95 via-black/70 to-transparent ${layout === 'feed-mobile' ? (isApp ? 'px-5 pb-28' : 'px-5 pb-24') : 'px-6 pb-6'}`}>
         {/* 게임 카드의 제작자 줄과 같은 높이의 한 줄 — 어떤 게임인지 */}
         <p className="flex items-center gap-2 text-[13px] font-semibold text-white/80 mb-3 min-h-[20px]">
           {game?.thumbnail_url && (

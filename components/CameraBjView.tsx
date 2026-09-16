@@ -1,6 +1,7 @@
 'use client'
 // 게임 내 BJ 박스 — 제작자의 폰 카메라 방송(WebRTC) 수신
 import { useEffect, useRef, useState } from 'react'
+import { getSoundPref, setSoundPref } from '@/lib/live/soundPref'
 import { createClient } from '@/lib/supabase/client'
 import { startViewer, type ViewerState } from '@/lib/live/viewer'
 import type { LiveInfo } from '@/lib/broadcast'
@@ -9,20 +10,22 @@ import type { LiveInfo } from '@/lib/broadcast'
 export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true, controls = false, controlsClass = 'top-3 right-3' }: { src: string; aspect?: number; cover?: boolean; badge?: boolean; controls?: boolean; controlsClass?: string }) {
   // 스피커 — YouTube 는 postMessage 로 mute/unMute/setVolume, Twitch/기타는 src 의 muted 파라미터를 바꿔 다시 로드
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [muted, setMuted] = useState(true)
-  const [volume, setVolume] = useState(70)
+  // 시작 상태는 공용 스피커 설정을 따른다 — 한 번 켜면 다른 영상도 켜진 채로 나온다
+  const [muted, setMuted] = useState(() => !getSoundPref().on)
+  const [volume, setVolume] = useState(() => getSoundPref().volume)
   const isYT = /youtube\.com\/embed/.test(src)
   const [srcState, setSrcState] = useState({ base: src, live: src })
   const liveSrc = srcState.base === src ? srcState.live : src
   const setLiveSrc = (v: string) => setSrcState({ base: src, live: v })
   const yt = (func: string, args: unknown[] = []) => iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*')
-  const toggleMute = () => {
-    const next = !muted
-    setMuted(next)
-    if (isYT) { yt(next ? 'mute' : 'unMute'); if (!next) yt('setVolume', [volume]) }
-    else setLiveSrc(src.replace(/([?&])muted?=(true|1)/, `$1muted=${next ? 'true' : 'false'}`).replace(/([?&])mute=1/, `$1mute=${next ? 1 : 0}`))
+  const unmutedSrc = (s: string) => s.replace(/([?&])muted?=(true|1)/, '$1muted=false').replace(/([?&])mute=1/, '$1mute=0')
+  const applyMute = (m: boolean) => {
+    setMuted(m)
+    if (isYT) { yt(m ? 'mute' : 'unMute'); if (!m) yt('setVolume', [volume]) }
+    else setLiveSrc(m ? src : unmutedSrc(src))
   }
-  const changeVolume = (v: number) => { setVolume(v); if (isYT) { yt('setVolume', [v]); if (v > 0 && muted) { setMuted(false); yt('unMute') } } }
+  const toggleMute = () => { const next = !muted; applyMute(next); setSoundPref({ on: !next }) }
+  const changeVolume = (v: number) => { setVolume(v); setSoundPref({ volume: v, on: v > 0 }); if (isYT) { yt('setVolume', [v]); if (v > 0 && muted) { setMuted(false); yt('unMute') } } }
   // 카드가 화면에서 벗어나면 소리를 끄고(YouTube 는 일시정지), 다시 들어오면 음소거 상태로 재생 — 다른 카드로 넘어가도 소리가 남지 않게
   const boxRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -31,10 +34,16 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
     const io = new IntersectionObserver((es) => {
       const vis = es.some((e) => e.isIntersecting && e.intersectionRatio >= 0.5)
       if (!vis) {
+        // 화면에서 벗어나면 이 카드만 조용히 — 공용 설정(켜짐)은 그대로 두어 다음 카드가 소리를 이어받는다
         setMuted(true)
         if (isYT) { yt('mute'); yt('pauseVideo') }
         else setLiveSrc(src) // twitch/기타: 원본(muted) src 로 재로드
-      } else if (isYT) { yt('playVideo') }
+      } else {
+        const on = getSoundPref().on
+        if (isYT) { yt('playVideo'); if (on) { yt('unMute'); yt('setVolume', [getSoundPref().volume]) } }
+        else if (on) setLiveSrc(unmutedSrc(src))
+        setMuted(!on)
+      }
     }, { threshold: [0, 0.5, 1] })
     io.observe(el)
     return () => io.disconnect()
@@ -90,7 +99,7 @@ export function LiveView({ live, cover = false, badge = true, controls = false, 
 export default function CameraBjView({ hostId, badge = true, controls = false, controlsClass = 'top-3 right-3' }: { hostId: string; badge?: boolean; controls?: boolean; controlsClass?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [state, setState] = useState<ViewerState>('connecting')
-  const [muted, setMuted] = useState(true)
+  const [muted, setMuted] = useState(() => !getSoundPref().on) // 공용 스피커 설정을 따른다
   const boxRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const el = boxRef.current
@@ -114,7 +123,7 @@ export default function CameraBjView({ hostId, badge = true, controls = false, c
       )}
       {state === 'live' && (
         <div className={`absolute z-10 flex items-center gap-2 rounded-full bg-black/55 backdrop-blur px-2 py-1 ${controls ? controlsClass : 'bottom-1.5 right-1.5'}`}>
-          <button onClick={() => setMuted((m) => !m)} aria-label={muted ? '소리 켜기' : '음소거'} className="text-white text-[15px] leading-none w-7 h-7 flex items-center justify-center">{muted ? '🔇' : '🔊'}</button>
+          <button onClick={() => { const next = !muted; setMuted(next); setSoundPref({ on: !next }) }} aria-label={muted ? '소리 켜기' : '음소거'} className="text-white text-[15px] leading-none w-7 h-7 flex items-center justify-center">{muted ? '🔇' : '🔊'}</button>
           {!muted && <input type="range" min={0} max={100} defaultValue={100} onChange={(e) => { if (videoRef.current) videoRef.current.volume = Number(e.target.value) / 100 }} className="w-20 accent-[#ffb62e]" aria-label="볼륨" />}
         </div>
       )}
