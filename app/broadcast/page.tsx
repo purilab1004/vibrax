@@ -23,6 +23,7 @@ export default function BroadcastPage() {
   const [linkUrl, setLinkUrl] = useState('')
   const [links, setLinks] = useState<LinkBroadcast[]>([])
   const [linkMsg, setLinkMsg] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null) // 수정 중인 링크 — 입력창에 불러와 '저장'으로 바꾼다
   const shown = links.filter((l) => (l.kind ?? 'live') === tabKind)
   const [results, setResults] = useState<Game[]>([])
   const [onAir, setOnAir] = useState(false)
@@ -80,13 +81,21 @@ export default function BroadcastPage() {
     if (!toEmbed(linkUrl)) { setLinkMsg(tab === 'video' ? '지원하지 않는 링크예요 (YouTube 영상/쇼츠)' : '지원하지 않는 링크예요 (YouTube/Twitch)'); return }
     if (!gameId && tab !== 'video') { setLinkMsg('연결할 게임을 골라 주세요'); return }
     const g = games.find((x) => x.id === gameId)
+    if (editingId) {
+      await persistLinks(links.map((l) => (l.id === editingId ? { ...l, url: linkUrl.trim(), gameId: gameId || null, title: g?.title } : l)))
+      setEditingId(null); setLinkUrl('')
+      setLinkMsg('✓ 수정했어요'); setTimeout(() => setLinkMsg(null), 2500)
+      return
+    }
     const item: LinkBroadcast = { id: `l_${Date.now().toString(36)}`, url: linkUrl.trim(), gameId: gameId || null, on: true, title: g?.title, kind: tabKind }
     await persistLinks([item, ...links])
     setLinkUrl('')
     setLinkMsg(tab === 'video' ? '▶ 등록했어요 — 게임 목록에 VIDEO 카드로 나와요' : '● 추가했어요 — 목록·게임 안에 영상이 나와요'); setTimeout(() => setLinkMsg(null), 2500)
   }
   const toggleLink = (id: string) => persistLinks(links.map((l) => (l.id === id ? { ...l, on: !l.on } : l)))
-  const removeLink = (id: string) => persistLinks(links.filter((l) => l.id !== id))
+  const removeLink = (id: string) => { if (editingId === id) { setEditingId(null); setLinkUrl('') } return persistLinks(links.filter((l) => l.id !== id)) }
+  const editLink = (l: LinkBroadcast) => { setEditingId(l.id); setLinkUrl(l.url); setGameId(l.gameId ?? ''); setLinkMsg('아래에서 링크·게임을 고치고 저장을 누르세요') }
+  const cancelEdit = () => { setEditingId(null); setLinkUrl(''); setLinkMsg(null) }
   const setBroadcast = async (on: boolean) => {
     if (!user) return
     const base = config ?? emptyConfig()
@@ -165,7 +174,7 @@ export default function BroadcastPage() {
 
   return (
     <div className="fixed inset-0 z-[70] bg-black text-white flex flex-col">
-      <div className="flex items-center gap-3 px-4 h-12 shrink-0">
+      <div className="app-top-pad flex items-center gap-3 px-4 h-12 shrink-0 box-content">
         <button onClick={async () => { if (onAir) await stop(); router.push('/profile') }} className="font-pixel text-[11px] text-white/70 tracking-widest">← 내정보</button>
         <span className="font-pixel text-[11px] tracking-widest text-[#ff6b8a]">📱 폰 카메라 방송</span>
         <div className="flex-1" />
@@ -175,8 +184,8 @@ export default function BroadcastPage() {
       {!onAir && (
         <div className="shrink-0 px-4 pb-2 flex gap-2">
           <button onClick={() => setTab('camera')} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'camera' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>📱 폰 카메라</button>
-          <button onClick={() => setTab('link')} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'link' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>🔗 라이브 링크</button>
-          <button onClick={() => setTab('video')} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'video' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>▶ 영상</button>
+          <button onClick={() => { setTab('link'); cancelEdit() }} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'link' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>🔗 라이브 링크</button>
+          <button onClick={() => { setTab('video'); cancelEdit() }} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'video' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>▶ 영상</button>
         </div>
       )}
       <div className="relative flex-1 min-h-0">
@@ -212,11 +221,12 @@ export default function BroadcastPage() {
                   <ul className="mt-3 space-y-2">
                     <li className="font-pixel text-[10px] tracking-widest text-white/60">{tab === 'video' ? '등록한 영상' : '추가한 라이브'} ({shown.length})</li>
                     {shown.map((l) => (
-                      <li key={l.id} className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${l.on ? 'border-[#e11d48]/70 bg-[#e11d48]/10' : 'border-white/15 bg-white/5'}`}>
+                      <li key={l.id} className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${editingId === l.id ? 'border-white bg-white/15' : l.on ? 'border-[#e11d48]/70 bg-[#e11d48]/10' : 'border-white/15 bg-white/5'}`}>
                         <div className="min-w-0 flex-1">
                           <p className="text-[12px] text-white truncate">{l.gameId ? `🎮 ${l.title ?? games.find((g) => g.id === l.gameId)?.title ?? '게임'}` : '▶ 게임 연결 없음 (영상만 공유)'}</p>
                           <p className="text-[10px] text-white/50 truncate">{l.url}</p>
                         </div>
+                        <button onClick={() => editLink(l)} className={`font-pixel text-[9px] px-2 py-1 rounded-full tracking-widest ${editingId === l.id ? 'bg-white text-black' : 'bg-white/15 text-white/80'}`}>수정</button>
                         <button onClick={() => toggleLink(l.id)} className={`font-pixel text-[9px] px-2 py-1 rounded-full tracking-widest ${l.on ? 'bg-[#e11d48] text-white' : 'bg-white/15 text-white/70'}`}>{l.on ? '● ON' : '○ OFF'}</button>
                         <button onClick={() => removeLink(l.id)} aria-label="삭제" className="text-white/50 hover:text-white text-sm px-1">✕</button>
                       </li>
@@ -265,7 +275,10 @@ export default function BroadcastPage() {
       <div className="shrink-0 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-center gap-3">
         {tab === 'camera' && <button onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} disabled={onAir} className="rounded-full bg-white/15 px-4 py-3 text-[12px] disabled:opacity-40">🔄 {facing === 'user' ? '전면' : '후면'}</button>}
         {!onAir && tab !== 'camera' ? (
-          <button onClick={addLink} disabled={!user || (!gameId && tab !== 'video') || !toEmbed(linkUrl)} className={`rounded-full px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40 ${tab === 'video' ? 'bg-[#7c3aed]' : 'bg-[#e11d48]'}`}>{tab === 'video' ? '＋ 영상 등록' : '＋ 이 게임에 영상 추가'}</button>
+          <>
+            {editingId && <button onClick={cancelEdit} className="rounded-full bg-white/15 px-5 py-3 font-pixel text-[12px] tracking-widest">취소</button>}
+            <button onClick={addLink} disabled={!user || (!gameId && tab !== 'video') || !toEmbed(linkUrl)} className={`rounded-full px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40 ${tab === 'video' ? 'bg-[#7c3aed]' : 'bg-[#e11d48]'}`}>{editingId ? '✓ 저장' : tab === 'video' ? '＋ 영상 등록' : '＋ 이 게임에 영상 추가'}</button>
+          </>
         ) : !onAir ? (
           <button onClick={start} disabled={!user || !gameId} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">● 방송 시작</button>
         ) : (

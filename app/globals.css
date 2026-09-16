@@ -928,6 +928,7 @@ html.vbx-app { --st: max(env(safe-area-inset-top, 0px), var(--app-top, 0px)); --
 .vbx-app.feed-page .feed-snap .top-\[15\%\], .vbx-app.feed-page .feed-snap .top-\[16\%\] { margin-top: var(--st); }
 .vbx-app.feed-page .feed-snap .top-3.left-3 { top: calc(.75rem + var(--st)); }    /* 라이브 카드 상단 줄 */
 .vbx-app .fixed.top-3.right-3 { top: calc(.75rem + var(--st)); }                  /* 모바일 검색 아이콘 */
+.vbx-app .app-top-pad { padding-top: var(--st); }                                 /* 자체 상단 바를 쓰는 페이지(스튜디오·방송) — 카메라 아래로 */
 .vbx-app .fixed.inset-x-0.top-0.z-\[64\] { padding-top: var(--st); }             /* 모바일 검색 패널 */
 
 /* 스튜디오 생성 대기 문구 전환 */

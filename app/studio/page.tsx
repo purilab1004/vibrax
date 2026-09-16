@@ -158,7 +158,7 @@ export default function StudioPage() {
   return (
     <div className="min-h-[100svh]">
       {/* 상단 바 — 유리 배경, 왼쪽 홈 · 가운데 STUDIO · 오른쪽 크레딧 코인 */}
-      <div className="sticky top-0 z-30 flex items-center gap-4 border-b border-[#ebe4d6] bg-white/60 backdrop-blur-xl px-4 h-12">
+      <div className="app-top-pad sticky top-0 z-30 flex items-center gap-4 border-b border-[#ebe4d6] bg-white/60 backdrop-blur-xl px-4 h-12 box-content">
         <Link href="/" className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest transition-colors shrink-0">← 홈</Link>
         <span className="font-pixel text-[11px] text-[#2563eb] tracking-widest">{s.heading}</span>
         <div className="flex-1" />
