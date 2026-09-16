@@ -9,14 +9,14 @@ export interface BroadcastSetting {
 export const DEFAULT_BROADCAST: BroadcastSetting = { mode: 'avatar', url: '', on: false }
 
 /** 링크 방송은 여러 개 추가 가능 — 각각 게임을 연결하고 개별 ON/OFF */
-export interface LinkBroadcast { id: string; url: string; gameId: string | null; on: boolean; title?: string }
+export interface LinkBroadcast { id: string; url: string; gameId: string | null; on: boolean; title?: string; kind?: 'live' | 'video' } // kind 생략 = live(라이브 링크), video = 일반 영상 공유
 export function parseLinkBroadcasts(raw: unknown): LinkBroadcast[] {
   if (!Array.isArray(raw)) return []
   return raw.flatMap((r) => {
     if (!r || typeof r !== 'object') return []
     const o = r as Record<string, unknown>
     if (typeof o.id !== 'string' || typeof o.url !== 'string') return []
-    return [{ id: o.id, url: o.url.slice(0, 500), gameId: typeof o.gameId === 'string' ? o.gameId : null, on: o.on === true, title: typeof o.title === 'string' ? o.title.slice(0, 80) : undefined }]
+    return [{ id: o.id, url: o.url.slice(0, 500), gameId: typeof o.gameId === 'string' ? o.gameId : null, on: o.on === true, title: typeof o.title === 'string' ? o.title.slice(0, 80) : undefined, kind: (o.kind === 'video' ? 'video' : 'live') as 'live' | 'video' }]
   }).slice(0, 20)
 }
 
@@ -65,7 +65,7 @@ export function isLinkOn(b: BroadcastSetting | undefined | null): b is Broadcast
 }
 
 /** 카드/게임에서 쓰는 라이브 정보 */
-export type LiveInfo = { kind: 'camera'; hostId: string } | { kind: 'link'; hostId: string; src: string; aspect: number }
+export type LiveInfo = { kind: 'camera'; hostId: string } | { kind: 'link'; hostId: string; src: string; aspect: number; video?: boolean } // video = 라이브가 아닌 일반 영상
 export function liveInfoOf(b: BroadcastSetting | undefined | null, hostId: string): LiveInfo | null {
   if (!b) return null
   if (b.mode === 'camera' && b.on) return { kind: 'camera', hostId }

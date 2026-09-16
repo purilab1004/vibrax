@@ -18,10 +18,12 @@ export default function BroadcastPage() {
   const [games, setGames] = useState<Game[]>([])
   const [gameId, setGameId] = useState<string>('')
   const [q, setQ] = useState('')
-  const [tab, setTab] = useState<'camera' | 'link'>('camera')
+  const [tab, setTab] = useState<'camera' | 'link' | 'video'>('camera')
+  const tabKind: 'live' | 'video' = tab === 'video' ? 'video' : 'live' // 링크 목록은 라이브/영상으로 나눠 보여준다
   const [linkUrl, setLinkUrl] = useState('')
   const [links, setLinks] = useState<LinkBroadcast[]>([])
   const [linkMsg, setLinkMsg] = useState<string | null>(null)
+  const shown = links.filter((l) => (l.kind ?? 'live') === tabKind)
   const [results, setResults] = useState<Game[]>([])
   const [onAir, setOnAir] = useState(false)
   const [viewers, setViewers] = useState(0)
@@ -39,7 +41,7 @@ export default function BroadcastPage() {
       const cfg = await loadAvatarConfig(supabase, user.id)
       setConfig(cfg)
       setLinks(cfg?.broadcasts ?? [])
-      if ((cfg?.broadcasts?.length ?? 0) > 0 && !(cfg?.broadcast?.mode === 'camera' && cfg.broadcast.on)) setTab('link')
+      if ((cfg?.broadcasts?.length ?? 0) > 0 && !(cfg?.broadcast?.mode === 'camera' && cfg.broadcast.on)) setTab(cfg!.broadcasts!.some((l) => l.kind === 'video') && !cfg!.broadcasts!.some((l) => (l.kind ?? 'live') === 'live') ? 'video' : 'link')
       // 기본 목록: 내 게임 + 인기 게임(조회수순). 검색으로 아무 게임이나 고를 수 있다
       const [{ data: mine }, { data: top }] = await Promise.all([
         supabase.from('games').select('id,title,user_id,view_count,thumbnail_url').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -75,13 +77,13 @@ export default function BroadcastPage() {
     setConfig(merged); setLinks(next)
   }
   const addLink = async () => {
-    if (!toEmbed(linkUrl)) { setLinkMsg('지원하지 않는 링크예요 (YouTube/Twitch)'); return }
+    if (!toEmbed(linkUrl)) { setLinkMsg(tab === 'video' ? '지원하지 않는 링크예요 (YouTube 영상/쇼츠)' : '지원하지 않는 링크예요 (YouTube/Twitch)'); return }
     if (!gameId) { setLinkMsg('연결할 게임을 골라 주세요'); return }
     const g = games.find((x) => x.id === gameId)
-    const item: LinkBroadcast = { id: `l_${Date.now().toString(36)}`, url: linkUrl.trim(), gameId, on: true, title: g?.title }
+    const item: LinkBroadcast = { id: `l_${Date.now().toString(36)}`, url: linkUrl.trim(), gameId, on: true, title: g?.title, kind: tabKind }
     await persistLinks([item, ...links])
     setLinkUrl('')
-    setLinkMsg('● 추가했어요 — 목록·게임 안에 영상이 나와요'); setTimeout(() => setLinkMsg(null), 2500)
+    setLinkMsg(tab === 'video' ? '▶ 등록했어요 — 게임 목록에 VIDEO 카드로 나와요' : '● 추가했어요 — 목록·게임 안에 영상이 나와요'); setTimeout(() => setLinkMsg(null), 2500)
   }
   const toggleLink = (id: string) => persistLinks(links.map((l) => (l.id === id ? { ...l, on: !l.on } : l)))
   const removeLink = (id: string) => persistLinks(links.filter((l) => l.id !== id))
@@ -173,7 +175,8 @@ export default function BroadcastPage() {
       {!onAir && (
         <div className="shrink-0 px-4 pb-2 flex gap-2">
           <button onClick={() => setTab('camera')} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'camera' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>📱 폰 카메라</button>
-          <button onClick={() => setTab('link')} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'link' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>🔗 링크 (YouTube/Twitch)</button>
+          <button onClick={() => setTab('link')} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'link' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>🔗 라이브 링크</button>
+          <button onClick={() => setTab('video')} className={`flex-1 rounded-full py-2 font-pixel text-[11px] tracking-widest border ${tab === 'video' ? 'bg-white text-black border-white' : 'border-white/30 text-white/70'}`}>▶ 영상</button>
         </div>
       )}
       <div className="relative flex-1 min-h-0">
@@ -189,11 +192,13 @@ export default function BroadcastPage() {
               <p className="text-sm text-white/85 leading-relaxed">방송을 시작하면 <b>추천 게임 카드</b>에 이 카메라 영상이 나오고, 코인을 넣으면 그 게임을 바로 플레이해요.<br />게임 안에서도 AJ 아바타 대신 방송이 BJ 자리에 나와요. 이 화면을 켜 둔 동안만 방송됩니다.</p>
             ) : (
               <div className="w-full max-w-sm text-left space-y-2">
-                <p className="text-sm text-white/85 leading-relaxed text-center">YouTube 라이브/영상이나 Twitch 채널 링크를 게임에 연결하면 <b>LIVE 카드</b>로 목록에 나오고, 게임 안 BJ 자리에도 그 영상이 나와요. <b>여러 개</b> 계속 추가할 수 있어요.</p>
+                {tab === 'video'
+                  ? <p className="text-sm text-white/85 leading-relaxed text-center">라이브가 아닌 <b>일반 영상</b>을 공유해요. YouTube 영상·쇼츠 링크를 게임에 연결하면 게임 목록에 <b>VIDEO 카드</b>로 나오고, 게임 안 BJ 자리에도 그 영상이 나와요. <b>여러 개</b> 등록할 수 있어요.</p>
+                  : <p className="text-sm text-white/85 leading-relaxed text-center">YouTube 라이브/영상이나 Twitch 채널 링크를 게임에 연결하면 <b>LIVE 카드</b>로 목록에 나오고, 게임 안 BJ 자리에도 그 영상이 나와요. <b>여러 개</b> 계속 추가할 수 있어요.</p>}
                 <input
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://youtube.com/live/… 또는 https://twitch.tv/채널"
+                  placeholder={tab === 'video' ? 'https://youtube.com/watch?v=… 또는 https://youtube.com/shorts/…' : 'https://youtube.com/live/… 또는 https://twitch.tv/채널'}
                   className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
                 />
                 {linkUrl && !toEmbed(linkUrl) && <p className="text-[11px] text-red-400">지원하지 않는 링크예요.</p>}
@@ -203,10 +208,10 @@ export default function BroadcastPage() {
                   </div>
                 )}
                 {linkMsg && <p className="text-[11px] text-[#7fd0ff]">{linkMsg}</p>}
-                {links.length > 0 && (
+                {shown.length > 0 && (
                   <ul className="mt-3 space-y-2">
-                    <li className="font-pixel text-[10px] tracking-widest text-white/60">추가한 영상 ({links.length})</li>
-                    {links.map((l) => (
+                    <li className="font-pixel text-[10px] tracking-widest text-white/60">{tab === 'video' ? '등록한 영상' : '추가한 라이브'} ({shown.length})</li>
+                    {shown.map((l) => (
                       <li key={l.id} className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${l.on ? 'border-[#e11d48]/70 bg-[#e11d48]/10' : 'border-white/15 bg-white/5'}`}>
                         <div className="min-w-0 flex-1">
                           <p className="text-[12px] text-white truncate">🎮 {l.title ?? games.find((g) => g.id === l.gameId)?.title ?? '게임'}</p>
@@ -258,8 +263,8 @@ export default function BroadcastPage() {
       </div>
       <div className="shrink-0 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-center gap-3">
         {tab === 'camera' && <button onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} disabled={onAir} className="rounded-full bg-white/15 px-4 py-3 text-[12px] disabled:opacity-40">🔄 {facing === 'user' ? '전면' : '후면'}</button>}
-        {!onAir && tab === 'link' ? (
-          <button onClick={addLink} disabled={!user || !gameId || !toEmbed(linkUrl)} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">＋ 이 게임에 영상 추가</button>
+        {!onAir && tab !== 'camera' ? (
+          <button onClick={addLink} disabled={!user || !gameId || !toEmbed(linkUrl)} className={`rounded-full px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40 ${tab === 'video' ? 'bg-[#7c3aed]' : 'bg-[#e11d48]'}`}>{tab === 'video' ? '＋ 영상 등록' : '＋ 이 게임에 영상 추가'}</button>
         ) : !onAir ? (
           <button onClick={start} disabled={!user || !gameId} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">● 방송 시작</button>
         ) : (

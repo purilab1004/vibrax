@@ -41,6 +41,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
   const go = () => router.push(`/games/${live.gameId}`)
   // 코인 투입 연출 → START → 게임 페이지 (실제 코인 차감은 게임 페이지의 기존 흐름에서)
   const insert = () => { if (coin !== 'idle') return; setCoin('drop'); setTimeout(() => setCoin('ready'), 900) }
+  const isVideo = live.kind === 'link' && !!live.video // 라이브가 아닌 일반 영상 공유
 
   const inner = (
     <>
@@ -50,12 +51,14 @@ export default function LiveCard({ live, game: given, layout }: Props) {
         {near ? (
           <LiveView live={live} cover badge={false} controls controlsClass={layout === 'feed-mobile' ? 'top-16 right-3' : 'top-3 right-3'} />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-white/40 font-pixel text-[10px] tracking-widest">LIVE</div>
+          <div className="absolute inset-0 flex items-center justify-center text-white/40 font-pixel text-[10px] tracking-widest">{isVideo ? 'VIDEO' : 'LIVE'}</div>
         )}
       </div>
       {/* 상단 — 방송자 */}
       <div className="absolute top-3 left-3 right-3 flex items-center gap-2 pointer-events-none">
-        <span className="flex items-center gap-1.5 rounded-full bg-[#e11d48] text-white font-pixel text-[10px] px-2.5 py-1 tracking-widest shadow"><span className="w-2 h-2 rounded-full bg-white animate-pulse" />LIVE</span>
+        {isVideo
+          ? <span className="flex items-center gap-1.5 rounded-full bg-[#7c3aed] text-white font-pixel text-[10px] px-2.5 py-1 tracking-widest shadow">▶ VIDEO</span>
+          : <span className="flex items-center gap-1.5 rounded-full bg-[#e11d48] text-white font-pixel text-[10px] px-2.5 py-1 tracking-widest shadow"><span className="w-2 h-2 rounded-full bg-white animate-pulse" />LIVE</span>}
         <span className="flex items-center gap-1.5 rounded-full bg-black/55 backdrop-blur px-2 py-1 text-white text-[12px] font-semibold max-w-[60%]">
           {live.hostAvatarUrl && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -133,11 +136,11 @@ export default function LiveCard({ live, game: given, layout }: Props) {
             </span></span>
             <span className="text-[11px] font-semibold text-[#6b6152] max-w-[72px] truncate">{live.hostName}</span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 text-[#e11d48]">
+          <div className={`flex flex-col items-center gap-0.5 ${isVideo ? 'text-[#7c3aed]' : 'text-[#e11d48]'}`}>
             <span className="w-12 h-12 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.1)] flex items-center justify-center">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#e11d48] animate-pulse" />
+              {isVideo ? <span className="text-[13px]">▶</span> : <span className="w-2.5 h-2.5 rounded-full bg-[#e11d48] animate-pulse" />}
             </span>
-            <span className="text-[11px] font-bold">LIVE</span>
+            <span className="text-[11px] font-bold">{isVideo ? 'VIDEO' : 'LIVE'}</span>
           </div>
           <div className="flex flex-col items-center gap-0.5 text-[#6b6152]">
             <button onClick={go} title="게임 보기" className="w-12 h-12 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.1)] flex items-center justify-center hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">

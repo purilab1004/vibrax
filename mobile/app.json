@@ -23,7 +23,7 @@
         "NSMicrophoneUsageDescription": "게임 방송을 위해 마이크를 사용합니다.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "2"
+      "buildNumber": "4"
     },
     "android": {
       "package": "com.puritechlab.vibrexcup",

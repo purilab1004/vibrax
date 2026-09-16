@@ -90,6 +90,8 @@ function Shell() {
   // 구글 OAuth·외부 링크는 시스템 브라우저로 (웹뷰 내 OAuth 는 구글이 차단)
   const onShouldStart = useCallback((req: WebViewNavigation) => {
     const url = req.url
+    // iframe(YouTube/Twitch 임베드 등) 안의 로드는 그대로 허용 — 최상위 페이지 이동만 외부 브라우저로
+    if (req.isTopFrame === false) return true
     if (url.startsWith('http') && !isInternal(url)) {
       WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url))
       return false

@@ -36,7 +36,7 @@ async function fetchLive(): Promise<LiveMap> {
     links.forEach((l, i) => {
       if (!l.on || !l.gameId) return
       const e = toEmbed(l.url); if (!e) return
-      m[`${row.id}:${l.gameId}:${i}`] = { kind: 'link', hostId: row.id, src: e.src, aspect: e.aspect, gameId: l.gameId, hostName, hostAvatarUrl }
+      m[`${row.id}:${l.gameId}:${i}`] = { kind: 'link', hostId: row.id, src: e.src, aspect: e.aspect, gameId: l.gameId, hostName, hostAvatarUrl, video: l.kind === 'video' }
     })
   }
   cache = m; fetchedAt = Date.now()
