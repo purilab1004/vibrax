@@ -37,13 +37,33 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
   // 스피커 — YouTube 는 postMessage 로 mute/unMute/setVolume, Twitch/기타는 src 의 muted 파라미터를 바꿔 다시 로드
   const iframeRef = useRef<HTMLIFrameElement>(null)
   // 시작 상태는 공용 스피커 설정을 따른다 — 한 번 켜면 다른 영상도 켜진 채로 나온다
-  const [muted, setMuted] = useState(() => !getSoundPref().on)
-  const [volume, setVolume] = useState(() => getSoundPref().volume)
   const isYT = /youtube\.com\/embed/.test(src)
+  const [muted, setMuted] = useState(() => !(isYT && getSoundPref().on))
+  const [volume, setVolume] = useState(() => getSoundPref().volume)
   const [srcState, setSrcState] = useState({ base: src, live: src })
   const liveSrc = srcState.base === src ? srcState.live : src
   const setLiveSrc = (v: string) => setSrcState({ base: src, live: v })
   const yt = (func: string, args: unknown[] = []) => iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*')
+  // 유튜브 플레이어 상태(재생 중=1) 를 받아 둔다 — 모바일 브라우저는 제스처 없이 소리 켠 재생을 막아 '로딩'에서 멈추므로, 소리 켜기가 실패하면 음소거로 되돌려 재생한다
+  const playingRef = useRef(false)
+  const unmuteTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (!isYT) return
+    const onMsg = (e: MessageEvent) => {
+      if (!iframeRef.current || e.source !== iframeRef.current.contentWindow) return
+      try { const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; if (d && d.event === 'infoDelivery' && d.info && typeof d.info.playerState === 'number') playingRef.current = d.info.playerState === 1 } catch { /* noop */ }
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [isYT])
+  const listen = () => iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 'vbx' }), '*')
+  // 소리 켠 채 재생 시도 → 1.8초 안에 재생이 안 되면 음소거로 폴백
+  const tryUnmutedPlay = () => {
+    yt('playVideo'); yt('unMute'); yt('setVolume', [getSoundPref().volume])
+    if (unmuteTimer.current) clearTimeout(unmuteTimer.current)
+    playingRef.current = false
+    unmuteTimer.current = setTimeout(() => { if (!playingRef.current) { yt('mute'); yt('playVideo'); setMuted(true) } }, 1800)
+  }
   const unmutedSrc = (s: string) => s.replace(/([?&])muted?=(true|1)/, '$1muted=false').replace(/([?&])mute=1/, '$1mute=0')
   const applyMute = (m: boolean) => {
     setMuted(m)
@@ -66,13 +86,12 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
         else setLiveSrc(src) // twitch/기타: 원본(muted) src 로 재로드
       } else {
         const on = getSoundPref().on
-        if (isYT) { yt('playVideo'); if (on) { yt('unMute'); yt('setVolume', [getSoundPref().volume]) } }
-        else if (on) setLiveSrc(unmutedSrc(src))
-        setMuted(!on)
+        if (isYT) { listen(); if (on) { setMuted(false); tryUnmutedPlay() } else { yt('playVideo'); setMuted(true) } }
+        else setMuted(true) // Twitch/기타는 src 재로드가 필요해 자동으로 소리를 켜지 않는다(탭하면 켜짐)
       }
     }, { threshold: [0, 0.5, 1] })
     io.observe(el)
-    return () => io.disconnect()
+    return () => { io.disconnect(); if (unmuteTimer.current) clearTimeout(unmuteTimer.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isYT])
   // cover: 영상 비율(aspect)로 iframe 을 컨테이너보다 크게 잡아 여백 없이 꽉 채운다 (넘치는 부분은 잘림)
@@ -97,7 +116,7 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
   return (
     <div ref={(n) => { (ref as React.MutableRefObject<HTMLDivElement | null>).current = n; (boxRef as React.MutableRefObject<HTMLDivElement | null>).current = n }} className="relative w-full h-full bg-black overflow-hidden">
       {/* controls 모드(카드)에선 iframe 클릭/호버를 막아 유튜브 자체 UI 가 뜨지 않게 — 우리 스피커 버튼만 노출 */}
-      <iframe ref={iframeRef} src={liveSrc} className={`${cover && box ? '' : 'absolute inset-0 w-full h-full'} ${controls ? 'pointer-events-none' : ''}`} style={style} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+      <iframe ref={iframeRef} src={liveSrc} onLoad={() => { if (isYT) listen() }} className={`${cover && box ? '' : 'absolute inset-0 w-full h-full'} ${controls ? 'pointer-events-none' : ''}`} style={style} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
       {controls && <SoundPill muted={muted} onToggle={toggleMute} volume={isYT ? volume : undefined} onVolume={isYT ? changeVolume : undefined} className={controlsClass} />}
       {badge && (
         <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
