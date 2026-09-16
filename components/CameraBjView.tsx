@@ -38,7 +38,9 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
   const iframeRef = useRef<HTMLIFrameElement>(null)
   // 시작 상태는 공용 스피커 설정을 따른다 — 한 번 켜면 다른 영상도 켜진 채로 나온다
   const isYT = /youtube\.com\/embed/.test(src)
-  const [muted, setMuted] = useState(() => !(isYT && getSoundPref().on))
+  // 소리 이어받기(자동으로 소리 켠 재생)는 앱과 데스크톱 브라우저만 — 모바일 브라우저는 제스처 없는 소리 재생을 막아 플레이어가 로딩에서 멈추므로 카드마다 탭해서 켠다
+  const carry = typeof window !== 'undefined' && (/VibrexcupApp/.test(navigator.userAgent) || !window.matchMedia('(pointer: coarse)').matches)
+  const [muted, setMuted] = useState(() => !(isYT && carry && getSoundPref().on))
   const [volume, setVolume] = useState(() => getSoundPref().volume)
   const [srcState, setSrcState] = useState({ base: src, live: src })
   const liveSrc = srcState.base === src ? srcState.live : src
@@ -86,7 +88,7 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
         if (isYT) { yt('mute'); yt('pauseVideo') }
         else setLiveSrc(src) // twitch/기타: 원본(muted) src 로 재로드
       } else {
-        const on = getSoundPref().on
+        const on = carry && getSoundPref().on
         if (isYT) { listen(); if (on) { setMuted(false); tryUnmutedPlay() } else { yt('playVideo'); setMuted(true) } }
         else setMuted(true) // Twitch/기타는 src 재로드가 필요해 자동으로 소리를 켜지 않는다(탭하면 켜짐)
       }
