@@ -34,9 +34,10 @@ async function fetchLive(): Promise<LiveMap> {
     // 링크 방송 목록 — 켜진 것만
     const links = parseLinkBroadcasts((row.avatar_config as { broadcasts?: unknown } | null)?.broadcasts)
     links.forEach((l, i) => {
-      if (!l.on || !l.gameId) return
+      if (!l.on) return
+      if (!l.gameId && l.kind !== 'video') return // 라이브 링크는 게임 필수, 일반 영상은 게임 없이도 공유 가능
       const e = toEmbed(l.url); if (!e) return
-      m[`${row.id}:${l.gameId}:${i}`] = { kind: 'link', hostId: row.id, src: e.src, aspect: e.aspect, gameId: l.gameId, hostName, hostAvatarUrl, video: l.kind === 'video' }
+      m[`${row.id}:${l.gameId ?? ''}:${i}`] = { kind: 'link', hostId: row.id, src: e.src, aspect: e.aspect, gameId: l.gameId ?? '', hostName, hostAvatarUrl, video: l.kind === 'video' }
     })
   }
   cache = m; fetchedAt = Date.now()

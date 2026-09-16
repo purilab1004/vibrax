@@ -78,9 +78,9 @@ export default function BroadcastPage() {
   }
   const addLink = async () => {
     if (!toEmbed(linkUrl)) { setLinkMsg(tab === 'video' ? '지원하지 않는 링크예요 (YouTube 영상/쇼츠)' : '지원하지 않는 링크예요 (YouTube/Twitch)'); return }
-    if (!gameId) { setLinkMsg('연결할 게임을 골라 주세요'); return }
+    if (!gameId && tab !== 'video') { setLinkMsg('연결할 게임을 골라 주세요'); return }
     const g = games.find((x) => x.id === gameId)
-    const item: LinkBroadcast = { id: `l_${Date.now().toString(36)}`, url: linkUrl.trim(), gameId, on: true, title: g?.title, kind: tabKind }
+    const item: LinkBroadcast = { id: `l_${Date.now().toString(36)}`, url: linkUrl.trim(), gameId: gameId || null, on: true, title: g?.title, kind: tabKind }
     await persistLinks([item, ...links])
     setLinkUrl('')
     setLinkMsg(tab === 'video' ? '▶ 등록했어요 — 게임 목록에 VIDEO 카드로 나와요' : '● 추가했어요 — 목록·게임 안에 영상이 나와요'); setTimeout(() => setLinkMsg(null), 2500)
@@ -214,7 +214,7 @@ export default function BroadcastPage() {
                     {shown.map((l) => (
                       <li key={l.id} className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${l.on ? 'border-[#e11d48]/70 bg-[#e11d48]/10' : 'border-white/15 bg-white/5'}`}>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[12px] text-white truncate">🎮 {l.title ?? games.find((g) => g.id === l.gameId)?.title ?? '게임'}</p>
+                          <p className="text-[12px] text-white truncate">{l.gameId ? `🎮 ${l.title ?? games.find((g) => g.id === l.gameId)?.title ?? '게임'}` : '▶ 게임 연결 없음 (영상만 공유)'}</p>
                           <p className="text-[10px] text-white/50 truncate">{l.url}</p>
                         </div>
                         <button onClick={() => toggleLink(l.id)} className={`font-pixel text-[9px] px-2 py-1 rounded-full tracking-widest ${l.on ? 'bg-[#e11d48] text-white' : 'bg-white/15 text-white/70'}`}>{l.on ? '● ON' : '○ OFF'}</button>
@@ -226,7 +226,7 @@ export default function BroadcastPage() {
               </div>
             )}
             <div className="w-full max-w-sm text-left space-y-2">
-              <span className="block font-pixel text-[10px] tracking-widest text-white/60">추천 게임 — 내 게임이 아니어도 돼요</span>
+              <span className="block font-pixel text-[10px] tracking-widest text-white/60">{tab === 'video' ? '추천 게임 (선택) — 안 고르면 영상만 공유돼요' : '추천 게임 — 내 게임이 아니어도 돼요'}</span>
               <div className="relative">
                 <input
                   value={q}
@@ -249,7 +249,8 @@ export default function BroadcastPage() {
                 )}
               </div>
               <select value={gameId} onChange={(e) => setGameId(e.target.value)} className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none">
-                {games.length === 0 && <option value="">게임을 검색해서 골라 주세요</option>}
+                {tab === 'video' && <option value="" className="text-black">게임 연결 안 함 — 영상만 공유</option>}
+                {games.length === 0 && tab !== 'video' && <option value="">게임을 검색해서 골라 주세요</option>}
                 {games.map((g) => <option key={g.id} value={g.id} className="text-black">{g.user_id === user?.id ? '★ ' : ''}{g.title}</option>)}
               </select>
               {selected && <p className="text-[11px] text-white/60">선택: <b className="text-white/90">{selected.title}</b>{selected.user_id === user?.id ? ' (내 게임)' : ''}</p>}
@@ -264,7 +265,7 @@ export default function BroadcastPage() {
       <div className="shrink-0 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center justify-center gap-3">
         {tab === 'camera' && <button onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} disabled={onAir} className="rounded-full bg-white/15 px-4 py-3 text-[12px] disabled:opacity-40">🔄 {facing === 'user' ? '전면' : '후면'}</button>}
         {!onAir && tab !== 'camera' ? (
-          <button onClick={addLink} disabled={!user || !gameId || !toEmbed(linkUrl)} className={`rounded-full px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40 ${tab === 'video' ? 'bg-[#7c3aed]' : 'bg-[#e11d48]'}`}>{tab === 'video' ? '＋ 영상 등록' : '＋ 이 게임에 영상 추가'}</button>
+          <button onClick={addLink} disabled={!user || (!gameId && tab !== 'video') || !toEmbed(linkUrl)} className={`rounded-full px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40 ${tab === 'video' ? 'bg-[#7c3aed]' : 'bg-[#e11d48]'}`}>{tab === 'video' ? '＋ 영상 등록' : '＋ 이 게임에 영상 추가'}</button>
         ) : !onAir ? (
           <button onClick={start} disabled={!user || !gameId} className="rounded-full bg-[#e11d48] px-8 py-3 font-pixel text-[12px] tracking-widest disabled:opacity-40">● 방송 시작</button>
         ) : (

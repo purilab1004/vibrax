@@ -20,8 +20,9 @@ interface Props {
 export default function LiveCard({ live, game: given, layout }: Props) {
   const router = useRouter()
   const [game, setGame] = useState<Pick<Game, 'id' | 'title' | 'thumbnail_url' | 'coin_cost'> | null>(given ?? null)
+  const hasGame = !!live.gameId // 게임 연결 없이 공유한 영상은 코인/게임 버튼을 보이지 않는다
   useEffect(() => {
-    if (given) return
+    if (given || !live.gameId) return
     let alive = true
     createClient().from('games').select('id,title,thumbnail_url,coin_cost').eq('id', live.gameId).maybeSingle().then(({ data }) => { if (alive && data) setGame(data as Game) })
     return () => { alive = false }
@@ -73,13 +74,14 @@ export default function LiveCard({ live, game: given, layout }: Props) {
       {/* 모바일 피드는 하단 내비에 가리지 않게 게임 카드와 같은 여백(pb-24) */}
       <div className={`absolute inset-x-0 bottom-0 pt-24 bg-gradient-to-t from-black/95 via-black/70 to-transparent ${layout === 'feed-mobile' ? (isApp ? 'px-5 pb-28' : 'px-5 pb-24') : 'px-6 pb-6'}`}>
         {/* 게임 카드의 제작자 줄과 같은 높이의 한 줄 — 어떤 게임인지 */}
-        <p className="flex items-center gap-2 text-[13px] font-semibold text-white/80 mb-3 min-h-[20px]">
+        {hasGame ? <p className="flex items-center gap-2 text-[13px] font-semibold text-white/80 mb-3 min-h-[20px]">
           {game?.thumbnail_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={game.thumbnail_url} alt="" className="w-7 h-5 rounded object-cover shrink-0 ring-1 ring-white/40" />
           )}
           <span className="truncate">🎮 {game?.title ?? '방송 중인 게임'}</span>
-        </p>
+        </p> : <p className="flex items-center gap-2 text-[13px] font-semibold text-white/80 mb-1 min-h-[20px]"><span className="truncate">▶ {live.hostName} 님이 공유한 영상</span></p>}
+        {hasGame && <>
         {/* 게임 카드와 같은 INSERT COIN + 코인 넣기 + 코인 통 — 누르면 코인 투입 연출 후 게임 페이지로 */}
         <p className={`arcade-blink font-pixel text-[14px] tracking-[0.3em] ${coin === 'ready' ? 'text-[#4cff6a] drop-shadow-[0_0_6px_rgba(76,255,106,0.7)]' : 'text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.7)]'}`}>
           {coin === 'ready' ? 'PRESS START' : 'INSERT COIN'}
@@ -114,6 +116,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
             )}
           </div>
         </div>
+        </>}
       </div>
     </>
   )
@@ -144,15 +147,15 @@ export default function LiveCard({ live, game: given, layout }: Props) {
             </span>
             <span className="text-[11px] font-bold">{isVideo ? 'VIDEO' : 'LIVE'}</span>
           </div>
-          <div className="flex flex-col items-center gap-0.5 text-[#6b6152]">
+          {hasGame && <div className="flex flex-col items-center gap-0.5 text-[#6b6152]">
             <button onClick={go} title="게임 보기" className="w-12 h-12 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.1)] flex items-center justify-center hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">
               <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>
             </button>
             <span className="text-[11px] font-bold">게임</span>
-          </div>
+          </div>}
           <div className="flex flex-col items-center gap-0.5 text-[#6b6152]">
             <button
-              onClick={async () => { try { await navigator.clipboard.writeText(`${window.location.origin}/games/${live.gameId}`); setCopied(true); setTimeout(() => setCopied(false), 1600) } catch {} }}
+              onClick={async () => { try { await navigator.clipboard.writeText(hasGame ? `${window.location.origin}/games/${live.gameId}` : `${window.location.origin}/games`); setCopied(true); setTimeout(() => setCopied(false), 1600) } catch {} }}
               title="링크 복사"
               className="w-12 h-12 rounded-full bg-white border border-[#ebe4d6] shadow-[0_2px_10px_rgba(36,31,23,0.1)] flex items-center justify-center hover:border-[#ec4899] hover:text-[#ec4899] transition-colors"
             >
