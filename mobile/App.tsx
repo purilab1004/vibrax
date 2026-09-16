@@ -95,7 +95,7 @@ function Shell() {
   const onShouldStart = useCallback((req: WebViewNavigation) => {
     const url = req.url
     // iframe(YouTube/Twitch 임베드 등) 안의 로드는 그대로 허용 — 최상위 페이지 이동만 외부 브라우저로
-    if (req.isTopFrame === false) return true
+    if ((req as WebViewNavigation & { isTopFrame?: boolean }).isTopFrame === false) return true
     // 안드로이드는 isTopFrame 이 없을 수 있어 임베드 플레이어 호스트는 항상 허용
     if (isEmbedHost(url)) return true
     if (url.startsWith('http') && !isInternal(url)) {
