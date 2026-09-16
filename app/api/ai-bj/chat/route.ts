@@ -76,11 +76,18 @@ ${talk.text}
   const readable = new ReadableStream({
     async start(controller) {
       let full = ''
-      for await (const chunk of stream) {
-        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-          full += chunk.delta.text
-          controller.enqueue(encoder.encode(chunk.delta.text))
+      try {
+        for await (const chunk of stream) {
+          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+            full += chunk.delta.text
+            controller.enqueue(encoder.encode(chunk.delta.text))
+          }
         }
+      } catch (e) {
+        // 크레딧 소진·모델 오류 — 스트림을 에러로 끝내 클라이언트가 '점검중' 안내를 띄우게 한다
+        console.error('[ai-bj/chat] stream failed', e instanceof Error ? e.message : e)
+        try { controller.error(e) } catch { /* noop */ }
+        return
       }
       controller.close()
       if (full.trim()) void logTalk({ gameId: body.gameId ?? null, genre, situation, emotion: (talk as { emotion?: string | null }).emotion ?? null, viewerText: body.viewerText ?? (situation === 'reply' ? message : null), utterance: full.trim(), exampleIds: talk.exampleIds, ruleIds: talk.ruleIds })

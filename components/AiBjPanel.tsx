@@ -9,6 +9,10 @@ import type { AvatarConfig } from '@/lib/jeumto/config'
 const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m.LiveView), { ssr: false })
 import type { LiveInfo } from '@/lib/broadcast'
 
+// AI 채팅이 실패했을 때(토큰 소진·서버 오류) 보여줄 한 줄과, 자동 중계를 쉬는 시간
+const CHAT_MAINT = '채팅은 점검중입니다.'
+const CHAT_DOWN_MS = 60_000
+
 const JeumtoBjOverlay = dynamic(() => import('@/lib/jeumto/JeumtoBjOverlay'), { ssr: false })
 
 
@@ -229,6 +233,9 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
 
 
   const isStreamingRef = useRef(false)
+
+
+  const chatDownUntilRef = useRef(0) // 채팅 실패 후 자동 중계 재시도 시각
   const messagesRef = useRef<Message[]>([])
   const commentaryIdx = useRef(0)
 
@@ -258,6 +265,8 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
     situationOverride?: string,
   ) => {
     if (isStreamingRef.current) return
+    // 채팅 서버가 실패한 직후(토큰 소진·오류)에는 자동 중계를 잠시 멈춘다 — 같은 안내 문구가 반복해서 올라오지 않게
+    if (isAuto && Date.now() < chatDownUntilRef.current) return
 
     const history = messagesRef.current
       .slice(-8)
@@ -309,13 +318,17 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
           return u
         })
       }
-      if (fullText.trim()) {
-        window.dispatchEvent(new CustomEvent('avatar:speak', { detail: { text: fullText.trim() } }))
-      }
+      if (!fullText.trim()) throw new Error('empty')
+      chatDownUntilRef.current = 0
+      window.dispatchEvent(new CustomEvent('avatar:speak', { detail: { text: fullText.trim() } }))
     } catch {
+      // 토큰 부족·서버 오류 등 사유와 무관하게 '점검중' 한 줄만. 직전 말풍선이 이미 점검 안내면 빈 말풍선을 지워 중복을 막는다
+      chatDownUntilRef.current = Date.now() + CHAT_DOWN_MS
       setMessages(prev => {
         const u = [...prev]
-        u[u.length - 1] = { ...u[u.length - 1], content: '잠깐 끊겼어! 다시 해볼게 💫' }
+        const before = u[u.length - 2]
+        if (before && before.role === 'assistant' && before.content === CHAT_MAINT) { u.pop(); return u }
+        u[u.length - 1] = { ...u[u.length - 1], content: CHAT_MAINT }
         return u
       })
     } finally {
@@ -424,7 +437,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
       const reply = `${j.policy.summary ?? '알았어, 반영했어!'} (학습 v${j.policy.version}${n ? ` · 규칙 ${n}개` : ''})`
       put(reply)
       window.dispatchEvent(new CustomEvent('avatar:speak', { detail: { text: j.policy.summary ?? reply } }))
-    } catch { put('잠깐 끊겼어! 다시 말해줘 💫') } finally { setIsStreaming(false) }
+    } catch { put(CHAT_MAINT) } finally { setIsStreaming(false) }
   }
   // 보내기 — AJ 가 말하는 중이면 끝날 때까지 잠깐 기다렸다가 보낸다 (입력창은 절대 비활성화하지 않는다: 포커스가 튕기므로)
   const waitIdle = () => new Promise<void>(res => { const t = setInterval(() => { if (!isStreamingRef.current) { clearInterval(t); res() } }, 120); setTimeout(() => { clearInterval(t); res() }, 15000) })
