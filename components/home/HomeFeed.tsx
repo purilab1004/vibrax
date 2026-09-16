@@ -24,21 +24,24 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
   // 모바일: 피드 구간에 들어왔을 때만 우상단 검색 아이콘 표시 (히어로에선 숨김)
   const rootRef = useRef<HTMLDivElement>(null)
   const [inFeed, setInFeed] = useState(false)
-  // 모바일: 히어로에서 아래로 넘겨 쇼츠 첫 장에 스냅되면 /games(게임 탭)로 자연스럽게 이동 — 앱에선 하단 탭도 GAMES 로 바뀐다
+  // 모바일: 홈에는 쇼츠 피드를 두지 않는다 — 프롬프트(히어로)에서 위로 스와이프(또는 휠로 내리기)하면 GAMES 탭(/games)으로 넘어간다.
   const router = useRouter()
   useEffect(() => {
     if (!window.matchMedia('(max-width: 767px)').matches) return
-    const el = rootRef.current; if (!el) return
-    let t: ReturnType<typeof setTimeout> | null = null, done = false, userMoved = false
-    const mountedAt = Date.now()
-    // 사용자가 실제로 손가락/휠로 움직인 뒤에만 넘어간다 — 홈 탭으로 들어왔을 때 스크롤 위치 복원 등으로 저절로 /games 로 튀지 않게
-    const markMoved = () => { userMoved = true }
-    const check = () => { if (done || !userMoved || Date.now() - mountedAt < 600) return; const top = el.getBoundingClientRect().top; if (window.scrollY > 120 && top <= 2 && top > -40) { done = true; router.push('/games') } }
-    let scrolls = 0
-    const onScroll = () => { if (++scrolls >= 3) userMoved = true; /* 손가락 스와이프는 스크롤 이벤트가 연속으로 여러 번 온다(위치 복원은 1번) */ if (t) clearTimeout(t); t = setTimeout(check, 140) }
-    window.addEventListener('touchmove', markMoved, { passive: true }); window.addEventListener('wheel', markMoved, { passive: true })
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('touchmove', markMoved); window.removeEventListener('wheel', markMoved); if (t) clearTimeout(t) }
+    let done = false, sx = 0, sy = 0, st = 0
+    const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8
+    const go = () => { if (done) return; done = true; router.push('/games') }
+    const isField = (t: EventTarget | null) => !!(t as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable="true"], .no-swipe')
+    const onStart = (e: TouchEvent) => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; st = Date.now() }
+    const onEnd = (e: TouchEvent) => {
+      if (isField(e.target)) return
+      const t = e.changedTouches[0]; const dy = t.clientY - sy, dx = t.clientX - sx
+      // 위로 60px 이상, 세로 위주, 1초 안의 스와이프 — 히어로가 화면보다 길면 끝까지 내려온 뒤에만
+      if (dy <= -60 && Math.abs(dy) > Math.abs(dx) * 1.3 && Date.now() - st < 1000 && atBottom()) go()
+    }
+    const onWheel = (e: WheelEvent) => { if (e.deltaY > 40 && atBottom() && !isField(e.target)) go() }
+    window.addEventListener('touchstart', onStart, { passive: true }); window.addEventListener('touchend', onEnd, { passive: true }); window.addEventListener('wheel', onWheel, { passive: true })
+    return () => { window.removeEventListener('touchstart', onStart); window.removeEventListener('touchend', onEnd); window.removeEventListener('wheel', onWheel) }
   }, [router])
   useEffect(() => {
     const el = rootRef.current
@@ -61,7 +64,7 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
   )
   return (
     // 데스크톱: 히어로 다음 한 화면짜리 스냅 섹션 안에 /games 와 똑같은 피드 박스(헤더 높이만큼 뺀 높이)를 둔다
-    <div ref={rootRef} className="home-feed-wrap w-full md:h-[100svh] md:pt-[3.75rem] md:box-border feed-snap">
+    <div ref={rootRef} className="home-feed-wrap hidden md:block w-full md:h-[100svh] md:pt-[3.75rem] md:box-border feed-snap">
       {/* 모바일 — /games 처럼 우상단 검색 아이콘 → 패널(검색은 /games 로 이동, 카테고리 = 전체/영상/게임) */}
       <MobileGamesTools categories={pills} visible={inFeed} />
       <div className="md:flex md:gap-6 md:px-6">
