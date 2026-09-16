@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { logServerError } from '@/lib/log/server'
 import { GENERATION_COST } from '@/lib/studio/constants'
 import { buildSystemPrompt, buildMessages, type ChatTurn } from '@/lib/studio/prompt'
-import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER } from '@/lib/studio/parse'
+import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER, ANSWER_MARKER } from '@/lib/studio/parse'
 import { templateOnly, extrasOf } from '@/lib/studio/templates'
 import { matchTemplateIn } from '@/lib/studio/template-match'
 import { loadDbTemplates, saveTemplateCandidate, bumpTemplateUse } from '@/lib/studio/db-templates'
@@ -375,10 +375,17 @@ export async function POST(req: Request) {
         const parsed = parseGeneration(full)
         if (!parsed.html) {
           await refund()
-          // 게임과 무관한 요청 — 실패가 아니라 안내로 처리 (크레딧은 위에서 환불됨)
-          controller.enqueue(encoder.encode(
-            full.includes('<offtopic') ? OFF_TOPIC_MARKER : GEN_ERROR_MARKER,
-          ))
+          const answer = parsed.description.replace(/<patch>[\s\S]*$/, '').trim()
+          if (full.includes('<offtopic')) {
+            // 게임과 무관한 요청 — 실패가 아니라 안내로 처리 (크레딧은 위에서 환불됨)
+            controller.enqueue(encoder.encode(OFF_TOPIC_MARKER))
+          } else if (latest && !patchMode && answer.length >= 20) {
+            // 기존 게임에 대한 질문/진단에 설명만 한 경우 — 답변으로 보여 주고 대화에 남긴다 (버전 없음, 환불됨)
+            try { await supabase.from('studio_messages').insert([{ project_id: projectId, role: 'user', content: prompt + attachNote }, { project_id: projectId, role: 'assistant', content: answer }] as never) } catch { /* noop */ }
+            controller.enqueue(encoder.encode(ANSWER_MARKER))
+          } else {
+            controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
+          }
         } else {
           const nextVersion = (latest?.version ?? 0) + 1
           const { data: vIns, error: vErr } = await supabase.from('studio_versions').insert([

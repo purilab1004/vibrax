@@ -4,6 +4,9 @@
 export const GEN_ERROR_MARKER = '\n[[GEN_ERROR]]'
 // 게임과 무관한 요청 — 모델이 <offtopic/>을 출력하면 서버가 이 마커로 변환해 내려준다
 export const OFF_TOPIC_MARKER = '\n[[OFF_TOPIC]]'
+// 수정 요청에 대해 모델이 코드 변경 없이 설명·질문만 한 경우 (예: 필요한 에셋이 없음) — 실패가 아니라 답변으로 표시, 크레딧 환불
+export const ANSWER_MARKER = '\n[[ANSWER_ONLY]]'
+export function hasAnswerOnly(text: string): boolean { return text.includes(ANSWER_MARKER) }
 
 export function hasOffTopic(text: string): boolean {
   return text.includes(OFF_TOPIC_MARKER) || text.includes('<offtopic')
@@ -17,7 +20,7 @@ export interface ParsedGeneration {
 }
 
 export function parseGeneration(text: string): ParsedGeneration {
-  const clean = text.split(GEN_ERROR_MARKER).join('').split(OFF_TOPIC_MARKER).join('').replace(/<offtopic\/?>/g, '')
+  const clean = text.split(GEN_ERROR_MARKER).join('').split(OFF_TOPIC_MARKER).join('').split(ANSWER_MARKER).join('').replace(/<offtopic\/?>/g, '')
   const open = clean.indexOf('<game>')
   if (open === -1) {
     return { description: clean.trim(), html: null, htmlBytes: 0, generating: false }

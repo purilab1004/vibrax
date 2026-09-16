@@ -13,7 +13,7 @@ import GamePreview from '@/components/studio/GamePreview'
 import PublishModal from '@/components/studio/PublishModal'
 import EditInfoModal from '@/components/studio/EditInfoModal'
 import StudyPanel from '@/components/studio/StudyPanel'
-import { parseGeneration, hasGenError, hasOffTopic } from '@/lib/studio/parse'
+import { parseGeneration, hasGenError, hasOffTopic, hasAnswerOnly } from '@/lib/studio/parse'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import type { StudioProject, StudioVersionMeta } from '@/lib/supabase/types'
 import { loadAvatarConfig } from '@/lib/jeumto/storage'
@@ -238,6 +238,15 @@ export default function StudioComposerPage() {
         setMessages(m => m.slice(0, -1))
         optimisticPending = false
         setError(s.offTopic)
+        return
+      }
+
+      if (hasAnswerOnly(full)) {
+        // 코드 변경 없이 설명/질문만 한 답변 — 실패가 아니다. 말풍선으로 보여 주고 끝 (크레딧은 서버가 환불)
+        const p = parseGeneration(full)
+        setMessages(m => [...m, { role: 'assistant', content: p.description }])
+        optimisticPending = false
+        try { await refreshBalance() } catch { /* noop */ }
         return
       }
 
