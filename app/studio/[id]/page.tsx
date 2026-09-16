@@ -41,6 +41,8 @@ export default function StudioComposerPage() {
   const balanceBeforeRef = useRef<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showPublish, setShowPublish] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)   // 진행 중 생성 취소
+  const stopGeneration = () => { abortRef.current?.abort() }
   const loadPublished = async () => {
     const { data } = await supabase.from('games').select('id,live_version_id').eq('studio_project_id', id).maybeSingle()
     const g = data as { id: string; live_version_id?: string | null } | null
@@ -188,10 +190,12 @@ export default function StudioComposerPage() {
     // 낙관적 user 메시지가 아직 롤백 대상인지 추적 (성공/GEN_ERROR 처리 후에는 롤백 금지)
     let optimisticPending = true
     setStreaming({ description: '', htmlBytes: 0, codeTail: '' })
+    const ac = new AbortController(); abortRef.current = ac
 
     try {
       const res = await fetch('/api/studio/generate', {
         method: 'POST',
+        signal: ac.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId: id,
@@ -294,9 +298,15 @@ export default function StudioComposerPage() {
         console.error('[studio]', e)
       }
     } catch (e) {
-      console.error('[studio]', e)
       setStreaming(null)
       if (optimisticPending) setMessages(m => m.slice(0, -1))
+      if (ac.signal.aborted) {
+        // 사용자가 취소 — 이전 상태 그대로 (서버가 모델을 멈추고 크레딧을 환불한다)
+        setError(null)
+        try { await refreshBalance() } catch { /* noop */ }
+        return
+      }
+      console.error('[studio]', e)
       setError(s.networkError)
       try {
         await refreshBalance()
@@ -444,6 +454,7 @@ export default function StudioComposerPage() {
               error={error}
               onSend={send}
               busy={streaming !== null}
+              onStop={stopGeneration}
               draft={draftPrompt}
               onDraftConsumed={() => setDraftPrompt(null)}
               ajAvatarUrl={aj.url}
@@ -462,6 +473,7 @@ export default function StudioComposerPage() {
                   error={error}
                   onSend={send}
                   busy={streaming !== null}
+                  onStop={stopGeneration}
                   draft={draftPrompt}
                   onDraftConsumed={() => setDraftPrompt(null)}
                   ajAvatarUrl={aj.url}

@@ -54,7 +54,12 @@ async function runJob(job: { id: string; model: string | null; system: string; m
     void flush()
   })
   child.stderr.on('data', (d: Buffer) => { err += d.toString('utf8') })
+  // 사용자가 취소하면(서버가 status=cancelled) CLI 를 끊는다
+  let cancelled = false
+  const watch = setInterval(async () => { const { data } = await sb.from('studio_jobs').select('status').eq('id', job.id).single(); if ((data as { status: string } | null)?.status === 'cancelled') { cancelled = true; clearInterval(watch); try { child.kill('SIGTERM') } catch { /* noop */ } } }, 1500)
   const code: number = await new Promise(res => child.on('close', res))
+  clearInterval(watch)
+  if (cancelled) { console.log('  cancelled'); try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { /* noop */ } return }
   await flush(true)
   try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { /* noop */ }
   if (code !== 0 && !buf) { await sb.from('studio_jobs').update({ status: 'error', error: err.slice(0, 500) || `exit ${code}`, finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  error', err.slice(0, 200)); return }

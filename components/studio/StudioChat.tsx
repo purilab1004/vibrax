@@ -18,7 +18,7 @@ export interface ChatMsg {
 }
 
 export default function StudioChat({
-  messages, streaming, usage, error, onSend, busy, draft, onDraftConsumed, ajAvatarUrl, ajName, generationCost = 10,
+  messages, streaming, usage, error, onSend, onStop, busy, draft, onDraftConsumed, ajAvatarUrl, ajName, generationCost = 10,
 }: {
   messages: ChatMsg[]
   streaming: { description: string; htmlBytes: number; codeTail: string } | null
@@ -27,6 +27,7 @@ export default function StudioChat({
   error: string | null
   onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[], pickedAssets?: AttachAsset[]) => void
   busy: boolean
+  onStop?: () => void   // 진행 중 생성 취소(✕)
   /* 외부(학습 노트 '다음 도전')에서 입력창에 채워 넣을 문장 */
   draft?: string | null
   onDraftConsumed?: () => void
@@ -413,6 +414,12 @@ export default function StudioChat({
               </button>
               <p className="text-[11px] text-[#9d9280]">{s.costNote}</p>
             </div>
+            {busy && onStop ? (
+              /* 생성 중 — ✕ 를 누르면 즉시 취소: 모델 중단, 버전 저장 안 함, 크레딧 환불, 이전 상태 유지 */
+              <button type="button" onClick={onStop} aria-label="생성 취소" title="생성 취소 — 이전 상태로 돌아가고 크레딧은 환불됩니다" className="w-9 h-9 rounded-full bg-[#241f17] text-white flex items-center justify-center hover:bg-red-500 transition-colors">
+                <svg viewBox="0 0 24 24" className="w-[16px] h-[16px]" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
+            ) : (
             <button
               type="submit"
               disabled={busy || planning || !input.trim()}
@@ -423,6 +430,7 @@ export default function StudioChat({
                 <path d="M12 19V5M5 12l7-7 7 7" />
               </svg>
             </button>
+            )}
           </div>
         </div>
       </form>

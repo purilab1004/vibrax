@@ -6,6 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type MsgStream = AsyncIterable<{ type: string; delta?: { type: string; text?: string } }> & {
   finalMessage(): Promise<{ usage?: { input_tokens?: number; output_tokens?: number } }>
+  abort?: () => void   // 사용자가 취소하면 호출 — 모델/워커 중단
 }
 const PICKUP_MS = 25_000, TOTAL_MS = 280_000, POLL_MS = 500
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
@@ -39,6 +40,7 @@ export async function tryMaxJob(admin: SupabaseClient, job: { projectId: string;
       }
     },
     async finalMessage() { return { usage: { input_tokens: 0, output_tokens: 0 } } },
+    abort() { ended = true; void admin.from('studio_jobs').update({ status: 'cancelled', finished_at: new Date().toISOString() }).eq('id', id).in('status', ['pending', 'running']) },
   }
   return stream
 }

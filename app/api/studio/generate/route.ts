@@ -316,10 +316,13 @@ export async function POST(req: Request) {
   }
 
   const encoder = new TextEncoder()
+  let aborted = false   // 클라이언트가 취소(연결 끊김) — 모델 중단, 버전 저장 안 함, 환불
   const readable = new ReadableStream({
+    cancel() { aborted = true; try { stream?.abort?.() } catch { /* noop */ } },
     async start(controller) {
       let full = ''
       let versionPersisted = false
+      const safeEnqueue = (t: string) => { if (aborted) return; try { controller.enqueue(encoder.encode(t)) } catch { aborted = true } }
       try {
         if (templateNote) { full += templateNote; controller.enqueue(encoder.encode(templateNote)) }
         // 부분 패치 모드: 모델이 <patch> 블록을 내기 시작하면 그 뒤 원문은 클라이언트에 보내지 않고(설명만 보임) 끝에 조립한 <game> 을 보낸다
@@ -329,11 +332,13 @@ export async function POST(req: Request) {
           const pi = raw.indexOf('<patch>')
           const upto = pi >= 0 ? pi : final ? raw.length : Math.max(sentUpTo, raw.length - 7)   // '<patch>' 가 잘려 오는 중일 수 있어 끝 7자는 보류
           if (pi >= 0) patchMode = true
-          if (upto > sentUpTo) { const seg = raw.slice(sentUpTo, upto); sentUpTo = upto; full += seg; controller.enqueue(encoder.encode(seg)) }
+          if (upto > sentUpTo) { const seg = raw.slice(sentUpTo, upto); sentUpTo = upto; full += seg; safeEnqueue(seg) }
         }
         for await (const chunk of stream) {
+          if (aborted) break
           if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { raw += chunk.delta.text ?? ''; forward() }
         }
+        if (aborted) { await refund(); console.log('[studio/generate] cancelled by user'); return }
         forward(true)
         if (patchMode) {
           const ex = extractPatches(raw)
@@ -361,8 +366,10 @@ export async function POST(req: Request) {
               }) as unknown as MsgStream
             }
             for await (const chunk of retry) {
-              if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { const t = chunk.delta.text ?? ''; full += t; controller.enqueue(encoder.encode(t)) }
+              if (aborted) { try { retry.abort?.() } catch { /* noop */ } break }
+              if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { const t = chunk.delta.text ?? ''; full += t; safeEnqueue(t) }
             }
+            if (aborted) { await refund(); return }
           }
         }
         // 실제 토큰 사용량을 마커로 전달 — 클라이언트가 파싱해 표시하고 본문에선 제외
