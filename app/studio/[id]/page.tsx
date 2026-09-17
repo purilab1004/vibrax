@@ -367,7 +367,8 @@ export default function StudioComposerPage() {
   return (
     <div className="flex flex-col" style={{ height: '100svh' }}>
       {/* 상단 바 — 뒤로 · 프로젝트 제목(편집) · 우측: 채팅 토글 / 크레딧 코인 */}
-      <div className="app-top-pad flex items-center gap-3 h-12 px-3 border-b border-[#ebe4d6] bg-white/70 backdrop-blur-xl shrink-0 box-content">
+      {/* 채팅과 같은 배경·구분선 없음 — 헤더가 따로 떠 보이지 않게 */}
+      <div className="app-top-pad flex items-center gap-3 h-12 px-3 bg-[#f3f1ec] shrink-0 box-content">
         <Link
           href="/studio"
           aria-label={s.backToStudio}
