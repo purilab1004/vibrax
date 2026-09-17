@@ -14,6 +14,7 @@ export interface MediaAsset {
   width: number | null; height: number | null; meta: Record<string, unknown>; auto_use: boolean; status: 'active' | 'archived'
   uses: number; created_by: string | null; created_at: string; updated_at: string
   credit_cost?: number // 게임에 넣을 때 회원이 내는 크레딧(아이템당, 관리자 설정) — 100% 디자이너에게
+  visibility?: 'public' | 'admin' // admin = 관리자 전용(이벤트·잭팟 이미지 등) — 회원 선택기·갤러리·자동 주입에서 제외
 }
 export type MediaAssetLite = Pick<MediaAsset, 'id' | 'kind' | 'name' | 'title' | 'description' | 'genres' | 'tags' | 'url' | 'mime' | 'bytes' | 'width' | 'height' | 'meta'>
 
@@ -105,7 +106,10 @@ export function scoreAssets(assets: MediaAssetLite[], opts: { prompt: string; ge
 
 /** 라이브러리에서 후보 로드 (auto_use, active) */
 export async function listAutoAssets(admin: SupabaseClient): Promise<MediaAssetLite[]> {
-  const { data } = await admin.from('media_assets').select('id,kind,name,title,description,genres,tags,url,mime,bytes,width,height,meta').eq('auto_use', true).eq('status', 'active').lte('bytes', ASSET_MAX_BYTES).limit(600)
+  const base = () => admin.from('media_assets').select('id,kind,name,title,description,genres,tags,url,mime,bytes,width,height,meta').eq('auto_use', true).eq('status', 'active').lte('bytes', ASSET_MAX_BYTES).limit(600)
+  // 관리자 전용(visibility=admin) 에셋은 자동 주입에서 제외 — 컬럼이 아직 없으면(마이그레이션 전) 필터 없이
+  let { data, error } = await base().eq('visibility', 'public')
+  if (error && /visibility/.test(error.message)) ({ data, error } = await base())
   return (data ?? []) as MediaAssetLite[]
 }
 export async function getAssetsByIds(admin: SupabaseClient, ids: string[]): Promise<MediaAssetLite[]> {

@@ -7,7 +7,7 @@ import MediaEditor from '@/components/admin/MediaEditor'
 import { AUDIO_ROLES, audioRoleLabel } from '@/lib/media/assets'
 
 type Kind = 'character' | 'background' | 'tile' | 'item' | 'ui' | 'effect' | 'sprite' | 'audio' | 'model3d' | 'font' | 'other'
-interface Asset { id: string; kind: Kind; name: string; title: string; description: string | null; credit_cost?: number; genres: string[]; tags: string[]; url: string; mime: string | null; bytes: number; width: number | null; height: number | null; meta: { frames?: { cols: number; rows: number; fps?: number }; role?: string } & Record<string, unknown>; auto_use: boolean; status: 'active' | 'archived'; uses: number; created_at: string }
+interface Asset { id: string; kind: Kind; name: string; title: string; description: string | null; credit_cost?: number; visibility?: 'public' | 'admin'; genres: string[]; tags: string[]; url: string; mime: string | null; bytes: number; width: number | null; height: number | null; meta: { frames?: { cols: number; rows: number; fps?: number }; role?: string } & Record<string, unknown>; auto_use: boolean; status: 'active' | 'archived'; uses: number; created_at: string }
 interface Genre { slug: string; name: string; group?: string }
 interface Data { items: Asset[]; total: number; genres: Genre[]; stats: { byKind: Record<string, number>; totalBytes: number; archived: number } }
 
@@ -127,6 +127,8 @@ export default function AdminMediaPage() {
           <button onClick={() => setBulk({ genres: [], tags: '' })} className="h-7 px-2.5 rounded-md bg-white/10 hover:bg-white/20 text-[12px]">장르·태그 추가</button>
           <button onClick={() => patch({ ids: [...sel], auto_use: true }, '자동 사용 켬')} className="h-7 px-2.5 rounded-md bg-white/10 hover:bg-white/20 text-[12px]">자동 사용 켜기</button>
           <button onClick={() => patch({ ids: [...sel], auto_use: false }, '자동 사용 끔')} className="h-7 px-2.5 rounded-md bg-white/10 hover:bg-white/20 text-[12px]">자동 사용 끄기</button>
+          <button onClick={() => patch({ ids: [...sel], visibility: 'admin' }, '관리자 전용으로')} className="h-7 px-2.5 rounded-md bg-white/10 hover:bg-white/20 text-[12px]">관리자 전용</button>
+          <button onClick={() => patch({ ids: [...sel], visibility: 'public' }, '회원 공개로')} className="h-7 px-2.5 rounded-md bg-white/10 hover:bg-white/20 text-[12px]">회원 공개</button>
           <button onClick={() => patch({ ids: [...sel], status: status === 'archived' ? 'active' : 'archived' }, status === 'archived' ? '복원했어요' : '보관했어요').then(() => setSel(new Set()))} className="h-7 px-2.5 rounded-md bg-white/10 hover:bg-white/20 text-[12px]">{status === 'archived' ? '복원' : '보관'}</button>
           <button onClick={() => setDel([...sel])} className="h-7 px-2.5 rounded-md bg-[#dc2626] hover:bg-[#b91c1c] text-[12px]">삭제</button>
           <button onClick={() => setSel(new Set(items.map(i => i.id)))} className="h-7 px-2.5 rounded-md bg-white/10 hover:bg-white/20 text-[12px] ml-auto">페이지 전체 선택</button>
@@ -219,6 +221,7 @@ function AssetCard({ a, size, selected, onOpen, onToggle, genreName }: { a: Asse
         <label className={`absolute top-1 left-1 w-4 h-4 rounded border bg-white/90 flex items-center justify-center cursor-pointer transition-opacity ${selected ? 'opacity-100 border-[#2563eb]' : 'opacity-0 group-hover:opacity-100 border-[#c5cad4]'}`}><input type="checkbox" checked={selected} onChange={onToggle} className="sr-only" />{selected && <span className="text-[#2563eb] text-[10px] font-bold">✓</span>}</label>
         <span className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ background: KIND_COLOR[a.kind] }} />
         {!a.auto_use && <span className="absolute bottom-[18px] right-1 text-[8px] px-1 rounded bg-[#1f2430]/80 text-white">수동</span>}
+        {a.visibility === 'admin' && <span className="absolute top-1 right-1 text-[8px] px-1 rounded bg-[#7c3aed] text-white">관리자</span>}
         <p className={`px-1.5 ${xs ? 'py-0.5 text-[9.5px]' : 'py-1 text-[11px]'} font-semibold text-[#1f2430] truncate`}>{a.title}</p>
       </div>
     )
@@ -254,9 +257,9 @@ function GenrePicker({ genres, groups, value, onChange }: { genres: Genre[]; gro
 }
 
 function DetailModal({ a, genres, groups, onClose, onPatch, onDelete, onEdit, onDuplicate }: { a: Asset; genres: Genre[]; groups: Map<string, Genre[]>; onClose: () => void; onPatch: (b: Record<string, unknown>) => Promise<void>; onDelete: () => void; onEdit: () => void; onDuplicate: () => void }) {
-  const [f, setF] = useState({ credit_cost: a.credit_cost ?? 0, title: a.title, name: a.name, description: a.description ?? '', kind: a.kind as Kind, genres: a.genres, tags: a.tags.join(', '), auto_use: a.auto_use, cols: a.meta?.frames?.cols ?? 0, rows: a.meta?.frames?.rows ?? 1, fps: a.meta?.frames?.fps ?? 8, role: a.meta?.role ?? '' })
+  const [f, setF] = useState({ visibility: (a.visibility ?? 'public') as 'public' | 'admin', credit_cost: a.credit_cost ?? 0, title: a.title, name: a.name, description: a.description ?? '', kind: a.kind as Kind, genres: a.genres, tags: a.tags.join(', '), auto_use: a.auto_use, cols: a.meta?.frames?.cols ?? 0, rows: a.meta?.frames?.rows ?? 1, fps: a.meta?.frames?.fps ?? 8, role: a.meta?.role ?? '' })
   const [saving, setSaving] = useState(false)
-  const save = async () => { setSaving(true); await onPatch({ credit_cost: Number(f.credit_cost) || 0, title: f.title, name: f.name, description: f.description || null, kind: f.kind, genres: f.genres, tags: f.tags.split(',').map(x => x.trim()).filter(Boolean), auto_use: f.auto_use, meta: { ...a.meta, ...(f.cols > 0 ? { frames: { cols: f.cols, rows: f.rows || 1, fps: f.fps || 8 } } : { frames: undefined }), role: f.role || undefined } }); setSaving(false) }
+  const save = async () => { setSaving(true); await onPatch({ visibility: f.visibility, credit_cost: Number(f.credit_cost) || 0, title: f.title, name: f.name, description: f.description || null, kind: f.kind, genres: f.genres, tags: f.tags.split(',').map(x => x.trim()).filter(Boolean), auto_use: f.auto_use, meta: { ...a.meta, ...(f.cols > 0 ? { frames: { cols: f.cols, rows: f.rows || 1, fps: f.fps || 8 } } : { frames: undefined }), role: f.role || undefined } }); setSaving(false) }
   const snippet = a.kind === 'audio' ? `playAsset('${a.name}'${f.role === 'bgm' ? ', { loop: true, volume: 0.5 }' : ''})` : `drawAsset(ctx, '${a.name}', x, y${a.width ? `, ${a.width}, ${a.height}` : ''}${f.cols > 0 ? ', frameIndex' : ''})`
   const injectable = ['character', 'background', 'tile', 'item', 'ui', 'effect', 'sprite', 'audio'].includes(a.kind) && a.bytes <= 450_000
   return (
@@ -283,6 +286,7 @@ function DetailModal({ a, genres, groups, onClose, onPatch, onDelete, onEdit, on
           <div><label className={labelCls}>종류</label><select value={f.kind} onChange={e => setF({ ...f, kind: e.target.value as Kind })} className={input}>{KINDS.filter(k => k[0]).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
           <div><label className={labelCls}>설명 (AI 용)</label><textarea value={f.description} onChange={e => setF({ ...f, description: e.target.value })} rows={2} className={`${input} h-auto py-1.5`} /></div>
           <div><label className={labelCls}>태그 (쉼표)</label><input value={f.tags} onChange={e => setF({ ...f, tags: e.target.value })} className={input} /></div>
+          <div><label className={labelCls}>공개 범위</label><select value={f.visibility} onChange={e => setF({ ...f, visibility: e.target.value as 'public' | 'admin' })} className={input}><option value="public">회원 공개 — 선택기·갤러리·자동 주입에 나옴</option><option value="admin">관리자 전용 — 이벤트·잭팟 이미지 등 (회원에게 안 보임)</option></select></div>
           <div><label className={labelCls}>사용 크레딧 (아이템당) <span className="font-normal text-[#9aa1ad]">— 회원이 이 에셋을 게임에 넣을 때 내는 크레딧, 100% 디자이너에게 적립. 0 = 무료</span></label><input type="number" min={0} value={f.credit_cost} onChange={e => setF({ ...f, credit_cost: Number(e.target.value) })} className={input} /></div>
           <GenrePicker genres={genres} groups={groups} value={f.genres} onChange={g => setF({ ...f, genres: g })} />
           {a.kind === 'audio' && <div><label className={labelCls}>오디오 역할</label><select value={f.role} onChange={e => setF({ ...f, role: e.target.value })} className={input}><option value="">선택 안 함</option>{AUDIO_ROLES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>}

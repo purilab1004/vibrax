@@ -13,11 +13,19 @@ export async function GET(req: Request) {
   const genre = u.searchParams.get('genre') ?? ''
   const limit = Math.min(120, Math.max(1, Number(u.searchParams.get('limit') ?? 60)))
   const admin = createAdminClient()
-  let query = admin.from('media_assets').select('id,kind,name,title,description,genres,tags,url,mime,bytes,width,height,meta,uses,credit_cost').eq('status', 'active').in('kind', [...INJECTABLE]).order('uses', { ascending: false }).order('created_at', { ascending: false }).limit(limit)
-  if (kind) query = query.eq('kind', kind)
-  if (genre) query = query.contains('genres', [genre])
-  if (q) query = query.or(`title.ilike.%${q}%,name.ilike.%${q}%,tags.cs.{${q}}`)
-  const { data, error } = await query
-  if (error) return Response.json({ items: [], error: error.message })
-  return Response.json({ items: data ?? [] })
+  const { data: prof } = await admin.from('profiles').select('role').eq('id', user.id).maybeSingle()
+  const isAdmin = (prof as { role?: string } | null)?.role === 'admin'
+  const run = async (withVis: boolean) => {
+    let q2 = admin.from('media_assets').select('id,kind,name,title,description,genres,tags,url,mime,bytes,width,height,meta,uses,credit_cost').eq('status', 'active').in('kind', [...INJECTABLE]).order('uses', { ascending: false }).order('created_at', { ascending: false }).limit(limit)
+    if (withVis) q2 = q2.eq('visibility', 'public')
+    if (kind) q2 = q2.eq('kind', kind)
+    if (genre) q2 = q2.contains('genres', [genre])
+    if (q) q2 = q2.or(`title.ilike.%${q}%,name.ilike.%${q}%,tags.cs.{${q}}`)
+    return q2
+  }
+  // 관리자 전용 에셋은 관리자에게만 보인다 (컬럼이 없으면 필터 없이)
+  let res = await run(!isAdmin)
+  if (res.error && /visibility/.test(res.error.message)) res = await run(false)
+  if (res.error) return Response.json({ items: [], error: res.error.message })
+  return Response.json({ items: res.data ?? [] })
 }

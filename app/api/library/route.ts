@@ -10,16 +10,18 @@ export async function GET(req: Request) {
   const limit = Math.min(200, Math.max(1, Number(u.searchParams.get('limit') ?? 120)))
   try {
     const admin = createAdminClient()
-    const build = (withDesigner: boolean) => {
+    const build = (withDesigner: boolean, withVis = withDesigner) => {
       const sel: string = `id,kind,name,title,description,genres,tags,url,width,height,bytes,uses,created_at${withDesigner ? ',designer_id' : ''}`
       let query = admin.from('media_assets').select(sel).eq('status', 'active').in('kind', [...INJECTABLE]).order('created_at', { ascending: false }).limit(limit)
+      if (withVis) query = query.eq('visibility', 'public') // 관리자 전용 에셋은 갤러리에 안 보인다
       if (kind) query = query.eq('kind', kind)
       if (q) query = query.or(`title.ilike.%${q}%,name.ilike.%${q}%,tags.cs.{${q}}`)
       return query
     }
     // designer_id 컬럼(마이그레이션)이 아직 없으면 없이 다시 조회
     let res = await build(true)
-    if (res.error && /designer_id/.test(res.error.message)) res = await build(false)
+    if (res.error && /visibility/.test(res.error.message)) res = await build(true, false)
+    if (res.error && /designer_id/.test(res.error.message)) res = await build(false, false)
     const error = res.error; const data = (res.data ?? []) as unknown as { designer_id?: string | null }[]
     if (error) return Response.json({ items: [], error: error.message })
     // 디자이너 이름
