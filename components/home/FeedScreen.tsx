@@ -65,7 +65,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
     setTimeout(() => setCoinState('ready'), 900)
   }
 
-  const hue = useDominantHue(game.thumbnail_url) // 제목 색을 썸네일 주요 색에 맞춘다
+  const hue = useDominantHue(game.thumbnail_url) // 제목 색 = 썸네일 주요 색의 보색(배경과 대비되며 어울림)
   const startGame = (e: React.MouseEvent) => {
     e.stopPropagation()
     playStartSound()
@@ -87,7 +87,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
       <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]" style={{ '--ttl-glow': `hsl(${golden ? 42 : (322 + ((hashOf(game.id) >> 3) % 36) - 18 + 360) % 360} 95% 62% / .6)` } as React.CSSProperties}>
         <span className="relative inline-block feed-title-pop">
-          <span className="relative inline-block feed-title-float" style={hue != null ? ({ '--th': Math.round(hue) } as React.CSSProperties) : undefined}>
+          <span className="relative inline-block feed-title-float" style={hue != null ? ({ '--th': Math.round((hue + 180) % 360) } as React.CSSProperties) : undefined}>
             <span aria-hidden className={`${galaxyFont.className} feed-title-outline absolute inset-0 z-0 text-[46px] leading-[1.2]`}>{teaser}</span>
             <h3 className={`${galaxyFont.className} feed-title relative z-[1] text-[46px] leading-[1.2]`}>{teaser}</h3>
             <span aria-hidden className={`${galaxyFont.className} feed-title-chrome absolute inset-0 z-[2] text-[46px] leading-[1.2]`}>{teaser}</span>

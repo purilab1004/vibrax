@@ -93,7 +93,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         )}
         {/* 상단 중앙 — Jua 포스터 타이틀 */}
         <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]">
-          <span className="relative inline-block feed-title-float" style={hue != null ? ({ '--th': Math.round(hue) } as React.CSSProperties) : undefined}>
+          <span className="relative inline-block feed-title-float" style={hue != null ? ({ '--th': Math.round((hue + 180) % 360) } as React.CSSProperties) : undefined}>
             <span aria-hidden className={`${galaxyFont.className} feed-title-outline absolute inset-0 z-0 text-[40px] leading-[1.2]`}>{teaser}</span>
             <h3 className={`${galaxyFont.className} feed-title relative z-[1] text-[40px] leading-[1.2]`}>{teaser}</h3>
             <span aria-hidden className={`${galaxyFont.className} feed-title-chrome absolute inset-0 z-[2] text-[40px] leading-[1.2]`}>{teaser}</span>
