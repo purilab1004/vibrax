@@ -127,9 +127,10 @@ export default async function GameDetailPage({ params }: Props) {
         {game.description && (
           <p className="text-[14px] leading-relaxed text-[#4a4337] whitespace-pre-line" style={{ wordBreak: 'keep-all' }}>{game.description}</p>
         )}
+        {/* TOP 10 — 버튼 아래 정보 칸 안에 (공간 절약) */}
+        <GameLeaderboard gameId={game.id} />
         </div>
       </div>
-      <GameLeaderboard gameId={game.id} />
     </div>
   )
 }

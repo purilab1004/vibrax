@@ -7,7 +7,7 @@ export default function GameLeaderboard({ gameId }: { gameId: string }) {
   const [lb, setLb] = useState<Leaderboard | null>(null)
   useEffect(() => { let alive = true; fetch(`/api/games/${gameId}/leaderboard`).then(r => r.json()).then(j => { if (alive && j && !j.error) setLb(j) }).catch(() => {}); return () => { alive = false } }, [gameId])
   return (
-    <section className="mt-8 border border-[#ebe4d6] bg-[#fcfaf5]">
+    <section className="border border-[#ebe4d6] bg-[#fcfaf5] rounded-xl overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#ebe4d6]">
         <h2 className="font-pixel text-[11px] tracking-widest text-[#241f17]">🏆 TOP {TOP_N}</h2>
         <span className="text-[11px] text-[#857a68]">{lb ? (lb.full && lb.threshold != null ? `${(lb.threshold + 1).toLocaleString()}점부터 순위 진입 → 다음 게임 이동` : '순위에 들면 다음 게임으로 이동할 수 있어요') : ''}</span>
