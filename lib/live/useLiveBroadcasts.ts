@@ -3,7 +3,8 @@
 // profiles.avatar_config.broadcast 를 훑어 한 번 받아 두고 30초마다 갱신. 모듈 캐시로 여러 카드가 공유.
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { parseBroadcast, parseLinkBroadcasts, liveInfoOf, toEmbed, LIVE_HOSTS_CHANNEL, type LiveInfo } from '@/lib/broadcast'
+import { parseBroadcast, parseLinkBroadcasts, liveInfoOf, toEmbed, type LiveInfo } from '@/lib/broadcast'
+import { subscribeHostsPresence, isHostOnline } from '@/lib/live/hostsPresence'
 import { avatarPreviewUrl } from '@/lib/jeumto/config'
 
 export type LiveEntry = LiveInfo & { gameId: string; hostName: string; hostAvatarUrl: string | null; hostCountry?: string | null; note?: string | null; videoTitle?: string | null }
@@ -14,26 +15,16 @@ export function liveForGame(m: LiveMap, gameId: string): LiveEntry | null {
 }
 let cache: LiveMap = {}
 // 지금 접속 중인 방송자(presence) — DB 플래그가 남아 있어도(강제 종료·끊김) 접속이 없으면 카메라 LIVE 카드를 숨긴다
-let onlineHosts: Set<string> = new Set()
-let presenceReady = false
 let presenceStarted = false
 function startPresence() {
   if (presenceStarted || typeof window === 'undefined') return
   presenceStarted = true
-  const ch = createClient().channel(LIVE_HOSTS_CHANNEL)
-  ch.on('presence', { event: 'sync' }, () => {
-    const st = ch.presenceState() as Record<string, { hostId?: string }[]>
-    const next = new Set<string>()
-    for (const arr of Object.values(st)) for (const p of arr) if (p.hostId) next.add(p.hostId)
-    onlineHosts = next; presenceReady = true
-    listeners.forEach((l) => l(visible(raw)))
-  })
-  ch.subscribe()
+  subscribeHostsPresence(() => { cache = visible(raw); listeners.forEach((l) => l(cache)) })
 }
 let raw: LiveMap = {}
 function visible(m: LiveMap): LiveMap {
   const out: LiveMap = {}
-  for (const [k, e] of Object.entries(m)) { if (e.kind === 'camera' && (!presenceReady || !onlineHosts.has(e.hostId))) continue; out[k] = e }
+  for (const [k, e] of Object.entries(m)) { if (e.kind === 'camera' && !isHostOnline(e.hostId)) continue; out[k] = e }
   return out
 }
 let fetchedAt = 0

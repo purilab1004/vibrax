@@ -101,8 +101,8 @@ export const ICE_SERVERS: RTCIceServer[] = [
 ]
 export type Signal =
   | { type: 'join'; from: string }                            // 시청자 → 호스트
-  | { type: 'offer'; to: string; sdp: RTCSessionDescriptionInit }
-  | { type: 'answer'; from: string; sdp: RTCSessionDescriptionInit }
+  | { type: 'offer'; to: string; sdp: RTCSessionDescriptionInit; sid?: string }   // sid = 이 offer 의 id — answer 가 같은 id 일 때만 적용(재접속 경합 방지)
+  | { type: 'answer'; from: string; sdp: RTCSessionDescriptionInit; sid?: string }
   | { type: 'ice'; from: string; to: string; candidate: RTCIceCandidateInit }
   | { type: 'bye'; from: string }
 export type LiveChannelKind = 'cam' | 'screen'

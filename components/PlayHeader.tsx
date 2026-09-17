@@ -16,6 +16,12 @@ export default function PlayHeader({ title, onClose, paused, onTogglePause, rota
   }, [])
   return (
     <div className="absolute inset-x-0 top-0 z-20 pointer-events-none">
+      {/* 모바일 — 상단 진행 바(다음 게임)에 가려져 빨간 끝만 보이던 LIVE 버튼 대신, 바 아래 작은 라벨 */}
+      {onToggleLive && live && (
+        <button onClick={onToggleLive} aria-label="방송 종료" className="md:hidden pointer-events-auto absolute flex items-center gap-1.5 rounded-full bg-[#e11d48] text-white text-[11px] font-bold px-2.5 h-7 shadow-[0_4px_12px_rgba(225,29,72,0.45)]" style={{ top: 'calc(3.6rem + var(--vbx-safe-top, 0px))', right: 'calc(0.75rem + var(--vbx-safe-right, 0px))' }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />LIVE · {live.viewers}
+        </button>
+      )}
       <div className="flex items-center gap-3" style={{ paddingTop: 'calc(0.75rem + var(--vbx-safe-top, 0px))', paddingLeft: 'calc(0.75rem + var(--vbx-safe-left, 0px))', paddingRight: 'calc(0.75rem + var(--vbx-safe-right, 0px))' }}>
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {onTogglePause && (
@@ -34,7 +40,7 @@ export default function PlayHeader({ title, onClose, paused, onTogglePause, rota
         </div>
         <div className="pointer-events-auto shrink-0 flex items-center gap-2">
           {onToggleLive && (
-            <button onClick={onToggleLive} aria-label={live ? '방송 종료' : '내 플레이 방송'} title={live ? '방송 종료' : '내 플레이를 라이브로 방송 (시청자는 관전만)'} className={`h-9 px-3 rounded-full backdrop-blur-md border text-white text-[12px] font-bold flex items-center gap-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-colors ${live ? 'bg-[#e11d48] border-[#e11d48]' : 'bg-black/45 border-white/15 hover:bg-white hover:text-black'}`}>
+            <button onClick={onToggleLive} aria-label={live ? '방송 종료' : '내 플레이 방송'} title={live ? '방송 종료' : '내 플레이를 라이브로 방송 (시청자는 관전만)'} className={`hidden md:flex h-9 px-3 rounded-full backdrop-blur-md border text-white text-[12px] font-bold flex items-center gap-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition-colors ${live ? 'bg-[#e11d48] border-[#e11d48]' : 'bg-black/45 border-white/15 hover:bg-white hover:text-black'}`}>
               <span className={`w-2 h-2 rounded-full ${live ? 'bg-white animate-pulse' : 'bg-[#e11d48]'}`} />
               {live ? `LIVE · ${live.viewers}` : '내 플레이 방송'}
             </button>

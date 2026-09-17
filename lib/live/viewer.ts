@@ -16,12 +16,17 @@ export function startViewer(
   let hostOnline = false
   // 원격 SDP 적용 전에 온 ICE 후보는 버려지면 연결이 늦어진다(15초 재시도까지) — 모았다가 적용 후 넣는다
   let pendingIce: RTCIceCandidateInit[] = []
+  let lastJoin = 0   // join 을 보낸 뒤 offer 를 기다리는 동안 다시 보내지 않는다(호스트가 연결을 새로 만들며 answer 가 어긋남)
   let joinTimer: ReturnType<typeof setInterval> | null = null
   const ch: RealtimeChannel = supabase.channel(liveChannelName(hostId, kind), { config: { broadcast: { self: false }, presence: { key: me } } })
   const send = (payload: Signal) => ch.send({ type: 'broadcast', event: 'signal', payload })
 
   const teardownPc = () => { pc?.close(); pc = null; onStream(null) }
-  const join = () => { if (hostOnline && (!pc || pc.connectionState === 'failed')) send({ type: 'join', from: me }) }
+  const join = () => {
+    if (!hostOnline || (pc && pc.connectionState !== 'failed')) return
+    if (!pc && Date.now() - lastJoin < 8000) return
+    lastJoin = Date.now(); send({ type: 'join', from: me })
+  }
 
   ch.on('presence', { event: 'sync' }, () => {
     const st = ch.presenceState() as Record<string, { role?: string }[]>
@@ -49,7 +54,7 @@ export function startViewer(
         for (const c of pendingIce.splice(0)) await pc.addIceCandidate(c).catch(() => {})
         const answer = await pc.createAnswer()
         await pc.setLocalDescription(answer)
-        send({ type: 'answer', from: me, sdp: answer })
+        send({ type: 'answer', from: me, sdp: answer, sid: payload.sid })
       } else if (payload.type === 'ice' && payload.to === me) {
         if (pc && pc.remoteDescription) await pc.addIceCandidate(payload.candidate).catch(() => {})
         else pendingIce.push(payload.candidate)

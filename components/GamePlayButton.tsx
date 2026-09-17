@@ -158,11 +158,11 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       cctx?.drawImage(d.bm, 0, 0); d.bm.close(); gotFrame = true
     }
     window.addEventListener('message', onFrame)
-    const askFrames = () => { try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, fps: 15, maxW: 720 }, '*') } catch { /* */ } }
+    const askFrames = () => { try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, fps: 30, maxW: 1280 }, '*') } catch { /* */ } }
     for (let i = 0; !gotFrame && i < (auto ? 15 : 5); i++) { askFrames(); await new Promise(r => setTimeout(r, 800)) }
     const capWithStream = cap as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }
     if (gotFrame && capWithStream.captureStream) {
-      stream = capWithStream.captureStream(15)
+      stream = capWithStream.captureStream(30)
       captureCleanup.current = () => { window.removeEventListener('message', onFrame); try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:capture', on: false }, '*') } catch { /* */ } cap.remove() }
     } else { window.removeEventListener('message', onFrame); cap.remove() }
     // 2) 캔버스가 없으면(DOM 게임) 화면 공유로 — 모바일은 화면 공유를 지원하지 않아 자동 시작에선 건너뛴다
@@ -392,10 +392,10 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                 <div className="absolute inset-0 bg-black">
                   {/* 게임 화면 방송이 있으면 그것을, 없으면 방송하는 회원의 카메라 라이브를 가운데에 크게 */}
                   <CameraBjView key={liveEntry.screen ? 'screen' : 'cam'} hostId={liveEntry.hostId} channel={liveEntry.screen ? 'screen' : 'cam'} fit="contain" badge={false} controls controlsClass="left-3 top-[calc(3.6rem+var(--vbx-safe-top,0px))]" />
-                  {/* 게임 화면을 보는 중이면 방송자 얼굴은 우측 하단 작은 창으로 */}
-                  {liveEntry.screen && liveEntry.cam && (
-                    <div className="absolute right-3 bottom-[150px] md:bottom-[240px] w-[104px] md:w-[150px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/25 shadow-[0_10px_30px_rgba(0,0,0,0.55)] z-10">
-                      <CameraBjView hostId={liveEntry.hostId} channel="cam" badge controls controlsClass="bottom-1.5 right-1.5" />
+                  {/* 게스트(아바타 자리 없음)는 방송자 얼굴을 우측 하단 작은 창으로 — 로그인 회원은 BJ(아바타) 자리에 나온다 */}
+                  {isGuest && liveEntry.screen && liveEntry.cam && (
+                    <div className="absolute right-3 bottom-[76px] md:bottom-4 w-[104px] md:w-[150px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/25 shadow-[0_10px_30px_rgba(0,0,0,0.55)] z-10">
+                      <CameraBjView hostId={liveEntry.hostId} channel="cam" badge sound={false} />
                     </div>
                   )}
                   <div className="absolute inset-x-0 flex justify-center pointer-events-none" style={{ top: 'calc(3.6rem + var(--vbx-safe-top, 0px))' }}>
@@ -412,7 +412,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                     allow="fullscreen; autoplay"
                     title={g.title}
                     ref={el => { if (!isPending) frameRef.current = el }}
-                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage(hostMsg(), '*'); if (captureCleanup.current) e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, fps: 15, maxW: 720 }, '*') } catch { /* */ } }}
+                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage(hostMsg(), '*'); if (captureCleanup.current) e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, fps: 30, maxW: 1280 }, '*') } catch { /* */ } }}
                     onError={(e) => { const f = e.currentTarget; if (f.src !== g.play_url) f.src = g.play_url }}
                   />
                 )
@@ -440,7 +440,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                 </div>
               </>
             ) : (
-              <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} myAvatarConfig={myAvatarConfig} bjName={bjName} bjLive={bjLive} />
+              <AiBjPanel gameId={game.id} genre={game.genre} gameTitle={game.title} gameDescription={game.description} agentConfig={agentConfig} bjAvatarConfig={bjAvatarConfig} myAvatarConfig={myAvatarConfig} bjName={bjName} bjLive={bjLive} showHostCam={!!(spectate && liveEntry?.screen && liveEntry?.cam)} />
             )}
           </div>
           </div>

@@ -45,6 +45,7 @@ interface Props {
   bjName?: string | null
   // 지금 이 게임을 추천 게임으로 방송 중인 라이브(카메라/링크) — 있으면 아바타 대신 표시
   bjLive?: LiveInfo | null
+  showHostCam?: boolean   // 관전 중(가운데 = 방송자 게임 화면)이면 방송자 얼굴을 이 BJ(아바타) 자리에
 }
 
 // 다른 시청자 이름 마스킹 — 앞 4글자만 보이고 나머지는 ** (개인정보 보호)
@@ -60,16 +61,16 @@ const AUTO_COMMENTARY = [
   '플레이어가 잘하고 있는지 못하고 있는지 게임 맥락에 맞게 짧게 외쳐줘.',
 ]
 
-export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, myAvatarConfig, bjName, bjLive }: Props) {
+export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, myAvatarConfig, bjName, bjLive, showHostCam = false }: Props) {
   const persona = AJ_PERSONAS[genre]
   // 라이브 영상이 BJ 자리에 나오는 경우 (아바타 TTS 는 꺼짐)
   //  · 회원 카메라 라이브: 방송하는 본인에게만 (내 카메라가 아바타 자리에). 들어온 시청자는 가운데 화면으로 라이브를 보고, 이 자리엔 자기 아바타가 나온다
   //  · 링크(YouTube/Twitch) 영상: 게임에 연결된 영상이라 누구에게나 BJ 자리에
   const [me, setMe] = useState<string | null>(null)
   useEffect(() => { let alive = true; createClient().auth.getSession().then(({ data }) => { if (alive) setMe(data.session?.user.id ?? null) }); return () => { alive = false } }, [])
-  const camera = bjLive && (bjLive.kind !== 'camera' || (me && bjLive.hostId === me)) ? bjLive : null
+  const camera = bjLive && (bjLive.kind !== 'camera' || showHostCam || (me && bjLive.hostId === me)) ? bjLive : null
   const stageConfig = myAvatarConfig ?? bjAvatarConfig ?? null
-  const bjAvatar = camera ? <LiveView live={camera} /> : <JeumtoBjOverlay config={stageConfig} />
+  const bjAvatar = camera ? <LiveView live={camera} sound={false} /> : <JeumtoBjOverlay config={stageConfig} />   // 소리는 화면 상단 스피커(공용 설정)로
   // 하단 BJ 프로필 — 제작자 에이전트 이름 + 아바타(없으면 AJ 페르소나 fallback)
   const bjLabel = myAvatarConfig ? (agentConfig?.name?.trim() || bjName?.trim() || persona.name) : (bjName?.trim() || persona.name)
   // 채팅에서 AJ(스트리머) 표기 — 게임을 만든 회원의 닉네임 (없을 때만 장르 페르소나)
@@ -86,7 +87,7 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
   const [mChatOpen, setMChatOpen] = useState(false)  // 모바일은 기본 접힘 — 게임 화면 확보, 새 메시지는 배지로
   const [mAvatarHiddenRaw, setMAvatarHiddenRaw] = useState(true)  // 모바일은 기본 숨김(게임 컨트롤러 공간) — 배지의 프로필을 탭하면 보임
   const [mCamHidden, setMCamHidden] = useState(false)            // 단, 내 카메라 라이브는 기본으로 보인다(방송하면서 게임할 때 내 얼굴 확인)
-  const ownCam = camera?.kind === 'camera'   // 카메라 라이브는 방송 본인에게만 여기 온다
+  const ownCam = camera?.kind === 'camera'   // 카메라 라이브(내 방송 또는 관전 중인 방송자) — 기본으로 보이게
   const mAvatarHidden = ownCam ? mCamHidden : mAvatarHiddenRaw
   const setMAvatarHidden = (f: (v: boolean) => boolean) => { if (ownCam) setMCamHidden(f); else setMAvatarHiddenRaw(f) }
   // 아바타는 말할 때만 보이고, 말이 끝나면 서서히 사라진다 (카메라 방송이면 항상 표시)

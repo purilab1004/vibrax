@@ -143,16 +143,22 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
 }
 
 /** 라이브 종류에 따라 카메라(WebRTC) 또는 링크 임베드 */
-export function LiveView({ live, cover = false, badge = true, controls = false, controlsClass, compact = false }: { live: LiveInfo; cover?: boolean; badge?: boolean; controls?: boolean; controlsClass?: string; compact?: boolean }) {
-  return live.kind === 'camera' ? <CameraBjView hostId={live.hostId} badge={badge} controls={controls} controlsClass={controlsClass} /> : <LinkLiveView src={live.src} aspect={live.aspect} cover={cover} badge={badge} controls={controls} controlsClass={controlsClass} compact={compact} />
+export function LiveView({ live, cover = false, badge = true, controls = false, controlsClass, compact = false, sound = true }: { live: LiveInfo; cover?: boolean; badge?: boolean; controls?: boolean; controlsClass?: string; compact?: boolean; sound?: boolean }) {
+  return live.kind === 'camera' ? <CameraBjView hostId={live.hostId} badge={badge} controls={controls} controlsClass={controlsClass} sound={sound} /> : <LinkLiveView src={live.src} aspect={live.aspect} cover={cover} badge={badge} controls={controls} controlsClass={controlsClass} compact={compact} />
 }
 
-export default function CameraBjView({ hostId, badge = true, controls = false, controlsClass = 'top-3 right-3', channel = 'cam', fit = 'cover' }: { hostId: string; badge?: boolean; controls?: boolean; controlsClass?: string; channel?: 'cam' | 'screen'; fit?: 'cover' | 'contain' }) {
+export default function CameraBjView({ hostId, badge = true, controls = false, controlsClass = 'top-3 right-3', channel = 'cam', fit = 'cover', sound = true }: { hostId: string; badge?: boolean; controls?: boolean; controlsClass?: string; channel?: 'cam' | 'screen'; fit?: 'cover' | 'contain'; sound?: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [state, setState] = useState<ViewerState>('connecting')
   const [isLocal, setIsLocal] = useState(false)   // 내 카메라(로컬) — 항상 음소거라 소리 버튼 없음
   const [muted, setMuted] = useState(true) // 처음엔 음소거로 재생을 시작하고, 재생이 붙은 뒤 공용 스피커 설정을 적용한다
   const [camVol, setCamVol] = useState(100)
+  // 공용 스피커 설정(게임 화면 상단 소리 버튼 등)이 바뀌면 이 영상 소리도 따라간다 — 내 로컬 카메라는 항상 음소거
+  useEffect(() => subscribeSoundPref((p) => {
+    const v = videoRef.current; if (!v || isLocal) return
+    v.muted = !p.on; setMuted(!p.on)
+    if (p.on) v.play().catch(() => { v.muted = true; setMuted(true) })
+  }), [isLocal])
   const boxRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const el = boxRef.current
@@ -187,7 +193,7 @@ export default function CameraBjView({ hostId, badge = true, controls = false, c
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
         </span>
       )}
-      {state === 'live' && !isLocal && (
+      {state === 'live' && !isLocal && sound && (
         <SoundPill muted={muted} onToggle={() => { const next = !muted; setMuted(next); setSoundPref({ on: !next }) }} volume={camVol} onVolume={(v) => { setCamVol(v); if (videoRef.current) videoRef.current.volume = v / 100 }} className={controls ? controlsClass : 'bottom-1.5 right-1.5'} />
       )}
       {state !== 'live' && (
