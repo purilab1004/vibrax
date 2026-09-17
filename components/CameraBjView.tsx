@@ -139,6 +139,7 @@ export function LiveView({ live, cover = false, badge = true, controls = false, 
 export default function CameraBjView({ hostId, badge = true, controls = false, controlsClass = 'top-3 right-3', channel = 'cam', fit = 'cover' }: { hostId: string; badge?: boolean; controls?: boolean; controlsClass?: string; channel?: 'cam' | 'screen'; fit?: 'cover' | 'contain' }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [state, setState] = useState<ViewerState>('connecting')
+  const [isLocal, setIsLocal] = useState(false)   // 내 카메라(로컬) — 항상 음소거라 소리 버튼 없음
   const [muted, setMuted] = useState(true) // 처음엔 음소거로 재생을 시작하고, 재생이 붙은 뒤 공용 스피커 설정을 적용한다
   const [camVol, setCamVol] = useState(100)
   const boxRef = useRef<HTMLDivElement>(null)
@@ -155,7 +156,7 @@ export default function CameraBjView({ hostId, badge = true, controls = false, c
     if (local) {
       const v = videoRef.current
       if (v) { v.muted = true; v.srcObject = local; v.play().catch(() => {}) }
-      const t = setTimeout(() => setState('live'), 0)
+      const t = setTimeout(() => { setState('live'); setIsLocal(true) }, 0)
       return () => { clearTimeout(t); if (v) v.srcObject = null }
     }
     const supabase = createClient()
@@ -175,7 +176,7 @@ export default function CameraBjView({ hostId, badge = true, controls = false, c
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
         </span>
       )}
-      {state === 'live' && (
+      {state === 'live' && !isLocal && (
         <SoundPill muted={muted} onToggle={() => { const next = !muted; setMuted(next); setSoundPref({ on: !next }) }} volume={camVol} onVolume={(v) => { setCamVol(v); if (videoRef.current) videoRef.current.volume = v / 100 }} className={controls ? controlsClass : 'bottom-1.5 right-1.5'} />
       )}
       {state !== 'live' && (

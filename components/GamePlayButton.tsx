@@ -137,13 +137,23 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       if (cfg?.broadcast?.screenOn) await saveAvatarConfig(supabase, user.id, { ...cfg, broadcast: { ...cfg.broadcast, screenOn: false } })
     } catch { /* noop */ }
   }
-  const startScreenLive = async () => {
+  const startScreenLive = async (auto = false) => {
     const { data: { user } } = await supabase.auth.getUser(); if (!user) return
     let stream: MediaStream | null = null
     // 1) 게임 iframe(같은 출처)의 캔버스를 그대로 캡처 — 시청자 화면엔 헤더·채팅 없이 게임만 나온다
-    try { const cv = frameRef.current?.contentDocument?.querySelector('canvas') as (HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }) | null; if (cv?.captureStream) stream = cv.captureStream(30) } catch { /* cross-origin 등 */ }
-    // 2) 캔버스가 없으면(DOM 게임) 화면 공유로
-    if (!stream) { try { stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false, ...({ preferCurrentTab: true, selfBrowserSurface: 'include' } as object) }) } catch { return } }
+    //    게임이 캔버스를 늦게 만들 수 있어 잠시 기다리며 찾고(자동 시작은 최대 ~12초), 여러 개면 가장 큰 캔버스
+    type CapCanvas = HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }
+    const findCanvas = (): CapCanvas | null => {
+      try { const list = [...(frameRef.current?.contentDocument?.querySelectorAll('canvas') ?? [])] as CapCanvas[]; return list.filter(c => c.width * c.height > 0).sort((x, y) => y.width * y.height - x.width * x.height)[0] ?? null } catch { return null }
+    }
+    let cv = findCanvas()
+    for (let i = 0; !cv && i < (auto ? 15 : 3); i++) { await new Promise(r => setTimeout(r, 800)); cv = findCanvas() }
+    if (cv?.captureStream) { try { stream = cv.captureStream(30) } catch { stream = null } }
+    // 2) 캔버스가 없으면(DOM 게임) 화면 공유로 — 모바일은 화면 공유를 지원하지 않아 자동 시작에선 건너뛴다
+    if (!stream) {
+      if (auto && !navigator.mediaDevices?.getDisplayMedia) return
+      try { stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false, ...({ preferCurrentTab: true, selfBrowserSurface: 'include' } as object) }) } catch { return }
+    }
     // 마이크(있으면) — 해설 소리
     // 카메라 방송(camLive) 중이면 마이크는 이미 그쪽으로 나간다 — 다시 요청하면 iOS 가 기존 카메라 트랙을 끊을 수 있어 건너뛴다
     if (!getCamLive()) { try { const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); mic.getAudioTracks().forEach(t => stream!.addTrack(t)) } catch { /* 마이크 없이 */ } }
@@ -227,7 +237,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     loadAvatarConfig(supabase, user.id).then(cfg => {
       setMyAvatarConfig(cfg)
       // 내가 /broadcast 에서 이 게임으로 라이브(폰 카메라) 중이면, 게임을 열자마자 내 플레이 화면 방송도 자동으로 켠다 — 시청자에게 게임 화면 + 얼굴이 함께 나온다
-      if (cfg?.broadcast?.mode === 'camera' && cfg.broadcast.on && cfg.broadcast.gameId === game.id) setTimeout(() => { if (!screenHost.current) void startScreenLive() }, 1500)
+      if (cfg?.broadcast?.mode === 'camera' && cfg.broadcast.on && cfg.broadcast.gameId === game.id) setTimeout(() => { if (!screenHost.current) void startScreenLive(true) }, 1500)
     }).catch(() => {})
     refreshLiveBroadcasts()
     setOpen(true)
@@ -275,14 +285,20 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
 
   // transport 로 넘어온 경우(?play=1) 자동으로 플레이 시작 — 게임을 끝내면 끊기지 않고 다음 게임으로 이어진다
   const autoRef = useRef(false)
+  const startBtnRef = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     if (autoRef.current) return
     let play = false
     try { play = new URLSearchParams(window.location.search).get('play') === '1' } catch { /* */ }
     if (!play) return
-    autoRef.current = true
-    try { window.history.replaceState(null, '', window.location.pathname) } catch { /* */ }
-    const t = setTimeout(() => { void handlePlay() }, 250)
+    // 잠금·주소 정리는 타이머 안에서 — 개발 모드 StrictMode 의 이펙트 두 번 실행(정리→재실행)에 자동 시작이 취소되지 않게
+    // 페이지에 START 가 두 개(모바일·PC) — 화면에 보이는 쪽만 시작
+    const t = setTimeout(() => {
+      if (autoRef.current || !startBtnRef.current || startBtnRef.current.offsetParent === null) return
+      autoRef.current = true
+      try { window.history.replaceState(null, '', window.location.pathname) } catch { /* */ }
+      void handlePlay()
+    }, 250)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -291,6 +307,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     <>
       {/* 아케이드 START — 카드 뒷면과 같은 빨간 돔 버튼, 큼직하게 */}
       <button
+        ref={startBtnRef}
         onClick={handlePlay}
         className="shrink-0 rounded-full bg-gradient-to-b from-[#ff6a52] to-[#d92c1a] text-white font-pixel text-[13px] tracking-[0.2em] px-10 h-12 flex items-center justify-center shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),0_4px_0_#8f1508,0_8px_16px_rgba(0,0,0,0.3)] active:translate-y-[2px] active:shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),0_2px_0_#8f1508] transition-all whitespace-nowrap"
       >

@@ -79,9 +79,9 @@ export default function LiveCard({ live, game: given, layout }: Props) {
                 </span>
               </span>
               <p className={`${titleFont.className} mt-3 text-[36px] leading-[1.1] text-center max-w-full truncate`} style={{ textShadow: '0 3px 14px rgba(0,0,0,.65)' }}>{live.hostName}</p>
-              <span className="live-pill mt-3 inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-[#ff2d55] to-[#ff5e3a] px-6 py-2.5 text-[22px] font-extrabold text-white shadow-[0_10px_30px_-6px_rgba(255,45,85,.75)] ring-2 ring-white/30">
-                <span className="relative flex w-3.5 h-3.5"><span className="absolute inset-0 rounded-full bg-white animate-ping opacity-75" /><span className="relative w-3.5 h-3.5 rounded-full bg-white" /></span>
-                {live.screen ? '생방송 중 · 관전하기' : '생방송 중'}
+              <span className="mt-3 inline-flex items-center gap-2.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 pl-3.5 pr-5 py-2 text-[18px] font-bold text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,.6)]">
+                <span className="relative flex w-3 h-3"><span className="absolute inset-0 rounded-full bg-[#ff2d55] animate-ping opacity-80" /><span className="relative w-3 h-3 rounded-full bg-[#ff2d55] shadow-[0_0_10px_#ff2d55]" /></span>
+                생방송 중
               </span>
             </div>
           </div>
