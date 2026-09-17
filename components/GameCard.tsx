@@ -399,7 +399,34 @@ export function hasCoinTicket(gameId: string): boolean {
 }
 
 // 단음 헬퍼 — 짧은 감쇠 엔벨로프
-function tone(ctx: AudioContext, type: OscillatorType, freq: number, start: number, dur: number, vol: number) {
+// 효과음은 오프라인으로 한 번 렌더해 WAV 로 만들고 <audio> 로 재생한다 — iOS 는 무음 스위치가 켜져 있으면 WebAudio 소리를 막지만 <audio>(미디어) 재생은 들리므로, 앱·사파리에서 코인 소리가 나게 하려면 이 경로가 필요하다
+const sfxCache = new Map<string, string>()
+function wavFromBuffer(buf: AudioBuffer): string {
+  const n = buf.length, ch = 1, sr = buf.sampleRate
+  const data = buf.getChannelData(0)
+  const out = new ArrayBuffer(44 + n * 2); const v = new DataView(out)
+  const w = (o: number, s: string) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)) }
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, ch, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true)
+  for (let i = 0; i < n; i++) { const s = Math.max(-1, Math.min(1, data[i])); v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true) }
+  return URL.createObjectURL(new Blob([out], { type: 'audio/wav' }))
+}
+async function sfxUrl(key: string, seconds: number, draw: (ctx: BaseAudioContext) => void): Promise<string | null> {
+  const hit = sfxCache.get(key); if (hit) return hit
+  try {
+    const off = new OfflineAudioContext(1, Math.ceil(44100 * seconds), 44100)
+    draw(off)
+    const buf = await off.startRendering()
+    const url = wavFromBuffer(buf); sfxCache.set(key, url); return url
+  } catch { return null }
+}
+function playSfx(key: string, seconds: number, draw: (ctx: BaseAudioContext) => void) {
+  // 이미 렌더돼 있으면 즉시(제스처 안에서) 재생, 아니면 렌더 후 재생 + 다음을 위해 캐시. 실패하면 WebAudio 로 바로
+  const cached = sfxCache.get(key)
+  if (cached) { const a = new Audio(cached); a.volume = 1; a.play().catch(() => { try { draw(new AudioContext()) } catch {} }); return }
+  try { draw(new AudioContext()) } catch {}
+  void sfxUrl(key, seconds, draw)
+}
+function tone(ctx: BaseAudioContext, type: OscillatorType, freq: number, start: number, dur: number, vol: number) {
   const o = ctx.createOscillator()
   const g = ctx.createGain()
   o.type = type
@@ -412,45 +439,30 @@ function tone(ctx: AudioContext, type: OscillatorType, freq: number, start: numb
   o.stop(start + dur)
 }
 
+const drawCoin = (ctx: BaseAudioContext) => {
+  const t = ctx.currentTime
+  // 낙하 시작 '톡'
+  tone(ctx, 'triangle', 740, t + 0.02, 0.06, 0.04)
+  // 착지 '찰' — 고음 금속성
+  tone(ctx, 'triangle', 3136, t + 0.42, 0.12, 0.1)
+  tone(ctx, 'sine', 4699, t + 0.42, 0.08, 0.05)
+  // 되튐 '그랑'
+  tone(ctx, 'triangle', 2637, t + 0.52, 0.18, 0.08)
+  tone(ctx, 'sine', 3951, t + 0.54, 0.12, 0.04)
+  // 클래식 코인 징글 (B5 → E6)
+  tone(ctx, 'square', 987, t + 0.62, 0.09, 0.06)
+  tone(ctx, 'square', 1319, t + 0.7, 0.32, 0.06)
+}
+const drawStart = (ctx: BaseAudioContext) => {
+  const notes = [523, 659, 784, 1047]
+  notes.forEach((f, i) => tone(ctx, 'square', f, ctx.currentTime + i * 0.08, 0.15, 0.05))
+}
+// 페이지가 뜨고 잠시 뒤 미리 렌더해 두면, 탭 순간에 <audio> 로 바로 재생된다 (OfflineAudioContext 는 제스처 없이 동작)
+if (typeof window !== 'undefined') setTimeout(() => { void sfxUrl('coin', 1.1, drawCoin); void sfxUrl('start', 0.7, drawStart) }, 1500)
 // 코인 투입 사운드 — 낙하 '톡' → 착지 '찰그랑'(금속성 2연타) → 클래식 코인 징글
-export function playCoinSound() {
-  try {
-    const ctx = new AudioContext()
-    const t = ctx.currentTime
-    // 낙하 시작 '톡'
-    tone(ctx, 'triangle', 740, t + 0.02, 0.06, 0.04)
-    // 착지 '찰' — 고음 금속성
-    tone(ctx, 'triangle', 3136, t + 0.42, 0.12, 0.1)
-    tone(ctx, 'sine', 4699, t + 0.42, 0.08, 0.05)
-    // 되튐 '그랑'
-    tone(ctx, 'triangle', 2637, t + 0.52, 0.18, 0.08)
-    tone(ctx, 'sine', 3951, t + 0.54, 0.12, 0.04)
-    // 클래식 코인 징글 (B5 → E6)
-    tone(ctx, 'square', 987, t + 0.62, 0.09, 0.06)
-    tone(ctx, 'square', 1319, t + 0.7, 0.32, 0.06)
-  } catch {}
-}
-
+export function playCoinSound() { playSfx('coin', 1.1, drawCoin) }
 // START 잉걸음 — 상승 아르페지오
-export function playStartSound() {
-  try {
-    const ctx = new AudioContext()
-    const notes = [523, 659, 784, 1047]
-    notes.forEach((f, i) => {
-      const o = ctx.createOscillator()
-      const g = ctx.createGain()
-      o.type = 'square'
-      o.connect(g)
-      g.connect(ctx.destination)
-      const t = ctx.currentTime + i * 0.08
-      g.gain.setValueAtTime(0.05, t)
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.15)
-      o.frequency.setValueAtTime(f, t)
-      o.start(t)
-      o.stop(t + 0.15)
-    })
-  } catch {}
-}
+export function playStartSound() { playSfx('start', 0.7, drawStart) }
 
 // 제작자 아바타 배지 — 동그란 원 안에 캐릭터 프리뷰
 function CreatorBadge({ url, name, size }: { url?: string | null; name?: string | null; size: number }) {
