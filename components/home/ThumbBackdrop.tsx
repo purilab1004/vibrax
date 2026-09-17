@@ -5,9 +5,9 @@ export default function ThumbBackdrop({ src, alt = '' }: { src?: string | null; 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(14px) saturate(1.2)', transform: 'scale(1.12)', opacity: 0.75, willChange: 'transform' }} />
+      <img src={src} alt={alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(8px) saturate(1.15)', transform: 'scale(1.08)', opacity: 0.85, willChange: 'transform' }} />
       {/* 오로라 색감을 살리고 상·하단 글자 가독성 확보 */}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.28) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 60%, rgba(0,0,0,.45) 100%)' }} />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.30) 0%, rgba(0,0,0,.05) 30%, rgba(0,0,0,.05) 58%, rgba(0,0,0,.55) 100%)' }} />
     </div>
   )
 }

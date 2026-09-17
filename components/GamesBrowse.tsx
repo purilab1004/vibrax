@@ -91,7 +91,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         )}
         {/* 상단 중앙 — Jua 포스터 타이틀 */}
         <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]">
-          <h3 className={`${titleFont.className} text-[42px] leading-[1.25] text-white drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]`}>
+          <h3 className={`${titleFont.className} feed-title text-[42px] leading-[1.25] text-white`} style={{ '--ttl-glow': `hsl(${(322 + ((hashOf(game.id) >> 3) % 36) - 18 + 360) % 360} 95% 62% / .6)` } as React.CSSProperties}>
             {teaser}
           </h3>
         </div>
