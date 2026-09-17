@@ -260,6 +260,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
                 ['#learning', 'AJ 학습', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 3l8 4-8 4-8-4 8-4Z" /><path d="M4 11l8 4 8-4M4 15l8 4 8-4" /></svg>],
                 ['#api', 'AJ API', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M8 7l-4 5 4 5M16 7l4 5-4 5M14 4l-4 16" /></svg>],
                 ['#games', '내 게임', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
+                ['#library', '라이브러리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 5h6l2 2h8v12H4z" /><path d="M4 9h16" /></svg>],
                 ['#billing', '결제 내역', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></svg>],
                 ['#notices', '공지사항', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 10v4l10 4V6L4 10Z" /><path d="M14 8.5a3.5 3.5 0 0 1 0 7M6.5 14.5V19" /></svg>],
                 ['#collections', '좋아요 · 컬렉션', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10Z" /></svg>],

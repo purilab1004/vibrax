@@ -20,6 +20,7 @@ import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 import { countryFlag, flagRingStyle } from '@/lib/country'
 import LiveCard from '@/components/LiveCard'
 import FeedEndCard from '@/components/FeedEndCard'
+import JackpotCard, { type Jackpot, type Product } from '@/components/JackpotCard'
 import ThumbBackdrop from '@/components/home/ThumbBackdrop'
 import { useDominantHue } from '@/lib/dominantHue'
 import PlayModeBadge from '@/components/PlayModeBadge'
@@ -228,8 +229,14 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
     return () => ctrl.abort()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter])
+  // 코인 잭팟(관리자 랜덤 뽑기) — 진행 중인 것을 게임 사이에 랜덤 위치로 끼워 넣는다
+  const [jack, setJack] = useState<{ open: Jackpot[]; products: Product[]; mine: Record<string, number> }>({ open: [], products: [], mine: {} })
+  useEffect(() => {
+    if (filter === 'video') return
+    fetch('/api/jackpots').then((r) => r.json()).then((j) => setJack({ open: j.open ?? [], products: j.products ?? [], mine: j.mine ?? {} })).catch(() => {})
+  }, [filter])
   // 라이브 카드를 몰아넣지 않고 게임 사이에 고르게 끼워 넣는다 (첫 번째는 맨 앞, 이후 게임 2~3장 간격)
-  type Item = { kind: 'game'; game: GameWithCreator; rank?: number; ad?: { campaignId: string; badge: string; hook?: string } } | { kind: 'live'; live: (typeof lives)[number] }
+  type Item = { kind: 'game'; game: GameWithCreator; rank?: number; ad?: { campaignId: string; badge: string; hook?: string } } | { kind: 'live'; live: (typeof lives)[number] } | { kind: 'jackpot'; jackpot: Jackpot }
   const items: Item[] = []
   {
     const gap = Math.max(2, Math.min(4, Math.floor(games.length / Math.max(1, lives.length))))
@@ -240,6 +247,8 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
       if (ai < ads.length && (i + 1) % 5 === 0) { const a = ads[ai++]; items.push({ kind: 'game', game: a.game, ad: { campaignId: a.campaignId, badge: a.creative?.badge ?? 'AJ PICK', hook: a.creative?.hook } }) }
     })
     while (li < lives.length) items.push({ kind: 'live', live: lives[li++] })
+    // 잭팟: 세션마다 랜덤 자리(2~7번째 사이)에 1장씩, 여러 개면 6장 간격
+    jack.open.forEach((jp, k) => { const pos = Math.min(items.length, 2 + (hashOf(jp.id + seed) % 6) + k * 6); items.splice(pos, 0, { kind: 'jackpot', jackpot: jp }) })
     while (ai < ads.length) { const a = ads[ai++]; items.push({ kind: 'game', game: a.game, ad: { campaignId: a.campaignId, badge: a.creative?.badge ?? 'AJ PICK', hook: a.creative?.hook } }) }
   }
   const adClick = (campaignId: string) => { try { sessionStorage.setItem('ad_click', campaignId) } catch {} ; fetch('/api/ads/event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaignId, kind: 'click' }), keepalive: true }).catch(() => {}) }
@@ -282,7 +291,9 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
       )}
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">
-        {items.map((it) => it.kind === 'live'
+        {items.map((it) => it.kind === 'jackpot'
+          ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} products={jack.products} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-mobile" />
+          : it.kind === 'live'
           ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-mobile" />
           : it.ad ? adWrap(it.ad, <FeedScreen game={it.game} />, `ad-${it.ad.campaignId}`) : <FeedScreen key={it.game.id} game={it.game} />)}
         {/* 맨 끝: 더 내려갈 게임이 없을 때 — 직접 만들기 권유 */}
@@ -297,7 +308,9 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
             ? 'md-page-feed'
             : 'h-[calc(100svh-3.75rem)] min-h-[540px] pt-1 pb-2 overflow-y-auto snap-y snap-mandatory scrollbar-hide'}
         >
-          {items.map((it) => it.kind === 'live'
+          {items.map((it) => it.kind === 'jackpot'
+            ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} products={jack.products} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-desktop" />
+            : it.kind === 'live'
             ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-desktop" />
             : it.ad ? adWrap(it.ad, <DesktopFeedCard game={it.game} />, `ad-${it.ad.campaignId}`) : <DesktopFeedCard key={it.game.id} game={it.game} rank={it.rank} />)}
           {items.length > 0 && <FeedEndCard layout="desktop" />}

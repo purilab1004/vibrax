@@ -37,7 +37,7 @@ export interface Profile {
   created_at: string
   avatar_config?: AvatarConfig | null
   agent_name?: string | null   // 공개 표시명(에이전트 이름) — 게임 카드/상세에 username 대신 노출
-  role?: 'user' | 'admin'
+  role?: 'user' | 'admin' | 'designer'
   banned_at?: string | null
   vcoin?: number   // 오락실 코인 잔액 (가입 시 1000)
 }

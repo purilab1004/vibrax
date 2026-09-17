@@ -1,6 +1,7 @@
 'use client'
 
 import NoticesSection from '@/components/profile/NoticesSection'
+import MyLibrary from '@/components/profile/MyLibrary'
 import PlayModeBadge from '@/components/PlayModeBadge'
 import AiLearningSection from '@/components/profile/AiLearningSection'
 import AjApiSection from '@/components/profile/AjApiSection'
@@ -59,9 +60,9 @@ interface EditingGame {
   newManual?: File | null
 }
 
-type Tab = 'profile' | 'password' | 'agent' | 'learning' | 'api' | 'games' | 'collections' | 'billing' | 'notices'
-const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', api: 'AJ API', games: '내 게임', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
-const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'api', 'games', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
+type Tab = 'profile' | 'password' | 'agent' | 'learning' | 'api' | 'games' | 'library' | 'collections' | 'billing' | 'notices'
+const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', api: 'AJ API', games: '내 게임', library: '라이브러리', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
+const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'api', 'games', 'library', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
 
 export default function ProfilePage() {
   // 사이드 메뉴 탭 — 해시(#games 등)에 따라 해당 섹션만 표시 (스크롤 아님)
@@ -526,6 +527,7 @@ export default function ProfilePage() {
       </section>}
 
       {/* ── 좋아요한 / 공유한 게임 ── */}
+      {tab === 'library' && <MyLibrary />}
       {tab === 'billing' && user && <BillingSection userId={user.id} />}
       {tab === 'notices' && <section id="notices" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><NoticesSection /></section>}
       {tab === 'collections' && user && <section id="collections" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><MyCollections userId={user.id} /></section>}
