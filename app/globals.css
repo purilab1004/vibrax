@@ -942,11 +942,11 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 
 /* ── 쇼츠 카드 타이틀: 스티커(두꺼운 외곽선 + 컬러 글로우 + 살짝 눌린 그림자) — 어떤 배경 위에서도 또렷 ── */
 /* 갤럭시(레트로 크롬) 3D 타이틀 — 3겹: 아래 '돌출' 층(핑크·자주 계단 그림자 + 보라 글로우) → 크롬 그라데이션 채움(흰 테두리) → 광택 스윕 */
-.feed-title { color: #ff6ea6; letter-spacing: 0.01em; text-shadow: 1px 1px 0 #e0498a, 2px 2px 0 #d3427f, 3px 3px 0 #c53b74, 4px 4px 0 #b6346a, 5px 5px 0 #a72e60, 6px 6px 0 #982856, 7px 7px 0 #88224c, 9px 12px 26px rgba(0,0,0,.5), 0 0 28px rgba(122,92,255,.55); }
+.feed-title { color: #ff6ea6; letter-spacing: 0.02em; text-shadow: 1px 1px 0 #e0498a, 2px 2px 0 #d3427f, 3px 3px 0 #c53b74, 4px 4px 0 #b6346a, 5px 5px 0 #a72e60, 6px 6px 0 #982856, 7px 7px 0 #88224c, 9px 12px 26px rgba(0,0,0,.5), 0 0 28px rgba(122,92,255,.55); }
 .feed-title-chrome { color: transparent; -webkit-text-fill-color: transparent; background-image: linear-gradient(180deg, #ffffff 0%, #eaf2ff 28%, #9ec0ff 45%, #6d86ff 52%, #a98cff 68%, #ff8fd2 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-stroke: 1.3px rgba(255,255,255,.9); paint-order: stroke fill; letter-spacing: 0.01em; pointer-events: none; }
 .feed-title-pop { animation: titlePop .6s cubic-bezier(.2,1.4,.4,1) both; }
 @keyframes titlePop { 0% { transform: scale(.82) rotate(-2deg); opacity: 0 } 60% { transform: scale(1.06) rotate(.5deg); opacity: 1 } 100% { transform: scale(1) rotate(0) } }
-/* 글자 위를 지나가는 광택(샤인) — 글자 모양으로만 비치는 밝은 띠가 3.4초마다 한 번 훑고 지나간다 */
-.feed-shine { color: transparent; -webkit-text-fill-color: transparent; background-image: linear-gradient(112deg, rgba(255,255,255,0) 38%, rgba(255,255,255,.95) 50%, rgba(255,255,255,0) 62%); background-size: 260% 100%; background-position: 130% 0; -webkit-background-clip: text; background-clip: text; animation: shine 3.4s cubic-bezier(.4,0,.2,1) .8s infinite; pointer-events: none; }
-@keyframes shine { 0% { background-position: 130% 0 } 55%, 100% { background-position: -130% 0 } }
-@media (prefers-reduced-motion: reduce) { .feed-title-pop, .feed-shine { animation: none } }
+/* 3D 부유 — 살짝 원근을 준 채 천천히 떠 있는 느낌(광택 없음) */
+.feed-title-float { transform-style: preserve-3d; animation: titleFloat 5s ease-in-out infinite; }
+@keyframes titleFloat { 0%,100% { transform: perspective(600px) rotateX(6deg) rotateY(-4deg) translateY(0) } 50% { transform: perspective(600px) rotateX(6deg) rotateY(4deg) translateY(-5px) } }
+@media (prefers-reduced-motion: reduce) { .feed-title-pop, .feed-title-float { animation: none } }

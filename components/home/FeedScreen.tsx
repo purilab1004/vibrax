@@ -14,7 +14,7 @@ import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import { useIsNativeApp } from '@/lib/isNativeApp'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
-import { titleFont } from '@/lib/fonts'
+import { titleFont, galaxyFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 import { countryFlag, flagRingStyle } from '@/lib/country'
@@ -85,9 +85,10 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
       <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]" style={{ '--ttl-glow': `hsl(${golden ? 42 : (322 + ((hashOf(game.id) >> 3) % 36) - 18 + 360) % 360} 95% 62% / .6)` } as React.CSSProperties}>
         <span className="relative inline-block feed-title-pop">
-          <h3 className={`${titleFont.className} feed-title text-[48px] leading-[1.25]`}>{teaser}</h3>
-          <span aria-hidden className={`${titleFont.className} feed-title-chrome absolute inset-0 text-[48px] leading-[1.25]`}>{teaser}</span>
-          <span aria-hidden className={`${titleFont.className} feed-shine absolute inset-0 text-[48px] leading-[1.25]`}>{teaser}</span>
+          <span className="relative inline-block feed-title-float">
+            <h3 className={`${galaxyFont.className} feed-title text-[46px] leading-[1.2]`}>{teaser}</h3>
+            <span aria-hidden className={`${galaxyFont.className} feed-title-chrome absolute inset-0 text-[46px] leading-[1.2]`}>{teaser}</span>
+          </span>
         </span>
       </div>
       {/* 방 디오라마 — 캐릭터는 중앙 (앱에서는 정적 렌더로 부드럽게) */}

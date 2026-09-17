@@ -13,7 +13,7 @@ import ViewerIcon from '@/components/ViewerIcon'
 import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
-import { titleFont } from '@/lib/fonts'
+import { titleFont, galaxyFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
@@ -91,10 +91,9 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         )}
         {/* 상단 중앙 — Jua 포스터 타이틀 */}
         <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]">
-          <span className="relative inline-block">
-            <h3 className={`${titleFont.className} feed-title text-[42px] leading-[1.25]`}>{teaser}</h3>
-            <span aria-hidden className={`${titleFont.className} feed-title-chrome absolute inset-0 text-[42px] leading-[1.25]`}>{teaser}</span>
-            <span aria-hidden className={`${titleFont.className} feed-shine absolute inset-0 text-[42px] leading-[1.25]`}>{teaser}</span>
+          <span className="relative inline-block feed-title-float">
+            <h3 className={`${galaxyFont.className} feed-title text-[40px] leading-[1.2]`}>{teaser}</h3>
+            <span aria-hidden className={`${galaxyFont.className} feed-title-chrome absolute inset-0 text-[40px] leading-[1.2]`}>{teaser}</span>
           </span>
         </div>
         {/* 방 장면 — 캐릭터는 중앙 */}
