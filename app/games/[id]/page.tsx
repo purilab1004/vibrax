@@ -97,7 +97,8 @@ export default async function GameDetailPage({ params }: Props) {
         {/* 포스터 + 버튼 — 모바일은 버튼을 포스터 하단에 얹어 스크롤 없이 바로 보이게, PC 는 포스터 아래 */}
         <div className="relative w-full md:w-[320px] md:shrink-0">
           <PosterHero src={game.thumbnail_url} alt={game.title} className="w-full aspect-[3/4] max-h-[62vh] md:aspect-[9/16] md:max-h-none" />
-          <div className="absolute inset-x-0 bottom-0 rounded-b-2xl bg-gradient-to-t from-black/75 via-black/35 to-transparent pt-12 pb-4 px-4 md:static md:bg-none md:rounded-none md:pt-4 md:pb-0 md:px-0">
+          {/* 모바일 전용 — 포스터 위에 얹은 버튼 */}
+          <div className="md:hidden absolute inset-x-0 bottom-0 rounded-b-2xl bg-gradient-to-t from-black/75 via-black/35 to-transparent pt-12 pb-4 px-4">
             <div className="flex items-center gap-2.5 [&>button]:flex-1">
               <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
               <ShareEmbed title={game.title} gameId={game.id} />
@@ -128,6 +129,11 @@ export default async function GameDetailPage({ params }: Props) {
             </span>
             <LikeButton gameId={game.id} size="md" />
           </div>
+        </div>
+        {/* PC 전용 — 정보 아래, TOP 10 위에 버튼 */}
+        <div className="hidden md:flex items-center gap-3 max-w-[440px] [&>button]:flex-1">
+          <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
+          <ShareEmbed title={game.title} gameId={game.id} />
         </div>
         {game.description && (
           <p className="text-[14px] leading-relaxed text-[#4a4337] whitespace-pre-line" style={{ wordBreak: 'keep-all' }}>{game.description}</p>
