@@ -171,7 +171,8 @@ export default function StudioChat({
 
   return (
     <div className="flex flex-col h-full border-r border-[#ebe4d6] bg-[#f3f1ec]">{/* 눈이 편한 따뜻한 회색 — 흰 말풍선·입력 카드가 또렷하게 */}
-      <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="max-w-[840px] mx-auto space-y-3">
         {/* 조작안 제안 중 */}
         {messages.length === 0 && !streaming && planning && (
           <div className="pt-16 text-center max-w-md mx-auto">
@@ -329,6 +330,7 @@ export default function StudioChat({
             {error}
           </p>
         )}
+        </div>
       </div>
       {/* 클로드 스타일 플로팅 입력 카드 — 둥근 카드가 하단에 떠 있고 전송 버튼은 안쪽 우하단 */}
       <form ref={formRef} onSubmit={submit} className="px-4 pb-4 pt-1 shrink-0">
