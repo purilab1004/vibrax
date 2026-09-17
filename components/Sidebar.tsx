@@ -302,6 +302,12 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
             </>
           )}
 
+          {!inStudio && !inProfile && !inAdmin && (
+            <Link href="/games" className={row(pathname === '/games' && !activeGenre)} title="ALL">
+              <span className={iconCol}><svg viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><rect x="14" y="14" width="7" height="7" rx="2" /></svg></span>
+              <span className={label}>ALL</span>
+            </Link>
+          )}
           {!inStudio && !inProfile && !inAdmin && GENRES.map(g => {
             const isNew = newGenres.includes(g)
             return (
@@ -317,18 +323,13 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
               </Link>
             )
           })}
-          {!inStudio && !inProfile && !inAdmin && (
-            <Link href="/gallery" className={row(pathname.startsWith('/gallery'))} title="GALLERY">
-              <span className={iconCol}><svg viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M3 15l5-5 4 4 3-3 6 6" /><circle cx="16" cy="9" r="1.6" /></svg></span>
-              <span className={label}>GALLERY</span>
-            </Link>
-          )}
           {/* 메인 메뉴 — 카테고리 아래 */}
           {!inStudio && !inProfile && !inAdmin && (
             <>
               <div className="my-3 border-t border-[#ebe4d6]" />
               {open && <p className="px-3 mb-1 font-pixel text-[10px] text-[#9d9280] tracking-[0.25em]">MENU</p>}
               {([
+                ['/gallery', 'GALLERY', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M3 15l5-5 4 4 3-3 6 6" /><circle cx="16" cy="9" r="1.6" /></svg>],
                 ['/studio', 'STUDIO', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z" /><path d="M5 19l1-2.5L8.5 15" /></svg>],
                 ['/tournament', 'EVENT', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4" /><path d="M12 13v4M8 21h8M10 17h4" /></svg>],
                 ['/blog', 'BLOG', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8 9h8M8 13h8M8 17h5" /></svg>],
