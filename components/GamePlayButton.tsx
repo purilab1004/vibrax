@@ -355,9 +355,10 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
               {spectate && liveEntry ? (
                 /* 관전 — 방을 연 회원의 게임 화면. 다른 회원은 직접 플레이할 수 없다 */
                 <div className="absolute inset-0 bg-black">
-                  <CameraBjView hostId={liveEntry.hostId} channel="screen" fit="contain" badge={false} controls controlsClass="left-3 top-[calc(3.6rem+var(--vbx-safe-top,0px))]" />
+                  {/* 게임 화면 방송이 있으면 그것을, 없으면 방송하는 회원의 카메라 라이브를 가운데에 크게 */}
+                  <CameraBjView key={liveEntry.screen ? 'screen' : 'cam'} hostId={liveEntry.hostId} channel={liveEntry.screen ? 'screen' : 'cam'} fit="contain" badge={false} controls controlsClass="left-3 top-[calc(3.6rem+var(--vbx-safe-top,0px))]" />
                   <div className="absolute inset-x-0 flex justify-center pointer-events-none" style={{ top: 'calc(3.6rem + var(--vbx-safe-top, 0px))' }}>
-                    <span className="rounded-full bg-black/55 backdrop-blur px-3 py-1 text-[12px] font-semibold text-white flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#e11d48] animate-pulse" />{liveEntry.screen ? `${liveEntry.hostName} 님의 플레이를 보는 중 — 관전 모드` : `${liveEntry.hostName} 님이 라이브 중 — 게임을 시작하면 여기에 보여요`}</span>
+                    <span className="rounded-full bg-black/55 backdrop-blur px-3 py-1 text-[12px] font-semibold text-white flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#e11d48] animate-pulse" />{liveEntry.screen ? `${liveEntry.hostName} 님의 플레이를 보는 중 — 관전 모드` : `${liveEntry.hostName} 님의 라이브를 보는 중`}</span>
                   </div>
                 </div>
               ) : [game, ...(pending ? [pending] : [])].map((g) => {

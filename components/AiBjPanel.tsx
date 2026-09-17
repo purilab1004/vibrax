@@ -8,6 +8,7 @@ import type { Genre } from '@/lib/supabase/types'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m.LiveView), { ssr: false })
 import type { LiveInfo } from '@/lib/broadcast'
+import { createClient } from '@/lib/supabase/client'
 
 // AI 채팅이 실패했을 때(토큰 소진·서버 오류) 보여줄 한 줄과, 자동 중계를 쉬는 시간
 const CHAT_MAINT = '채팅은 점검중입니다.'
@@ -61,8 +62,12 @@ const AUTO_COMMENTARY = [
 
 export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, agentConfig, bjAvatarConfig, myAvatarConfig, bjName, bjLive }: Props) {
   const persona = AJ_PERSONAS[genre]
-  // 제작자가 라이브 방송(ON AIR)을 켜 두었으면 아바타 대신 영상이 BJ 자리에 나온다 (아바타 TTS 는 꺼짐)
-  const camera = bjLive ?? null
+  // 라이브 영상이 BJ 자리에 나오는 경우 (아바타 TTS 는 꺼짐)
+  //  · 회원 카메라 라이브: 방송하는 본인에게만 (내 카메라가 아바타 자리에). 들어온 시청자는 가운데 화면으로 라이브를 보고, 이 자리엔 자기 아바타가 나온다
+  //  · 링크(YouTube/Twitch) 영상: 게임에 연결된 영상이라 누구에게나 BJ 자리에
+  const [me, setMe] = useState<string | null>(null)
+  useEffect(() => { let alive = true; createClient().auth.getSession().then(({ data }) => { if (alive) setMe(data.session?.user.id ?? null) }); return () => { alive = false } }, [])
+  const camera = bjLive && (bjLive.kind !== 'camera' || (me && bjLive.hostId === me)) ? bjLive : null
   const stageConfig = myAvatarConfig ?? bjAvatarConfig ?? null
   const bjAvatar = camera ? <LiveView live={camera} /> : <JeumtoBjOverlay config={stageConfig} />
   // 하단 BJ 프로필 — 제작자 에이전트 이름 + 아바타(없으면 AJ 페르소나 fallback)
