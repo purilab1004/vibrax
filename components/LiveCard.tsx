@@ -78,19 +78,29 @@ export default function LiveCard({ live, game: given, layout }: Props) {
         {isVideo
           ? <span className="flex items-center gap-1.5 rounded-full bg-[#7c3aed] text-white font-pixel text-[10px] px-2.5 py-1 tracking-widest shadow">▶ VIDEO</span>
           : <span className="flex items-center gap-1.5 rounded-full bg-[#e11d48] text-white font-pixel text-[10px] px-2.5 py-1 tracking-widest shadow"><span className="w-2 h-2 rounded-full bg-white animate-pulse" />LIVE</span>}
-        <span className="flex items-center gap-1.5 rounded-full bg-black/55 backdrop-blur px-2 py-1 text-white text-[12px] font-semibold max-w-[60%]">
+        {isVideo && hasGame && game && (
+          /* 영상 카드 — VIDEO 옆에 연결된 게임 썸네일·이름 */
+          <span className="flex items-center gap-1.5 rounded-full bg-black/55 backdrop-blur pl-1 pr-2.5 py-1 text-white text-[12px] font-semibold max-w-[62%]">
+            {game.thumbnail_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={game.thumbnail_url} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-white/40" />
+            )}
+            <span className="truncate">🎮 {game.title}</span>
+          </span>
+        )}
+        {!isVideo && <span className="flex items-center gap-1.5 rounded-full bg-black/55 backdrop-blur px-2 py-1 text-white text-[12px] font-semibold max-w-[60%]">
           {live.hostAvatarUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={live.hostAvatarUrl} alt="" className="w-5 h-5 rounded-full object-cover bg-white/70" />
           )}
           <span className="truncate">{live.hostName}</span>
-        </span>
+        </span>}
       </div>
       {/* 하단 — 추천 게임 + 코인 넣고 플레이 */}
       {/* 모바일 피드는 하단 내비에 가리지 않게 게임 카드와 같은 여백(pb-24) */}
       <div className={`absolute inset-x-0 bottom-0 pt-24 bg-gradient-to-t from-black/95 via-black/70 to-transparent ${layout === 'feed-mobile' ? (isApp ? 'px-5 pb-28' : 'px-5 pb-24') : 'px-6 pb-6'}`}>
         {/* 게임 카드의 제작자 줄과 같은 높이의 한 줄 — 어떤 게임인지 */}
-        {hasGame ? <p className="flex items-center gap-2 text-[13px] font-semibold text-white/80 mb-3 min-h-[20px]">
+        {hasGame && !isVideo ? <p className="flex items-center gap-2 text-[13px] font-semibold text-white/80 mb-3 min-h-[20px]">
           {game?.thumbnail_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={game.thumbnail_url} alt="" className="w-7 h-5 rounded object-cover shrink-0 ring-1 ring-white/40" />
@@ -109,6 +119,8 @@ export default function LiveCard({ live, game: given, layout }: Props) {
             <span className="truncate">{live.hostName}</span>{countryFlag(live.hostCountry) && <span className="ml-1">{countryFlag(live.hostCountry)}</span>}
           </p>
         )}
+        {live.note && <p className="mt-1.5 text-[13.5px] leading-snug text-white/95 line-clamp-2 [text-shadow:0_1px_6px_rgba(0,0,0,.7)]" style={{ wordBreak: 'keep-all' }}>{live.note}</p>}
+
         {hasGame && <>
         {/* 게임 카드와 같은 INSERT COIN + 코인 넣기 + 코인 통 — 누르면 코인 투입 연출 후 게임 페이지로 */}
         <div className="mt-2 flex items-center gap-3">

@@ -21,6 +21,7 @@ export default function BroadcastPage() {
   const [tab, setTab] = useState<'camera' | 'link' | 'video'>('camera')
   const tabKind: 'live' | 'video' = tab === 'video' ? 'video' : 'live' // 링크 목록은 라이브/영상으로 나눠 보여준다
   const [linkUrl, setLinkUrl] = useState('')
+  const [linkNote, setLinkNote] = useState('') // 한 줄 소개 — 쇼츠 카드에 표시
   const [links, setLinks] = useState<LinkBroadcast[]>([])
   const [linkMsg, setLinkMsg] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null) // 수정 중인 링크 — 입력창에 불러와 '저장'으로 바꾼다
@@ -82,20 +83,20 @@ export default function BroadcastPage() {
     if (!gameId && tab !== 'video') { setLinkMsg('연결할 게임을 골라 주세요'); return }
     const g = games.find((x) => x.id === gameId)
     if (editingId) {
-      await persistLinks(links.map((l) => (l.id === editingId ? { ...l, url: linkUrl.trim(), gameId: gameId || null, title: g?.title } : l)))
-      setEditingId(null); setLinkUrl('')
+      await persistLinks(links.map((l) => (l.id === editingId ? { ...l, url: linkUrl.trim(), gameId: gameId || null, title: g?.title, note: linkNote.trim() || undefined } : l)))
+      setEditingId(null); setLinkUrl(''); setLinkNote('')
       setLinkMsg('✓ 수정했어요'); setTimeout(() => setLinkMsg(null), 2500)
       return
     }
-    const item: LinkBroadcast = { id: `l_${Date.now().toString(36)}`, url: linkUrl.trim(), gameId: gameId || null, on: true, title: g?.title, kind: tabKind }
+    const item: LinkBroadcast = { id: `l_${Date.now().toString(36)}`, url: linkUrl.trim(), gameId: gameId || null, on: true, title: g?.title, kind: tabKind, note: linkNote.trim() || undefined }
     await persistLinks([item, ...links])
-    setLinkUrl('')
+    setLinkUrl(''); setLinkNote('')
     setLinkMsg(tab === 'video' ? '▶ 등록했어요 — 게임 목록에 VIDEO 카드로 나와요' : '● 추가했어요 — 목록·게임 안에 영상이 나와요'); setTimeout(() => setLinkMsg(null), 2500)
   }
   const toggleLink = (id: string) => persistLinks(links.map((l) => (l.id === id ? { ...l, on: !l.on } : l)))
   const removeLink = (id: string) => { if (editingId === id) { setEditingId(null); setLinkUrl('') } return persistLinks(links.filter((l) => l.id !== id)) }
-  const editLink = (l: LinkBroadcast) => { setEditingId(l.id); setLinkUrl(l.url); setGameId(l.gameId ?? ''); setLinkMsg('아래에서 링크·게임을 고치고 저장을 누르세요') }
-  const cancelEdit = () => { setEditingId(null); setLinkUrl(''); setLinkMsg(null) }
+  const editLink = (l: LinkBroadcast) => { setEditingId(l.id); setLinkUrl(l.url); setLinkNote(l.note ?? ''); setGameId(l.gameId ?? ''); setLinkMsg('아래에서 링크·게임을 고치고 저장을 누르세요') }
+  const cancelEdit = () => { setEditingId(null); setLinkUrl(''); setLinkNote(''); setLinkMsg(null) }
   const setBroadcast = async (on: boolean) => {
     if (!user) return
     const base = config ?? emptyConfig()
@@ -210,6 +211,13 @@ export default function BroadcastPage() {
                   placeholder={tab === 'video' ? 'https://youtube.com/watch?v=… 또는 https://youtube.com/shorts/…' : 'https://youtube.com/live/… 또는 https://twitch.tv/채널'}
                   className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
                 />
+                <input
+                  value={linkNote}
+                  onChange={(e) => setLinkNote(e.target.value)}
+                  maxLength={80}
+                  placeholder="한 줄 소개 — 쇼츠 카드에 표시돼요 (예: 롤러코스터 1위 도전 하이라이트)"
+                  className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
+                />
                 {linkUrl && !toEmbed(linkUrl) && <p className="text-[11px] text-red-400">지원하지 않는 링크예요.</p>}
                 {toEmbed(linkUrl) && (
                   <div className="aspect-video w-full rounded-lg overflow-hidden bg-black/60">
@@ -224,6 +232,7 @@ export default function BroadcastPage() {
                       <li key={l.id} className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${editingId === l.id ? 'border-white bg-white/15' : l.on ? 'border-[#e11d48]/70 bg-[#e11d48]/10' : 'border-white/15 bg-white/5'}`}>
                         <div className="min-w-0 flex-1">
                           <p className="text-[12px] text-white truncate">{l.gameId ? `🎮 ${l.title ?? games.find((g) => g.id === l.gameId)?.title ?? '게임'}` : '▶ 게임 연결 없음 (영상만 공유)'}</p>
+                          {l.note && <p className="text-[11px] text-white/80 truncate">{l.note}</p>}
                           <p className="text-[10px] text-white/50 truncate">{l.url}</p>
                         </div>
                         <button onClick={() => editLink(l)} className={`font-pixel text-[9px] px-2 py-1 rounded-full tracking-widest ${editingId === l.id ? 'bg-white text-black' : 'bg-white/15 text-white/80'}`}>수정</button>
