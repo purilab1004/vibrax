@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { titleFont } from '@/lib/fonts'
 import { useIsNativeApp } from '@/lib/isNativeApp'
 import CardRail from '@/components/CardRail'
+import { playCoinSound } from '@/components/GameCard'
 
 export interface Jackpot {
   id: string; title: string; description: string | null; image_url: string | null; entry_cost: number; ends_at: string; status: string; pool: number; entries: number
@@ -99,9 +100,9 @@ export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Ja
   const [pool, setPool] = useState(jackpot.pool)
   const [entries, setEntries] = useState(jackpot.entries)
   const [myCount, setMyCount] = useState(mine)
-  const [busy, setBusy] = useState(false)
+  const [coinState, setCoinState] = useState<'idle' | 'drop' | 'done'>('idle')
+  const coinLock = useRef(false)
   const [msg, setMsg] = useState<string | null>(null)
-  const [confirm, setConfirm] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const [inView, setInView] = useState(false)
   useEffect(() => {
@@ -118,19 +119,24 @@ export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Ja
   const reveal = drawn && !!jackpot.product
   const reached = pool > threshold
 
-  const enter = async () => {
-    if (busy || closed || layout === 'preview') return
-    const { data: { session } } = await createClient().auth.getSession()
-    if (!session?.user) { router.push('/login?redirect=/games'); return }
-    setBusy(true); setMsg(null)
+  // 게임 쇼츠와 같은 코인 투입 — 한 번 탭하면 동전이 슬롯에 들어가며 바로 참여(확인 버튼 없음). 여러 번 넣을 수 있다
+  const insertCoin = async () => {
+    if (coinLock.current || coinState === 'drop' || closed || layout === 'preview') return
+    coinLock.current = true
+    setCoinState('drop'); setMsg(null)
+    playCoinSound()   // 탭 제스처 안에서 즉시 — iOS 재생 차단 방지
     try {
+      const { data: { session } } = await createClient().auth.getSession()
+      if (!session?.user) { setCoinState('idle'); router.push('/login?redirect=/games'); return }
       const r = await fetch(`/api/jackpots/${jackpot.id}/enter`, { method: 'POST' })
       const j = await r.json()
-      if (!r.ok) { setMsg(j.error ?? '참여 실패'); return }
+      if (!r.ok) { setMsg(j.error ?? '참여 실패'); setCoinState('idle'); return }
       setPool((p) => p + jackpot.entry_cost); setEntries((e) => e + 1); setMyCount((c) => c + 1)
       setMsg(`참여 완료! 남은 토큰동전 ${Number(j.balance).toLocaleString()}`)
       window.dispatchEvent(new CustomEvent('credits:changed', { detail: { balance: j.balance } }))
-    } catch { setMsg('네트워크 오류') } finally { setBusy(false); setConfirm(false) }
+      setTimeout(() => setCoinState('done'), 700)
+      setTimeout(() => setCoinState('idle'), 2200)
+    } catch { setMsg('네트워크 오류'); setCoinState('idle') } finally { coinLock.current = false }
   }
 
   const statusBadge = drawn ? '🎉 당첨 발표' : closed ? '마감 · 추첨 대기' : `⏳ ${text} 남음`
@@ -218,16 +224,31 @@ export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Ja
       {/* 하단 — 참여 버튼 */}
       <div className={`relative z-10 shrink-0 px-5 pt-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent ${layout === 'feed-mobile' ? (isApp ? 'pb-28' : 'pb-24') : 'pb-6'}`}>
         {msg && <p className="mb-2 text-[12.5px] text-[#ffd166] font-semibold text-center">{msg}</p>}
-        {confirm ? (
-          <div className="flex items-center gap-2">
-            <button onClick={enter} disabled={busy} className={`flex-1 h-[52px] ${titleFont.className} text-[19px] rounded-full bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] shadow-[0_5px_0_#d18f00,0_9px_16px_rgba(0,0,0,0.35)] disabled:opacity-60`}>{busy ? '참여 중…' : `✦ ${jackpot.entry_cost} 토큰동전 내고 참여`}</button>
-            <button onClick={() => setConfirm(false)} className="h-[52px] px-4 rounded-full bg-white/15 text-white text-[14px] font-bold">취소</button>
-          </div>
-        ) : (
-          <button onClick={() => (closed ? null : setConfirm(true))} disabled={closed} className={`w-full h-[52px] ${titleFont.className} text-[20px] rounded-full ${closed ? 'bg-white/15 text-white/60' : 'bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] shadow-[0_5px_0_#d18f00,0_9px_16px_rgba(0,0,0,0.35)]'}`}>
-            {drawn ? '당첨 발표 완료' : closed ? '마감 — 곧 추첨해요' : `🎰 ${jackpot.entry_cost} 토큰동전으로 도전`}
+        <div className="flex items-center gap-3">
+          <button onClick={insertCoin} disabled={closed || coinState === 'drop'} className={`flex-1 h-[52px] ${titleFont.className} text-[20px] rounded-full flex items-center justify-center gap-2 transition-all ${closed ? 'bg-white/15 text-white/60' : coinState === 'done' ? 'bg-gradient-to-b from-[#6dff8a] to-[#22c55e] text-[#053b16] shadow-[0_5px_0_#15803d,0_9px_16px_rgba(0,0,0,0.35)]' : 'bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] shadow-[0_5px_0_#d18f00,0_9px_16px_rgba(0,0,0,0.35)] active:translate-y-1 active:shadow-[0_1px_0_#d18f00] disabled:opacity-90'}`}>
+            {drawn ? '당첨 발표 완료' : closed ? '마감 — 곧 추첨해요' : coinState === 'drop' ? (
+              <>
+                <svg viewBox="0 0 24 24" className="w-4 h-4 animate-spin" fill="none" aria-hidden><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+                코인 투입 중...
+              </>
+            ) : coinState === 'done' ? '✓ 참여 완료! 한 번 더?' : `🎰 ${jackpot.entry_cost} 코인으로 도전`}
           </button>
-        )}
+          {/* 미니 코인 슬롯 — 게임 쇼츠와 같은 모양 */}
+          {!closed && (
+            <div className="relative w-12 h-[58px] shrink-0">
+              <div className={`w-full h-full rounded-lg bg-gradient-to-b from-[#4a4a4a] to-[#2a2a2a] border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_4px_10px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-1.5 transition-shadow ${coinState === 'done' ? 'shadow-[inset_0_2px_4px_rgba(255,255,255,0.15),0_0_16px_rgba(76,255,106,0.5)]' : ''} ${coinState === 'drop' ? 'slot-clink' : ''}`}>
+                <span className="w-1.5 h-7 rounded-full bg-black shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" />
+                <span className={`w-2.5 h-2.5 rounded-full ${coinState === 'done' ? 'bg-[#4cff6a] shadow-[0_0_8px_#4cff6a]' : 'bg-red-500/80 shadow-[0_0_6px_rgba(239,68,68,0.8)] animate-pulse'}`} />
+              </div>
+              {coinState === 'drop' && (
+                <>
+                  <span className="gold-coin absolute left-1/2 -top-6" style={{ '--coin-drop': '31px' } as React.CSSProperties} aria-hidden />
+                  <span className="slot-spark absolute left-1/2 top-[8px] -translate-x-1/2 text-xs" aria-hidden>✨</span>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <p className="mt-2 text-center text-[10.5px] text-white/55">참여 토큰동전은 환불되지 않아요 · 마감 후 낸 토큰동전만큼 확률로 {winnerCount}명 추첨</p>
       </div>
     </div>
