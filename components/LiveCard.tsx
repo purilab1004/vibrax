@@ -111,9 +111,6 @@ export default function LiveCard({ live, game: given, layout }: Props) {
         )}
         {hasGame && <>
         {/* 게임 카드와 같은 INSERT COIN + 코인 넣기 + 코인 통 — 누르면 코인 투입 연출 후 게임 페이지로 */}
-        <p className={`arcade-blink font-pixel text-[14px] tracking-[0.3em] ${coin === 'ready' ? 'text-[#4cff6a] drop-shadow-[0_0_6px_rgba(76,255,106,0.7)]' : 'text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.7)]'}`}>
-          {coin === 'ready' ? 'PRESS START' : 'INSERT COIN'}
-        </p>
         <div className="mt-2 flex items-center gap-3">
           {coin !== 'ready' ? (
             <button

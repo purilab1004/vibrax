@@ -124,14 +124,6 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
           {creatorName}{countryFlag(game.country ?? game.profiles?.country) && <span className="ml-1">{countryFlag(game.country ?? game.profiles?.country)}</span>}
         </p>
         {game.intro && <p className="mt-1.5 text-[13.5px] leading-snug text-white/95 line-clamp-2 [text-shadow:0_1px_6px_rgba(0,0,0,.7)]" style={{ wordBreak: 'keep-all' }}>{game.intro}</p>}
-        {/* 점멸 상태 라벨 */}
-        <p className={`arcade-blink mt-3 font-pixel text-[14px] tracking-[0.3em] ${
-          coinState === 'ready'
-            ? 'text-[#4cff6a] drop-shadow-[0_0_6px_rgba(76,255,106,0.7)]'
-            : 'text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.7)]'
-        }`}>
-          {coinState === 'ready' ? 'PRESS START' : 'INSERT COIN'}
-        </p>
         <div className="mt-2 flex items-center gap-3">
           {coinState !== 'ready' ? (
             <button
