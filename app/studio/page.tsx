@@ -167,14 +167,9 @@ export default function StudioPage() {
 
       {/* 히어로 — 홈 첫 화면과 같은 느낌 (배경 영상 + 헤드라인 + 프롬프트 카드) */}
       <section className="relative overflow-hidden min-h-[78svh] flex flex-col bg-white">
-        <video className="absolute inset-0 w-full h-full object-cover opacity-55" autoPlay muted loop playsInline preload="auto" aria-hidden>
-          <source src="/hero-bg-2.mp4" type="video/mp4" />
-        </video>
-        <div className="hero-shield absolute inset-0" aria-hidden />
+        {/* 배경 — 영상·움직이는 글로우 대신 가벼운 정적 그라데이션 (스튜디오는 가볍게) */}
+        <div className="absolute inset-0" aria-hidden style={{ background: 'radial-gradient(60% 50% at 20% 20%, rgba(37,99,235,0.12), transparent 70%), radial-gradient(55% 45% at 85% 30%, rgba(6,182,212,0.12), transparent 70%), linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%)' }} />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#fcfaf5]" aria-hidden />
-        <div className="hero-glow hero-glow-blue" aria-hidden />
-        <div className="hero-glow hero-glow-green" aria-hidden />
-        <div className="hero-glow hero-glow-yellow" aria-hidden />
 
         <div className="relative flex-1 w-full max-w-7xl mx-auto px-6 flex flex-col items-center justify-center text-center py-12">
           <h1 className="hero-chat-in text-3xl md:text-5xl leading-[1.15] tracking-tight font-extrabold text-[#241f17] mb-5">

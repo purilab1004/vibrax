@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { playSrc } from '@/lib/game-src'
+import { playSrc, IOS_IFRAME_FIT } from '@/lib/game-src'
 import { useNetBridge } from '@/lib/net/useNetBridge'
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
@@ -416,6 +416,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                     className={`absolute inset-0 w-full h-full border-0 ${isPending ? 'opacity-0 pointer-events-none' : warp === 'out' ? 'teleport-out' : warp === 'hold' ? 'opacity-0' : warp === 'in' ? 'teleport-in' : ''}`}
                     allow="fullscreen; autoplay"
                     title={g.title}
+                    style={IOS_IFRAME_FIT}
                     ref={el => { if (!isPending) frameRef.current = el }}
                     onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage(hostMsg(), '*'); if (captureCleanup.current) e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, ...capOpts() }, '*') } catch { /* */ } }}
                     onError={(e) => { const f = e.currentTarget; if (f.src !== g.play_url) f.src = g.play_url }}

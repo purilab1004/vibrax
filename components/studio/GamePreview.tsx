@@ -165,7 +165,7 @@ published ? (
               <span className="absolute bottom-2 right-3 text-[10.5px] text-white/50 tabular-nums">{fw}×{fh}{scale < 1 ? ` · ${Math.round(scale * 100)}%` : ''}</span>
             </div>
           ) : (
-            <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" {...(frameSrc ? { src: frameSrc } : { srcDoc: html })} className="absolute inset-0 w-full h-full border-0" title="game preview" />
+            <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" {...(frameSrc ? { src: frameSrc } : { srcDoc: html })} className="absolute inset-0 w-full h-full border-0" title="game preview" style={{ width: '1px', minWidth: '100%' }} />
           )
         ) : (
           <div className="w-full h-full flex items-center justify-center">

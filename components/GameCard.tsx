@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic'
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { playSrc } from '@/lib/game-src'
+import { playSrc, IOS_IFRAME_FIT } from '@/lib/game-src'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -905,6 +905,7 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
                 ref={playFrameRef}
                 src={playSrc(game)}
                 className="w-full h-full border-0"
+                style={IOS_IFRAME_FIT}
                 allow="fullscreen; autoplay"
                 title={game.title}
                 onLoad={focusFrame}

@@ -8,3 +8,6 @@ export function playSrc(game: { id: string; play_url: string }): string {
     return `/play/ext/${game.id}`
   } catch { return game.play_url }
 }
+
+/** iOS Safari/WebView 는 iframe 을 내용(예: 400px 캔버스) 크기만큼 넓혀 버려 화면 오른쪽이 잘린다 — width:1px + min-width:100% 로 컨테이너 폭에 고정 */
+export const IOS_IFRAME_FIT = { width: '1px', minWidth: '100%' } as const
