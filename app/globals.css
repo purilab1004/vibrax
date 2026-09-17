@@ -1011,3 +1011,6 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 @keyframes liveWave { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
 .live-badge { animation: liveBeat 1.6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .live-wave, .live-badge { animation: none } }
+.live-ring-pulse { animation: liveRingPulse 1.6s ease-out infinite; }
+@keyframes liveRingPulse { 0% { transform: scale(.96); opacity: .9 } 100% { transform: scale(1.18); opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .live-ring-pulse { animation: none } }

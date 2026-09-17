@@ -2,6 +2,8 @@
 // 게임 내 BJ 박스 — 제작자의 폰 카메라 방송(WebRTC) 수신
 import { useEffect, useRef, useState } from 'react'
 import { getSoundPref, setSoundPref } from '@/lib/live/soundPref'
+import { SoundIconButton } from '@/components/FeedSoundButton'
+import { setFeedBgmMuted } from '@/lib/feedBgm'
 import { createClient } from '@/lib/supabase/client'
 import { startViewer, type ViewerState } from '@/lib/live/viewer'
 import type { LiveInfo } from '@/lib/broadcast'
@@ -9,7 +11,9 @@ import { localCamStream } from '@/lib/live/camLive'
 
 /** 링크(YouTube/Twitch) 방송 임베드 */
 // 스피커 필 — 꺼짐: '소리 켜기' 라벨, 켜짐: 움직이는 이퀄라이저 + 볼륨 슬라이더(선택). 유리 질감의 알약 모양
-export function SoundPill({ muted, onToggle, volume, onVolume, className = '' }: { muted: boolean; onToggle: () => void; volume?: number; onVolume?: (v: number) => void; className?: string }) {
+export function SoundPill({ muted, onToggle, volume, onVolume, className = '', compact = false }: { muted: boolean; onToggle: () => void; volume?: number; onVolume?: (v: number) => void; className?: string; compact?: boolean }) {
+  // 쇼츠에선 모든 카드와 같은 둥근 스피커 버튼
+  if (compact) return <SoundIconButton muted={muted} onToggle={() => { onToggle(); setFeedBgmMuted(!muted ? true : false) }} className={className} />
   return (
     <div className={`absolute z-10 flex items-center gap-1 rounded-full bg-black/35 backdrop-blur-xl border border-white/20 shadow-[0_4px_16px_rgba(0,0,0,.35)] pl-1.5 pr-2 py-1 text-white ${className}`}>
       <button onClick={onToggle} aria-label={muted ? '소리 켜기' : '음소거'} className="flex items-center gap-1.5 h-7 pl-1 pr-1.5 rounded-full active:scale-95 transition-transform">
@@ -34,7 +38,7 @@ export function SoundPill({ muted, onToggle, volume, onVolume, className = '' }:
   )
 }
 
-export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true, controls = false, controlsClass = 'top-3 right-3' }: { src: string; aspect?: number; cover?: boolean; badge?: boolean; controls?: boolean; controlsClass?: string }) {
+export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true, controls = false, controlsClass = 'top-3 right-3', compact = false }: { src: string; aspect?: number; cover?: boolean; badge?: boolean; controls?: boolean; controlsClass?: string; compact?: boolean }) {
   // 스피커 — YouTube 는 postMessage 로 mute/unMute/setVolume, Twitch/기타는 src 의 muted 파라미터를 바꿔 다시 로드
   const iframeRef = useRef<HTMLIFrameElement>(null)
   // 시작 상태는 공용 스피커 설정을 따른다 — 한 번 켜면 다른 영상도 켜진 채로 나온다
@@ -121,7 +125,7 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
     <div ref={(n) => { (ref as React.MutableRefObject<HTMLDivElement | null>).current = n; (boxRef as React.MutableRefObject<HTMLDivElement | null>).current = n }} className="relative w-full h-full bg-black overflow-hidden">
       {/* controls 모드(카드)에선 iframe 클릭/호버를 막아 유튜브 자체 UI 가 뜨지 않게 — 우리 스피커 버튼만 노출 */}
       <iframe ref={iframeRef} src={liveSrc} onLoad={() => { if (isYT) listen() }} className={`${cover && box ? '' : 'absolute inset-0 w-full h-full'} ${controls ? 'pointer-events-none' : ''}`} style={style} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
-      {controls && <SoundPill muted={muted} onToggle={toggleMute} volume={isYT ? volume : undefined} onVolume={isYT ? changeVolume : undefined} className={controlsClass} />}
+      {controls && <SoundPill compact={compact} muted={muted} onToggle={toggleMute} volume={isYT ? volume : undefined} onVolume={isYT ? changeVolume : undefined} className={controlsClass} />}
       {badge && (
         <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[9px] px-2 py-0.5 tracking-widest pointer-events-none">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
@@ -132,8 +136,8 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
 }
 
 /** 라이브 종류에 따라 카메라(WebRTC) 또는 링크 임베드 */
-export function LiveView({ live, cover = false, badge = true, controls = false, controlsClass }: { live: LiveInfo; cover?: boolean; badge?: boolean; controls?: boolean; controlsClass?: string }) {
-  return live.kind === 'camera' ? <CameraBjView hostId={live.hostId} badge={badge} controls={controls} controlsClass={controlsClass} /> : <LinkLiveView src={live.src} aspect={live.aspect} cover={cover} badge={badge} controls={controls} controlsClass={controlsClass} />
+export function LiveView({ live, cover = false, badge = true, controls = false, controlsClass, compact = false }: { live: LiveInfo; cover?: boolean; badge?: boolean; controls?: boolean; controlsClass?: string; compact?: boolean }) {
+  return live.kind === 'camera' ? <CameraBjView hostId={live.hostId} badge={badge} controls={controls} controlsClass={controlsClass} /> : <LinkLiveView src={live.src} aspect={live.aspect} cover={cover} badge={badge} controls={controls} controlsClass={controlsClass} compact={compact} />
 }
 
 export default function CameraBjView({ hostId, badge = true, controls = false, controlsClass = 'top-3 right-3', channel = 'cam', fit = 'cover' }: { hostId: string; badge?: boolean; controls?: boolean; controlsClass?: string; channel?: 'cam' | 'screen'; fit?: 'cover' | 'contain' }) {

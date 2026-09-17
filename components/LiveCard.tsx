@@ -64,34 +64,27 @@ export default function LiveCard({ live, game: given, layout }: Props) {
               <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#0f172a]" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
-            {/* 가운데 — LIVE 배지 + 프로필(아바타·이름) 크게 (썸네일이 복잡해도 읽히게 가운데를 어둡게) */}
+            {/* 가운데 — 프로필(빨간 링 + LIVE 태그)·이름 크게 (썸네일이 복잡해도 읽히게 가운데를 어둡게) */}
             <div aria-hidden className="absolute inset-0" style={{ background: 'radial-gradient(60% 38% at 50% 50%, rgba(0,0,0,.55), transparent 100%)' }} />
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center text-white px-6">
-              {/* LIVE 배지 — 주황→핑크→보라 그라데이션 + 방송 아이콘 ((•)) */}
-              <span className="live-badge mb-3 inline-flex items-center gap-2 rounded-[14px] px-4 py-1.5 text-white font-black text-[26px] leading-none tracking-wide bg-[linear-gradient(100deg,#ff6a1a_0%,#ff2d55_45%,#7b2ff7_100%)] shadow-[0_10px_28px_-8px_rgba(255,45,85,.7)]">
-                <svg viewBox="0 0 32 24" className="w-8 h-6" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden>
-                  <circle cx="16" cy="12" r="3.2" fill="currentColor" stroke="none" />
-                  <path className="live-wave" d="M10.5 6.5a8 8 0 0 0 0 11M21.5 6.5a8 8 0 0 1 0 11" />
-                  <path className="live-wave live-wave-2" d="M6 3a13 13 0 0 0 0 18M26 3a13 13 0 0 1 0 18" />
-                </svg>
-                LIVE
-              </span>
+              {/* 틱톡형 — 빨간 링(펄스) + 링 아래에 걸친 작은 빨간 LIVE 태그 */}
               <span className="relative">
-                <span aria-hidden className="absolute -inset-2 rounded-full live-halo" />
-                <span className="relative block w-[92px] h-[92px] rounded-full p-[4px] bg-[conic-gradient(from_0deg,#ff6a1a,#ff2d55,#7b2ff7,#ff2d55,#ff6a1a)] live-ring">
-                  <span className="block w-full h-full rounded-full overflow-hidden bg-[#1f1b2e] ring-2 ring-black/40">
+                <span aria-hidden className="absolute -inset-1.5 rounded-full border-2 border-[#fe2c55] live-ring-pulse" />
+                <span className="relative block w-[96px] h-[96px] rounded-full p-[3px] bg-[#fe2c55]">
+                  <span className="block w-full h-full rounded-full overflow-hidden bg-[#1f1b2e] ring-[3px] ring-black/60">
                     {live.hostAvatarUrl
                       // eslint-disable-next-line @next/next/no-img-element
                       ? <img src={live.hostAvatarUrl} alt="" className="w-full h-full object-cover object-top" />
-                      : <span className="w-full h-full flex items-center justify-center text-[34px] font-extrabold">{live.hostName.charAt(0).toUpperCase()}</span>}
+                      : <span className="w-full h-full flex items-center justify-center text-[36px] font-extrabold">{live.hostName.charAt(0).toUpperCase()}</span>}
                   </span>
                 </span>
+                <span className="absolute left-1/2 -bottom-2 -translate-x-1/2 rounded-[5px] bg-[#fe2c55] px-2 py-[2px] text-[12px] font-extrabold tracking-wide text-white ring-2 ring-black/70 leading-none">LIVE</span>
               </span>
-              <p className={`${titleFont.className} mt-3 text-[36px] leading-[1.1] text-center max-w-full truncate`} style={{ textShadow: '0 3px 14px rgba(0,0,0,.65)' }}>{live.hostName}</p>
+              <p className={`${titleFont.className} mt-4 text-[36px] leading-[1.1] text-center max-w-full truncate`} style={{ textShadow: '0 3px 14px rgba(0,0,0,.65)' }}>{live.hostName}</p>
             </div>
           </div>
         ) : near ? (
-          <LiveView live={live} cover badge={false} controls controlsClass={layout === 'feed-mobile' ? 'left-3 top-[calc(3.1rem+var(--st,0px))]' : 'left-3 top-12'} />
+          <LiveView live={live} cover badge={false} controls compact controlsClass={layout === 'feed-mobile' ? 'left-3 top-[calc(3.1rem+var(--st,0px))]' : 'left-3 top-12'} />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-white/40 font-pixel text-[10px] tracking-widest">{isVideo ? 'VIDEO' : 'LIVE'}</div>
         )}
