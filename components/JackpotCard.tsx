@@ -11,6 +11,7 @@ import { titleFont } from '@/lib/fonts'
 import { useIsNativeApp } from '@/lib/isNativeApp'
 import CardRail from '@/components/CardRail'
 import { playCoinSound } from '@/components/GameCard'
+import { useFeedTrack } from '@/lib/feedBgm'
 
 export interface Jackpot {
   id: string; title: string; description: string | null; image_url: string | null; entry_cost: number; ends_at: string; status: string; pool: number; entries: number
@@ -106,6 +107,7 @@ export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Ja
   const [msg, setMsg] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const [inView, setInView] = useState(false)
+  useFeedTrack(rootRef, 'reward', layout !== 'preview')   // 리워드 배경음
   useEffect(() => {
     const el = rootRef.current; if (!el) return
     const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setInView(true) }, { threshold: 0.55 })

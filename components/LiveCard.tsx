@@ -10,6 +10,7 @@ import type { LiveEntry } from '@/lib/live/useLiveBroadcasts'
 import { titleFont } from '@/lib/fonts'
 import { countryFlag, flagRingStyle } from '@/lib/country'
 import { useIsNativeApp } from '@/lib/isNativeApp'
+import { useFeedTrack } from '@/lib/feedBgm'
 const LiveView = dynamic(() => import('@/components/CameraBjView').then((m) => m.LiveView), { ssr: false })
 
 interface Props {
@@ -33,6 +34,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
   const [copied, setCopied] = useState(false)
   // 플레이어(iframe/WebRTC)는 카드가 화면 근처(±1화면)에 올 때만 마운트 — 모바일에서 iframe 여러 개로 튕기는 것 방지 + 보이는 것부터 빨리 로드
   const rootRef = useRef<HTMLDivElement>(null)
+  useFeedTrack(rootRef, null)   // 라이브·영상 카드에선 쇼츠 배경음을 끈다(영상 소리와 겹치지 않게)
   const [near, setNear] = useState(false)
   useEffect(() => {
     const el = rootRef.current

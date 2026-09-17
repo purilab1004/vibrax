@@ -21,6 +21,7 @@ import { countryFlag, flagRingStyle } from '@/lib/country'
 import ThumbBackdrop from '@/components/home/ThumbBackdrop'
 import { useDominantHue } from '@/lib/dominantHue'
 import PlayModeBadge from '@/components/PlayModeBadge'
+import { useFeedTrack } from '@/lib/feedBgm'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
 export default function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; golden?: boolean; rank?: number }) {
@@ -29,6 +30,16 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
   const supabase = createClient()
   const isApp = useIsNativeApp()
   const [coinState, setCoinState] = useState<'idle' | 'drop' | 'ready'>('idle')
+  const rootRef = useRef<HTMLDivElement>(null)
+  useFeedTrack(rootRef, game.genre)   // 카테고리별 배경음
+  // 썸네일 공개는 이 화면에서 코인을 넣었을 때만 — 스와이프로 카드가 화면을 벗어나면 리셋(제목·캐릭터 복귀, 넣은 코인 티켓은 유지)
+  const [revealedRaw, setRevealed] = useState(false)
+  useEffect(() => {
+    const el = rootRef.current; if (!el) return
+    const io = new IntersectionObserver(([e]) => { if (!e.isIntersecting) setRevealed(false) }, { threshold: 0 })
+    io.observe(el); return () => io.disconnect()
+  }, [])
+  const revealed = revealedRaw && !!game.thumbnail_url
 
   const creatorName = game.profiles?.agent_name ?? game.profiles?.username ?? 'unknown'
   const avatarUrl = avatarPreviewUrl(game.profiles?.avatar_config)
@@ -44,20 +55,20 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
     e.stopPropagation()
     // 클릭 즉시 잠금 + 상태 전환 — 네트워크 대기 중 두 번 눌러도 한 번만 차감
     if (coinLock.current || coinState !== 'idle') return
-    if (hasCoinTicket(game.id)) { setCoinState('ready'); return }
+    if (hasCoinTicket(game.id)) { setCoinState('ready'); setRevealed(true); return }
     coinLock.current = true
-    setCoinState('drop')
+    setCoinState('drop'); setRevealed(true)
     // 소리는 탭한 그 순간(제스처 안)에 — await 뒤로 미루면 iOS 에서 재생이 막힐 수 있다
     playCoinSound()
     try {
       // 로컬 세션으로 로그인 판정(네트워크 왕복 없음) → 즉시 반응
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) { setCoinState('idle'); router.push('/login?redirect=/'); return }
+      if (!session?.user) { setCoinState('idle'); setRevealed(false); router.push('/login?redirect=/'); return }
       const { error } = await supabase.rpc('spend_credits_for_game', { p_game_id: game.id } as never)
       if (error) {
         if (/insufficient_vcoin|INSUFFICIENT_CREDITS/.test(error.message)) {
           alert(T.games.insufficientCoin)
-          setCoinState('idle')
+          setCoinState('idle'); setRevealed(false)
           return
         }
         console.warn('vcoin spend skipped:', error.message)
@@ -67,8 +78,6 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
     setTimeout(() => setCoinState('ready'), 900)
   }
 
-  // 코인을 넣는 순간 제목·캐릭터가 빠지고 썸네일이 드러난다 (썸네일 없는 게임은 그대로)
-  const revealed = coinState !== 'idle' && !!game.thumbnail_url
   const hue = useDominantHue(game.thumbnail_url) // 제목 색 = 썸네일 주요 색의 보색(배경과 대비되며 어울림)
   const startGame = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -182,6 +191,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
 
   return (
     <div
+      ref={rootRef}
       className="feed-snap grain relative h-[100svh] overflow-hidden"
       style={auroraOf(game.id, golden)}
     >

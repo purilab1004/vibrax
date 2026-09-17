@@ -25,6 +25,7 @@ import ThumbBackdrop from '@/components/home/ThumbBackdrop'
 import { useDominantHue } from '@/lib/dominantHue'
 import PlayModeBadge from '@/components/PlayModeBadge'
 import { recordShare } from '@/lib/shares'
+import { useFeedBgmHost, useFeedTrack, useFeedBgmMuted, setFeedBgmMuted } from '@/lib/feedBgm'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
 function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number }) {
@@ -33,28 +34,37 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
   const supabase = createClient()
   const [coinState, setCoinState] = useState<'idle' | 'drop' | 'ready'>('idle')
   const [copied, setCopied] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  useFeedTrack(rootRef, game.genre)   // 카테고리별 배경음
+  // 썸네일 공개는 이 화면에서 코인을 넣었을 때만 — 스와이프로 카드가 화면을 벗어나면 리셋(제목·캐릭터 복귀, 넣은 코인 티켓은 유지)
+  const [revealedRaw, setRevealed] = useState(false)
+  useEffect(() => {
+    const el = rootRef.current; if (!el) return
+    const io = new IntersectionObserver(([e]) => { if (!e.isIntersecting) setRevealed(false) }, { threshold: 0 })
+    io.observe(el); return () => io.disconnect()
+  }, [])
+  const revealed = revealedRaw && !!game.thumbnail_url
 
   const creatorName = game.profiles?.agent_name ?? game.profiles?.username ?? 'unknown'
   const avatarUrl = avatarPreviewUrl(game.profiles?.avatar_config)
   const avatarFramesV = avatarFrames(game.profiles?.avatar_config)
   const hue = useDominantHue(game.thumbnail_url)
-  const revealed = coinState !== 'idle' && !!game.thumbnail_url // 코인 넣으면 제목·캐릭터 빠지고 썸네일 공개
   const teaser = lang === 'en'
     ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
     : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
 
   const insertCoin = async () => {
     if (coinState !== 'idle') return
-    if (hasCoinTicket(game.id)) { setCoinState('ready'); return }
+    if (hasCoinTicket(game.id)) { setCoinState('ready'); setRevealed(true); return }
     playCoinSound() // 탭 제스처 안에서 바로 (await 뒤면 iOS 가 막을 수 있음)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login?redirect=/games'); return }
-    setCoinState('drop')
+    setCoinState('drop'); setRevealed(true)
     const { error } = await supabase.rpc('spend_credits_for_game', { p_game_id: game.id } as never)
     if (error) {
       if (/insufficient_vcoin|INSUFFICIENT_CREDITS/.test(error.message)) {
         alert(T.games.insufficientCoin)
-        setCoinState('idle')
+        setCoinState('idle'); setRevealed(false)
         return
       }
       console.warn('vcoin spend skipped:', error.message)
@@ -79,7 +89,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
   }
 
   return (
-    <div className="h-full snap-start [scroll-snap-stop:always] flex items-center justify-center gap-5">
+    <div ref={rootRef} className="h-full snap-start [scroll-snap-stop:always] flex items-center justify-center gap-5">
       {/* 세로 카드 */}
       <div
         className="grain relative h-[96%] aspect-[9/15] rounded-2xl overflow-hidden shadow-[0_18px_60px_rgba(36,31,23,0.22)]"
@@ -210,8 +220,22 @@ export type FeedFilter = 'all' | 'video' | 'game' | 'reward' // reward = 코인 
 
 // filter: all = 게임 사이에 라이브를 끼워 넣기, video = 라이브만, game = 게임만. shuffleLives = 라이브 순서를 랜덤으로
 // pageScroll: 데스크톱에서 별도 스크롤 박스 대신 페이지 스크롤로 한 장씩 스냅 (홈 — 프롬프트 섹션을 넘기면 쇼츠 섹션으로 이어진다)
+// 쇼츠 배경음 켜기/끄기 (기기에 기억)
+function BgmToggle({ muted, className = '' }: { muted: boolean; className?: string }) {
+  return (
+    <button onClick={() => setFeedBgmMuted(!muted)} aria-label={muted ? '배경음 켜기' : '배경음 끄기'} title={muted ? '배경음 켜기' : '배경음 끄기'} className={`rounded-full flex items-center justify-center transition-colors ${className}`}>
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 9v6h4l5 4V5L8 9H4z" />
+        {muted ? <path d="M22 9l-6 6M16 9l6 6" /> : <path d="M16.5 8.5a5 5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13" />}
+      </svg>
+    </button>
+  )
+}
+
 export default function GamesBrowse({ games: input, filter = 'all', shuffleLives = false, pageScroll = false, onOverscrollTop }: { games: GameWithCreator[]; filter?: FeedFilter; shuffleLives?: boolean; pageScroll?: boolean; onOverscrollTop?: () => void }) {
   const feedRef = useRef<HTMLDivElement>(null)
+  useFeedBgmHost()   // 쇼츠 배경음 — 첫 입력에서 재생 시작, 피드를 떠나면 정지
+  const bgmMuted = useFeedBgmMuted()
   // 방송 카드 — 게임 카드와 별개로 피드에 끼워 넣는다
   const liveMap = useLiveBroadcasts()
   const [seed] = useState(() => String(Math.random()))
@@ -292,6 +316,7 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
       )}
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">
+        {items.length > 0 && <BgmToggle muted={bgmMuted} className="fixed right-3 top-[34%] z-40 w-10 h-10 bg-black/40 backdrop-blur text-white border border-white/20" />}
         {items.map((it) => it.kind === 'jackpot'
           ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-mobile" />
           : it.kind === 'live'
@@ -318,6 +343,7 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
         </div>
         {/* 위/아래 화살표 — 다음/이전 게임 */}
         <div className={`${pageScroll ? 'fixed' : 'absolute'} right-2 lg:right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30`}>
+          {items.length > 0 && <BgmToggle muted={bgmMuted} className="w-11 h-11 bg-white border border-[#ebe4d6] shadow-[0_4px_14px_rgba(36,31,23,0.12)] text-[#6b6152] hover:text-[#2563eb] hover:border-[#2563eb]/50 mb-2" />}
           {([[-1, 'M6 15l6-6 6 6'], [1, 'M6 9l6 6 6-6']] as const).map(([dir, d]) => (
             <button
               key={dir}
