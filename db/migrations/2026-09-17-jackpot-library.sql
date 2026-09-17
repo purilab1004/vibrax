@@ -137,4 +137,4 @@ create index if not exists media_assets_designer_idx on public.media_assets (des
 -- ─────────────────────────────────────────────────────────────────────────────
 alter table public.credit_ledger drop constraint if exists credit_ledger_reason_check;
 alter table public.credit_ledger add constraint credit_ledger_reason_check
-  check (reason in ('purchase','generation','refund','signup_bonus','admin_adjust','purchase_refund','chargeback','designer_payout'));
+  check (reason in ('purchase','generation','refund','signup_bonus','admin_adjust','purchase_refund','chargeback','api','designer_payout'));
