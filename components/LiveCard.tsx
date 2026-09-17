@@ -64,9 +64,23 @@ export default function LiveCard({ live, game: given, layout }: Props) {
               <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#0f172a]" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
-            <div className="absolute inset-x-0 top-[38%] flex flex-col items-center gap-2 text-white">
-              <span className="flex items-center gap-2 rounded-full bg-[#e11d48] px-4 py-1.5 font-pixel text-[11px] tracking-widest shadow-[0_0_24px_rgba(225,29,72,.7)]"><span className="w-2 h-2 rounded-full bg-white animate-pulse" />LIVE</span>
-              <span className="text-[13px] font-semibold drop-shadow">{live.screen ? `${live.hostName} 님이 플레이 중 — 들어가서 관전` : `${live.hostName} 님이 방송 중`}</span>
+            {/* 가운데 — 프로필(아바타·이름) 크게 + 그 아래 큰 LIVE (썸네일이 복잡해도 읽히게 가운데를 어둡게) */}
+            <div aria-hidden className="absolute inset-0" style={{ background: 'radial-gradient(60% 38% at 50% 50%, rgba(0,0,0,.55), transparent 100%)' }} />
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center text-white px-6">
+              <span className="relative">
+                <span aria-hidden className="absolute -inset-2 rounded-full live-halo" />
+                <span className="relative block w-[92px] h-[92px] rounded-full p-[4px] bg-[conic-gradient(from_0deg,#ff2d55,#ff9500,#ff2d55,#bf5af2,#ff2d55)] live-ring">
+                  <span className="block w-full h-full rounded-full overflow-hidden bg-[#1f1b2e] ring-2 ring-black/40">
+                    {live.hostAvatarUrl
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={live.hostAvatarUrl} alt="" className="w-full h-full object-cover object-top" />
+                      : <span className="w-full h-full flex items-center justify-center text-[34px] font-extrabold">{live.hostName.charAt(0).toUpperCase()}</span>}
+                  </span>
+                </span>
+              </span>
+              <p className={`${titleFont.className} mt-3 text-[36px] leading-[1.1] text-center max-w-full truncate`} style={{ textShadow: '0 3px 14px rgba(0,0,0,.65)' }}>{live.hostName}</p>
+              <p className="live-big mt-1 text-[64px] leading-none font-black italic tracking-tight">LIVE</p>
+              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur px-3 py-1 text-[12px] font-semibold text-white/90"><span className="w-2 h-2 rounded-full bg-[#ff2d55] animate-pulse" />{live.screen ? '플레이 중 — 들어가서 관전' : '지금 방송 중'}</span>
             </div>
           </div>
         ) : near ? (

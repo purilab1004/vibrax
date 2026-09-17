@@ -6,7 +6,7 @@ import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { loadAvatarConfig, saveAvatarConfig } from '@/lib/jeumto/storage'
 import { emptyConfig, type AvatarConfig } from '@/lib/jeumto/config'
-import { startHost, type HostHandle } from '@/lib/live/host'
+import { startCamLive, stopCamLive, getCamLive, subscribeCamLive } from '@/lib/live/camLive'
 import { toEmbed, type LinkBroadcast } from '@/lib/broadcast'
 import type { Game } from '@/lib/supabase/types'
 
@@ -34,8 +34,21 @@ export default function BroadcastPage() {
   const [err, setErr] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const hostRef = useRef<HostHandle | null>(null)
-  const wakeRef = useRef<{ release(): Promise<void> } | null>(null)
+  // 방송 중인 카메라는 앱 전역(camLive)에 있다 — 게임 페이지에 다녀와도 이어지고, 돌아오면 다시 붙인다
+  useEffect(() => {
+    const sync = () => {
+      const cur = getCamLive()
+      setOnAir(!!cur); setViewers(cur?.viewers ?? 0)
+      if (cur && videoRef.current && videoRef.current.srcObject !== cur.stream) { videoRef.current.srcObject = cur.stream; videoRef.current.muted = true }
+    }
+    const t = setTimeout(() => {
+      const cur = getCamLive()
+      if (cur) { setTab('camera'); setFacing(cur.facing); if (cur.gameId) setGameId(cur.gameId) }
+      sync()
+    }, 0)
+    const unsub = subscribeCamLive(sync)
+    return () => { clearTimeout(t); unsub() }
+  }, [])
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -66,7 +79,7 @@ export default function BroadcastPage() {
 
   useEffect(() => {
     if (!onAir) return
-    const t0 = Date.now()
+    const t0 = getCamLive()?.startedAt ?? Date.now()
     const iv = setInterval(() => setElapsed(Math.floor((Date.now() - t0) / 1000)), 1000)
     return () => clearInterval(iv)
   }, [onAir])
@@ -125,44 +138,32 @@ export default function BroadcastPage() {
         audio: { echoCancellation: true, noiseSuppression: true },
       })
       if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.muted = true }
-      hostRef.current = startHost(supabase, user.id, stream, setViewers)
-      const e = await setBroadcast(true)
-      if (e) throw new Error(e)
-      setOnAir(true)
-      try { wakeRef.current = await (navigator as Navigator & { wakeLock?: { request(t: 'screen'): Promise<{ release(): Promise<void> }> } }).wakeLock?.request('screen') ?? null } catch { /* ignore */ }
-    } catch (e) {
-      hostRef.current?.stop(); hostRef.current = null
-      setErr(e instanceof Error ? e.message : '카메라를 켤 수 없어요')
-    }
-  }
-  const stop = async () => {
-    hostRef.current?.stop(); hostRef.current = null
-    if (videoRef.current) videoRef.current.srcObject = null
-    wakeRef.current?.release().catch(() => {}); wakeRef.current = null
-    setOnAir(false); setViewers(0)
-    await setBroadcast(false)
-  }
-  useEffect(() => () => { hostRef.current?.stop() }, [])
-  // 페이지 떠나면(닫기/새로고침) 방송 OFF 로 — 이후 시청자에겐 '방송 준비 중' 대신 아바타가 나오도록
-  useEffect(() => {
-    if (!onAir || !user) return
-    const h = () => {
+      // 탭을 닫으면(pagehide) 방송 OFF — supabase-js 대신 REST keepalive (세션 토큰은 미리 잡아 둔다)
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess.session?.access_token
       const base = config ?? emptyConfig()
-      const body = JSON.stringify({ avatar_config: { ...base, broadcast: { ...(base.broadcast ?? {}), mode: 'camera', url: base.broadcast?.url ?? '', on: false, gameId: gameId || null } } })
-      // sendBeacon 은 supabase-js 를 못 쓰니 REST 로 직접 (세션 토큰 필요) — 최선의 노력
-      supabase.auth.getSession().then(({ data }) => {
-        const token = data.session?.access_token
+      const offBody = JSON.stringify({ avatar_config: { ...base, broadcast: { ...(base.broadcast ?? {}), mode: 'camera', url: base.broadcast?.url ?? '', on: false, gameId: gameId || null } } })
+      const onPageHide = () => {
         if (!token) return
         fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}`, {
           method: 'PATCH', keepalive: true,
           headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-          body,
+          body: offBody,
         }).catch(() => {})
-      })
+      }
+      await startCamLive(supabase, user.id, stream, { gameId: gameId || null, facing, onPageHide })
+      const e = await setBroadcast(true)
+      if (e) throw new Error(e)
+    } catch (e) {
+      stopCamLive()
+      setErr(e instanceof Error ? e.message : '카메라를 켤 수 없어요')
     }
-    window.addEventListener('pagehide', h)
-    return () => window.removeEventListener('pagehide', h)
-  }, [onAir, user, config, supabase, gameId])
+  }
+  const stop = async () => {
+    stopCamLive()
+    if (videoRef.current) videoRef.current.srcObject = null
+    await setBroadcast(false)
+  }
 
   // 게임 검색 (제목 부분 일치) — 아무 게임이나 추천 게임으로 연결 가능
   useEffect(() => {
@@ -207,7 +208,7 @@ export default function BroadcastPage() {
           </span>
         )}
         {!onAir && (
-          <div className="absolute inset-0 overflow-y-auto flex flex-col items-center justify-center gap-4 px-8 py-6 text-center">
+          <div className="absolute inset-0 overflow-y-auto flex flex-col items-center gap-4 px-8 py-6 text-center [&>*:first-child]:mt-auto [&>*:last-child]:mb-auto">
             {tab === 'camera' ? (
               <p className="text-sm text-white/85 leading-relaxed">방송을 시작하면 <b>추천 게임 카드</b>에 이 카메라 영상이 나오고, 코인을 넣으면 그 게임을 바로 플레이해요.<br />게임 안에서도 AJ 아바타 대신 방송이 BJ 자리에 나와요. 이 화면을 켜 둔 동안만 방송됩니다.</p>
             ) : (
@@ -293,15 +294,15 @@ export default function BroadcastPage() {
         {onAir && gameId && (
           <>
             <span className="absolute top-3 right-3 max-w-[60%] truncate rounded-full bg-black/55 text-white/90 text-[11px] px-2.5 py-1">🎮 {games.find((g) => g.id === gameId)?.title}</span>
-            {/* 카메라를 켠 채 게임 하러 가기 — 새 탭에서 게임을 열면 내 플레이 화면 방송이 자동으로 켜지고, 시청자에겐 게임 화면 + 이 카메라(BJ 자리)가 함께 나온다. 이 탭은 닫지 말 것(카메라 송출) */}
+            {/* 카메라를 켠 채 같은 탭에서 게임으로 이동 — 카메라는 camLive(전역)에 있어 끊기지 않고, 게임 화면 BJ 자리에 내 카메라가 나온다 */}
             <div className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-1.5 px-4">
               <button
-                onClick={() => window.open(`/games/${gameId}?play=1`, '_blank', 'noopener')}
+                onClick={() => router.push(`/games/${gameId}?play=1`)}
                 className="rounded-full bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] font-bold text-[14px] px-6 py-3 shadow-[0_4px_0_#d18f00,0_8px_18px_rgba(0,0,0,.4)] active:translate-y-[2px] active:shadow-[0_2px_0_#d18f00]"
               >
-                🎮 이 게임 하러 가기 — 내 플레이도 라이브로
+                🎮 라이브 방송하면서 게임하기
               </button>
-              <p className="text-[10.5px] text-white/70 text-center">새 탭에서 게임이 열리고 플레이 화면 방송이 자동으로 켜져요. 이 화면은 닫지 마세요(카메라 송출 중)</p>
+              <p className="text-[10.5px] text-white/70 text-center">게임이 열려도 카메라 방송은 계속돼요 — 게임 화면 우측 하단(아바타 자리)에 내 카메라가 나와요</p>
             </div>
           </>
         )}

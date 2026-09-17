@@ -5,6 +5,7 @@ import { getSoundPref, setSoundPref } from '@/lib/live/soundPref'
 import { createClient } from '@/lib/supabase/client'
 import { startViewer, type ViewerState } from '@/lib/live/viewer'
 import type { LiveInfo } from '@/lib/broadcast'
+import { localCamStream } from '@/lib/live/camLive'
 
 /** 링크(YouTube/Twitch) 방송 임베드 */
 // 스피커 필 — 꺼짐: '소리 켜기' 라벨, 켜짐: 움직이는 이퀄라이저 + 볼륨 슬라이더(선택). 유리 질감의 알약 모양
@@ -149,6 +150,14 @@ export default function CameraBjView({ hostId, badge = true, controls = false, c
     return () => io.disconnect()
   }, [])
   useEffect(() => {
+    // 내가 방송 중인 카메라면(같은 탭에서 게임으로 이동) WebRTC 없이 로컬 스트림을 바로 — 내 목소리가 되울리지 않게 항상 음소거
+    const local = channel === 'cam' ? localCamStream(hostId) : null
+    if (local) {
+      const v = videoRef.current
+      if (v) { v.muted = true; v.srcObject = local; v.play().catch(() => {}) }
+      const t = setTimeout(() => setState('live'), 0)
+      return () => { clearTimeout(t); if (v) v.srcObject = null }
+    }
     const supabase = createClient()
     // 스트림이 붙으면 반드시 '음소거'로 먼저 재생(제스처 없이 소리 켠 자동재생은 막혀 화면이 검게 남는다) → 재생이 시작된 뒤 공용 스피커 설정이 켜져 있으면 소리를 켠다
     const stop = startViewer(supabase, hostId, (s) => {

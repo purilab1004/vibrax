@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import LogoMark from '@/components/LogoMark'
+import ProfileSideCard from '@/components/profile/ProfileSideCard'
 import type { Genre, StudioProject } from '@/lib/supabase/types'
 import { formatViewers } from '@/lib/format'
 
@@ -54,10 +55,10 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   const inStudio = pathname.startsWith('/studio')
   // 마이페이지에서는 프로필 섹션 메뉴만 보여준다
   const inProfile = pathname.startsWith('/profile')
-  const [profileHash, setProfileHash] = useState('#profile')
+  const [profileHash, setProfileHash] = useState('#games')
   useEffect(() => {
     if (!inProfile) return
-    const sync = () => setProfileHash(window.location.hash || '#profile')
+    const sync = () => setProfileHash(window.location.hash || '#games')
     sync(); window.addEventListener('hashchange', sync); return () => window.removeEventListener('hashchange', sync)
   }, [inProfile])
   // 관리자에서는 관리자 메뉴(대시보드/게임/블로그/공지/회원/신청/설정)를 보여준다
@@ -67,8 +68,8 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   // 본문(main/footer) 여백을 사이드바 폭과 동기화 — 접힘: 플로팅 버튼만 남으므로 0
   useEffect(() => {
     if (inAdmin) return  // 관리자는 AdminRail 이 --rail-w 를 관리
-    // 내정보는 관리자처럼 접이식 아이콘 레일(3.5rem, 호버 시 펼침)
-    document.documentElement.style.setProperty('--rail-w', inProfile ? '3.5rem' : open ? '14rem' : '0rem')
+    // 내정보는 항상 펼친 사이드바(프로필 섹션 + 메뉴)
+    document.documentElement.style.setProperty('--rail-w', inProfile ? '14rem' : open ? '14rem' : '0rem')
   }, [open, inAdmin, inProfile])
 
   useEffect(() => {
@@ -115,7 +116,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
     }`
   // 아이콘은 접힌 폭(w-14)과 같은 고정 컬럼에 가운데 정렬 → 접힌 상태에서 중앙에 보임
   const iconCol = 'w-14 shrink-0 flex items-center justify-center'
-  const label = `text-[13px] font-medium tracking-wider whitespace-nowrap pr-2 transition-opacity duration-200 ${inProfile ? 'opacity-0 group-hover/rail:opacity-100' : open ? 'opacity-100' : 'opacity-0'}`
+  const label = `text-[13px] font-medium tracking-wider whitespace-nowrap pr-2 transition-opacity duration-200 ${inProfile || open ? 'opacity-100' : 'opacity-0'}`
 
   // 접힘 — 좌상단 플로팅 'Menu' 버튼만
   if (inAdmin) return null  // 관리자는 다크 아이콘 레일(AdminRail) 사용
@@ -163,14 +164,14 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
 
   return (
     <aside
-      className={`hidden md:flex fixed top-0 left-0 bottom-0 z-[60] flex-col overflow-hidden border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm ${inProfile ? 'group/rail w-14 hover:w-56 transition-[width] duration-200 hover:shadow-[8px_0_24px_-12px_rgba(36,31,23,0.25)]' : 'w-56'}`}
+      className={`hidden md:flex fixed top-0 left-0 bottom-0 z-[60] flex-col overflow-hidden border-r border-[#ebe4d6] bg-[#fcfaf5]/95 backdrop-blur-sm w-56`}
       aria-label="sidebar"
     >
       {/* 로고 헤더 — 로고 + ← 닫기 버튼 */}
       <div className="flex items-center h-14 shrink-0">
         <Link href="/" onClick={(e) => { if (pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) } }} className="flex items-center min-w-0 hover:opacity-80 transition-opacity" title="Vibrexcup">
           <span className={iconCol}><LogoMark /></span>
-          <span className={`text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap ${inProfile ? 'opacity-0 group-hover/rail:opacity-100 transition-opacity' : ''}`}>
+          <span className={`text-lg font-extrabold tracking-tight text-[#241f17] whitespace-nowrap`}>
             {inAdmin ? <>vibrex<span className="text-[#2563eb]">admin</span></> : <>
               vibrex<span className="text-[#2563eb]">cup</span>
               <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
@@ -212,6 +213,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
             <span className={label}>{T.nav.home}</span>
           </Link>
           <div className="my-1 mx-3 border-t border-[#ebe4d6]/70" />
+          {inProfile && <ProfileSideCard />}
 
           {inStudio && (
             <>
@@ -254,12 +256,12 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
           {inProfile && (
             <>
               {([
-                ['#profile', '프로필', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" /></svg>],
+                ['#games', '내 게임', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
+                ['#profile', '프로필 설정', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" /></svg>],
                 ['#password', '비밀번호', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>],
                 ['#agent', 'AJ 외모', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="7" width="14" height="11" rx="2" /><path d="M12 7V4M9 12h.01M15 12h.01M9.5 15.5c.8.7 4.2.7 5 0" /></svg>],
                 ['#learning', 'AJ 학습', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 3l8 4-8 4-8-4 8-4Z" /><path d="M4 11l8 4 8-4M4 15l8 4 8-4" /></svg>],
                 ['#api', 'AJ API', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M8 7l-4 5 4 5M16 7l4 5-4 5M14 4l-4 16" /></svg>],
-                ['#games', '내 게임', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
                 ['#library', '갤러리', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 5h6l2 2h8v12H4z" /><path d="M4 9h16" /></svg>],
                 ['#billing', '결제 내역', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h3" /></svg>],
                 ['#notices', '공지사항', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M4 10v4l10 4V6L4 10Z" /><path d="M14 8.5a3.5 3.5 0 0 1 0 7M6.5 14.5V19" /></svg>],

@@ -61,12 +61,14 @@ interface EditingGame {
 }
 
 type Tab = 'profile' | 'password' | 'agent' | 'learning' | 'api' | 'games' | 'library' | 'collections' | 'billing' | 'notices'
-const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', api: 'AJ API', games: '내 게임', library: '갤러리', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
-const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'api', 'games', 'library', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
+// 순서 = 모바일 탭·사이드바 메뉴 순서 (내 게임이 첫 화면)
+const TAB_LABEL: Record<Tab, string> = { games: '내 게임', profile: '프로필 설정', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', api: 'AJ API', library: '갤러리', billing: '결제 내역', notices: '공지사항', collections: '좋아요·컬렉션' }
+const TAB_ICON: Record<Tab, string> = { games: '🎮', profile: '👤', password: '🔒', agent: '🤖', learning: '🧠', api: '🧩', library: '🖼️', billing: '💳', notices: '📢', collections: '💖' }
+const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'api', 'games', 'library', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'games' }
 
 export default function ProfilePage() {
   // 사이드 메뉴 탭 — 해시(#games 등)에 따라 해당 섹션만 표시 (스크롤 아님)
-  const [tab, setTab] = useState<Tab>('profile')
+  const [tab, setTab] = useState<Tab>('games')
   const [creditBalance, setCreditBalance] = useState<number | null>(null)
   const [vcoinBalance, setVcoinBalance] = useState<number | null>(null)
   useEffect(() => {
@@ -223,33 +225,30 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-6 sm:space-y-8">
-      {/* 헤더 — 프로필 탭에서만 노출 */}
-      {tab === 'profile' && (
-      <div className="relative overflow-hidden rounded-3xl bg-[#171b26] text-white shadow-[0_24px_60px_-28px_rgba(23,27,38,0.6)]">
-        <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-24 -left-10 w-72 h-72 rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.55),transparent)] blur-2xl" /><div className="absolute -bottom-28 right-10 w-80 h-80 rounded-full bg-[radial-gradient(closest-side,rgba(245,158,11,0.35),transparent)] blur-2xl" /><div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '18px 18px' }} /></div>
-        <div className="relative px-5 md:px-8 py-5 md:py-6 flex items-center gap-4 sm:gap-5 flex-wrap">
-          <span className="avatar-ring shrink-0"><span className="avatar-wave w-20 h-20 rounded-full overflow-hidden flex items-center justify-center bg-white">
+      {/* 모바일 — 작은 프로필 줄 + 트렌디한 섹션 탭 (데스크톱은 사이드바에 프로필 섹션·메뉴) */}
+      <div className="md:hidden -mt-1 space-y-3">
+        <div className="relative overflow-hidden rounded-2xl bg-[#171b26] text-white px-3.5 py-3 flex items-center gap-3 shadow-[0_14px_30px_-20px_rgba(23,27,38,0.7)]">
+          <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-12 -left-6 w-36 h-36 rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.5),transparent)] blur-xl" /><div className="absolute -bottom-14 right-0 w-36 h-36 rounded-full bg-[radial-gradient(closest-side,rgba(245,158,11,0.3),transparent)] blur-xl" /></div>
+          <span className="relative avatar-ring shrink-0"><span className="avatar-wave w-11 h-11 rounded-full overflow-hidden flex items-center justify-center bg-white">
             {myAvatarConfig?.previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={myAvatarConfig.previewUrl} alt="" className="avatar-bob w-full h-full object-cover object-top" />
-            ) : <span className="text-[24px] font-extrabold text-[#2563eb]">{(username || user?.email || '?').charAt(0).toUpperCase()}</span>}
+            ) : <span className="text-[16px] font-extrabold text-[#2563eb]">{(username || user?.email || '?').charAt(0).toUpperCase()}</span>}
           </span></span>
-          <div className="min-w-0 flex-1">
-            <p className="font-pixel text-[10px] tracking-[0.3em] text-[#60a5fa]">MY PAGE · {TAB_LABEL[tab]}</p>
-            <h1 className="text-[24px] md:text-[28px] font-extrabold tracking-tight text-white leading-tight truncate">{agentName || username || '내 계정'}</h1>
-            <p className="text-[13px] text-white/60 truncate">{username && agentName ? `@${username} · ` : ''}{user?.email}{country ? ` · ${COUNTRIES.find(c => c.code === country)?.flag ?? ''} ${COUNTRIES.find(c => c.code === country)?.name ?? country}` : ''}</p>
+          <div className="relative min-w-0 flex-1">
+            <p className="text-[15px] font-extrabold leading-tight truncate">{agentName || username || '내 계정'}</p>
+            <p className="text-[11px] text-white/55 truncate">{username ? `@${username}` : user?.email}{country ? ` · ${COUNTRIES.find(c => c.code === country)?.flag ?? ''}` : ''}</p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <a href="/credits" className="hover:opacity-80 transition-opacity"><PromptCreditBadge amount={creditBalance} /></a>
-            <Link href="/studio" className="inline-flex items-center h-9 px-4 rounded-lg bg-white text-[#171b26] text-[13px] font-semibold hover:bg-[#e8f1ff] transition-colors">게임 만들기</Link>
-          </div>
+          <a href="/credits" className="relative shrink-0"><PromptCreditBadge amount={creditBalance} size="sm" label={false} /></a>
         </div>
+        <nav className="-mx-4 px-4 flex gap-2 overflow-x-auto scrollbar-hide snap-x" aria-label="my page sections">
+          {(Object.keys(TAB_LABEL) as Tab[]).map(t => (
+            <a key={t} href={`#${t}`} className={`snap-start shrink-0 h-9 pl-2 pr-3.5 rounded-full text-[12.5px] font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${tab === t ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white shadow-[0_6px_16px_-6px_rgba(37,99,235,0.65)]' : 'bg-white text-[#4a4337] border border-[#ebe4d6] shadow-[0_1px_2px_rgba(36,31,23,0.05)]'}`}>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[13px] ${tab === t ? 'bg-white/25' : 'bg-[#f4efe5]'}`} aria-hidden>{TAB_ICON[t]}</span>{TAB_LABEL[t]}
+            </a>
+          ))}
+        </nav>
       </div>
-      )}
-      {/* 모바일 탭 (데스크톱은 사이드 메뉴) */}
-      <nav className="md:hidden -mt-6 flex items-center gap-1 rounded-full bg-[#f1ece2] p-1 overflow-x-auto scrollbar-hide" aria-label="my page sections">
-        {(Object.keys(TAB_LABEL) as Tab[]).map(t => <a key={t} href={`#${t}`} className={`h-8 px-3.5 rounded-full text-[12.5px] font-semibold whitespace-nowrap flex items-center transition-colors ${tab === t ? 'bg-white text-[#241f17] shadow-sm' : 'text-[#6b6152]'}`}>{TAB_LABEL[t]}</a>)}
-      </nav>
 
       {/* ── Profile ── */}
       {tab === 'profile' && <section id="profile" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-6">

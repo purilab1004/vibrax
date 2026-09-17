@@ -16,6 +16,7 @@ import { LangProvider } from '@/lib/i18n/context'
 import { createClient } from '@/lib/supabase/server'
 import { cookies, headers } from 'next/headers'
 import type { Lang } from '@/lib/i18n/translations'
+import CamLiveDock from '@/components/CamLiveDock'
 
 const pressStart = Press_Start_2P({
   weight: '400',
@@ -270,6 +271,7 @@ export default async function RootLayout({
         <LangProvider initialLang={lang}>
           <HomeBanner />
           <NavBar />
+          <CamLiveDock />
           <Suspense fallback={null}>
             <Sidebar newGenres={newGenres} channels={channels} tournament={tournament} />
           </Suspense>
