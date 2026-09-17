@@ -86,8 +86,9 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]" style={{ '--ttl-glow': `hsl(${golden ? 42 : (322 + ((hashOf(game.id) >> 3) % 36) - 18 + 360) % 360} 95% 62% / .6)` } as React.CSSProperties}>
         <span className="relative inline-block feed-title-pop">
           <span className="relative inline-block feed-title-float">
-            <h3 className={`${galaxyFont.className} feed-title text-[46px] leading-[1.2]`}>{teaser}</h3>
-            <span aria-hidden className={`${galaxyFont.className} feed-title-chrome absolute inset-0 text-[46px] leading-[1.2]`}>{teaser}</span>
+            <span aria-hidden className={`${galaxyFont.className} feed-title-outline absolute inset-0 z-0 text-[46px] leading-[1.2]`}>{teaser}</span>
+            <h3 className={`${galaxyFont.className} feed-title relative z-[1] text-[46px] leading-[1.2]`}>{teaser}</h3>
+            <span aria-hidden className={`${galaxyFont.className} feed-title-chrome absolute inset-0 z-[2] text-[46px] leading-[1.2]`}>{teaser}</span>
           </span>
         </span>
       </div>

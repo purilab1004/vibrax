@@ -942,7 +942,9 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 
 /* ── 쇼츠 카드 타이틀: 스티커(두꺼운 외곽선 + 컬러 글로우 + 살짝 눌린 그림자) — 어떤 배경 위에서도 또렷 ── */
 /* 갤럭시(레트로 크롬) 3D 타이틀 — 3겹: 아래 '돌출' 층(핑크·자주 계단 그림자 + 보라 글로우) → 크롬 그라데이션 채움(흰 테두리) → 광택 스윕 */
-.feed-title, .feed-title-chrome { word-break: keep-all; overflow-wrap: normal; text-wrap: balance; }
+.feed-title, .feed-title-chrome, .feed-title-outline { word-break: keep-all; overflow-wrap: normal; text-wrap: balance; }
+/* 맨 아래 겹: 진보라 굵은 외곽 테두리 — 밝은(흰) 배경 위에서도 글자 윤곽이 또렷하게 */
+.feed-title-outline { color: #2b1f66; -webkit-text-stroke: 10px #2b1f66; paint-order: stroke fill; text-shadow: 7px 7px 0 #2b1f66, 0 6px 18px rgba(0,0,0,.35); letter-spacing: 0.02em; pointer-events: none; }
 .feed-title { color: #ff6ea6; letter-spacing: 0.02em; text-shadow: 1px 1px 0 #e0498a, 2px 2px 0 #d3427f, 3px 3px 0 #c53b74, 4px 4px 0 #b6346a, 5px 5px 0 #a72e60, 6px 6px 0 #982856, 7px 7px 0 #88224c, 9px 12px 26px rgba(0,0,0,.5), 0 0 28px rgba(122,92,255,.55); }
 .feed-title-chrome { color: transparent; -webkit-text-fill-color: transparent; background-image: linear-gradient(180deg, #ffffff 0%, #eaf2ff 28%, #9ec0ff 45%, #6d86ff 52%, #a98cff 68%, #ff8fd2 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-stroke: 1.3px rgba(255,255,255,.9); paint-order: stroke fill; letter-spacing: 0.01em; pointer-events: none; }
 .feed-title-pop { animation: titlePop .6s cubic-bezier(.2,1.4,.4,1) both; }
