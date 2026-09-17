@@ -45,3 +45,4 @@ next-env.d.ts
 # Android release keystore (never commit)
 mobile/keystore/
 .max-worker.log
+mobile/build/
