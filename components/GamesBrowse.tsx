@@ -26,7 +26,6 @@ import { useDominantHue } from '@/lib/dominantHue'
 import PlayModeBadge from '@/components/PlayModeBadge'
 import { recordShare } from '@/lib/shares'
 import { useFeedBgmHost, useFeedTrack } from '@/lib/feedBgm'
-import FeedSoundButton from '@/components/FeedSoundButton'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
 function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number }) {
@@ -97,7 +96,6 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         style={auroraOf(game.id, rank === 1 && (game.view_count ?? 0) > 0)}
       >
         <ThumbBackdrop src={game.thumbnail_url} alt={game.title} revealed={revealed} />
-        <FeedSoundButton className="left-3 top-12" />
         <div className="absolute top-4 left-4 right-16 z-10 flex items-center gap-2">
           <PlayModeBadge mode={game.play_mode} />
           <span className="flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur pl-1 pr-2.5 py-1 text-white text-[12px] font-semibold max-w-[70%]">

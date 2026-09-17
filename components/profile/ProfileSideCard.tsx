@@ -47,8 +47,8 @@ export default function ProfileSideCard() {
   const p = useMyProfileLite()
   const c = p?.country ? COUNTRIES.find((x) => x.code === p.country) : null
   return (
-    <div className="mx-3 my-2 rounded-3xl overflow-hidden bg-white/90 border border-[#efe8f7] relative shadow-[0_18px_36px_-26px_rgba(91,33,182,0.45)]">
-      <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-10 -left-8 w-32 h-32 rounded-full bg-[radial-gradient(closest-side,rgba(255,45,111,0.2),transparent)] blur-xl" /><div className="absolute -bottom-12 -right-6 w-32 h-32 rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.2),transparent)] blur-xl" /></div>
+    <div className="mx-3 my-2 rounded-3xl overflow-hidden bg-white border border-[#efe8f7] relative shadow-[0_18px_36px_-26px_rgba(91,33,182,0.45)]">
+      <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-10 -left-8 w-32 h-32 rounded-full bg-[radial-gradient(closest-side,rgba(255,45,111,0.2),transparent)]" /><div className="absolute -bottom-12 -right-6 w-32 h-32 rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.2),transparent)]" /></div>
       <div className="relative p-3.5">
         <div className="flex items-center gap-3">
           <span className="shrink-0 rounded-full p-[2.5px] bg-gradient-to-br from-[#ff2d6f] to-[#8b3dff]"><span className="block rounded-full ring-2 ring-white overflow-hidden"><ProfileAvatar p={p} size={44} /></span></span>

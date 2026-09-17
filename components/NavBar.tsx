@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
+import { useSoundPref, setSoundPref } from '@/lib/live/soundPref'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
@@ -22,6 +23,7 @@ export default function NavBar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const soundPref = useSoundPref()
   // 검색 결과 페이지에서는 현재 검색어(?q=)를 입력창에 그대로 보여준다 (별도 안내 줄 없이). useSearchParams 는 Suspense 요구가 있어 location 으로 읽는다.
   useEffect(() => {
     const read = () => { try { setQuery(new URLSearchParams(window.location.search).get('q') ?? '') } catch { /* */ } }
@@ -199,7 +201,12 @@ export default function NavBar() {
             <div />
             {pathname === '/games' || pastHero ? (
               /* /games (그리고 홈에서 히어로를 지난 뒤) — 유튜브식 중앙 검색바 */
-              <form onSubmit={handleSearch} className="w-[min(620px,50vw)] -translate-x-[2.25rem]">
+              <div className="flex items-center gap-2 -translate-x-[2.25rem]">
+              {/* 쇼츠 공용 스피커 — 검색바 왼쪽 (배경음·영상 소리를 함께 켜고 끔) */}
+              <button type="button" onClick={() => setSoundPref({ on: !soundPref.on })} aria-label={soundPref.on ? '소리 끄기' : '소리 켜기'} title={soundPref.on ? '소리 끄기' : '소리 켜기'} className="shrink-0 w-10 h-10 rounded-full border border-[#ddd3bf] bg-white/95 shadow-[0_2px_10px_rgba(36,31,23,0.06)] text-[#6b6152] hover:text-[#2563eb] hover:border-[#2563eb] flex items-center justify-center transition-colors">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" />{soundPref.on ? <path d="M16.5 8.5a5 5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13" /> : <path d="M22 9l-6 6M16 9l6 6" />}</svg>
+              </button>
+              <form onSubmit={handleSearch} className="w-[min(620px,50vw)]">
                 <div className="flex items-center rounded-full border border-[#ddd3bf] bg-white/95 shadow-[0_2px_10px_rgba(36,31,23,0.06)] focus-within:border-[#2563eb] transition-colors overflow-hidden">
                   <input
                     value={query}
@@ -217,6 +224,7 @@ export default function NavBar() {
                   </button>
                 </div>
               </form>
+              </div>
             ) : (
             <div className="flex items-center gap-6">
               {navLinkDesktop('/games', T.nav.games)}
