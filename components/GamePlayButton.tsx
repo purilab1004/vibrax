@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { playSrc } from '@/lib/game-src'
 import { useNetBridge } from '@/lib/net/useNetBridge'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
@@ -11,7 +11,7 @@ import { useLang } from '@/lib/i18n/context'
 import { loadAvatarConfig, saveAvatarConfig } from '@/lib/jeumto/storage'
 import { emptyConfig } from '@/lib/jeumto/config'
 import { startHost, type HostHandle } from '@/lib/live/host'
-import { getCamLive } from '@/lib/live/camLive'
+import { getCamLive, subscribeCamLive } from '@/lib/live/camLive'
 import dynamic from 'next/dynamic'
 import { useLiveBroadcasts, liveForGame, refreshLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 import { useGameTelemetry } from '@/lib/aj/telemetry'
@@ -127,6 +127,9 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const captureCleanup = useRef<(() => void) | null>(null)   // 게임 캡처 브리지 끄기
   // 온라인(멀티) 게임은 라이브 중에도 다른 회원이 함께 플레이할 수 있다 — 관전은 싱글 게임만
   const spectate = !!(open && !screenLive && liveEntry && liveEntry.kind === 'camera' && (liveEntry.screen || liveEntry.cam) && liveEntry.hostId !== me && game.play_mode !== 'multi')
+  // 라이브 방송 중(내가 화면·카메라로 이 게임을 방송하거나, 남의 방송을 관전)이면 다음 게임으로 넘어가지 않는다
+  const camLiveGame = useSyncExternalStore(subscribeCamLive, () => getCamLive()?.gameId ?? null, () => null)
+  const liveLocked = !!screenLive || spectate || camLiveGame === game.id
   const stopScreenLive = async (persist = true) => {
     screenHost.current?.stop(); screenHost.current = null
     screenStream.current?.getTracks().forEach(t => t.stop()); screenStream.current = null
@@ -379,7 +382,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={close} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} live={screenLive} onToggleLive={!isGuest && !spectate ? toggleScreenLive : undefined} />
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0 overflow-hidden">
-              <TransportBar key={game.id} gameId={game.id} active={open} />
+              <TransportBar key={game.id} gameId={game.id} active={open} locked={liveLocked} />
               {/* 게임은 항상 화면 전체(카메라·홈바 뒤까지) — 헤더는 그 위에 겹친다. 게임엔 topInset(헤더 아래 y) 을 알려 AI PLAYING 배지·HUD 를 헤더 밑에 두게 한다 */}
               <div className="absolute inset-0">
               {warp && (

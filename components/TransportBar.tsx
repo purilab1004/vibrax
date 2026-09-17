@@ -11,11 +11,13 @@ const CHAIN_KEY = 'vx_transport_chain'
 
 export function readChain(): number { try { return Number(sessionStorage.getItem(CHAIN_KEY) ?? 0) || 0 } catch { return 0 } }
 
-export default function TransportBar({ gameId, active }: { gameId: string; active: boolean }) {
+// locked — 라이브 방송(방송자·시청자) 중에는 '이 게임만' 하는 방송이라 다음 게임으로 넘어가지 않는다
+export default function TransportBar({ gameId, active, locked = false }: { gameId: string; active: boolean; locked?: boolean }) {
   const router = useRouter()
   const [info, setInfo] = useState<Info | null>(null)
   const [score, setScore] = useState(0)
-  const [reached, setReached] = useState(false)
+  const [reachedRaw, setReached] = useState(false)
+  const reached = reachedRaw && !locked
   const [finished, setFinished] = useState(false)   // 게임오버/클리어 1회 이상
   const [pickOpen, setPickOpen] = useState(false)
   const [going, setGoing] = useState<string | null>(null)
@@ -57,10 +59,10 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
   useEffect(() => {
     if (!info) return
     const ok = (lb ? myRank > 0 : finished) || (info.goalSource === 'admin' && !!info.goal && score >= info.goal)
-    if (!ok || reached) return
+    if (!ok || reachedRaw) return
     const t = setTimeout(() => { setReached(true); reachedAt.current = Date.now() }, 0)   // 달성 즉시 자동으로 펼치지 않음 — 버튼을 누르거나 한 판이 끝날 때만
     return () => clearTimeout(t)
-  }, [info, lb, myRank, score, finished, reached, mobile])
+  }, [info, lb, myRank, score, finished, reachedRaw, mobile])
   useEffect(() => {
     if (!reached || !finished || sheetShownOnFinish) return
     const t = setTimeout(() => { setPickOpen(true); setSheetShownOnFinish(true) }, 400)
@@ -68,7 +70,7 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
   }, [reached, finished, sheetShownOnFinish])
 
   const go = useCallback(async (c: Cand, picked: boolean) => {
-    if (going) return
+    if (going || locked) return
     setGoing(c.id)
     try { sessionStorage.setItem(CHAIN_KEY, String(readChain() + 1)) } catch { /* */ }
     void fetch(`/api/games/${gameId}/transport`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: c.id, score, goal: info?.goal ?? null, picked }), keepalive: true }).catch(() => {})
@@ -76,7 +78,7 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
     const ev = new CustomEvent('vibrex:teleport', { detail: c, cancelable: true })
     const handled = !window.dispatchEvent(ev)
     if (!handled) router.push(`/games/${c.id}?play=1`)
-  }, [gameId, going, info, router, score])
+  }, [gameId, going, info, router, score, locked])
 
   if (!active || !info || info.next.length === 0) return null
   // 다음 목표: 순위 밖이면 10위 진입 점수, 순위 안이면 한 단계 위 점수. 점수가 오를수록 목표도 한 칸씩 올라간다.
@@ -162,12 +164,16 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
         <button
           onClick={() => reached ? (mobile ? setPickOpen(v => !v) : (pickOpen ? go(primary, false) : setPickOpen(true))) : undefined}
           disabled={!reached || !!going}
-          title={reached ? `다음 게임: ${primary.title}` : (goal ? `목표 ${goal.toLocaleString()}점을 넘기면 열려요` : '한 판을 끝내면 열려요')}
+          title={locked ? '라이브 방송 중에는 이 게임만 플레이해요' : reached ? `다음 게임: ${primary.title}` : (goal ? `목표 ${goal.toLocaleString()}점을 넘기면 열려요` : '한 판을 끝내면 열려요')}
           aria-label="다음 게임으로 이동"
           className={`px-3 md:pl-4 md:pr-3.5 rounded-none border-l border-white/10 flex items-center gap-1 md:gap-1.5 text-[10.5px] md:text-[12px] font-bold whitespace-nowrap shrink-0 transition-all ${reached ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white transport-glow' : 'bg-white/10 text-white/35 cursor-not-allowed'}`}
         >
-          <span className="whitespace-nowrap">다음 게임</span>
-          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          {locked ? (
+            <><span className="w-1.5 h-1.5 rounded-full bg-[#ff2d55]" /><span className="whitespace-nowrap">라이브 중</span></>
+          ) : (
+            <><span className="whitespace-nowrap">다음 게임</span>
+            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></>
+          )}
         </button>
       </div>
     </div>
