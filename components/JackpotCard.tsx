@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { titleFont } from '@/lib/fonts'
 import { useIsNativeApp } from '@/lib/isNativeApp'
+import CardRail from '@/components/CardRail'
 
 export interface Jackpot { id: string; title: string; description: string | null; image_url: string | null; entry_cost: number; ends_at: string; status: string; pool: number; entries: number }
 export interface Product { id: string; title: string; description: string | null; image_url: string | null; coin_price: number }
@@ -113,6 +114,10 @@ export default function JackpotCard({ jackpot, products, mine = 0, layout }: { j
     return (
       <div className="h-full snap-start [scroll-snap-stop:always] flex items-center justify-center gap-5">
         <div className="relative h-[96%] aspect-[9/15] rounded-2xl overflow-hidden shadow-[0_18px_60px_rgba(36,31,23,0.22)]">{inner}</div>
+        <CardRail name="VIBREXCUP" color="#FFD166" shareUrl={typeof window !== 'undefined' ? `${window.location.origin}/games` : undefined} stats={[
+          { icon: <span className="text-[18px]">🪙</span>, label: pool.toLocaleString() },
+          { icon: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M2.8 19c.6-3.3 3-5 6.2-5s5.6 1.7 6.2 5" /><circle cx="17" cy="9" r="2.6" /><path d="M15.5 14.2c3 .2 5 1.8 5.6 4.8" /></svg>, label: `${entries}명` },
+        ]} />
       </div>
     )
   }

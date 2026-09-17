@@ -2,6 +2,7 @@
 // 피드(쇼츠) 맨 끝 카드 — 더 내려갈 게임이 없을 때 "이제 당신 차례" 로 게임 제작을 권한다.
 // 모바일은 한 화면 스냅 카드, 데스크톱은 피드 카드와 같은 틀.
 import Link from 'next/link'
+import CardRail from '@/components/CardRail'
 
 const ORBS = [
   { e: '🎮', x: '8%', y: '14%', d: '0s', s: 44 }, { e: '🧱', x: '78%', y: '10%', d: '1.2s', s: 34 }, { e: '💫', x: '86%', y: '38%', d: '0.4s', s: 28 },
@@ -62,7 +63,8 @@ export default function FeedEndCard({ layout }: { layout: 'mobile' | 'desktop' }
   if (layout === 'desktop') {
     return (
       <div className="h-full snap-start [scroll-snap-stop:always] flex items-center justify-center gap-5">
-        <div className="w-[min(420px,42vw)] h-[min(92%,760px)] rounded-[28px] overflow-hidden shadow-[0_24px_60px_rgba(36,31,23,0.25)] border border-white/10">{inner}</div>
+        <div className="relative h-[96%] aspect-[9/15] rounded-2xl overflow-hidden shadow-[0_18px_60px_rgba(36,31,23,0.22)]">{inner}</div>
+        <CardRail name="VIBREXCUP" color="#F27EA9" shareUrl={typeof window !== 'undefined' ? `${window.location.origin}/studio` : undefined} stats={[{ icon: <span className="text-[18px]">🎮</span>, label: '만들기' }]} />
       </div>
     )
   }
