@@ -947,7 +947,7 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 .feed-title, .feed-title-chrome, .feed-title-outline { word-break: keep-all; overflow-wrap: normal; text-wrap: balance; letter-spacing: 0.02em; }
 /* (외곽 테두리 층은 사용하지 않음 — 크롬 층의 회색 stroke 로 윤곽을 잡는다) */
 .feed-title { color: hsl(var(--th) 85% 66%); text-shadow: 1px 1px 0 hsl(var(--th) 70% 56%), 2px 2px 0 hsl(var(--th) 70% 53%), 3px 3px 0 hsl(var(--th) 70% 50%), 4px 4px 0 hsl(var(--th) 70% 47%), 5px 5px 0 hsl(var(--th) 70% 44%), 6px 6px 0 hsl(var(--th) 70% 41%), 7px 7px 0 hsl(var(--th) 70% 38%), 9px 12px 26px rgba(0,0,0,.5); }
-.feed-title-chrome { color: transparent; -webkit-text-fill-color: transparent; background-image: linear-gradient(180deg, #ffffff 0%, hsl(var(--th) 100% 96%) 30%, hsl(var(--th) 90% 82%) 46%, hsl(var(--th) 80% 68%) 52%, hsl(var(--th) 85% 80%) 70%, hsl(var(--th) 95% 88%) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-stroke: 2px rgba(58,54,72,.92); paint-order: stroke fill; pointer-events: none; }
+.feed-title-chrome { color: #fffdf7; -webkit-text-stroke: 2px rgba(58,54,72,.92); paint-order: stroke fill; text-shadow: 0 1px 0 rgba(255,255,255,.5); pointer-events: none; } /* 스티커 스타일 — 흰 글자 + 진회색 테두리 (그라데이션 없음) */
 /* 3D 부유 — 살짝 원근을 준 채 천천히 떠 있는 느낌(광택 없음) */
 .feed-title-float { transform-style: preserve-3d; animation: titleFloat 5s ease-in-out infinite; }
 @keyframes titleFloat { 0%,100% { transform: perspective(600px) rotateX(6deg) rotateY(-4deg) translateY(0) } 50% { transform: perspective(600px) rotateX(6deg) rotateY(4deg) translateY(-5px) } }
