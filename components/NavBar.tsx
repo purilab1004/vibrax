@@ -107,18 +107,6 @@ export default function NavBar() {
     </Link>
   )
 
-  const navLinkMobile = (href: string, label: string) => (
-    <Link
-      href={href}
-      onClick={() => setMenuOpen(false)}
-      className={`font-pixel text-2xl tracking-widest transition-colors py-3 ${
-        pathname === href ? 'text-[#2563eb]' : 'text-[#241f17] hover:text-[#2563eb]'
-      }`}
-    >
-      {label}
-    </Link>
-  )
-
   // KO/EN 토글 스위치 — 그라디언트 노브가 슬라이드
   const LangSwitch = () => (
     <button
@@ -346,57 +334,76 @@ export default function NavBar() {
         </div>
 
         {/* Menu items */}
-        <div className="flex flex-col px-8 pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex-1 min-h-0 overflow-y-auto justify-between">
-          <nav className="flex flex-col">
-            {/* Mobile search */}
-            <form onSubmit={handleSearch} className="mb-6">
+        <div className="flex flex-col gap-6 px-5 pt-5 pb-[calc(6rem+env(safe-area-inset-bottom))] flex-1 min-h-0 overflow-y-auto justify-between bg-[#fcfaf5]">
+          <nav className="flex flex-col gap-5">
+            {/* 검색 */}
+            <form onSubmit={handleSearch}>
               <div className="relative">
                 <input
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder={T.nav.searchPlaceholder}
-                  className="w-full bg-[#ffffff] border border-[#ebe4d6] focus:border-[#2563eb] pl-10 pr-3 py-3 text-sm text-[#241f17] placeholder-[#a1957f] outline-none transition-colors"
+                  className="w-full h-12 rounded-2xl bg-white border border-[#ebe4d6] focus:border-[#2563eb] pl-11 pr-3 text-[15px] text-[#241f17] placeholder-[#a1957f] outline-none transition-colors"
                   aria-label={T.nav.search}
                 />
-                <button type="submit" aria-label={T.nav.search} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#857a68]">
+                <button type="submit" aria-label={T.nav.search} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#857a68]">
                   <SearchIcon />
                 </button>
               </div>
             </form>
-            {navLinkMobile('/games', T.nav.games)}
-            {navLinkMobile('/studio', T.nav.studio)}
-            <Link
-              href="/tournament"
-              onClick={() => setMenuOpen(false)}
-              className="text-[#c9940c] font-pixel text-2xl tracking-widest transition-colors py-3 px-1 rounded"
-            >
-              🏆 {T.nav.tournament}
-            </Link>
-            {navLinkMobile('/gallery', T.nav.library)}
-            {navLinkMobile('/blog', T.nav.blog)}
-            {navLinkMobile('/partner', T.nav.partner)}
-            {navLinkMobile('/dev', T.nav.dev)}
-            {navLinkMobile('/about', T.nav.about)}
+
+            {/* 계정 */}
             {user ? (
-              <>
-                {navLinkMobile('/studio', T.nav.submit)}
-                {navLinkMobile('/profile', T.nav.mypage)}
-                <button
-                  onClick={handleSignOut}
-                  className="font-pixel text-2xl tracking-widest text-left text-[#6b6152] hover:text-[#2563eb] transition-colors py-3"
-                >
-                  {T.nav.logout}
-                </button>
-                {isAdmin && navLinkMobile('/admin', `⚙ ${T.nav.admin}`)}
-              </>
+              <div className="rounded-2xl bg-white border border-[#ebe4d6] p-3 flex items-center gap-2">
+                <Link href="/profile" onClick={() => setMenuOpen(false)} className="flex-1 min-w-0 flex items-center gap-2.5">
+                  <span className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center font-extrabold shrink-0">{(user.email ?? '?').charAt(0).toUpperCase()}</span>
+                  <span className="min-w-0">
+                    <span className="block text-[14px] font-extrabold text-[#241f17]">{T.nav.mypage}</span>
+                    <span className="block text-[11.5px] text-[#9d9280] truncate">{user.email}</span>
+                  </span>
+                </Link>
+                {credits !== null && <Link href="/credits" onClick={() => setMenuOpen(false)}><PromptCreditBadge amount={credits} size="sm" label={false} /></Link>}
+              </div>
             ) : (
-              <Link
-                href="/login"
-                onClick={() => setMenuOpen(false)}
-                className="mt-4 inline-block font-pixel text-sm tracking-widest bg-[#2563eb] text-white px-6 py-3 hover:bg-[#1d4ed8] transition-colors text-center"
-              >
-                {T.nav.login}
-              </Link>
+              <div className="grid grid-cols-2 gap-2">
+                <Link href="/login" onClick={() => setMenuOpen(false)} className="h-12 rounded-2xl bg-[#2563eb] text-white text-[15px] font-bold flex items-center justify-center">{T.nav.login}</Link>
+                <Link href="/signup" onClick={() => setMenuOpen(false)} className="h-12 rounded-2xl bg-white border border-[#ebe4d6] text-[15px] font-bold text-[#241f17] flex items-center justify-center">{lang === 'en' ? 'Sign up' : '회원가입'}</Link>
+              </div>
+            )}
+
+            {/* 메인 4 — 타일 */}
+            <div className="grid grid-cols-2 gap-2.5">
+              {([
+                ['/games', T.nav.games, '🎮', 'from-[#2563eb] to-[#06b6d4]'],
+                ['/studio', T.nav.studio, '✨', 'from-[#6366f1] to-[#2563eb]'],
+                ['/tournament', T.nav.tournament, '🏆', 'from-[#f59e0b] to-[#ef4444]'],
+                ['/gallery', T.nav.library, '🎨', 'from-[#8b5cf6] to-[#ec4899]'],
+              ] as const).map(([href, label, icon, grad]) => (
+                <Link key={href} href={href} onClick={() => setMenuOpen(false)} className={`relative overflow-hidden h-[84px] rounded-2xl p-3 flex flex-col justify-between text-white bg-gradient-to-br ${grad} shadow-[0_10px_24px_-14px_rgba(37,99,235,0.6)] active:scale-[0.98] transition-transform ${pathname.startsWith(href) ? 'ring-2 ring-offset-2 ring-[#241f17]/30' : ''}`}>
+                  <span className="text-[22px] leading-none">{icon}</span>
+                  <span className="text-[15px] font-extrabold tracking-wide">{label}</span>
+                </Link>
+              ))}
+            </div>
+
+            {/* 더보기 — 작은 목록 */}
+            <div className="rounded-2xl bg-white border border-[#ebe4d6] divide-y divide-[#f1ece2] overflow-hidden">
+              {([
+                ['/blog', T.nav.blog],
+                ['/partner', T.nav.partner],
+                ['/dev', T.nav.dev],
+                ['/about', T.nav.about],
+                ...(isAdmin ? [['/admin', `⚙ ${T.nav.admin}`] as const] : []),
+              ] as (readonly [string, string])[]).map(([href, label]) => (
+                <Link key={href} href={href} onClick={() => setMenuOpen(false)} className={`flex items-center justify-between h-12 px-4 text-[14.5px] font-semibold ${pathname.startsWith(href) ? 'text-[#2563eb]' : 'text-[#4a4337]'}`}>
+                  {label}
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#c9bfae]" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
+                </Link>
+              ))}
+            </div>
+
+            {user && (
+              <button onClick={handleSignOut} className="self-start text-[13px] font-semibold text-[#9d9280] hover:text-[#e11d48] px-1">{T.nav.logout}</button>
             )}
           </nav>
 
