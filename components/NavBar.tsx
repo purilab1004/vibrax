@@ -203,7 +203,7 @@ export default function NavBar() {
             <div />
             {pathname === '/games' || pastHero ? (
               /* /games (그리고 홈에서 히어로를 지난 뒤) — 유튜브식 중앙 검색바 */
-              <form onSubmit={handleSearch} className="w-[min(620px,50vw)] translate-x-[4.625rem]">
+              <form onSubmit={handleSearch} className="w-[min(620px,50vw)]">
                 <div className="flex items-center rounded-full border border-[#ddd3bf] bg-white/95 shadow-[0_2px_10px_rgba(36,31,23,0.06)] focus-within:border-[#2563eb] transition-colors overflow-hidden">
                   <input
                     value={query}
