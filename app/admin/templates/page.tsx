@@ -3,7 +3,7 @@
 import AutoPanel from '@/components/admin/AutoPanel'
 import { useCallback, useEffect, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
-import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, ConfirmModal, Toast, Modal, btn, input, label as labelCls, th, td, trHover, Pager, usePager } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, ConfirmModal, Toast, Modal, btn, input, label as labelCls, th, td, trHover, Pager, usePager, IconAction } from '@/components/admin/ui'
 
 interface DbT { id: string; slug: string | null; name: string; keywords: string[]; prompt: string; description: string | null; approved: boolean; uses: number; created_at: string }
 interface StaticT { slug: string; name: string; origName: string; keywords: string[]; origKeywords: string[]; prompt: string; disabled: boolean; uses: number; freeUses: number }
@@ -65,7 +65,7 @@ export default function AdminTemplatesPage() {
               <td className={`${td} text-right tabular-nums text-[#059669]`}>{t.freeUses}</td>
               <td className={td}>{t.disabled ? <Badge color="#6b7280">비활성</Badge> : <Badge color="#059669">사용 중</Badge>}</td>
               <td className={td}><div className="flex gap-1.5 justify-end">
-                <button onClick={() => setPreview({ id: t.slug, name: t.name })} className={btn.ghost + ' !h-8 !px-2.5'}>미리보기</button>
+                <IconAction kind="preview" label="미리보기" onClick={() => setPreview({ id: t.slug, name: t.name })} />
                 <button onClick={() => { setEditS(t); setSNm(t.name); setSKw(t.keywords.join(', ')) }} className={btn.ghost + ' !h-8 !px-2.5'}>키워드 편집</button>
                 {t.disabled ? <button onClick={() => patchStatic(t.slug, { disabled: false })} className={btn.primary + ' !h-8 !px-2.5'}>다시 사용</button> : <button onClick={() => patchStatic(t.slug, { disabled: true })} className="inline-flex items-center h-8 px-2.5 rounded-md border border-[#e3e6ec] text-[12.5px] text-[#6b7280] hover:border-[#dc2626] hover:text-[#dc2626]">삭제(비활성)</button>}
               </div></td>
@@ -86,10 +86,10 @@ export default function AdminTemplatesPage() {
                 <td className={td}>{t.approved ? <Badge color="#059669">승인됨</Badge> : <Badge color="#f59e0b">대기</Badge>}</td>
                 <td className={`${td} whitespace-nowrap text-[#6b7280]`}>{new Date(t.created_at).toLocaleDateString()}</td>
                 <td className={td}><div className="flex gap-1.5 justify-end">
-                  <button onClick={() => setPreview({ id: t.id, name: t.name })} className={btn.ghost + ' !h-8 !px-2.5'}>미리보기</button>
-                  <button onClick={() => { setEdit(t); setNm(t.name); setKw(t.keywords.join(', ')) }} className={btn.ghost + ' !h-8 !px-2.5'}>편집</button>
-                  <button onClick={() => patch(t.id, { approved: !t.approved })} className={(t.approved ? btn.ghost : btn.primary) + ' !h-8 !px-2.5'}>{t.approved ? '승인 해제' : '승인'}</button>
-                  <button onClick={() => setDel(t)} className="inline-flex items-center h-8 px-2.5 rounded-md border border-[#e3e6ec] text-[12.5px] text-[#6b7280] hover:border-[#dc2626] hover:text-[#dc2626]">삭제</button>
+                  <IconAction kind="preview" label="미리보기" onClick={() => setPreview({ id: t.id, name: t.name })} />
+                  <IconAction kind="edit" label="편집" onClick={() => { setEdit(t); setNm(t.name); setKw(t.keywords.join(', ')) }} />
+                  <IconAction kind={t.approved ? 'undo' : 'check'} label={t.approved ? '승인 해제' : '승인'} onClick={() => patch(t.id, { approved: !t.approved })} />
+                  <IconAction kind="delete" label="삭제" onClick={() => setDel(t)} />
                 </div></td>
               </tr>))}</tbody>
           </table><Pager {...pager} /></div>

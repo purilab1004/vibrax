@@ -1031,3 +1031,11 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
   .admin-ui main :is(button, a)[class~="w-8"][class~="h-8"] { width: 40px; }
   .admin-ui main :is(button, a)[class~="w-7"][class~="h-7"] { width: 36px; }
 }
+@media (max-width: 767px) {
+  /* 표 — 마지막 열(행 액션 아이콘)은 오른쪽에 고정해 스크롤 없이 보이게, 첫 열은 너무 넓지 않게 */
+  .admin-ui .overflow-x-auto table th:last-child,
+  .admin-ui .overflow-x-auto table td:last-child { position: sticky; right: 0; z-index: 1; background: #fff; box-shadow: -1px 0 0 #e3e6ec; }
+  .admin-ui .overflow-x-auto table thead th:last-child { background: #f7f8fa; }
+  .admin-ui .overflow-x-auto table td:first-child { max-width: 52vw; }
+  .admin-ui .overflow-x-auto table td:first-child :is(a, p, span, div) { max-width: calc(52vw - 24px); }
+}

@@ -162,3 +162,30 @@ export function Pager({ page, pages, total, setPage, pageSize }: { page: number;
     </div>
   )
 }
+
+// ── 표·목록 행 액션 — 글자 대신 아이콘(툴팁·스크린리더 라벨). 모바일에서 버튼 글자가 밀리지 않게 ──
+type IconKind = 'view' | 'external' | 'edit' | 'delete' | 'preview' | 'ai' | 'ban' | 'unban' | 'check' | 'undo' | 'stop' | 'pin' | 'credits' | 'open'
+const ICON_PATH: Record<IconKind, React.ReactNode> = {
+  view: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></>,
+  preview: <><rect x="3" y="4" width="18" height="14" rx="2" /><path d="m10 9 5 2.5-5 2.5z" fill="currentColor" /><path d="M8 21h8" /></>,
+  external: <><path d="M14 4h6v6" /><path d="M20 4 11 13" /><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></>,
+  open: <><path d="M14 4h6v6" /><path d="M20 4 11 13" /><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></>,
+  edit: <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13.5 6.5 4 4" /></>,
+  delete: <><path d="M4 7h16" /><path d="M10 11v6M14 11v6" /><path d="M6 7l1 13h10l1-13" /><path d="M9 7V4h6v3" /></>,
+  ai: <><rect x="5" y="7" width="14" height="11" rx="3" /><path d="M12 7V4M9 12h.01M15 12h.01M9.5 15.5c.8.6 4.2.6 5 0" /></>,
+  ban: <><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></>,
+  unban: <><circle cx="12" cy="12" r="8.5" /><path d="m8.5 12 2.5 2.5 4.5-5" /></>,
+  check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
+  undo: <><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></>,
+  stop: <rect x="6.5" y="6.5" width="11" height="11" rx="2" />,
+  pin: <><path d="M9 4h6l-1 6 3 3H7l3-3z" /><path d="M12 13v7" /></>,
+  credits: <><circle cx="12" cy="12" r="8.5" /><path d="M12 8v8M8 12h8" /></>,
+}
+const ICON_TONE: Partial<Record<IconKind, string>> = { delete: 'hover:text-[#e11d48] hover:border-[#e11d48]/50 hover:bg-[#fff1f2]', ban: 'hover:text-[#e11d48] hover:border-[#e11d48]/50 hover:bg-[#fff1f2]', stop: 'text-[#dc2626] border-[#dc2626]/40 hover:bg-[#fff1f2]', unban: 'text-emerald-700 border-emerald-300 bg-emerald-50', ai: 'text-[#2563eb] hover:bg-[#2563eb]/10', check: 'hover:text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50' }
+
+export function IconAction({ kind, label, onClick, href, external, disabled, active }: { kind: IconKind; label: string; onClick?: () => void; href?: string; external?: boolean; disabled?: boolean; active?: boolean }) {
+  const cls = `inline-flex items-center justify-center w-9 h-9 md:w-8 md:h-8 rounded-lg border border-[#e3e6ec] bg-white text-[#4b5563] transition-colors disabled:opacity-40 shrink-0 ${active ? 'bg-[#2563eb]/10 text-[#2563eb] border-[#2563eb]/30' : 'hover:text-[#2563eb] hover:border-[#2563eb]/40 hover:bg-[#f5f8ff]'} ${ICON_TONE[kind] ?? ''}`
+  const svg = <svg viewBox="0 0 24 24" className="w-[17px] h-[17px]" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" aria-hidden>{ICON_PATH[kind]}</svg>
+  if (href) return <a href={href} title={label} aria-label={label} className={cls} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}>{svg}</a>
+  return <button type="button" onClick={onClick} disabled={disabled} title={label} aria-label={label} className={cls}>{svg}</button>
+}

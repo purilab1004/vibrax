@@ -9,7 +9,7 @@ import type { Genre, GameWithCreator } from '@/lib/supabase/types'
 import StatCard from '@/components/admin/StatCard'
 import { COUNTRIES } from '@/lib/countries'
 import { countryFlag } from '@/lib/country'
-import { PageHeader, Card, Badge, Modal, ConfirmModal, Toast, Skeleton, EmptyState, Segmented, Pager, usePager, btn, input, label as labelCls, th, td, trHover } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, Modal, ConfirmModal, Toast, Skeleton, EmptyState, Segmented, Pager, usePager, btn, input, label as labelCls, th, td, trHover, IconAction } from '@/components/admin/ui'
 
 const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 const GENRE_COLOR: Record<string, string> = { action: '#e11d48', adventure: '#059669', strategy: '#7c3aed', sports: '#f59e0b' }
@@ -109,9 +109,10 @@ export default function AdminGamesPage() {
                     <td className={`${td} whitespace-nowrap text-[#6b7280]`}>{new Date(g.created_at).toLocaleDateString()}</td>
                     <td className={td}>
                       <div className="flex gap-1.5 justify-end">
-                        <Link href={`/aj/${g.id}`} className={btn.ghost + ' !h-8 !px-2.5'}>AJ</Link>
-                        <button onClick={() => openEdit(g)} className={btn.ghost + ' !h-8 !px-2.5'}>{a.edit}</button>
-                        <button onClick={() => setDeleting(g)} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] font-medium text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">{a.delete}</button>
+                        <IconAction kind="ai" label="AJ 대시보드" href={`/aj/${g.id}`} />
+                        <IconAction kind="external" label="게임 보기" href={`/games/${g.id}`} external />
+                        <IconAction kind="edit" label={a.edit} onClick={() => openEdit(g)} />
+                        <IconAction kind="delete" label={a.delete} onClick={() => setDeleting(g)} />
                       </div>
                     </td>
                   </tr>

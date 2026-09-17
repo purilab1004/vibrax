@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import type { AdminMember, AdminRole } from '@/lib/supabase/types'
 import StatCard from '@/components/admin/StatCard'
-import { PageHeader, Card, Badge, Modal, Toast, Avatar, Pager, usePager, btn, input, label as labelCls } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, Modal, Toast, Avatar, Pager, usePager, btn, input, label as labelCls, IconAction } from '@/components/admin/ui'
 
 const SUPER = ['puridev1155@gmail.com']
 type Filter = 'all' | 'admin' | 'banned' | 'new'
@@ -165,14 +165,12 @@ export default function AdminMembersPage() {
                       <td className="px-4 py-3 text-right text-[#6b7280] tabular-nums">{m.games_count}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1.5 justify-end">
-                          <button onClick={() => setAdjusting(m)} className={btn.ghost + ' !h-8 !px-2.5'} title={a.adjustCredits}>±</button>
+                          <IconAction kind="credits" label={a.adjustCredits} onClick={() => setAdjusting(m)} />
                           {!isSuper && (
-                            <button onClick={() => api('PATCH', { userId: m.id, banned: !m.banned_at }).then(ok => ok && say(m.banned_at ? '차단을 해제했어요.' : '차단했어요. 이 회원은 사이트를 이용할 수 없어요.'))} disabled={busy} className={`inline-flex items-center h-8 px-2.5 rounded-md border text-[12.5px] font-medium transition-colors ${m.banned_at ? 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'border-[#d9dde5] text-[#374151] hover:border-[#dc2626] hover:text-[#dc2626]'}`}>
-                              {m.banned_at ? a.unban : a.ban}
-                            </button>
+                            <IconAction kind={m.banned_at ? 'unban' : 'ban'} label={m.banned_at ? a.unban : a.ban} disabled={busy} onClick={() => api('PATCH', { userId: m.id, banned: !m.banned_at }).then(ok => ok && say(m.banned_at ? '차단을 해제했어요.' : '차단했어요. 이 회원은 사이트를 이용할 수 없어요.'))} />
                           )}
                           {!isSuper && (
-                            <button onClick={() => { setDeleting(m); setConfirmText('') }} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] font-medium text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">삭제</button>
+                            <IconAction kind="delete" label="삭제" onClick={() => { setDeleting(m); setConfirmText('') }} />
                           )}
                         </div>
                       </td>

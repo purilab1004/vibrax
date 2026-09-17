@@ -5,7 +5,7 @@ import AutoPanel from '@/components/admin/AutoPanel'
 import MappingTab from '@/components/admin/mlpilot/MappingTab'
 import { useCallback, useEffect, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
-import { PageHeader, Card, Badge, Segmented, Skeleton, Toggle, Toast, Modal, ConfirmModal, btn, input, label as labelCls, th, td, trHover, Pager, usePager } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, Segmented, Skeleton, Toggle, Toast, Modal, ConfirmModal, btn, input, label as labelCls, th, td, trHover, Pager, usePager, IconAction } from '@/components/admin/ui'
 
 type Tab = 'overview' | 'examples' | 'rules' | 'curriculum' | 'upload' | 'connect' | 'feedback' | 'mapping'
 interface Meta { situations: string[]; emotions: string[]; ruleKinds: string[]; situationLabel: Record<string, string>; emotionLabel: Record<string, string> }
@@ -194,7 +194,7 @@ function RulesTab({ meta, say, reload }: { meta: Meta; say: (m: string) => void;
                 <td className={`${td} max-w-[520px]`}>{r.title && <p className="font-semibold text-[#1f2430]">{r.title}</p>}<p className="text-[12.5px] text-[#374151] line-clamp-2 whitespace-pre-wrap">{r.content}</p></td>
                 <td className={`${td} text-right tabular-nums`}>{r.priority}</td>
                 <td className={td}><Toggle checked={r.enabled} onChange={async v => { await api('PATCH', { id: r.id, rule: { enabled: v } }); load(); reload() }} /></td>
-                <td className={td}><div className="flex gap-1.5 justify-end"><button onClick={() => setEdit(r)} className={btn.ghost + ' !h-8 !px-2.5'}>편집</button><button onClick={() => setDel(r)} className="inline-flex items-center h-8 px-2.5 rounded-md border border-[#e3e6ec] text-[12.5px] text-[#6b7280] hover:border-[#dc2626] hover:text-[#dc2626]">삭제</button></div></td>
+                <td className={td}><div className="flex gap-1.5 justify-end"><IconAction kind="edit" label="편집" onClick={() => setEdit(r)} /><IconAction kind="delete" label="삭제" onClick={() => setDel(r)} /></div></td>
               </tr>))}</tbody></table>
         )}
       </Card>

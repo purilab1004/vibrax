@@ -8,7 +8,7 @@ import { useLang } from '@/lib/i18n/context'
 import type { BlogCategory, BlogPost } from '@/lib/supabase/types'
 import CategoryManager from '@/components/admin/CategoryManager'
 import StatCard from '@/components/admin/StatCard'
-import { PageHeader, Card, Badge, ConfirmModal, Toast, Skeleton, EmptyState, Segmented, Pager, usePager, btn, input, th, td, trHover } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, ConfirmModal, Toast, Skeleton, EmptyState, Segmented, Pager, usePager, btn, input, th, td, trHover, IconAction } from '@/components/admin/ui'
 
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<BlogPost[] | null>(null)
@@ -79,9 +79,9 @@ export default function AdminBlogPage() {
                     <td className={`${td} whitespace-nowrap text-[#6b7280]`}>{new Date(p.created_at).toLocaleDateString()}</td>
                     <td className={td}>
                       <div className="flex gap-1.5 justify-end">
-                        {p.published && <a href={`/blog/${p.id}`} target="_blank" rel="noreferrer" className={btn.ghost + ' !h-8 !px-2.5'}>보기</a>}
-                        <Link href={`/admin/blog/${p.id}`} className={btn.ghost + ' !h-8 !px-2.5'}>{a.edit}</Link>
-                        <button onClick={() => setDeleting(p)} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] font-medium text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">{a.delete}</button>
+                        {p.published && <IconAction kind="external" label="사이트에서 보기" href={`/blog/${p.id}`} external />}
+                        <IconAction kind="edit" label={a.edit} href={`/admin/blog/${p.id}`} />
+                        <IconAction kind="delete" label={a.delete} onClick={() => setDeleting(p)} />
                       </div>
                     </td>
                   </tr>

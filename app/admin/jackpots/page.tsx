@@ -1,7 +1,7 @@
 'use client'
 // 관리자 — 코인 잭팟: ① 제목·설명·참가비·당첨자 수 ② 상품(선택) 등록 ③ 잭팟 열기 → 추첨 → 당첨자 목록에서 상금 직접 수여
 import { useEffect, useMemo, useState } from 'react'
-import { PageHeader, Card, Badge, EmptyState, btn, input, label, th, td, trHover, ConfirmModal, Segmented } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, EmptyState, btn, input, label, th, td, trHover, ConfirmModal, Segmented, IconAction } from '@/components/admin/ui'
 import JackpotCard from '@/components/JackpotCard'
 
 interface Product { id: string; title: string; description: string | null; image_url: string | null; coin_price: number; active: boolean }
@@ -245,13 +245,13 @@ export default function AdminJackpotsPage() {
                       <td className={td}>
                         <div className="flex gap-1 justify-end flex-wrap">
                           {j.status === 'open' && <>
-                            <button onClick={() => edit(j)} className={btn.ghost}>수정</button>
+                            <IconAction kind="edit" label="수정" onClick={() => edit(j)} />
                             <button onClick={() => setConfirm({ id: j.id, action: 'settle', n: j.winner_count ?? 1 })} className={btn.primary}>추첨</button>
                             <button onClick={() => setConfirm({ id: j.id, action: 'cancel' })} className={btn.ghost}>취소·환불</button>
                           </>}
                           {j.status === 'drawn' && <button onClick={() => setOpenWinners(openWinners === j.id ? null : j.id)} className={pending ? btn.primary : btn.ghost}>당첨자 {j.winners.length}명{pending ? ` · 수여 대기 ${pending}` : ''}</button>}
                           <button onClick={() => toggleHidden(j)} className={btn.ghost} title="쇼츠 피드·REWARD 에서 숨기기 (기록은 남음)">{j.hidden ? '보이기' : '숨기기'}</button>
-                          {j.status !== 'open' && <button onClick={() => setConfirm({ id: j.id, action: 'delete', title: j.title })} className={`${btn.ghost} text-[#dc2626]`}>삭제</button>}
+                          {j.status !== 'open' && <IconAction kind="delete" label="삭제" onClick={() => setConfirm({ id: j.id, action: 'delete', title: j.title })} />}
                         </div>
                       </td>
                     </tr>,

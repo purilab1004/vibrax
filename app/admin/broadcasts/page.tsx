@@ -4,7 +4,7 @@ import AutoPanel from '@/components/admin/AutoPanel'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import StatCard from '@/components/admin/StatCard'
-import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, ConfirmModal, Toast, Avatar, btn, th, td, trHover, Pager, usePager } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, ConfirmModal, Toast, Avatar, th, td, trHover, Pager, usePager, IconAction } from '@/components/admin/ui'
 
 interface Item { hostId: string; host: string; avatar: string | null; kind: 'camera' | 'link'; id: string | null; url: string | null; gameId: string | null; on: boolean; title?: string; game: { id: string; title: string; thumbnail_url: string } | null }
 
@@ -47,8 +47,8 @@ export default function AdminBroadcastsPage() {
                 <td className={`${td} max-w-[260px] truncate`}>{it.url ? <a href={it.url} target="_blank" rel="noreferrer" className="text-[#2563eb] hover:underline">{it.title ?? it.url}</a> : <span className="text-[#9aa1ad]">폰 카메라</span>}</td>
                 <td className={td}>{it.on ? <Badge color="#dc2626">ON AIR</Badge> : <span className="text-[12px] text-[#9aa1ad]">off</span>}</td>
                 <td className={td}><div className="flex gap-1.5 justify-end">
-                  {it.on && <button onClick={() => setConfirm({ it, action: 'off' })} className={btn.danger + ' !h-8 !px-2.5'}>강제 종료</button>}
-                  <button onClick={() => setConfirm({ it, action: 'remove' })} className="inline-flex items-center h-8 px-2.5 rounded-md border border-[#e3e6ec] text-[12.5px] text-[#6b7280] hover:border-[#dc2626] hover:text-[#dc2626]">삭제</button>
+                  {it.on && <IconAction kind="stop" label="강제 종료" onClick={() => setConfirm({ it, action: 'off' })} />}
+                  <IconAction kind="delete" label="삭제" onClick={() => setConfirm({ it, action: 'remove' })} />
                 </div></td>
               </tr>))}</tbody>
           </table><Pager {...pager} /></div>

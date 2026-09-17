@@ -2,7 +2,7 @@
 // 관리자 종류 관리 — 생성 / 수정 / 삭제 (삭제 시 소속 관리자 이동)
 import { useCallback, useEffect, useState } from 'react'
 import type { AdminRole } from '@/lib/supabase/types'
-import { Card, Badge, Modal, btn, input, label as labelCls } from '@/components/admin/ui'
+import { Card, Badge, Modal, btn, input, label as labelCls, IconAction } from '@/components/admin/ui'
 
 const PERMS: [string, string][] = [
   ['games', '게임 관리'], ['members', '회원 관리'], ['blog', '블로그'], ['notices', '공지'],
@@ -65,8 +65,8 @@ export default function RoleManager({ onToast }: { onToast: (msg: string, kind?:
                 <p className="flex items-center gap-2 text-[14px] font-semibold text-[#1f2430]">{r.name}{r.is_system && <Badge color="#e11d48">SYSTEM</Badge>}</p>
                 <p className="text-[12px] text-[#6b7280] truncate">{r.description || '설명 없음'} · 권한: {r.permissions?.all ? '전체' : PERMS.filter(([k]) => r.permissions?.[k]).map(([, l]) => l).join(', ') || '없음'}</p>
               </div>
-              <button onClick={() => setEditing({ id: r.id, is_system: r.is_system, name: r.name, color: r.color, description: r.description ?? '', permissions: r.permissions ?? {} })} className={btn.ghost + ' !h-8'}>수정</button>
-              {!r.is_system && <button onClick={() => { setDeleting(r); setReassign('') }} className="inline-flex items-center h-8 px-3 rounded-lg border border-[#e3e6ec] text-[12.5px] text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">삭제</button>}
+              <IconAction kind="edit" label="수정" onClick={() => setEditing({ id: r.id, is_system: r.is_system, name: r.name, color: r.color, description: r.description ?? '', permissions: r.permissions ?? {} })} />
+              {!r.is_system && <IconAction kind="delete" label="삭제" onClick={() => { setDeleting(r); setReassign('') }} />}
             </li>
           ))}
         </ul>

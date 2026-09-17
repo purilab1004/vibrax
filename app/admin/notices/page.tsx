@@ -7,7 +7,7 @@ import { useLang } from '@/lib/i18n/context'
 import type { Notice } from '@/lib/supabase/types'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import { uploadBlogImage } from '@/lib/blog/upload'
-import { PageHeader, Card, Badge, ConfirmModal, Toast, Toggle, Skeleton, EmptyState, btn, input, label as labelCls } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, ConfirmModal, Toast, Toggle, Skeleton, EmptyState, btn, input, label as labelCls, IconAction } from '@/components/admin/ui'
 
 export default function AdminNoticesPage() {
   const [notices, setNotices] = useState<Notice[] | null>(null)
@@ -90,16 +90,16 @@ export default function AdminNoticesPage() {
         {notices === null ? <Skeleton /> : notices.length === 0 ? <EmptyState title="공지가 없어요" action={<button onClick={() => open('new')} className={btn.primary}>{a.newNotice}</button>} /> : (
           <ul className="divide-y divide-[#eef0f4]">
             {notices.map(n => (
-              <li key={n.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#f7f8fa] transition-colors">
-                <button onClick={() => quickToggle(n, { pinned: !n.pinned })} title={a.pinnedLabel} className={`h-7 px-2 rounded-md text-[11px] font-semibold flex items-center justify-center transition-colors ${n.pinned ? 'bg-[#2563eb]/10 text-[#2563eb]' : 'text-[#c4b9a2] hover:bg-[#eef0f4]'}`}>고정</button>
+              <li key={n.id} className="flex items-center gap-2 md:gap-4 px-3 md:px-5 py-3.5 hover:bg-[#f7f8fa] transition-colors">
+                <IconAction kind="pin" label={n.pinned ? '고정 해제' : a.pinnedLabel} active={n.pinned} onClick={() => quickToggle(n, { pinned: !n.pinned })} />
                 <button onClick={() => open(n)} className="min-w-0 flex-1 text-left">
                   <p className={`text-[14px] font-semibold truncate ${n.published ? 'text-[#1f2430]' : 'text-[#9aa1ad]'}`}>{n.title || '—'}</p>
                   <p className="text-[11.5px] text-[#9aa1ad]">{new Date(n.created_at).toLocaleDateString()} · 수정 {new Date(n.updated_at ?? n.created_at).toLocaleDateString()}</p>
                 </button>
                 {n.published ? <Badge color="#059669">공개</Badge> : <Badge color="#857a68">비공개</Badge>}
                 <Toggle checked={n.published} onChange={v => quickToggle(n, { published: v })} />
-                <button onClick={() => open(n)} className={btn.ghost + ' !h-8 !px-2.5'}>{a.edit}</button>
-                <button onClick={() => setDeleting(n)} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] font-medium text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">{a.delete}</button>
+                <IconAction kind="edit" label={a.edit} onClick={() => open(n)} />
+                <IconAction kind="delete" label={a.delete} onClick={() => setDeleting(n)} />
               </li>
             ))}
           </ul>

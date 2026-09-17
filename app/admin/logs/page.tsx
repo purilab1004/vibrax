@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import StatCard from '@/components/admin/StatCard'
 import TrendChart from '@/components/admin/TrendChart'
-import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, ConfirmModal, Toast, Pager, usePager, btn, input, th, td, trHover } from '@/components/admin/ui'
+import { PageHeader, Card, Badge, Segmented, Skeleton, EmptyState, ConfirmModal, Toast, Pager, usePager, btn, input, th, td, trHover, IconAction } from '@/components/admin/ui'
 
 interface Grp { fingerprint: string; message: string; source: string; level: string; path: string | null; count: number; count24h: number; users: number; first: string; last: string; resolved: boolean; sample: { stack: string | null; user_agent: string | null; user_id: string | null; meta: unknown; created_at: string } }
 interface Data { days: number; total: number; last24h: number; unresolved: number; bySource: Record<string, number>; byDay: { day: string; n: number }[]; groups: Grp[] }
@@ -62,8 +62,8 @@ export default function AdminLogsPage() {
                     <td className={`${td} text-right tabular-nums`}>{x.users}</td>
                     <td className={`${td} whitespace-nowrap text-[#6b7280]`}>{new Date(x.last).toLocaleString()}</td>
                     <td className={td} onClick={e => e.stopPropagation()}><div className="flex gap-1.5 justify-end">
-                      <button onClick={() => resolve(x.fingerprint, !x.resolved)} className={btn.ghost + ' !h-8 !px-2.5'}>{x.resolved ? '다시 열기' : '해결'}</button>
-                      <button onClick={() => setConfirm({ fp: x.fingerprint })} className="inline-flex items-center h-8 px-2.5 rounded-lg border border-[#e3e6ec] text-[12.5px] text-[#6b7280] hover:border-[#e11d48] hover:text-[#e11d48]">삭제</button>
+                      <IconAction kind={x.resolved ? 'undo' : 'check'} label={x.resolved ? '다시 열기' : '해결'} onClick={() => resolve(x.fingerprint, !x.resolved)} />
+                      <IconAction kind="delete" label="삭제" onClick={() => setConfirm({ fp: x.fingerprint })} />
                     </div></td>
                   </tr>
                   {openFp === x.fingerprint && (
