@@ -96,7 +96,8 @@ export default function BroadcastPage() {
   }
   const toggleLink = (id: string) => persistLinks(links.map((l) => (l.id === id ? { ...l, on: !l.on } : l)))
   const removeLink = (id: string) => { if (editingId === id) { setEditingId(null); setLinkUrl('') } return persistLinks(links.filter((l) => l.id !== id)) }
-  const editLink = (l: LinkBroadcast) => { setEditingId(l.id); setLinkUrl(l.url); setLinkNote(l.note ?? ''); setLinkTitle(l.videoTitle ?? ''); setGameId(l.gameId ?? ''); setLinkMsg('아래에서 링크·게임을 고치고 저장을 누르세요') }
+  const formRef = useRef<HTMLDivElement>(null)
+  const editLink = (l: LinkBroadcast) => { setEditingId(l.id); setLinkUrl(l.url); setLinkNote(l.note ?? ''); setLinkTitle(l.videoTitle ?? ''); setGameId(l.gameId ?? ''); setTimeout(() => { formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); formRef.current?.querySelector<HTMLInputElement>('input[data-note]')?.focus() }, 50); setLinkMsg('아래에서 링크·게임을 고치고 저장을 누르세요') }
   const cancelEdit = () => { setEditingId(null); setLinkUrl(''); setLinkNote(''); setLinkTitle(''); setLinkMsg(null) }
   // 링크를 넣으면 영상 제목 자동(YouTube oEmbed) — 이미 직접 쓴 제목은 덮지 않는다
   useEffect(() => {
@@ -210,7 +211,8 @@ export default function BroadcastPage() {
             {tab === 'camera' ? (
               <p className="text-sm text-white/85 leading-relaxed">방송을 시작하면 <b>추천 게임 카드</b>에 이 카메라 영상이 나오고, 코인을 넣으면 그 게임을 바로 플레이해요.<br />게임 안에서도 AJ 아바타 대신 방송이 BJ 자리에 나와요. 이 화면을 켜 둔 동안만 방송됩니다.</p>
             ) : (
-              <div className="w-full max-w-sm text-left space-y-2">
+              <div ref={formRef} className="w-full max-w-sm text-left space-y-2">
+                {editingId && <p className="text-[12px] font-bold text-[#ffd166] text-center">✏️ 수정 중 — 아래 링크·제목·한 줄 소개·게임을 고치고 '저장'을 누르세요</p>}
                 {tab === 'video'
                   ? <p className="text-sm text-white/85 leading-relaxed text-center">라이브가 아닌 <b>일반 영상</b>을 공유해요. YouTube 영상·쇼츠 링크를 게임에 연결하면 게임 목록에 <b>VIDEO 카드</b>로 나오고, 게임 안 BJ 자리에도 그 영상이 나와요. <b>여러 개</b> 등록할 수 있어요.</p>
                   : <p className="text-sm text-white/85 leading-relaxed text-center">YouTube 라이브/영상이나 Twitch 채널 링크를 게임에 연결하면 <b>LIVE 카드</b>로 목록에 나오고, 게임 안 BJ 자리에도 그 영상이 나와요. <b>여러 개</b> 계속 추가할 수 있어요.</p>}
@@ -228,6 +230,7 @@ export default function BroadcastPage() {
                   className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
                 />
                 <input
+                  data-note
                   value={linkNote}
                   onChange={(e) => setLinkNote(e.target.value)}
                   maxLength={80}
