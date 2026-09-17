@@ -1014,3 +1014,20 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 .live-ring-pulse { animation: liveRingPulse 1.6s ease-out infinite; }
 @keyframes liveRingPulse { 0% { transform: scale(.96); opacity: .9 } 100% { transform: scale(1.18); opacity: 0 } }
 @media (prefers-reduced-motion: reduce) { .live-ring-pulse { animation: none } }
+
+/* 관리자 모바일 — 표는 컨테이너 안에서 가로 스크롤하고 첫 열은 고정, 페이지 헤더 액션은 넓게 */
+@media (max-width: 767px) {
+  .admin-ui .overflow-x-auto table th:first-child,
+  .admin-ui .overflow-x-auto table td:first-child { position: sticky; left: 0; z-index: 1; background: #fff; box-shadow: 1px 0 0 #e3e6ec; }
+  .admin-ui .overflow-x-auto table thead th:first-child { background: #f7f8fa; }
+  .admin-ui .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+  .admin-ui select, .admin-ui textarea { font-size: 16px; }
+  .admin-ui main h1 { font-size: 21px; }
+}
+@media (max-width: 767px) {
+  /* 페이지마다 직접 준 작은 버튼(h-7·h-8)도 모바일에선 손가락으로 누르기 좋게 */
+  .admin-ui main :is(button, a, select, input)[class~="h-8"] { height: 40px; }
+  .admin-ui main :is(button, a, select, input)[class~="h-7"] { height: 36px; }
+  .admin-ui main :is(button, a)[class~="w-8"][class~="h-8"] { width: 40px; }
+  .admin-ui main :is(button, a)[class~="w-7"][class~="h-7"] { width: 36px; }
+}

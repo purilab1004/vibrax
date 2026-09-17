@@ -10,14 +10,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
   if ((data as { role?: string } | null)?.role !== 'admin') redirect('/')
   return (
-    <div className="admin-ui min-h-[calc(100svh-3rem)] bg-[#f4f5f8]">
+    <div className="admin-ui min-h-[calc(100svh-3rem)] bg-[#f4f5f8] overflow-x-clip md:overflow-x-visible">
       <AdminRail />
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-5 flex flex-col gap-4">
+      <div className="max-w-[1400px] mx-auto px-3 md:px-6 py-3 md:py-5 flex flex-col gap-3 md:gap-4">
       {/* 데스크탑은 전역 사이드바가 관리자 메뉴를 담당 — 모바일에서만 가로 탭 표시 */}
-      <div className="md:hidden">
+      <div className="md:hidden sticky top-[calc(3.5rem+var(--st,0px))] z-30">
         <AdminNav />
       </div>
-      <main className="flex-1 min-w-0">{children}</main>
+      <main className="flex-1 min-w-0 max-md:overflow-x-auto">{children}</main>
       </div>
     </div>
   )
