@@ -205,7 +205,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
 }
 
 // 게임 목록 — 모바일: 쇼츠 풀스크린 피드 / 데스크톱: 틱톡 웹형 중앙 카드 피드
-export type FeedFilter = 'all' | 'video' | 'game'
+export type FeedFilter = 'all' | 'video' | 'game' | 'reward' // reward = 코인 잭팟 카드만
 
 // filter: all = 게임 사이에 라이브를 끼워 넣기, video = 라이브만, game = 게임만. shuffleLives = 라이브 순서를 랜덤으로
 // pageScroll: 데스크톱에서 별도 스크롤 박스 대신 페이지 스크롤로 한 장씩 스냅 (홈 — 프롬프트 섹션을 넘기면 쇼츠 섹션으로 이어진다)
@@ -215,10 +215,10 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
   const liveMap = useLiveBroadcasts()
   const [seed] = useState(() => String(Math.random()))
   const livesAll = Object.values(liveMap)
-  const lives = filter === 'game' ? [] : shuffleLives
+  const lives = filter === 'game' || filter === 'reward' ? [] : shuffleLives
     ? [...livesAll].sort((a, b) => hashOf(a.gameId + a.hostId + seed) - hashOf(b.gameId + b.hostId + seed))
     : livesAll
-  const games = filter === 'video' ? [] : input
+  const games = filter === 'video' || filter === 'reward' ? [] : input
   // AJ AdPilot — 홍보 캠페인 카드 (게임 5장마다 1장, 광고 표시)
   const [ads, setAds] = useState<{ campaignId: string; creative: { headline?: string; hook?: string; badge?: string }; game: GameWithCreator }[]>([])
   const inputKey = input.map(g => g.id).join(',')
@@ -287,7 +287,7 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
   return (
     <div>
       {items.length === 0 && (
-        <div className="py-24 text-center text-[#857a68] text-sm">{filter === 'video' ? '지금 방송 중인 영상이 없어요.' : '표시할 게임이 없어요.'}</div>
+        <div className="py-24 text-center text-[#857a68] text-sm">{filter === 'video' ? '지금 방송 중인 영상이 없어요.' : filter === 'reward' ? '지금 진행 중인 코인 잭팟이 없어요. 곧 다시 열려요!' : '표시할 게임이 없어요.'}</div>
       )}
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">

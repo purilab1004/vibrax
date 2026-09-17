@@ -10,10 +10,11 @@ import { selectGamesWithCreator } from '@/lib/supabase/games'
 const VALID_GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
 
 interface Props {
-  searchParams: Promise<{ genre?: string; q?: string; creator?: string }>
+  searchParams: Promise<{ genre?: string; q?: string; creator?: string; reward?: string }>
 }
 
-async function GameGrid({ genre, q, creator }: { genre?: string; q?: string; creator?: string }) {
+async function GameGrid({ genre, q, creator, reward }: { genre?: string; q?: string; creator?: string; reward?: boolean }) {
+  if (reward) return <GamesBrowse games={[]} filter="reward" /> // REWARD — 진행 중인 코인 잭팟만
   const supabase = await createClient()
   const validGenre = VALID_GENRES.includes(genre as Genre) ? (genre as Genre) : undefined
   const term = q?.trim()
@@ -46,7 +47,7 @@ async function GameGrid({ genre, q, creator }: { genre?: string; q?: string; cre
 }
 
 export default async function GamesPage({ searchParams }: Props) {
-  const { genre, q, creator } = await searchParams
+  const { genre, q, creator, reward } = await searchParams
   const term = q?.trim()
 
   return (
@@ -61,7 +62,7 @@ export default async function GamesPage({ searchParams }: Props) {
       <div className="md:flex md:gap-6">
         <div className="flex-1 min-w-0">
           {/* 그리드를 별도 스트리밍하지 않고 라우트 로더(app/loading.tsx)로 덮는다 → 마스코트 1회만 */}
-          <GameGrid genre={genre} q={q} creator={creator} />
+          <GameGrid genre={genre} q={q} creator={creator} reward={reward === '1'} />
         </div>
       </div>
     </div>
