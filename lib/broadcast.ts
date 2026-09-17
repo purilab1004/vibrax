@@ -89,6 +89,8 @@ const envTurn = (): RTCIceServer[] => {
   if (!urls.length) return []
   return [{ urls, username: process.env.NEXT_PUBLIC_TURN_USER ?? '', credential: process.env.NEXT_PUBLIC_TURN_PASS ?? '' }]
 }
+/** 방송 중인 호스트가 presence 로 접속을 알리는 전역 채널 (피드의 LIVE 카드 필터용) */
+export const LIVE_HOSTS_CHANNEL = 'vbx-live-hosts'
 export const ICE_SERVERS: RTCIceServer[] = [
   { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
   { urls: 'stun:stun.cloudflare.com:3478' },

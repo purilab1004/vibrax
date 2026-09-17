@@ -1,7 +1,7 @@
 // lib/live/host.ts — 방송 호스트(폰 카메라). 시청자마다 RTCPeerConnection 하나씩(P2P, 시청자 수 소규모용).
 // 시그널링은 Supabase Realtime broadcast 채널. 호스트는 presence 로 "온라인"을 알린다.
 import type { SupabaseClient, RealtimeChannel } from '@supabase/supabase-js'
-import { ICE_SERVERS, liveChannelName, type Signal, type LiveChannelKind } from '@/lib/broadcast'
+import { ICE_SERVERS, liveChannelName, LIVE_HOSTS_CHANNEL, type Signal, type LiveChannelKind } from '@/lib/broadcast'
 
 export interface HostHandle {
   stop(): void
@@ -46,12 +46,17 @@ export function startHost(supabase: SupabaseClient, hostId: string, stream: Medi
     } catch (e) { console.warn('[live host] signal error', e) }
   })
   ch.subscribe(async (status) => { if (status === 'SUBSCRIBED') await ch.track({ role: 'host', at: Date.now() }) })
+  // 전역 온라인 표시 — 피드는 DB 의 방송 플래그만 믿지 않고, 지금 실제로 접속 중인 방송자만 LIVE 카드로 보여 준다(앱 강제 종료·네트워크 끊김 시 자동으로 사라짐)
+  const online: RealtimeChannel = supabase.channel(LIVE_HOSTS_CHANNEL, { config: { presence: { key: `${hostId}:${kind}` } } })
+  online.subscribe(async (status) => { if (status === 'SUBSCRIBED') await online.track({ hostId, kind }) })
 
   return {
     stop() {
       for (const id of [...peers.keys()]) closePeer(id)
       ch.untrack().catch(() => {})
       supabase.removeChannel(ch)
+      online.untrack().catch(() => {})
+      supabase.removeChannel(online)
       for (const t of stream.getTracks()) t.stop()
     },
     viewers: () => peers.size,
