@@ -4,7 +4,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import GenreFilter from '@/components/GenreFilter'
 
 interface Sug { id: string; title: string; genre: string; thumbnail_url: string | null; view_count: number | null }
 const RECENT_KEY = 'vbx_recent_search'
@@ -17,6 +16,8 @@ export default function MobileSearch({ open, onClose, categories }: { open: bool
   const [q, setQ] = useState('')
   const [sug, setSug] = useState<Sug[]>([])
   const [popular, setPopular] = useState<Sug[]>([])
+  const [cat, setCat] = useState('') // 카테고리(장르) — 고르면 그 장르의 인기 게임을 아래에 바로 보여준다
+  const [catList, setCatList] = useState<Sug[]>([])
   const [recent, setRecent] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -47,6 +48,13 @@ export default function MobileSearch({ open, onClose, categories }: { open: bool
     return () => { alive = false; clearTimeout(t) }
   }, [open, q, popular.length])
 
+  // 카테고리를 고르면 그 장르 인기 게임 10개
+  useEffect(() => {
+    if (!open || !cat) { setCatList([]); return }
+    let alive = true
+    createClient().from('games').select('id,title,genre,thumbnail_url,view_count').eq('genre', cat).order('view_count', { ascending: false }).limit(10).then(({ data }) => { if (alive) setCatList((data ?? []) as Sug[]) })
+    return () => { alive = false }
+  }, [open, cat])
   const search = (term: string) => {
     const t = term.trim()
     const p = new URLSearchParams(params.toString())
@@ -102,9 +110,25 @@ export default function MobileSearch({ open, onClose, categories }: { open: bool
             )}
             <section className="px-4 pt-5">
               <h3 className="text-[11px] font-bold tracking-[0.18em] text-[#9d9280] mb-2">카테고리</h3>
-              <div className="[&_a]:!h-9 [&_button]:!h-9">{typeof categories === 'function' ? categories(onClose) : (categories ?? <GenreFilter />)}</div>
+              {categories ? (
+                <div className="[&_a]:!h-9 [&_button]:!h-9">{typeof categories === 'function' ? categories(onClose) : categories}</div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {([['', '전체'], ['action', '액션'], ['adventure', '어드벤처'], ['strategy', '전략'], ['sports', '스포츠']] as const).map(([v, l]) => (
+                    <button key={v} onClick={() => setCat(v)} className={`h-9 px-3.5 rounded-full text-[13px] font-semibold border transition-colors ${cat === v ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white text-[#4a4337] border-[#e3dccb]'}`}>{l}</button>
+                  ))}
+                </div>
+              )}
             </section>
-            {popular.length > 0 && (
+            {cat ? (
+              <section className="pt-5">
+                <div className="px-4 flex items-center justify-between mb-1">
+                  <h3 className="text-[11px] font-bold tracking-[0.18em] text-[#9d9280]">{({ action: '액션', adventure: '어드벤처', strategy: '전략', sports: '스포츠' } as Record<string, string>)[cat]} 인기 게임</h3>
+                  <button onClick={() => { onClose(); router.push(`/games?genre=${cat}`) }} className="text-[12px] font-semibold text-[#2563eb]">전체 보기 →</button>
+                </div>
+                {catList.length === 0 ? <p className="px-4 py-6 text-[13px] text-[#9d9280]">이 카테고리에 등록된 게임이 아직 없어요.</p> : catList.map((g) => <Row key={g.id} g={g} />)}
+              </section>
+            ) : popular.length > 0 && (
               <section className="pt-5">
                 <h3 className="px-4 text-[11px] font-bold tracking-[0.18em] text-[#9d9280] mb-1">인기 게임</h3>
                 {popular.map((g) => <Row key={g.id} g={g} />)}

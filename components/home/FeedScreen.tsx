@@ -97,7 +97,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
         </span>
       </div>
       {/* 방 디오라마 — 캐릭터는 중앙 (앱에서는 정적 렌더로 부드럽게) */}
-      <div className="absolute inset-x-1 top-[24%] bottom-[26%] scale-[.84] origin-center">
+      <div className="absolute inset-x-1 top-[30%] bottom-[20%] scale-[.84] origin-center">
         <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />
       </div>
       {/* 우측 액션 레일 — 틱톡 스타일 */}
