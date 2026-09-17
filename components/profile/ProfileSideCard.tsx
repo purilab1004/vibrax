@@ -32,17 +32,6 @@ export function useMyProfileLite(): MyProfileLite | null {
   return p
 }
 
-export function ProfileAvatar({ p, size }: { p: MyProfileLite | null; size: number }) {
-  return (
-    <span className="avatar-ring shrink-0"><span className="avatar-wave rounded-full overflow-hidden flex items-center justify-center bg-white" style={{ width: size, height: size }}>
-      {p?.avatarUrl
-        // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={p.avatarUrl} alt="" className="avatar-bob w-full h-full object-cover object-top" />
-        : <span className="font-extrabold text-[#2563eb]" style={{ fontSize: size * 0.4 }}>{(p?.name ?? '?').charAt(0).toUpperCase()}</span>}
-    </span></span>
-  )
-}
-
 export default function ProfileSideCard() {
   const p = useMyProfileLite()
   const c = p?.country ? COUNTRIES.find((x) => x.code === p.country) : null
@@ -51,7 +40,14 @@ export default function ProfileSideCard() {
       <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-10 -left-8 w-32 h-32 rounded-full bg-[radial-gradient(closest-side,rgba(255,45,111,0.2),transparent)]" /><div className="absolute -bottom-12 -right-6 w-32 h-32 rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.2),transparent)]" /></div>
       <div className="relative p-3.5">
         <div className="flex items-center gap-3">
-          <span className="shrink-0 rounded-full p-[2.5px] bg-gradient-to-br from-[#ff2d6f] to-[#8b3dff]"><span className="block rounded-full ring-2 ring-white overflow-hidden"><ProfileAvatar p={p} size={44} /></span></span>
+          <span className="shrink-0 rounded-full p-[2.5px] bg-gradient-to-br from-[#ff2d6f] to-[#8b3dff]">
+            <span className="block w-11 h-11 rounded-full overflow-hidden bg-white ring-2 ring-white flex items-center justify-center">
+              {p?.avatarUrl
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={p.avatarUrl} alt="" className="w-full h-full object-cover object-top" />
+                : <span className="text-[17px] font-extrabold text-[#8b3dff]">{(p?.name ?? '?').charAt(0).toUpperCase()}</span>}
+            </span>
+          </span>
           <div className="min-w-0">
             <p className="text-[9px] font-extrabold tracking-[0.25em] bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] bg-clip-text text-transparent">MY PAGE</p>
             <p className="text-[15px] font-extrabold leading-tight truncate text-[#1d1530]">{p?.name ?? '…'}</p>
