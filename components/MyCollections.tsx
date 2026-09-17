@@ -32,24 +32,26 @@ function Section({ title, icon, games, empty, loading, onRemove, removeLabel }: 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {games.map((g) => (
             <div key={g.id} className="group relative rounded-xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_8px_24px_-18px_rgba(36,31,23,0.25)] hover:shadow-[0_12px_32px_-16px_rgba(36,31,23,0.35)] hover:-translate-y-0.5 transition-all overflow-hidden">
-              <button
-                onClick={(e) => { e.preventDefault(); remove(g.id) }}
-                disabled={busy === g.id}
-                aria-label={removeLabel}
-                title={removeLabel}
-                className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/55 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#e11d48] transition-all disabled:opacity-60"
-              >
-                {busy === g.id ? <span className="w-3 h-3 border-2 border-white/60 border-t-transparent rounded-full animate-spin" /> : <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>}
-              </button>
               <Link href={`/games/${g.id}`} className="block">
                 <div className="relative aspect-video bg-gray-900">
                   <Image src={g.thumbnail_url} alt={g.title} fill className="object-cover group-hover:scale-[1.03] transition-transform" />
                 </div>
-                <div className="p-2.5">
+                <div className="p-2.5 pb-1.5">
                   <p className="text-[13px] font-semibold text-[#241f17] truncate">{g.title}</p>
                   <p className="text-[11px] text-[#857a68] truncate">{g.profiles?.agent_name ?? g.profiles?.username ?? 'unknown'} · 👤 {formatViewers(g.view_count ?? 0)}</p>
                 </div>
               </Link>
+              {/* 취소 — 모바일에서도 항상 보이게 (예전엔 마우스 호버에서만 보였음) */}
+              <div className="px-2.5 pb-2.5">
+                <button
+                  onClick={() => remove(g.id)}
+                  disabled={busy === g.id}
+                  className="w-full h-8 rounded-lg border border-[#ebe4d6] bg-[#faf8f3] text-[12px] font-semibold text-[#6b6152] hover:border-[#e11d48] hover:text-[#e11d48] hover:bg-[#fff1f4] transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60"
+                >
+                  {busy === g.id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <span aria-hidden>{icon === '❤️' ? '💔' : '✕'}</span>}
+                  {removeLabel}
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -93,7 +95,7 @@ export default function MyCollections({ userId }: { userId: string }) {
   return (
     <div className="space-y-10">
       <Section title="LIKED GAMES · 좋아요한 게임" icon="❤️" games={liked} empty="아직 좋아요한 게임이 없어요. 마음에 드는 게임에 ❤️를 눌러 보세요." loading={loading} onRemove={removeLiked} removeLabel="좋아요 취소" />
-      <Section title="SHARED GAMES · 공유한 게임" icon="🔗" games={shared} empty="아직 공유한 게임이 없어요. 게임 페이지의 공유 버튼을 누르면 여기에 모여요." loading={loading} onRemove={removeShared} removeLabel="목록에서 제거" />
+      <Section title="SHARED GAMES · 공유한 게임" icon="🔗" games={shared} empty="아직 공유한 게임이 없어요. 게임 페이지의 공유 버튼을 누르면 여기에 모여요." loading={loading} onRemove={removeShared} removeLabel="공유 목록에서 빼기" />
     </div>
   )
 }
