@@ -147,9 +147,9 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
       {!mobile && boardOpen && boardPanel}
       {!mobile && pickOpen && pickPanel}
       {/* 진행 바 + 이동 화살표 */}
-      <div className="pointer-events-auto flex items-center gap-2 w-full h-9 pl-2.5 pr-0 rounded-full bg-black/55 backdrop-blur-md border border-white/12 shadow-[0_2px_10px_rgba(0,0,0,0.35)] md:pl-3 overflow-hidden">
-        {chain > 0 && <span className="text-[10.5px] font-bold text-[#fbbf24] whitespace-nowrap">🚀 {chain}연속</span>}
-        <button type="button" onClick={() => { if (mobile && reached) { setPickOpen(v => !v); setBoardOpen(false) } else if (lb) setBoardOpen(v => !v) }} className="flex flex-col flex-1 min-w-0 text-left">
+      <div className="pointer-events-auto flex items-stretch gap-0 w-full h-9 pl-2.5 pr-0 rounded-full bg-black/55 backdrop-blur-md border border-white/12 shadow-[0_2px_10px_rgba(0,0,0,0.35)] md:pl-3 overflow-hidden">
+        {chain > 0 && <span className="self-center mr-2 text-[10.5px] font-bold text-[#fbbf24] whitespace-nowrap">🚀 {chain}연속</span>}
+        <button type="button" onClick={() => { if (mobile && reached) { setPickOpen(v => !v); setBoardOpen(false) } else if (lb) setBoardOpen(v => !v) }} className="flex flex-col justify-center flex-1 min-w-0 text-left pr-2.5">
           <div className="flex items-baseline justify-between gap-2 text-[10px] md:text-[10.5px] text-white/80 leading-none mb-0.5 md:mb-1 whitespace-nowrap min-w-0">
             {mobile && reached
               ? <span key={tick} className="text-white font-bold truncate transport-ticker">다음 → {tickerTitle}</span>
@@ -158,13 +158,13 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
           </div>
           <div className="h-1 md:h-1.5 w-full rounded-full bg-white/15 overflow-hidden"><div className={`h-full rounded-full transition-[width] duration-500 ${nt && nt.rank === 1 ? 'bg-[#fbbf24]' : reached ? 'bg-[#22c55e]' : 'bg-[#60a5fa]'}`} style={{ width: `${pct}%` }} /></div>
         </button>
-        {lb && <button onClick={() => setBoardOpen(v => !v)} title="회원 TOP 10" aria-label="순위표" className={`hidden md:flex h-9 w-9 rounded-full flex items-center justify-center text-[15px] transition-colors ${boardOpen ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}>🏆</button>}
+        {lb && <button onClick={() => setBoardOpen(v => !v)} title="회원 TOP 10" aria-label="순위표" className={`hidden md:flex self-center mr-1.5 h-7 w-7 rounded-full flex items-center justify-center text-[15px] transition-colors ${boardOpen ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}>🏆</button>}
         <button
           onClick={() => reached ? (mobile ? setPickOpen(v => !v) : (pickOpen ? go(primary, false) : setPickOpen(true))) : undefined}
           disabled={!reached || !!going}
           title={reached ? `다음 게임: ${primary.title}` : (goal ? `목표 ${goal.toLocaleString()}점을 넘기면 열려요` : '한 판을 끝내면 열려요')}
           aria-label="다음 게임으로 이동"
-          className={`h-full px-3 md:pl-4 md:pr-3.5 rounded-full flex items-center gap-1 md:gap-1.5 text-[10.5px] md:text-[12px] font-bold whitespace-nowrap shrink-0 transition-all ${reached ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white shadow-[0_0_0_4px_rgba(37,99,235,0.25)] transport-glow' : 'bg-white/10 text-white/35 cursor-not-allowed'}`}
+          className={`px-3 md:pl-4 md:pr-3.5 rounded-none border-l border-white/10 flex items-center gap-1 md:gap-1.5 text-[10.5px] md:text-[12px] font-bold whitespace-nowrap shrink-0 transition-all ${reached ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white transport-glow' : 'bg-white/10 text-white/35 cursor-not-allowed'}`}
         >
           <span className="whitespace-nowrap">다음 게임</span>
           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
