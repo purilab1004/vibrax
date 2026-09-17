@@ -447,7 +447,7 @@ export default function ProfilePage() {
 
         {onAirGames.map((onAirGame) => (
           <div key={`onair-${onAirGame.id}`} className="mb-3 rounded-xl border border-[#e11d48]/40 bg-[#fff1f4] flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
-            <div className="relative w-20 h-12 shrink-0 overflow-hidden rounded-lg bg-gray-900">
+            <div className="relative w-[48px] h-[84px] shrink-0 overflow-hidden rounded-lg bg-gray-900">
               <Image src={onAirGame.thumbnail_url} alt={onAirGame.title} fill className="object-cover" />
               <span className="absolute top-1 left-1 flex items-center gap-1 rounded-full bg-[#e11d48] text-white font-pixel text-[8px] px-1.5 py-0.5 tracking-widest"><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />LIVE</span>
             </div>
@@ -478,7 +478,8 @@ export default function ProfilePage() {
               <div key={game.id} className="rounded-xl border border-[#ebe4d6] bg-white hover:border-[#cfc4ab] hover:shadow-[0_6px_18px_-10px_rgba(36,31,23,0.2)] transition-all">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4">
                   <div className="flex items-center gap-3 sm:contents">
-                  <div className="relative w-20 h-12 sm:w-24 sm:h-14 shrink-0 overflow-hidden rounded-lg bg-gray-900">
+                  {/* 세로(쇼츠 9:16) 썸네일 — 가로 이미지는 가운데를 잘라 보여준다 */}
+                  <div className="relative w-[54px] h-[96px] sm:w-[63px] sm:h-[112px] shrink-0 overflow-hidden rounded-lg bg-gray-900">
                     <Image src={game.thumbnail_url} alt={game.title} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
