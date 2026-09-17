@@ -72,9 +72,11 @@ export default function GameEditModal({ gameId, userId, onClose, onSaved }: { ga
         <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
           <div>
             <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">썸네일</label>
-            <div className="relative w-full aspect-video mb-3 overflow-hidden rounded-xl bg-gray-900 border border-[#ebe4d6]">
-              <Image src={f.newThumbnail ? URL.createObjectURL(f.newThumbnail) : f.thumbnail_url} alt="thumbnail" fill className="object-cover" unoptimized />
+            <div className="relative mx-auto w-[200px] aspect-[9/16] mb-3 overflow-hidden rounded-xl bg-[#0f0d14] border border-[#ebe4d6]">
+              <Image src={f.newThumbnail ? URL.createObjectURL(f.newThumbnail) : f.thumbnail_url} alt="" aria-hidden fill className="object-cover opacity-70" style={{ filter: 'blur(16px)', transform: 'scale(1.2)' }} unoptimized />
+              <Image src={f.newThumbnail ? URL.createObjectURL(f.newThumbnail) : f.thumbnail_url} alt="thumbnail" fill className="object-contain" unoptimized />
             </div>
+            <p className="text-[11px] text-[#9d9280] mb-2">권장 크기: 세로 <b>1080×1920</b> (9:16, 쇼츠 비율). 게임 페이지 포스터와 피드 카드 배경에 그대로 쓰여요.</p>
             <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={e => set({ newThumbnail: e.target.files?.[0] ?? null })}
               className="w-full bg-white border border-[#ddd3bf] px-4 py-2.5 text-sm text-[#6b6152] file:mr-4 file:py-1 file:px-3 file:border-0 file:bg-[#2563eb] file:text-white file:text-[11px] file:font-pixel file:cursor-pointer file:hover:bg-[#1d4ed8] file:transition-colors" />
             {f.newThumbnail && <p className="text-xs text-[#6b6152] mt-1">선택됨: {f.newThumbnail.name}</p>}

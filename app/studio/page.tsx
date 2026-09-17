@@ -240,7 +240,7 @@ export default function StudioPage() {
                   <Link href={`/studio/${p.id}`} className="block relative aspect-[4/3] overflow-hidden" style={auroraOf(p.id)}>
                     {pub?.thumbnail_url && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={pub.thumbnail_url} alt={title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out" />
+                      <img src={pub.thumbnail_url} alt={title} className="absolute inset-0 w-full h-full object-cover object-[center_30%] group-hover:scale-[1.06] transition-transform duration-700 ease-out" />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/10" />
                     <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">

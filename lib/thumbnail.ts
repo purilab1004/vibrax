@@ -74,7 +74,7 @@ function loadDefaultBackground(): Promise<HTMLImageElement | null> {
   if (defaultBgPromise) return defaultBgPromise
   defaultBgPromise = (async () => {
     try {
-      const r = await fetch('/api/media/default-background'); const j = await r.json() as { url?: string | null }
+      const r = await fetch('/api/media/default-background?portrait=1'); const j = await r.json() as { url?: string | null }
       if (!j.url) return null
       return await new Promise<HTMLImageElement | null>((resolve) => {
         const img = new Image(); img.crossOrigin = 'anonymous'
@@ -86,8 +86,9 @@ function loadDefaultBackground(): Promise<HTMLImageElement | null> {
 }
 
 export async function generateThumbnail(title: string, genre: Genre, seed = 0): Promise<Blob> {
-  const W = 1280
-  const H = 720
+  // 쇼츠(세로 9:16) 크기 — 게임 페이지 포스터·피드 배경에 맞춘다
+  const W = 1080
+  const H = 1920
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
@@ -148,36 +149,37 @@ export async function generateThumbnail(title: string, genre: Genre, seed = 0): 
 
   // 장르 라벨 (좌상단)
   ctx.fillStyle = c1
-  ctx.font = `16px ${pixel}`
+  ctx.font = `26px ${pixel}`
   ctx.textBaseline = 'top'
-  ctx.fillText(`▮ ${GENRE_LABEL[genre]}`, 56, 52)
+  ctx.fillText(`▮ ${GENRE_LABEL[genre]}`, 64, 88)
 
   // 제목 (중앙, 최대 2줄, 길이에 따라 크기 조절)
-  const base = title.length <= 8 ? 104 : title.length <= 16 ? 84 : 66
+  const base = title.length <= 6 ? 150 : title.length <= 10 ? 124 : title.length <= 16 ? 104 : 86
   ctx.font = `400 ${base}px ${cute}, 'Pretendard Variable', Pretendard, sans-serif`
-  const lines = wrapTitle(ctx, title.trim() || 'MY GAME', W - 220)
+  const lines = wrapTitle(ctx, title.trim() || 'MY GAME', W - 160)
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.shadowColor = bgImg ? 'rgba(0,0,0,0.85)' : c1
   ctx.shadowBlur = bgImg ? 18 : 34
   ctx.fillStyle = '#ffffff'
   const lineH = base * 1.22
-  const startY = H / 2 - ((lines.length - 1) * lineH) / 2
+  // 제목은 위쪽 40% 지점 — 피드 카드에서 제목·마스코트와 겹치지 않고, 아래쪽엔 배경 그림이 남는다
+  const startY = H * 0.4 - ((lines.length - 1) * lineH) / 2
   lines.forEach((line, i) => ctx.fillText(line, W / 2, startY + i * lineH))
   ctx.shadowBlur = 0
 
   // 제목 아래 액센트 언더라인
   const uw = 120 + rng() * 80
   ctx.fillStyle = c2
-  ctx.fillRect(W / 2 - uw / 2, startY + (lines.length - 0.5) * lineH + 18, uw, 8)
+  ctx.fillRect(W / 2 - uw / 2, startY + (lines.length - 0.5) * lineH + 22, uw, 10)
 
   // 워터마크 (우하단)
   ctx.textAlign = 'right'
   ctx.textBaseline = 'alphabetic'
-  ctx.font = `20px ${pixel}`
+  ctx.font = `28px ${pixel}`
   ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8
   ctx.fillStyle = '#ffffff'
-  ctx.fillText('VIBREXCUP', W - 56, H - 48)
+  ctx.fillText('VIBREXCUP', W - 64, H - 72)
   ctx.shadowBlur = 0
 
   return new Promise<Blob>((resolve, reject) => {

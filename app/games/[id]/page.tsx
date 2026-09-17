@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import Image from 'next/image'
+import PosterHero from '@/components/PosterHero'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import type { Game } from '@/lib/supabase/types'
@@ -92,18 +92,11 @@ export default async function GameDetailPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(gameJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }} />
 
-      <div className="relative aspect-video w-full mb-8 overflow-hidden bg-gray-900 border border-[#ebe4d6]">
-        <Image
-          src={game.thumbnail_url}
-          alt={game.title}
-          fill
-          className="object-cover"
-          priority
-        />
-      </div>
-
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-        <div className="flex-1 min-w-0">
+      {/* 포스터(쇼츠 9:16) + 정보 — PC 는 좌우 2단, 모바일은 포스터 아래 정보 */}
+      <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-10">
+        <PosterHero src={game.thumbnail_url} alt={game.title} className="w-full aspect-[3/4] max-h-[62vh] md:w-[320px] md:aspect-[9/16] md:max-h-none md:shrink-0" />
+        <div className="flex-1 min-w-0 md:pt-2 flex flex-col gap-6">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-3">
             <span
               className={`inline-block font-pixel text-[11px] px-2 py-1 text-white rounded ${genreColor}`}
@@ -127,9 +120,13 @@ export default async function GameDetailPage({ params }: Props) {
             <LikeButton gameId={game.id} size="md" />
           </div>
         </div>
-        <div className="flex items-center gap-2.5 md:gap-3 shrink-0 w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none">
+        <div className="flex items-center gap-2.5 md:gap-3 w-full md:max-w-[420px] [&>button]:flex-1">
           <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
           <ShareEmbed title={game.title} gameId={game.id} />
+        </div>
+        {game.description && (
+          <p className="text-[14px] leading-relaxed text-[#4a4337] whitespace-pre-line" style={{ wordBreak: 'keep-all' }}>{game.description}</p>
+        )}
         </div>
       </div>
       <GameLeaderboard gameId={game.id} />

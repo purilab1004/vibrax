@@ -3,10 +3,15 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const revalidate = 300
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { data } = await createAdminClient().from('media_assets').select('url,width,height').eq('name', 'default_background').eq('status', 'active').limit(1).maybeSingle()
-    const a = data as { url: string; width: number | null; height: number | null } | null
+    const portrait = new URL(req.url).searchParams.get('portrait') === '1'
+    const admin = createAdminClient()
+    type Row = { url: string; width: number | null; height: number | null }
+    let a: Row | null = null
+    // 세로(쇼츠) 썸네일용 — 'default_background_portrait' 에셋이 등록돼 있으면 그것을, 없으면 가로 기본 배경을 cover 로 자른다
+    if (portrait) { const { data } = await admin.from('media_assets').select('url,width,height').eq('name', 'default_background_portrait').eq('status', 'active').limit(1).maybeSingle(); a = (data as Row | null) ?? null }
+    if (!a) { const { data } = await admin.from('media_assets').select('url,width,height').eq('name', 'default_background').eq('status', 'active').limit(1).maybeSingle(); a = (data as Row | null) ?? null }
     return Response.json(a ? { url: a.url, width: a.width, height: a.height } : { url: null }, { headers: { 'Cache-Control': 'public, max-age=300, s-maxage=600' } })
   } catch { return Response.json({ url: null }) }
 }
