@@ -134,22 +134,27 @@ export default function NavBar() {
   if (pathname.startsWith('/admin')) {
     return (
       <header className="sticky top-0 z-50 border-b border-[#e3e6ec] bg-white md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">
-        <nav className="w-full px-4 h-12 flex items-center gap-4">
+        <nav className="w-full px-3 md:px-4 h-12 flex items-center gap-2 md:gap-4">
           {/* 좌: 워드마크 + 관리자 검색 */}
           <Link href="/admin" className="flex items-center gap-2 text-[#1f2430] text-[15px] font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0">
             <span className="md:hidden"><LogoMark /></span>
             <span>vibrex<span className="text-[#2563eb]">admin</span></span>
           </Link>
           <div className="flex-1" />
+          {/* 모바일 — 회원 홈으로 (아이콘 + 짧은 라벨) */}
+          <Link href="/" aria-label={T.nav.backToSite} title={T.nav.backToSite} className="sm:hidden inline-flex items-center gap-1 h-9 pl-2 pr-2.5 rounded-lg border border-[#d9dde5] bg-white text-[12.5px] font-semibold text-[#1f2430] active:bg-[#f3f5f8]">
+            <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-[#2563eb]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10v9.5h13V10" /><path d="M10 19.5v-5h4v5" /></svg>
+            {lang === 'en' ? 'Home' : '홈'}
+          </Link>
           <Link href="/" className="hidden sm:inline-flex items-center h-8 px-3 rounded-md border border-[#d9dde5] bg-white text-[12.5px] font-medium text-[#1f2430] hover:bg-[#f3f5f8] transition-colors">
             {T.nav.backToSite}
           </Link>
           {user && (
-            <button onClick={handleSignOut} className="inline-flex items-center h-8 px-3 rounded-md text-[12.5px] font-medium text-[#6b7280] hover:text-[#1f2430] hover:bg-[#f3f5f8] transition-colors">
+            <button onClick={handleSignOut} className="inline-flex items-center h-8 px-2 md:px-3 rounded-md text-[12.5px] font-medium text-[#6b7280] hover:text-[#1f2430] hover:bg-[#f3f5f8] transition-colors">
               {T.nav.logout}
             </button>
           )}
-          <div className="flex items-center gap-2 border-l border-[#e3e6ec] pl-3">
+          <div className="flex items-center gap-2 border-l border-[#e3e6ec] pl-2 md:pl-3">
             <div className="inline-flex items-center rounded-md border border-[#d9dde5] p-0.5">
               {(['ko', 'en'] as const).map(l => <button key={l} onClick={() => setLang(l)} className={`h-6 px-2 rounded text-[11px] font-bold ${lang === l ? 'bg-[#eef2ff] text-[#2563eb]' : 'text-[#6b7280] hover:text-[#1f2430]'}`}>{l.toUpperCase()}</button>)}
             </div>
