@@ -11,6 +11,7 @@ import { useLang } from '@/lib/i18n/context'
 import { loadAvatarConfig, saveAvatarConfig } from '@/lib/jeumto/storage'
 import { emptyConfig } from '@/lib/jeumto/config'
 import { startHost, type HostHandle } from '@/lib/live/host'
+import { getCamLive } from '@/lib/live/camLive'
 import dynamic from 'next/dynamic'
 import { useLiveBroadcasts, liveForGame, refreshLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 import { useGameTelemetry } from '@/lib/aj/telemetry'
@@ -144,7 +145,8 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     // 2) 캔버스가 없으면(DOM 게임) 화면 공유로
     if (!stream) { try { stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false, ...({ preferCurrentTab: true, selfBrowserSurface: 'include' } as object) }) } catch { return } }
     // 마이크(있으면) — 해설 소리
-    try { const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); mic.getAudioTracks().forEach(t => stream!.addTrack(t)) } catch { /* 마이크 없이 */ }
+    // 카메라 방송(camLive) 중이면 마이크는 이미 그쪽으로 나간다 — 다시 요청하면 iOS 가 기존 카메라 트랙을 끊을 수 있어 건너뛴다
+    if (!getCamLive()) { try { const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); mic.getAudioTracks().forEach(t => stream!.addTrack(t)) } catch { /* 마이크 없이 */ } }
     screenStream.current = stream
     stream.getVideoTracks()[0]?.addEventListener('ended', () => { void stopScreenLive() })
     screenHost.current = startHost(supabase, user.id, stream, (n) => setScreenLive(s => (s ? { ...s, viewers: n } : s)), 'screen')
