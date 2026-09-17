@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 export interface PickedAsset { id: string; kind: string; name: string; title: string; url: string }
-interface Item extends PickedAsset { description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string } }
+interface Item extends PickedAsset { credit_cost?: number; description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string } }
 const ROLE: Record<string, string> = { bgm: '배경음', jump: '점프', hit: '타격', coin: '획득', shoot: '발사', explosion: '폭발', powerup: '파워업', gameover: '게임오버', clear: '클리어', click: 'UI', ambient: '환경음', other: '기타' }
 
 const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '오디오']]
@@ -83,6 +83,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
                   </div>
                   <div className="px-2 py-1.5">
                     <p className="text-[12px] font-semibold text-[#241f17] truncate">{it.title}</p>
+                    {(it.credit_cost ?? 0) > 0 && <span className="absolute top-1.5 right-1.5 rounded-full bg-[#241f17]/85 text-[#ffd166] text-[10.5px] font-bold px-1.5 py-0.5">🪙 {it.credit_cost}</span>}
                     <p className="text-[10.5px] text-[#9d9280] truncate">{KINDS.find(k => k[0] === it.kind)?.[1] ?? it.kind}{it.kind === 'audio' && it.meta?.role ? ` · ${ROLE[it.meta.role] ?? it.meta.role}` : it.width ? ` · ${it.width}×${it.height}` : ''}</p>
                   </div>
                   {has(it.id) && <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#2563eb] text-white text-[11px] flex items-center justify-center">✓</span>}
@@ -91,7 +92,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
             </div>}
         </div>
         <div className="flex items-center justify-between px-4 py-3 border-t border-[#ebe4d6]">
-          <p className="text-[12px] text-[#6b6152]">{picked.length}/10 선택 — 고른 에셋은 게임에 바로 들어가고, AI 가 캐릭터·배경으로 써요.</p>
+          <p className="text-[12px] text-[#6b6152]">{picked.length}/10 선택 — 고른 에셋은 게임에 바로 들어가고, AI 가 캐릭터·배경으로 써요.{(() => { const c = picked.reduce((s, p) => s + ((items ?? []).find(i => i.id === p.id)?.credit_cost ?? 0), 0); return c > 0 ? <b className="ml-1 text-[#b45309]">추가 {c}크레딧 (디자이너에게 100% 적립)</b> : null })()}</p>
           <button onClick={close} className="h-8 px-4 rounded-lg bg-[#2563eb] text-white text-[12.5px] font-semibold hover:bg-[#1d4ed8]">완료</button>
         </div>
       </div>

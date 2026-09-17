@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const genre = u.searchParams.get('genre') ?? ''
   const limit = Math.min(120, Math.max(1, Number(u.searchParams.get('limit') ?? 60)))
   const admin = createAdminClient()
-  let query = admin.from('media_assets').select('id,kind,name,title,description,genres,tags,url,mime,bytes,width,height,meta,uses').eq('status', 'active').in('kind', [...INJECTABLE]).order('uses', { ascending: false }).order('created_at', { ascending: false }).limit(limit)
+  let query = admin.from('media_assets').select('id,kind,name,title,description,genres,tags,url,mime,bytes,width,height,meta,uses,credit_cost').eq('status', 'active').in('kind', [...INJECTABLE]).order('uses', { ascending: false }).order('created_at', { ascending: false }).limit(limit)
   if (kind) query = query.eq('kind', kind)
   if (genre) query = query.contains('genres', [genre])
   if (q) query = query.or(`title.ilike.%${q}%,name.ilike.%${q}%,tags.cs.{${q}}`)

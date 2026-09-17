@@ -7,7 +7,7 @@ import MediaEditor from '@/components/admin/MediaEditor'
 import { AUDIO_ROLES, audioRoleLabel } from '@/lib/media/assets'
 
 type Kind = 'character' | 'background' | 'tile' | 'item' | 'ui' | 'effect' | 'sprite' | 'audio' | 'model3d' | 'font' | 'other'
-interface Asset { id: string; kind: Kind; name: string; title: string; description: string | null; genres: string[]; tags: string[]; url: string; mime: string | null; bytes: number; width: number | null; height: number | null; meta: { frames?: { cols: number; rows: number; fps?: number }; role?: string } & Record<string, unknown>; auto_use: boolean; status: 'active' | 'archived'; uses: number; created_at: string }
+interface Asset { id: string; kind: Kind; name: string; title: string; description: string | null; credit_cost?: number; genres: string[]; tags: string[]; url: string; mime: string | null; bytes: number; width: number | null; height: number | null; meta: { frames?: { cols: number; rows: number; fps?: number }; role?: string } & Record<string, unknown>; auto_use: boolean; status: 'active' | 'archived'; uses: number; created_at: string }
 interface Genre { slug: string; name: string; group?: string }
 interface Data { items: Asset[]; total: number; genres: Genre[]; stats: { byKind: Record<string, number>; totalBytes: number; archived: number } }
 
@@ -254,9 +254,9 @@ function GenrePicker({ genres, groups, value, onChange }: { genres: Genre[]; gro
 }
 
 function DetailModal({ a, genres, groups, onClose, onPatch, onDelete, onEdit, onDuplicate }: { a: Asset; genres: Genre[]; groups: Map<string, Genre[]>; onClose: () => void; onPatch: (b: Record<string, unknown>) => Promise<void>; onDelete: () => void; onEdit: () => void; onDuplicate: () => void }) {
-  const [f, setF] = useState({ title: a.title, name: a.name, description: a.description ?? '', kind: a.kind as Kind, genres: a.genres, tags: a.tags.join(', '), auto_use: a.auto_use, cols: a.meta?.frames?.cols ?? 0, rows: a.meta?.frames?.rows ?? 1, fps: a.meta?.frames?.fps ?? 8, role: a.meta?.role ?? '' })
+  const [f, setF] = useState({ credit_cost: a.credit_cost ?? 0, title: a.title, name: a.name, description: a.description ?? '', kind: a.kind as Kind, genres: a.genres, tags: a.tags.join(', '), auto_use: a.auto_use, cols: a.meta?.frames?.cols ?? 0, rows: a.meta?.frames?.rows ?? 1, fps: a.meta?.frames?.fps ?? 8, role: a.meta?.role ?? '' })
   const [saving, setSaving] = useState(false)
-  const save = async () => { setSaving(true); await onPatch({ title: f.title, name: f.name, description: f.description || null, kind: f.kind, genres: f.genres, tags: f.tags.split(',').map(x => x.trim()).filter(Boolean), auto_use: f.auto_use, meta: { ...a.meta, ...(f.cols > 0 ? { frames: { cols: f.cols, rows: f.rows || 1, fps: f.fps || 8 } } : { frames: undefined }), role: f.role || undefined } }); setSaving(false) }
+  const save = async () => { setSaving(true); await onPatch({ credit_cost: Number(f.credit_cost) || 0, title: f.title, name: f.name, description: f.description || null, kind: f.kind, genres: f.genres, tags: f.tags.split(',').map(x => x.trim()).filter(Boolean), auto_use: f.auto_use, meta: { ...a.meta, ...(f.cols > 0 ? { frames: { cols: f.cols, rows: f.rows || 1, fps: f.fps || 8 } } : { frames: undefined }), role: f.role || undefined } }); setSaving(false) }
   const snippet = a.kind === 'audio' ? `playAsset('${a.name}'${f.role === 'bgm' ? ', { loop: true, volume: 0.5 }' : ''})` : `drawAsset(ctx, '${a.name}', x, y${a.width ? `, ${a.width}, ${a.height}` : ''}${f.cols > 0 ? ', frameIndex' : ''})`
   const injectable = ['character', 'background', 'tile', 'item', 'ui', 'effect', 'sprite', 'audio'].includes(a.kind) && a.bytes <= 450_000
   return (
@@ -283,6 +283,7 @@ function DetailModal({ a, genres, groups, onClose, onPatch, onDelete, onEdit, on
           <div><label className={labelCls}>종류</label><select value={f.kind} onChange={e => setF({ ...f, kind: e.target.value as Kind })} className={input}>{KINDS.filter(k => k[0]).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
           <div><label className={labelCls}>설명 (AI 용)</label><textarea value={f.description} onChange={e => setF({ ...f, description: e.target.value })} rows={2} className={`${input} h-auto py-1.5`} /></div>
           <div><label className={labelCls}>태그 (쉼표)</label><input value={f.tags} onChange={e => setF({ ...f, tags: e.target.value })} className={input} /></div>
+          <div><label className={labelCls}>사용 크레딧 (아이템당) <span className="font-normal text-[#9aa1ad]">— 회원이 이 에셋을 게임에 넣을 때 내는 크레딧, 100% 디자이너에게 적립. 0 = 무료</span></label><input type="number" min={0} value={f.credit_cost} onChange={e => setF({ ...f, credit_cost: Number(e.target.value) })} className={input} /></div>
           <GenrePicker genres={genres} groups={groups} value={f.genres} onChange={g => setF({ ...f, genres: g })} />
           {a.kind === 'audio' && <div><label className={labelCls}>오디오 역할</label><select value={f.role} onChange={e => setF({ ...f, role: e.target.value })} className={input}><option value="">선택 안 함</option>{AUDIO_ROLES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>}
           {isImg(a) && <div><label className={labelCls}>스프라이트시트 (프레임 열 × 행 · fps, 0이면 단일 이미지)</label><div className="grid grid-cols-3 gap-2"><input type="number" min={0} value={f.cols} onChange={e => setF({ ...f, cols: Number(e.target.value) })} className={input} placeholder="열" /><input type="number" min={1} value={f.rows} onChange={e => setF({ ...f, rows: Number(e.target.value) })} className={input} placeholder="행" /><input type="number" min={1} value={f.fps} onChange={e => setF({ ...f, fps: Number(e.target.value) })} className={input} placeholder="fps" /></div></div>}

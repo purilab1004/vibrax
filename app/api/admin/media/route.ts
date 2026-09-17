@@ -131,7 +131,7 @@ export async function PATCH(req: Request) {
     return Response.json({ item: data })
   }
   // 메타 수정 (JSON) — 여러 개 동시(ids) 지원
-  const b = await req.json().catch(() => null) as { id?: string; ids?: string[]; title?: string; name?: string; description?: string | null; kind?: string; genres?: string[]; tags?: string[]; meta?: Record<string, unknown>; auto_use?: boolean; status?: string; addGenres?: string[]; addTags?: string[] } | null
+  const b = await req.json().catch(() => null) as { id?: string; ids?: string[]; title?: string; name?: string; description?: string | null; kind?: string; genres?: string[]; tags?: string[]; meta?: Record<string, unknown>; auto_use?: boolean; status?: string; credit_cost?: number; addGenres?: string[]; addTags?: string[] } | null
   const ids = b?.ids?.length ? b.ids : b?.id ? [b.id] : []
   if (!ids.length) return Response.json({ error: 'id 필요' }, { status: 400 })
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() }
@@ -143,6 +143,7 @@ export async function PATCH(req: Request) {
   if (Array.isArray(b?.tags)) patch.tags = splitList(b!.tags)
   if (b?.meta && typeof b.meta === 'object') patch.meta = b.meta
   if (typeof b?.auto_use === 'boolean') patch.auto_use = b.auto_use
+  if (typeof b?.credit_cost === 'number' && Number.isFinite(b.credit_cost)) patch.credit_cost = Math.max(0, Math.min(100000, Math.round(b.credit_cost)))
   if (b?.status === 'active' || b?.status === 'archived') patch.status = b.status
   // 태그·장르 추가(일괄)
   if (Array.isArray(b?.addGenres) || Array.isArray(b?.addTags)) {

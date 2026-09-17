@@ -13,6 +13,7 @@ export interface MediaAsset {
   genres: string[]; tags: string[]; path: string; url: string; mime: string | null; bytes: number
   width: number | null; height: number | null; meta: Record<string, unknown>; auto_use: boolean; status: 'active' | 'archived'
   uses: number; created_by: string | null; created_at: string; updated_at: string
+  credit_cost?: number // 게임에 넣을 때 회원이 내는 크레딧(아이템당, 관리자 설정) — 100% 디자이너에게
 }
 export type MediaAssetLite = Pick<MediaAsset, 'id' | 'kind' | 'name' | 'title' | 'description' | 'genres' | 'tags' | 'url' | 'mime' | 'bytes' | 'width' | 'height' | 'meta'>
 

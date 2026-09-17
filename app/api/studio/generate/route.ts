@@ -127,14 +127,15 @@ export async function POST(req: Request) {
   // refund_credits는 service role 전용(자기 자신 대상이라도 클라이언트에서
   // 직접 RPC를 호출해 성공 건을 임의로 환불하는 것을 막기 위함) — admin
   // 클라이언트로 호출하고, 검증된 user.id를 p_user_id로 넘긴다.
+  // 미디어 에셋 사용 크레딧(아이템당, 관리자 설정) — 이번 생성에 새로 들어가는 에셋만 별도 차감. 실패 시 함께 환불, 성공 시 100% 디자이너 적립
+  let assetCost = 0
+  let assetCostRows: { id: string; credit_cost: number; designer_id: string | null; credit_earned: number }[] = []
   const refund = async () => {
     if (!chargeUser) return // 차감이 없었으니 환불도 없다
-    const { error } = await createAdminClient().rpc('refund_credits', {
-      p_user_id: user.id,
-      p_amount: cost,
-      p_ref: spendRef,
-    } as never)
+    const adminDb = createAdminClient()
+    const { error } = await adminDb.rpc('refund_credits', { p_user_id: user.id, p_amount: cost, p_ref: spendRef } as never)
     if (error) console.error('[studio/generate] refund failed', error)
+    if (assetCost > 0) { const { error: e2 } = await adminDb.rpc('refund_credits', { p_user_id: user.id, p_amount: assetCost, p_ref: spendRef + ':assets' } as never); if (e2) console.error('[studio/generate] asset refund failed', e2) }
   }
 
   // ── 템플릿 엔진: 첫 생성이고 알려진 장르면 ──
@@ -278,7 +279,24 @@ export async function POST(req: Request) {
     mediaAssets = mediaAssets.slice(0, 10)
     const fresh = mediaAssets.filter(a => !prevAssetIds.includes(a.id)).map(a => a.id)
     if (fresh.length) void adminDb.rpc('media_assets_touch', { ids: fresh })
+    // 아이템당 사용 크레딧 — 새로 들어가는 에셋의 credit_cost 합
+    if (fresh.length) {
+      try {
+        const { data: rows } = await adminDb.from('media_assets').select('id,credit_cost,designer_id,credit_earned').in('id', fresh)
+        assetCostRows = ((rows ?? []) as { id: string; credit_cost: number | null; designer_id: string | null; credit_earned: number | null }[]).map(r => ({ id: r.id, credit_cost: r.credit_cost ?? 0, designer_id: r.designer_id, credit_earned: r.credit_earned ?? 0 }))
+        assetCost = assetCostRows.reduce((s, r) => s + (r.credit_cost > 0 ? r.credit_cost : 0), 0)
+      } catch { assetCost = 0; assetCostRows = [] }
+    }
   } catch (e) { console.error('[studio/generate] media pick failed', e); mediaAssets = [] }
+  if (chargeUser && assetCost > 0) {
+    const { error: assetSpendError } = await supabase.rpc('spend_credits', { p_amount: assetCost, p_ref: spendRef + ':assets' } as never)
+    if (assetSpendError) {
+      assetCost = 0
+      await refund()
+      const insufficient = assetSpendError.message.includes('INSUFFICIENT_CREDITS')
+      return new Response(insufficient ? 'insufficient credits' : 'spend failed', { status: insufficient ? 402 : 500 })
+    }
+  }
   if (mediaAssets.length) {
     const titles: Record<string, { title: string; description: string | null }> = {}
     for (const a of mediaAssets) titles[a.name] = { title: a.title, description: a.description }
@@ -410,20 +428,14 @@ export async function POST(req: Request) {
           } else {
             // 버전이 저장된 이상 생성은 성공이다 — 이후 실패는 환불도, 에러 마커도 없다.
             versionPersisted = true
-            // 디자이너 보상 — 이번 생성에 실제로 실린 에셋 중 디자이너 작품이 있으면, 회원이 쓴 생성 크레딧을 100% 디자이너에게 나눠 준다(디자이너 수로 균등 분배)
-            if (chargeUser && cost > 0 && loadedAssets.length) {
+            // 디자이너 보상 — 이번 생성에 새로 실린 에셋의 '사용 크레딧'을 100% 그 디자이너에게 적립 (회원이 낸 assetCost 그대로)
+            if (chargeUser && assetCost > 0) {
               try {
                 const adminDb = createAdminClient()
-                const { data: rows } = await adminDb.from('media_assets').select('id,designer_id,credit_earned').in('id', loadedAssets.map(a => a.id))
-                const byDesigner = new Map<string, { id: string; credit_earned: number }[]>()
-                for (const r of (rows ?? []) as { id: string; designer_id: string | null; credit_earned: number | null }[]) { if (r.designer_id && r.designer_id !== user.id) { const arr = byDesigner.get(r.designer_id) ?? []; arr.push({ id: r.id, credit_earned: r.credit_earned ?? 0 }); byDesigner.set(r.designer_id, arr) } }
-                if (byDesigner.size) {
-                  const share = Math.floor(cost / byDesigner.size)
-                  if (share > 0) for (const [designerId, assets] of byDesigner) {
-                    await adminDb.from('credit_ledger').insert([{ user_id: designerId, amount: share, reason: 'designer_payout', ref_id: spendRef }] as never)
-                    const per = Math.floor(share / assets.length)
-                    for (const a of assets) await adminDb.from('media_assets').update({ credit_earned: a.credit_earned + per }).eq('id', a.id)
-                  }
+                for (const r of assetCostRows) {
+                  if (!r.designer_id || r.designer_id === user.id || r.credit_cost <= 0 || !loadedAssets.some(l => l.id === r.id)) continue
+                  await adminDb.from('credit_ledger').insert([{ user_id: r.designer_id, amount: r.credit_cost, reason: 'designer_payout', ref_id: spendRef + ':assets' }] as never)
+                  await adminDb.from('media_assets').update({ credit_earned: r.credit_earned + r.credit_cost }).eq('id', r.id)
                 }
               } catch (e) { console.error('[studio/generate] designer payout failed', e) }
             }
