@@ -37,7 +37,7 @@ export default function HeroSection({ games }: { games: GameWithCreator[] }) {
           muted
           loop
           playsInline
-          preload={i === 0 ? 'auto' : 'metadata'}
+          preload={i === 0 ? 'auto' : 'none'}
           aria-hidden
         >
           <source src={src} type="video/mp4" />
