@@ -323,6 +323,26 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
               <span className={label}>GALLERY</span>
             </Link>
           )}
+          {/* 메인 메뉴 — 카테고리 아래 */}
+          {!inStudio && !inProfile && !inAdmin && (
+            <>
+              <div className="my-3 border-t border-[#ebe4d6]" />
+              {open && <p className="px-3 mb-1 font-pixel text-[10px] text-[#9d9280] tracking-[0.25em]">MENU</p>}
+              {([
+                ['/studio', 'STUDIO', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z" /><path d="M5 19l1-2.5L8.5 15" /></svg>],
+                ['/tournament', 'EVENT', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4" /><path d="M12 13v4M8 21h8M10 17h4" /></svg>],
+                ['/blog', 'BLOG', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8 9h8M8 13h8M8 17h5" /></svg>],
+                ['/partner', 'PARTNER', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M7 11l3-3 3 3 4-4" /><path d="M3 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" /><circle cx="17" cy="8" r="2.5" /></svg>],
+                ['/dev', 'DEV', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M8 7l-4 5 4 5M16 7l4 5-4 5M14 4l-4 16" /></svg>],
+                ['/about', 'ABOUT', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="9" /><path d="M12 10v6M12 7h.01" /></svg>],
+              ] as [string, string, React.ReactNode][]).map(([href, name, icon]) => (
+                <Link key={href} href={href} className={row(pathname.startsWith(href))} title={name}>
+                  <span className={iconCol}>{icon}</span>
+                  <span className={label}>{name}</span>
+                </Link>
+              ))}
+            </>
+          )}
         </nav>
 
         {false && !inStudio && !inProfile && !inAdmin && channels.length > 0 && (
