@@ -22,7 +22,7 @@ export default function AdminNav() {
     ['/admin/templates', '템플릿'],
     ['/admin/media', '미디어 라이브러리'],
     ['/admin/designers', '디자이너'],
-    ['/admin/jackpots', '크레딧 잭팟'],
+    ['/admin/jackpots', '토큰동전 잭팟'],
     ['/admin/controls', '컨트롤러'],
     ['/admin/aj', 'AJ 랭킹'],
     ['/admin/payments', '결제 관리'],

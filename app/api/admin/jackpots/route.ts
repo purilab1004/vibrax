@@ -100,14 +100,14 @@ export async function PATCH(req: Request) {
     if (body.action === 'unaward') {
       // 크레딧을 이미 지급한 건은 되돌리지 않는다(원장 기록) — 상품 지급 표시만 해제
       const { data: w } = await g.admin.from('jackpot_winners').select('note').eq('id', body.winner_id).maybeSingle()
-      if (/크레딧 지급/.test((w as { note: string | null } | null)?.note ?? '')) return Response.json({ error: '크레딧을 지급한 건은 해제할 수 없어요' }, { status: 400 })
+      if (/(크레딧|토큰동전) 지급/.test((w as { note: string | null } | null)?.note ?? '')) return Response.json({ error: '토큰동전을 지급한 건은 해제할 수 없어요' }, { status: 400 })
       const { error } = await g.admin.from('jackpot_winners').update({ awarded: false, awarded_at: null, awarded_by: null } as never).eq('id', body.winner_id)
       if (error) return Response.json({ error: error.message }, { status: 500 })
       return Response.json({ ok: true })
     }
     const amount = Math.max(0, Math.floor(Number(body.amount ?? 0) || 0))
     const pay = !!body.pay_credits && amount > 0
-    const note = [pay ? `✦ ${amount.toLocaleString()} 크레딧 지급` : null, (body.note ?? '').trim() || null].filter(Boolean).join(' · ') || null
+    const note = [pay ? `✦ ${amount.toLocaleString()} 토큰동전 지급` : null, (body.note ?? '').trim() || null].filter(Boolean).join(' · ') || null
     // 한 번만 — awarded=false 인 행만 잡는다
     const { data: rows, error } = await g.admin.from('jackpot_winners').update({ awarded: true, awarded_at: new Date().toISOString(), awarded_by: g.user.id, amount, note } as never).eq('id', body.winner_id).eq('awarded', false).select('id,user_id,jackpot_id')
     if (error) return Response.json({ error: v2Hint(error.message) }, { status: 500 })
@@ -115,7 +115,7 @@ export async function PATCH(req: Request) {
     if (!row) return Response.json({ error: '이미 수여된 당첨자예요' }, { status: 409 })
     if (pay) {
       const { error: le } = await g.admin.from('credit_ledger').insert([{ user_id: row.user_id, amount, reason: 'jackpot_win', ref_id: `${row.jackpot_id}:${row.id}` }] as never)
-      if (le) { await g.admin.from('jackpot_winners').update({ awarded: false, awarded_at: null, awarded_by: null } as never).eq('id', row.id); return Response.json({ error: '크레딧 지급 실패: ' + le.message }, { status: 500 }) }
+      if (le) { await g.admin.from('jackpot_winners').update({ awarded: false, awarded_at: null, awarded_by: null } as never).eq('id', row.id); return Response.json({ error: '토큰동전 지급 실패: ' + le.message }, { status: 500 }) }
     }
     return Response.json({ ok: true, paid: pay ? amount : 0 })
   }

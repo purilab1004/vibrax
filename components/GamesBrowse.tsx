@@ -287,7 +287,7 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
   return (
     <div>
       {items.length === 0 && (
-        <div className="py-24 text-center text-[#857a68] text-sm">{filter === 'video' ? '지금 방송 중인 영상이 없어요.' : filter === 'reward' ? '지금 진행 중인 크레딧 잭팟이 없어요. 곧 다시 열려요!' : '표시할 게임이 없어요.'}</div>
+        <div className="py-24 text-center text-[#857a68] text-sm">{filter === 'video' ? '지금 방송 중인 영상이 없어요.' : filter === 'reward' ? '지금 진행 중인 토큰동전 잭팟이 없어요. 곧 다시 열려요!' : '표시할 게임이 없어요.'}</div>
       )}
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">

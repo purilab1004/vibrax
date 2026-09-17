@@ -1,5 +1,5 @@
 'use client'
-// 코인 잭팟(랜덤 뽑기) 카드 — 쇼츠 피드에 게임 사이로 끼어든다. 관리자만 만들 수 있고, 회원은 크레딧을 내고 참여.
+// 코인 잭팟(랜덤 뽑기) 카드 — 쇼츠 피드에 게임 사이로 끼어든다. 관리자만 만들 수 있고, 회원은 토큰동전(크레딧)을 내고 참여. 쇼츠 문구는 모두 '토큰동전'.
 //  · 대표 이미지는 가운데에서 레인보우 햇살 광휘와 함께 빛난다 (없으면 ✦)
 //  · 상품이 걸린 잭팟: 추첨 전엔 "이번 상품 : 상품이 등록되었습니다!" + 닫힌 판도라 박스, 조건 금액 진행 바
 //  · 추첨(당첨 발표) 뒤엔 판도라 박스가 흔들리다 열리며 상품 썸네일이 빛과 함께 솟아오른다 + 당첨자 목록
@@ -128,7 +128,7 @@ export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Ja
       const j = await r.json()
       if (!r.ok) { setMsg(j.error ?? '참여 실패'); return }
       setPool((p) => p + jackpot.entry_cost); setEntries((e) => e + 1); setMyCount((c) => c + 1)
-      setMsg(`참여 완료! 남은 크레딧 ${Number(j.balance).toLocaleString()}`)
+      setMsg(`참여 완료! 남은 토큰동전 ${Number(j.balance).toLocaleString()}`)
       window.dispatchEvent(new CustomEvent('credits:changed', { detail: { balance: j.balance } }))
     } catch { setMsg('네트워크 오류') } finally { setBusy(false); setConfirm(false) }
   }
@@ -167,7 +167,7 @@ export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Ja
 
         {/* 모인 크레딧 */}
         <div className="relative z-[6] shrink-0 flex flex-col items-center" style={{ textShadow: '0 1px 6px rgba(0,0,0,.8)' }}>
-          <p className="text-[10.5px] tracking-[0.3em] text-[#ffd166] font-bold">모인 크레딧</p>
+          <p className="text-[10.5px] tracking-[0.3em] text-[#ffd166] font-bold">모인 토큰동전</p>
           <p className={`${titleFont.className} text-[38px] leading-none text-white mt-0.5 tabular-nums`} style={{ textShadow: '0 0 16px rgba(245,158,11,.7)' }}>✦ {pool.toLocaleString()}</p>
           <p className="mt-1 text-[12px] text-white/75">참여 {entries.toLocaleString()}명{myCount > 0 ? ` · 내 참여 ${myCount}장` : ''} · 당첨 {winnerCount}명</p>
         </div>
@@ -187,7 +187,7 @@ export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Ja
               {reveal ? (
                 <>
                   <p className={`${titleFont.className} text-[16px] leading-tight jp-rainbow-text truncate`}>이번 상품 : {jackpot.product!.title}</p>
-                  <p className="text-[11px] text-white/80 mt-0.5">{jackpot.product_won ? '🎉 조건 달성! 당첨자에게 상품이 나갑니다' : `조건(✦ ${threshold.toLocaleString()} 초과) 미달 — 크레딧으로 지급해요`}</p>
+                  <p className="text-[11px] text-white/80 mt-0.5">{jackpot.product_won ? '🎉 조건 달성! 당첨자에게 상품이 나갑니다' : `조건(✦ ${threshold.toLocaleString()} 초과) 미달 — 토큰동전으로 지급해요`}</p>
                 </>
               ) : (
                 <>
@@ -220,15 +220,15 @@ export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Ja
         {msg && <p className="mb-2 text-[12.5px] text-[#ffd166] font-semibold text-center">{msg}</p>}
         {confirm ? (
           <div className="flex items-center gap-2">
-            <button onClick={enter} disabled={busy} className={`flex-1 h-[52px] ${titleFont.className} text-[19px] rounded-full bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] shadow-[0_5px_0_#d18f00,0_9px_16px_rgba(0,0,0,0.35)] disabled:opacity-60`}>{busy ? '참여 중…' : `✦ ${jackpot.entry_cost} 크레딧 내고 참여`}</button>
+            <button onClick={enter} disabled={busy} className={`flex-1 h-[52px] ${titleFont.className} text-[19px] rounded-full bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] shadow-[0_5px_0_#d18f00,0_9px_16px_rgba(0,0,0,0.35)] disabled:opacity-60`}>{busy ? '참여 중…' : `✦ ${jackpot.entry_cost} 토큰동전 내고 참여`}</button>
             <button onClick={() => setConfirm(false)} className="h-[52px] px-4 rounded-full bg-white/15 text-white text-[14px] font-bold">취소</button>
           </div>
         ) : (
           <button onClick={() => (closed ? null : setConfirm(true))} disabled={closed} className={`w-full h-[52px] ${titleFont.className} text-[20px] rounded-full ${closed ? 'bg-white/15 text-white/60' : 'bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] shadow-[0_5px_0_#d18f00,0_9px_16px_rgba(0,0,0,0.35)]'}`}>
-            {drawn ? '당첨 발표 완료' : closed ? '마감 — 곧 추첨해요' : `🎰 ${jackpot.entry_cost} 크레딧으로 도전`}
+            {drawn ? '당첨 발표 완료' : closed ? '마감 — 곧 추첨해요' : `🎰 ${jackpot.entry_cost} 토큰동전으로 도전`}
           </button>
         )}
-        <p className="mt-2 text-center text-[10.5px] text-white/55">참여 크레딧은 환불되지 않아요 · 마감 후 낸 크레딧만큼 확률로 {winnerCount}명 추첨</p>
+        <p className="mt-2 text-center text-[10.5px] text-white/55">참여 토큰동전은 환불되지 않아요 · 마감 후 낸 토큰동전만큼 확률로 {winnerCount}명 추첨</p>
       </div>
     </div>
   )

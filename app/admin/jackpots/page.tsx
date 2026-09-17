@@ -48,8 +48,8 @@ export default function AdminJackpotsPage() {
   const autoDescription = () => {
     const t = Math.max(0, form.product_threshold).toLocaleString()
     set('description', form.product_mode === 'none'
-      ? `이번 잭팟은 상품 없이 모인 크레딧만 드려요! 마감 후 추첨으로 당첨 ${form.winner_count}명에게 크레딧이 지급됩니다.`
-      : `이번 주 상품은 이번 잭팟 금액 ${t} 크레딧 초과 시 당첨된 회원에게 상품이 나갑니다!`)
+      ? `이번 잭팟은 상품 없이 모인 토큰동전만 드려요! 마감 후 추첨으로 당첨 ${form.winner_count}명에게 토큰동전이 지급됩니다.`
+      : `이번 주 상품은 이번 잭팟 금액 ${t} 토큰동전 초과 시 당첨된 회원에게 상품이 나갑니다!`)
   }
 
   const submit = async () => {
@@ -95,7 +95,7 @@ export default function AdminJackpotsPage() {
     setBusy(true)
     const r = await fetch('/api/admin/jackpots', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'award', winner_id: w.id, amount: a.amount, pay_credits: payCredits, note: a.note }) }); const j = await r.json()
     setBusy(false)
-    setMsg(!r.ok ? { text: j.error ?? '실패', err: true } : { text: j.paid ? `${w.name} 님에게 ✦ ${Number(j.paid).toLocaleString()} 크레딧을 지급했어요` : `${w.name} 님 수여 완료로 표시했어요` })
+    setMsg(!r.ok ? { text: j.error ?? '실패', err: true } : { text: j.paid ? `${w.name} 님에게 ✦ ${Number(j.paid).toLocaleString()} 토큰동전을 지급했어요` : `${w.name} 님 수여 완료로 표시했어요` })
     load()
   }
   const undoAward = async (w: Winner) => {
@@ -119,7 +119,7 @@ export default function AdminJackpotsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="크레딧 잭팟" desc="① 제목·설명·참가비·당첨자 수를 넣고 ② 상품이 있으면 등록한 뒤 ③ 잭팟을 엽니다. 마감 후 추첨하면 당첨자 목록이 만들어지고, 상금(크레딧·상품)은 관리자가 직접 수여해요." />
+      <PageHeader title="토큰동전 잭팟" desc="① 제목·설명·참가비·당첨자 수를 넣고 ② 상품이 있으면 등록한 뒤 ③ 잭팟을 엽니다. 마감 후 추첨하면 당첨자 목록이 만들어지고, 상금(토큰동전·상품)은 관리자가 직접 수여해요." />
       {missing && <Card className="p-4 border-[#f59e0b] bg-[#fffbeb]"><p className="text-[13px] text-[#92400e]">테이블이 아직 없어요. Supabase SQL 편집기에서 <code>db/migrations/2026-09-17-jackpot-library.sql</code> 을 실행해 주세요.</p></Card>}
       {needsV2 && <Card className="p-4 border-[#f59e0b] bg-[#fffbeb]"><p className="text-[13px] text-[#92400e]">상품·당첨자 수·당첨자 목록을 쓰려면 Supabase SQL 편집기에서 <code>db/migrations/2026-09-17-jackpot-v2.sql</code> 을 실행해 주세요. (실행 전 추첨은 예전 방식으로 1명에게 자동 지급돼요)</p></Card>}
       {msg && <p className={`text-[13px] font-semibold ${msg.err ? 'text-[#dc2626]' : 'text-[#2563eb]'}`}>{msg.text}</p>}
@@ -136,10 +136,10 @@ export default function AdminJackpotsPage() {
             <div><label className={label}>이번 게임 제목 <span className="text-[#9ca3af] font-normal">— 쇼츠에서 크게 보여요</span></label><input className={input} value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="예: 이번 주 판도라 잭팟" /></div>
             <div>
               <div className="flex items-center justify-between"><label className={label}>설명</label><button type="button" onClick={autoDescription} className="text-[11.5px] font-semibold text-[#2563eb] hover:underline">설명 자동 작성</button></div>
-              <textarea className={`${input} min-h-[72px] py-2`} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder={form.product_mode === 'none' ? '예: 상품 없이 모인 크레딧만 드려요!' : '예: 이번 주 상품은 이번 잭팟 금액 1,000 크레딧 초과 시 당첨된 회원에게 상품이 나갑니다!'} />
+              <textarea className={`${input} min-h-[72px] py-2`} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder={form.product_mode === 'none' ? '예: 상품 없이 모인 토큰동전만 드려요!' : '예: 이번 주 상품은 이번 잭팟 금액 1,000 토큰동전 초과 시 당첨된 회원에게 상품이 나갑니다!'} />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              <div><label className={label}>참가비 (크레딧/1장)</label><input className={input} type="number" min={1} value={form.entry_cost} onChange={(e) => set('entry_cost', Number(e.target.value))} /></div>
+              <div><label className={label}>참가비 (토큰동전/1장)</label><input className={input} type="number" min={1} value={form.entry_cost} onChange={(e) => set('entry_cost', Number(e.target.value))} /></div>
               <div><label className={label}>당첨자 수</label><input className={input} type="number" min={1} max={100} value={form.winner_count} onChange={(e) => set('winner_count', Math.max(1, Math.min(100, Number(e.target.value) || 1)))} /></div>
               <div className="col-span-2 sm:col-span-1"><label className={label}>마감(추첨) 시각</label><input className={input} type="datetime-local" value={form.ends_at} onChange={(e) => set('ends_at', e.target.value)} /></div>
             </div>
@@ -158,8 +158,8 @@ export default function AdminJackpotsPage() {
 
           <section className="space-y-3 border-t border-[#eef0f3] pt-4">
             <p className="text-[12px] font-bold text-[#6b7280]">② 상품 (선택)</p>
-            <Segmented value={form.product_mode} onChange={(v) => set('product_mode', v)} options={[{ value: 'none', label: '상품 없음 (크레딧만)' }, { value: 'new', label: '새 상품 등록' }, { value: 'existing', label: '등록된 상품' }]} />
-            {form.product_mode === 'none' && <p className="text-[12px] text-[#6b7280]">당첨자에게 모인 크레딧만 지급해요. 제목·설명에 &ldquo;크레딧만 지급&rdquo;이라고 적어 주세요.</p>}
+            <Segmented value={form.product_mode} onChange={(v) => set('product_mode', v)} options={[{ value: 'none', label: '상품 없음 (토큰동전만)' }, { value: 'new', label: '새 상품 등록' }, { value: 'existing', label: '등록된 상품' }]} />
+            {form.product_mode === 'none' && <p className="text-[12px] text-[#6b7280]">당첨자에게 모인 토큰동전만 지급해요. 제목·설명에 &ldquo;토큰동전만 지급&rdquo;이라고 적어 주세요.</p>}
             {form.product_mode === 'new' && (
               <div className="grid sm:grid-cols-2 gap-2">
                 <div><label className={label}>상품명</label><input className={input} value={form.product_title} onChange={(e) => set('product_title', e.target.value)} placeholder="예: 에어팟 프로" /></div>
@@ -192,7 +192,7 @@ export default function AdminJackpotsPage() {
               )
             )}
             {form.product_mode !== 'none' && (
-              <div className="max-w-[260px]"><label className={label}>상품 지급 조건 — 잭팟 금액 (크레딧) 초과 시</label><input className={input} type="number" min={0} value={form.product_threshold} onChange={(e) => set('product_threshold', Math.max(0, Number(e.target.value) || 0))} /></div>
+              <div className="max-w-[260px]"><label className={label}>상품 지급 조건 — 잭팟 금액 (토큰동전) 초과 시</label><input className={input} type="number" min={0} value={form.product_threshold} onChange={(e) => set('product_threshold', Math.max(0, Number(e.target.value) || 0))} /></div>
             )}
           </section>
 
@@ -228,7 +228,7 @@ export default function AdminJackpotsPage() {
                         <img src={j.image_url} alt="" className="w-9 h-9 rounded object-contain bg-[#1f1048]" />)}<div><p className="font-semibold">{j.title}</p><p className="text-[11px] text-[#6b7280] truncate max-w-[240px]">{j.description}</p></div></div></td>
                       <td className={td}>{j.product ? <div className="flex items-center gap-1.5">{j.product.image_url && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={j.product.image_url} alt="" className="w-7 h-7 rounded object-contain bg-[#1f1048]" />)}<div><p className="text-[12px] font-semibold">{j.product.title}</p><p className="text-[10.5px] text-[#6b7280]">✦ {(j.product_threshold ?? 0).toLocaleString()} 초과 시</p></div></div> : <span className="text-[11.5px] text-[#9ca3af]">크레딧만</span>}</td>
+                        <img src={j.product.image_url} alt="" className="w-7 h-7 rounded object-contain bg-[#1f1048]" />)}<div><p className="text-[12px] font-semibold">{j.product.title}</p><p className="text-[10.5px] text-[#6b7280]">✦ {(j.product_threshold ?? 0).toLocaleString()} 초과 시</p></div></div> : <span className="text-[11.5px] text-[#9ca3af]">토큰동전만</span>}</td>
                       <td className={td}>✦ {j.entry_cost}</td>
                       <td className={td}><b>{j.pool.toLocaleString()}</b> / {j.entries}장</td>
                       <td className={td}>{j.winner_count ?? 1}명</td>
@@ -249,7 +249,7 @@ export default function AdminJackpotsPage() {
                       <tr key={`${j.id}-w`}><td colSpan={8} className="bg-[#f8f9fb] px-4 py-3">
                         {j.winners.length === 0 ? <p className="text-[12.5px] text-[#6b7280]">{j.winner_name ? `당첨: ${j.winner_name} (예전 방식 — 자동 지급됨)` : '당첨자 기록이 없어요.'}</p> : (
                           <table className="w-full bg-white rounded-lg border border-[#e3e6ec]">
-                            <thead><tr><th className={th}>순위</th><th className={th}>회원</th><th className={th}>상금</th><th className={th}>크레딧</th><th className={th}>메모</th><th className={th}>상태</th><th className={th}></th></tr></thead>
+                            <thead><tr><th className={th}>순위</th><th className={th}>회원</th><th className={th}>상금</th><th className={th}>토큰동전</th><th className={th}>메모</th><th className={th}>상태</th><th className={th}></th></tr></thead>
                             <tbody>
                               {j.winners.map((w) => {
                                 const a = award[w.id] ?? { amount: w.amount, note: '' }
@@ -257,14 +257,14 @@ export default function AdminJackpotsPage() {
                                   <tr key={w.id}>
                                     <td className={td}>🏆 {w.rank}</td>
                                     <td className={td}><p className="font-semibold">{w.name}</p><p className="text-[11px] text-[#6b7280]">{w.email ?? w.user_id.slice(0, 8)}</p></td>
-                                    <td className={td}>{w.prize === 'product' ? <Badge color="#db2777">🎁 상품{j.product ? ` · ${j.product.title}` : ''}</Badge> : <Badge color="#d97706">✦ 크레딧</Badge>}</td>
+                                    <td className={td}>{w.prize === 'product' ? <Badge color="#db2777">🎁 상품{j.product ? ` · ${j.product.title}` : ''}</Badge> : <Badge color="#d97706">✦ 토큰동전</Badge>}</td>
                                     <td className={td}>{w.awarded ? `✦ ${w.amount.toLocaleString()}` : <input className={`${input} w-[110px]`} type="number" min={0} value={a.amount} onChange={(e) => setAward({ ...award, [w.id]: { ...a, amount: Math.max(0, Number(e.target.value) || 0) } })} />}</td>
                                     <td className={td}>{w.awarded ? <span className="text-[11.5px] text-[#6b7280]">{w.note ?? '-'}</span> : <input className={`${input} w-[180px]`} value={a.note} placeholder={w.prize === 'product' ? '예: 택배 발송 완료' : '메모'} onChange={(e) => setAward({ ...award, [w.id]: { ...a, note: e.target.value } })} />}</td>
                                     <td className={td}>{w.awarded ? <Badge color="#16a34a">수여 완료 · {w.awarded_at ? fmt(w.awarded_at) : ''}</Badge> : <Badge color="#f59e0b">수여 대기</Badge>}</td>
                                     <td className={td}>
-                                      {w.awarded ? (!/크레딧 지급/.test(w.note ?? '') && <button onClick={() => undoAward(w)} className={btn.ghost}>되돌리기</button>) : (
+                                      {w.awarded ? (!/(크레딧|토큰동전) 지급/.test(w.note ?? '') && <button onClick={() => undoAward(w)} className={btn.ghost}>되돌리기</button>) : (
                                         <div className="flex gap-1 justify-end">
-                                          <button disabled={busy || a.amount <= 0} onClick={() => giveAward(w, true)} className={btn.primary}>✦ 크레딧 지급</button>
+                                          <button disabled={busy || a.amount <= 0} onClick={() => giveAward(w, true)} className={btn.primary}>✦ 토큰동전 지급</button>
                                           <button disabled={busy} onClick={() => giveAward(w, false)} className={btn.ghost}>{w.prize === 'product' ? '상품 지급 완료' : '지급 완료 표시'}</button>
                                         </div>
                                       )}
@@ -303,7 +303,7 @@ export default function AdminJackpotsPage() {
         </Card>
       )}
 
-      <ConfirmModal open={!!confirm} onClose={() => setConfirm(null)} onConfirm={act} busy={busy} title={confirm?.action === 'settle' ? '지금 추첨할까요?' : '잭팟을 취소할까요?'} desc={confirm?.action === 'settle' ? `낸 크레딧만큼의 확률로 당첨자 ${confirm?.n ?? 1}명을 뽑습니다(한 회원은 한 번만). 상금은 자동으로 나가지 않아요 — 당첨자 목록에서 직접 수여하세요. 되돌릴 수 없어요.` : '참여자 전원에게 크레딧을 환불하고 잭팟을 닫습니다.'} confirmLabel={confirm?.action === 'settle' ? '추첨' : '취소·환불'} />
+      <ConfirmModal open={!!confirm} onClose={() => setConfirm(null)} onConfirm={act} busy={busy} title={confirm?.action === 'settle' ? '지금 추첨할까요?' : '잭팟을 취소할까요?'} desc={confirm?.action === 'settle' ? `낸 토큰동전만큼의 확률로 당첨자 ${confirm?.n ?? 1}명을 뽑습니다(한 회원은 한 번만). 상금은 자동으로 나가지 않아요 — 당첨자 목록에서 직접 수여하세요. 되돌릴 수 없어요.` : '참여자 전원에게 토큰동전을 환불하고 잭팟을 닫습니다.'} confirmLabel={confirm?.action === 'settle' ? '추첨' : '취소·환불'} />
     </div>
   )
 }
