@@ -10,10 +10,15 @@ export async function GET(req: Request) {
   const limit = Math.min(200, Math.max(1, Number(u.searchParams.get('limit') ?? 120)))
   try {
     const admin = createAdminClient()
-    let query = admin.from('media_assets').select('id,kind,name,title,description,genres,tags,url,width,height,bytes,uses,created_at,designer_id').eq('status', 'active').in('kind', [...INJECTABLE]).order('created_at', { ascending: false }).limit(limit)
-    if (kind) query = query.eq('kind', kind)
-    if (q) query = query.or(`title.ilike.%${q}%,name.ilike.%${q}%,tags.cs.{${q}}`)
-    const { data, error } = await query
+    const build = (withDesigner: boolean) => {
+      let query = admin.from('media_assets').select(`id,kind,name,title,description,genres,tags,url,width,height,bytes,uses,created_at${withDesigner ? ',designer_id' : ''}`).eq('status', 'active').in('kind', [...INJECTABLE]).order('created_at', { ascending: false }).limit(limit)
+      if (kind) query = query.eq('kind', kind)
+      if (q) query = query.or(`title.ilike.%${q}%,name.ilike.%${q}%,tags.cs.{${q}}`)
+      return query
+    }
+    // designer_id 컬럼(마이그레이션)이 아직 없으면 없이 다시 조회
+    let { data, error } = await build(true)
+    if (error && /designer_id/.test(error.message)) ({ data, error } = await build(false))
     if (error) return Response.json({ items: [], error: error.message })
     // 디자이너 이름
     const ids = [...new Set((data ?? []).map((a) => (a as { designer_id: string | null }).designer_id).filter((x): x is string => !!x))]
