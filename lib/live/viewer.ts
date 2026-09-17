@@ -14,6 +14,8 @@ export function startViewer(
   const me = `v_${Math.random().toString(36).slice(2, 10)}`
   let pc: RTCPeerConnection | null = null
   let hostOnline = false
+  // 원격 SDP 적용 전에 온 ICE 후보는 버려지면 연결이 늦어진다(15초 재시도까지) — 모았다가 적용 후 넣는다
+  let pendingIce: RTCIceCandidateInit[] = []
   let joinTimer: ReturnType<typeof setInterval> | null = null
   const ch: RealtimeChannel = supabase.channel(liveChannelName(hostId, kind), { config: { broadcast: { self: false }, presence: { key: me } } })
   const send = (payload: Signal) => ch.send({ type: 'broadcast', event: 'signal', payload })
@@ -30,6 +32,7 @@ export function startViewer(
     try {
       if (payload.type === 'offer' && payload.to === me) {
         teardownPc()
+        pendingIce = []
         pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
         // 트랙이 붙어도 ICE 연결이 끝나기 전엔 '연결 중' — 연결이 실제로 되면 그때 'live' (안 되면 검은 화면 대신 연결 중 표시 + 재시도)
         pc.ontrack = (e) => { onStream(e.streams[0]); if (pc && pc.connectionState === 'connected') onState('live') }
@@ -41,13 +44,15 @@ export function startViewer(
         }
         // 15초 안에 연결이 안 되면(NAT 차단 등) 끊고 다시 시도
         const started = pc
-        setTimeout(() => { if (pc === started && pc.connectionState !== 'connected') { teardownPc(); onState(hostOnline ? 'connecting' : 'waiting'); if (hostOnline) join() } }, 15000)
+        setTimeout(() => { if (pc === started && pc.connectionState !== 'connected') { teardownPc(); onState(hostOnline ? 'connecting' : 'waiting'); if (hostOnline) join() } }, 10000)
         await pc.setRemoteDescription(payload.sdp)
+        for (const c of pendingIce.splice(0)) await pc.addIceCandidate(c).catch(() => {})
         const answer = await pc.createAnswer()
         await pc.setLocalDescription(answer)
         send({ type: 'answer', from: me, sdp: answer })
-      } else if (payload.type === 'ice' && payload.to === me && pc) {
-        await pc.addIceCandidate(payload.candidate).catch(() => {})
+      } else if (payload.type === 'ice' && payload.to === me) {
+        if (pc && pc.remoteDescription) await pc.addIceCandidate(payload.candidate).catch(() => {})
+        else pendingIce.push(payload.candidate)
       }
     } catch (e) { console.warn('[live viewer] signal error', e) }
   })

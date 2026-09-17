@@ -64,7 +64,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
               <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#0f172a]" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
-            {/* 가운데 — 프로필(아바타·이름) 크게 + 그 아래 큰 LIVE (썸네일이 복잡해도 읽히게 가운데를 어둡게) */}
+            {/* 가운데 — 프로필(아바타·이름) 크게 + 그 아래 큰 '생방송 중' 라벨 (썸네일이 복잡해도 읽히게 가운데를 어둡게) */}
             <div aria-hidden className="absolute inset-0" style={{ background: 'radial-gradient(60% 38% at 50% 50%, rgba(0,0,0,.55), transparent 100%)' }} />
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center text-white px-6">
               <span className="relative">
@@ -79,8 +79,10 @@ export default function LiveCard({ live, game: given, layout }: Props) {
                 </span>
               </span>
               <p className={`${titleFont.className} mt-3 text-[36px] leading-[1.1] text-center max-w-full truncate`} style={{ textShadow: '0 3px 14px rgba(0,0,0,.65)' }}>{live.hostName}</p>
-              <p className="live-big mt-1 text-[64px] leading-none font-black italic tracking-tight">LIVE</p>
-              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur px-3 py-1 text-[12px] font-semibold text-white/90"><span className="w-2 h-2 rounded-full bg-[#ff2d55] animate-pulse" />{live.screen ? '플레이 중 — 들어가서 관전' : '지금 방송 중'}</span>
+              <span className="live-pill mt-3 inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-[#ff2d55] to-[#ff5e3a] px-6 py-2.5 text-[22px] font-extrabold text-white shadow-[0_10px_30px_-6px_rgba(255,45,85,.75)] ring-2 ring-white/30">
+                <span className="relative flex w-3.5 h-3.5"><span className="absolute inset-0 rounded-full bg-white animate-ping opacity-75" /><span className="relative w-3.5 h-3.5 rounded-full bg-white" /></span>
+                {live.screen ? '생방송 중 · 관전하기' : '생방송 중'}
+              </span>
             </div>
           </div>
         ) : near ? (

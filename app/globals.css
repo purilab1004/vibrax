@@ -995,7 +995,7 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
   .jp-spin, .jp-spin-rev, .jp-spin-fast, .jp-bloom, .jp-float, .jp-twinkle, .jp-wiggle, .jp-rainbow-text { animation: none }
 }
 
-/* 라이브 쇼츠 — 가운데 프로필 링·큰 LIVE */
+/* 라이브 쇼츠 — 가운데 프로필 링·생방송 라벨 */
 .live-ring { animation: liveRingSpin 3s linear infinite; }
 @keyframes liveRingSpin { to { transform: rotate(360deg) } }
 .live-ring > span { animation: liveRingSpin 3s linear infinite reverse; }
@@ -1003,5 +1003,6 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 @keyframes liveHalo { 0%,100% { transform: scale(1); opacity: .7 } 50% { transform: scale(1.25); opacity: 1 } }
 .live-big { background: linear-gradient(180deg, #fff 0%, #ffd1dc 35%, #ff2d55 70%, #c2002f 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 18px rgba(255,45,85,.65)); animation: liveBeat 1.2s ease-in-out infinite; }
 @keyframes liveBeat { 0%,100% { transform: scale(1) } 50% { transform: scale(1.06) } }
-@media (prefers-reduced-motion: reduce) { .live-ring, .live-ring > span, .live-halo, .live-big { animation: none } }
+.live-pill { animation: liveBeat 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .live-ring, .live-ring > span, .live-halo, .live-big, .live-pill { animation: none } }
 @media (hover: none), (pointer: coarse) { .live-big { filter: none } }

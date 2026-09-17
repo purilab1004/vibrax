@@ -10,11 +10,13 @@ export interface HostHandle {
 
 export function startHost(supabase: SupabaseClient, hostId: string, stream: MediaStream, onViewers?: (n: number) => void, kind: LiveChannelKind = 'cam'): HostHandle {
   const peers = new Map<string, RTCPeerConnection>()
+  // 시청자 answer 적용 전에 도착한 ICE 후보 — 버리지 않고 모았다가 넣는다(연결 지연 방지)
+  const pendingIce = new Map<string, RTCIceCandidateInit[]>()
   const ch: RealtimeChannel = supabase.channel(liveChannelName(hostId, kind), { config: { broadcast: { self: false }, presence: { key: 'host' } } })
   const send = (payload: Signal) => ch.send({ type: 'broadcast', event: 'signal', payload })
   const notify = () => onViewers?.(peers.size)
 
-  const closePeer = (id: string) => { peers.get(id)?.close(); peers.delete(id); notify() }
+  const closePeer = (id: string) => { peers.get(id)?.close(); peers.delete(id); pendingIce.delete(id); notify() }
 
   const connect = async (viewerId: string) => {
     closePeer(viewerId)
@@ -31,8 +33,15 @@ export function startHost(supabase: SupabaseClient, hostId: string, stream: Medi
   ch.on('broadcast', { event: 'signal' }, async ({ payload }: { payload: Signal }) => {
     try {
       if (payload.type === 'join') await connect(payload.from)
-      else if (payload.type === 'answer') { const pc = peers.get(payload.from); if (pc && pc.signalingState !== 'stable') await pc.setRemoteDescription(payload.sdp) }
-      else if (payload.type === 'ice' && payload.to === 'host') { const pc = peers.get(payload.from); if (pc) await pc.addIceCandidate(payload.candidate).catch(() => {}) }
+      else if (payload.type === 'answer') {
+        const pc = peers.get(payload.from)
+        if (pc && pc.signalingState !== 'stable') { await pc.setRemoteDescription(payload.sdp); for (const c of pendingIce.get(payload.from)?.splice(0) ?? []) await pc.addIceCandidate(c).catch(() => {}) }
+      }
+      else if (payload.type === 'ice' && payload.to === 'host') {
+        const pc = peers.get(payload.from)
+        if (pc && pc.remoteDescription) await pc.addIceCandidate(payload.candidate).catch(() => {})
+        else { const q = pendingIce.get(payload.from) ?? []; q.push(payload.candidate); pendingIce.set(payload.from, q) }
+      }
       else if (payload.type === 'bye') closePeer(payload.from)
     } catch (e) { console.warn('[live host] signal error', e) }
   })
