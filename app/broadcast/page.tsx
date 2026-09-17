@@ -212,7 +212,7 @@ export default function BroadcastPage() {
               <p className="text-sm text-white/85 leading-relaxed">방송을 시작하면 <b>추천 게임 카드</b>에 이 카메라 영상이 나오고, 코인을 넣으면 그 게임을 바로 플레이해요.<br />게임 안에서도 AJ 아바타 대신 방송이 BJ 자리에 나와요. 이 화면을 켜 둔 동안만 방송됩니다.</p>
             ) : (
               <div ref={formRef} className="w-full max-w-sm text-left space-y-2">
-                {editingId && <p className="text-[12px] font-bold text-[#ffd166] text-center">✏️ 수정 중 — 아래 링크·제목·한 줄 소개·게임을 고치고 '저장'을 누르세요</p>}
+                {editingId && <p className="text-[12px] font-bold text-[#ffd166] text-center">✏️ 수정 중 — 아래 링크·한 줄 제목·게임을 고치고 '저장'을 누르세요</p>}
                 {tab === 'video'
                   ? <p className="text-sm text-white/85 leading-relaxed text-center">라이브가 아닌 <b>일반 영상</b>을 공유해요. YouTube 영상·쇼츠 링크를 게임에 연결하면 게임 목록에 <b>VIDEO 카드</b>로 나오고, 게임 안 BJ 자리에도 그 영상이 나와요. <b>여러 개</b> 등록할 수 있어요.</p>
                   : <p className="text-sm text-white/85 leading-relaxed text-center">YouTube 라이브/영상이나 Twitch 채널 링크를 게임에 연결하면 <b>LIVE 카드</b>로 목록에 나오고, 게임 안 BJ 자리에도 그 영상이 나와요. <b>여러 개</b> 계속 추가할 수 있어요.</p>}
@@ -226,17 +226,11 @@ export default function BroadcastPage() {
                   value={linkTitle}
                   onChange={(e) => setLinkTitle(e.target.value)}
                   maxLength={120}
-                  placeholder="영상 제목 — 링크를 넣으면 자동으로 채워져요 (고칠 수 있음)"
-                  className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
-                />
-                <input
                   data-note
-                  value={linkNote}
-                  onChange={(e) => setLinkNote(e.target.value)}
-                  maxLength={80}
-                  placeholder="한 줄 소개 — 쇼츠 카드에 표시돼요 (예: 롤러코스터 1위 도전 하이라이트)"
+                  placeholder="쇼츠에 나올 한 줄 제목 — 링크를 넣으면 유튜브 제목이 자동으로 채워져요 (고칠 수 있음)"
                   className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
                 />
+                {/* 영상의 '한 줄'은 곧 제목 — 별도 소개 없음 */}
                 {linkUrl && !toEmbed(linkUrl) && <p className="text-[11px] text-red-400">지원하지 않는 링크예요.</p>}
                 {toEmbed(linkUrl) && (
                   <div className="aspect-video w-full rounded-lg overflow-hidden bg-black/60">
@@ -252,7 +246,6 @@ export default function BroadcastPage() {
                         <div className="min-w-0 flex-1">
                           <p className="text-[12px] text-white truncate">{l.gameId ? `🎮 ${l.title ?? games.find((g) => g.id === l.gameId)?.title ?? '게임'}` : '▶ 게임 연결 없음 (영상만 공유)'}</p>
                           {l.videoTitle && <p className="text-[12px] text-white/90 truncate">{l.videoTitle}</p>}
-                          {l.note && <p className="text-[11px] text-white/80 truncate">{l.note}</p>}
                           <p className="text-[10px] text-white/50 truncate">{l.url}</p>
                         </div>
                         <button onClick={() => editLink(l)} className={`font-pixel text-[9px] px-2 py-1 rounded-full tracking-widest ${editingId === l.id ? 'bg-white text-black' : 'bg-white/15 text-white/80'}`}>수정</button>
