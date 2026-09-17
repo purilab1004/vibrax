@@ -123,7 +123,8 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const [screenLive, setScreenLive] = useState<{ viewers: number } | null>(null)
   const screenHost = useRef<HostHandle | null>(null)
   const screenStream = useRef<MediaStream | null>(null)
-  const spectate = !!(open && !screenLive && liveEntry && liveEntry.kind === 'camera' && (liveEntry.screen || liveEntry.cam) && liveEntry.hostId !== me)
+  // 온라인(멀티) 게임은 라이브 중에도 다른 회원이 함께 플레이할 수 있다 — 관전은 싱글 게임만
+  const spectate = !!(open && !screenLive && liveEntry && liveEntry.kind === 'camera' && (liveEntry.screen || liveEntry.cam) && liveEntry.hostId !== me && game.play_mode !== 'multi')
   const stopScreenLive = async (persist = true) => {
     screenHost.current?.stop(); screenHost.current = null
     screenStream.current?.getTracks().forEach(t => t.stop()); screenStream.current = null

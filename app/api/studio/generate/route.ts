@@ -410,6 +410,23 @@ export async function POST(req: Request) {
           } else {
             // 버전이 저장된 이상 생성은 성공이다 — 이후 실패는 환불도, 에러 마커도 없다.
             versionPersisted = true
+            // 디자이너 보상 — 이번 생성에 실제로 실린 에셋 중 디자이너 작품이 있으면, 회원이 쓴 생성 크레딧을 100% 디자이너에게 나눠 준다(디자이너 수로 균등 분배)
+            if (chargeUser && cost > 0 && loadedAssets.length) {
+              try {
+                const adminDb = createAdminClient()
+                const { data: rows } = await adminDb.from('media_assets').select('id,designer_id,credit_earned').in('id', loadedAssets.map(a => a.id))
+                const byDesigner = new Map<string, { id: string; credit_earned: number }[]>()
+                for (const r of (rows ?? []) as { id: string; designer_id: string | null; credit_earned: number | null }[]) { if (r.designer_id && r.designer_id !== user.id) { const arr = byDesigner.get(r.designer_id) ?? []; arr.push({ id: r.id, credit_earned: r.credit_earned ?? 0 }); byDesigner.set(r.designer_id, arr) } }
+                if (byDesigner.size) {
+                  const share = Math.floor(cost / byDesigner.size)
+                  if (share > 0) for (const [designerId, assets] of byDesigner) {
+                    await adminDb.from('credit_ledger').insert([{ user_id: designerId, amount: share, reason: 'designer_payout', ref_id: spendRef }] as never)
+                    const per = Math.floor(share / assets.length)
+                    for (const a of assets) await adminDb.from('media_assets').update({ credit_earned: a.credit_earned + per }).eq('id', a.id)
+                  }
+                }
+              } catch (e) { console.error('[studio/generate] designer payout failed', e) }
+            }
             await logUsage({
               userId: user.id, projectId, versionId: (vIns as { id: string } | null)?.id ?? null,
               kind: tmatch ? 'template_edit' : latest ? 'edit' : 'create',

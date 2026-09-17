@@ -131,3 +131,10 @@ alter table public.media_assets add constraint media_assets_status_check check (
 alter table public.media_assets add column if not exists designer_id uuid references public.profiles(id);
 alter table public.media_assets add column if not exists credit_earned int not null default 0; -- 이 에셋으로 디자이너에게 쌓인 크레딧(100%)
 create index if not exists media_assets_designer_idx on public.media_assets (designer_id, status);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 3) 디자이너 보상 — 회원이 디자이너 에셋을 써서 게임을 생성하면 그 생성 크레딧이 100% 디자이너에게 쌓인다 (credit_ledger reason 'designer_payout')
+-- ─────────────────────────────────────────────────────────────────────────────
+alter table public.credit_ledger drop constraint if exists credit_ledger_reason_check;
+alter table public.credit_ledger add constraint credit_ledger_reason_check
+  check (reason in ('purchase','generation','refund','signup_bonus','admin_adjust','purchase_refund','chargeback','designer_payout'));
