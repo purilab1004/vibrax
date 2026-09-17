@@ -202,7 +202,7 @@ export async function POST(req: Request) {
         const picked = scoreAssets(pool, { prompt, genreSlugs: [tmatch.template.slug, ...(tmatch.template.genreGroup ? [tmatch.template.genreGroup] : [])] })
         // 템플릿 코드가 이름으로 직접 쓰는 에셋(예: 우빈 롤러코스터의 background_basic)은 프롬프트 언급과 무관하게 항상 주입
         for (const a of pool) if (!picked.some(x => x.id === a.id) && (html.includes(`'${a.name}'`) || html.includes(`"${a.name}"`))) picked.push(a)
-        if (picked.length) { html = injectAssets(html, await loadAssetData(picked)); void adminDb.rpc('media_assets_touch', { ids: picked.map(a => a.id) }) }
+        if (picked.length) { html = injectAssets(html, await loadAssetData(picked, { maxCount: 40 })); void adminDb.rpc('media_assets_touch', { ids: picked.map(a => a.id) }) }
       } catch (e) { console.error('[studio/generate] template asset inject failed', e) }
       const tplVersion = (latest?.version ?? 0) + 1
       const { error: vErr } = await supabase.from('studio_versions').insert([

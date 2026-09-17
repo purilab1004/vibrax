@@ -16,7 +16,7 @@ const VARIANTS: Record<string, { replace: string[]; titles: Variant[] }> = {
 }
 const HUES = [0, 35, 70, 110, 150, 195, 240, 285, 320]
 // 빨강=하락·초록=상승처럼 색이 게임 의미를 갖는 템플릿은 hue-rotate 를 걸지 않는다
-const NO_HUE = new Set(['stock', 'poop-clean', 'woobin-coaster'])  // 픽셀 에셋(스프라이트·배경)을 쓰는 템플릿은 색조 변형 금지
+const NO_HUE = new Set(['stock', 'poop-clean', 'woobin-coaster', 'stair-rush'])  // 픽셀 에셋(스프라이트·배경)을 쓰는 템플릿은 색조 변형 금지
 
 export function personalizeTemplate(slug: string, html: string, seed: string): { html: string; title: string } {
   const v = VARIANTS[slug]
