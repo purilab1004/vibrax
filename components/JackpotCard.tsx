@@ -149,12 +149,12 @@ export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Ja
     <div ref={rootRef} className="absolute inset-0 overflow-hidden flex flex-col" style={{ background: 'radial-gradient(120% 80% at 50% 38%, #4a2394 0%, #1f1048 48%, #0a0619 100%)' }}>
       <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.55) 1px, transparent 1.5px)', backgroundSize: '80px 80px', opacity: 0.45 }} />
       {/* 상단 배지 */}
-      <div className="relative z-10 shrink-0 pt-4 pl-4 pr-16 flex items-center gap-2">
+      <div className="relative z-10 shrink-0 pl-4 pr-16 flex items-center gap-2" style={{ paddingTop: layout === 'feed-mobile' ? 'calc(1rem + var(--st, 0px))' : '1rem' }}>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f59e0b] text-[#3a2500] font-pixel text-[10px] px-2.5 py-1 tracking-widest shadow">🎰 JACKPOT</span>
         <span className="inline-flex items-center rounded-full bg-black/45 backdrop-blur px-2.5 py-1 text-white text-[11px] font-semibold">{statusBadge}</span>
       </div>
 
-      <div className={`relative z-[5] flex-1 min-h-0 flex flex-col items-center px-5 ${layout === 'feed-mobile' ? 'pt-[9svh]' : 'pt-3'}`}>
+      <div className={`relative z-[5] flex-1 min-h-0 flex flex-col items-center px-5 ${layout === 'feed-mobile' ? 'pt-[11svh]' : 'pt-3'}`}>
         {/* 제목 크게 */}
         <h3 className={`${titleFont.className} shrink-0 text-center text-[clamp(34px,9.5vw,46px)] leading-[1.12] text-white`} style={{ wordBreak: 'keep-all', textShadow: '0 2px 0 #2a1160, 0 4px 14px rgba(0,0,0,.75), 0 0 22px rgba(255,209,102,.55)' }}>{jackpot.title}</h3>
         {jackpot.description && <p className="shrink-0 mt-1.5 text-center text-[13.5px] text-white/90 leading-snug line-clamp-3" style={{ wordBreak: 'keep-all', textShadow: '0 1px 6px rgba(0,0,0,.8)' }}>{jackpot.description}</p>}
