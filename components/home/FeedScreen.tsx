@@ -18,6 +18,7 @@ import { titleFont } from '@/lib/fonts'
 import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 import { countryFlag, flagRingStyle } from '@/lib/country'
+import ThumbBackdrop from '@/components/home/ThumbBackdrop'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
 export default function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; golden?: boolean; rank?: number }) {
@@ -71,6 +72,8 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
 
   const inner = (
     <>
+      {/* 배경 — 게임 썸네일을 흐려 은은하게 */}
+      <ThumbBackdrop src={game.thumbnail_url} alt={game.title} />
       {/* 조회수 랭킹 배지 — 상단 우측 */}
       {rank && rank <= 10 && (
         <span className={`absolute top-4 right-4 z-10 font-pixel text-[13px] px-3 py-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.25)] ${

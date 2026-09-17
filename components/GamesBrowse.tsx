@@ -20,6 +20,7 @@ import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 import { countryFlag, flagRingStyle } from '@/lib/country'
 import LiveCard from '@/components/LiveCard'
 import FeedEndCard from '@/components/FeedEndCard'
+import ThumbBackdrop from '@/components/home/ThumbBackdrop'
 import { recordShare } from '@/lib/shares'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
@@ -79,6 +80,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         className="grain relative h-[96%] aspect-[9/15] rounded-2xl overflow-hidden shadow-[0_18px_60px_rgba(36,31,23,0.22)]"
         style={auroraOf(game.id, rank === 1 && (game.view_count ?? 0) > 0)}
       >
+        <ThumbBackdrop src={game.thumbnail_url} alt={game.title} />
         {/* 랭킹 배지 */}
         {rank && rank <= 10 && (
           <span className={`absolute top-4 right-4 z-10 font-pixel text-[13px] px-3 py-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.25)] ${
