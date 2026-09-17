@@ -534,11 +534,11 @@ export default function GameCard({ game, creatorName, creatorAvatarUrl, creatorA
     if (hasCoinTicket(game.id)) { setCoinState('ready'); return }
     coinLock.current = true
     setCoinState('drop')
+    playCoinSound() // 탭 제스처 안에서 바로
     try {
       // 로컬 세션으로 로그인 판정(네트워크 왕복 없음) → 즉시 반응
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) { setCoinState('idle'); setAgentGate('login'); return }
-      playCoinSound()
       const { error } = await supabase.rpc('spend_vcoin', { p_game_id: game.id } as never)
       if (error) {
         if (error.message.includes('insufficient_vcoin')) {

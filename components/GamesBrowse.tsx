@@ -44,10 +44,10 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
   const insertCoin = async () => {
     if (coinState !== 'idle') return
     if (hasCoinTicket(game.id)) { setCoinState('ready'); return }
+    playCoinSound() // 탭 제스처 안에서 바로 (await 뒤면 iOS 가 막을 수 있음)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login?redirect=/games'); return }
     setCoinState('drop')
-    playCoinSound()
     const { error } = await supabase.rpc('spend_vcoin', { p_game_id: game.id } as never)
     if (error) {
       if (error.message.includes('insufficient_vcoin')) {
