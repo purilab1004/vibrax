@@ -941,7 +941,7 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 @keyframes eq { 0%,100% { transform: scaleY(.35) } 50% { transform: scaleY(1) } }
 
 /* ── 쇼츠 카드 타이틀: 스티커(두꺼운 외곽선 + 컬러 글로우 + 살짝 눌린 그림자) — 어떤 배경 위에서도 또렷 ── */
-.feed-title { paint-order: stroke fill; -webkit-text-stroke: 7px #1b1740; text-shadow: 0 5px 0 #1b1740, 0 10px 24px rgba(0,0,0,.45); letter-spacing: -0.01em; }
+.feed-title { paint-order: stroke fill; -webkit-text-stroke: 3.5px rgba(27,23,64,.85); text-shadow: 0 2px 2px rgba(0,0,0,.25), 0 8px 22px rgba(0,0,0,.28); letter-spacing: -0.01em; }
 .feed-title-pop { animation: titlePop .6s cubic-bezier(.2,1.4,.4,1) both; }
 @keyframes titlePop { 0% { transform: scale(.82) rotate(-2deg); opacity: 0 } 60% { transform: scale(1.06) rotate(.5deg); opacity: 1 } 100% { transform: scale(1) rotate(0) } }
 .feed-spark { position: absolute; color: #fff7c2; text-shadow: 0 0 8px rgba(255,255,255,.8); animation: spark 2.2s ease-in-out infinite; pointer-events: none; }
