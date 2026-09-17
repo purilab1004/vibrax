@@ -3,7 +3,6 @@ import GamesBrowse from '@/components/GamesBrowse'
 import HtmlClass from '@/components/HtmlClass'
 import PullToHome from '@/components/PullToHome'
 import MobileGamesTools from '@/components/MobileGamesTools'
-import GenreSidebar from '@/components/GenreSidebar'
 import { Suspense } from 'react'
 import type { Genre, GameWithCreator } from '@/lib/supabase/types'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
@@ -60,13 +59,6 @@ export default async function GamesPage({ searchParams }: Props) {
       </Suspense>
 
       <div className="md:flex md:gap-6">
-        {/* 데스크톱 — 좌측 카테고리 + 메뉴 사이드바 */}
-        <aside className="hidden md:block w-52 shrink-0 sticky top-20 self-start">
-          <Suspense>
-            <GenreSidebar />
-          </Suspense>
-        </aside>
-
         <div className="flex-1 min-w-0">
           {/* 그리드를 별도 스트리밍하지 않고 라우트 로더(app/loading.tsx)로 덮는다 → 마스코트 1회만 */}
           <GameGrid genre={genre} q={q} creator={creator} />

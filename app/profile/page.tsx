@@ -61,7 +61,7 @@ interface EditingGame {
 }
 
 type Tab = 'profile' | 'password' | 'agent' | 'learning' | 'api' | 'games' | 'library' | 'collections' | 'billing' | 'notices'
-const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', api: 'AJ API', games: '내 게임', library: '라이브러리', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
+const TAB_LABEL: Record<Tab, string> = { profile: '프로필', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', api: 'AJ API', games: '내 게임', library: '갤러리', collections: '좋아요·컬렉션', billing: '결제 내역', notices: '공지사항' }
 const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'api', 'games', 'library', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'profile' }
 
 export default function ProfilePage() {

@@ -39,10 +39,10 @@ export default function MyLibrary() {
     <section id="library" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-[18px] font-extrabold text-[#241f17]">라이브러리</h2>
+          <h2 className="text-[18px] font-extrabold text-[#241f17]">갤러리</h2>
           <p className="text-[12.5px] text-[#6b6152] mt-0.5" style={{ wordBreak: 'keep-all' }}>내가 등록한 디자인과 쌓인 크레딧. 회원이 내 디자인으로 게임을 만들면 그 크레딧이 <b>100% 나에게</b> 쌓여요.</p>
         </div>
-        <Link href="/library" className="shrink-0 text-[12.5px] font-semibold text-[#7c3aed]">공개 라이브러리 →</Link>
+        <Link href="/gallery" className="shrink-0 text-[12.5px] font-semibold text-[#7c3aed]">공개 갤러리 →</Link>
       </div>
 
       {!isDesigner ? (
@@ -50,7 +50,7 @@ export default function MyLibrary() {
           <p className="text-[28px]">🎨</p>
           <p className="text-[15px] font-bold text-[#241f17] mt-1">아직 디자이너가 아니에요</p>
           <p className="text-[12.5px] text-[#857a68] mt-1 mb-4">일반 회원 누구나 접수할 수 있어요. 관리자가 확인하면 디자이너로 전환되고 여기서 작품을 올릴 수 있습니다.</p>
-          <Link href="/library" className="inline-flex items-center h-10 px-5 rounded-lg bg-[#7c3aed] text-white text-[13px] font-semibold">디자이너 접수하러 가기</Link>
+          <Link href="/gallery" className="inline-flex items-center h-10 px-5 rounded-lg bg-[#7c3aed] text-white text-[13px] font-semibold">디자이너 접수하러 가기</Link>
         </div>
       ) : (
         <>

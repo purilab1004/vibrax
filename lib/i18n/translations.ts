@@ -4,7 +4,7 @@ export const t = {
   ko: {
     nav: {
       games: 'GAMES',
-      library: '라이브러리',
+      library: 'GALLERY',
       about: 'ABOUT',
       submit: '+ 등록',
       studio: 'STUDIO',
@@ -331,7 +331,7 @@ export const t = {
   en: {
     nav: {
       games: 'GAMES',
-      library: 'LIBRARY',
+      library: 'GALLERY',
       about: 'ABOUT',
       submit: '+ SUBMIT',
       studio: 'STUDIO',

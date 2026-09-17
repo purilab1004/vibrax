@@ -25,7 +25,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const m = await me(); if (!m) return Response.json({ error: 'unauthorized' }, { status: 401 })
-  if (m.role !== 'designer' && m.role !== 'admin') return Response.json({ error: '디자이너로 승인된 회원만 올릴 수 있어요. 라이브러리 페이지에서 접수해 주세요.' }, { status: 403 })
+  if (m.role !== 'designer' && m.role !== 'admin') return Response.json({ error: '디자이너로 승인된 회원만 올릴 수 있어요. 갤러리 페이지에서 접수해 주세요.' }, { status: 403 })
   const fd = await req.formData().catch(() => null)
   if (!fd) return Response.json({ error: 'multipart 필요' }, { status: 400 })
   const files = fd.getAll('files').filter((f): f is File => f instanceof File && f.size > 0)

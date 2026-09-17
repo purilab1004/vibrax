@@ -231,7 +231,7 @@ export default function NavBar() {
               >
                 🏆 {T.nav.tournament}
               </Link>
-              {navLinkDesktop('/library', T.nav.library)}
+              {navLinkDesktop('/gallery', T.nav.library)}
               {navLinkDesktop('/blog', T.nav.blog)}
               {navLinkDesktop('/partner', T.nav.partner)}
               {navLinkDesktop('/dev', T.nav.dev)}
@@ -342,7 +342,7 @@ export default function NavBar() {
         </div>
 
         {/* Menu items */}
-        <div className="flex flex-col px-8 pt-8 pb-6 flex-1 justify-between">
+        <div className="flex flex-col px-8 pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex-1 min-h-0 overflow-y-auto justify-between">
           <nav className="flex flex-col">
             {/* Mobile search */}
             <form onSubmit={handleSearch} className="mb-6">
@@ -368,7 +368,7 @@ export default function NavBar() {
             >
               🏆 {T.nav.tournament}
             </Link>
-            {navLinkMobile('/library', T.nav.library)}
+            {navLinkMobile('/gallery', T.nav.library)}
             {navLinkMobile('/blog', T.nav.blog)}
             {navLinkMobile('/partner', T.nav.partner)}
             {navLinkMobile('/dev', T.nav.dev)}
