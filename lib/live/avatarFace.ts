@@ -88,7 +88,7 @@ export async function createAvatarFaceStream(cam: MediaStream, avatar: { preview
   }
 
   const m4 = new Matrix4(), eul = new Euler()
-  let running = true, raf = 0, lastVideoTime = -1
+  let running = true, raf = 0, lastVideoTime = -1, lastDraw = 0, frameNo = 0
   // 부드럽게 따라가는 얼굴 상태
   let fx = canvas.width / 2, fy = canvas.height * 0.42, fw = canvas.width * 0.16, found = false
   const pose: Pose = { yaw: 0, pitch: 0, roll: 0, jaw: 0, blink: 0 }
@@ -101,8 +101,11 @@ export async function createAvatarFaceStream(cam: MediaStream, avatar: { preview
     raf = requestAnimationFrame(frame)
     if (video.readyState < 2) return
     const now = performance.now()
+    if (now - lastDraw < 1000 / 24) return   // 24fps 이상은 그리지 않는다
+    lastDraw = now
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    if (video.currentTime !== lastVideoTime) {
+    // 얼굴 인식은 2프레임에 한 번(나머지는 직전 결과로) — 폰에서 게임 조작이 버벅이지 않게
+    if (video.currentTime !== lastVideoTime && (frameNo++ % 2 === 0 || !found)) {
       lastVideoTime = video.currentTime
       try {
         const r = landmarker.detectForVideo(video, now)

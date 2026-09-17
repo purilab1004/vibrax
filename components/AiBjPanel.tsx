@@ -619,7 +619,9 @@ export default function AiBjPanel({ gameId, genre, gameTitle, gameDescription, a
         )}
         {/* 우하단 — 아바타(드래그 이동, 배지 탭으로 숨기기/보이기) + 네임 배지 */}
         <div className="absolute right-3 bottom-2 w-[116px] pointer-events-none select-none" style={{ transform: `translate(${drag.x}px, ${drag.y}px)` }}>
-          <div className={`relative aj-stage aj-stage-desk pointer-events-none ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible && !mAvatarHidden ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: camera ? 90 : 132 }}>
+          <div className={`relative aj-stage aj-stage-desk ${camera && avatarVisible && !mAvatarHidden ? 'pointer-events-auto touch-none cursor-grab' : 'pointer-events-none'} ${camera ? 'aj-stage-cam' : ''} ${joined ? 'aj-stage-joined' : avatarVisible && !mAvatarHidden ? 'aj-stage-on' : 'aj-stage-off'}`} style={{ height: camera ? 90 : 132 }}
+            {...(camera ? { onPointerDown: onDragStart, onPointerMove: onDragMove, onPointerUp: onDragEnd, onPointerCancel: onDragEnd } : {})}>
+            {/* 카메라 라이브 박스는 끌어서 옮길 수 있다(게임 버튼을 가릴 때) */}
             {isMobile && bjAvatar}
             {speaking && !camera && !mAvatarHidden && (
               <div className="aj-typing" aria-hidden><svg viewBox="0 0 64 56" className="w-full h-full"><path d="M32 6c14.9 0 26 9 26 20.5S46.9 47 32 47c-2.1 0-4.2-.2-6.2-.5L14 53l2.4-10.8C9.9 38.4 6 32.8 6 26.5 6 15 17.1 6 32 6Z" fill="rgba(10,12,18,0.6)" stroke="#ffffff" strokeWidth="3.5" strokeLinejoin="round" /><circle cx="21" cy="27" r="3.6" fill="#ffffff" className="aj-dot" /><circle cx="32" cy="27" r="3.6" fill="#ffffff" className="aj-dot" style={{ animationDelay: '.18s' }} /><circle cx="43" cy="27" r="3.6" fill="#ffffff" className="aj-dot" style={{ animationDelay: '.36s' }} /></svg></div>

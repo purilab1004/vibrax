@@ -30,7 +30,14 @@ export function startHost(supabase: SupabaseClient, hostId: string, stream: Medi
       pc.addTrack(t, stream)
     }
     pc.onicecandidate = (e) => { if (e.candidate) send({ type: 'ice', from: 'host', to: viewerId, candidate: e.candidate.toJSON() }) }
-    pc.onconnectionstatechange = () => { if (['failed', 'closed', 'disconnected'].includes(pc.connectionState)) closePeer(viewerId) }
+    // 모바일 망에선 'disconnected' 가 잠깐씩 뜨고 스스로 회복된다 — 바로 끊으면 시청자 화면이 꺼지므로 8초 유예
+    let dcTimer: ReturnType<typeof setTimeout> | null = null
+    pc.onconnectionstatechange = () => {
+      const st = pc.connectionState
+      if (st === 'failed' || st === 'closed') { if (dcTimer) clearTimeout(dcTimer); if (peers.get(viewerId) === pc) closePeer(viewerId); return }
+      if (st === 'disconnected') { if (!dcTimer) dcTimer = setTimeout(() => { dcTimer = null; if (pc.connectionState !== 'connected' && peers.get(viewerId) === pc) closePeer(viewerId) }, 8000) }
+      else if (dcTimer) { clearTimeout(dcTimer); dcTimer = null }
+    }
     const offer = await pc.createOffer()
     await pc.setLocalDescription(offer)
     // 기본 비트레이트(낮게 잡힘) 대신 넉넉히 — 화면 방송은 해상도 유지 (인코딩은 로컬 SDP 적용 후에 생긴다)
@@ -65,11 +72,14 @@ export function startHost(supabase: SupabaseClient, hostId: string, stream: Medi
     } catch (e) { console.warn('[live host] signal error', e) }
   })
   ch.subscribe(async (status) => { if (status === 'SUBSCRIBED') await ch.track({ role: 'host', at: Date.now() }) })
+  // 실시간 연결이 재접속돼도 '방송 중' presence 가 사라지지 않게 주기적으로 다시 알린다
+  const beat = setInterval(() => { ch.track({ role: 'host', at: Date.now() }).catch(() => {}) }, 25_000)
   // 전역 온라인 표시 — 피드는 DB 의 방송 플래그만 믿지 않고, 지금 실제로 접속 중인 방송자만 LIVE 카드로 보여 준다(앱 강제 종료·네트워크 끊김 시 자동으로 사라짐)
   const untrackOnline = trackHost(hostId, kind === 'screen' ? 'screen' : 'cam')
 
   return {
     stop() {
+      clearInterval(beat)
       for (const id of [...peers.keys()]) closePeer(id)
       ch.untrack().catch(() => {})
       supabase.removeChannel(ch)

@@ -33,6 +33,8 @@ function ensure() {
     subs.forEach((f) => f())
   })
   ch.subscribe((status) => { if (status === 'SUBSCRIBED') { joined = true; syncTrack() } })
+  // 재접속 등으로 presence 가 빠져도 다시 올라가게 주기적으로 갱신
+  setInterval(() => { if (mine.size) syncTrack() }, 25_000)
 }
 
 export function subscribeHostsPresence(f: () => void): () => void { ensure(); subs.add(f); return () => { subs.delete(f) } }

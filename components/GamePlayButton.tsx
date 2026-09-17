@@ -139,6 +139,8 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       if (cfg?.broadcast?.screenOn) await saveAvatarConfig(supabase, user.id, { ...cfg, broadcast: { ...cfg.broadcast, screenOn: false } })
     } catch { /* noop */ }
   }
+  // 폰에선 게임·카메라·얼굴 인식이 함께 돌아 무거우므로 화면 방송은 가볍게(조작 지연 방지)
+  const capOpts = () => (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches ? { fps: 20, maxW: 720 } : { fps: 30, maxW: 1280 })
   const startScreenLive = async (auto = false) => {
     const { data: { user } } = await supabase.auth.getUser(); if (!user) return
     let stream: MediaStream | null = null
@@ -158,11 +160,11 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       cctx?.drawImage(d.bm, 0, 0); d.bm.close(); gotFrame = true
     }
     window.addEventListener('message', onFrame)
-    const askFrames = () => { try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, fps: 30, maxW: 1280 }, '*') } catch { /* */ } }
+    const askFrames = () => { try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, ...capOpts() }, '*') } catch { /* */ } }
     for (let i = 0; !gotFrame && i < (auto ? 15 : 5); i++) { askFrames(); await new Promise(r => setTimeout(r, 800)) }
     const capWithStream = cap as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }
     if (gotFrame && capWithStream.captureStream) {
-      stream = capWithStream.captureStream(30)
+      stream = capWithStream.captureStream(capOpts().fps)
       captureCleanup.current = () => { window.removeEventListener('message', onFrame); try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:capture', on: false }, '*') } catch { /* */ } cap.remove() }
     } else { window.removeEventListener('message', onFrame); cap.remove() }
     // 2) 캔버스가 없으면(DOM 게임) 화면 공유로 — 모바일은 화면 공유를 지원하지 않아 자동 시작에선 건너뛴다
@@ -412,7 +414,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                     allow="fullscreen; autoplay"
                     title={g.title}
                     ref={el => { if (!isPending) frameRef.current = el }}
-                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage(hostMsg(), '*'); if (captureCleanup.current) e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, fps: 30, maxW: 1280 }, '*') } catch { /* */ } }}
+                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage(hostMsg(), '*'); if (captureCleanup.current) e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, ...capOpts() }, '*') } catch { /* */ } }}
                     onError={(e) => { const f = e.currentTarget; if (f.src !== g.play_url) f.src = g.play_url }}
                   />
                 )
