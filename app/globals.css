@@ -941,7 +941,9 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 @keyframes eq { 0%,100% { transform: scaleY(.35) } 50% { transform: scaleY(1) } }
 
 /* ── 쇼츠 카드 타이틀: 스티커(두꺼운 외곽선 + 컬러 글로우 + 살짝 눌린 그림자) — 어떤 배경 위에서도 또렷 ── */
-.feed-title { paint-order: stroke fill; -webkit-text-stroke: 3.5px rgba(27,23,64,.85); text-shadow: 0 2px 2px rgba(0,0,0,.25), 0 8px 22px rgba(0,0,0,.28); letter-spacing: -0.01em; }
+/* 갤럭시(레트로 크롬) 3D 타이틀 — 3겹: 아래 '돌출' 층(핑크·자주 계단 그림자 + 보라 글로우) → 크롬 그라데이션 채움(흰 테두리) → 광택 스윕 */
+.feed-title { color: #ff6ea6; letter-spacing: 0.01em; text-shadow: 1px 1px 0 #e0498a, 2px 2px 0 #d3427f, 3px 3px 0 #c53b74, 4px 4px 0 #b6346a, 5px 5px 0 #a72e60, 6px 6px 0 #982856, 7px 7px 0 #88224c, 9px 12px 26px rgba(0,0,0,.5), 0 0 28px rgba(122,92,255,.55); }
+.feed-title-chrome { color: transparent; -webkit-text-fill-color: transparent; background-image: linear-gradient(180deg, #ffffff 0%, #eaf2ff 28%, #9ec0ff 45%, #6d86ff 52%, #a98cff 68%, #ff8fd2 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-stroke: 1.3px rgba(255,255,255,.9); paint-order: stroke fill; letter-spacing: 0.01em; pointer-events: none; }
 .feed-title-pop { animation: titlePop .6s cubic-bezier(.2,1.4,.4,1) both; }
 @keyframes titlePop { 0% { transform: scale(.82) rotate(-2deg); opacity: 0 } 60% { transform: scale(1.06) rotate(.5deg); opacity: 1 } 100% { transform: scale(1) rotate(0) } }
 /* 글자 위를 지나가는 광택(샤인) — 글자 모양으로만 비치는 밝은 띠가 3.4초마다 한 번 훑고 지나간다 */
