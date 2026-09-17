@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { loadAvatarConfig, saveAvatarConfig } from '@/lib/jeumto/storage'
 import { emptyConfig, type AvatarConfig } from '@/lib/jeumto/config'
 import { startCamLive, stopCamLive, getCamLive, subscribeCamLive } from '@/lib/live/camLive'
+import { createAvatarFaceStream } from '@/lib/live/avatarFace'
 import { toEmbed, type LinkBroadcast } from '@/lib/broadcast'
 import type { Game } from '@/lib/supabase/types'
 
@@ -32,6 +33,9 @@ export default function BroadcastPage() {
   const [viewers, setViewers] = useState(0)
   const [facing, setFacing] = useState<'user' | 'environment'>('user')
   const [err, setErr] = useState<string | null>(null)
+  // 내 얼굴 → AJ 아바타 얼굴로 바꿔 방송 (아바타가 있을 때 기본 켜짐)
+  const [avatarFace, setAvatarFace] = useState(true)
+  const [preparing, setPreparing] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
   // 방송 중인 카메라는 앱 전역(camLive)에 있다 — 게임 페이지에 다녀와도 이어지고, 돌아오면 다시 붙인다
@@ -137,7 +141,19 @@ export default function BroadcastPage() {
         video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 24 } },
         audio: { echoCancellation: true, noiseSuppression: true },
       })
-      if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.muted = true }
+      let outStream: MediaStream = stream
+      let onStop: (() => void) | undefined
+      if (avatarFace && config?.previewUrl) {
+        setPreparing(true)
+        try {
+          const af = await createAvatarFaceStream(stream, { previewUrl: config.previewUrl, blinkUrl: config.blinkUrl, talkUrl: config.talkUrl })
+          outStream = af.stream; onStop = af.stop
+        } catch (e) {
+          console.warn('[avatar face]', e)
+          setErr('아바타 얼굴을 준비하지 못해 실제 카메라로 방송해요')
+        } finally { setPreparing(false) }
+      }
+      if (videoRef.current) { videoRef.current.srcObject = outStream; videoRef.current.muted = true }
       // 탭을 닫으면(pagehide) 방송 OFF — supabase-js 대신 REST keepalive (세션 토큰은 미리 잡아 둔다)
       const { data: sess } = await supabase.auth.getSession()
       const token = sess.session?.access_token
@@ -151,7 +167,7 @@ export default function BroadcastPage() {
           body: offBody,
         }).catch(() => {})
       }
-      await startCamLive(supabase, user.id, stream, { gameId: gameId || null, facing, onPageHide })
+      await startCamLive(supabase, user.id, outStream, { gameId: gameId || null, facing, onPageHide, onStop })
       const e = await setBroadcast(true)
       if (e) throw new Error(e)
     } catch (e) {
@@ -254,6 +270,19 @@ export default function BroadcastPage() {
                   <span className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff2d6f] to-[#8b3dff] flex items-center justify-center shadow-[0_10px_24px_-10px_rgba(255,45,111,0.8)]"><svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="13" height="12" rx="3" /><path d="m16 10 5-3v10l-5-3" /></svg></span>
                   <div className="min-w-0"><p className="text-[16px] font-extrabold">폰 카메라로 라이브</p><p className="text-[12px] text-white/55 leading-snug">추천 게임 카드와 게임 안 BJ 자리에 내 카메라가 나와요</p></div>
                 </div>
+                <button onClick={() => setAvatarFace((v) => !v)} disabled={!config?.previewUrl} className="relative mt-3 w-full flex items-center gap-3 rounded-xl bg-white/[0.06] border border-white/10 px-3 py-2.5 text-left disabled:opacity-50">
+                  <span className="w-10 h-10 rounded-full overflow-hidden bg-white/10 shrink-0 ring-2 ring-[#ff2d6f]/60">
+                    {config?.previewUrl
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={config.previewUrl} alt="" className="w-full h-full object-cover" />
+                      : <span className="w-full h-full flex items-center justify-center">🙂</span>}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-bold">아바타 얼굴로 방송</span>
+                    <span className="block text-[11.5px] text-white/50 leading-snug">{config?.previewUrl ? '카메라 속 내 얼굴을 AJ 아바타로 바꿔서 내보내요' : '내정보 → AJ 외모에서 아바타를 먼저 만들어 주세요'}</span>
+                  </span>
+                  <span role="switch" aria-checked={avatarFace && !!config?.previewUrl} className={`relative w-11 h-6 rounded-full shrink-0 transition-colors ${avatarFace && config?.previewUrl ? 'bg-[#ff2d55]' : 'bg-white/20'}`}><span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${avatarFace && config?.previewUrl ? 'left-[22px]' : 'left-0.5'}`} /></span>
+                </button>
                 <div className="relative mt-3 grid grid-cols-3 gap-2">
                   {['게임 고르기', '방송 시작', '방송하며 플레이'].map((t, i) => (
                     <div key={t} className="rounded-xl bg-white/[0.06] border border-white/10 px-2 py-2.5 text-center"><p className="text-[10px] font-bold text-[#ff8aa6]">STEP {i + 1}</p><p className="text-[12px] font-semibold mt-0.5">{t}</p></div>
@@ -372,8 +401,8 @@ export default function BroadcastPage() {
               <button onClick={addLink} disabled={!user || (!gameId && tab !== 'video') || !toEmbed(linkUrl)} className="flex-1 h-14 rounded-2xl bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-[16px] font-extrabold disabled:opacity-35 shadow-[0_10px_28px_-10px_rgba(255,45,111,0.8)]">{editingId ? '저장하기' : tab === 'video' ? '영상 등록하기' : '라이브 추가하기'}</button>
             </>
           ) : !onAir ? (
-            <button onClick={start} disabled={!user || !gameId} className="flex-1 h-14 rounded-2xl bg-gradient-to-r from-[#ff2d55] to-[#ff5e3a] text-[16px] font-extrabold flex items-center justify-center gap-2 disabled:opacity-35 shadow-[0_10px_28px_-10px_rgba(255,45,85,0.85)]">
-              <span className="w-3 h-3 rounded-full bg-white" />방송 시작
+            <button onClick={start} disabled={!user || !gameId || preparing} className="flex-1 h-14 rounded-2xl bg-gradient-to-r from-[#ff2d55] to-[#ff5e3a] text-[16px] font-extrabold flex items-center justify-center gap-2 disabled:opacity-35 shadow-[0_10px_28px_-10px_rgba(255,45,85,0.85)]">
+              {preparing ? <><span className="w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />아바타 준비 중…</> : <><span className="w-3 h-3 rounded-full bg-white" />방송 시작</>}
             </button>
           ) : (
             <button onClick={stop} className="flex-1 h-14 rounded-2xl bg-white/10 border border-white/20 text-[16px] font-extrabold flex items-center justify-center gap-2">
