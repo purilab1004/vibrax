@@ -20,7 +20,7 @@ import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 import { countryFlag, flagRingStyle } from '@/lib/country'
 import LiveCard from '@/components/LiveCard'
 import FeedEndCard from '@/components/FeedEndCard'
-import JackpotCard, { type Jackpot, type Product } from '@/components/JackpotCard'
+import JackpotCard, { type Jackpot } from '@/components/JackpotCard'
 import ThumbBackdrop from '@/components/home/ThumbBackdrop'
 import { useDominantHue } from '@/lib/dominantHue'
 import PlayModeBadge from '@/components/PlayModeBadge'
@@ -229,11 +229,11 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
     return () => ctrl.abort()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter])
-  // 코인 잭팟(관리자 랜덤 뽑기) — 진행 중인 것을 게임 사이에 랜덤 위치로 끼워 넣는다
-  const [jack, setJack] = useState<{ open: Jackpot[]; products: Product[]; mine: Record<string, number> }>({ open: [], products: [], mine: {} })
+  // 코인 잭팟(관리자 랜덤 뽑기) — 진행 중 + 최근 당첨 발표된 것을 게임 사이에 랜덤 위치로 끼워 넣는다
+  const [jack, setJack] = useState<{ open: Jackpot[]; mine: Record<string, number> }>({ open: [], mine: {} })
   useEffect(() => {
     if (filter === 'video') return
-    fetch('/api/jackpots').then((r) => r.json()).then((j) => setJack({ open: j.open ?? [], products: j.products ?? [], mine: j.mine ?? {} })).catch(() => {})
+    fetch('/api/jackpots').then((r) => r.json()).then((j) => setJack({ open: j.open ?? [], mine: j.mine ?? {} })).catch(() => {})
   }, [filter])
   // 라이브 카드를 몰아넣지 않고 게임 사이에 고르게 끼워 넣는다 (첫 번째는 맨 앞, 이후 게임 2~3장 간격)
   type Item = { kind: 'game'; game: GameWithCreator; rank?: number; ad?: { campaignId: string; badge: string; hook?: string } } | { kind: 'live'; live: (typeof lives)[number] } | { kind: 'jackpot'; jackpot: Jackpot }
@@ -292,7 +292,7 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">
         {items.map((it) => it.kind === 'jackpot'
-          ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} products={jack.products} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-mobile" />
+          ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-mobile" />
           : it.kind === 'live'
           ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-mobile" />
           : it.ad ? adWrap(it.ad, <FeedScreen game={it.game} />, `ad-${it.ad.campaignId}`) : <FeedScreen key={it.game.id} game={it.game} />)}
@@ -309,7 +309,7 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
             : 'h-[calc(100svh-3.75rem)] min-h-[540px] pt-1 pb-2 overflow-y-auto snap-y snap-mandatory scrollbar-hide'}
         >
           {items.map((it) => it.kind === 'jackpot'
-            ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} products={jack.products} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-desktop" />
+            ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-desktop" />
             : it.kind === 'live'
             ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-desktop" />
             : it.ad ? adWrap(it.ad, <DesktopFeedCard game={it.game} />, `ad-${it.ad.campaignId}`) : <DesktopFeedCard key={it.game.id} game={it.game} rank={it.rank} />)}

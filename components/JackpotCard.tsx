@@ -1,15 +1,26 @@
 'use client'
-// 코인 잭팟(랜덤 뽑기) 카드 — 쇼츠 피드에 게임 사이로 끼어든다. 관리자만 만들 수 있고, 회원은 코인을 내고 참여.
-// 마감 뒤 추첨 → 당첨자가 모인 크레딧(프롬코인)을 모두 가져간다. 크레딧은 나중에 실제 상품 구매에도 쓴다.
-import { useEffect, useState } from 'react'
+// 코인 잭팟(랜덤 뽑기) 카드 — 쇼츠 피드에 게임 사이로 끼어든다. 관리자만 만들 수 있고, 회원은 크레딧을 내고 참여.
+//  · 대표 이미지는 가운데에서 레인보우 햇살 광휘와 함께 빛난다 (없으면 ✦)
+//  · 상품이 걸린 잭팟: 추첨 전엔 "이번 상품 : 상품이 등록되었습니다!" + 닫힌 판도라 박스, 조건 금액 진행 바
+//  · 추첨(당첨 발표) 뒤엔 판도라 박스가 흔들리다 열리며 상품 썸네일이 빛과 함께 솟아오른다 + 당첨자 목록
+//  · 상금(크레딧·상품)은 관리자가 당첨자 목록에서 직접 수여
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { titleFont } from '@/lib/fonts'
 import { useIsNativeApp } from '@/lib/isNativeApp'
 import CardRail from '@/components/CardRail'
 
-export interface Jackpot { id: string; title: string; description: string | null; image_url: string | null; entry_cost: number; ends_at: string; status: string; pool: number; entries: number }
-export interface Product { id: string; title: string; description: string | null; image_url: string | null; coin_price: number }
+export interface Jackpot {
+  id: string; title: string; description: string | null; image_url: string | null; entry_cost: number; ends_at: string; status: string; pool: number; entries: number
+  drawn_at?: string | null
+  winner_count?: number
+  has_product?: boolean
+  product_threshold?: number
+  product?: { title: string; description: string | null; image_url: string | null } | null
+  product_won?: boolean
+  winners?: { rank: number; name: string; prize: string }[]
+}
 
 function useCountdown(endsAt: string) {
   const [now, setNow] = useState(() => Date.now())
@@ -19,7 +30,69 @@ function useCountdown(endsAt: string) {
   return { ms, text: d > 0 ? `${d}일 ${h}시간 ${m}분` : h > 0 ? `${h}시간 ${m}분 ${s}초` : `${m}분 ${s}초` }
 }
 
-export default function JackpotCard({ jackpot, products, mine = 0, layout }: { jackpot: Jackpot; products: Product[]; mine?: number; layout: 'feed-mobile' | 'feed-desktop' }) {
+// 레인보우 광선 — 24갈래, 갈래마다 색상환을 한 바퀴 돈다
+const RAINBOW_RAYS = `conic-gradient(from 0deg, ${Array.from({ length: 24 }, (_, i) => { const a = i * 15; return `hsla(${i * 15} 100% 68% / .95) ${a}deg ${a + 6}deg, transparent ${a + 6}deg ${a + 15}deg` }).join(', ')})`
+const RAY_MASK = 'radial-gradient(circle, #000 0%, #000 18%, rgba(0,0,0,.55) 38%, transparent 62%)'
+const center = { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' } as const
+
+/** 햇살처럼 강하게 빛나는 레인보우 광휘 — 부모(relative) 가운데에 깔린다 */
+function Radiance({ scale = 1 }: { scale?: number }) {
+  return (
+    <div className="absolute inset-0 pointer-events-none" aria-hidden>
+      {/* 무지개 원판(흐림) — 회전하며 색이 돈다 */}
+      <div className="absolute jp-spin-fast rounded-full" style={{ ...center, width: `${62 * scale}%`, aspectRatio: '1', background: 'conic-gradient(#ff5e5e, #ffb84d, #fff45c, #6dff8a, #5ce1ff, #7a7dff, #e36bff, #ff5e5e)', filter: 'blur(26px)', opacity: 0.85 }} />
+      {/* 레인보우 광선 */}
+      <div className="absolute jp-spin" style={{ ...center, width: `${135 * scale}%`, aspectRatio: '1', background: RAINBOW_RAYS, WebkitMaskImage: RAY_MASK, maskImage: RAY_MASK, mixBlendMode: 'screen' }} />
+      {/* 흰 광선(반대로) — 햇빛 느낌 */}
+      <div className="absolute jp-spin-rev" style={{ ...center, width: `${115 * scale}%`, aspectRatio: '1', background: 'repeating-conic-gradient(from 7deg, rgba(255,255,255,.9) 0deg 2.2deg, transparent 2.2deg 18deg)', WebkitMaskImage: RAY_MASK, maskImage: RAY_MASK, mixBlendMode: 'screen' }} />
+      {/* 중심 발광 */}
+      <div className="absolute jp-bloom rounded-full" style={{ ...center, width: `${58 * scale}%`, aspectRatio: '1', background: 'radial-gradient(circle, #fff 0%, #fffbe0 18%, rgba(255,226,140,.85) 34%, rgba(255,150,210,.35) 52%, transparent 70%)', mixBlendMode: 'screen' }} />
+      {/* 반짝이 */}
+      {[[14, 22, 0], [82, 18, .5], [8, 70, 1], [88, 64, .3], [30, 8, 1.3], [66, 88, .8], [50, 2, 1.6], [20, 92, .2]].map(([x, y, d], i) => (
+        <span key={i} className="absolute jp-twinkle text-white" style={{ left: `${x}%`, top: `${y}%`, fontSize: i % 2 ? 14 : 20, animationDelay: `${d}s`, textShadow: '0 0 8px #fff, 0 0 16px #ffd166' }}>✦</span>
+      ))}
+    </div>
+  )
+}
+
+/** 판도라 박스 — 화면에 들어오면 흔들리다 열리고 상품이 솟아오른다 */
+function PandoraReveal({ product, active }: { product: NonNullable<Jackpot['product']>; active: boolean }) {
+  const [phase, setPhase] = useState<'closed' | 'shake' | 'open'>('closed')
+  useEffect(() => {
+    if (!active) return
+    const a = setTimeout(() => setPhase((p) => (p === 'closed' ? 'shake' : p)), 250)
+    const b = setTimeout(() => setPhase('open'), 1150)
+    return () => { clearTimeout(a); clearTimeout(b) }
+  }, [active])
+  const open = phase === 'open'
+  return (
+    <div className="relative w-full h-full">
+      {open && <Radiance scale={1.1} />}
+      {open && <div className="absolute inset-0 jp-flash pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 55%, #fff 0%, rgba(255,255,255,.7) 30%, transparent 65%)' }} />}
+      {/* 상품 썸네일 — 박스에서 솟아오른다 */}
+      {open && (
+        <div className="absolute jp-rise z-[3]" style={{ left: '50%', top: '0%', height: '62%', maxWidth: '72%', aspectRatio: '1' }}>
+          <div className="jp-float w-full h-full flex items-center justify-center">
+            {product.image_url
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={product.image_url} alt={product.title} className="max-w-full max-h-full object-contain jp-glow-img" />
+              : <span className="text-[84px] jp-glow-img">🎁</span>}
+          </div>
+        </div>
+      )}
+      {open && Array.from({ length: 12 }, (_, i) => { const ang = (i / 12) * Math.PI * 2; return (
+        <span key={i} className="absolute jp-burst text-[#fff6c8] z-[4]" style={{ left: '50%', top: '62%', fontSize: 16 + (i % 3) * 6, ['--dx' as string]: `${Math.cos(ang) * 140}px`, ['--dy' as string]: `${Math.sin(ang) * 120 - 30}px`, textShadow: '0 0 10px #fff, 0 0 18px #ffb84d' } as React.CSSProperties}>✦</span>
+      ) })}
+      {/* 박스 */}
+      <div className="absolute inset-x-0 bottom-0 flex justify-center z-[2]" style={{ height: open ? '46%' : '72%', transition: 'height .4s ease' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img key={open ? 'o' : 'c'} src={open ? '/jackpot/box-open.webp' : '/jackpot/box-closed.webp'} alt="판도라 박스" className={`h-full object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,.5)] ${phase === 'shake' ? 'jp-shake' : open ? 'jp-box-open' : 'jp-wiggle'}`} />
+      </div>
+    </div>
+  )
+}
+
+export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Jackpot; mine?: number; layout: 'feed-mobile' | 'feed-desktop' | 'preview' }) {
   const router = useRouter()
   const isApp = useIsNativeApp()
   const { ms, text } = useCountdown(jackpot.ends_at)
@@ -29,10 +102,24 @@ export default function JackpotCard({ jackpot, products, mine = 0, layout }: { j
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const [confirm, setConfirm] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = rootRef.current; if (!el) return
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setInView(true) }, { threshold: 0.55 })
+    io.observe(el); return () => io.disconnect()
+  }, [])
+
+  const drawn = jackpot.status === 'drawn'
   const closed = ms <= 0 || jackpot.status !== 'open'
+  const winnerCount = Math.max(1, jackpot.winner_count ?? 1)
+  const threshold = jackpot.product_threshold ?? 0
+  const hasProduct = !!jackpot.has_product
+  const reveal = drawn && !!jackpot.product
+  const reached = pool > threshold
 
   const enter = async () => {
-    if (busy || closed) return
+    if (busy || closed || layout === 'preview') return
     const { data: { session } } = await createClient().auth.getSession()
     if (!session?.user) { router.push('/login?redirect=/games'); return }
     setBusy(true); setMsg(null)
@@ -46,54 +133,90 @@ export default function JackpotCard({ jackpot, products, mine = 0, layout }: { j
     } catch { setMsg('네트워크 오류') } finally { setBusy(false); setConfirm(false) }
   }
 
+  const statusBadge = drawn ? '🎉 당첨 발표' : closed ? '마감 · 추첨 대기' : `⏳ ${text} 남음`
+  const winners = jackpot.winners ?? []
+
   const inner = (
-    <div className="absolute inset-0 overflow-hidden" style={{ background: 'radial-gradient(120% 80% at 50% 0%, #3b1d7a 0%, #1a0f3f 45%, #0a0619 100%)' }}>
-      {/* 배경 이미지(상품/잭팟) 흐리게 */}
-      {jackpot.image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={jackpot.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(18px) saturate(1.2)', transform: 'scale(1.15)', opacity: 0.45 }} />
-      )}
-      <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.55) 1px, transparent 1.5px)', backgroundSize: '80px 80px', opacity: 0.5 }} />
+    <div ref={rootRef} className="absolute inset-0 overflow-hidden flex flex-col" style={{ background: 'radial-gradient(120% 80% at 50% 38%, #4a2394 0%, #1f1048 48%, #0a0619 100%)' }}>
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.55) 1px, transparent 1.5px)', backgroundSize: '80px 80px', opacity: 0.45 }} />
       {/* 상단 배지 */}
-      <div className="absolute top-4 left-4 right-16 z-10 flex items-center gap-2">
+      <div className="relative z-10 shrink-0 pt-4 pl-4 pr-16 flex items-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f59e0b] text-[#3a2500] font-pixel text-[10px] px-2.5 py-1 tracking-widest shadow">🎰 JACKPOT</span>
-        <span className="inline-flex items-center rounded-full bg-black/45 backdrop-blur px-2.5 py-1 text-white text-[11px] font-semibold">{closed ? '마감' : `⏳ ${text} 남음`}</span>
+        <span className="inline-flex items-center rounded-full bg-black/45 backdrop-blur px-2.5 py-1 text-white text-[11px] font-semibold">{statusBadge}</span>
       </div>
-      {/* 본문 */}
-      <div className="absolute inset-x-0 top-[13%] px-6 text-center z-[5]">
-        <h3 className={`${titleFont.className} text-[34px] leading-[1.2] text-white drop-shadow-[0_3px_8px_rgba(0,0,0,.6)]`} style={{ wordBreak: 'keep-all' }}>{jackpot.title}</h3>
-        {jackpot.description && <p className="mt-2 text-[13px] text-white/85 leading-snug line-clamp-2" style={{ wordBreak: 'keep-all' }}>{jackpot.description}</p>}
-      </div>
-      {/* 코인 풀 */}
-      <div className="absolute inset-x-0 top-[34%] flex flex-col items-center z-[5]">
-        {jackpot.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={jackpot.image_url} alt="" className="w-[42%] max-w-[180px] aspect-square object-cover rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,.5)] ring-2 ring-white/20 mb-3" />
-        ) : <span className="text-[72px] leading-none mb-2 text-[#ffd166] drop-shadow-[0_8px_20px_rgba(245,158,11,.55)]">✦</span>}
-        <p className="text-[11px] tracking-[0.3em] text-[#ffd166] font-bold">모인 크레딧</p>
-        <p className={`${titleFont.className} text-[46px] leading-none text-white mt-1 tabular-nums drop-shadow-[0_4px_12px_rgba(245,158,11,.5)]`}>{pool.toLocaleString()}</p>
-        <p className="mt-1.5 text-[12px] text-white/75">참여 {entries.toLocaleString()}명{myCount > 0 ? ` · 내 참여 ${myCount}장` : ''} · 당첨 1명이 전부 가져가요</p>
-      </div>
-      {/* 상품 */}
-      {products.length > 0 && (
-        <div className="absolute inset-x-0 bottom-[30%] px-5 z-[5]">
-          <p className="text-[10.5px] tracking-[0.2em] text-white/60 font-bold mb-1.5">크레딧으로 살 수 있는 상품</p>
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            {products.slice(0, 6).map((p) => (
-              <div key={p.id} className="shrink-0 w-[92px] rounded-xl bg-white/10 backdrop-blur border border-white/15 p-1.5">
-                {p.image_url ? (
+
+      <div className={`relative z-[5] flex-1 min-h-0 flex flex-col items-center px-5 ${layout === 'feed-mobile' ? 'pt-[9svh]' : 'pt-3'}`}>
+        {/* 제목 크게 */}
+        <h3 className={`${titleFont.className} shrink-0 text-center text-[clamp(34px,9.5vw,46px)] leading-[1.12] text-white`} style={{ wordBreak: 'keep-all', textShadow: '0 2px 0 #2a1160, 0 4px 14px rgba(0,0,0,.75), 0 0 22px rgba(255,209,102,.55)' }}>{jackpot.title}</h3>
+        {jackpot.description && <p className="shrink-0 mt-1.5 text-center text-[13.5px] text-white/90 leading-snug line-clamp-3" style={{ wordBreak: 'keep-all', textShadow: '0 1px 6px rgba(0,0,0,.8)' }}>{jackpot.description}</p>}
+
+        {/* 가운데 — 빛나는 대표 이미지 / 추첨 뒤 판도라 박스 공개 */}
+        <div className="relative flex-1 min-h-[120px] w-full my-1">
+          {reveal ? <PandoraReveal product={jackpot.product!} active={inView} /> : (
+            <>
+              <Radiance />
+              <div className="absolute inset-y-[14%] inset-x-[20%] flex items-center justify-center jp-float">
+                {jackpot.image_url
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.image_url} alt={p.title} className="w-full aspect-square object-cover rounded-lg" />
-                ) : <div className="w-full aspect-square rounded-lg bg-white/10 flex items-center justify-center text-xl">🎁</div>}
-                <p className="mt-1 text-[10.5px] text-white truncate">{p.title}</p>
-                <p className="text-[10px] text-[#ffd166] font-bold">✦ {p.coin_price.toLocaleString()}</p>
+                  ? <img src={jackpot.image_url} alt="" className="max-w-full max-h-full object-contain jp-glow-img" />
+                  : <span className="text-[96px] leading-none text-[#ffd166] jp-glow-img">✦</span>}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
-      )}
+
+        {/* 모인 크레딧 */}
+        <div className="relative z-[6] shrink-0 flex flex-col items-center" style={{ textShadow: '0 1px 6px rgba(0,0,0,.8)' }}>
+          <p className="text-[10.5px] tracking-[0.3em] text-[#ffd166] font-bold">모인 크레딧</p>
+          <p className={`${titleFont.className} text-[38px] leading-none text-white mt-0.5 tabular-nums`} style={{ textShadow: '0 0 16px rgba(245,158,11,.7)' }}>✦ {pool.toLocaleString()}</p>
+          <p className="mt-1 text-[12px] text-white/75">참여 {entries.toLocaleString()}명{myCount > 0 ? ` · 내 참여 ${myCount}장` : ''} · 당첨 {winnerCount}명</p>
+        </div>
+
+        {/* 상품 안내 */}
+        {hasProduct && (
+          <div className="shrink-0 mt-2 w-full max-w-[360px] rounded-2xl bg-white/10 backdrop-blur border border-white/20 px-3 py-2 flex items-center gap-2.5">
+            {!drawn && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src="/jackpot/box-closed.webp" alt="" className="w-11 h-11 object-contain jp-wiggle shrink-0" />
+            )}
+            {reveal && jackpot.product?.image_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={jackpot.product.image_url} alt="" className="w-11 h-11 object-contain shrink-0 jp-glow-img" />
+            )}
+            <div className="min-w-0 flex-1">
+              {reveal ? (
+                <>
+                  <p className={`${titleFont.className} text-[16px] leading-tight jp-rainbow-text truncate`}>이번 상품 : {jackpot.product!.title}</p>
+                  <p className="text-[11px] text-white/80 mt-0.5">{jackpot.product_won ? '🎉 조건 달성! 당첨자에게 상품이 나갑니다' : `조건(✦ ${threshold.toLocaleString()} 초과) 미달 — 크레딧으로 지급해요`}</p>
+                </>
+              ) : (
+                <>
+                  <p className={`${titleFont.className} text-[16px] leading-tight jp-rainbow-text`}>이번 상품 : 상품이 등록되었습니다!</p>
+                  {threshold > 0 ? (
+                    <>
+                      <p className="text-[11px] text-white/80 mt-0.5">잭팟 ✦ {threshold.toLocaleString()} 초과 시 당첨자에게 상품 지급 {reached && <b className="text-[#7dff8a]">· 달성!</b>}</p>
+                      <div className="mt-1 h-1.5 rounded-full bg-white/15 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-[#ffd166] via-[#ff7ad9] to-[#6bd6ff]" style={{ width: `${Math.min(100, (pool / Math.max(1, threshold)) * 100)}%` }} /></div>
+                    </>
+                  ) : <p className="text-[11px] text-white/80 mt-0.5">추첨 후 판도라 박스가 열리면 공개돼요</p>}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 당첨자 */}
+        {drawn && winners.length > 0 && (
+          <div className="shrink-0 mt-2 w-full max-w-[360px] flex flex-wrap justify-center gap-1.5">
+            {winners.slice(0, 6).map((w) => (
+              <span key={w.rank} className="inline-flex items-center gap-1 rounded-full bg-[#ffd166]/20 border border-[#ffd166]/50 text-[#ffe9a8] text-[11.5px] font-bold px-2.5 py-1">🏆 {w.name}</span>
+            ))}
+            {winners.length > 6 && <span className="text-[11.5px] text-white/70 self-center">외 {winners.length - 6}명</span>}
+          </div>
+        )}
+      </div>
+
       {/* 하단 — 참여 버튼 */}
-      <div className={`absolute inset-x-0 bottom-0 z-10 px-5 pt-14 bg-gradient-to-t from-black/80 via-black/40 to-transparent ${layout === 'feed-mobile' ? (isApp ? 'pb-28' : 'pb-24') : 'pb-6'}`}>
+      <div className={`relative z-10 shrink-0 px-5 pt-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent ${layout === 'feed-mobile' ? (isApp ? 'pb-28' : 'pb-24') : 'pb-6'}`}>
         {msg && <p className="mb-2 text-[12.5px] text-[#ffd166] font-semibold text-center">{msg}</p>}
         {confirm ? (
           <div className="flex items-center gap-2">
@@ -102,10 +225,10 @@ export default function JackpotCard({ jackpot, products, mine = 0, layout }: { j
           </div>
         ) : (
           <button onClick={() => (closed ? null : setConfirm(true))} disabled={closed} className={`w-full h-[52px] ${titleFont.className} text-[20px] rounded-full ${closed ? 'bg-white/15 text-white/60' : 'bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] shadow-[0_5px_0_#d18f00,0_9px_16px_rgba(0,0,0,0.35)]'}`}>
-            {closed ? '마감됐어요' : `🎰 ${jackpot.entry_cost} 크레딧으로 도전`}
+            {drawn ? '당첨 발표 완료' : closed ? '마감 — 곧 추첨해요' : `🎰 ${jackpot.entry_cost} 크레딧으로 도전`}
           </button>
         )}
-        <p className="mt-2 text-center text-[10.5px] text-white/55">참여 크레딧은 환불되지 않아요 · 마감 후 낸 크레딧만큼 확률로 추첨</p>
+        <p className="mt-2 text-center text-[10.5px] text-white/55">참여 크레딧은 환불되지 않아요 · 마감 후 낸 크레딧만큼 확률로 {winnerCount}명 추첨</p>
       </div>
     </div>
   )
@@ -121,5 +244,6 @@ export default function JackpotCard({ jackpot, products, mine = 0, layout }: { j
       </div>
     )
   }
+  if (layout === 'preview') return inner   // 관리자 미리보기 — 부모(relative, 9:15)가 크기를 잡는다
   return <div className="feed-snap relative h-[100svh] overflow-hidden bg-[#0a0619]">{inner}</div>
 }

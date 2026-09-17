@@ -1,9 +1,8 @@
-// 관리자 — 코인으로 살 수 있는 실제 상품(이미지·코인 가격) 등록/목록/삭제
+// 관리자 — 잭팟 상품(이미지·설명) 등록/목록/삭제. 초록 배경 이미지는 자동으로 투명 처리
 import { requireAdmin } from '@/lib/admin/guard'
-import { optimizeImage } from '@/lib/media/optimize'
+import { uploadPrizeImage } from '@/lib/media/jackpot-image'
 
 export const runtime = 'nodejs'
-const BUCKET = 'media'
 
 export async function GET() {
   const g = await requireAdmin(); if ('error' in g) return g.error
@@ -21,11 +20,9 @@ export async function POST(req: Request) {
   let image_url: string | null = null
   const file = fd.get('image')
   if (file instanceof File && file.size > 0) {
-    const opt = await optimizeImage(Buffer.from(await file.arrayBuffer()), file.type || 'image/png')
-    const path = `product/${crypto.randomUUID()}.${opt.converted ? 'webp' : (file.name.split('.').pop() || 'png')}`
-    const { error: upErr } = await g.admin.storage.from(BUCKET).upload(path, opt.buf, { contentType: opt.mime, upsert: false, cacheControl: '31536000' })
-    if (upErr) return Response.json({ error: '이미지 업로드 실패: ' + upErr.message }, { status: 500 })
-    image_url = g.admin.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
+    const up = await uploadPrizeImage(g.admin, file, 'product')
+    if ('error' in up) return Response.json({ error: up.error }, { status: 500 })
+    image_url = up.url
   }
   const { data, error } = await g.admin.from('products').insert([{ title, description, image_url, coin_price }] as never).select('*').single()
   if (error) return Response.json({ error: error.message }, { status: 500 })
