@@ -67,6 +67,8 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
     setTimeout(() => setCoinState('ready'), 900)
   }
 
+  // 코인을 넣는 순간 제목·캐릭터가 빠지고 썸네일이 드러난다 (썸네일 없는 게임은 그대로)
+  const revealed = coinState !== 'idle' && !!game.thumbnail_url
   const hue = useDominantHue(game.thumbnail_url) // 제목 색 = 썸네일 주요 색의 보색(배경과 대비되며 어울림)
   const startGame = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -77,7 +79,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
   const inner = (
     <>
       {/* 배경 — 게임 썸네일을 흐려 은은하게 */}
-      <ThumbBackdrop src={game.thumbnail_url} alt={game.title} />
+      <ThumbBackdrop src={game.thumbnail_url} alt={game.title} revealed={revealed} />
       {/* 싱글/멀티 라벨 — 상단 좌측 */}
       <div className="absolute top-4 left-4 right-16 z-10 flex items-center gap-2">
         <PlayModeBadge mode={game.play_mode} />
@@ -98,7 +100,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
         </span>
       )}
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
-      <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]" style={{ '--ttl-glow': `hsl(${golden ? 42 : (322 + ((hashOf(game.id) >> 3) % 36) - 18 + 360) % 360} 95% 62% / .6)` } as React.CSSProperties}>
+      <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]" style={{ ...{ opacity: revealed ? 0 : 1, transform: revealed ? 'translateY(-18px) scale(.9)' : 'none', transition: 'opacity .5s ease, transform .6s ease', pointerEvents: revealed ? 'none' : undefined }, '--ttl-glow': `hsl(${golden ? 42 : (322 + ((hashOf(game.id) >> 3) % 36) - 18 + 360) % 360} 95% 62% / .6)` } as React.CSSProperties}>
         <span className="relative inline-block feed-title-pop">
           <span className="relative inline-block feed-title-float" style={hue != null ? ({ '--th': Math.round((hue + 180) % 360) } as React.CSSProperties) : undefined}>
             <h3 className={`${galaxyFont.className} feed-title relative z-[1] text-[46px] leading-[1.2]`}>{teaser}</h3>
@@ -107,7 +109,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
         </span>
       </div>
       {/* 방 디오라마 — 캐릭터는 중앙 (앱에서는 정적 렌더로 부드럽게) */}
-      <div className="absolute inset-x-1 top-[30%] bottom-[20%] scale-[.84] origin-center">
+      <div className="absolute inset-x-1 top-[30%] bottom-[20%] scale-[.84] origin-center" style={{ opacity: revealed ? 0 : 1, transform: revealed ? 'translateY(28px)' : 'none', transition: 'opacity .45s ease, transform .6s ease', pointerEvents: revealed ? 'none' : undefined }}>
         <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />
       </div>
       {/* 우측 액션 레일 — 틱톡 스타일 */}

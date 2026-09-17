@@ -38,6 +38,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
   const avatarUrl = avatarPreviewUrl(game.profiles?.avatar_config)
   const avatarFramesV = avatarFrames(game.profiles?.avatar_config)
   const hue = useDominantHue(game.thumbnail_url)
+  const revealed = coinState !== 'idle' && !!game.thumbnail_url // 코인 넣으면 제목·캐릭터 빠지고 썸네일 공개
   const teaser = lang === 'en'
     ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
     : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
@@ -84,7 +85,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         className="grain relative h-[96%] aspect-[9/15] rounded-2xl overflow-hidden shadow-[0_18px_60px_rgba(36,31,23,0.22)]"
         style={auroraOf(game.id, rank === 1 && (game.view_count ?? 0) > 0)}
       >
-        <ThumbBackdrop src={game.thumbnail_url} alt={game.title} />
+        <ThumbBackdrop src={game.thumbnail_url} alt={game.title} revealed={revealed} />
         <div className="absolute top-4 left-4 right-16 z-10 flex items-center gap-2">
           <PlayModeBadge mode={game.play_mode} />
           <span className="flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur pl-1 pr-2.5 py-1 text-white text-[12px] font-semibold max-w-[70%]">
@@ -104,14 +105,14 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
           </span>
         )}
         {/* 상단 중앙 — Jua 포스터 타이틀 */}
-        <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]">
+        <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]" style={{ opacity: revealed ? 0 : 1, transform: revealed ? 'translateY(-18px) scale(.9)' : 'none', transition: 'opacity .5s ease, transform .6s ease', pointerEvents: revealed ? 'none' : undefined }}>
           <span className="relative inline-block feed-title-float" style={hue != null ? ({ '--th': Math.round((hue + 180) % 360) } as React.CSSProperties) : undefined}>
             <h3 className={`${galaxyFont.className} feed-title relative z-[1] text-[40px] leading-[1.2]`}>{teaser}</h3>
             <span aria-hidden className={`${galaxyFont.className} feed-title-chrome absolute inset-0 z-[2] text-[40px] leading-[1.2]`}>{teaser}</span>
           </span>
         </div>
         {/* 방 장면 — 캐릭터는 중앙 */}
-        <div className="absolute inset-x-1 top-[29%] bottom-[21%] scale-[.84] origin-center">
+        <div className="absolute inset-x-1 top-[29%] bottom-[21%] scale-[.84] origin-center" style={{ opacity: revealed ? 0 : 1, transform: revealed ? 'translateY(28px)' : 'none', transition: 'opacity .45s ease, transform .6s ease', pointerEvents: revealed ? 'none' : undefined }}>
           <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />
         </div>
         {/* 하단 — 아케이드 플로우 */}
