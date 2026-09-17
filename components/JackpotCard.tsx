@@ -149,7 +149,7 @@ export default function JackpotCard({ jackpot, mine = 0, layout }: { jackpot: Ja
   const inner = (
     <div ref={rootRef} className="absolute inset-0 overflow-hidden flex flex-col" style={{ background: 'radial-gradient(120% 80% at 50% 38%, #4a2394 0%, #1f1048 48%, #0a0619 100%)' }}>
       <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.55) 1px, transparent 1.5px)', backgroundSize: '80px 80px', opacity: 0.45 }} />
-      {layout !== 'preview' && <FeedSoundButton className={layout === 'feed-mobile' ? 'left-3 top-[calc(3.1rem+var(--st,0px))]' : 'left-3 top-12'} />}
+      {layout === 'feed-desktop' && <FeedSoundButton className="left-3 top-12" />}
       {/* 상단 배지 */}
       <div className="relative z-10 shrink-0 pt-4 pl-4 pr-16 flex items-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f59e0b] text-[#3a2500] font-pixel text-[10px] px-2.5 py-1 tracking-widest shadow">🎰 JACKPOT</span>

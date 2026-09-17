@@ -5,16 +5,18 @@
 //  · 피드를 떠나거나(언마운트) 탭이 숨겨지면 멈춘다
 import { useEffect, useSyncExternalStore, type RefObject } from 'react'
 import { FEED_BGM, type BgmTrack } from '@/lib/feedBgmConfig'
+import { getSoundPref, setSoundPref, subscribeSoundPref } from '@/lib/live/soundPref'
 
-const MUTE_KEY = 'feed_bgm_muted'
 let urls: Record<string, string> | null = null
 let urlsLoading: Promise<void> | null = null
 let audio: HTMLAudioElement | null = null
 let wanted: BgmTrack | null = null
 let unlocked = false
 let active = 0            // 마운트된 피드 수
-let muted = (() => { try { return localStorage.getItem(MUTE_KEY) === '1' } catch { return false } })()
+// 음소거 여부는 공용 스피커 설정(soundPref)을 따른다 — 영상 쇼츠에서 켠 소리가 게임 쇼츠 배경음에도 그대로
+const isMuted = () => !getSoundPref().on
 const subs = new Set<() => void>()
+if (typeof window !== 'undefined') subscribeSoundPref(() => { apply(); subs.forEach((f) => f()) })
 
 function loadUrls() {
   if (urls || urlsLoading) return urlsLoading
@@ -25,7 +27,7 @@ function loadUrls() {
 // 동기 — 사용자 입력 핸들러 안에서도 await 없이 play() 가 호출되게
 function apply() {
   if (typeof window === 'undefined') return
-  const shouldPlay = !!wanted && !muted && active > 0 && !document.hidden
+  const shouldPlay = !!wanted && !isMuted() && active > 0 && !document.hidden
   if (!shouldPlay) { audio?.pause(); return }
   const url = urls?.[wanted!.name]
   if (!url) { audio?.pause(); if (!urls) loadUrls(); return }
@@ -46,9 +48,7 @@ export function setFeedTrack(key: string | null) {
 }
 
 export function setFeedBgmMuted(m: boolean) {
-  muted = m
-  try { localStorage.setItem(MUTE_KEY, m ? '1' : '0') } catch {}
-  apply(); subs.forEach((f) => f())
+  setSoundPref({ on: !m })   // 구독으로 apply·알림
 }
 
 /** 피드 컨테이너에서 한 번 — 입력 잠금 해제·탭 전환 처리, 떠나면 정지 */
@@ -84,5 +84,5 @@ export function useFeedTrack(ref: RefObject<HTMLElement | null>, key: string | n
 }
 
 export function useFeedBgmMuted() {
-  return useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f) } }, () => muted, () => false)
+  return useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f) } }, isMuted, () => false)
 }

@@ -84,7 +84,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
             </div>
           </div>
         ) : near ? (
-          <LiveView live={live} cover badge={false} controls compact controlsClass={layout === 'feed-mobile' ? 'left-3 top-[calc(3.1rem+var(--st,0px))]' : 'left-3 top-12'} />
+          <LiveView live={live} cover badge={false} controls={layout !== 'feed-mobile'} compact controlsClass="left-3 top-12" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-white/40 font-pixel text-[10px] tracking-widest">{isVideo ? 'VIDEO' : 'LIVE'}</div>
         )}

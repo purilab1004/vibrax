@@ -1,7 +1,7 @@
 'use client'
 // 게임 내 BJ 박스 — 제작자의 폰 카메라 방송(WebRTC) 수신
 import { useEffect, useRef, useState } from 'react'
-import { getSoundPref, setSoundPref } from '@/lib/live/soundPref'
+import { getSoundPref, setSoundPref, subscribeSoundPref } from '@/lib/live/soundPref'
 import { SoundIconButton } from '@/components/FeedSoundButton'
 import { setFeedBgmMuted } from '@/lib/feedBgm'
 import { createClient } from '@/lib/supabase/client'
@@ -43,8 +43,8 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
   const iframeRef = useRef<HTMLIFrameElement>(null)
   // 시작 상태는 공용 스피커 설정을 따른다 — 한 번 켜면 다른 영상도 켜진 채로 나온다
   const isYT = /youtube\.com\/embed/.test(src)
-  // 소리 이어받기(자동으로 소리 켠 재생)는 앱과 데스크톱 브라우저만 — 모바일 브라우저는 제스처 없는 소리 재생을 막아 플레이어가 로딩에서 멈추므로 카드마다 탭해서 켠다
-  const carry = typeof window !== 'undefined' && (/VibrexcupApp/.test(navigator.userAgent) || !window.matchMedia('(pointer: coarse)').matches)
+  // 소리 이어받기 — 한 번 켜면 모든 카드가 켜진 채로 시작(모바일 포함). 브라우저가 막으면 tryUnmutedPlay 가 음소거로 폴백한다
+  const carry = typeof window !== 'undefined'
   const [muted, setMuted] = useState(() => !(isYT && carry && getSoundPref().on))
   const [volume, setVolume] = useState(() => getSoundPref().volume)
   const [srcState, setSrcState] = useState({ base: src, live: src })
@@ -99,7 +99,14 @@ export function LinkLiveView({ src, aspect = 16 / 9, cover = false, badge = true
       }
     }, { threshold: [0, 0.5, 1] })
     io.observe(el)
-    return () => { io.disconnect(); if (unmuteTimer.current) clearTimeout(unmuteTimer.current) }
+    // 상단 공용 스피커로 설정이 바뀌면 지금 보이는 카드에 바로 반영
+    const unsub = subscribeSoundPref((p) => {
+      const r = el.getBoundingClientRect(); const vis = r.bottom > window.innerHeight * 0.5 && r.top < window.innerHeight * 0.5
+      if (!vis) return
+      if (isYT) { if (p.on) { setMuted(false); tryUnmutedPlay() } else { if (unmuteTimer.current) clearTimeout(unmuteTimer.current); yt('mute'); setMuted(true) } }
+      else { setMuted(!p.on); setLiveSrc(p.on ? unmutedSrc(src) : src) }
+    })
+    return () => { io.disconnect(); unsub(); if (unmuteTimer.current) clearTimeout(unmuteTimer.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isYT])
   // cover: 영상 비율(aspect)로 iframe 을 컨테이너보다 크게 잡아 여백 없이 꽉 채운다 (넘치는 부분은 잘림)
