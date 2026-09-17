@@ -64,12 +64,21 @@ export default function LiveCard({ live, game: given, layout }: Props) {
               <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#0f172a]" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
-            {/* 가운데 — 프로필(아바타·이름) 크게 + 그 아래 큰 '생방송 중' 라벨 (썸네일이 복잡해도 읽히게 가운데를 어둡게) */}
+            {/* 가운데 — LIVE 배지 + 프로필(아바타·이름) 크게 (썸네일이 복잡해도 읽히게 가운데를 어둡게) */}
             <div aria-hidden className="absolute inset-0" style={{ background: 'radial-gradient(60% 38% at 50% 50%, rgba(0,0,0,.55), transparent 100%)' }} />
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center text-white px-6">
+              {/* LIVE 배지 — 주황→핑크→보라 그라데이션 + 방송 아이콘 ((•)) */}
+              <span className="live-badge mb-3 inline-flex items-center gap-2 rounded-[14px] px-4 py-1.5 text-white font-black text-[26px] leading-none tracking-wide bg-[linear-gradient(100deg,#ff6a1a_0%,#ff2d55_45%,#7b2ff7_100%)] shadow-[0_10px_28px_-8px_rgba(255,45,85,.7)]">
+                <svg viewBox="0 0 32 24" className="w-8 h-6" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden>
+                  <circle cx="16" cy="12" r="3.2" fill="currentColor" stroke="none" />
+                  <path className="live-wave" d="M10.5 6.5a8 8 0 0 0 0 11M21.5 6.5a8 8 0 0 1 0 11" />
+                  <path className="live-wave live-wave-2" d="M6 3a13 13 0 0 0 0 18M26 3a13 13 0 0 1 0 18" />
+                </svg>
+                LIVE
+              </span>
               <span className="relative">
                 <span aria-hidden className="absolute -inset-2 rounded-full live-halo" />
-                <span className="relative block w-[92px] h-[92px] rounded-full p-[4px] bg-[conic-gradient(from_0deg,#ff2d55,#ff9500,#ff2d55,#bf5af2,#ff2d55)] live-ring">
+                <span className="relative block w-[92px] h-[92px] rounded-full p-[4px] bg-[conic-gradient(from_0deg,#ff6a1a,#ff2d55,#7b2ff7,#ff2d55,#ff6a1a)] live-ring">
                   <span className="block w-full h-full rounded-full overflow-hidden bg-[#1f1b2e] ring-2 ring-black/40">
                     {live.hostAvatarUrl
                       // eslint-disable-next-line @next/next/no-img-element
@@ -79,10 +88,6 @@ export default function LiveCard({ live, game: given, layout }: Props) {
                 </span>
               </span>
               <p className={`${titleFont.className} mt-3 text-[36px] leading-[1.1] text-center max-w-full truncate`} style={{ textShadow: '0 3px 14px rgba(0,0,0,.65)' }}>{live.hostName}</p>
-              <span className="mt-3 inline-flex items-center gap-2.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 pl-3.5 pr-5 py-2 text-[18px] font-bold text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,.6)]">
-                <span className="relative flex w-3 h-3"><span className="absolute inset-0 rounded-full bg-[#ff2d55] animate-ping opacity-80" /><span className="relative w-3 h-3 rounded-full bg-[#ff2d55] shadow-[0_0_10px_#ff2d55]" /></span>
-                생방송 중
-              </span>
             </div>
           </div>
         ) : near ? (

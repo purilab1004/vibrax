@@ -1006,3 +1006,8 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 .live-pill { animation: liveBeat 1.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .live-ring, .live-ring > span, .live-halo, .live-big, .live-pill { animation: none } }
 @media (hover: none), (pointer: coarse) { .live-big { filter: none } }
+.live-wave { animation: liveWave 1.6s ease-in-out infinite; }
+.live-wave-2 { animation-delay: .25s; }
+@keyframes liveWave { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+.live-badge { animation: liveBeat 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .live-wave, .live-badge { animation: none } }
