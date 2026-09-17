@@ -146,7 +146,7 @@ export default function BroadcastPage() {
       if (avatarFace && config?.previewUrl) {
         setPreparing(true)
         try {
-          const af = await createAvatarFaceStream(stream, { previewUrl: config.previewUrl, blinkUrl: config.blinkUrl, talkUrl: config.talkUrl })
+          const af = await createAvatarFaceStream(stream, { previewUrl: config.previewUrl, blinkUrl: config.blinkUrl, talkUrl: config.talkUrl, dataUrl: config.dataUrl })
           outStream = af.stream; onStop = af.stop
         } catch (e) {
           console.warn('[avatar face]', e)
