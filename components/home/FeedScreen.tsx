@@ -84,11 +84,9 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       )}
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
       <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]" style={{ '--ttl-glow': `hsl(${golden ? 42 : (322 + ((hashOf(game.id) >> 3) % 36) - 18 + 360) % 360} 95% 62% / .6)` } as React.CSSProperties}>
-        <span className="relative inline-block">
-          <span className="feed-spark text-[22px]" style={{ left: -18, top: -14, animationDelay: '0s' }} aria-hidden>✦</span>
-          <span className="feed-spark text-[14px]" style={{ right: -14, top: 8, animationDelay: '.7s' }} aria-hidden>✦</span>
-          <span className="feed-spark text-[18px]" style={{ right: 10, bottom: -18, animationDelay: '1.4s' }} aria-hidden>✦</span>
-          <h3 className={`${titleFont.className} feed-title feed-title-pop text-[48px] leading-[1.25] text-white`}>{teaser}</h3>
+        <span className="relative inline-block feed-title-pop">
+          <h3 className={`${titleFont.className} feed-title text-[48px] leading-[1.25] text-white`}>{teaser}</h3>
+          <span aria-hidden className={`${titleFont.className} feed-shine absolute inset-0 text-[48px] leading-[1.25]`}>{teaser}</span>
         </span>
       </div>
       {/* 방 디오라마 — 캐릭터는 중앙 (앱에서는 정적 렌더로 부드럽게) */}
