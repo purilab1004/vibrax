@@ -47,21 +47,21 @@ export default function ProfileSideCard() {
   const p = useMyProfileLite()
   const c = p?.country ? COUNTRIES.find((x) => x.code === p.country) : null
   return (
-    <div className="mx-3 my-2 rounded-2xl overflow-hidden bg-[#171b26] text-white relative shadow-[0_12px_28px_-18px_rgba(23,27,38,0.7)]">
-      <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-10 -left-8 w-32 h-32 rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.55),transparent)] blur-xl" /><div className="absolute -bottom-12 -right-6 w-32 h-32 rounded-full bg-[radial-gradient(closest-side,rgba(245,158,11,0.35),transparent)] blur-xl" /></div>
+    <div className="mx-3 my-2 rounded-3xl overflow-hidden bg-white/90 border border-[#efe8f7] relative shadow-[0_18px_36px_-26px_rgba(91,33,182,0.45)]">
+      <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-10 -left-8 w-32 h-32 rounded-full bg-[radial-gradient(closest-side,rgba(255,45,111,0.2),transparent)] blur-xl" /><div className="absolute -bottom-12 -right-6 w-32 h-32 rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.2),transparent)] blur-xl" /></div>
       <div className="relative p-3.5">
         <div className="flex items-center gap-3">
-          <ProfileAvatar p={p} size={48} />
+          <span className="shrink-0 rounded-full p-[2.5px] bg-gradient-to-br from-[#ff2d6f] to-[#8b3dff]"><span className="block rounded-full ring-2 ring-white overflow-hidden"><ProfileAvatar p={p} size={44} /></span></span>
           <div className="min-w-0">
-            <p className="font-pixel text-[8.5px] tracking-[0.25em] text-[#60a5fa]">MY PAGE</p>
-            <p className="text-[15px] font-extrabold leading-tight truncate">{p?.name ?? '…'}</p>
-            {p?.username && <p className="text-[11px] text-white/55 truncate">@{p.username}</p>}
+            <p className="text-[9px] font-extrabold tracking-[0.25em] bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] bg-clip-text text-transparent">MY PAGE</p>
+            <p className="text-[15px] font-extrabold leading-tight truncate text-[#1d1530]">{p?.name ?? '…'}</p>
+            {p?.username && <p className="text-[11px] text-[#8a8198] truncate">@{p.username}</p>}
           </div>
         </div>
-        {(p?.email || c) && <p className="mt-2 text-[10.5px] text-white/50 truncate">{p?.email}{c ? ` · ${c.flag} ${c.name}` : ''}</p>}
+        {(p?.email || c) && <p className="mt-2 text-[10.5px] text-[#a79fb5] truncate">{p?.email}{c ? ` · ${c.flag} ${c.name}` : ''}</p>}
         <div className="mt-2.5 flex items-center gap-1.5">
           <Link href="/credits" className="hover:opacity-85 transition-opacity"><PromptCreditBadge amount={p?.credits} size="sm" label={false} /></Link>
-          <Link href="/studio" className="flex-1 inline-flex items-center justify-center h-7 rounded-full bg-white text-[#171b26] text-[11.5px] font-bold hover:bg-[#e8f1ff] transition-colors">게임 만들기</Link>
+          <Link href="/studio" className="flex-1 inline-flex items-center justify-center h-7 rounded-full bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white text-[11.5px] font-bold">게임 만들기</Link>
         </div>
       </div>
     </div>

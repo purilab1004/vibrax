@@ -245,222 +245,206 @@ export default function TournamentPage() {
     }
   }
 
-  const inputClass =
-    'w-full bg-[#111] border border-gray-700 focus:border-[#00ff41] px-4 py-3 text-sm outline-none transition-colors text-white placeholder-gray-600 rounded-lg'
-  const labelClass = 'block font-pixel text-[11px] mb-2 text-gray-400 tracking-widest'
-
+  const inputClass = 'w-full h-12 rounded-xl bg-white/[0.07] border border-white/10 focus:border-[#ff4d7d]/70 focus:bg-white/[0.1] px-3.5 text-[14px] text-white outline-none placeholder:text-white/35 transition-colors'
+  const labelClass = 'block text-[12px] font-bold text-white/55 mb-1.5'
+  const card = 'rounded-3xl bg-white/[0.05] border border-white/10 backdrop-blur-xl'
   const divisions: Division[] = ['individual', 'school', 'world', 'company']
+  const DIV_ICON: Record<Division, string> = { individual: '🎮', school: '🎓', world: '🌏', company: '🏢' }
+  const medals = ['🥇', '🥈', '🥉']
 
   const applyCard = (
-        <div className="border border-gray-800 bg-[#111] rounded-2xl p-8">
-          <h2 className="font-pixel text-sm text-[#00ff41] tracking-widest mb-2">{c.applyHeading}</h2>
-          <p className="text-gray-400 text-sm mb-8">{c.applyDesc}</p>
+    <div id="apply" className={`${card} p-5 md:p-6`}>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-[20px] font-extrabold">{c.applyHeading}</h2>
+        <span className="text-[11px] font-bold text-[#ff8aa6] bg-[#ff2d55]/15 border border-[#ff2d55]/30 rounded-full px-2.5 py-1">FREE</span>
+      </div>
+      <p className="text-[13px] text-white/55 mb-5">{c.applyDesc}</p>
 
-          {status === 'done' ? (
-            <p className="text-[#00ff41] text-base">{c.doneMsg}</p>
-          ) : user === undefined ? null : user === null ? (
-            <div className="text-center py-4">
-              <p className="text-gray-300 text-sm mb-6">{c.needAccount}</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/signup?redirect=/tournament" className="bg-[#00ff41] text-black font-pixel text-[12px] px-8 py-4 rounded-lg hover:bg-[#00cc33] transition-colors tracking-widest">
-                  {c.signupCta}
-                </Link>
-                <Link href="/login?redirect=/tournament" className="border border-gray-700 text-gray-300 text-[13px] px-8 py-4 rounded-lg hover:border-[#00ff41] hover:text-[#00ff41] transition-colors">
-                  {c.loginCta}
-                </Link>
-              </div>
+      {status === 'done' ? (
+        <div className="rounded-2xl bg-gradient-to-br from-[#22c55e]/20 to-[#06b6d4]/10 border border-[#22c55e]/30 p-5 text-center">
+          <p className="text-[36px]">🏆</p>
+          <p className="mt-1 text-[15px] font-bold text-white">{c.doneMsg}</p>
+        </div>
+      ) : user === undefined ? null : user === null ? (
+        <div className="space-y-2.5">
+          <p className="text-[13px] text-white/70 leading-relaxed mb-3">{c.needAccount}</p>
+          <Link href="/signup?redirect=/tournament" className="flex items-center justify-center w-full h-14 rounded-2xl bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-[16px] font-extrabold shadow-[0_10px_28px_-10px_rgba(255,45,111,0.8)]">{c.signupCta}</Link>
+          <Link href="/login?redirect=/tournament" className="flex items-center justify-center w-full h-12 rounded-2xl bg-white/[0.07] border border-white/10 text-[14px] font-bold text-white/80">{c.loginCta}</Link>
+        </div>
+      ) : (
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className={labelClass}>{c.division}</label>
+            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-white/[0.06] border border-white/10">
+              {divisions.map(d => (
+                <button key={d} type="button" onClick={() => setDivision(d)} className={`h-11 rounded-xl text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all ${division === d ? 'bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white shadow-[0_6px_18px_-6px_rgba(255,45,111,0.7)]' : 'text-white/55'}`}>
+                  <span aria-hidden>{DIV_ICON[d]}</span>{c.divisions[d].name}
+                </button>
+              ))}
             </div>
-          ) : (
-            <form onSubmit={submit} className="space-y-5">
+          </div>
+          <div>
+            <label className={labelClass}>{c.name}</label>
+            <input value={name} onChange={e => setName(e.target.value)} required className={inputClass} />
+          </div>
+          <p className="flex items-center gap-2 text-[12.5px] text-[#7dffb0] bg-[#22c55e]/10 border border-[#22c55e]/25 rounded-xl px-3.5 py-2.5">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5 9-10" /></svg>
+            <span className="truncate">{c.applyAs(user.email ?? '')}</span>
+          </p>
+          <div>
+            <label className={labelClass}>{c.country}</label>
+            <input value={country} onChange={e => setCountry(e.target.value)} placeholder={c.countryPh} required={division === 'world'} className={inputClass} />
+          </div>
+          {division === 'school' && (
+            <>
               <div>
-                <label className={labelClass}>{c.division}</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {divisions.map(d => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDivision(d)}
-                      className="py-2.5 text-[13px] font-medium rounded-lg border transition-colors"
-                      style={division === d
-                        ? { color: '#000', background: DIVISION_COLOR[d], borderColor: DIVISION_COLOR[d] }
-                        : { color: '#9ca3af', borderColor: '#1f2937' }}
-                    >
-                      {c.divisions[d].name}
-                    </button>
+                <label className={labelClass}>{c.schoolLevel}</label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {(Object.keys(c.schoolLevels) as SchoolLevel[]).map(l => (
+                    <button key={l} type="button" onClick={() => setSchoolLevel(l)} className={`h-10 rounded-xl text-[12px] font-bold border transition-colors ${schoolLevel === l ? 'bg-white text-[#07060b] border-white' : 'bg-white/[0.05] border-white/10 text-white/60'}`}>{c.schoolLevels[l]}</button>
                   ))}
                 </div>
               </div>
-
               <div>
-                <label className={labelClass}>{c.name}</label>
-                <input value={name} onChange={e => setName(e.target.value)} required className={inputClass} />
+                <label className={labelClass}>{c.schoolName}</label>
+                <input value={schoolName} onChange={e => setSchoolName(e.target.value)} placeholder={c.schoolNamePh} required className={inputClass} />
               </div>
-              <p className="text-[13px] text-[#00ff41] border border-[#00ff41]/30 bg-[#00ff41]/5 px-4 py-3 rounded-lg">
-                ✓ {c.applyAs(user.email ?? '')}
-              </p>
-              <div>
-                <label className={labelClass}>{c.country}</label>
-                <input value={country} onChange={e => setCountry(e.target.value)} placeholder={c.countryPh} required={division === 'world'} className={inputClass} />
-              </div>
-
-              {division === 'school' && (
-                <>
-                  <div>
-                    <label className={labelClass}>{c.schoolLevel}</label>
-                    <select value={schoolLevel} onChange={e => setSchoolLevel(e.target.value as SchoolLevel)} className={inputClass}>
-                      {(Object.keys(c.schoolLevels) as SchoolLevel[]).map(l => (
-                        <option key={l} value={l}>{c.schoolLevels[l]}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelClass}>{c.schoolName}</label>
-                    <input value={schoolName} onChange={e => setSchoolName(e.target.value)} placeholder={c.schoolNamePh} required className={inputClass} />
-                  </div>
-                </>
-              )}
-
-              {division === 'company' && (
-                <div>
-                  <label className={labelClass}>{c.companyName}</label>
-                  <input value={companyName} onChange={e => setCompanyName(e.target.value)} required className={inputClass} />
-                </div>
-              )}
-
-              <div>
-                <label className={labelClass}>{c.note}</label>
-                <textarea value={note} onChange={e => setNote(e.target.value)} rows={3} className={`${inputClass} resize-none`} />
-              </div>
-
-              {status === 'fail' && (
-                <p className="text-red-400 text-sm border border-red-900 bg-red-900/20 px-3 py-2 rounded-lg">{c.failMsg}</p>
-              )}
-              {status === 'dup' && (
-                <p className="text-yellow-400 text-sm border border-yellow-900 bg-yellow-900/20 px-3 py-2 rounded-lg">{c.alreadyApplied}</p>
-              )}
-
-              <button
-                type="submit"
-                disabled={status === 'busy'}
-                className="w-full bg-[#00ff41] text-black font-pixel text-[12px] py-4 rounded-lg hover:bg-[#00cc33] transition-colors disabled:opacity-50 tracking-widest"
-              >
-                {status === 'busy' ? c.submitting : c.submit}
-              </button>
-            </form>
+            </>
           )}
-        </div>
+          {division === 'company' && (
+            <div>
+              <label className={labelClass}>{c.companyName}</label>
+              <input value={companyName} onChange={e => setCompanyName(e.target.value)} required className={inputClass} />
+            </div>
+          )}
+          <div>
+            <label className={labelClass}>{c.note}</label>
+            <textarea value={note} onChange={e => setNote(e.target.value)} rows={3} className={`${inputClass} h-auto py-3 resize-none`} />
+          </div>
+          {status === 'fail' && <p className="text-[13px] text-[#ff8aa6] bg-[#ff2d55]/10 border border-[#ff2d55]/30 rounded-xl px-3.5 py-2.5">{c.failMsg}</p>}
+          {status === 'dup' && <p className="text-[13px] text-[#ffd24d] bg-[#ffd24d]/10 border border-[#ffd24d]/30 rounded-xl px-3.5 py-2.5">{c.alreadyApplied}</p>}
+          <button type="submit" disabled={status === 'busy'} className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-[16px] font-extrabold disabled:opacity-40 shadow-[0_10px_28px_-10px_rgba(255,45,111,0.8)]">
+            {status === 'busy' ? c.submitting : c.submit}
+          </button>
+        </form>
+      )}
+    </div>
   )
 
   return (
-    <div className="bg-[#0a0a0a] min-h-screen">
-      {/* ── 히어로 ── */}
-      <section className="relative overflow-hidden border-b border-gray-800">
-        <div
-          className="absolute inset-0 opacity-[0.04] pointer-events-none"
-          style={{
-            backgroundImage: 'linear-gradient(#00ff41 1px, transparent 1px), linear-gradient(90deg, #00ff41 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-          }}
-        />
-        <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-14 grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-          {/* 우측(모바일 상단): 대회 정보 */}
-          <div className="text-center order-1 lg:order-2 lg:sticky lg:top-24">
-            <span className="inline-flex items-center gap-2 font-pixel text-[11px] text-red-400 border border-red-500/50 rounded-full px-4 py-2 tracking-[0.25em] mb-8 animate-pulse">
-              <span className="w-2 h-2 rounded-full bg-red-500" />
-              {c.openingSoon}
+    <div className="relative min-h-screen bg-[#07060b] text-white overflow-hidden">
+      {/* 배경 오라 */}
+      <div aria-hidden className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-40 -left-32 w-[28rem] h-[28rem] rounded-full bg-[radial-gradient(closest-side,rgba(255,45,110,0.30),transparent)] blur-2xl" />
+        <div className="absolute top-40 -right-40 w-[30rem] h-[30rem] rounded-full bg-[radial-gradient(closest-side,rgba(124,58,237,0.30),transparent)] blur-2xl" />
+        <div className="absolute bottom-0 left-1/3 w-[26rem] h-[26rem] rounded-full bg-[radial-gradient(closest-side,rgba(255,210,77,0.14),transparent)] blur-2xl" />
+      </div>
+
+      <div className="relative max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 space-y-5 md:space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-5 md:gap-6 items-start">
+          {/* ── 히어로 ── */}
+          <section className={`${card} relative overflow-hidden p-6 md:p-10 text-center`}>
+            <div aria-hidden className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-[radial-gradient(closest-side,rgba(255,210,77,0.25),transparent)]" />
+            <span className="relative inline-flex items-center gap-2 rounded-full bg-[#ff2d55]/15 border border-[#ff2d55]/40 px-3.5 py-1.5 text-[11px] font-extrabold tracking-[0.2em] text-[#ff8aa6]">
+              <span className="w-2 h-2 rounded-full bg-[#ff2d55] animate-pulse shadow-[0_0_10px_#ff2d55]" />{c.openingSoon}
             </span>
-            <h1 className="font-pixel text-2xl md:text-4xl text-white tracking-widest leading-relaxed mb-4">
-              🏆 <span className="text-[#00ff41]">VIBREX</span><span className="text-[#ffd24d]">CUP</span>
-              <br />TOURNAMENT
+            <p className="relative mt-5 text-[11px] font-bold tracking-[0.35em] text-white/45">VIBREXCUP</p>
+            <h1 className="relative mt-1 text-[34px] md:text-[52px] font-black leading-[1.05] tracking-tight">
+              <span className="bg-gradient-to-r from-[#ffd24d] via-[#ff8a5c] to-[#ff2d6f] bg-clip-text text-transparent">TOURNAMENT</span> 🏆
             </h1>
-            <p className="text-gray-300 text-base md:text-lg mb-10">{c.tagline}</p>
-            <div className="inline-block border border-[#ffd24d]/40 bg-[#ffd24d]/5 rounded-2xl px-10 py-6">
-              <p className="font-pixel text-[11px] text-gray-400 tracking-widest mb-2">{c.totalPrize}</p>
-              <p className="font-pixel text-2xl md:text-3xl text-[#ffd24d] tabular-nums">₩{prizeCount.toLocaleString()}+</p>
-            </div>
-            <p className="text-[#ffd24d] mt-7 text-lg md:text-2xl font-extrabold leading-snug">
-              💰 {c.sponsorNote}
-            </p>
-            <p className="mt-3 text-base md:text-xl font-extrabold text-white">
-              {c.sponsorPledge}
-            </p>
-            <button
-              onClick={() => setSponsorOpen(true)}
-              className="inline-block mt-5 bg-[#ffd24d] text-white font-pixel text-[12px] px-10 py-4 rounded-lg hover:bg-[#ffe9a8] transition-colors tracking-widest"
-            >
-              {c.sponsorCta}
-            </button>
-            {/* 후원 안내 — 계좌 입금 */}
-            {sponsorOpen && (
-              <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-[2px] flex items-center justify-center p-4" onClick={() => setSponsorOpen(false)}>
-                <div className="w-full max-w-md rounded-2xl bg-white text-[#241f17] p-7 text-left shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                  <p className="font-pixel text-[11px] tracking-[0.3em] text-[#c9940c]">SPONSOR</p>
-                  <h3 className="mt-1 text-[22px] font-extrabold">{lang === 'en' ? 'Sponsor the prize pool' : '상금 후원하기'}</h3>
-                  <p className="mt-2 text-[13px] text-[#6b6152]">{lang === 'en' ? 'Sponsorships are accepted by bank transfer. 70% of every sponsorship goes straight into the prize pool.' : '후원금은 계좌 입금으로 받습니다. 후원금의 70%는 그대로 상금이 됩니다.'}</p>
-                  <div className="mt-5 rounded-xl border border-[#ebe4d6] bg-[#faf8f3] p-4">
-                    <p className="text-[11px] font-semibold text-[#9d9280]">{lang === 'en' ? 'Bank' : '은행'}</p>
-                    <p className="text-[15px] font-bold">{lang === 'en' ? 'Woori Bank' : '우리은행'}</p>
-                    <p className="mt-2 text-[11px] font-semibold text-[#9d9280]">{lang === 'en' ? 'Account number' : '계좌번호'}</p>
-                    <div className="flex items-center gap-2"><p className="text-[22px] font-extrabold tracking-wide tabular-nums">1005-004-678381</p><button onClick={() => { navigator.clipboard?.writeText('1005004678381'); setCopied(true); setTimeout(() => setCopied(false), 1500) }} className="h-7 px-2.5 rounded-md border border-[#ddd3bf] text-[11.5px] font-semibold hover:border-[#c9940c]">{copied ? (lang === 'en' ? 'Copied' : '복사됨') : (lang === 'en' ? 'Copy' : '복사')}</button></div>
-                    <p className="mt-2 text-[11px] font-semibold text-[#9d9280]">{lang === 'en' ? 'Account holder' : '예금주'}</p>
-                    <p className="text-[15px] font-bold">퓨리테크{lang === 'en' ? ' (PuriTech)' : ''}</p>
-                  </div>
-                  <p className="mt-4 text-[12px] text-[#857a68]">{lang === 'en' ? 'After transferring, email us your name/organization and amount so we can add you to the sponsor list and update the prize pool.' : '입금 후 이름/단체명과 금액을 메일로 알려주시면 후원사 명단과 상금에 반영해 드려요.'} <a href={`mailto:dev@puritechlab.com?subject=${encodeURIComponent(c.sponsorMailSubject)}`} className="text-[#2563eb] underline">dev@puritechlab.com</a></p>
-                  <button onClick={() => setSponsorOpen(false)} className="mt-5 w-full h-11 rounded-xl bg-[#241f17] text-white text-[14px] font-bold">{lang === 'en' ? 'Close' : '닫기'}</button>
-                </div>
-              </div>
-            )}
-            <p className="text-[13px] text-gray-500 mt-7">{c.schedule}</p>
-          </div>
-          {/* 좌측: 참가 신청 폼 */}
-          <div className="order-2 lg:order-1">
-            {applyCard}
-          </div>
-        </div>
-      </section>
+            <p className="relative mt-3 text-[15px] md:text-[17px] text-white/70">{c.tagline}</p>
 
-      {/* ── 부문 카드 ── */}
-      <section className="max-w-6xl mx-auto px-6 py-14">
-        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.divisionsHeading}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-          {divisions.map(d => {
-            const info = c.divisions[d]
-            const color = DIVISION_COLOR[d]
-            return (
-              <div key={d} className="border border-gray-800 bg-[#111] rounded-2xl p-6 flex flex-col hover:border-gray-600 transition-colors">
-                <span className="font-pixel text-[10px] tracking-widest px-2 py-1 rounded self-start mb-4" style={{ color, border: `1px solid ${color}55`, background: `${color}11` }}>
-                  {info.sub}
-                </span>
-                <h3 className="text-white text-xl font-bold mb-2">{info.name}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed mb-5 flex-1">{info.desc}</p>
-                <div className="border-t border-gray-800 pt-4 space-y-1.5">
-                  {[c.winner, c.second, c.third].map((rank, i) => (
-                    <div key={rank} className="flex justify-between text-sm">
-                      <span className={i === 0 ? 'text-[#ffd24d] font-pixel text-[11px]' : 'text-gray-500 font-pixel text-[11px]'}>{rank}</span>
-                      <span className={i === 0 ? 'text-white font-semibold' : 'text-gray-300'}>{info.prizes[i]}</span>
+            <div className="relative mt-7 mx-auto max-w-sm rounded-3xl p-[1.5px] bg-gradient-to-r from-[#ffd24d] via-[#ff5e9a] to-[#8b3dff]">
+              <div className="rounded-[22px] bg-[#0e0c14] px-6 py-5">
+                <p className="text-[11px] font-bold tracking-[0.25em] text-white/50">{c.totalPrize}</p>
+                <p className="mt-1 text-[34px] md:text-[40px] font-black tabular-nums text-[#ffd24d] drop-shadow-[0_0_24px_rgba(255,210,77,0.35)]">₩{prizeCount.toLocaleString()}+</p>
+              </div>
+            </div>
+
+            <p className="relative mt-6 text-[16px] md:text-[20px] font-extrabold text-[#ffd24d] leading-snug">💰 {c.sponsorNote}</p>
+            <p className="relative mt-1.5 text-[14px] md:text-[16px] font-bold text-white/85">{c.sponsorPledge}</p>
+            <div className="relative mt-6 flex flex-col sm:flex-row gap-2.5 justify-center">
+              <button onClick={() => setSponsorOpen(true)} className="h-13 min-h-[52px] px-7 rounded-2xl bg-gradient-to-r from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] text-[15px] font-extrabold shadow-[0_10px_28px_-10px_rgba(255,190,50,0.8)]">{c.sponsorCta}</button>
+              <a href="#apply" className="lg:hidden h-13 min-h-[52px] px-7 rounded-2xl bg-white/[0.08] border border-white/15 text-[15px] font-extrabold flex items-center justify-center">{c.applyHeading} ↓</a>
+            </div>
+            <p className="relative mt-5 text-[12.5px] text-white/45">{c.schedule}</p>
+          </section>
+
+          {/* ── 참가 신청 ── */}
+          <div className="lg:sticky lg:top-20">{applyCard}</div>
+        </div>
+
+        {/* ── 부문 ── */}
+        <section>
+          <div className="flex items-end justify-between mb-3 px-1">
+            <h2 className="text-[20px] md:text-[24px] font-extrabold">{c.divisionsHeading}</h2>
+            <span className="text-[12px] text-white/40 md:hidden">{lang === 'en' ? 'swipe →' : '밀어서 보기 →'}</span>
+          </div>
+          <div className="-mx-4 px-4 md:mx-0 md:px-0 flex md:grid md:grid-cols-2 xl:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible scrollbar-hide snap-x">
+            {divisions.map(d => {
+              const info = c.divisions[d]
+              const color = DIVISION_COLOR[d]
+              return (
+                <div key={d} className={`${card} snap-start shrink-0 w-[82%] sm:w-[60%] md:w-auto p-5 flex flex-col relative overflow-hidden`}>
+                  <div aria-hidden className="absolute -top-16 -right-16 w-40 h-40 rounded-full" style={{ background: `radial-gradient(closest-side, ${color}33, transparent)` }} />
+                  <div className="relative flex items-center gap-2.5">
+                    <span className="w-11 h-11 rounded-2xl flex items-center justify-center text-[22px]" style={{ background: `${color}22`, border: `1px solid ${color}55` }}>{DIV_ICON[d]}</span>
+                    <div>
+                      <p className="text-[10px] font-extrabold tracking-[0.25em]" style={{ color }}>{info.sub}</p>
+                      <h3 className="text-[18px] font-extrabold leading-tight">{info.name}</h3>
                     </div>
-                  ))}
-                  <p className="text-[11px] text-gray-500 pt-2">{info.extra}</p>
+                  </div>
+                  <p className="relative mt-3 text-[13px] text-white/60 leading-relaxed flex-1">{info.desc}</p>
+                  <div className="relative mt-4 rounded-2xl bg-black/30 border border-white/10 p-3 space-y-1.5">
+                    {[c.winner, c.second, c.third].map((rank, i) => (
+                      <div key={rank} className="flex items-center justify-between text-[13px]">
+                        <span className="flex items-center gap-1.5 text-white/60"><span aria-hidden>{medals[i]}</span>{rank}</span>
+                        <span className={i === 0 ? 'font-extrabold text-[#ffd24d]' : 'font-semibold text-white/85'}>{info.prizes[i]}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="relative mt-2.5 text-[11.5px] text-white/40">{info.extra}</p>
                 </div>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ── 진행 방식 ── */}
+        <section>
+          <h2 className="text-[20px] md:text-[24px] font-extrabold mb-3 px-1">{c.howHeading}</h2>
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+            {c.how.map(([h, p], i) => (
+              <div key={h} className={`${card} p-4 md:p-5`}>
+                <p className="text-[10px] font-extrabold tracking-[0.2em] text-[#ff8aa6]">STEP {i + 1}</p>
+                <h3 className="mt-1 text-[15px] font-extrabold">{h.replace(/^[①②③④]\s*/, '')}</h3>
+                <p className="mt-1.5 text-[12.5px] text-white/55 leading-relaxed">{p}</p>
               </div>
-            )
-          })}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      </div>
 
-      {/* ── 진행 방식 ── */}
-      <section className="max-w-6xl mx-auto px-6 pb-14">
-        <h2 className="font-pixel text-sm text-white tracking-widest mb-8">{c.howHeading}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-          {c.how.map(([h, p]) => (
-            <div key={h} className="border border-gray-800 bg-[#111] rounded-2xl p-6">
-              <h3 className="text-[#00ff41] text-base font-bold mb-2">{h}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">{p}</p>
+      {/* 후원 안내 — 계좌 입금 */}
+      {sponsorOpen && (
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => setSponsorOpen(false)}>
+          <div className="w-full max-w-md rounded-3xl bg-[#121019] border border-white/10 p-6 text-left shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-[11px] font-extrabold tracking-[0.3em] text-[#ffd24d]">SPONSOR</p>
+            <h3 className="mt-1 text-[22px] font-extrabold">{lang === 'en' ? 'Sponsor the prize pool' : '상금 후원하기'}</h3>
+            <p className="mt-2 text-[13px] text-white/60">{lang === 'en' ? 'Sponsorships are accepted by bank transfer. 70% of every sponsorship goes straight into the prize pool.' : '후원금은 계좌 입금으로 받습니다. 후원금의 70%는 그대로 상금이 됩니다.'}</p>
+            <div className="mt-5 rounded-2xl bg-white/[0.05] border border-white/10 p-4 space-y-2">
+              <div><p className="text-[11px] font-bold text-white/45">{lang === 'en' ? 'Bank' : '은행'}</p><p className="text-[15px] font-bold">{lang === 'en' ? 'Woori Bank' : '우리은행'}</p></div>
+              <div>
+                <p className="text-[11px] font-bold text-white/45">{lang === 'en' ? 'Account number' : '계좌번호'}</p>
+                <div className="flex items-center gap-2"><p className="text-[22px] font-extrabold tracking-wide tabular-nums">1005-004-678381</p><button onClick={() => { navigator.clipboard?.writeText('1005004678381'); setCopied(true); setTimeout(() => setCopied(false), 1500) }} className="h-8 px-3 rounded-full bg-white/10 border border-white/15 text-[12px] font-bold">{copied ? (lang === 'en' ? 'Copied' : '복사됨') : (lang === 'en' ? 'Copy' : '복사')}</button></div>
+              </div>
+              <div><p className="text-[11px] font-bold text-white/45">{lang === 'en' ? 'Account holder' : '예금주'}</p><p className="text-[15px] font-bold">퓨리테크{lang === 'en' ? ' (PuriTech)' : ''}</p></div>
             </div>
-          ))}
+            <p className="mt-4 text-[12px] text-white/50">{lang === 'en' ? 'After transferring, email us your name/organization and amount so we can add you to the sponsor list and update the prize pool.' : '입금 후 이름/단체명과 금액을 메일로 알려주시면 후원사 명단과 상금에 반영해 드려요.'} <a href={`mailto:dev@puritechlab.com?subject=${encodeURIComponent(c.sponsorMailSubject)}`} className="text-[#7fd0ff] underline">dev@puritechlab.com</a></p>
+            <button onClick={() => setSponsorOpen(false)} className="mt-5 w-full h-12 rounded-2xl bg-white text-[#07060b] text-[15px] font-extrabold">{lang === 'en' ? 'Close' : '닫기'}</button>
+          </div>
         </div>
-      </section>
-
+      )}
     </div>
   )
 }

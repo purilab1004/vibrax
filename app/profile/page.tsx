@@ -218,40 +218,45 @@ export default function ProfilePage() {
     })
   }
 
-  const inputClass = 'w-full h-10 rounded-lg bg-white border border-[#ddd3bf] focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 px-3.5 text-[14px] outline-none transition text-[#241f17] placeholder-[#a1957f]'
+  const inputClass = 'w-full h-11 rounded-xl bg-[#faf8fd] border border-[#e9e2f3] focus:border-[#8b3dff] focus:ring-4 focus:ring-[#8b3dff]/10 focus:bg-white px-3.5 text-[14px] outline-none transition text-[#1d1530] placeholder-[#a79fb5]'
 
   if (loading) return <MascotLoader />
 
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-6 sm:space-y-8">
+    <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5 sm:space-y-7">
+      {/* 배경 오라 — 밝은 톤 */}
+      <div aria-hidden className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 -left-24 w-[30rem] h-[30rem] rounded-full bg-[radial-gradient(closest-side,rgba(255,45,111,0.14),transparent)] blur-2xl" />
+        <div className="absolute top-1/3 -right-32 w-[32rem] h-[32rem] rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.14),transparent)] blur-2xl" />
+      </div>
       {/* 모바일 — 작은 프로필 줄 + 트렌디한 섹션 탭 (데스크톱은 사이드바에 프로필 섹션·메뉴) */}
       <div className="md:hidden -mt-1 space-y-3">
-        <div className="relative overflow-hidden rounded-2xl bg-[#171b26] text-white px-3.5 py-3 flex items-center gap-3 shadow-[0_14px_30px_-20px_rgba(23,27,38,0.7)]">
-          <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-12 -left-6 w-36 h-36 rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.5),transparent)] blur-xl" /><div className="absolute -bottom-14 right-0 w-36 h-36 rounded-full bg-[radial-gradient(closest-side,rgba(245,158,11,0.3),transparent)] blur-xl" /></div>
-          <span className="relative avatar-ring shrink-0"><span className="avatar-wave w-11 h-11 rounded-full overflow-hidden flex items-center justify-center bg-white">
+        <div className="relative overflow-hidden rounded-3xl bg-white/85 backdrop-blur-xl border border-[#efe8f7] px-3.5 py-3 flex items-center gap-3 shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)]">
+          <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-12 -left-6 w-36 h-36 rounded-full bg-[radial-gradient(closest-side,rgba(255,45,111,0.18),transparent)] blur-xl" /><div className="absolute -bottom-14 right-0 w-36 h-36 rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.18),transparent)] blur-xl" /></div>
+          <span className="relative shrink-0 rounded-full p-[2.5px] bg-gradient-to-br from-[#ff2d6f] to-[#8b3dff]"><span className="block w-11 h-11 rounded-full overflow-hidden bg-white ring-2 ring-white">
             {myAvatarConfig?.previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={myAvatarConfig.previewUrl} alt="" className="avatar-bob w-full h-full object-cover object-top" />
-            ) : <span className="text-[16px] font-extrabold text-[#2563eb]">{(username || user?.email || '?').charAt(0).toUpperCase()}</span>}
+            ) : <span className="w-full h-full flex items-center justify-center text-[16px] font-extrabold text-[#8b3dff]">{(username || user?.email || '?').charAt(0).toUpperCase()}</span>}
           </span></span>
           <div className="relative min-w-0 flex-1">
-            <p className="text-[15px] font-extrabold leading-tight truncate">{agentName || username || '내 계정'}</p>
-            <p className="text-[11px] text-white/55 truncate">{username ? `@${username}` : user?.email}{country ? ` · ${COUNTRIES.find(c => c.code === country)?.flag ?? ''}` : ''}</p>
+            <p className="text-[16px] font-extrabold leading-tight truncate text-[#1d1530]">{agentName || username || '내 계정'}</p>
+            <p className="text-[11.5px] text-[#8a8198] truncate">{username ? `@${username}` : user?.email}{country ? ` · ${COUNTRIES.find(c => c.code === country)?.flag ?? ''}` : ''}</p>
           </div>
           <a href="/credits" className="relative shrink-0"><PromptCreditBadge amount={creditBalance} size="sm" label={false} /></a>
         </div>
         <nav className="-mx-4 px-4 flex gap-2 overflow-x-auto scrollbar-hide snap-x" aria-label="my page sections">
           {(Object.keys(TAB_LABEL) as Tab[]).map(t => (
-            <a key={t} href={`#${t}`} className={`snap-start shrink-0 h-9 pl-2 pr-3.5 rounded-full text-[12.5px] font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${tab === t ? 'bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white shadow-[0_6px_16px_-6px_rgba(37,99,235,0.65)]' : 'bg-white text-[#4a4337] border border-[#ebe4d6] shadow-[0_1px_2px_rgba(36,31,23,0.05)]'}`}>
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[13px] ${tab === t ? 'bg-white/25' : 'bg-[#f4efe5]'}`} aria-hidden>{TAB_ICON[t]}</span>{TAB_LABEL[t]}
+            <a key={t} href={`#${t}`} className={`snap-start shrink-0 h-9 pl-2 pr-3.5 rounded-full text-[12.5px] font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${tab === t ? 'bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white shadow-[0_8px_18px_-8px_rgba(255,45,111,0.7)]' : 'bg-white/85 backdrop-blur text-[#3d3450] border border-[#efe8f7]'}`}>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[13px] ${tab === t ? 'bg-white/25' : 'bg-[#f5f0fb]'}`} aria-hidden>{TAB_ICON[t]}</span>{TAB_LABEL[t]}
             </a>
           ))}
         </nav>
       </div>
 
       {/* ── Profile ── */}
-      {tab === 'profile' && <section id="profile" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-6">
+      {tab === 'profile' && <section id="profile" className="rounded-3xl bg-white/85 backdrop-blur-xl p-4 sm:p-6 md:p-7 border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)] space-y-6">
 
         {/* Email */}
         <div>
@@ -265,13 +270,13 @@ export default function ProfilePage() {
           {editingUsername ? (
             <div className="flex items-center gap-3 flex-wrap">
               <input className={inputClass + ' max-w-xs'} value={newUsername} onChange={e => setNewUsername(e.target.value)} autoFocus />
-              <button onClick={handleSaveUsername} disabled={isPending} className="inline-flex items-center h-10 px-4 rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 shadow-[0_2px_8px_rgba(37,99,235,0.25)]">저장</button>
+              <button onClick={handleSaveUsername} disabled={isPending} className="inline-flex items-center h-11 px-5 rounded-full bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white text-[13px] font-bold disabled:opacity-40">저장</button>
               <button onClick={() => { setEditingUsername(false); setNewUsername('') }} className="inline-flex items-center h-10 px-4 rounded-lg border border-[#ddd3bf] bg-white text-[13px] font-medium text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">취소</button>
             </div>
           ) : (
             <div className="flex items-center gap-4">
               <span className="text-sm text-[#241f17]">{username}</span>
-              <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="inline-flex items-center h-8 px-3 rounded-lg border border-[#ddd3bf] bg-white text-[12.5px] font-medium text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">수정</button>
+              <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="inline-flex items-center h-9 px-3.5 rounded-full border border-[#e9e2f3] bg-[#faf8fd] text-[12.5px] font-semibold text-[#3d3450] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">수정</button>
             </div>
           )}
         </div>
@@ -296,7 +301,7 @@ export default function ProfilePage() {
       </section>}
 
       {/* ── Password ── */}
-      {tab === 'password' && <section id="password" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] space-y-4">
+      {tab === 'password' && <section id="password" className="rounded-3xl bg-white/85 backdrop-blur-xl p-4 sm:p-6 md:p-7 border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)] space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
           <div>
             <p className="text-[12px] font-semibold text-[#6b6152] mb-1.5">새 비밀번호</p>
@@ -308,7 +313,7 @@ export default function ProfilePage() {
           </div>
         </div>
         {pwMsg && <p className={`text-xs font-pixel tracking-widest ${pwMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{pwMsg.text}</p>}
-        <button onClick={handleChangePassword} disabled={isPending || !newPassword || !confirmPassword} className="inline-flex items-center h-10 px-6 rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 shadow-[0_2px_8px_rgba(37,99,235,0.25)]">
+        <button onClick={handleChangePassword} disabled={isPending || !newPassword || !confirmPassword} className="inline-flex items-center h-11 px-7 rounded-full bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white text-[14px] font-bold disabled:opacity-40 shadow-[0_8px_18px_-8px_rgba(255,45,111,0.7)]">
           비밀번호 변경
         </button>
       </section>}
@@ -316,7 +321,7 @@ export default function ProfilePage() {
       {/* ── My Agent ── */}
       {tab === 'agent' && <section id="agent" className="space-y-4">
         {/* 소개 스트립 */}
-        <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] px-5 md:px-6 py-4 flex items-start gap-3">
+        <div className="rounded-3xl bg-white/85 backdrop-blur-xl border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)] px-5 md:px-6 py-4 flex items-start gap-3">
           <span className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center text-[16px]">🎙️</span>
           <div>
             <p className="text-[13.5px] font-bold text-[#241f17]">내 AJ — 나 대신 방송하고 게임하는 AI 아바타</p>
@@ -326,7 +331,7 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,360px)_1fr] gap-4 items-start">
           {/* ── 아바타 쇼케이스 스테이지 ── */}
-          <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-4 relative overflow-hidden">
+          <div className="rounded-3xl bg-white/85 backdrop-blur-xl border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)] p-4 relative overflow-hidden">
             <div aria-hidden className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: 'radial-gradient(120% 80% at 50% 0%, rgba(37,99,235,0.10), transparent 65%)' }} />
             <div className="relative">
               <div className="flex items-center justify-between mb-3">
@@ -379,7 +384,7 @@ export default function ProfilePage() {
           </div>
 
           {/* ── 정체성 · 성격 설정 ── */}
-          <div className="rounded-2xl bg-white shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)] p-5 md:p-6 space-y-5">
+          <div className="rounded-3xl bg-white/85 backdrop-blur-xl border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)] p-5 md:p-6 space-y-5">
             <div className="flex items-center justify-between">
               <div><p className="text-[10px] font-bold tracking-[0.28em] uppercase text-[#2563eb]">Identity</p><h3 className="text-[17px] font-extrabold text-[#241f17] mt-0.5">AJ 정체성</h3></div>
               {agentMsg && <span className={`text-[12px] font-semibold ${agentMsg.ok ? 'text-[#059669]' : 'text-red-500'}`}>{agentMsg.text}</span>}
@@ -414,7 +419,7 @@ export default function ProfilePage() {
             </div>
 
             <button onClick={handleSaveAgent} disabled={isPending || (!agentName.trim() && !agentPersona.trim())}
-              className="w-full inline-flex items-center justify-center h-12 rounded-xl bg-[#2563eb] text-white text-[14px] font-bold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 shadow-[0_8px_20px_-8px_rgba(37,99,235,0.6)]">
+              className="w-full inline-flex items-center justify-center h-14 rounded-2xl bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white text-[15px] font-extrabold disabled:opacity-40 shadow-[0_12px_28px_-10px_rgba(255,45,111,0.7)]">
               {isPending ? '저장 중…' : '저장하기'}
             </button>
           </div>
@@ -425,15 +430,15 @@ export default function ProfilePage() {
  && <section id="learning"><AiLearningSection /></section>}
 
       {/* ── My Games ── */}
-      {tab === 'games' && <section id="games" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
+      {tab === 'games' && <section id="games" className="rounded-3xl bg-white/85 backdrop-blur-xl p-4 sm:p-6 md:p-7 border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)]">
         <div className="flex items-center justify-between mb-5 sm:mb-6 gap-3 flex-wrap">
-          <div><h2 className="text-[17px] font-bold text-[#241f17]">내 게임 <span className="text-[#2563eb]">{games.length}</span></h2><p className="text-[12.5px] text-[#857a68] mt-0.5">게시한 게임을 수정하고 AJ 대시보드·홍보로 이동해요.</p></div>
+          <div><h2 className="text-[20px] font-extrabold text-[#1d1530]">내 게임 <span className="bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] bg-clip-text text-transparent">{games.length}</span></h2><p className="text-[12.5px] text-[#857a68] mt-0.5">게시한 게임을 수정하고 AJ 대시보드·홍보로 이동해요.</p></div>
           <div className="flex items-center gap-2 w-full sm:w-auto [&>a]:flex-1 sm:[&>a]:flex-none [&>a]:justify-center">
             {gameMsg && <p className={`w-full sm:w-auto text-xs font-pixel tracking-widest ${gameMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{gameMsg.text}</p>}
             {/* 방송 추가 — 폰 카메라로 내 게임 BJ 방송 (켜져 있는 동안 아바타 대신 영상) */}
             <a
               href="/broadcast"
-              className={`inline-flex items-center h-9 px-4 rounded-lg border text-[13px] font-semibold transition-colors ${
+              className={`inline-flex items-center h-10 px-4 rounded-full border text-[13px] font-bold transition-colors ${
                 !!(user && (liveInfoOf(myAvatarConfig?.broadcast, user.id) || myAvatarConfig?.broadcasts?.some((b) => b.on)))
                   ? 'bg-[#e11d48] text-white border-[#e11d48] animate-pulse'
                   : 'border-[#e11d48]/50 text-[#e11d48] hover:bg-[#e11d48] hover:text-white'
@@ -441,7 +446,7 @@ export default function ProfilePage() {
             >
               {!!(user && (liveInfoOf(myAvatarConfig?.broadcast, user.id) || myAvatarConfig?.broadcasts?.some((b) => b.on))) ? '● ON AIR · 방송 관리' : '방송 추가'}
             </a>
-            <Link href="/studio" className="inline-flex items-center h-9 px-4 rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors shadow-[0_2px_8px_rgba(37,99,235,0.25)]">게임 추가</Link>
+            <Link href="/studio" className="inline-flex items-center h-10 px-5 rounded-full bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white text-[13px] font-bold shadow-[0_8px_18px_-8px_rgba(255,45,111,0.7)] active:scale-[0.98] transition-transform">＋ 게임 추가</Link>
           </div>
         </div>
 
@@ -475,11 +480,11 @@ export default function ProfilePage() {
         ) : (
           <div className="space-y-3">
             {games.map(game => (
-              <div key={game.id} className="rounded-xl border border-[#ebe4d6] bg-white hover:border-[#cfc4ab] hover:shadow-[0_6px_18px_-10px_rgba(36,31,23,0.2)] transition-all">
+              <div key={game.id} className="rounded-2xl border border-[#efe8f7] bg-white hover:border-[#d9ccef] hover:shadow-[0_14px_30px_-18px_rgba(91,33,182,0.35)] transition-all">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4">
                   <div className="flex items-center gap-3 sm:contents">
                   {/* 세로(쇼츠 9:16) 썸네일 — 가로 이미지는 가운데를 잘라 보여준다 */}
-                  <div className="relative w-[54px] h-[96px] sm:w-[63px] sm:h-[112px] shrink-0 overflow-hidden rounded-lg bg-gray-900">
+                  <div className="relative w-[54px] h-[96px] sm:w-[63px] sm:h-[112px] shrink-0 overflow-hidden rounded-xl bg-gray-900">
                     <Image src={game.thumbnail_url} alt={game.title} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -493,28 +498,28 @@ export default function ProfilePage() {
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-[#6b6152] bg-[#f1ece2]">설명서</span>
                       )}
                     </div>
-                    <p className="text-[14px] text-[#241f17] truncate font-bold">{game.title}</p>
+                    <p className="text-[15px] text-[#1d1530] truncate font-extrabold">{game.title}</p>
                     <p className="text-[11.5px] text-[#9d9280] truncate mt-0.5">조회 {(game.view_count ?? 0).toLocaleString()} · {new Date(game.created_at).toLocaleDateString()}</p>
                   </div>
                   </div>
                   {/* 액션 — 모바일에선 아래 줄에 가로로 꽉 차게, 데스크톱은 오른쪽 */}
                   <div className="flex items-center gap-1.5 sm:gap-2 sm:shrink-0 [&>a]:flex-1 [&>button]:flex-1 sm:[&>a]:flex-none sm:[&>button]:flex-none [&>a]:justify-center [&>button]:justify-center">
-                    <a href={`/aj/${game.id}`} title="AJ 대시보드 — 지표·분석·업데이트 제안" className="inline-flex items-center h-8 px-3 rounded-lg border border-[#2563eb]/40 bg-[#2563eb]/5 text-[12.5px] font-semibold text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors">AJ</a>
-                    <a href={`/ads?game=${game.id}`} title="AJ AdPilot — 홍보 캠페인" className="inline-flex items-center h-8 px-3 rounded-lg border border-[#ddd3bf] bg-white text-[12.5px] font-medium text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">홍보</a>
-                    <button onClick={() => setCurriculumGame({ id: game.id, title: game.title })} title="AJ 학습 가이드 — 내 게임의 정석 플레이를 등록하면 모든 회원의 AI 가 배워요" className="inline-flex items-center h-8 px-3 rounded-lg border border-[#7c3aed]/40 bg-[#7c3aed]/5 text-[12.5px] font-semibold text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white transition-colors">학습</button>
+                    <a href={`/aj/${game.id}`} title="AJ 대시보드 — 지표·분석·업데이트 제안" className="inline-flex items-center h-9 px-3.5 rounded-full border border-[#2563eb]/40 bg-[#2563eb]/5 text-[12.5px] font-semibold text-[#2563eb] hover:bg-[#2563eb] hover:text-white transition-colors">AJ</a>
+                    <a href={`/ads?game=${game.id}`} title="AJ AdPilot — 홍보 캠페인" className="inline-flex items-center h-9 px-3.5 rounded-full border border-[#e9e2f3] bg-[#faf8fd] text-[12.5px] font-semibold text-[#3d3450] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">홍보</a>
+                    <button onClick={() => setCurriculumGame({ id: game.id, title: game.title })} title="AJ 학습 가이드 — 내 게임의 정석 플레이를 등록하면 모든 회원의 AI 가 배워요" className="inline-flex items-center h-9 px-3.5 rounded-full border border-[#7c3aed]/40 bg-[#7c3aed]/5 text-[12.5px] font-semibold text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white transition-colors">학습</button>
                     <button
                       onClick={() => setEditingGame({ id: game.id, title: game.title, genre: game.genre, description: game.description ?? '', language: game.language ?? 'ko', country: game.country ?? country ?? '', game_manual: game.game_manual ?? '', play_url: game.play_url, thumbnail_url: game.thumbnail_url, teaser: game.teaser ?? '', newThumbnail: null, newManual: null })}
-                      className="inline-flex items-center h-8 px-3 rounded-lg border border-[#ddd3bf] bg-white text-[12.5px] font-medium text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors"
+                      className="inline-flex items-center h-9 px-3.5 rounded-full border border-[#e9e2f3] bg-[#faf8fd] text-[12.5px] font-semibold text-[#3d3450] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors"
                     >
                       수정
                     </button>
                     {deleteConfirm === game.id ? (
                       <div className="flex items-center gap-1 flex-1 sm:flex-none [&>button]:flex-1 sm:[&>button]:flex-none [&>button]:justify-center">
-                        <button onClick={() => handleDeleteGame(game.id)} disabled={isPending} className="inline-flex items-center h-8 px-3 rounded-lg bg-[#e11d48] text-white text-[12.5px] font-semibold hover:bg-[#be123c] disabled:opacity-50">삭제 확인</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="inline-flex items-center h-8 px-3 rounded-lg border border-[#ddd3bf] bg-white text-[12.5px] font-medium text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">취소</button>
+                        <button onClick={() => handleDeleteGame(game.id)} disabled={isPending} className="inline-flex items-center h-9 px-3.5 rounded-full bg-[#e11d48] text-white text-[12.5px] font-semibold hover:bg-[#be123c] disabled:opacity-50">삭제 확인</button>
+                        <button onClick={() => setDeleteConfirm(null)} className="inline-flex items-center h-9 px-3.5 rounded-full border border-[#e9e2f3] bg-[#faf8fd] text-[12.5px] font-semibold text-[#3d3450] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">취소</button>
                       </div>
                     ) : (
-                      <button onClick={() => setDeleteConfirm(game.id)} className="inline-flex items-center h-8 px-3 rounded-lg border border-[#ebe4d6] bg-white text-[12.5px] font-medium text-[#9d9280] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">삭제</button>
+                      <button onClick={() => setDeleteConfirm(game.id)} className="inline-flex items-center h-9 px-3.5 rounded-full border border-[#efe8f7] bg-white text-[12.5px] font-semibold text-[#a79fb5] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">삭제</button>
                     )}
                   </div>
                 </div>
@@ -527,8 +532,8 @@ export default function ProfilePage() {
       {/* ── 좋아요한 / 공유한 게임 ── */}
       {tab === 'library' && <MyLibrary />}
       {tab === 'billing' && user && <BillingSection userId={user.id} />}
-      {tab === 'notices' && <section id="notices" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><NoticesSection /></section>}
-      {tab === 'collections' && user && <section id="collections" className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]"><MyCollections userId={user.id} /></section>}
+      {tab === 'notices' && <section id="notices" className="rounded-3xl bg-white/85 backdrop-blur-xl p-4 sm:p-6 md:p-7 border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)]"><NoticesSection /></section>}
+      {tab === 'collections' && user && <section id="collections" className="rounded-3xl bg-white/85 backdrop-blur-xl p-4 sm:p-6 md:p-7 border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)]"><MyCollections userId={user.id} /></section>}
       {curriculumGame && <GameCurriculumModal gameId={curriculumGame.id} title={curriculumGame.title} onClose={() => setCurriculumGame(null)} />}
 
       {/* ── Edit Game Modal (공용 컴포넌트) ── */}
@@ -561,7 +566,7 @@ function BillingSection({ userId }: { userId: string }) {
   const REASON: Record<string, string> = { purchase: '크레딧 구매', generation: '게임 생성·수정', refund: '생성 실패 환불', signup_bonus: '가입 보너스', admin_adjust: '관리자 조정', purchase_refund: '결제 환불 회수', chargeback: '차지백 회수' }
   return (
     <section id="billing" className="space-y-6">
-      <div className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
+      <div className="rounded-3xl bg-white/85 backdrop-blur-xl p-4 sm:p-6 md:p-7 border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)]">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
           <div><h2 className="text-[17px] font-bold text-[#241f17]">결제 내역</h2><p className="text-[12.5px] text-[#857a68] mt-0.5">프롬코인 구매 기록이에요. 완료된 결제는 영수증(PDF)을 받을 수 있어요.</p></div>
           <Link href="/credits" className="inline-flex items-center h-9 px-4 rounded-lg bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8]">크레딧 충전</Link>
@@ -579,7 +584,7 @@ function BillingSection({ userId }: { userId: string }) {
           </ul>
         )}
       </div>
-      <div className="rounded-2xl bg-white p-4 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(36,31,23,0.05),0_12px_32px_-20px_rgba(36,31,23,0.3)]">
+      <div className="rounded-3xl bg-white/85 backdrop-blur-xl p-4 sm:p-6 md:p-7 border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)]">
         <h2 className="text-[17px] font-bold text-[#241f17] mb-4">크레딧 사용 내역</h2>
         {ledger === null ? <MascotLoader size={40} className="py-8" /> : ledger.length === 0 ? <p className="text-[13px] text-[#857a68]">기록이 없어요.</p> : (
           <ul className="divide-y divide-[#f0eadf]">
