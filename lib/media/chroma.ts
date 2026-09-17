@@ -32,7 +32,26 @@ export async function removeGreenIfNeeded(input: Buffer, mime: string): Promise<
       const k = greenness(r, g, b)
       if (k > 0) out[i + 3] = Math.round(out[i + 3] * (1 - k))
     }
-    const buf = await sharp(out, { raw: { width: w, height: h, channels: 4 } }).webp({ quality: 90, effort: 5 }).toBuffer()
+    snapAlpha(out)
+    const buf = await sharp(out, { raw: { width: w, height: h, channels: 4 } }).webp({ quality: 90, alphaQuality: 100, effort: 5 }).toBuffer()
+    return { buf, mime: 'image/webp', applied: true }
+  } catch { return { buf: input, mime, applied: false } }
+}
+
+// 거의 불투명(≥235)은 완전 불투명, 거의 투명(≤10)은 완전 투명으로 — 반투명 잔여 픽셀이 뒤 배경(광선)에 비쳐 보이지 않게
+function snapAlpha(rgba: Buffer) {
+  for (let i = 3; i < rgba.length; i += 4) { const a = rgba[i]; if (a >= 235) rgba[i] = 255; else if (a <= 10) rgba[i] = 0 }
+}
+
+/** 이미 투명 배경인 PNG/WebP(배경 제거 도구로 만든 것 등) — 알파만 정리해 WebP 로. 알파가 없으면 applied=false */
+export async function cleanAlphaIfTransparent(input: Buffer, mime: string): Promise<{ buf: Buffer; mime: string; applied: boolean }> {
+  if (!/^image\/(png|webp)$/.test(mime)) return { buf: input, mime, applied: false }
+  try {
+    const meta = await sharp(input, { animated: false }).metadata()
+    if (!meta.hasAlpha || (meta.pages ?? 1) > 1) return { buf: input, mime, applied: false }
+    const { data, info } = await sharp(input).resize({ width: MAX_EDGE, height: MAX_EDGE, fit: 'inside', withoutEnlargement: true }).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+    snapAlpha(data)
+    const buf = await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } }).webp({ quality: 90, alphaQuality: 100, effort: 5 }).toBuffer()
     return { buf, mime: 'image/webp', applied: true }
   } catch { return { buf: input, mime, applied: false } }
 }

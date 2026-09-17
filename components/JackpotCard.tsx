@@ -34,14 +34,15 @@ function useCountdown(endsAt: string) {
 // 레인보우 광선 — 24갈래, 갈래마다 색상환을 한 바퀴 돈다
 const RAINBOW_RAYS = `conic-gradient(from 0deg, ${Array.from({ length: 24 }, (_, i) => { const a = i * 15; return `hsla(${i * 15} 100% 68% / .95) ${a}deg ${a + 6}deg, transparent ${a + 6}deg ${a + 15}deg` }).join(', ')})`
 const RAY_MASK = 'radial-gradient(circle, #000 0%, #000 18%, rgba(0,0,0,.55) 38%, transparent 62%)'
+const DISC_MASK = 'radial-gradient(circle, #000 18%, rgba(0,0,0,.5) 40%, transparent 68%)'
 const center = { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' } as const
 
 /** 햇살처럼 강하게 빛나는 레인보우 광휘 — 부모(relative) 가운데에 깔린다 */
 function Radiance({ scale = 1 }: { scale?: number }) {
   return (
     <div className="absolute inset-0 pointer-events-none" aria-hidden>
-      {/* 무지개 원판(흐림) — 회전하며 색이 돈다 */}
-      <div className="absolute jp-spin-fast rounded-full" style={{ ...center, width: `${62 * scale}%`, aspectRatio: '1', background: 'conic-gradient(#ff5e5e, #ffb84d, #fff45c, #6dff8a, #5ce1ff, #7a7dff, #e36bff, #ff5e5e)', filter: 'blur(26px)', opacity: 0.85 }} />
+      {/* 무지개 원판 — 회전하며 색이 돈다. blur 필터 대신 마스크로 가장자리를 흐린다(모바일에서 blur 가 레이어 사각형으로 잘려 보이는 문제) */}
+      <div className="absolute jp-spin-fast rounded-full" style={{ ...center, width: `${78 * scale}%`, aspectRatio: '1', background: 'conic-gradient(#ff5e5e, #ffb84d, #fff45c, #6dff8a, #5ce1ff, #7a7dff, #e36bff, #ff5e5e)', WebkitMaskImage: DISC_MASK, maskImage: DISC_MASK, opacity: 0.8 }} />
       {/* 레인보우 광선 */}
       <div className="absolute jp-spin" style={{ ...center, width: `${135 * scale}%`, aspectRatio: '1', background: RAINBOW_RAYS, WebkitMaskImage: RAY_MASK, maskImage: RAY_MASK, mixBlendMode: 'screen' }} />
       {/* 흰 광선(반대로) — 햇빛 느낌 */}

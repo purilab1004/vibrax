@@ -973,6 +973,8 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 .jp-float { animation: jpFloat 3.4s ease-in-out infinite; }
 @keyframes jpFloat { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
 .jp-glow-img { filter: drop-shadow(0 0 6px rgba(255,255,255,.95)) drop-shadow(0 0 18px rgba(255,236,160,.95)) drop-shadow(0 0 38px rgba(255,170,90,.75)); }
+/* 모바일(터치)에선 drop-shadow 가 움직이는 레이어 경계에서 잘려 투명 이미지 둘레에 희미한 사각형이 보인다 → 필터 없이 뒤의 발광·광선만으로 빛낸다 */
+@media (hover: none), (pointer: coarse) { .jp-glow-img { filter: none } }
 .jp-twinkle { animation: jpTwinkle 1.8s ease-in-out infinite; }
 @keyframes jpTwinkle { 0%,100% { opacity: 0; transform: scale(.4) rotate(0deg) } 50% { opacity: 1; transform: scale(1) rotate(45deg) } }
 .jp-wiggle { animation: jpWiggle 2.8s ease-in-out infinite; transform-origin: 50% 90%; }
