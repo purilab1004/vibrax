@@ -94,7 +94,16 @@ export default async function GameDetailPage({ params }: Props) {
 
       {/* 포스터(쇼츠 9:16) + 정보 — PC 는 좌우 2단, 모바일은 포스터 아래 정보 */}
       <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-10">
-        <PosterHero src={game.thumbnail_url} alt={game.title} className="w-full aspect-[3/4] max-h-[62vh] md:w-[320px] md:aspect-[9/16] md:max-h-none md:shrink-0" />
+        {/* 포스터 + 버튼 — 모바일은 버튼을 포스터 하단에 얹어 스크롤 없이 바로 보이게, PC 는 포스터 아래 */}
+        <div className="relative w-full md:w-[320px] md:shrink-0">
+          <PosterHero src={game.thumbnail_url} alt={game.title} className="w-full aspect-[3/4] max-h-[62vh] md:aspect-[9/16] md:max-h-none" />
+          <div className="absolute inset-x-0 bottom-0 rounded-b-2xl bg-gradient-to-t from-black/75 via-black/35 to-transparent pt-12 pb-4 px-4 md:static md:bg-none md:rounded-none md:pt-4 md:pb-0 md:px-0">
+            <div className="flex items-center gap-2.5 [&>button]:flex-1">
+              <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
+              <ShareEmbed title={game.title} gameId={game.id} />
+            </div>
+          </div>
+        </div>
         <div className="flex-1 min-w-0 md:pt-2 flex flex-col gap-6">
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-3">
@@ -119,10 +128,6 @@ export default async function GameDetailPage({ params }: Props) {
             </span>
             <LikeButton gameId={game.id} size="md" />
           </div>
-        </div>
-        <div className="flex items-center gap-2.5 md:gap-3 w-full md:max-w-[420px] [&>button]:flex-1">
-          <GamePlayButton game={game} genreColor={genreColor} genreLabel={genreLabel} bjName={author} />
-          <ShareEmbed title={game.title} gameId={game.id} />
         </div>
         {game.description && (
           <p className="text-[14px] leading-relaxed text-[#4a4337] whitespace-pre-line" style={{ wordBreak: 'keep-all' }}>{game.description}</p>
