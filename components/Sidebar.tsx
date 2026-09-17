@@ -188,7 +188,7 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
         </button>}
       </div>
 
-      {/* 그라디언트 CTA — 프롬프트로 게임 시작 (펼침 + 일반 페이지에서만) */}
+      {/* 그라디언트 CTA — 새 프롬프트 추가 (펼침 + 일반 페이지에서만) */}
       {open && !inStudio && !inProfile && !inAdmin && (
         <div className={`shrink-0 pt-3 pb-1 ${open ? 'px-3' : 'px-2'}`}>
           <Link

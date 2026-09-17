@@ -406,12 +406,12 @@ export default function StudioComposerPage() {
       <div className="flex-1 flex min-h-0">
         {/* 좌측 — 최근 프로젝트 사이드바 (클로드 스타일, 데스크톱) */}
         {!chatCollapsed && !sideOpen && (
-          /* 접힌 사이드바 — 얇은 레일: 펼치기 + 새로 생성 */
+          /* 접힌 사이드바 — 얇은 레일: 펼치기 + 새 프롬프트 추가 */
           <aside className="hidden lg:flex w-11 shrink-0 flex-col items-center gap-2 border-r border-[#ebe4d6] bg-[#fcfaf5] min-h-0 pt-3">
             <button onClick={() => setSideOpen(true)} aria-label="사이드 메뉴 펼치기" title="최근 항목 펼치기" className="w-8 h-8 rounded-lg text-[#6b6152] hover:text-[#2563eb] hover:bg-[#241f17]/5 flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
             </button>
-            <button onClick={createNewProject} aria-label="새로 생성" title="새로 생성" className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center text-sm shadow-sm">＋</button>
+            <button onClick={createNewProject} aria-label="새 프롬프트 추가" title="새 프롬프트 추가" className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center text-sm shadow-sm">＋</button>
           </aside>
         )}
         {!chatCollapsed && sideOpen && (
@@ -422,7 +422,7 @@ export default function StudioComposerPage() {
                 className="flex-1 flex items-center gap-2 text-[13px] font-semibold text-[#4a4337] hover:text-[#2563eb] px-2.5 py-2 rounded-lg hover:bg-[#241f17]/5 transition-colors text-left"
               >
                 <span className="w-5 h-5 rounded-md bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center text-xs" aria-hidden>＋</span>
-                새로 생성
+                새 프롬프트 추가
               </button>
               <button onClick={() => setSideOpen(false)} aria-label="사이드 메뉴 접기" title="접기" className="w-8 h-8 rounded-lg text-[#9d9280] hover:text-[#2563eb] hover:bg-[#241f17]/5 flex items-center justify-center shrink-0">
                 <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
