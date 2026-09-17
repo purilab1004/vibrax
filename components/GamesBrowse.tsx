@@ -22,6 +22,7 @@ import LiveCard from '@/components/LiveCard'
 import FeedEndCard from '@/components/FeedEndCard'
 import ThumbBackdrop from '@/components/home/ThumbBackdrop'
 import { useDominantHue } from '@/lib/dominantHue'
+import PlayModeBadge from '@/components/PlayModeBadge'
 import { recordShare } from '@/lib/shares'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
@@ -83,6 +84,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         style={auroraOf(game.id, rank === 1 && (game.view_count ?? 0) > 0)}
       >
         <ThumbBackdrop src={game.thumbnail_url} alt={game.title} />
+        <PlayModeBadge mode={game.play_mode} className="absolute top-4 left-4 z-10" />
         {/* 랭킹 배지 */}
         {rank && rank <= 10 && (
           <span className={`absolute top-4 right-4 z-10 font-pixel text-[13px] px-3 py-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.25)] ${

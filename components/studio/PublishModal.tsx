@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { suggestIntro } from '@/lib/intro'
+import { PlayModeIcon } from '@/components/PlayModeBadge'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import type { Genre } from '@/lib/supabase/types'
@@ -20,6 +21,7 @@ export default function PublishModal({
   const [title, setTitle] = useState(defaultTitle)
   const [intro, setIntro] = useState('') // 한 줄 소개 — 비우면 게임 매니페스트 goal 로 자동
   const [introBusy, setIntroBusy] = useState(false)
+  const [playMode, setPlayMode] = useState<'single' | 'multi'>('single') // 싱글/멀티 — 게임 코드에 VIBREX_NET 이 있으면 멀티로 자동 제안
   const [genre, setGenre] = useState<Genre>('action')
   // 썸네일: 기본은 타이틀 기반 자동 생성, 파일을 올리면 그걸 우선 사용
   const [customFile, setCustomFile] = useState<File | null>(null)
@@ -49,6 +51,12 @@ export default function PublishModal({
       return suggestIntro({ html: (data as { html?: string } | null)?.html, title })
     } catch { return suggestIntro({ title }) }
   }
+  useEffect(() => {
+    let q = supabase.from('studio_versions').select('html').eq('project_id', projectId)
+    q = versionId ? q.eq('id', versionId) : q.order('version', { ascending: false }).limit(1)
+    Promise.resolve(q.maybeSingle()).then(({ data }) => { const html = (data as { html?: string } | null)?.html ?? ''; if (/VIBREX_NET\.(join|hello|send)|vibrexNet|onlineRoom/.test(html)) setPlayMode('multi') }).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, versionId])
   const fillIntro = async () => { setIntroBusy(true); try { setIntro(await autoIntro()) } finally { setIntroBusy(false) } }
   // 타이틀/장르/시드가 바뀌면 자동 썸네일 재생성 (직접 업로드 중이면 건너뜀)
   useEffect(() => {
@@ -130,12 +138,17 @@ export default function PublishModal({
         teaser,
         teaser_en: teaserEn,
         intro: (intro.trim() || (await autoIntro())) || null,
+        play_mode: playMode,
         ...(versionId ? { live_version_id: versionId } : {}),   // 게시 버전 고정 — 이후 수정은 '최신 버전 게시' 로만 반영
       }
       let { data: inserted, error: insertError } = await supabase.from('games').insert([row] as never).select('id').single()
       // teaser 컬럼 마이그레이션 전 — 없이 재시도
+      if (insertError?.message.includes('play_mode')) {
+        const { play_mode: _omitP, ...rest } = row
+        ;({ data: inserted, error: insertError } = await supabase.from('games').insert([rest] as never).select('id').single())
+      }
       if (insertError?.message.includes('intro')) {
-        const { intro: _omitI, ...rest } = row
+        const { intro: _omitI, play_mode: _omitP2, ...rest } = row
         ;({ data: inserted, error: insertError } = await supabase.from('games').insert([rest] as never).select('id').single())
       }
       if (insertError?.message.includes('teaser')) {
@@ -199,6 +212,16 @@ export default function PublishModal({
               <div className="flex gap-2">
                 <input value={intro} onChange={e => setIntro(e.target.value)} maxLength={80} placeholder="예: 장애물을 피해 최대한 멀리 달려라!" className={inputClass} />
                 <button type="button" onClick={fillIntro} disabled={introBusy} className="shrink-0 px-3 rounded-lg border border-[#ddd3bf] text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] disabled:opacity-50">{introBusy ? '…' : '✨ 자동'}</button>
+              </div>
+            </div>
+            <div>
+              <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">플레이 방식</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['single', 'multi'] as const).map(m => (
+                  <button key={m} type="button" onClick={() => setPlayMode(m)} className={`h-10 rounded-lg border text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-colors ${playMode === m ? 'border-[#2563eb] bg-[#2563eb]/8 text-[#2563eb]' : 'border-[#ddd3bf] text-[#6b6152] hover:border-[#241f17]'}`}>
+                    <PlayModeIcon mode={m} className="w-4 h-4" />{m === 'single' ? '싱글플레이' : '멀티플레이'}
+                  </button>
+                ))}
               </div>
             </div>
             <div>

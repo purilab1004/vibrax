@@ -1,6 +1,7 @@
 'use client'
 
 import NoticesSection from '@/components/profile/NoticesSection'
+import PlayModeBadge from '@/components/PlayModeBadge'
 import AiLearningSection from '@/components/profile/AiLearningSection'
 import AjApiSection from '@/components/profile/AjApiSection'
 import GameCurriculumModal from '@/components/profile/GameCurriculumModal'
@@ -485,6 +486,7 @@ export default function ProfilePage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${GENRE_COLORS[game.genre]}`}>{game.genre.toUpperCase()}</span>
+                      <PlayModeBadge mode={game.play_mode} dark={false} className="!text-[10px] !py-0.5" />
                       {game.language && (
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-[#4a4337] bg-[#f1ece2]">{game.language === 'ko' ? '한국어' : 'EN'}</span>
                       )}

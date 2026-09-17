@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import PosterHero from '@/components/PosterHero'
+import PlayModeBadge from '@/components/PlayModeBadge'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import type { Game } from '@/lib/supabase/types'
@@ -113,6 +114,7 @@ export default async function GameDetailPage({ params }: Props) {
             >
               {genreLabel}
             </span>
+            <PlayModeBadge mode={game.play_mode} dark={false} />
             {game.language && (
               <span className="inline-block font-pixel text-[11px] px-2 py-1 border border-[#ddd3bf] text-[#6b6152]">
                 {game.language === 'ko' ? '한국어' : 'English'}
