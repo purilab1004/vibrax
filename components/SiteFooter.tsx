@@ -12,6 +12,7 @@ export default function SiteFooter() {
   if (pathname === '/games') return null   // 게임 피드(PC) — 한 장씩 넘기는 화면에서 푸터가 방해됨 (링크는 좌측 사이드 메뉴 하단에 있음)
   // 관리자는 사이드바 하단 축약 푸터로 대체
   if (pathname.startsWith('/admin')) return null
+  if (pathname.startsWith('/profile')) return null   // 내정보 — 사이드바 메뉴 화면이라 푸터 불필요
   // 모바일에서는 푸터를 전부 숨긴다(하단 앱 내비가 있어 불필요) — 데스크톱만 표시
   return (
     <footer className="hidden md:block border-t border-[#ebe4d6] py-6 px-6 mt-auto md:pl-[var(--rail-w,0rem)] transition-[padding] duration-200">
