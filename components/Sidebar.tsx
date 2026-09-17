@@ -257,7 +257,6 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
             <>
               {([
                 ['#games', '내 게임', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="3" y="7" width="18" height="11" rx="3" /><path d="M8 11v4M6 13h4M15 12h.01M17.5 14h.01" /></svg>],
-                ['#profile', '프로필 설정', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="8" r="3.5" /><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" /></svg>],
                 ['#password', '비밀번호', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>],
                 ['#agent', 'AJ 외모', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="7" width="14" height="11" rx="2" /><path d="M12 7V4M9 12h.01M15 12h.01M9.5 15.5c.8.7 4.2.7 5 0" /></svg>],
                 ['#learning', 'AJ 학습', <svg key="i" viewBox="0 0 24 24" className={ICON} {...stroke}><path d="M12 3l8 4-8 4-8-4 8-4Z" /><path d="M4 11l8 4 8-4M4 15l8 4 8-4" /></svg>],

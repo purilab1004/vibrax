@@ -1,7 +1,8 @@
 'use client'
-// 스튜디오 채팅 입력창 위 — 관리자만: 생성 엔진 선택(Opus 5·Fable 5.1 = Max 구독 워커, API 토큰) + Max 사용량(5시간·7일, 초기화까지)
+// 스튜디오 채팅 입력창 위 — 관리자 전용: 생성 엔진 선택(Opus 5·Fable 5.1 = Max 구독 워커, API 토큰) + Max 사용량(5시간·7일, 초기화까지)
 import { useEffect, useState } from 'react'
-import { ENGINE_LABEL, setEngine, useEngine, type StudioEngine } from '@/lib/studio/engine'
+import { ENGINE_LABEL, markAdmin, setEngine, useEngine, type StudioEngine } from '@/lib/studio/engine'
+import { useIsAdmin } from '@/lib/useIsAdmin'
 
 interface Win { utilization?: number; resetsAt?: number }
 interface UsageInfo { status?: string; rateLimitType?: string; unifiedWindows?: { five_hour?: Win; seven_day?: Win; seven_day_overage_included?: Win }; model?: string; at?: string; lastError?: string | null }
@@ -16,16 +17,19 @@ const left = (sec?: number) => {
 const pct = (w?: Win) => (typeof w?.utilization === 'number' ? Math.round(w.utilization * 100) : null)
 
 export default function EngineSelect() {
+  const isAdmin = useIsAdmin()   // 회원에게는 엔진 선택을 노출하지 않는다 (회원 생성은 항상 API 토큰)
   const engine = useEngine()
   const [info, setInfo] = useState<{ maxWorker: boolean; usage: { value: UsageInfo; updated_at: string } | null } | null>(null)
   const [open, setOpen] = useState(false)
   useEffect(() => {
+    markAdmin(!!isAdmin)
+    if (!isAdmin) return
     let alive = true
     const load = () => fetch('/api/studio/engine').then((r) => (r.ok ? r.json() : null)).then((j) => { if (alive) setInfo(j) }).catch(() => {})
     load(); const iv = setInterval(load, 60_000)
     return () => { alive = false; clearInterval(iv) }
-  }, [])
-  if (!info) return null   // 관리자 아님(403) 또는 로딩 중
+  }, [isAdmin])
+  if (!isAdmin || !info) return null   // 회원이거나 로딩 중
   const u = info.usage?.value
   const five = u?.unifiedWindows?.five_hour, week = u?.unifiedWindows?.seven_day, extra = u?.unifiedWindows?.seven_day_overage_included
   const fableBlocked = pct(extra) === 100 || /usage_credits|Fable/i.test(u?.lastError ?? '')

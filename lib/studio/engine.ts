@@ -6,9 +6,14 @@ export type StudioEngine = 'max-opus' | 'max-fable' | 'api'
 export const ENGINE_LABEL: Record<StudioEngine, string> = { 'max-opus': 'Opus 5 · Max', 'max-fable': 'Fable 5.1 · Max', api: 'API 토큰' }
 const KEY = 'studio_engine'
 const subs = new Set<() => void>()
+// 관리자 표시 — EngineSelect 가 관리자 확인에 성공하면 켠다. 서버 권한과는 무관한 UI 힌트.
+let adminHint = false
+export function markAdmin(v: boolean) { adminHint = v; subs.forEach((f) => f()) }
+export function isAdminHint() { return adminHint }
 let cur: StudioEngine | null = null
 
 export function getEngine(): StudioEngine {
+  if (!isAdminHint()) return 'api'   // 회원 생성은 항상 API 토큰 (서버도 관리자만 Max 워커를 쓴다)
   if (cur) return cur
   try { const v = localStorage.getItem(KEY); if (v === 'max-opus' || v === 'max-fable' || v === 'api') cur = v } catch { /* noop */ }
   return cur ?? 'max-opus'

@@ -60,11 +60,11 @@ interface EditingGame {
   newManual?: File | null
 }
 
-type Tab = 'profile' | 'password' | 'agent' | 'learning' | 'api' | 'games' | 'library' | 'collections' | 'billing' | 'notices'
+type Tab = 'password' | 'agent' | 'learning' | 'api' | 'games' | 'library' | 'collections' | 'billing' | 'notices'
 // 순서 = 모바일 탭·사이드바 메뉴 순서 (내 게임이 첫 화면)
-const TAB_LABEL: Record<Tab, string> = { games: '내 게임', profile: '프로필 설정', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', api: 'AJ API', library: '갤러리', billing: '결제 내역', notices: '공지사항', collections: '좋아요·컬렉션' }
-const TAB_ICON: Record<Tab, string> = { games: '🎮', profile: '👤', password: '🔒', agent: '🤖', learning: '🧠', api: '🧩', library: '🖼️', billing: '💳', notices: '📢', collections: '💖' }
-const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['profile', 'password', 'agent', 'learning', 'api', 'games', 'library', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'games' }
+const TAB_LABEL: Record<Tab, string> = { games: '내 게임', password: '비밀번호', agent: 'AJ 외모', learning: 'AJ 학습', api: 'AJ API', library: '갤러리', billing: '결제 내역', notices: '공지사항', collections: '좋아요·컬렉션' }
+const TAB_ICON: Record<Tab, string> = { games: '🎮', password: '🔒', agent: '🤖', learning: '🧠', api: '🧩', library: '🖼️', billing: '💳', notices: '📢', collections: '💖' }
+const tabFromHash = (): Tab => { const h = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''; return (['password', 'agent', 'learning', 'api', 'games', 'library', 'collections', 'billing', 'notices'] as Tab[]).includes(h as Tab) ? (h as Tab) : 'games' }
 
 export default function ProfilePage() {
   // 사이드 메뉴 탭 — 해시(#games 등)에 따라 해당 섹션만 표시 (스크롤 아님)
@@ -218,6 +218,10 @@ export default function ProfilePage() {
     })
   }
 
+  const [gameQuery, setGameQuery] = useState('')
+  const gq = gameQuery.trim().toLowerCase()
+  const visibleGames = gq ? games.filter(g => `${g.title} ${g.genre} ${g.description ?? ''}`.toLowerCase().includes(gq)) : games
+  const darkInput = 'w-full h-10 rounded-xl bg-white/10 border border-white/15 focus:border-[#8ea4ff] focus:ring-4 focus:ring-[#8ea4ff]/15 px-3 text-[13.5px] outline-none transition text-white placeholder-white/35 [&>option]:text-[#1d1530]'
   const inputClass = 'w-full h-11 rounded-xl bg-[#faf8fd] border border-[#e9e2f3] focus:border-[#8b3dff] focus:ring-4 focus:ring-[#8b3dff]/10 focus:bg-white px-3.5 text-[14px] outline-none transition text-[#1d1530] placeholder-[#a79fb5]'
 
   if (loading) return <MascotLoader />
@@ -230,75 +234,76 @@ export default function ProfilePage() {
         <div className="absolute -top-40 -left-24 w-[30rem] h-[30rem] rounded-full bg-[radial-gradient(closest-side,rgba(255,45,111,0.14),transparent)]" />
         <div className="absolute top-1/3 -right-32 w-[32rem] h-[32rem] rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.14),transparent)]" />
       </div>
-      {/* 모바일 — 작은 프로필 줄 + 트렌디한 섹션 탭 (데스크톱은 사이드바에 프로필 섹션·메뉴) */}
-      <div className="md:hidden -mt-1 space-y-3">
-        <div className="relative overflow-hidden rounded-3xl bg-white/95 border border-[#efe8f7] px-3.5 py-3 flex items-center gap-3 shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)]">
-          <div aria-hidden className="absolute inset-0 pointer-events-none"><div className="absolute -top-12 -left-6 w-36 h-36 rounded-full bg-[radial-gradient(closest-side,rgba(255,45,111,0.18),transparent)]" /><div className="absolute -bottom-14 right-0 w-36 h-36 rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.18),transparent)]" /></div>
-          <span className="relative shrink-0 rounded-full p-[2.5px] bg-gradient-to-br from-[#ff2d6f] to-[#8b3dff]"><span className="block w-11 h-11 rounded-full overflow-hidden bg-white ring-2 ring-white">
-            {myAvatarConfig?.previewUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={myAvatarConfig.previewUrl} alt="" className="avatar-bob w-full h-full object-cover object-top" />
-            ) : <span className="w-full h-full flex items-center justify-center text-[16px] font-extrabold text-[#8b3dff]">{(username || user?.email || '?').charAt(0).toUpperCase()}</span>}
-          </span></span>
-          <div className="relative min-w-0 flex-1">
-            <p className="text-[16px] font-extrabold leading-tight truncate text-[#1d1530]">{agentName || username || '내 계정'}</p>
-            <p className="text-[11.5px] text-[#8a8198] truncate">{username ? `@${username}` : user?.email}{country ? ` · ${COUNTRIES.find(c => c.code === country)?.flag ?? ''}` : ''}</p>
+      {/* 내 프로필 — 이메일·사용자 이름·국가를 이 카드 안에서 바로 고친다. 아래 섹션은 곧바로 내 게임 */}
+      <section id="profile" className="relative overflow-hidden rounded-3xl text-white px-4 py-4 sm:px-6 sm:py-5 shadow-[0_24px_50px_-30px_rgba(11,16,32,0.8)]" style={{ background: 'linear-gradient(135deg,#182039 0%,#0d1326 55%,#0a0f1f 100%)' }}>
+        <div aria-hidden className="absolute inset-0 pointer-events-none opacity-[0.35]" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.35) 1px, transparent 1.5px)', backgroundSize: '22px 22px' }} />
+        <div aria-hidden className="absolute -bottom-24 right-[8%] w-[22rem] h-[22rem] rounded-full pointer-events-none" style={{ background: 'radial-gradient(closest-side,rgba(245,158,11,0.22),transparent)' }} />
+        <div className="relative flex items-center gap-3.5 sm:gap-4">
+          <span className="shrink-0 rounded-full p-[2.5px] bg-gradient-to-br from-[#ff2d6f] to-[#8b3dff]">
+            <span className="flex w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-[#0d1326] ring-2 ring-[#0d1326] items-center justify-center">
+              {myAvatarConfig?.previewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={myAvatarConfig.previewUrl} alt="" className="avatar-bob w-full h-full object-cover object-top" />
+              ) : <span className="text-[20px] font-extrabold text-[#8b3dff]">{(username || user?.email || '?').charAt(0).toUpperCase()}</span>}
+            </span>
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[9.5px] font-extrabold tracking-[0.28em] text-[#8ea4ff]">MY PAGE · 프로필</p>
+            <p className="text-[21px] sm:text-[26px] font-extrabold leading-tight truncate">{agentName || username || '내 계정'}</p>
+            <p className="text-[11.5px] sm:text-[12.5px] text-white/55 truncate">{username ? `@${username}` : ''}{username && user?.email ? ' · ' : ''}{user?.email}{country ? ` · ${COUNTRIES.find(c => c.code === country)?.flag ?? ''} ${COUNTRIES.find(c => c.code === country)?.name ?? ''}` : ''}</p>
           </div>
-          <a href="/credits" className="relative shrink-0"><PromptCreditBadge amount={creditBalance} size="sm" label={false} /></a>
+          <div className="hidden sm:flex items-center gap-2 shrink-0">
+            <a href="/credits" className="hover:opacity-85 transition-opacity"><PromptCreditBadge amount={creditBalance} size="sm" /></a>
+            <Link href="/studio" className="inline-flex items-center h-9 px-4 rounded-full bg-white text-[#0d1326] text-[12.5px] font-bold hover:bg-[#e8f1ff] transition-colors">게임 만들기</Link>
+          </div>
         </div>
-        <nav className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5" aria-label="my page sections">
-          {(Object.keys(TAB_LABEL) as Tab[]).map(t => (
-            <a key={t} href={`#${t}`} className={`shrink-0 h-9 pl-2 pr-3.5 rounded-full text-[12.5px] font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${tab === t ? 'bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white shadow-[0_8px_18px_-8px_rgba(255,45,111,0.7)]' : 'bg-white text-[#3d3450] border border-[#efe8f7]'}`}>
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[13px] ${tab === t ? 'bg-white/25' : 'bg-[#f5f0fb]'}`} aria-hidden>{TAB_ICON[t]}</span>{TAB_LABEL[t]}
-            </a>
-          ))}
-        </nav>
-      </div>
-
-      {/* ── Profile ── */}
-      {tab === 'profile' && <section id="profile" className="rounded-3xl bg-white/95 p-4 sm:p-6 md:p-7 border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)] space-y-6">
-
-        {/* Email */}
-        <div>
-          <p className="text-[12px] font-semibold text-[#6b6152] mb-1.5">이메일</p>
-          <p className="text-sm text-[#4a4337]">{user?.email}</p>
+        <div className="relative sm:hidden mt-3 flex items-center gap-2">
+          <a href="/credits" className="shrink-0"><PromptCreditBadge amount={creditBalance} size="sm" label={false} /></a>
+          <Link href="/studio" className="flex-1 inline-flex items-center justify-center h-9 rounded-full bg-white text-[#0d1326] text-[12.5px] font-bold">게임 만들기</Link>
         </div>
 
-        {/* Username */}
-        <div>
-          <p className="text-[12px] font-semibold text-[#6b6152] mb-1.5">사용자 이름</p>
-          {editingUsername ? (
-            <div className="flex items-center gap-3 flex-wrap">
-              <input className={inputClass + ' max-w-xs'} value={newUsername} onChange={e => setNewUsername(e.target.value)} autoFocus />
-              <button onClick={handleSaveUsername} disabled={isPending} className="inline-flex items-center h-11 px-5 rounded-full bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white text-[13px] font-bold disabled:opacity-40">저장</button>
-              <button onClick={() => { setEditingUsername(false); setNewUsername('') }} className="inline-flex items-center h-10 px-4 rounded-lg border border-[#ddd3bf] bg-white text-[13px] font-medium text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">취소</button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-[#241f17]">{username}</span>
-              <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="inline-flex items-center h-9 px-3.5 rounded-full border border-[#e9e2f3] bg-[#faf8fd] text-[12.5px] font-semibold text-[#3d3450] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">수정</button>
-            </div>
-          )}
+        {/* 계정 설정 — 사용자 이름·국가 */}
+        <div className="relative mt-4 pt-4 border-t border-white/10 grid gap-3 sm:grid-cols-2">
+          <div>
+            <p className="text-[10.5px] font-semibold tracking-wider text-white/45 mb-1.5">사용자 이름</p>
+            {editingUsername ? (
+              <div className="flex items-center gap-2">
+                <input className={darkInput} value={newUsername} onChange={e => setNewUsername(e.target.value)} autoFocus />
+                <button onClick={handleSaveUsername} disabled={isPending} className="shrink-0 inline-flex items-center h-10 px-4 rounded-xl bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white text-[12.5px] font-bold disabled:opacity-40">저장</button>
+                <button onClick={() => { setEditingUsername(false); setNewUsername('') }} className="shrink-0 inline-flex items-center h-10 px-3 rounded-xl border border-white/20 text-[12.5px] font-medium text-white/70 hover:text-white transition-colors">취소</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2.5">
+                <span className="text-[14px] font-semibold truncate">{username || '—'}</span>
+                <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="shrink-0 inline-flex items-center h-8 px-3 rounded-full border border-white/20 bg-white/5 text-[12px] font-semibold text-white/80 hover:bg-white/10 hover:text-white transition-colors">수정</button>
+              </div>
+            )}
+          </div>
+          <div>
+            <p className="text-[10.5px] font-semibold tracking-wider text-white/45 mb-1.5">국가</p>
+            <select value={country} onChange={e => handleChangeCountry(e.target.value)} disabled={isPending} className={darkInput + ' cursor-pointer disabled:opacity-50'}>
+              <option value="">선택 안 함</option>
+              {COUNTRIES.map(c => (
+                <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
-
-        {/* Country */}
-        <div>
-          <p className="text-[12px] font-semibold text-[#6b6152] mb-1.5">국가</p>
-          <select
-            value={country}
-            onChange={e => handleChangeCountry(e.target.value)}
-            disabled={isPending}
-            className={inputClass + ' max-w-xs cursor-pointer disabled:opacity-50'}
-          >
-            <option value="">선택 안 함</option>
-            {COUNTRIES.map(c => (
-              <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
-            ))}
-          </select>
+        <div className="relative mt-3 flex items-center gap-3 flex-wrap">
+          <span className="text-[11.5px] text-white/40">이메일 {user?.email}</span>
+          <a href="#password" className="text-[11.5px] font-semibold text-[#8ea4ff] hover:text-white transition-colors">비밀번호 변경</a>
+          {profileMsg && <span className={`text-[11.5px] font-semibold ${profileMsg.ok ? 'text-[#4ade80]' : 'text-[#fda4af]'}`}>{profileMsg.text}</span>}
         </div>
+      </section>
 
-        {profileMsg && <p className={`text-xs font-pixel tracking-widest ${profileMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{profileMsg.text}</p>}
-      </section>}
+      {/* 모바일 섹션 탭 (데스크톱은 사이드바 메뉴) */}
+      <nav className="md:hidden flex gap-2 overflow-x-auto scrollbar-hide pb-0.5" aria-label="my page sections">
+        {(Object.keys(TAB_LABEL) as Tab[]).map(t => (
+          <a key={t} href={`#${t}`} className={`shrink-0 h-9 pl-2 pr-3.5 rounded-full text-[12.5px] font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${tab === t ? 'bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white shadow-[0_8px_18px_-8px_rgba(255,45,111,0.7)]' : 'bg-white text-[#3d3450] border border-[#efe8f7]'}`}>
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[13px] ${tab === t ? 'bg-white/25' : 'bg-[#f5f0fb]'}`} aria-hidden>{TAB_ICON[t]}</span>{TAB_LABEL[t]}
+          </a>
+        ))}
+      </nav>
 
       {/* ── Password ── */}
       {tab === 'password' && <section id="password" className="rounded-3xl bg-white/95 p-4 sm:p-6 md:p-7 border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)] space-y-4">
@@ -432,7 +437,12 @@ export default function ProfilePage() {
       {/* ── My Games ── */}
       {tab === 'games' && <section id="games" className="rounded-3xl bg-white/95 p-4 sm:p-6 md:p-7 border border-[#efe8f7] shadow-[0_20px_44px_-30px_rgba(91,33,182,0.35)]">
         <div className="flex items-center justify-between mb-5 sm:mb-6 gap-3 flex-wrap">
-          <div><h2 className="text-[20px] font-extrabold text-[#1d1530]">내 게임 <span className="bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] bg-clip-text text-transparent">{games.length}</span></h2><p className="text-[12.5px] text-[#857a68] mt-0.5">게시한 게임을 수정하고 AJ 대시보드·홍보로 이동해요.</p></div>
+          <div><h2 className="text-[20px] font-extrabold text-[#1d1530]">내 게임 <span className="bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] bg-clip-text text-transparent">{gq ? `${visibleGames.length}/${games.length}` : games.length}</span></h2><p className="text-[12.5px] text-[#857a68] mt-0.5">게시한 게임을 수정하고 AJ 대시보드·홍보로 이동해요.</p></div>
+          <div className="relative w-full sm:w-[260px] order-last sm:order-none">
+            <svg viewBox="0 0 24 24" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a79fb5]" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            <input value={gameQuery} onChange={e => setGameQuery(e.target.value)} placeholder="내 게임 검색" aria-label="내 게임 검색" className="w-full h-10 rounded-full bg-[#faf8fd] border border-[#e9e2f3] focus:border-[#8b3dff] focus:ring-4 focus:ring-[#8b3dff]/10 focus:bg-white pl-9 pr-8 text-[13px] outline-none transition text-[#1d1530] placeholder-[#a79fb5]" />
+            {gameQuery && <button onClick={() => setGameQuery('')} aria-label="검색어 지우기" className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#ece5f6] text-[#6b6152] text-[11px] leading-none">✕</button>}
+          </div>
           <div className="flex items-center gap-2 w-full sm:w-auto [&>a]:flex-1 sm:[&>a]:flex-none [&>a]:justify-center">
             {gameMsg && <p className={`w-full sm:w-auto text-xs font-pixel tracking-widest ${gameMsg.ok ? 'text-[#2563eb]' : 'text-red-400'}`}>{gameMsg.text}</p>}
             {/* 방송 추가 — 폰 카메라로 내 게임 BJ 방송 (켜져 있는 동안 아바타 대신 영상) */}
@@ -471,7 +481,12 @@ export default function ProfilePage() {
             </div>
           </div>
         ))}
-        {games.length === 0 ? (
+        {gq && visibleGames.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[#e9e2f3] bg-[#faf8fd] p-12 text-center">
+            <p className="text-[15px] font-bold text-[#1d1530]">검색 결과가 없어요</p>
+            <p className="text-[12.5px] text-[#857a68] mt-1">다른 낱말로 찾아보세요.</p>
+          </div>
+        ) : games.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[#ddd3bf] bg-[#faf8f3] p-12 text-center">
             <p className="text-[15px] font-bold text-[#241f17]">아직 등록한 게임이 없어요</p>
             <p className="text-[12.5px] text-[#857a68] mt-1 mb-4">프롬프트 한 줄로 만들거나, 이미 만든 게임을 링크로 등록해요.</p>
@@ -479,7 +494,7 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {games.map(game => (
+            {visibleGames.map(game => (
               <div key={game.id} className="rounded-2xl border border-[#efe8f7] bg-white hover:border-[#d9ccef] hover:shadow-[0_14px_30px_-18px_rgba(91,33,182,0.35)] transition-all">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4">
                   <div className="flex items-center gap-3 sm:contents">
