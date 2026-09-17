@@ -9,8 +9,13 @@ export async function GET(req: Request) {
     const admin = createAdminClient()
     type Row = { url: string; width: number | null; height: number | null }
     let a: Row | null = null
-    // 세로(쇼츠) 썸네일용 — 'default_background_portrait' 에셋이 등록돼 있으면 그것을, 없으면 가로 기본 배경을 cover 로 자른다
-    if (portrait) { const { data } = await admin.from('media_assets').select('url,width,height').eq('name', 'default_background_portrait').eq('status', 'active').limit(1).maybeSingle(); a = (data as Row | null) ?? null }
+    // 세로(쇼츠) 썸네일용 — 'default_short_background'(941×1672) 에셋을 우선, 없으면 가로 기본 배경을 cover 로 자른다
+    if (portrait) {
+      for (const name of ['default_short_background', 'default_background_portrait']) {
+        const { data } = await admin.from('media_assets').select('url,width,height').eq('name', name).eq('status', 'active').limit(1).maybeSingle()
+        if (data) { a = data as Row; break }
+      }
+    }
     if (!a) { const { data } = await admin.from('media_assets').select('url,width,height').eq('name', 'default_background').eq('status', 'active').limit(1).maybeSingle(); a = (data as Row | null) ?? null }
     return Response.json(a ? { url: a.url, width: a.width, height: a.height } : { url: null }, { headers: { 'Cache-Control': 'public, max-age=300, s-maxage=600' } })
   } catch { return Response.json({ url: null }) }
