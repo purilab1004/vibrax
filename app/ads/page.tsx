@@ -1,12 +1,12 @@
 'use client'
-// AJ AdPilot — AJ에게 홍보 맡기기: 캠페인(의뢰) 만들기 · 예산(코인) · 성과(노출/클릭/플레이/획득 코인/ROAS)
+// AJ AdPilot — AJ에게 홍보 맡기기: 캠페인(의뢰) 만들기 · 예산(크레딧) · 성과(노출/클릭/플레이/획득 크레딧/ROAS)
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
 import { titleFont } from '@/lib/fonts'
-import { GameCoinBadge } from '@/components/CurrencyBadge'
+import { PromptCreditBadge } from '@/components/CurrencyBadge'
 
 interface Campaign { id: string; game_id: string; title: string | null; creative: { headline?: string; hook?: string; badge?: string; by?: string; fun_score?: number | null }; budget_coins: number; spent_coins: number; cpc_coins: number; status: string; targeting: { genres?: string[]; countries?: string[] }; auto: boolean; impressions: number; clicks: number; plays: number; coins_earned: number; created_at: string; games: { id: string; title: string; thumbnail_url: string; genre: string } | null }
 
@@ -43,7 +43,7 @@ function AdsInner() {
     const t0 = setTimeout(() => supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { window.location.href = '/login?redirect=/ads'; return }
       setMe(user.id)
-      supabase.from('profiles').select('vcoin').eq('id', user.id).maybeSingle().then(({ data }) => setVcoin((data as { vcoin?: number } | null)?.vcoin ?? 0))
+      supabase.rpc('credit_balance' as never).then(({ data }) => setVcoin(typeof data === 'number' ? data : 0))
       const { data } = await supabase.from('games').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
       setMyGames((data as Game[] | null) ?? [])
       load()
@@ -82,7 +82,7 @@ function AdsInner() {
     const r = await fetch('/api/ads/campaigns', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, action, coins }) })
     const j = await r.json(); setBusy(false)
     if (!r.ok) { say(j.error ?? '실패'); return }
-    say(action === 'close' ? `종료했어요. 남은 ${j.refunded}코인을 돌려받았어요.` : action === 'fund' ? '예산을 충전했어요.' : '변경했어요.'); load()
+    say(action === 'close' ? `종료했어요. 남은 ${j.refunded}크레딧을 돌려받았어요.` : action === 'fund' ? '예산을 충전했어요.' : '변경했어요.'); load()
   }
   const totals = useMemo(() => (camps ?? []).reduce((a, c) => ({ spent: a.spent + c.spent_coins, clicks: a.clicks + c.clicks, plays: a.plays + c.plays, earned: a.earned + c.coins_earned, imps: a.imps + c.impressions }), { spent: 0, clicks: 0, plays: 0, earned: 0, imps: 0 }), [camps])
   const roas = totals.spent ? (totals.earned / totals.spent) : 0
@@ -93,10 +93,10 @@ function AdsInner() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className={`${titleFont.className} text-[32px] md:text-[40px] leading-tight text-[#241f17]`}>AJ에게 홍보를 맡기세요</h1>
-          <p className="mt-2 text-[13px] text-[#6b6152] max-w-2xl">AJ가 게임의 지표(재미 점수·체류·수익)로 광고 문구를 만들고, 홈·게임 피드에 <b>AJ PICK</b> 카드로 노출해요. 코인으로 예산을 걸면 클릭당 과금되고, 유입된 플레이가 벌어들인 코인까지 추적합니다. 내 게임뿐 아니라 다른 게임 홍보 <b>의뢰</b>도 가능해요.</p>
+          <p className="mt-2 text-[13px] text-[#6b6152] max-w-2xl">AJ가 게임의 지표(재미 점수·체류·수익)로 광고 문구를 만들고, 홈·게임 피드에 <b>AJ PICK</b> 카드로 노출해요. 크레딧으로 예산을 걸면 클릭당 과금되고, 유입된 플레이가 벌어들인 코인까지 추적합니다. 내 게임뿐 아니라 다른 게임 홍보 <b>의뢰</b>도 가능해요.</p>
         </div>
         <div className="flex items-center gap-3">
-          <GameCoinBadge amount={vcoin} />
+          <PromptCreditBadge amount={vcoin} />
           <button onClick={() => setOpen(true)} className="h-10 px-5 rounded-lg bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-[13px] font-bold shadow-[0_6px_18px_rgba(37,99,235,0.3)]">캠페인 만들기</button>
         </div>
       </div>
@@ -105,7 +105,7 @@ function AdsInner() {
 
       {/* 성과 요약 */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-5 gap-3">
-        {[['노출', totals.imps], ['클릭', totals.clicks], ['플레이 전환', totals.plays], ['사용 코인', totals.spent], ['ROAS', `${roas.toFixed(1)}×`]].map(([l, v]) => (
+        {[['노출', totals.imps], ['클릭', totals.clicks], ['플레이 전환', totals.plays], ['사용 크레딧', totals.spent], ['ROAS', `${roas.toFixed(1)}×`]].map(([l, v]) => (
           <div key={l as string} className="rounded-2xl border border-[#ebe4d6] bg-white p-4"><p className="text-[11.5px] text-[#857a68]">{l}</p><p className="text-[22px] font-extrabold text-[#241f17] tracking-tight">{typeof v === 'number' ? v.toLocaleString() : v}</p></div>
         ))}
       </div>
@@ -115,7 +115,7 @@ function AdsInner() {
         {camps === null ? <p className="text-[13px] text-[#9d9280]">불러오는 중…</p> : camps.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[#ddd3bf] bg-white/60 p-10 text-center">
             <p className="text-[15px] font-bold text-[#241f17]">아직 캠페인이 없어요</p>
-            <p className="text-[12.5px] text-[#857a68] mt-1">게임을 고르면 AJ가 문구·예산을 제안해요. 최소 10코인부터.</p>
+            <p className="text-[12.5px] text-[#857a68] mt-1">게임을 고르면 AJ가 문구·예산을 제안해요. 최소 10크레딧부터.</p>
             <button onClick={() => setOpen(true)} className="mt-4 h-10 px-5 rounded-lg bg-[#241f17] text-white text-[13px] font-bold">첫 캠페인 만들기</button>
           </div>
         ) : camps.map(c => {
@@ -133,18 +133,18 @@ function AdsInner() {
                   <div className="flex items-center gap-2 flex-wrap"><p className="text-[15px] font-bold text-[#241f17] truncate">{c.creative?.headline ?? c.title ?? c.games?.title}</p><span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${sc}`}>{sl}</span>{c.auto && <span className="rounded-full bg-[#2563eb]/10 text-[#2563eb] px-2 py-0.5 text-[11px] font-semibold">AJ 자동</span>}</div>
                   <p className="text-[12.5px] text-[#857a68] truncate">{c.games?.title} · {c.creative?.hook}</p>
                   <div className="mt-2 h-1.5 rounded-full bg-[#f1ece2] overflow-hidden"><div className="h-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4]" style={{ width: `${Math.min(100, c.budget_coins ? (c.spent_coins / c.budget_coins) * 100 : 0)}%` }} /></div>
-                  <p className="text-[11.5px] text-[#9d9280] mt-1">예산 {c.spent_coins}/{c.budget_coins} 코인 · 클릭당 {c.cpc_coins} · 남은 {left}</p>
+                  <p className="text-[11.5px] text-[#9d9280] mt-1">예산 {c.spent_coins}/{c.budget_coins} 크레딧 · 클릭당 {c.cpc_coins} · 남은 {left}</p>
                 </div>
               </div>
               <div className="mt-3 grid grid-cols-3 md:grid-cols-6 gap-2 text-center">
-                {[['노출', c.impressions], ['클릭', c.clicks], ['CTR', `${ctr.toFixed(1)}%`], ['플레이', c.plays], ['획득 코인', c.coins_earned], ['ROAS', c.spent_coins ? `${(c.coins_earned / c.spent_coins).toFixed(1)}×` : '-']].map(([l, v]) => (
+                {[['노출', c.impressions], ['클릭', c.clicks], ['CTR', `${ctr.toFixed(1)}%`], ['플레이', c.plays], ['획득 크레딧', c.coins_earned], ['ROAS', c.spent_coins ? `${(c.coins_earned / c.spent_coins).toFixed(1)}×` : '-']].map(([l, v]) => (
                   <div key={l as string} className="rounded-lg bg-[#faf8f3] py-2"><p className="text-[10.5px] text-[#9d9280]">{l}</p><p className="text-[14px] font-bold text-[#241f17]">{typeof v === 'number' ? v.toLocaleString() : v}</p></div>
                 ))}
               </div>
               <div className="mt-3 flex gap-2 flex-wrap">
                 {c.status === 'active' && <button disabled={busy} onClick={() => act(c.id, 'pause')} className="h-8 px-3 rounded-lg border border-[#ddd3bf] text-[12.5px] font-medium hover:border-[#2563eb]">일시정지</button>}
                 {c.status === 'paused' && <button disabled={busy} onClick={() => act(c.id, 'resume')} className="h-8 px-3 rounded-lg border border-[#ddd3bf] text-[12.5px] font-medium hover:border-[#2563eb]">재개</button>}
-                {c.status !== 'done' && <button disabled={busy} onClick={() => { const v = prompt('추가할 코인 수'); const n = Number(v); if (n > 0) act(c.id, 'fund', n) }} className="h-8 px-3 rounded-lg border border-[#ddd3bf] text-[12.5px] font-medium hover:border-[#2563eb]">예산 충전</button>}
+                {c.status !== 'done' && <button disabled={busy} onClick={() => { const v = prompt('추가할 크레딧 수'); const n = Number(v); if (n > 0) act(c.id, 'fund', n) }} className="h-8 px-3 rounded-lg border border-[#ddd3bf] text-[12.5px] font-medium hover:border-[#2563eb]">예산 충전</button>}
                 {c.status !== 'done' && <button disabled={busy} onClick={() => { if (confirm('캠페인을 종료하고 남은 예산을 돌려받을까요?')) act(c.id, 'close') }} className="h-8 px-3 rounded-lg border border-[#ddd3bf] text-[12.5px] font-medium text-[#857a68] hover:border-[#e11d48] hover:text-[#e11d48]">종료 · 환급</button>}
                 {c.games && <Link href={`/aj/${c.games.id}`} className="h-8 px-3 rounded-lg border border-[#ddd3bf] text-[12.5px] font-medium hover:border-[#2563eb] inline-flex items-center">AJ 대시보드</Link>}
               </div>
@@ -175,12 +175,12 @@ function AdsInner() {
               <div><label className={label}>한 줄 훅</label><input value={hook} onChange={e => setHook(e.target.value)} className={input} /></div>
               <div className="grid grid-cols-3 gap-3">
                 <div><label className={label}>배지</label><input value={badge} onChange={e => setBadge(e.target.value)} className={input} /></div>
-                <div><label className={label}>예산 (코인)</label><input type="number" min={10} value={budget} onChange={e => setBudget(Number(e.target.value))} className={input} /></div>
+                <div><label className={label}>예산 (크레딧)</label><input type="number" min={10} value={budget} onChange={e => setBudget(Number(e.target.value))} className={input} /></div>
                 <div><label className={label}>클릭당 (코인)</label><input type="number" min={1} value={cpc} onChange={e => setCpc(Number(e.target.value))} className={input} /></div>
               </div>
               <div><label className={label}>타게팅 장르 (선택)</label><div className="flex gap-1.5 flex-wrap">{GENRES.map(g => <button key={g} onClick={() => setGenres(genres.includes(g) ? genres.filter(x => x !== g) : [...genres, g])} className={`h-8 px-3 rounded-full text-[12px] font-semibold border ${genres.includes(g) ? 'border-[#2563eb] bg-[#2563eb]/10 text-[#2563eb]' : 'border-[#ddd3bf] text-[#6b6152]'}`}>{g.toUpperCase()}</button>)}</div></div>
               <label className="flex items-center gap-2 text-[13px] text-[#4a4337]"><input type="checkbox" checked={auto} onChange={e => setAuto(e.target.checked)} className="accent-[#2563eb]" />AJ 자동 운영 — 성과 보고 문구·입찰을 AJ가 조정 (리포트에 반영)</label>
-              <p className="text-[11.5px] text-[#9d9280]">예산은 지금 코인에서 차감돼요 (보유 {vcoin.toLocaleString()}). 클릭당 {cpc}코인이 소진되고, 예산이 다 쓰이면 자동 종료. 언제든 종료하면 남은 예산은 돌려받아요. 예상 클릭 약 {Math.floor(budget / Math.max(1, cpc))}회.</p>
+              <p className="text-[11.5px] text-[#9d9280]">예산은 프롬코인(크레딧)에서 차감돼요 (보유 {vcoin.toLocaleString()}). 클릭당 {cpc}크레딧이 소진되고, 예산이 다 쓰이면 자동 종료. 언제든 종료하면 남은 예산은 돌려받아요. 예상 클릭 약 {Math.floor(budget / Math.max(1, cpc))}회.</p>
               {err && <p className="text-[13px] text-red-500">{err}</p>}
               <button onClick={create} disabled={busy || !gameId || budget < 10 || budget > vcoin} className="w-full h-11 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-[14px] font-bold disabled:opacity-40">{budget > vcoin ? '코인이 부족해요' : `${budget}코인으로 캠페인 시작`}</button>
             </div>

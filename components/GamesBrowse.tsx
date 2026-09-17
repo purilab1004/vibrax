@@ -49,9 +49,9 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login?redirect=/games'); return }
     setCoinState('drop')
-    const { error } = await supabase.rpc('spend_vcoin', { p_game_id: game.id } as never)
+    const { error } = await supabase.rpc('spend_credits_for_game', { p_game_id: game.id } as never)
     if (error) {
-      if (error.message.includes('insufficient_vcoin')) {
+      if (/insufficient_vcoin|INSUFFICIENT_CREDITS/.test(error.message)) {
         alert(T.games.insufficientCoin)
         setCoinState('idle')
         return
@@ -130,7 +130,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
                     코인 투입 중...
                   </>
                 ) : (
-                  <>🪙 × {game.coin_cost ?? 1} 코인 넣기</>
+                  <>✦ × {game.coin_cost ?? 1} 코인 넣기</>
                 )}
               </button>
             ) : (
@@ -287,7 +287,7 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
   return (
     <div>
       {items.length === 0 && (
-        <div className="py-24 text-center text-[#857a68] text-sm">{filter === 'video' ? '지금 방송 중인 영상이 없어요.' : filter === 'reward' ? '지금 진행 중인 코인 잭팟이 없어요. 곧 다시 열려요!' : '표시할 게임이 없어요.'}</div>
+        <div className="py-24 text-center text-[#857a68] text-sm">{filter === 'video' ? '지금 방송 중인 영상이 없어요.' : filter === 'reward' ? '지금 진행 중인 크레딧 잭팟이 없어요. 곧 다시 열려요!' : '표시할 게임이 없어요.'}</div>
       )}
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">

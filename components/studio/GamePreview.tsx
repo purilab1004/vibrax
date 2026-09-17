@@ -23,6 +23,8 @@ const VIEWPORT_ICON: Record<Viewport, React.ReactNode> = {
   mobile: <svg viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="7" y="2.5" width="10" height="19" rx="2" /><path d="M11 18.5h2" /></svg>,
 }
 
+import { useIsNativeApp } from '@/lib/isNativeApp'
+
 export default function GamePreview({
   html, versions, currentVersionId, onSelectVersion, onPublish, busy, onStudy, ajHref, netId, published, liveVersionId, onUpdateLive,
 }: {
@@ -40,6 +42,9 @@ export default function GamePreview({
   ajHref?: string | null
 }) {
   const [frameKey, setFrameKey] = useState(0)
+  // 네이티브 앱 웹뷰는 about:srcdoc 프레임을 막는다(검정 화면) → 저장된 버전은 같은 출처 URL 로 띄운다
+  const isApp = useIsNativeApp()
+  const frameSrc = isApp && currentVersionId ? `/api/studio/preview/${currentVersionId}?k=${frameKey}` : null
   useNetBridge(!!html && !!netId, () => null, netId ?? '')
   const [viewport, setViewport] = useState<Viewport>('pc')
   const [landscape, setLandscape] = useState(false)
@@ -155,12 +160,12 @@ published ? (
           dev && box.w === 0 ? null : dev ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className={`${dev.radius} border border-[#ddd3bf] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] bg-black shrink-0`} style={{ width: fw, height: fh, transform: `scale(${scale})`, transformOrigin: 'center', transition: 'width .25s ease, height .25s ease' }}>
-                <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" srcDoc={html} className="w-full h-full border-0" title="game preview" style={{ width: fw, height: fh }} />
+                <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" {...(frameSrc ? { src: frameSrc } : { srcDoc: html })} className="w-full h-full border-0" title="game preview" style={{ width: fw, height: fh }} />
               </div>
               <span className="absolute bottom-2 right-3 text-[10.5px] text-white/50 tabular-nums">{fw}×{fh}{scale < 1 ? ` · ${Math.round(scale * 100)}%` : ''}</span>
             </div>
           ) : (
-            <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" srcDoc={html} className="absolute inset-0 w-full h-full border-0" title="game preview" />
+            <iframe key={frameKey} sandbox="allow-scripts allow-pointer-lock" {...(frameSrc ? { src: frameSrc } : { srcDoc: html })} className="absolute inset-0 w-full h-full border-0" title="game preview" />
           )
         ) : (
           <div className="w-full h-full flex items-center justify-center">

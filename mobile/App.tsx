@@ -153,7 +153,7 @@ function Shell() {
           domStorageEnabled
           javaScriptEnabled
           allowsBackForwardNavigationGestures
-          originWhitelist={['https://*', 'vibrexcup://*']}
+          originWhitelist={['https://*', 'about:*', 'vibrexcup://*']}
           setSupportMultipleWindows={false}
           mediaCapturePermissionGrantType="grant"
           overScrollMode="never"

@@ -140,7 +140,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ id: s
                 className="mt-4 flex items-center justify-center gap-2 h-12 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white font-bold text-[15px] shadow-[0_6px_20px_rgba(37,99,235,0.35)] hover:shadow-[0_8px_26px_rgba(37,99,235,0.45)] transition-shadow"
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden><path d="M8 5v14l11-7-11-7Z" /></svg>
-                지금 플레이 · 🪙 {linkedGame.coin_cost ?? 1}
+                지금 플레이 · ✦ {linkedGame.coin_cost ?? 1}
               </Link>
             </div>
           </div>

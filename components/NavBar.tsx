@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { useLang } from '@/lib/i18n/context'
 import type { Lang } from '@/lib/i18n/translations'
-import { GameCoinBadge } from '@/components/CurrencyBadge'
+import { PromptCreditBadge } from '@/components/CurrencyBadge'
 import LogoMark from '@/components/LogoMark'
 
 export default function NavBar() {
@@ -16,7 +16,7 @@ export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [scrolled, setScrolled] = useState(false)
-  const [vcoin, setVcoin] = useState<number | null>(null)
+  const [credits, setCredits] = useState<number | null>(null) // 헤더 잔액 = 프롬코인(스튜디오와 같은 실제 크레딧)
   const [hideMobile, setHideMobile] = useState(false)
   const [pastHero, setPastHero] = useState(false) // 홈 — 프롬프트(히어로) 섹션을 지나면 /games 헤더처럼 검색바
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -64,19 +64,15 @@ export default function NavBar() {
   // 관리자 링크는 user 블록 안에서만 렌더되므로 로그아웃 시 초기화가 필요 없다
   useEffect(() => {
     if (!user) return
-    supabase.from('profiles').select('role, vcoin').eq('id', user.id).maybeSingle()
-      .then(({ data, error }) => {
-        if (error) {
-          // vcoin 컬럼 마이그레이션 전 — role만 폴백 조회
-          supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-            .then(({ data: d2 }) => setIsAdmin((d2 as { role?: string } | null)?.role === 'admin'))
-          return
-        }
-        const p = data as { role?: string; vcoin?: number } | null
-        setIsAdmin(p?.role === 'admin')
-        setVcoin(p?.vcoin ?? null)
-      })
-  }, [user])
+    supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+      .then(({ data }) => setIsAdmin((data as { role?: string } | null)?.role === 'admin'))
+    const loadCredits = () => supabase.rpc('credit_balance' as never).then(({ data }) => setCredits(typeof data === 'number' ? data : 0))
+    loadCredits()
+    // 코인 넣기·잭팟 참여·생성 뒤 잔액 갱신
+    const onChange = (e: Event) => { const b = (e as CustomEvent<{ balance?: number }>).detail?.balance; if (typeof b === 'number') setCredits(b); else loadCredits() }
+    window.addEventListener('credits:changed', onChange)
+    return () => window.removeEventListener('credits:changed', onChange)
+  }, [user, supabase])
 
   const handleSignOut = async () => {
     setMenuOpen(false)
@@ -241,7 +237,7 @@ export default function NavBar() {
             <div className="flex items-center justify-end gap-5">
               {user ? (
                 <>
-                  {vcoin !== null && <GameCoinBadge amount={vcoin} size="sm" label={false} />}
+                  {credits !== null && <Link href="/credits" title="프롬코인 — 게임 플레이·잭팟·스튜디오 생성에 쓰는 크레딧"><PromptCreditBadge amount={credits} size="sm" label={false} /></Link>}
                   {/* 계정 드롭다운 — 등록/마이페이지/관리자/로그아웃을 하나로 정리 */}
                   <div className="relative">
                     <button

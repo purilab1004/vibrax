@@ -130,7 +130,7 @@ export default function LiveCard({ live, game: given, layout }: Props) {
               disabled={coin === 'drop'}
               className={`flex-1 h-[52px] ${titleFont.className} text-[21px] rounded-full bg-gradient-to-b from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] shadow-[0_5px_0_#d18f00,0_9px_16px_rgba(0,0,0,0.35)] active:translate-y-1 active:shadow-[0_1px_0_#d18f00] transition-all flex items-center justify-center gap-2 disabled:opacity-90`}
             >
-              {coin === 'drop' ? '코인 투입 중...' : <>🪙 × {game?.coin_cost ?? 1} 코인 넣기</>}
+              {coin === 'drop' ? '코인 투입 중...' : <>✦ × {game?.coin_cost ?? 1} 코인 넣기</>}
             </button>
           ) : (
             <button

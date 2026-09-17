@@ -124,7 +124,7 @@ export default function TransportBar({ gameId, active }: { gameId: string; activ
                 <img src={c.thumbnail_url} alt={c.title} className="w-16 h-10 rounded-md object-cover shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-white text-[11.5px] font-semibold truncate">{c.title}</p>
-                  <p className="text-white/55 text-[10px] truncate">{i === 0 ? '추천 · ' : ''}{c.reason}{c.coin_cost > 1 ? ` · 🪙${c.coin_cost}` : ''}</p>
+                  <p className="text-white/55 text-[10px] truncate">{i === 0 ? '추천 · ' : ''}{c.reason}{c.coin_cost > 1 ? ` · ✦${c.coin_cost}` : ''}</p>
                 </div>
                 <svg viewBox="0 0 24 24" className="w-4 h-4 text-white/60 shrink-0 mr-1" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
                 {going === c.id && <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-[12px]">이동 중…</span>}

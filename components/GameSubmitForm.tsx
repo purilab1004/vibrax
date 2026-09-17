@@ -254,7 +254,7 @@ export default function GameSubmitForm({ userId }: { userId: string }) {
 
       <div>
         <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">
-          🪙 플레이 비용 (VCOIN)
+          ✦ 플레이 비용 (크레딧)
         </label>
         <input
           type="number"

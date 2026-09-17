@@ -53,9 +53,9 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       // 로컬 세션으로 로그인 판정(네트워크 왕복 없음) → 즉시 반응
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) { setCoinState('idle'); router.push('/login?redirect=/'); return }
-      const { error } = await supabase.rpc('spend_vcoin', { p_game_id: game.id } as never)
+      const { error } = await supabase.rpc('spend_credits_for_game', { p_game_id: game.id } as never)
       if (error) {
-        if (error.message.includes('insufficient_vcoin')) {
+        if (/insufficient_vcoin|INSUFFICIENT_CREDITS/.test(error.message)) {
           alert(T.games.insufficientCoin)
           setCoinState('idle')
           return
@@ -147,7 +147,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
                   코인 투입 중...
                 </>
               ) : (
-                <>🪙 × {game.coin_cost ?? 1} 코인 넣기</>
+                <>✦ × {game.coin_cost ?? 1} 코인 넣기</>
               )}
             </button>
           ) : (

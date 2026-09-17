@@ -51,7 +51,7 @@ export default function AdminJackpotsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="코인 잭팟" desc="회원이 코인을 내고 참여하는 랜덤 뽑기. 마감 후 추첨하면 당첨 1명이 모인 코인을 모두 받아요. 진행 중인 잭팟은 쇼츠 피드에 게임 사이로 나옵니다." />
+      <PageHeader title="크레딧 잭팟" desc="회원이 프롬코인(크레딧)을 내고 참여하는 랜덤 뽑기. 마감 후 추첨하면 당첨 1명이 모인 크레딧을 모두 받아요. 진행 중인 잭팟은 쇼츠 피드에 게임 사이로 나옵니다." />
       {missing && <Card className="p-4 border-[#f59e0b] bg-[#fffbeb]"><p className="text-[13px] text-[#92400e]">테이블이 아직 없어요. Supabase SQL 편집기에서 <code>db/migrations/2026-09-17-jackpot-library.sql</code> 을 실행해 주세요.</p></Card>}
       {msg && <p className="text-[13px] font-semibold text-[#2563eb]">{msg}</p>}
 
@@ -61,18 +61,18 @@ export default function AdminJackpotsPage() {
           <div><label className={label}>제목</label><input className={input} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="예: 이번 주 코인 잭팟" /></div>
           <div><label className={label}>설명</label><input className={input} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="예: 당첨 코인으로 에어팟 상품 교환 가능" /></div>
           <div className="grid grid-cols-2 gap-2">
-            <div><label className={label}>참가비 (코인/1장)</label><input className={input} type="number" min={1} value={form.entry_cost} onChange={(e) => setForm({ ...form, entry_cost: Number(e.target.value) })} /></div>
+            <div><label className={label}>참가비 (크레딧/1장)</label><input className={input} type="number" min={1} value={form.entry_cost} onChange={(e) => setForm({ ...form, entry_cost: Number(e.target.value) })} /></div>
             <div><label className={label}>마감 시각</label><input className={input} type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} /></div>
           </div>
           <div><label className={label}>대표 이미지 (선택)</label><input type="file" accept="image/*" onChange={(e) => setForm({ ...form, image: e.target.files?.[0] ?? null })} className="text-[12px]" /></div>
           <button onClick={create} disabled={busy} className={btn.primary}>잭팟 열기</button>
         </Card>
         <Card className="p-5 space-y-3">
-          <h3 className="text-[14px] font-bold">코인 상품 등록 <span className="text-[11px] font-normal text-[#6b7280]">— 코인으로 살 수 있는 실제 상품 (잭팟 카드에 표시)</span></h3>
+          <h3 className="text-[14px] font-bold">크레딧 상품 등록 <span className="text-[11px] font-normal text-[#6b7280]">— 크레딧으로 살 수 있는 실제 상품 (잭팟 카드에 표시)</span></h3>
           <div><label className={label}>상품명</label><input className={input} value={pform.title} onChange={(e) => setPform({ ...pform, title: e.target.value })} placeholder="예: 에어팟 프로" /></div>
           <div><label className={label}>설명</label><input className={input} value={pform.description} onChange={(e) => setPform({ ...pform, description: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-2">
-            <div><label className={label}>코인 가격</label><input className={input} type="number" min={0} value={pform.coin_price} onChange={(e) => setPform({ ...pform, coin_price: Number(e.target.value) })} /></div>
+            <div><label className={label}>크레딧 가격</label><input className={input} type="number" min={0} value={pform.coin_price} onChange={(e) => setPform({ ...pform, coin_price: Number(e.target.value) })} /></div>
             <div><label className={label}>이미지</label><input type="file" accept="image/*" onChange={(e) => setPform({ ...pform, image: e.target.files?.[0] ?? null })} className="text-[12px] mt-1" /></div>
           </div>
           <button onClick={addProduct} disabled={busy} className={btn.primary}>상품 등록</button>
@@ -84,7 +84,7 @@ export default function AdminJackpotsPage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.image_url} alt={p.title} className="w-full aspect-square object-cover rounded" />
                   ) : <div className="w-full aspect-square rounded bg-[#f3f5f8] flex items-center justify-center">🎁</div>}
-                  <p className="text-[11px] font-semibold truncate mt-1">{p.title}</p><p className="text-[10.5px] text-[#6b7280]">🪙 {p.coin_price.toLocaleString()}</p>
+                  <p className="text-[11px] font-semibold truncate mt-1">{p.title}</p><p className="text-[10.5px] text-[#6b7280]">✦ {p.coin_price.toLocaleString()}</p>
                   <button onClick={() => delProduct(p.id)} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-[10px]">✕</button>
                 </div>
               ))}
@@ -104,7 +104,7 @@ export default function AdminJackpotsPage() {
                     <td className={td}><div className="flex items-center gap-2">{j.image_url && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={j.image_url} alt="" className="w-8 h-8 rounded object-cover" />)}<div><p className="font-semibold">{j.title}</p><p className="text-[11px] text-[#6b7280] truncate max-w-[260px]">{j.description}</p></div></div></td>
-                    <td className={td}>🪙 {j.entry_cost}</td>
+                    <td className={td}>✦ {j.entry_cost}</td>
                     <td className={td}><b>{j.pool.toLocaleString()}</b> / {j.entries}명</td>
                     <td className={td}>{fmt(j.ends_at)}</td>
                     <td className={td}><Badge color={j.status === 'open' ? '#16a34a' : j.status === 'drawn' ? '#7c3aed' : '#6b7280'}>{j.status === 'open' ? (new Date(j.ends_at).getTime() < nowTs ? '마감(추첨 대기)' : '진행 중') : j.status === 'drawn' ? '추첨 완료' : '취소'}</Badge></td>

@@ -7,8 +7,8 @@ export async function GET() {
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 })
   const { data, error } = await supabase.from('ad_campaigns').select('*, games(id,title,thumbnail_url,genre)').eq('advertiser_id', user.id).order('created_at', { ascending: false })
   if (error) return Response.json({ error: error.message, missing: /does not exist|schema cache/i.test(error.message) }, { status: 500 })
-  const { data: prof } = await supabase.from('profiles').select('vcoin').eq('id', user.id).maybeSingle()
-  return Response.json({ campaigns: data ?? [], vcoin: (prof as { vcoin?: number } | null)?.vcoin ?? 0 })
+  const { data: bal } = await supabase.rpc('credit_balance' as never)
+  return Response.json({ campaigns: data ?? [], vcoin: typeof bal === 'number' ? bal : 0 })
 }
 
 export async function POST(req: Request) {
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   if (!b?.gameId || !b.budget) return Response.json({ error: 'bad request' }, { status: 400 })
   const { data, error } = await supabase.rpc('create_ad_campaign', { p_game_id: b.gameId, p_budget: Math.floor(b.budget), p_cpc: Math.max(1, Math.floor(b.cpc ?? 1)), p_title: b.title ?? null, p_creative: b.creative ?? {}, p_targeting: b.targeting ?? {}, p_auto: !!b.auto } as never)
   if (error) {
-    const msg = error.message.includes('insufficient_vcoin') ? '코인이 부족해요.' : error.message.includes('min_budget') ? '최소 예산은 10코인이에요.' : error.message
+    const msg = /insufficient_vcoin|INSUFFICIENT_CREDITS/.test(error.message) ? '크레딧이 부족해요.' : error.message.includes('min_budget') ? '최소 예산은 10크레딧이에요.' : error.message
     return Response.json({ error: msg, missing: /does not exist|schema cache/i.test(error.message) }, { status: 400 })
   }
   return Response.json({ id: data })
@@ -33,7 +33,7 @@ export async function PATCH(req: Request) {
   if (!b?.id || !b.action) return Response.json({ error: 'bad request' }, { status: 400 })
   if (b.action === 'fund') {
     const { data, error } = await supabase.rpc('fund_ad_campaign', { p_campaign_id: b.id, p_coins: Math.floor(b.coins ?? 0) } as never)
-    if (error) return Response.json({ error: error.message.includes('insufficient') ? '코인이 부족해요.' : error.message }, { status: 400 })
+    if (error) return Response.json({ error: error.message.includes('insufficient') || error.message.includes('INSUFFICIENT') ? '크레딧이 부족해요.' : error.message }, { status: 400 })
     return Response.json({ budget: data })
   }
   if (b.action === 'close') {

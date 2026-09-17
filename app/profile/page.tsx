@@ -16,7 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 import GameEditModal from '@/components/GameEditModal'
 import type { User } from '@supabase/supabase-js'
 import { COUNTRIES } from '@/lib/countries'
-import { GameCoinBadge, PromptCreditBadge } from '@/components/CurrencyBadge'
+import { PromptCreditBadge } from '@/components/CurrencyBadge'
 import type { Game, Genre } from '@/lib/supabase/types'
 import { loadAvatarConfig, saveAvatarConfig, uploadPreview } from '@/lib/jeumto/storage'
 import { liveInfoOf } from '@/lib/broadcast'
@@ -241,7 +241,6 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <a href="/credits" className="hover:opacity-80 transition-opacity"><PromptCreditBadge amount={creditBalance} /></a>
-            <GameCoinBadge amount={vcoinBalance} />
             <Link href="/studio" className="inline-flex items-center h-9 px-4 rounded-lg bg-white text-[#171b26] text-[13px] font-semibold hover:bg-[#e8f1ff] transition-colors">게임 만들기</Link>
           </div>
         </div>

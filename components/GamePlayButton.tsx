@@ -207,9 +207,9 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     if (hasCoinTicket(game.id)) {
       try { sessionStorage.removeItem(ticketKeyOf(game.id)) } catch {}
     } else {
-      const { error: coinError } = await supabase.rpc('spend_vcoin', { p_game_id: game.id } as never)
+      const { error: coinError } = await supabase.rpc('spend_credits_for_game', { p_game_id: game.id } as never)
       if (coinError) {
-        if (coinError.message.includes('insufficient_vcoin')) {
+        if (/insufficient_vcoin|INSUFFICIENT_CREDITS/.test(coinError.message)) {
           alert(T.games.insufficientCoin)
           return
         }
@@ -250,8 +250,8 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       const pay = (async () => {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session?.user) return true
-        const { error } = await supabase.rpc('spend_vcoin', { p_game_id: c.id } as never)
-        return !(error?.message.includes('insufficient_vcoin'))
+        const { error } = await supabase.rpc('spend_credits_for_game', { p_game_id: c.id } as never)
+        return !(/insufficient_vcoin|INSUFFICIENT_CREDITS/.test(error?.message ?? ''))
       })()
       const [ok] = await Promise.all([pay, sleep(560)])
       if (!ok) { setWarp(null); setPending(null); alert(T.games.insufficientCoin); return }

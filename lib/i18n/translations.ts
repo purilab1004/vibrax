@@ -53,7 +53,7 @@ export const t = {
       topCreators: 'TOP AI AVATAR',
       inspiredBy: '다음 플랫폼의 게임과 크리에이터에게서 영감을 받았습니다',
       beNextHero: '다음 게임의 주인공이 되세요',
-      insufficientCoin: '🪙 vcoin이 부족해요! 코인이 있어야 플레이할 수 있어요.',
+      insufficientCoin: '✦ 프롬코인이 부족해요! 크레딧을 충전하면 플레이할 수 있어요.',
       teasers: [
         '3판 안에 깰 수 있을까?',
         '지금 1등, 이길 자신 있어?',
@@ -380,7 +380,7 @@ export const t = {
       topCreators: 'TOP AI AVATAR',
       inspiredBy: 'Inspired by games and creators from these platforms',
       beNextHero: 'Be the hero of the next game',
-      insufficientCoin: '🪙 Not enough vcoin! You need coins to play.',
+      insufficientCoin: '✦ Not enough credits! Top up credits to play.',
       teasers: [
         'Can you beat it in 3 tries?',
         'Think you can top #1?',
