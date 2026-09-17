@@ -318,7 +318,7 @@ export default function NavBar() {
         }`}
       >
         {/* Top bar */}
-        <div className="flex items-center justify-between px-6 h-14 border-b border-[#ebe4d6] shrink-0">
+        <div className="app-top-pad flex items-center justify-between px-6 h-14 border-b border-[#ebe4d6] shrink-0">
           <Link
             href="/"
             onClick={(e) => { setMenuOpen(false); if (pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) } }}

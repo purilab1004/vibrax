@@ -283,15 +283,13 @@ body {
 
 /* 히어로 아바타 마퀴 — GPU 가속 무한 루프, 호버 시 일시정지, 양끝 마스크 페이드 */
 .hero-marquee {
-  /* mask-image 는 움직이는 트랙 전체를 매 프레임 다시 합성해 버벅였다 → 양끝은 배경색 그라데이션 오버레이로 대체(합성 비용 거의 없음) */
-  contain: paint;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent);
+  /* 마스크가 있는 컨테이너를 GPU 레이어로 고정해 트랙이 움직여도 매 프레임 다시 그리지 않게 */
   transform: translateZ(0);
+  contain: paint;
+  isolation: isolate;
 }
-.hero-marquee::before, .hero-marquee::after {
-  content: ''; position: absolute; top: 0; bottom: 0; width: 18%; pointer-events: none; z-index: 1;
-}
-.hero-marquee::before { left: 0; background: linear-gradient(to right, var(--marquee-bg, #fff), transparent); }
-.hero-marquee::after { right: 0; background: linear-gradient(to left, var(--marquee-bg, #fff), transparent); }
 .hero-marquee-track {
   animation: heroMarquee 28s linear infinite;
   will-change: transform;
