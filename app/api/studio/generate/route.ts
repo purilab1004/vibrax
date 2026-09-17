@@ -37,7 +37,9 @@ export async function POST(req: Request) {
   } catch {
     return new Response('bad request', { status: 400 })
   }
-  const { projectId, prompt, images: rawImages, sounds: rawSounds, variantSlug: rawVariantSlug, assetIds: rawAssetIds } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown; sounds?: unknown; variantSlug?: unknown; assetIds?: unknown }
+  const { projectId, prompt, images: rawImages, sounds: rawSounds, variantSlug: rawVariantSlug, assetIds: rawAssetIds, engine: rawEngine } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown; sounds?: unknown; variantSlug?: unknown; assetIds?: unknown; engine?: unknown }
+  // 관리자 엔진 선택 — max-opus / max-fable(로컬 Max 워커), api(API 토큰). 일반 회원은 무시
+  const engine = rawEngine === 'api' || rawEngine === 'max-fable' || rawEngine === 'max-opus' ? rawEngine : 'max-opus'
   // 미디어 라이브러리 에셋 (스튜디오에서 고른 것) — 최대 10개
   const assetIds = (Array.isArray(rawAssetIds) ? rawAssetIds : []).filter((x): x is string => typeof x === 'string' && /^[0-9a-f-]{36}$/i.test(x)).slice(0, 10)
   const variantSlug = typeof rawVariantSlug === 'string' ? rawVariantSlug : null
@@ -314,9 +316,10 @@ export async function POST(req: Request) {
   const genMessages = buildMessages({ prompt: effectivePrompt, currentHtml: modelBase, history, images })
   let stream: MsgStream | null = null
   // 관리자 + MAX_WORKER=1: 로컬 Claude Code(Max 구독) 워커로 생성 (이미지 입력은 API). 워커가 없으면 API 로 폴백.
-  const useMax = isAdminUser && process.env.MAX_WORKER === '1'   // 이미지 첨부도 워커가 임시 파일로 넘겨 처리
+  const useMax = isAdminUser && process.env.MAX_WORKER === '1' && engine !== 'api'   // 이미지 첨부도 워커가 임시 파일로 넘겨 처리. 관리자가 'API 토큰'을 고르면 워커를 건너뛴다
+  const maxModel = engine === 'max-fable' ? 'claude-fable-5-1' : 'claude-opus-5'
   if (useMax) {
-    try { stream = await tryMaxJob(createAdminClient(), { projectId, userId: user.id, model: chosenModel, system: systemPrompt, messages: genMessages }) } catch (e) { console.error('[studio/generate] max job', e); stream = null }
+    try { stream = await tryMaxJob(createAdminClient(), { projectId, userId: user.id, model: maxModel, system: systemPrompt, messages: genMessages }) } catch (e) { console.error('[studio/generate] max job', e); stream = null }
   }
   if (!stream) try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -375,7 +378,7 @@ export async function POST(req: Request) {
             console.warn('[studio/generate] patch apply failed', applied?.failed ?? 'no base', invalid ?? '', '→ full regeneration')
             const retryMessages = [...(genMessages as { role: 'user' | 'assistant'; content: unknown }[]), { role: 'assistant', content: raw.slice(0, 4000) }, { role: 'user', content: '위 패치 중 원문이 일치하지 않거나 적용 결과가 깨지는 것이 있어 실패했다. 이번엔 패치 대신 요청을 반영한 "전체 완성본" HTML 을 <game>…</game> 으로 출력해라.' }]
             let retry: MsgStream | null = null
-            if (useMax) { try { retry = await tryMaxJob(createAdminClient(), { projectId, userId: user.id, model: chosenModel, system: systemPrompt, messages: retryMessages }) } catch { retry = null } }
+            if (useMax) { try { retry = await tryMaxJob(createAdminClient(), { projectId, userId: user.id, model: maxModel, system: systemPrompt, messages: retryMessages }) } catch { retry = null } }
             if (!retry) {
               const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
               retry = client.messages.stream({
@@ -472,6 +475,9 @@ export async function POST(req: Request) {
       } catch (err) {
         if (!versionPersisted) {
           await refund()
+          // Max 워커 오류(한도·추가 사용량 소진 등)는 사유를 그대로 보여 준다
+          const m = err instanceof Error ? err.message : ''
+          if (m.startsWith('max worker:')) controller.enqueue(encoder.encode(`\n[[GEN_MSG]]${m.replace(/^max worker:\s*/, '')}[[/GEN_MSG]]`))
           controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
         } else {
           console.error('[studio/generate] error after version persisted', err)

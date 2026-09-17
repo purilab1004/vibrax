@@ -7,9 +7,13 @@ import fs from 'node:fs'
 
 for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', 'utf8').split('\n') : []) { const m = line.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^"|"$/g, '') }
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
-// 임시(2026-09-17): API 크레딧이 없어 관리자 생성은 전부 Opus 5(Max 구독)로. 되돌리려면 MAX_WORKER_MODEL 을 비우고 아래 기본값을 null 로
-const FORCE_MODEL = process.env.MAX_WORKER_MODEL ?? 'claude-opus-5'
-const cliModel = (m: string | null) => FORCE_MODEL || (/opus/i.test(m ?? '') ? 'opus' : /haiku/i.test(m ?? '') ? 'haiku' : 'sonnet')
+// 모델 — 스튜디오에서 관리자가 고른 엔진(Opus 5 / Fable 5.1)이 job.model 로 온다. MAX_WORKER_MODEL 이 있으면 그것으로 강제
+const FORCE_MODEL = process.env.MAX_WORKER_MODEL || ''
+const cliModel = (m: string | null) => FORCE_MODEL || (/^claude-/.test(m ?? '') ? m! : /opus/i.test(m ?? '') ? 'opus' : /haiku/i.test(m ?? '') ? 'haiku' : 'sonnet')
+// Max 구독 사용량(5시간·7일 창) — CLI 의 rate_limit_event 를 받아 site_settings 에 저장(스튜디오 엔진 선택기에 표시)
+async function saveUsage(info: Record<string, unknown>, model: string, lastError: string | null) {
+  try { await sb.from('site_settings').upsert({ key: 'max_usage', value: { ...info, model, lastError, at: new Date().toISOString() }, updated_at: new Date().toISOString() } as never) } catch { /* noop */ }
+}
 // claude CLI 가 .env.local 의 ANTHROPIC_API_KEY(크레딧 소진)를 쓰지 않고 claude.ai(Max) 로그인으로 돌도록 키를 뺀 환경
 const cliEnv = (() => { const e: NodeJS.ProcessEnv = { ...process.env, CLAUDECODE: '' }; delete e.ANTHROPIC_API_KEY; delete e.ANTHROPIC_AUTH_TOKEN; return e })()
 
@@ -44,13 +48,15 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   const args = ['-p', '--tools', files.length ? 'Read' : '', '--model', cliModel(job.model), '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--no-session-persistence', '--effort', 'medium', '--system-prompt', job.system, ...(files.length ? ['--add-dir', tmpDir] : [])]
   const child = spawn('claude', args, { env: cliEnv, stdio: ['pipe', 'pipe', 'pipe'] })
   child.stdin.write(input); child.stdin.end()
-  let rest = '', err = ''
+  let rest = '', err = '', apiError: string | null = null
   child.stdout.on('data', (d: Buffer) => {
     rest += d.toString('utf8'); const lines = rest.split('\n'); rest = lines.pop() ?? ''
     for (const line of lines) {
       if (!line.trim()) continue
       try {
-        const ev = JSON.parse(line) as { type?: string; event?: { type?: string; delta?: { type?: string; text?: string } }; result?: string; subtype?: string }
+        const ev = JSON.parse(line) as { type?: string; event?: { type?: string; delta?: { type?: string; text?: string } }; result?: string; subtype?: string; rate_limit_info?: Record<string, unknown>; api_error?: string; error?: string }
+        if (ev.type === 'rate_limit_event' && ev.rate_limit_info) void saveUsage(ev.rate_limit_info, cliModel(job.model), null)
+        if (ev.type === 'assistant' && ev.api_error) apiError = ev.api_error
         if (ev.type === 'stream_event' && ev.event?.type === 'content_block_delta' && ev.event.delta?.type === 'text_delta') { buf += ev.event.delta.text ?? ''; dirty = true }
         else if (ev.type === 'result' && typeof ev.result === 'string' && !buf) { buf = ev.result; dirty = true }
       } catch { /* 비 JSON 줄 무시 */ }
@@ -66,6 +72,13 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   if (cancelled) { console.log('  cancelled'); try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { /* noop */ } return }
   await flush(true)
   try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { /* noop */ }
+  // Max 구독 한도·추가 사용량 소진(예: Fable 5.1 은 추가 사용량 필요) — 알기 쉬운 오류로
+  if (apiError && buf.length < 400) {
+    const msg = apiError === 'model_requires_usage_credits' ? `${cliModel(job.model)} 은(는) Max 추가 사용량이 필요한데 소진됐어요 — 엔진을 Opus 5 로 바꾸거나 초기화 후 다시 시도하세요` : apiError === 'rate_limit' ? 'Max 구독 사용량 한도에 걸렸어요 — 초기화 시간 이후 다시 시도하거나 API 토큰 엔진을 쓰세요' : `Max 오류: ${apiError}`
+    await sb.from('studio_jobs').update({ status: 'error', error: msg, finished_at: new Date().toISOString() }).eq('id', job.id)
+    void sb.from('site_settings').select('value').eq('key', 'max_usage').maybeSingle().then(({ data }) => { const v = (data as { value?: Record<string, unknown> } | null)?.value; if (v) void saveUsage(v, cliModel(job.model), msg) })
+    console.log('  api error', apiError); try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { /* noop */ } return
+  }
   // CLI 가 인증·크레딧 오류를 '결과 텍스트'로 돌려주면 게임 코드로 저장하지 말고 오류로 — 서버가 API 폴백/안내
   if (buf.length < 300 && /credit balance is too low|invalid api key|not logged in|please run \/login|authentication/i.test(buf)) { await sb.from('studio_jobs').update({ status: 'error', error: buf.slice(0, 500), finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  auth/credit error', buf); return }
   if (code !== 0 && !buf) { await sb.from('studio_jobs').update({ status: 'error', error: err.slice(0, 500) || `exit ${code}`, finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  error', err.slice(0, 200)); return }
@@ -73,7 +86,7 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   console.log('  done', buf.length, 'chars')
 }
 
-console.log(`max-worker: 대기 중 (모델 ${FORCE_MODEL || '요청값'}, Max 로그인 사용 · Ctrl+C 로 종료)`)
+console.log(`max-worker: 대기 중 (모델 ${FORCE_MODEL || '스튜디오 선택값'}, Max 로그인 사용 · Ctrl+C 로 종료)`)
 for (;;) {
   try {
     const { data } = await sb.from('studio_jobs').select('id,model,system,messages').eq('status', 'pending').order('created_at').limit(1)

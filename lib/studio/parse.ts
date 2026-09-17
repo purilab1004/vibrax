@@ -20,7 +20,7 @@ export interface ParsedGeneration {
 }
 
 export function parseGeneration(text: string): ParsedGeneration {
-  const clean = text.split(GEN_ERROR_MARKER).join('').split(OFF_TOPIC_MARKER).join('').split(ANSWER_MARKER).join('').replace(/<offtopic\/?>/g, '')
+  const clean = text.replace(/\n\[\[GEN_MSG\]\][\s\S]*?\[\[\/GEN_MSG\]\]/g, '').split(GEN_ERROR_MARKER).join('').split(OFF_TOPIC_MARKER).join('').split(ANSWER_MARKER).join('').replace(/<offtopic\/?>/g, '')
   const open = clean.indexOf('<game>')
   if (open === -1) {
     return { description: clean.trim(), html: null, htmlBytes: 0, generating: false }

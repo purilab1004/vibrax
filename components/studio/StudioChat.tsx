@@ -4,6 +4,7 @@ import { parseAttach, type AttachAsset } from '@/lib/studio/attach'
 import { useEffect, useRef, useState } from 'react'
 import MediaPicker, { type PickedAsset } from '@/components/studio/MediaPicker'
 import { useLang } from '@/lib/i18n/context'
+import EngineSelect from '@/components/studio/EngineSelect'
 
 // 생성 대기 중 돌아가며 보여 주는 문구 — 심심하지 않게, 동물 친구들이 일하는 느낌으로
 const THINKING_KO = ['생각 중...', '야옹이가 요청을 해석하는 중...', '강아지가 열심히 고민하는 중...', '픽셀을 한 알씩 고르는 중...', '토끼가 규칙을 정리하는 중...', '거북이가 코드를 차근차근 쓰는 중...', '햄스터가 쳇바퀴 돌리며 계산하는 중...', '고양이가 버그를 노려보는 중...', '펭귄이 아이디어를 굴리는 중...', '다람쥐가 점수 규칙을 모으는 중...', '여우가 조작법을 다듬는 중...', '거의 다 됐어요, 마지막 손질 중...']
@@ -334,6 +335,7 @@ export default function StudioChat({
       </div>
       {/* 클로드 스타일 플로팅 입력 카드 — 둥근 카드가 하단에 떠 있고 전송 버튼은 안쪽 우하단 */}
       <form ref={formRef} onSubmit={submit} className="px-4 pb-4 pt-1 shrink-0">
+        <EngineSelect />
         <div onDragOver={e => { e.preventDefault() }} onDrop={e => { e.preventDefault(); addAny(e.dataTransfer?.files ?? null) }} className="rounded-2xl bg-white border border-[#ddd3bf] focus-within:border-[#2563eb] shadow-[0_8px_28px_rgba(36,31,23,0.1)] focus-within:shadow-[0_10px_32px_rgba(37,99,235,0.16)] transition-all overflow-hidden">
           <textarea
             value={input}

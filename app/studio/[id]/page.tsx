@@ -17,6 +17,7 @@ import { parseGeneration, hasGenError, hasOffTopic, hasAnswerOnly } from '@/lib/
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import type { StudioProject, StudioVersionMeta } from '@/lib/supabase/types'
 import { loadAvatarConfig } from '@/lib/jeumto/storage'
+import { getEngine } from '@/lib/studio/engine'
 
 export default function StudioComposerPage() {
   const { id } = useParams<{ id: string }>()
@@ -204,6 +205,7 @@ export default function StudioComposerPage() {
           sounds: sounds?.map(x => ({ name: x.name, media_type: x.media_type, data: x.data, role: x.role })),
           variantSlug,
           assetIds,
+          engine: getEngine(),   // 관리자 생성 엔진(Max Opus/Fable, API) — 서버가 관리자일 때만 반영
         }),
       })
 
@@ -270,7 +272,7 @@ export default function StudioComposerPage() {
       if (hasGenError(full)) {
         setMessages(m => m.slice(0, -1))
         optimisticPending = false
-        setError(s.genError)
+        setError(full.match(/\[\[GEN_MSG\]\]([\s\S]*?)\[\[\/GEN_MSG\]\]/)?.[1] ?? s.genError)
         try {
           await refreshBalance()
         } catch (e) {
