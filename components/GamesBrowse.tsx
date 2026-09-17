@@ -21,6 +21,7 @@ import { countryFlag, flagRingStyle } from '@/lib/country'
 import LiveCard from '@/components/LiveCard'
 import FeedEndCard from '@/components/FeedEndCard'
 import ThumbBackdrop from '@/components/home/ThumbBackdrop'
+import { useDominantHue } from '@/lib/dominantHue'
 import { recordShare } from '@/lib/shares'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
@@ -34,6 +35,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
   const creatorName = game.profiles?.agent_name ?? game.profiles?.username ?? 'unknown'
   const avatarUrl = avatarPreviewUrl(game.profiles?.avatar_config)
   const avatarFramesV = avatarFrames(game.profiles?.avatar_config)
+  const hue = useDominantHue(game.thumbnail_url)
   const teaser = lang === 'en'
     ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
     : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
@@ -91,7 +93,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         )}
         {/* 상단 중앙 — Jua 포스터 타이틀 */}
         <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]">
-          <span className="relative inline-block feed-title-float">
+          <span className="relative inline-block feed-title-float" style={hue != null ? ({ '--th': Math.round(hue) } as React.CSSProperties) : undefined}>
             <span aria-hidden className={`${galaxyFont.className} feed-title-outline absolute inset-0 z-0 text-[40px] leading-[1.2]`}>{teaser}</span>
             <h3 className={`${galaxyFont.className} feed-title relative z-[1] text-[40px] leading-[1.2]`}>{teaser}</h3>
             <span aria-hidden className={`${galaxyFont.className} feed-title-chrome absolute inset-0 z-[2] text-[40px] leading-[1.2]`}>{teaser}</span>

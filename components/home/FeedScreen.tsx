@@ -19,6 +19,7 @@ import type { GameWithCreator } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 import { countryFlag, flagRingStyle } from '@/lib/country'
 import ThumbBackdrop from '@/components/home/ThumbBackdrop'
+import { useDominantHue } from '@/lib/dominantHue'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
 export default function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; golden?: boolean; rank?: number }) {
@@ -64,6 +65,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
     setTimeout(() => setCoinState('ready'), 900)
   }
 
+  const hue = useDominantHue(game.thumbnail_url) // 제목 색을 썸네일 주요 색에 맞춘다
   const startGame = (e: React.MouseEvent) => {
     e.stopPropagation()
     playStartSound()
@@ -85,7 +87,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
       <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]" style={{ '--ttl-glow': `hsl(${golden ? 42 : (322 + ((hashOf(game.id) >> 3) % 36) - 18 + 360) % 360} 95% 62% / .6)` } as React.CSSProperties}>
         <span className="relative inline-block feed-title-pop">
-          <span className="relative inline-block feed-title-float">
+          <span className="relative inline-block feed-title-float" style={hue != null ? ({ '--th': Math.round(hue) } as React.CSSProperties) : undefined}>
             <span aria-hidden className={`${galaxyFont.className} feed-title-outline absolute inset-0 z-0 text-[46px] leading-[1.2]`}>{teaser}</span>
             <h3 className={`${galaxyFont.className} feed-title relative z-[1] text-[46px] leading-[1.2]`}>{teaser}</h3>
             <span aria-hidden className={`${galaxyFont.className} feed-title-chrome absolute inset-0 z-[2] text-[46px] leading-[1.2]`}>{teaser}</span>
