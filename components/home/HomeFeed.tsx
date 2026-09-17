@@ -24,10 +24,9 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
   // 모바일: 피드 구간에 들어왔을 때만 우상단 검색 아이콘 표시 (히어로에선 숨김)
   const rootRef = useRef<HTMLDivElement>(null)
   const [inFeed, setInFeed] = useState(false)
-  // 모바일: 홈에는 쇼츠 피드를 두지 않는다 — 프롬프트(히어로)에서 위로 스와이프(또는 휠로 내리기)하면 GAMES 탭(/games)으로 넘어간다.
+  // 홈에는 쇼츠 피드를 두지 않는다(PC·모바일 공통) — 프롬프트(히어로)에서 위로 스와이프하거나 휠로 내리면 GAMES(/games)로 넘어간다.
   const router = useRouter()
   useEffect(() => {
-    if (!window.matchMedia('(max-width: 767px)').matches) return
     let done = false, sx = 0, sy = 0, st = 0
     const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8
     const go = () => { if (done) return; done = true; router.push('/games') }
@@ -64,7 +63,7 @@ export default function HomeFeed({ games }: { games: GameWithCreator[] }) {
   )
   return (
     // 데스크톱: 히어로 다음 한 화면짜리 스냅 섹션 안에 /games 와 똑같은 피드 박스(헤더 높이만큼 뺀 높이)를 둔다
-    <div ref={rootRef} className="home-feed-wrap hidden md:block w-full md:h-[100svh] md:pt-[3.75rem] md:box-border feed-snap">
+    <div ref={rootRef} className="home-feed-wrap hidden w-full md:h-[100svh] md:pt-[3.75rem] md:box-border feed-snap">
       {/* 모바일 — /games 처럼 우상단 검색 아이콘 → 패널(검색은 /games 로 이동, 카테고리 = 전체/영상/게임) */}
       <MobileGamesTools categories={pills} visible={inFeed} />
       <div className="md:flex md:gap-6 md:px-6">
