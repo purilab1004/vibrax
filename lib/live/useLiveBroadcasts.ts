@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { parseBroadcast, parseLinkBroadcasts, liveInfoOf, toEmbed, type LiveInfo } from '@/lib/broadcast'
 import { avatarPreviewUrl } from '@/lib/jeumto/config'
 
-export type LiveEntry = LiveInfo & { gameId: string; hostName: string; hostAvatarUrl: string | null; hostCountry?: string | null; note?: string | null }
+export type LiveEntry = LiveInfo & { gameId: string; hostName: string; hostAvatarUrl: string | null; hostCountry?: string | null; note?: string | null; videoTitle?: string | null }
 export type LiveMap = Record<string, LiveEntry> // key: `${hostId}:${gameId}:${n}`
 /** 이 게임을 대상으로 한 라이브 하나 (게임 안 BJ 용) */
 export function liveForGame(m: LiveMap, gameId: string): LiveEntry | null {
@@ -38,7 +38,7 @@ async function fetchLive(): Promise<LiveMap> {
       if (!l.on) return
       if (!l.gameId && l.kind !== 'video') return // 라이브 링크는 게임 필수, 일반 영상은 게임 없이도 공유 가능
       const e = toEmbed(l.url); if (!e) return
-      m[`${row.id}:${l.gameId ?? ''}:${i}`] = { kind: 'link', hostId: row.id, src: e.src, aspect: e.aspect, gameId: l.gameId ?? '', hostName, hostAvatarUrl, hostCountry, video: l.kind === 'video', note: l.note ?? null }
+      m[`${row.id}:${l.gameId ?? ''}:${i}`] = { kind: 'link', hostId: row.id, src: e.src, aspect: e.aspect, gameId: l.gameId ?? '', hostName, hostAvatarUrl, hostCountry, video: l.kind === 'video', note: l.note ?? null, videoTitle: l.videoTitle ?? null }
     })
   }
   cache = m; fetchedAt = Date.now()

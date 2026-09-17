@@ -22,6 +22,7 @@ export default function BroadcastPage() {
   const tabKind: 'live' | 'video' = tab === 'video' ? 'video' : 'live' // 링크 목록은 라이브/영상으로 나눠 보여준다
   const [linkUrl, setLinkUrl] = useState('')
   const [linkNote, setLinkNote] = useState('') // 한 줄 소개 — 쇼츠 카드에 표시
+  const [linkTitle, setLinkTitle] = useState('') // 영상 제목 — 링크를 넣으면 YouTube 에서 자동으로 채우고, 고칠 수 있다
   const [links, setLinks] = useState<LinkBroadcast[]>([])
   const [linkMsg, setLinkMsg] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null) // 수정 중인 링크 — 입력창에 불러와 '저장'으로 바꾼다
@@ -83,20 +84,28 @@ export default function BroadcastPage() {
     if (!gameId && tab !== 'video') { setLinkMsg('연결할 게임을 골라 주세요'); return }
     const g = games.find((x) => x.id === gameId)
     if (editingId) {
-      await persistLinks(links.map((l) => (l.id === editingId ? { ...l, url: linkUrl.trim(), gameId: gameId || null, title: g?.title, note: linkNote.trim() || undefined } : l)))
-      setEditingId(null); setLinkUrl(''); setLinkNote('')
+      await persistLinks(links.map((l) => (l.id === editingId ? { ...l, url: linkUrl.trim(), gameId: gameId || null, title: g?.title, note: linkNote.trim() || undefined, videoTitle: linkTitle.trim() || undefined } : l)))
+      setEditingId(null); setLinkUrl(''); setLinkNote(''); setLinkTitle('')
       setLinkMsg('✓ 수정했어요'); setTimeout(() => setLinkMsg(null), 2500)
       return
     }
-    const item: LinkBroadcast = { id: `l_${Date.now().toString(36)}`, url: linkUrl.trim(), gameId: gameId || null, on: true, title: g?.title, kind: tabKind, note: linkNote.trim() || undefined }
+    const item: LinkBroadcast = { id: `l_${Date.now().toString(36)}`, url: linkUrl.trim(), gameId: gameId || null, on: true, title: g?.title, kind: tabKind, note: linkNote.trim() || undefined, videoTitle: linkTitle.trim() || undefined }
     await persistLinks([item, ...links])
-    setLinkUrl(''); setLinkNote('')
+    setLinkUrl(''); setLinkNote(''); setLinkTitle('')
     setLinkMsg(tab === 'video' ? '▶ 등록했어요 — 게임 목록에 VIDEO 카드로 나와요' : '● 추가했어요 — 목록·게임 안에 영상이 나와요'); setTimeout(() => setLinkMsg(null), 2500)
   }
   const toggleLink = (id: string) => persistLinks(links.map((l) => (l.id === id ? { ...l, on: !l.on } : l)))
   const removeLink = (id: string) => { if (editingId === id) { setEditingId(null); setLinkUrl('') } return persistLinks(links.filter((l) => l.id !== id)) }
-  const editLink = (l: LinkBroadcast) => { setEditingId(l.id); setLinkUrl(l.url); setLinkNote(l.note ?? ''); setGameId(l.gameId ?? ''); setLinkMsg('아래에서 링크·게임을 고치고 저장을 누르세요') }
-  const cancelEdit = () => { setEditingId(null); setLinkUrl(''); setLinkNote(''); setLinkMsg(null) }
+  const editLink = (l: LinkBroadcast) => { setEditingId(l.id); setLinkUrl(l.url); setLinkNote(l.note ?? ''); setLinkTitle(l.videoTitle ?? ''); setGameId(l.gameId ?? ''); setLinkMsg('아래에서 링크·게임을 고치고 저장을 누르세요') }
+  const cancelEdit = () => { setEditingId(null); setLinkUrl(''); setLinkNote(''); setLinkTitle(''); setLinkMsg(null) }
+  // 링크를 넣으면 영상 제목 자동(YouTube oEmbed) — 이미 직접 쓴 제목은 덮지 않는다
+  useEffect(() => {
+    if (!toEmbed(linkUrl) || linkTitle.trim()) return
+    let alive = true
+    const t = setTimeout(() => { fetch(`/api/oembed?url=${encodeURIComponent(linkUrl.trim())}`).then(r => r.json()).then(j => { if (alive && j?.title && !linkTitle.trim()) setLinkTitle(String(j.title).slice(0, 120)) }).catch(() => {}) }, 400)
+    return () => { alive = false; clearTimeout(t) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkUrl])
   const setBroadcast = async (on: boolean) => {
     if (!user) return
     const base = config ?? emptyConfig()
@@ -212,6 +221,13 @@ export default function BroadcastPage() {
                   className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
                 />
                 <input
+                  value={linkTitle}
+                  onChange={(e) => setLinkTitle(e.target.value)}
+                  maxLength={120}
+                  placeholder="영상 제목 — 링크를 넣으면 자동으로 채워져요 (고칠 수 있음)"
+                  className="w-full bg-white/10 border border-white/25 rounded-lg px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/40"
+                />
+                <input
                   value={linkNote}
                   onChange={(e) => setLinkNote(e.target.value)}
                   maxLength={80}
@@ -232,6 +248,7 @@ export default function BroadcastPage() {
                       <li key={l.id} className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${editingId === l.id ? 'border-white bg-white/15' : l.on ? 'border-[#e11d48]/70 bg-[#e11d48]/10' : 'border-white/15 bg-white/5'}`}>
                         <div className="min-w-0 flex-1">
                           <p className="text-[12px] text-white truncate">{l.gameId ? `🎮 ${l.title ?? games.find((g) => g.id === l.gameId)?.title ?? '게임'}` : '▶ 게임 연결 없음 (영상만 공유)'}</p>
+                          {l.videoTitle && <p className="text-[12px] text-white/90 truncate">{l.videoTitle}</p>}
                           {l.note && <p className="text-[11px] text-white/80 truncate">{l.note}</p>}
                           <p className="text-[10px] text-white/50 truncate">{l.url}</p>
                         </div>

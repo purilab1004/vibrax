@@ -119,7 +119,8 @@ export default function LiveCard({ live, game: given, layout }: Props) {
             <span className="truncate">{live.hostName}</span>{countryFlag(live.hostCountry) && <span className="ml-1">{countryFlag(live.hostCountry)}</span>}
           </p>
         )}
-        {live.note && <p className="mt-1.5 text-[13.5px] leading-snug text-white/95 line-clamp-2 [text-shadow:0_1px_6px_rgba(0,0,0,.7)]" style={{ wordBreak: 'keep-all' }}>{live.note}</p>}
+        {live.videoTitle && <p className="mt-1.5 text-[15px] font-bold leading-snug text-white line-clamp-2 [text-shadow:0_1px_6px_rgba(0,0,0,.7)]" style={{ wordBreak: 'keep-all' }}>{live.videoTitle}</p>}
+        {live.note && <p className="mt-1 text-[13px] leading-snug text-white/90 line-clamp-2 [text-shadow:0_1px_6px_rgba(0,0,0,.7)]" style={{ wordBreak: 'keep-all' }}>{live.note}</p>}
 
         {hasGame && <>
         {/* 게임 카드와 같은 INSERT COIN + 코인 넣기 + 코인 통 — 누르면 코인 투입 연출 후 게임 페이지로 */}
