@@ -123,6 +123,7 @@ export default async function GameDetailPage({ params }: Props) {
             {game.title}
           </h1>
           <p className="text-[#4a4337] text-xs tracking-wider mb-3">by {author}</p>
+          {game.intro && <p className="text-[15px] text-[#241f17] font-medium leading-snug mb-3" style={{ wordBreak: 'keep-all' }}>{game.intro}</p>}
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5 text-xs text-[#857a68] font-pixel">
               <ViewerIcon className="w-3.5 h-3.5" />{game.view_count ?? 0}

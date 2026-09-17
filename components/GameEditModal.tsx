@@ -2,6 +2,7 @@
 // 게시된 게임 정보 수정 — 프로필(내 게임)과 스튜디오 목록에서 같은 모달을 쓴다.
 // 썸네일(업로드·기본 썸네일 재생성), 제목, 훅 문구, 언어, 국가, AJ 설명, 메뉴얼(.md), 장르, 플레이 URL
 import { useEffect, useState, useTransition } from 'react'
+import { suggestIntro } from '@/lib/intro'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { generateThumbnail } from '@/lib/thumbnail'
@@ -11,8 +12,8 @@ import type { Genre } from '@/lib/supabase/types'
 const LANGUAGES = [{ value: 'ko', label: '한국어' }, { value: 'en', label: 'English' }]
 const GENRES: { value: Genre; label: string }[] = [{ value: 'action', label: 'ACTION' }, { value: 'adventure', label: 'ADVENTURE' }, { value: 'strategy', label: 'STRATEGY' }, { value: 'sports', label: 'SPORTS' }]
 
-export interface GameEditPatch { id: string; title: string; genre: Genre; description: string | null; language: string | null; country: string | null; game_manual: string | null; play_url: string; thumbnail_url: string; teaser: string | null }
-interface Form { title: string; genre: Genre; description: string; language: string; country: string; game_manual: string; play_url: string; thumbnail_url: string; teaser: string; newThumbnail: File | null; newManual: File | null }
+export interface GameEditPatch { id: string; title: string; genre: Genre; description: string | null; language: string | null; country: string | null; game_manual: string | null; play_url: string; intro: string | null; thumbnail_url: string; teaser: string | null }
+interface Form { title: string; genre: Genre; description: string; language: string; country: string; game_manual: string; play_url: string; thumbnail_url: string; teaser: string; intro: string; newThumbnail: File | null; newManual: File | null }
 
 export default function GameEditModal({ gameId, userId, onClose, onSaved }: { gameId: string; userId: string; onClose: () => void; onSaved: (g: GameEditPatch) => void }) {
   const supabase = createClient()
@@ -23,15 +24,22 @@ export default function GameEditModal({ gameId, userId, onClose, onSaved }: { ga
   const inputClass = 'w-full h-10 rounded-lg bg-white border border-[#ddd3bf] focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 px-3.5 text-[14px] outline-none transition text-[#241f17] placeholder:text-[#b3a78f]'
 
   useEffect(() => {
-    supabase.from('games').select('id,title,genre,description,language,country,game_manual,play_url,thumbnail_url,teaser').eq('id', gameId).maybeSingle().then(({ data, error }) => {
+    supabase.from('games').select('id,title,genre,description,language,country,game_manual,play_url,thumbnail_url,teaser,intro').eq('id', gameId).maybeSingle().then(({ data, error }) => {
       if (error || !data) { setError(error?.message ?? '게임을 찾을 수 없어요'); return }
       const g = data as Omit<GameEditPatch, 'id'> & { id: string }
-      setF({ title: g.title, genre: g.genre, description: g.description ?? '', language: g.language ?? 'ko', country: g.country ?? '', game_manual: g.game_manual ?? '', play_url: g.play_url, thumbnail_url: g.thumbnail_url, teaser: g.teaser ?? '', newThumbnail: null, newManual: null })
+      setF({ title: g.title, genre: g.genre, description: g.description ?? '', language: g.language ?? 'ko', country: g.country ?? '', game_manual: g.game_manual ?? '', play_url: g.play_url, thumbnail_url: g.thumbnail_url, teaser: g.teaser ?? '', intro: (g as { intro?: string | null }).intro ?? '', newThumbnail: null, newManual: null })
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId])
 
   const set = (patch: Partial<Form>) => setF(prev => prev ? { ...prev, ...patch } : prev)
+  const [introBusy, setIntroBusy] = useState(false)
+  const autoIntro = async () => {
+    setIntroBusy(true)
+    try { const r = await fetch(`/play/${gameId}`, { cache: 'no-store' }); const html = r.ok ? await r.text() : null; set({ intro: suggestIntro({ html, description: f?.description, title: f?.title }) }) }
+    catch { set({ intro: suggestIntro({ description: f?.description, title: f?.title }) }) }
+    finally { setIntroBusy(false) }
+  }
   const regenThumb = async () => {
     if (!f) return
     setRegen(true)
@@ -53,9 +61,10 @@ export default function GameEditModal({ gameId, userId, onClose, onSaved }: { ga
       }
       let manual = f.game_manual || null
       if (f.newManual) manual = await f.newManual.text()
-      const patch: GameEditPatch = { id: gameId, title: f.title.trim(), genre: f.genre, description: f.description.trim() || null, language: f.language || null, country: f.country || null, game_manual: manual, play_url: f.play_url, thumbnail_url: thumbnailUrl, teaser: f.teaser.trim() || null }
+      const patch: GameEditPatch = { id: gameId, title: f.title.trim(), genre: f.genre, description: f.description.trim() || null, language: f.language || null, country: f.country || null, game_manual: manual, play_url: f.play_url, thumbnail_url: thumbnailUrl, teaser: f.teaser.trim() || null, intro: f.intro.trim() || null }
       const { id: _id, ...row } = patch; void _id
-      const { error: e } = await supabase.from('games').update(row as never).eq('id', gameId)
+      let { error: e } = await supabase.from('games').update(row as never).eq('id', gameId)
+      if (e && e.message.includes('intro')) { const { intro: _i, ...rest } = row; void _i; ;({ error: e } = await supabase.from('games').update(rest as never).eq('id', gameId)) } // intro 컬럼 마이그레이션 전
       if (e) { setError('저장 실패: ' + e.message); return }
       onSaved(patch); onClose()
     })
@@ -90,6 +99,13 @@ export default function GameEditModal({ gameId, userId, onClose, onSaved }: { ga
           <div>
             <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">카드 훅 문구 <span className="text-[#9d9280] font-normal text-[11px]">(카드 앞면에 표시 — 비워두면 기본 문구)</span></label>
             <input className={inputClass} maxLength={40} placeholder="예: 멈추면 죽는다 / 왕좌를 뺏어라" value={f.teaser} onChange={e => set({ teaser: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">한 줄 소개 <span className="text-[#9d9280] font-normal text-[11px]">(쇼츠 카드 제작자 아래·게임 페이지에 표시)</span></label>
+            <div className="flex gap-2">
+              <input className={inputClass} maxLength={80} placeholder="예: 장애물을 피해 최대한 멀리 달려라!" value={f.intro} onChange={e => set({ intro: e.target.value })} />
+              <button type="button" onClick={autoIntro} disabled={introBusy} className="shrink-0 h-10 px-3 rounded-lg border border-[#ddd3bf] bg-white text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] disabled:opacity-50">{introBusy ? '…' : '✨ 자동 생성'}</button>
+            </div>
           </div>
           <div><label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">게임 언어</label><select className={inputClass} value={f.language} onChange={e => set({ language: e.target.value })}>{LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}</select></div>
           <div><label className="block text-[12px] font-semibold text-[#6b6152] mb-1.5">게임 국가</label><select className={inputClass} value={f.country} onChange={e => set({ country: e.target.value })}><option value="">선택 안 함</option>{COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}</select></div>

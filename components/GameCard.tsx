@@ -146,7 +146,7 @@ function FluffFigure({ delay, eyesRef, color = '#F05A28', shape = 0 }: {
 // 카드 속 제작자 점토 캐릭터 — 둥실·스퀴시 + 가끔 깡총/갸웃/두리번 + 말풍선으로 짧게 말한다.
 // 그림자는 캐릭터와 분리해 바닥에 고정하고, 뛰어오를 때 작아진다.
 const CLAY_LINES = ['안녕! 놀러 와~', '이 게임 재밌어!', '한 판 할래?', '같이 놀자!', '나 잘하지? 히히', '두근두근…', '오늘도 화이팅!', '기다리고 있었어!', '클리어 도전!', '눌러 봐 눌러 봐~']
-const CLAY_ACTS = ['clay-hop', 'clay-tilt', 'clay-look', 'clay-wiggle'] as const
+const CLAY_ACTS = ['clay-hop', 'clay-hop', 'clay-tilt', 'clay-look', 'clay-wiggle'] as const
 function ClayAvatarActor({ id, frames }: { id: string; frames: AvatarFrames }) {
   const { url, blinkUrl, talkUrl } = frames
   const isApp = useIsNativeApp() // 앱에서는 타이머·눈깜빡임·말하기 없이 정적으로 렌더 → 스크롤 부드럽게

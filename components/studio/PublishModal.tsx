@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { suggestIntro } from '@/lib/intro'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 import type { Genre } from '@/lib/supabase/types'
@@ -17,6 +18,8 @@ export default function PublishModal({
   onClose: () => void
 }) {
   const [title, setTitle] = useState(defaultTitle)
+  const [intro, setIntro] = useState('') // 한 줄 소개 — 비우면 게임 매니페스트 goal 로 자동
+  const [introBusy, setIntroBusy] = useState(false)
   const [genre, setGenre] = useState<Genre>('action')
   // 썸네일: 기본은 타이틀 기반 자동 생성, 파일을 올리면 그걸 우선 사용
   const [customFile, setCustomFile] = useState<File | null>(null)
@@ -37,6 +40,16 @@ export default function PublishModal({
       .then(({ data }) => setAlreadyPublished(!!data))
   }, [projectId])
 
+  // 한 줄 소개 자동 — 게시할 버전 HTML 의 매니페스트 goal 에서 (LLM 없이)
+  const autoIntro = async (): Promise<string> => {
+    try {
+      let q = supabase.from('studio_versions').select('html').eq('project_id', projectId)
+      q = versionId ? q.eq('id', versionId) : q.order('version', { ascending: false }).limit(1)
+      const { data } = await q.maybeSingle()
+      return suggestIntro({ html: (data as { html?: string } | null)?.html, title })
+    } catch { return suggestIntro({ title }) }
+  }
+  const fillIntro = async () => { setIntroBusy(true); try { setIntro(await autoIntro()) } finally { setIntroBusy(false) } }
   // 타이틀/장르/시드가 바뀌면 자동 썸네일 재생성 (직접 업로드 중이면 건너뜀)
   useEffect(() => {
     if (customFile) return
@@ -116,10 +129,15 @@ export default function PublishModal({
         studio_project_id: projectId,
         teaser,
         teaser_en: teaserEn,
+        intro: (intro.trim() || (await autoIntro())) || null,
         ...(versionId ? { live_version_id: versionId } : {}),   // 게시 버전 고정 — 이후 수정은 '최신 버전 게시' 로만 반영
       }
       let { data: inserted, error: insertError } = await supabase.from('games').insert([row] as never).select('id').single()
       // teaser 컬럼 마이그레이션 전 — 없이 재시도
+      if (insertError?.message.includes('intro')) {
+        const { intro: _omitI, ...rest } = row
+        ;({ data: inserted, error: insertError } = await supabase.from('games').insert([rest] as never).select('id').single())
+      }
       if (insertError?.message.includes('teaser')) {
         const { teaser: _omit, teaser_en: _omit2, ...rest } = row
         ;({ data: inserted, error: insertError } = await supabase.from('games').insert([rest] as never).select('id').single())
@@ -175,6 +193,13 @@ export default function PublishModal({
                 {T.submit.titleLabel}
               </label>
               <input value={title} onChange={e => setTitle(e.target.value)} required className={inputClass} />
+            </div>
+            <div>
+              <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">한 줄 소개 <span className="normal-case tracking-normal font-sans text-[10.5px] text-[#9d9280]">(쇼츠 카드·게임 페이지에 표시, 비우면 자동)</span></label>
+              <div className="flex gap-2">
+                <input value={intro} onChange={e => setIntro(e.target.value)} maxLength={80} placeholder="예: 장애물을 피해 최대한 멀리 달려라!" className={inputClass} />
+                <button type="button" onClick={fillIntro} disabled={introBusy} className="shrink-0 px-3 rounded-lg border border-[#ddd3bf] text-[12px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb] disabled:opacity-50">{introBusy ? '…' : '✨ 자동'}</button>
+              </div>
             </div>
             <div>
               <label className="block font-pixel text-[11px] mb-2 text-[#6b6152] tracking-widest">

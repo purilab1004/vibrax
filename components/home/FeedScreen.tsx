@@ -120,6 +120,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
           </span></span>
           {creatorName}{countryFlag(game.country ?? game.profiles?.country) && <span className="ml-1">{countryFlag(game.country ?? game.profiles?.country)}</span>}
         </p>
+        {game.intro && <p className="mt-1.5 text-[13.5px] leading-snug text-white/95 line-clamp-2 [text-shadow:0_1px_6px_rgba(0,0,0,.7)]" style={{ wordBreak: 'keep-all' }}>{game.intro}</p>}
         {/* 점멸 상태 라벨 */}
         <p className={`arcade-blink mt-3 font-pixel text-[14px] tracking-[0.3em] ${
           coinState === 'ready'
