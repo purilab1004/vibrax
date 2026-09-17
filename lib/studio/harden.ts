@@ -36,6 +36,12 @@ export const PAUSE_SHIM = `<script>(function(){var paused=false,q=[];var oRAF=wi
 
 /** 모델에 보낼 때 플랫폼 shim(일시정지·키·터치·오토파일럿·아바타·AJ·온라인·localStorage 브리지, 컨트롤 설정)을 떼어낸다.
  *  저장/서빙 시 hardenHtml 이 최신으로 다시 심으므로 모델이 볼 필요도, 다시 쓸 이유도 없다 (전체의 절반 이상이 shim 이라 토큰·시간 낭비 + 재작성 시 파손 위험) */
+// 화면 방송 캡처 브리지 — /play 는 CSP sandbox(opaque origin)라 부모가 캔버스에 접근할 수 없다.
+// 부모가 {type:'vibrex:capture', on:true} 를 보내면 게임 안에서 가장 큰 캔버스를 ImageBitmap 으로 떠서(축소·초당 fps) 부모로 넘긴다(transfer).
+// 부모는 받은 프레임을 자기 캔버스에 그려 captureStream → WebRTC 로 시청자에게 보낸다 (모바일 브라우저에서도 동작).
+// WebGL 캔버스는 그린 뒤 버퍼가 비워져 빈 프레임이 되므로 preserveDrawingBuffer 를 켠다.
+const CAPTURE_SHIM = `<script>(function(){var CAPON=false,fps=15,maxW=720,last=0,busy=false;try{var gc=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t,a){if(/webgl/i.test(String(t))){a=Object.assign({},a||{},{preserveDrawingBuffer:true})}return gc.call(this,t,a)}}catch(e){}function pick(){var cs=document.getElementsByTagName('canvas'),b=null,ar=0;for(var i=0;i<cs.length;i++){var c=cs[i],s=c.width*c.height;if(s>ar){ar=s;b=c}}return b}function loop(ts){if(!CAPON)return;requestAnimationFrame(loop);if(busy||ts-last<1000/fps)return;var c=pick();if(!c||!c.width||!c.height||typeof createImageBitmap!=='function')return;last=ts;busy=true;var w=Math.min(maxW,c.width),h=Math.max(1,Math.round(c.height*w/c.width));createImageBitmap(c,{resizeWidth:w,resizeHeight:h}).then(function(bm){try{parent.postMessage({type:'vibrex:frame',w:w,h:h,bm:bm},'*',[bm])}catch(e){}busy=false}).catch(function(){busy=false})}addEventListener('message',function(e){var d=e.data;if(!d||d.type!=='vibrex:capture')return;if(d.on){fps=d.fps||15;maxW=d.maxW||720;if(!CAPON){CAPON=true;requestAnimationFrame(loop)}}else CAPON=false})})();</script>`
+
 export function stripShims(html: string): string {
   return html
     .replace(/<script>\(function\(\)\{var paused=false,q=\[\];[\s\S]*?<\/script>/g, '')
@@ -48,6 +54,7 @@ export function stripShims(html: string): string {
     .replace(/<script>try\{window\.localStorage\.getItem\('__t'\)\}[\s\S]*?<\/script>/g, '')
     .replace(/<script>window\.VIBREX_CONTROLS=[^<]*<\/script>/g, '')
     .replace(/<script>window\.VIBREX_VERSION_ID=[\s\S]*?<\/script>/g, '')
+    .replace(/<script>\(function\(\)\{var CAPON=false,[\s\S]*?<\/script>/g, '')
 }
 
 export function hardenHtml(html: string, opts: { controls?: ControlChannel[] } = {}): string {
@@ -77,6 +84,9 @@ export function hardenHtml(html: string, opts: { controls?: ControlChannel[] } =
   // 온라인 브리지(VIBREX_NET) — 항상 최신으로. 호스트가 없으면 1.5초 뒤 'offline' 이벤트
   out = out.replace(/<script>\(function\(\)\{var NETQ=\[\],H=\[\][\s\S]*?<\/script>/, '')
   { const i = out.search(/<head[^>]*>/i); out = i >= 0 ? out.slice(0, out.indexOf('>', i) + 1) + NET_SHIM + out.slice(out.indexOf('>', i) + 1) : NET_SHIM + out }
+  // 화면 방송 캡처 브리지 — 항상 최신으로, 게임 스크립트보다 먼저(getContext 감싸기)
+  out = out.replace(/<script>\(function\(\)\{var CAPON=false,[\s\S]*?<\/script>/, '')
+  { const i = out.search(/<head[^>]*>/i); out = i >= 0 ? out.slice(0, out.indexOf('>', i) + 1) + CAPTURE_SHIM + out.slice(out.indexOf('>', i) + 1) : CAPTURE_SHIM + out }
   html = out
   if (html.includes("localStorage.getItem('__t')")) return html
   const i = html.search(/<head[^>]*>/i)

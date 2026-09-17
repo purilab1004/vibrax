@@ -124,11 +124,13 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const [screenLive, setScreenLive] = useState<{ viewers: number } | null>(null)
   const screenHost = useRef<HostHandle | null>(null)
   const screenStream = useRef<MediaStream | null>(null)
+  const captureCleanup = useRef<(() => void) | null>(null)   // 게임 캡처 브리지 끄기
   // 온라인(멀티) 게임은 라이브 중에도 다른 회원이 함께 플레이할 수 있다 — 관전은 싱글 게임만
   const spectate = !!(open && !screenLive && liveEntry && liveEntry.kind === 'camera' && (liveEntry.screen || liveEntry.cam) && liveEntry.hostId !== me && game.play_mode !== 'multi')
   const stopScreenLive = async (persist = true) => {
     screenHost.current?.stop(); screenHost.current = null
     screenStream.current?.getTracks().forEach(t => t.stop()); screenStream.current = null
+    captureCleanup.current?.(); captureCleanup.current = null
     setScreenLive(null)
     if (!persist) return
     try {
@@ -140,15 +142,29 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   const startScreenLive = async (auto = false) => {
     const { data: { user } } = await supabase.auth.getUser(); if (!user) return
     let stream: MediaStream | null = null
-    // 1) 게임 iframe(같은 출처)의 캔버스를 그대로 캡처 — 시청자 화면엔 헤더·채팅 없이 게임만 나온다
-    //    게임이 캔버스를 늦게 만들 수 있어 잠시 기다리며 찾고(자동 시작은 최대 ~12초), 여러 개면 가장 큰 캔버스
-    type CapCanvas = HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }
-    const findCanvas = (): CapCanvas | null => {
-      try { const list = [...(frameRef.current?.contentDocument?.querySelectorAll('canvas') ?? [])] as CapCanvas[]; return list.filter(c => c.width * c.height > 0).sort((x, y) => y.width * y.height - x.width * x.height)[0] ?? null } catch { return null }
+    // 1) 게임 캔버스 캡처 — /play 는 sandbox(opaque origin)라 직접 접근이 안 되므로, 게임 안 캡처 브리지가 보내 주는 프레임(ImageBitmap)을
+    //    내 캔버스에 그려 captureStream 으로 방송한다. 시청자 화면엔 헤더·채팅 없이 게임만 나오고, 모바일 브라우저에서도 된다.
+    //    게임이 늦게 뜰 수 있어 첫 프레임을 기다린다(자동 시작 최대 ~12초, 버튼은 ~4초)
+    const cap = document.createElement('canvas')
+    cap.width = 2; cap.height = 2
+    Object.assign(cap.style, { position: 'fixed', left: '-10000px', top: '0', width: '2px', height: '2px', pointerEvents: 'none' })
+    document.body.appendChild(cap)
+    const cctx = cap.getContext('2d')
+    let gotFrame = false
+    const onFrame = (e: MessageEvent) => {
+      const d = e.data as { type?: string; w?: number; h?: number; bm?: ImageBitmap } | null
+      if (!d || d.type !== 'vibrex:frame' || !d.bm || e.source !== frameRef.current?.contentWindow) return
+      if (cap.width !== d.w || cap.height !== d.h) { cap.width = d.w!; cap.height = d.h! }
+      cctx?.drawImage(d.bm, 0, 0); d.bm.close(); gotFrame = true
     }
-    let cv = findCanvas()
-    for (let i = 0; !cv && i < (auto ? 15 : 3); i++) { await new Promise(r => setTimeout(r, 800)); cv = findCanvas() }
-    if (cv?.captureStream) { try { stream = cv.captureStream(30) } catch { stream = null } }
+    window.addEventListener('message', onFrame)
+    const askFrames = () => { try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, fps: 15, maxW: 720 }, '*') } catch { /* */ } }
+    for (let i = 0; !gotFrame && i < (auto ? 15 : 5); i++) { askFrames(); await new Promise(r => setTimeout(r, 800)) }
+    const capWithStream = cap as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }
+    if (gotFrame && capWithStream.captureStream) {
+      stream = capWithStream.captureStream(15)
+      captureCleanup.current = () => { window.removeEventListener('message', onFrame); try { frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:capture', on: false }, '*') } catch { /* */ } cap.remove() }
+    } else { window.removeEventListener('message', onFrame); cap.remove() }
     // 2) 캔버스가 없으면(DOM 게임) 화면 공유로 — 모바일은 화면 공유를 지원하지 않아 자동 시작에선 건너뛴다
     if (!stream) {
       if (auto && !navigator.mediaDevices?.getDisplayMedia) return
@@ -376,6 +392,12 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                 <div className="absolute inset-0 bg-black">
                   {/* 게임 화면 방송이 있으면 그것을, 없으면 방송하는 회원의 카메라 라이브를 가운데에 크게 */}
                   <CameraBjView key={liveEntry.screen ? 'screen' : 'cam'} hostId={liveEntry.hostId} channel={liveEntry.screen ? 'screen' : 'cam'} fit="contain" badge={false} controls controlsClass="left-3 top-[calc(3.6rem+var(--vbx-safe-top,0px))]" />
+                  {/* 게임 화면을 보는 중이면 방송자 얼굴은 우측 하단 작은 창으로 */}
+                  {liveEntry.screen && liveEntry.cam && (
+                    <div className="absolute right-3 bottom-[150px] md:bottom-[240px] w-[104px] md:w-[150px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/25 shadow-[0_10px_30px_rgba(0,0,0,0.55)] z-10">
+                      <CameraBjView hostId={liveEntry.hostId} channel="cam" badge controls controlsClass="bottom-1.5 right-1.5" />
+                    </div>
+                  )}
                   <div className="absolute inset-x-0 flex justify-center pointer-events-none" style={{ top: 'calc(3.6rem + var(--vbx-safe-top, 0px))' }}>
                     <span className="rounded-full bg-black/55 backdrop-blur px-3 py-1 text-[12px] font-semibold text-white flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#e11d48] animate-pulse" />{liveEntry.screen ? `${liveEntry.hostName} 님의 플레이를 보는 중 — 관전 모드` : `${liveEntry.hostName} 님의 라이브를 보는 중`}</span>
                   </div>
@@ -390,7 +412,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                     allow="fullscreen; autoplay"
                     title={g.title}
                     ref={el => { if (!isPending) frameRef.current = el }}
-                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage(hostMsg(), '*') } catch { /* */ } }}
+                    onLoad={e => { if (isPending) pendingLoaded.current = true; try { e.currentTarget.contentWindow?.postMessage(hostMsg(), '*'); if (captureCleanup.current) e.currentTarget.contentWindow?.postMessage({ type: 'vibrex:capture', on: true, fps: 15, maxW: 720 }, '*') } catch { /* */ } }}
                     onError={(e) => { const f = e.currentTarget; if (f.src !== g.play_url) f.src = g.play_url }}
                   />
                 )
