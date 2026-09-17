@@ -84,7 +84,16 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         style={auroraOf(game.id, rank === 1 && (game.view_count ?? 0) > 0)}
       >
         <ThumbBackdrop src={game.thumbnail_url} alt={game.title} />
-        <PlayModeBadge mode={game.play_mode} className="absolute top-4 left-4 z-10" />
+        <div className="absolute top-4 left-4 right-16 z-10 flex items-center gap-2">
+          <PlayModeBadge mode={game.play_mode} />
+          <span className="flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur pl-1 pr-2.5 py-1 text-white text-[12px] font-semibold max-w-[70%]">
+            {game.thumbnail_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={game.thumbnail_url} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-white/40" />
+            )}
+            <span className="truncate">🎮 {game.title}</span>
+          </span>
+        </div>
         {/* 랭킹 배지 */}
         {rank && rank <= 10 && (
           <span className={`absolute top-4 right-4 z-10 font-pixel text-[13px] px-3 py-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.25)] ${
@@ -106,7 +115,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         </div>
         {/* 하단 — 아케이드 플로우 */}
         <div className="absolute inset-x-0 bottom-0 px-6 pb-6 pt-14 bg-gradient-to-t from-black/65 via-black/30 to-transparent">
-          {game.intro && <p className="mb-2 text-[13px] leading-snug text-white/95 line-clamp-2 [text-shadow:0_1px_6px_rgba(0,0,0,.7)]" style={{ wordBreak: 'keep-all' }}>{game.intro}</p>}
+          {game.intro && <p className="mb-2 text-[15px] font-bold leading-snug text-white line-clamp-2 [text-shadow:0_1px_6px_rgba(0,0,0,.7)]" style={{ wordBreak: 'keep-all' }}>{game.intro}</p>}
           <div className="mt-2 flex items-center gap-3">
             {coinState !== 'ready' ? (
               <button

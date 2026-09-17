@@ -78,7 +78,16 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
       {/* 배경 — 게임 썸네일을 흐려 은은하게 */}
       <ThumbBackdrop src={game.thumbnail_url} alt={game.title} />
       {/* 싱글/멀티 라벨 — 상단 좌측 */}
-      <PlayModeBadge mode={game.play_mode} className="absolute top-4 left-4 z-10" />
+      <div className="absolute top-4 left-4 right-16 z-10 flex items-center gap-2">
+        <PlayModeBadge mode={game.play_mode} />
+        <span className="flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur pl-1 pr-2.5 py-1 text-white text-[12px] font-semibold max-w-[70%]">
+          {game.thumbnail_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={game.thumbnail_url} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-white/40" />
+          )}
+          <span className="truncate">🎮 {game.title}</span>
+        </span>
+      </div>
       {/* 조회수 랭킹 배지 — 상단 우측 */}
       {rank && rank <= 10 && (
         <span className={`absolute top-4 right-4 z-10 font-pixel text-[13px] px-3 py-1.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.25)] ${
@@ -123,7 +132,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
           </span></span>
           {creatorName}{countryFlag(game.country ?? game.profiles?.country) && <span className="ml-1">{countryFlag(game.country ?? game.profiles?.country)}</span>}
         </p>
-        {game.intro && <p className="mt-1.5 text-[13.5px] leading-snug text-white/95 line-clamp-2 [text-shadow:0_1px_6px_rgba(0,0,0,.7)]" style={{ wordBreak: 'keep-all' }}>{game.intro}</p>}
+        {game.intro && <p className="mt-1.5 text-[15px] font-bold leading-snug text-white line-clamp-2 [text-shadow:0_1px_6px_rgba(0,0,0,.7)]" style={{ wordBreak: 'keep-all' }}>{game.intro}</p>}
         <div className="mt-2 flex items-center gap-3">
           {coinState !== 'ready' ? (
             <button

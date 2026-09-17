@@ -50,7 +50,7 @@ export default function MobileSearch({ open, onClose, categories }: { open: bool
 
   // 카테고리를 고르면 그 장르 인기 게임 10개
   useEffect(() => {
-    if (!open || !cat) { setCatList([]); return }
+    if (!open || !cat) return
     let alive = true
     createClient().from('games').select('id,title,genre,thumbnail_url,view_count').eq('genre', cat).order('view_count', { ascending: false }).limit(10).then(({ data }) => { if (alive) setCatList((data ?? []) as Sug[]) })
     return () => { alive = false }
@@ -126,7 +126,7 @@ export default function MobileSearch({ open, onClose, categories }: { open: bool
                   <h3 className="text-[11px] font-bold tracking-[0.18em] text-[#9d9280]">{({ action: '액션', adventure: '어드벤처', strategy: '전략', sports: '스포츠' } as Record<string, string>)[cat]} 인기 게임</h3>
                   <button onClick={() => { onClose(); router.push(`/games?genre=${cat}`) }} className="text-[12px] font-semibold text-[#2563eb]">전체 보기 →</button>
                 </div>
-                {catList.length === 0 ? <p className="px-4 py-6 text-[13px] text-[#9d9280]">이 카테고리에 등록된 게임이 아직 없어요.</p> : catList.map((g) => <Row key={g.id} g={g} />)}
+                {catList.filter((g) => g.genre === cat).length === 0 ? <p className="px-4 py-6 text-[13px] text-[#9d9280]">이 카테고리에 등록된 게임이 아직 없어요.</p> : catList.filter((g) => g.genre === cat).map((g) => <Row key={g.id} g={g} />)}
               </section>
             ) : popular.length > 0 && (
               <section className="pt-5">
