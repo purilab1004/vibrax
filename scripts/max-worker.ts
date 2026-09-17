@@ -7,7 +7,11 @@ import fs from 'node:fs'
 
 for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', 'utf8').split('\n') : []) { const m = line.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^"|"$/g, '') }
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
-const cliModel = (m: string | null) => /opus/i.test(m ?? '') ? 'opus' : /haiku/i.test(m ?? '') ? 'haiku' : 'sonnet'
+// 임시(2026-09-17): API 크레딧이 없어 관리자 생성은 전부 Opus 5(Max 구독)로. 되돌리려면 MAX_WORKER_MODEL 을 비우고 아래 기본값을 null 로
+const FORCE_MODEL = process.env.MAX_WORKER_MODEL ?? 'claude-opus-5'
+const cliModel = (m: string | null) => FORCE_MODEL || (/opus/i.test(m ?? '') ? 'opus' : /haiku/i.test(m ?? '') ? 'haiku' : 'sonnet')
+// claude CLI 가 .env.local 의 ANTHROPIC_API_KEY(크레딧 소진)를 쓰지 않고 claude.ai(Max) 로그인으로 돌도록 키를 뺀 환경
+const cliEnv = (() => { const e: NodeJS.ProcessEnv = { ...process.env, CLAUDECODE: '' }; delete e.ANTHROPIC_API_KEY; delete e.ANTHROPIC_AUTH_TOKEN; return e })()
 
 type Msg = { role: string; content: string | { type: string; text?: string; source?: { media_type?: string; data?: string } }[] }
 // 이미지 블록은 임시 파일로 저장하고 경로를 알려 준다 — claude CLI 가 Read 도구로 열어 본다
@@ -38,7 +42,7 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   const { text: input, files } = flatten(job.messages, tmpDir)
   // 이미지가 있으면 Read 도구만 허용(파일을 보기 위해), 없으면 도구 없이
   const args = ['-p', '--tools', files.length ? 'Read' : '', '--model', cliModel(job.model), '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--no-session-persistence', '--effort', 'medium', '--system-prompt', job.system, ...(files.length ? ['--add-dir', tmpDir] : [])]
-  const child = spawn('claude', args, { env: { ...process.env, CLAUDECODE: '' }, stdio: ['pipe', 'pipe', 'pipe'] })
+  const child = spawn('claude', args, { env: cliEnv, stdio: ['pipe', 'pipe', 'pipe'] })
   child.stdin.write(input); child.stdin.end()
   let rest = '', err = ''
   child.stdout.on('data', (d: Buffer) => {
@@ -62,12 +66,14 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   if (cancelled) { console.log('  cancelled'); try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { /* noop */ } return }
   await flush(true)
   try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { /* noop */ }
+  // CLI 가 인증·크레딧 오류를 '결과 텍스트'로 돌려주면 게임 코드로 저장하지 말고 오류로 — 서버가 API 폴백/안내
+  if (buf.length < 300 && /credit balance is too low|invalid api key|not logged in|please run \/login|authentication/i.test(buf)) { await sb.from('studio_jobs').update({ status: 'error', error: buf.slice(0, 500), finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  auth/credit error', buf); return }
   if (code !== 0 && !buf) { await sb.from('studio_jobs').update({ status: 'error', error: err.slice(0, 500) || `exit ${code}`, finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  error', err.slice(0, 200)); return }
   await sb.from('studio_jobs').update({ status: 'done', result: buf, finished_at: new Date().toISOString() }).eq('id', job.id)
   console.log('  done', buf.length, 'chars')
 }
 
-console.log('max-worker: 대기 중 (Ctrl+C 로 종료)')
+console.log(`max-worker: 대기 중 (모델 ${FORCE_MODEL || '요청값'}, Max 로그인 사용 · Ctrl+C 로 종료)`)
 for (;;) {
   try {
     const { data } = await sb.from('studio_jobs').select('id,model,system,messages').eq('status', 'pending').order('created_at').limit(1)
