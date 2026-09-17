@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export const revalidate = 0
 
-type J = { id: string; title: string; description: string | null; image_url: string | null; entry_cost: number; ends_at: string; status: string; pool: number; entries: number; drawn_at: string | null; product_id?: string | null; product_threshold?: number; winner_count?: number; winner_user_id?: string | null }
+type J = { id: string; title: string; description: string | null; image_url: string | null; entry_cost: number; ends_at: string; status: string; pool: number; entries: number; drawn_at: string | null; product_id?: string | null; product_threshold?: number; winner_count?: number; winner_user_id?: string | null; hidden?: boolean }
 
 export async function GET() {
   try {
@@ -16,7 +16,7 @@ export async function GET() {
       admin.from('jackpots').select('*').eq('status', 'open').order('ends_at', { ascending: true }).limit(10),
       admin.from('jackpots').select('*').eq('status', 'drawn').gte('drawn_at', since).order('drawn_at', { ascending: false }).limit(5),
     ])
-    const rows = [...((open ?? []) as J[]), ...((drawn ?? []) as J[])]
+    const rows = [...((open ?? []) as J[]), ...((drawn ?? []) as J[])].filter((j) => !j.hidden)   // 관리자가 숨긴 잭팟 제외
     const drawnIds = rows.filter((j) => j.status === 'drawn').map((j) => j.id)
     // 당첨자 (v2 테이블이 없으면 winner_user_id 1명으로 폴백)
     const winnersBy: Record<string, { rank: number; user_id: string; prize: string }[]> = {}

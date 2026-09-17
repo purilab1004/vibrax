@@ -6,7 +6,7 @@ import JackpotCard from '@/components/JackpotCard'
 
 interface Product { id: string; title: string; description: string | null; image_url: string | null; coin_price: number; active: boolean }
 interface Winner { id: string; rank: number; user_id: string; name: string; email: string | null; amount: number; prize: 'credits' | 'product'; awarded: boolean; awarded_at: string | null; note: string | null }
-interface Jackpot { id: string; title: string; description: string | null; image_url: string | null; entry_cost: number; ends_at: string; status: string; pool: number; entries: number; winner_count?: number; product_id?: string | null; product_threshold?: number; product: Product | null; winner_name: string | null; winners: Winner[]; drawn_at: string | null; created_at: string }
+interface Jackpot { id: string; title: string; description: string | null; image_url: string | null; entry_cost: number; ends_at: string; status: string; pool: number; entries: number; winner_count?: number; product_id?: string | null; product_threshold?: number; product: Product | null; winner_name: string | null; winners: Winner[]; drawn_at: string | null; created_at: string; hidden?: boolean }
 
 type ProductMode = 'none' | 'existing' | 'new'
 const emptyForm = { id: '' as string, title: '', description: '', entry_cost: 50, ends_at: '', winner_count: 1, image: null as File | null, image_url: null as string | null, remove_image: false, product_mode: 'none' as ProductMode, product_id: '', product_threshold: 1000, product_title: '', product_description: '', product_image: null as File | null }
@@ -25,9 +25,10 @@ export default function AdminJackpotsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [missing, setMissing] = useState(false)
   const [needsV2, setNeedsV2] = useState(false)
+  const [needsHidden, setNeedsHidden] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState<{ text: string; err?: boolean } | null>(null)
-  const [confirm, setConfirm] = useState<{ id: string; action: 'settle' | 'cancel'; n?: number } | null>(null)
+  const [confirm, setConfirm] = useState<{ id: string; action: 'settle' | 'cancel' | 'delete'; n?: number; title?: string } | null>(null)
   const [openWinners, setOpenWinners] = useState<string | null>(null)
   const [award, setAward] = useState<Record<string, { amount: number; note: string }>>({})
   const [nowTs] = useState(() => Date.now())
@@ -37,7 +38,7 @@ export default function AdminJackpotsPage() {
   const load = async () => {
     const [a, b] = await Promise.all([fetch('/api/admin/jackpots').then((r) => r.json()), fetch('/api/admin/products').then((r) => r.json())])
     if (a.missing || b.missing) setMissing(true)
-    setNeedsV2(!!a.needsV2)
+    setNeedsV2(!!a.needsV2); setNeedsHidden(!!a.needsHidden)
     setItems(a.items ?? []); setProducts(b.items ?? [])
   }
   useEffect(() => { const t = setTimeout(load, 0); return () => clearTimeout(t) }, [])
@@ -86,7 +87,8 @@ export default function AdminJackpotsPage() {
       if (j.legacy) setMsg({ text: '⚠️ 예전 추첨 함수로 처리됐어요(당첨 1명에게 자동 지급). jackpot-v2.sql 을 실행해 주세요.', err: true })
       else if (!j.count) setMsg({ text: '참여자가 없어 취소 처리됐어요' })
       else { setMsg({ text: `추첨 완료 — 당첨자 ${j.count}명. 아래 당첨자 목록에서 상금을 수여하세요` }); setOpenWinners(confirm.id) }
-    } else setMsg({ text: `취소했어요 (환불 ${j.refunded ?? 0}명)` })
+    } else if (confirm.action === 'delete') setMsg({ text: '잭팟을 삭제했어요' })
+    else setMsg({ text: `취소했어요 (환불 ${j.refunded ?? 0}명)` })
     load()
   }
 
@@ -101,6 +103,11 @@ export default function AdminJackpotsPage() {
   const undoAward = async (w: Winner) => {
     const r = await fetch('/api/admin/jackpots', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unaward', winner_id: w.id }) }); const j = await r.json()
     if (!r.ok) setMsg({ text: j.error ?? '실패', err: true }); load()
+  }
+  const toggleHidden = async (j: Jackpot) => {
+    const r = await fetch('/api/admin/jackpots', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: j.id, action: j.hidden ? 'show' : 'hide' }) }); const res = await r.json()
+    setMsg(!r.ok ? { text: res.error ?? '실패', err: true } : { text: j.hidden ? '쇼츠에 다시 보이게 했어요' : '쇼츠에서 숨겼어요 (기록은 그대로)' })
+    load()
   }
   const delProduct = async (id: string) => { await fetch('/api/admin/products', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); load() }
 
@@ -122,6 +129,7 @@ export default function AdminJackpotsPage() {
       <PageHeader title="토큰동전 잭팟" desc="① 제목·설명·참가비·당첨자 수를 넣고 ② 상품이 있으면 등록한 뒤 ③ 잭팟을 엽니다. 마감 후 추첨하면 당첨자 목록이 만들어지고, 상금(토큰동전·상품)은 관리자가 직접 수여해요." />
       {missing && <Card className="p-4 border-[#f59e0b] bg-[#fffbeb]"><p className="text-[13px] text-[#92400e]">테이블이 아직 없어요. Supabase SQL 편집기에서 <code>db/migrations/2026-09-17-jackpot-library.sql</code> 을 실행해 주세요.</p></Card>}
       {needsV2 && <Card className="p-4 border-[#f59e0b] bg-[#fffbeb]"><p className="text-[13px] text-[#92400e]">상품·당첨자 수·당첨자 목록을 쓰려면 Supabase SQL 편집기에서 <code>db/migrations/2026-09-17-jackpot-v2.sql</code> 을 실행해 주세요. (실행 전 추첨은 예전 방식으로 1명에게 자동 지급돼요)</p></Card>}
+      {needsHidden && <Card className="p-4 border-[#f59e0b] bg-[#fffbeb]"><p className="text-[13px] text-[#92400e]">잭팟 숨기기를 쓰려면 Supabase SQL 편집기에서 <code>db/migrations/2026-09-17-jackpot-hidden.sql</code> 을 실행해 주세요.</p></Card>}
       {msg && <p className={`text-[13px] font-semibold ${msg.err ? 'text-[#dc2626]' : 'text-[#2563eb]'}`}>{msg.text}</p>}
 
       <div className="grid xl:grid-cols-[1fr_360px] gap-4 items-start">
@@ -233,7 +241,7 @@ export default function AdminJackpotsPage() {
                       <td className={td}><b>{j.pool.toLocaleString()}</b> / {j.entries}장</td>
                       <td className={td}>{j.winner_count ?? 1}명</td>
                       <td className={td}>{fmt(j.ends_at)}</td>
-                      <td className={td}><Badge color={j.status === 'open' ? '#16a34a' : j.status === 'drawn' ? '#7c3aed' : '#6b7280'}>{j.status === 'open' ? (new Date(j.ends_at).getTime() < nowTs ? '마감(추첨 대기)' : '진행 중') : j.status === 'drawn' ? '추첨 완료' : '취소'}</Badge></td>
+                      <td className={td}><Badge color={j.status === 'open' ? '#16a34a' : j.status === 'drawn' ? '#7c3aed' : '#6b7280'}>{j.status === 'open' ? (new Date(j.ends_at).getTime() < nowTs ? '마감(추첨 대기)' : '진행 중') : j.status === 'drawn' ? '추첨 완료' : '취소'}</Badge>{j.hidden && <span className="ml-1"><Badge color="#6b7280">숨김</Badge></span>}</td>
                       <td className={td}>
                         <div className="flex gap-1 justify-end flex-wrap">
                           {j.status === 'open' && <>
@@ -242,6 +250,8 @@ export default function AdminJackpotsPage() {
                             <button onClick={() => setConfirm({ id: j.id, action: 'cancel' })} className={btn.ghost}>취소·환불</button>
                           </>}
                           {j.status === 'drawn' && <button onClick={() => setOpenWinners(openWinners === j.id ? null : j.id)} className={pending ? btn.primary : btn.ghost}>당첨자 {j.winners.length}명{pending ? ` · 수여 대기 ${pending}` : ''}</button>}
+                          <button onClick={() => toggleHidden(j)} className={btn.ghost} title="쇼츠 피드·REWARD 에서 숨기기 (기록은 남음)">{j.hidden ? '보이기' : '숨기기'}</button>
+                          {j.status !== 'open' && <button onClick={() => setConfirm({ id: j.id, action: 'delete', title: j.title })} className={`${btn.ghost} text-[#dc2626]`}>삭제</button>}
                         </div>
                       </td>
                     </tr>,
@@ -303,7 +313,7 @@ export default function AdminJackpotsPage() {
         </Card>
       )}
 
-      <ConfirmModal open={!!confirm} onClose={() => setConfirm(null)} onConfirm={act} busy={busy} title={confirm?.action === 'settle' ? '지금 추첨할까요?' : '잭팟을 취소할까요?'} desc={confirm?.action === 'settle' ? `낸 토큰동전만큼의 확률로 당첨자 ${confirm?.n ?? 1}명을 뽑습니다(한 회원은 한 번만). 상금은 자동으로 나가지 않아요 — 당첨자 목록에서 직접 수여하세요. 되돌릴 수 없어요.` : '참여자 전원에게 토큰동전을 환불하고 잭팟을 닫습니다.'} confirmLabel={confirm?.action === 'settle' ? '추첨' : '취소·환불'} />
+      <ConfirmModal open={!!confirm} onClose={() => setConfirm(null)} onConfirm={act} busy={busy} title={confirm?.action === 'settle' ? '지금 추첨할까요?' : confirm?.action === 'delete' ? `'${confirm?.title ?? ''}' 잭팟을 삭제할까요?` : '잭팟을 취소할까요?'} desc={confirm?.action === 'settle' ? `낸 토큰동전만큼의 확률로 당첨자 ${confirm?.n ?? 1}명을 뽑습니다(한 회원은 한 번만). 상금은 자동으로 나가지 않아요 — 당첨자 목록에서 직접 수여하세요. 되돌릴 수 없어요.` : confirm?.action === 'delete' ? '잭팟과 참여 기록·당첨자 목록이 함께 지워지고 되돌릴 수 없어요. 기록을 남기려면 삭제 대신 숨기기를 쓰세요. (이미 지급한 토큰동전은 회원에게 그대로 남아요)' : '참여자 전원에게 토큰동전을 환불하고 잭팟을 닫습니다.'} confirmLabel={confirm?.action === 'settle' ? '추첨' : confirm?.action === 'delete' ? '삭제' : '취소·환불'} />
     </div>
   )
 }

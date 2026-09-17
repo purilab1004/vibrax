@@ -1,4 +1,4 @@
-// 관리자 — 잭팟 만들기(상품 함께 등록)/수정/목록/추첨/취소 + 당첨자 목록·상금 수여
+// 관리자 — 잭팟 만들기(상품 함께 등록)/수정/목록/추첨/취소/숨기기/삭제 + 당첨자 목록·상금 수여
 import { requireAdmin } from '@/lib/admin/guard'
 import { uploadPrizeImage } from '@/lib/media/jackpot-image'
 
@@ -30,8 +30,9 @@ export async function GET() {
   const productIds = [...new Set(rows.map((j) => j.product_id).filter((x): x is string => !!x))]
   const products: Record<string, unknown> = {}
   if (productIds.length) { const { data: ps } = await g.admin.from('products').select('*').in('id', productIds); for (const p of (ps ?? []) as { id: string }[]) products[p.id] = p }
+  const needsHidden = rows.length > 0 && !('hidden' in (rows[0] as object))
   return Response.json({
-    needsV2,
+    needsV2, needsHidden,
     items: rows.map((j) => ({
       ...(j as object),
       winner_name: nameOf(j.winner_user_id),
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   const g = await requireAdmin(); if ('error' in g) return g.error
-  const body = await req.json().catch(() => null) as { id?: string; action?: 'settle' | 'cancel' | 'award' | 'unaward'; winner_id?: string; amount?: number; pay_credits?: boolean; note?: string } | null
+  const body = await req.json().catch(() => null) as { id?: string; action?: 'settle' | 'cancel' | 'award' | 'unaward' | 'hide' | 'show' | 'delete'; winner_id?: string; amount?: number; pay_credits?: boolean; note?: string } | null
   if (!body?.action) return Response.json({ error: 'bad request' }, { status: 400 })
 
   if (body.action === 'award' || body.action === 'unaward') {
@@ -121,6 +122,20 @@ export async function PATCH(req: Request) {
   }
 
   if (!body.id) return Response.json({ error: 'bad request' }, { status: 400 })
+  if (body.action === 'hide' || body.action === 'show') {
+    const { error } = await g.admin.from('jackpots').update({ hidden: body.action === 'hide' } as never).eq('id', body.id)
+    if (error) return Response.json({ error: /hidden/.test(error.message) ? `${error.message} — Supabase 에서 db/migrations/2026-09-17-jackpot-hidden.sql 을 먼저 실행하세요` : error.message }, { status: 500 })
+    return Response.json({ ok: true })
+  }
+  if (body.action === 'delete') {
+    // 진행 중인 잭팟은 먼저 취소·환불해야 지울 수 있다 (참여 기록·당첨자도 함께 삭제, 토큰동전 원장 기록은 남음)
+    const { data: row } = await g.admin.from('jackpots').select('status').eq('id', body.id).maybeSingle()
+    if (!row) return Response.json({ error: '잭팟을 찾을 수 없어요' }, { status: 404 })
+    if ((row as { status: string }).status === 'open') return Response.json({ error: '진행 중인 잭팟은 먼저 취소·환불한 뒤 삭제하세요' }, { status: 400 })
+    const { error } = await g.admin.from('jackpots').delete().eq('id', body.id)
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+    return Response.json({ ok: true })
+  }
   if (body.action === 'settle') {
     // 관리자 세션으로 RPC (is_admin 확인은 함수 안에서)
     const { createClient } = await import('@/lib/supabase/server')
