@@ -395,6 +395,36 @@ export async function POST(req: Request) {
             if (aborted) { await refund(); return }
           }
         }
+        // ── 출력이 잘렸으면 이어받는다 ──
+        // 3D(three.js) 게임처럼 코드가 길면 max_tokens 에서 끊겨 </game> 이 안 온다.
+        // 예전엔 이 경우 통째로 실패 처리돼 화면의 답변마저 새로고침하면 사라졌다 → 이어서 최대 2번 더 받아 완성한다.
+        for (let cont = 0; cont < 2 && full.includes('<game>') && !full.includes('</game>'); cont++) {
+          if (aborted) break
+          console.warn('[studio/generate] output truncated → continue', cont + 1, 'chars so far', full.length)
+          const prefill = full.replace(/\s+$/, '')   // 프리필은 끝에 공백이 있으면 API 가 거부한다
+          const contMessages = [...(genMessages as { role: 'user' | 'assistant'; content: unknown }[]), { role: 'assistant', content: prefill }]
+          let more: MsgStream | null = null
+          if (useMax) { try { more = await tryMaxJob(createAdminClient(), { projectId, userId: user.id, model: maxModel, system: systemPrompt, messages: contMessages }) } catch { more = null } }
+          if (!more) {
+            const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+            // 이어받기에는 사고(thinking)를 끈다 — 프리필과 함께 쓸 수 없고, 남은 토큰을 본문에만 쓰기 위해서
+            more = client.messages.stream({
+              model: chosenModel, max_tokens: GENERATION_MAX_TOKENS,
+              system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+              messages: contMessages as never,
+            }) as unknown as MsgStream
+          }
+          for await (const chunk of more) {
+            if (aborted) { try { more.abort?.() } catch { /* noop */ } break }
+            if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { const t = chunk.delta.text ?? ''; full += t; safeEnqueue(t) }
+          }
+        }
+        // 그래도 닫는 태그가 없지만 HTML 은 끝났으면 살려 쓴다
+        if (full.includes('<game>') && !full.includes('</game>') && /<\/html>/i.test(full)) {
+          const end = full.toLowerCase().lastIndexOf('</html>') + '</html>'.length
+          full = full.slice(0, end) + '</game>'
+          safeEnqueue('</game>')
+        }
         // 실제 토큰 사용량을 마커로 전달 — 클라이언트가 파싱해 표시하고 본문에선 제외
         let usedIn = 0, usedOut = 0
         try {
@@ -414,6 +444,9 @@ export async function POST(req: Request) {
             try { await supabase.from('studio_messages').insert([{ project_id: projectId, role: 'user', content: prompt + attachNote }, { project_id: projectId, role: 'assistant', content: answer }] as never) } catch { /* noop */ }
             controller.enqueue(encoder.encode(ANSWER_MARKER))
           } else {
+            // 실패해도 대화는 남긴다 — 예전엔 새로고침하면 요청과 답변이 통째로 사라졌다
+            const note = answer.length >= 10 ? answer : '만들다가 중간에 끊겼어요. 크레딧은 돌려드렸으니 한 번 더 시도해 주세요. (게임이 크면 "핵심만 먼저" 처럼 나눠서 요청하면 잘 됩니다)'
+            try { await supabase.from('studio_messages').insert([{ project_id: projectId, role: 'user', content: prompt + attachNote }, { project_id: projectId, role: 'assistant', content: note }] as never) } catch { /* noop */ }
             controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
           }
         } else {

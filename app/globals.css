@@ -1042,6 +1042,6 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 
 
 /* 게임 쇼츠 썸네일 — 아주 천천히 확대(켄번즈) */
-@keyframes thumb-kb { from { transform: scale(1); } to { transform: scale(1.22); } }
-.thumb-kb { animation: thumb-kb 32s cubic-bezier(.25,.6,.3,1) forwards; transform-origin: 50% 45%; will-change: transform; }
+@keyframes thumb-kb { from { transform: scale(1); } to { transform: scale(1.14); } }
+.thumb-kb { animation: thumb-kb 32s cubic-bezier(.25,.6,.3,1) forwards; transform-origin: 50% 45%; }
 @media (prefers-reduced-motion: reduce) { .thumb-kb { animation: none; } }

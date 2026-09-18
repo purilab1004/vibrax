@@ -19,4 +19,4 @@ export function costUsd(model: string, inputTokens: number, outputTokens: number
 export const usdToKrw = (usd: number) => Math.round(usd * KRW_PER_USD)
 
 /** 출력 토큰 상한 — 최악 케이스(64k) 방어. 무거운 게임(러너 21k)도 여유 있게 들어온다 */
-export const GENERATION_MAX_TOKENS = 32000
+export const GENERATION_MAX_TOKENS = 64000   // 3D(three.js) 게임처럼 긴 코드도 한 번에 나오게
