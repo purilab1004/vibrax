@@ -57,7 +57,25 @@ export function stripShims(html: string): string {
     .replace(/<script>\(function\(\)\{var CAPON=false,[\s\S]*?<\/script>/g, '')
 }
 
+// 자체 호스팅 three.js (public/vendor/three.min.js, r149 UMD → 전역 THREE).
+// 게임은 CSP 샌드박스(opaque origin)에서 돌아가므로 절대 URL 로만 불러올 수 있다.
+export const THREE_URL = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://vibrexcup.com'}/vendor/three.min.js`
+const THREE_TAG = `<script src="${THREE_URL}"></script>`
+const THREE_SRC_RE = /<script\b[^>]*\bsrc=["'][^"']*\bthree(?:\.module|\.core|\.webgpu)?(?:\.min)?\.js[^"']*["'][^>]*>\s*<\/script>/gi
+
+/** 게임이 three.js 를 쓰면(THREE.* 사용 또는 three 스크립트 태그) 우리 사본으로 바꿔/넣어 준다 */
+function injectThree(html: string): string {
+  const usesThree = /\bTHREE\s*\./.test(html) || THREE_SRC_RE.test(html)
+  THREE_SRC_RE.lastIndex = 0
+  if (!usesThree) return html
+  html = html.replace(THREE_SRC_RE, '')                       // CDN·모듈 태그는 걷어내고
+  if (html.includes(THREE_URL)) return html
+  const i = html.search(/<head[^>]*>/i)                        // 게임 스크립트보다 먼저 로드되게 <head> 맨 앞
+  return i >= 0 ? html.slice(0, html.indexOf('>', i) + 1) + THREE_TAG + html.slice(html.indexOf('>', i) + 1) : THREE_TAG + html
+}
+
 export function hardenHtml(html: string, opts: { controls?: ControlChannel[] } = {}): string {
+  html = injectThree(html)
   // 컨트롤러 설정(관리자) — 기본값과 다를 때만 심는다
   html = html.replace(/<script>window\.VIBREX_CONTROLS=[^<]*<\/script>/, '')
   if (opts.controls && JSON.stringify(opts.controls) !== JSON.stringify(DEFAULT_CONTROLS)) {
