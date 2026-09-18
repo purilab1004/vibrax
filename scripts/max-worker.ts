@@ -7,6 +7,7 @@ import fs from 'node:fs'
 import { parseGeneration, extractTitle } from '../lib/studio/parse'
 import { smokeGame } from './smoke-game.mjs'
 import { hardenHtml } from '../lib/studio/harden'
+import { extractPatches, applyPatches, validatePatchedHtml } from '../lib/studio/patch'
 
 for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', 'utf8').split('\n') : []) { const m = line.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^"|"$/g, '') }
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
@@ -92,6 +93,23 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   void ensureSaved(job, buf)
 }
 
+// 작업 결과를 '실행 가능한 HTML' 로 만든다 — 전체 완성본(<game>)이면 그대로, 부분 패치면 최신 버전에 적용해서
+async function materialize(jobId: string, out: string): Promise<{ html: string | null; fromPatch: boolean }> {
+  const direct = parseGeneration(out).html
+  if (direct) return { html: direct, fromPatch: false }
+  const ex = extractPatches(out)
+  if (!ex.blocks.length) return { html: null, fromPatch: false }
+  const { data: jobRow } = await sb.from('studio_jobs').select('project_id').eq('id', jobId).maybeSingle()
+  const projectId = (jobRow as { project_id?: string } | null)?.project_id
+  if (!projectId) return { html: null, fromPatch: true }
+  const { data: v } = await sb.from('studio_versions').select('html').eq('project_id', projectId).order('version', { ascending: false }).limit(1).maybeSingle()
+  const base = (v as { html?: string } | null)?.html
+  if (!base) return { html: null, fromPatch: true }
+  const applied = applyPatches(base, ex.blocks)
+  if (applied.failed.length || validatePatchedHtml(applied.html)) return { html: null, fromPatch: true }
+  return { html: applied.html, fromPatch: true }
+}
+
 // CLI 한 번 실행 — 수정 라운드용(도구 없이, 텍스트만 받는다)
 function runClaudeOnce(system: string, model: string, input: string, onText: (t: string) => void): Promise<string> {
   return new Promise((resolve) => {
@@ -118,8 +136,8 @@ function runClaudeOnce(system: string, model: string, input: string, onText: (t:
 async function testAndRepair(job: { id: string; model: string | null; system: string }, buf: string, append: (t: string) => void): Promise<string> {
   let out = buf
   for (let round = 0; round <= 2; round++) {
-    const html = parseGeneration(out).html
-    if (!html) return out                       // 게임이 없으면 테스트할 것도 없다
+    const { html } = await materialize(job.id, out)
+    if (!html) return out                       // 만들어진 게임이 없으면(설명만·패치 적용 실패) 테스트할 것도 없다
     let r
     try { r = await smokeGame(html) } catch (e) { console.log('  실행 테스트 불가', e); return out }
     console.log(`  실행 테스트 ${round + 1}회: ${r.ok ? '통과' : '실패'} (frames ${r.ticks}${r.errors.length ? ', ' + r.errors[0] : ''})`)
@@ -156,20 +174,21 @@ async function ensureSaved(job: { id: string; project_id?: string; messages: Msg
     const row = jobRow as { project_id: string; created_at: string } | null
     if (!row?.project_id) return
     const parsed = parseGeneration(result)
-    if (!parsed.html) return
+    const { html: finalHtml } = await materialize(job.id, result)
+    if (!finalHtml) return
     const { data: after } = await sb.from('studio_versions').select('id').eq('project_id', row.project_id).gt('created_at', row.created_at).limit(1)
     if ((after ?? []).length) return   // 서버가 이미 저장함
     const { data: last } = await sb.from('studio_versions').select('version').eq('project_id', row.project_id).order('version', { ascending: false }).limit(1).maybeSingle()
     const next = ((last as { version?: number } | null)?.version ?? 0) + 1
-    const { error: vErr } = await sb.from('studio_versions').insert([{ project_id: row.project_id, version: next, html: hardenHtml(parsed.html) }] as never)
+    const { error: vErr } = await sb.from('studio_versions').insert([{ project_id: row.project_id, version: next, html: hardenHtml(finalHtml) }] as never)
     if (vErr) { console.log('  [저장 안전장치] 버전 저장 실패', vErr.message); return }
     const lastUser = [...job.messages].reverse().find(m => m.role !== 'assistant')
     const prompt = typeof lastUser?.content === 'string' ? lastUser.content : (lastUser?.content ?? []).map(c => c.text ?? '').join('\n')
     await sb.from('studio_messages').insert([
       { project_id: row.project_id, role: 'user', content: (prompt || '(요청)').slice(0, 4000) },
-      { project_id: row.project_id, role: 'assistant', content: parsed.description },
+      { project_id: row.project_id, role: 'assistant', content: parsed.description || extractPatches(result).description },
     ] as never)
-    if (next === 1) { const t = extractTitle(parsed.html); if (t) await sb.from('studio_projects').update({ title: t } as never).eq('id', row.project_id) }
+    if (next === 1) { const t = extractTitle(finalHtml); if (t) await sb.from('studio_projects').update({ title: t } as never).eq('id', row.project_id) }
     console.log('  [저장 안전장치] 서버가 저장하지 못해 워커가 v' + next + ' 저장함')
   } catch (e) { console.log('  [저장 안전장치] 실패', e) }
 }

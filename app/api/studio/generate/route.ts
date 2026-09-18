@@ -364,10 +364,18 @@ export async function POST(req: Request) {
         forward(true)
         // 연결이 끊겼어도(탭 이동·새로고침·프록시 종료) 완성본이 이미 나왔으면 저장은 끝까지 한다.
         // 건진 게 없을 때만 환불하고 끝낸다.
-        if (aborted && !parseGeneration(full).html) { await refund(); console.log('[studio/generate] cancelled by user — nothing to save'); return }
+        // 부분 패치도 '건진 결과' 다 — 패치가 있으면 아래에서 적용해 저장한다
+        if (aborted && !parseGeneration(full).html && !extractPatches(raw).blocks.length) { await refund(); console.log('[studio/generate] cancelled by user — nothing to save'); return }
         if (aborted) console.warn('[studio/generate] client gone, but generation complete → saving anyway')
         if (patchMode) {
           const ex = extractPatches(raw)
+          // 워커가 실행 테스트에서 고친 '전체 완성본' 을 뒤에 붙였으면 그것을 쓴다(패치 재적용보다 우선)
+          const tested = parseGeneration(raw).html
+          if (tested) {
+            const tail = `\n<game>${tested}</game>`
+            full = ex.description + tail; safeEnqueue(tail)
+            console.log('[studio/generate] 워커가 고친 완성본 사용', tested.length, 'chars')
+          } else {
           const patchBase = modelBase
           const applied = patchBase && ex.blocks.length ? applyPatches(patchBase, ex.blocks) : null
           const invalid = applied && applied.failed.length === 0 ? validatePatchedHtml(applied.html) : null
@@ -396,6 +404,7 @@ export async function POST(req: Request) {
               if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { const t = chunk.delta.text ?? ''; full += t; safeEnqueue(t) }
             }
             if (aborted && !parseGeneration(full).html) { await refund(); return }
+          }
           }
         }
         // ── 출력이 잘렸으면 이어받는다 ──

@@ -10,7 +10,9 @@
 export interface PatchBlock { search: string; replace: string }
 export interface ExtractedPatches { blocks: PatchBlock[]; description: string; hasPatch: boolean }
 
-const BLOCK_RE = /<patch>\s*<{7}\s*SEARCH\s*\n([\s\S]*?)\n?={7}\s*\n([\s\S]*?)\n?>{7}\s*REPLACE\s*<\/patch>/g
+// SEARCH/REPLACE 짝을 <patch> 감싸임과 무관하게 모두 뽑는다.
+// (모델이 <patch> 하나 안에 수십 개의 짝을 넣는 경우가 많다 — 예전엔 '한 <patch>에 한 짝'만 인정해 전부 버려졌다)
+const BLOCK_RE = /<{7}[ \t]*SEARCH[ \t]*\r?\n([\s\S]*?)\r?\n={7}[ \t]*\r?\n([\s\S]*?)\r?\n>{7}[ \t]*REPLACE/g
 
 const MARKER_LINE = /^(<{7}|={7}|>{7})(\s|$)/m
 export function extractPatches(text: string): ExtractedPatches {
@@ -27,7 +29,9 @@ export function extractPatches(text: string): ExtractedPatches {
     byKey.set(key, b)
   }
   const blocks = [...byKey.values()]
-  const first = text.indexOf('<patch>')
+  const wrap = text.indexOf('<patch>')
+  const bare = text.search(/<{7}[ \t]*SEARCH/)
+  const first = wrap >= 0 ? wrap : bare
   const description = (first >= 0 ? text.slice(0, first) : text).replace(/<\/?patches?>/g, '').trim()
   return { blocks, description, hasPatch: first >= 0 }
 }
