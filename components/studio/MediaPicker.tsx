@@ -11,6 +11,7 @@ const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], [
 export default function MediaPicker({ open, onClose, picked, onChange }: { open: boolean; onClose: () => void; picked: PickedAsset[]; onChange: (next: PickedAsset[]) => void }) {
   const [q, setQ] = useState(''); const [kind, setKind] = useState('')
   const [items, setItems] = useState<Item[] | null>(null)
+  const [loading, setLoading] = useState(false)   // 카테고리·검색이 바뀌면 바로 스켈레톤 — 결과가 훅 튀어나오지 않게
   const [err, setErr] = useState<string | null>(null)
   // 오디오 미리듣기 — 한 번에 하나만, 닫으면 정지
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -30,13 +31,18 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
   useEffect(() => {
     if (!open) return
     if (!q && !kind) return // 검색·카테고리 선택 전에는 안내만 보여준다(렌더에서 분기)
+    let alive = true
+    const t0 = setTimeout(() => { setLoading(true); setErr(null) }, 0)   // 누르는 즉시 스켈레톤
     const t = setTimeout(async () => {
       try {
         const r = await fetch(`/api/media?q=${encodeURIComponent(q)}&kind=${kind}&limit=80`)
-        const j = await r.json(); setItems(j.items ?? []); setErr(j.error ?? null)
-      } catch { setErr('불러오지 못했어요') }
+        const j = await r.json()
+        if (!alive) return                       // 카테고리를 빨리 바꾸면 늦게 온 응답은 버린다
+        setItems(j.items ?? []); setErr(j.error ?? null)
+      } catch { if (alive) setErr('불러오지 못했어요') }
+      finally { if (alive) setLoading(false) }
     }, q ? 250 : 0)
-    return () => clearTimeout(t)
+    return () => { alive = false; clearTimeout(t0); clearTimeout(t) }
   }, [open, q, kind])
   useEffect(() => {
     if (!open) return
@@ -63,7 +69,19 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
         <div className="flex-1 min-h-0 overflow-y-auto p-4">
           {err && <p className="text-[12.5px] text-red-600 mb-2">{err}</p>}
           {!q && !kind ? <div className="min-h-[40vh] flex flex-col items-center justify-center gap-2 text-center"><span className="text-[28px]">🔍</span><p className="text-[15px] font-bold text-[#241f17]">검색하세요</p><p className="text-[12.5px] text-[#9d9280]">위 검색창에 이름·태그를 입력하거나 카테고리를 선택하면 에셋이 나와요.</p></div>
-            : items === null ? <p className="text-[13px] text-[#9d9280]">불러오는 중…</p>
+            : loading || items === null ? (
+              <div>
+                <p className="mb-2.5 inline-flex items-center gap-2 text-[12.5px] text-[#9d9280]"><span className="w-3.5 h-3.5 rounded-full border-2 border-[#ddd3bf] border-t-[#241f17] animate-spin" />불러오는 중…</p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div key={i} className="rounded-xl overflow-hidden bg-[#f8f6f1] border-2 border-transparent animate-pulse" style={{ animationDelay: `${i * 60}ms` }}>
+                      <div className="aspect-square bg-[#efeade]" />
+                      <div className="p-1.5 space-y-1"><div className="h-2.5 rounded bg-[#efeade]" /><div className="h-2 w-2/3 rounded bg-[#f3efe6]" /></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
             : items.length === 0 ? <div className="min-h-[40vh] flex flex-col items-center justify-center gap-2 text-center"><span className="text-[28px]">🗂️</span><p className="text-[15px] font-bold text-[#241f17]">{q ? '검색에 없습니다.' : '이 카테고리에 등록된 에셋이 없어요.'}</p>{q && <p className="text-[12.5px] text-[#9d9280]">다른 단어로 검색하거나 카테고리를 골라 보세요.</p>}</div>
             : <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
               {items.map(it => (

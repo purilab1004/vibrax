@@ -43,7 +43,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
     let t = 0
     // 화면에 들어오면 썸네일을 먼저 또렷하게 보여주고, 잠시 뒤 흐려지며 제목·캐릭터가 나타난다(다시 들어오면 또 재생)
     const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { clearTimeout(t); t = window.setTimeout(() => setRevealed(true), 1100) }
+      if (e.isIntersecting) { clearTimeout(t); t = window.setTimeout(() => setRevealed(true), 420) }
       else { clearTimeout(t); setRevealed(false) }
     }, { threshold: 0.35 })
     io.observe(el); return () => { clearTimeout(t); io.disconnect() }
@@ -122,14 +122,14 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
           </span>
         )}
         {/* 상단 중앙 — Jua 포스터 타이틀 */}
-        <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]" style={{ opacity: showStage ? 1 : 0, transform: showStage ? 'none' : 'translateY(-18px) scale(.9)', transition: 'opacity .5s ease, transform .6s ease', pointerEvents: showStage ? undefined : 'none' }}>
+        <div className="absolute inset-x-0 top-[15%] px-5 text-center z-[5]" style={{ opacity: showStage ? 1 : 0, transform: showStage ? 'none' : 'translateY(-18px) scale(.9)', transition: 'opacity .32s ease, transform .4s cubic-bezier(.2,1.1,.4,1)', pointerEvents: showStage ? undefined : 'none' }}>
           <span className="relative inline-block feed-title-float" style={hue != null ? ({ '--th': Math.round((hue + 180) % 360) } as React.CSSProperties) : undefined}>
             <h3 className={`${galaxyFont.className} feed-title relative z-[1] text-[40px] leading-[1.2]`}>{teaser}</h3>
             <span aria-hidden className={`${galaxyFont.className} feed-title-chrome absolute inset-0 z-[2] text-[40px] leading-[1.2]`}>{teaser}</span>
           </span>
         </div>
         {/* 방 장면 — 캐릭터는 중앙 */}
-        <div className="absolute inset-x-1 top-[29%] bottom-[21%] scale-[.84] origin-center" style={{ opacity: showStage ? 1 : 0, transform: showStage ? 'none' : 'translateY(28px)', transition: 'opacity .45s ease, transform .6s ease', pointerEvents: showStage ? undefined : 'none' }}>
+        <div className="absolute inset-x-1 top-[29%] bottom-[21%] scale-[.84] origin-center" style={{ opacity: showStage ? 1 : 0, transform: showStage ? 'none' : 'translateY(28px)', transition: 'opacity .3s ease, transform .42s cubic-bezier(.2,1.1,.4,1)', pointerEvents: showStage ? undefined : 'none' }}>
           <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />
         </div>
         {/* 하단 — 아케이드 플로우 */}
