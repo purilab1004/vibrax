@@ -41,8 +41,11 @@ function flatten(messages: Msg[], tmpDir: string): { text: string; files: string
   return { text, files }
 }
 
+let currentJobId: string | null = null
+
 async function runJob(job: { id: string; model: string | null; system: string; messages: Msg[] }) {
   console.log(new Date().toISOString(), 'job', job.id.slice(0, 8), 'model', cliModel(job.model))
+  currentJobId = job.id
   void beat(true)
   await sb.from('studio_jobs').update({ status: 'running', started_at: new Date().toISOString() }).eq('id', job.id)
   let buf = '', dirty = false, lastFlush = 0
@@ -90,6 +93,7 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   // ── 실제로 실행해 본다 → 실패하면 오류를 넣어 자동 수정(최대 2회) ──
   buf = await testAndRepair(job, buf, (t) => { buf += t; dirty = true; void flush() })
   await sb.from('studio_jobs').update({ status: 'done', result: buf, finished_at: new Date().toISOString() }).eq('id', job.id)
+  currentJobId = null
   console.log('  done', buf.length, 'chars')
   void ensureSaved(job, buf)
 }
@@ -204,6 +208,29 @@ const beat = async (busy: boolean) => {
 }
 void beat(false)
 setInterval(() => void beat(false), 10_000)
+
+// 이전 워커가 중간에 죽어 'running' 으로 멈춘 작업을 다시 대기열로 — 사용자는 기다리고 있는데 아무도 안 만드는 상태를 막는다
+async function reclaimStuck() {
+  const cutoff = new Date(Date.now() - 3 * 60_000).toISOString()
+  const { data } = await sb.from('studio_jobs').select('id,started_at,result').eq('status', 'running').lt('started_at', cutoff)
+  for (const j of (data ?? []) as { id: string; result: string | null }[]) {
+    await sb.from('studio_jobs').update({ status: 'pending', started_at: null, result: null }).eq('id', j.id)
+    console.log('  멈춰 있던 작업을 다시 대기열로:', j.id.slice(0, 8))
+  }
+}
+await reclaimStuck()
+setInterval(() => void reclaimStuck(), 120_000)
+
+// 종료 신호(재시작 등) — 처리 중이던 작업은 대기열로 돌려놓고 나간다
+for (const sig of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(sig, async () => {
+    if (currentJobId) {
+      console.log('종료 — 진행 중이던 작업을 대기열로 되돌립니다', currentJobId.slice(0, 8))
+      try { await sb.from('studio_jobs').update({ status: 'pending', started_at: null, result: null }).eq('id', currentJobId) } catch { /* noop */ }
+    }
+    process.exit(0)
+  })
+}
 
 console.log(`max-worker: 대기 중 (모델 ${FORCE_MODEL || '스튜디오 선택값'}, Max 로그인 사용 · Ctrl+C 로 종료)`)
 for (;;) {
