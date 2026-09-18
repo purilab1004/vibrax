@@ -18,6 +18,7 @@ const GENRE_LABELS: Record<string, string> = {
   adventure: 'ADVENTURE',
   strategy: 'STRATEGY',
   sports: 'SPORTS',
+  arcade: 'ARCADE',
 }
 
 const GENRE_COLORS: Record<string, string> = {
@@ -25,6 +26,7 @@ const GENRE_COLORS: Record<string, string> = {
   adventure: 'bg-amber-700',
   strategy: 'bg-blue-700',
   sports: 'bg-green-700',
+  arcade: 'bg-sky-600',
 }
 
 interface Props {

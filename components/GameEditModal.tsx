@@ -11,7 +11,7 @@ import { COUNTRIES } from '@/lib/countries'
 import type { Genre } from '@/lib/supabase/types'
 
 const LANGUAGES = [{ value: 'ko', label: '한국어' }, { value: 'en', label: 'English' }]
-const GENRES: { value: Genre; label: string }[] = [{ value: 'action', label: 'ACTION' }, { value: 'adventure', label: 'ADVENTURE' }, { value: 'strategy', label: 'STRATEGY' }, { value: 'sports', label: 'SPORTS' }]
+const GENRES: { value: Genre; label: string }[] = [{ value: 'action', label: 'ACTION' }, { value: 'adventure', label: 'ADVENTURE' }, { value: 'strategy', label: 'STRATEGY' }, { value: 'sports', label: 'SPORTS' }, { value: 'arcade', label: 'ARCADE' }]
 
 export interface GameEditPatch { id: string; title: string; genre: Genre; description: string | null; language: string | null; country: string | null; game_manual: string | null; play_url: string; intro: string | null; play_mode: 'single' | 'multi'; thumbnail_url: string; teaser: string | null }
 interface Form { title: string; genre: Genre; description: string; language: string; country: string; game_manual: string; play_url: string; thumbnail_url: string; teaser: string; intro: string; play_mode: 'single' | 'multi'; newThumbnail: File | null; newManual: File | null }

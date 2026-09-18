@@ -60,7 +60,7 @@ export function publicProfile(id: ApiIdentity, games: MyGame[], stats: { learned
 
 /** 외부 대화용 시스템 프롬프트 — 회원의 AJ 이름·성격 + 회원 게임 + MLPilot 말투 KB + 현재 페이지 컨텍스트 */
 export async function buildExternalSystem(id: ApiIdentity, games: MyGame[], ctx: ChatContext, userText: string, mode: ChatMode = 'chat'): Promise<{ system: string; exampleIds: string[]; ruleIds: string[]; emotion: string | null; genre: string; situation: string }> {
-  const genre = (['action', 'adventure', 'strategy', 'sports'].includes(ctx.genre ?? '') ? ctx.genre : 'action') as Genre
+  const genre = (['action', 'adventure', 'strategy', 'sports', 'arcade'].includes(ctx.genre ?? '') ? ctx.genre : 'action') as Genre
   const situation = ctx.situation && typeof ctx.situation === 'string' ? ctx.situation : 'reply'
   const talk = await buildTalkContext({ genre, gameId: null, situation, viewerText: userText }).catch(() => ({ text: '', exampleIds: [] as string[], ruleIds: [] as string[], style: null, emotion: null as string | null }))
   const name = ajDisplayName(id)

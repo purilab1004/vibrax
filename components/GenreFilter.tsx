@@ -11,6 +11,7 @@ const GENRES: { key: GenreOption; label: string }[] = [
   { key: 'adventure', label: 'ADVENTURE' },
   { key: 'strategy', label: 'STRATEGY' },
   { key: 'sports', label: 'SPORTS' },
+  { key: 'arcade', label: 'ARCADE' },
 ]
 
 // 장르 필터 — 유리 알약 바 안에서 활성 장르가 그라디언트 필로 빛난다

@@ -114,7 +114,7 @@ export default function MobileSearch({ open, onClose, categories }: { open: bool
                 <div className="[&_a]:!h-9 [&_button]:!h-9">{typeof categories === 'function' ? categories(onClose) : categories}</div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {([['', '전체'], ['action', '액션'], ['adventure', '어드벤처'], ['strategy', '전략'], ['sports', '스포츠']] as const).map(([v, l]) => (
+                  {([['', '전체'], ['action', '액션'], ['adventure', '어드벤처'], ['strategy', '전략'], ['sports', '스포츠'], ['arcade', '아케이드']] as const).map(([v, l]) => (
                     <button key={v} onClick={() => setCat(v)} className={`h-9 px-3.5 rounded-full text-[13px] font-semibold border transition-colors ${cat === v ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white text-[#4a4337] border-[#e3dccb]'}`}>{l}</button>
                   ))}
                 </div>
@@ -123,7 +123,7 @@ export default function MobileSearch({ open, onClose, categories }: { open: bool
             {cat ? (
               <section className="pt-5">
                 <div className="px-4 flex items-center justify-between mb-1">
-                  <h3 className="text-[11px] font-bold tracking-[0.18em] text-[#9d9280]">{({ action: '액션', adventure: '어드벤처', strategy: '전략', sports: '스포츠' } as Record<string, string>)[cat]} 인기 게임</h3>
+                  <h3 className="text-[11px] font-bold tracking-[0.18em] text-[#9d9280]">{({ action: '액션', adventure: '어드벤처', strategy: '전략', sports: '스포츠', arcade: '아케이드' } as Record<string, string>)[cat]} 인기 게임</h3>
                   <button onClick={() => { onClose(); router.push(`/games?genre=${cat}`) }} className="text-[12px] font-semibold text-[#2563eb]">전체 보기 →</button>
                 </div>
                 {catList.filter((g) => g.genre === cat).length === 0 ? <p className="px-4 py-6 text-[13px] text-[#9d9280]">이 카테고리에 등록된 게임이 아직 없어요.</p> : catList.filter((g) => g.genre === cat).map((g) => <Row key={g.id} g={g} />)}

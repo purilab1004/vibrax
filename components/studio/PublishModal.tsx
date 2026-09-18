@@ -8,7 +8,7 @@ import { useLang } from '@/lib/i18n/context'
 import type { Genre } from '@/lib/supabase/types'
 import { generateThumbnail } from '@/lib/thumbnail'
 
-const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
+const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports', 'arcade']
 
 export default function PublishModal({
   projectId, defaultTitle, versionId, onClose,

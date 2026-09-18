@@ -34,9 +34,10 @@ const GENRE_ICON: Record<Genre, React.ReactNode> = {
   adventure: <svg viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2.2 4.8-4.8 2.2 2.2-4.8 4.8-2.2Z" /></svg>,
   strategy: <svg viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="4.2" /><circle cx="12" cy="12" r="0.6" /></svg>,
   sports: <svg viewBox="0 0 24 24" className={ICON} {...stroke}><circle cx="12" cy="12" r="9" /><path d="M12 3v18M3 12h18" /></svg>,
+  arcade: <svg viewBox="0 0 24 24" className={ICON} {...stroke}><rect x="5" y="3" width="14" height="18" rx="2.5" /><rect x="7.5" y="6" width="9" height="5" rx="1.2" /><circle cx="9.5" cy="15.5" r="1.2" /><path d="M13 15.5h3.5" /></svg>,
 }
 
-const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
+const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports', 'arcade']
 
 // 순위(1~3위) 강조색 — 금·은·동
 const RANK_COLOR = ['text-[#c9940c]', 'text-[#4a4337]', 'text-amber-600']

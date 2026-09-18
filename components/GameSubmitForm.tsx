@@ -18,6 +18,7 @@ const GENRES: { value: Genre; label: string }[] = [
   { value: 'adventure', label: 'ADVENTURE' },
   { value: 'strategy', label: 'STRATEGY' },
   { value: 'sports', label: 'SPORTS' },
+  { value: 'arcade', label: 'ARCADE' },
 ]
 
 export default function GameSubmitForm({ userId }: { userId: string }) {

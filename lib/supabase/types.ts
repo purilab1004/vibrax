@@ -1,6 +1,6 @@
 import type { AvatarConfig } from '@/lib/jeumto/config'
 
-export type Genre = 'action' | 'adventure' | 'strategy' | 'sports'
+export type Genre = 'action' | 'adventure' | 'strategy' | 'sports' | 'arcade'
 
 export interface Game {
   id: string

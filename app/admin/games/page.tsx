@@ -11,8 +11,8 @@ import { COUNTRIES } from '@/lib/countries'
 import { countryFlag } from '@/lib/country'
 import { PageHeader, Card, Badge, Modal, ConfirmModal, Toast, Skeleton, EmptyState, Segmented, Pager, usePager, btn, input, label as labelCls, th, td, trHover, IconAction } from '@/components/admin/ui'
 
-const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
-const GENRE_COLOR: Record<string, string> = { action: '#e11d48', adventure: '#059669', strategy: '#7c3aed', sports: '#f59e0b' }
+const GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports', 'arcade']
+const GENRE_COLOR: Record<string, string> = { action: '#e11d48', adventure: '#059669', strategy: '#7c3aed', sports: '#f59e0b', arcade: '#0ea5e9' }
 
 export default function AdminGamesPage() {
   const [games, setGames] = useState<GameWithCreator[] | null>(null)

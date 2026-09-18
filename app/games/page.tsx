@@ -7,7 +7,7 @@ import { Suspense } from 'react'
 import type { Genre, GameWithCreator } from '@/lib/supabase/types'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
 
-const VALID_GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports']
+const VALID_GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports', 'arcade']
 
 interface Props {
   searchParams: Promise<{ genre?: string; q?: string; creator?: string; reward?: string }>

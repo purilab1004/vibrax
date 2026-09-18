@@ -36,6 +36,7 @@ const GENRES: { value: Genre; label: string }[] = [
   { value: 'adventure', label: 'ADVENTURE' },
   { value: 'strategy', label: 'STRATEGY' },
   { value: 'sports', label: 'SPORTS' },
+  { value: 'arcade', label: 'ARCADE' },
 ]
 
 const GENRE_COLORS: Record<Genre, string> = {
@@ -43,6 +44,7 @@ const GENRE_COLORS: Record<Genre, string> = {
   adventure: 'bg-[#059669]',
   strategy: 'bg-[#7c3aed]',
   sports: 'bg-[#f59e0b]',
+  arcade: 'bg-[#0ea5e9]',
 }
 
 interface EditingGame {

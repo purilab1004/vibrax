@@ -15,7 +15,7 @@ const PALETTES: [string, string][] = [
 ]
 
 const GENRE_LABEL: Record<Genre, string> = {
-  action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS',
+  action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS', arcade: 'ARCADE',
 }
 
 function hashStr(s: string): number {

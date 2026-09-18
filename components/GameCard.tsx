@@ -30,6 +30,7 @@ const GENRE_LABELS: Record<Game['genre'], string> = {
   adventure: 'ADVENTURE',
   strategy: 'STRATEGY',
   sports: 'SPORTS',
+  arcade: 'ARCADE',
 }
 
 // 시청자 아이콘 — 눈(👁) 대신 사람 실루엣
@@ -46,6 +47,7 @@ const GENRE_COLORS: Record<Game['genre'], string> = {
   adventure: 'bg-amber-700',
   strategy: 'bg-blue-700',
   sports: 'bg-green-700',
+  arcade: 'bg-sky-600',
 }
 
 // ── 감성 앞면 — 오로라 타이다이 그라디언트 (id로 색 배치 고정) ──

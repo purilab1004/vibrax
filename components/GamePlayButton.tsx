@@ -22,8 +22,8 @@ import PlayHeader from './PlayHeader'
 import TransportBar, { type Cand } from './TransportBar'
 import { hasCoinTicket, ticketKeyOf } from './GameCard'
 
-const GENRE_LABELS: Record<string, string> = { action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS' }
-const GENRE_COLORS: Record<string, string> = { action: 'bg-red-700', adventure: 'bg-amber-700', strategy: 'bg-blue-700', sports: 'bg-green-700' }
+const GENRE_LABELS: Record<string, string> = { action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS', arcade: 'ARCADE' }
+const GENRE_COLORS: Record<string, string> = { action: 'bg-red-700', adventure: 'bg-amber-700', strategy: 'bg-blue-700', sports: 'bg-green-700', arcade: 'bg-sky-600' }
 
 interface Props {
   game: Game

@@ -26,7 +26,7 @@ export const t = {
       adminHome: '관리자 홈',
       backToSite: '사이트로 돌아가기',
     },
-    genres: { action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS' },
+    genres: { action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS', arcade: 'ARCADE' },
     hero: {
       tagline: 'VIBE CODED · AI STREAMED · YOUR GAME',
       heading: '바이브로 게임 만들고\nAI가 STREAMING 한다',
@@ -354,7 +354,7 @@ export const t = {
       adminHome: 'Admin Home',
       backToSite: 'Back to site',
     },
-    genres: { action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS' },
+    genres: { action: 'ACTION', adventure: 'ADVENTURE', strategy: 'STRATEGY', sports: 'SPORTS', arcade: 'ARCADE' },
     hero: {
       tagline: 'VIBE CODED · AI STREAMED · YOUR GAME',
       heading: 'Build with Vibes,\nAI Streams It Live',

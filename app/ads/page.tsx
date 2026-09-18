@@ -10,7 +10,7 @@ import { PromptCreditBadge } from '@/components/CurrencyBadge'
 
 interface Campaign { id: string; game_id: string; title: string | null; creative: { headline?: string; hook?: string; badge?: string; by?: string; fun_score?: number | null }; budget_coins: number; spent_coins: number; cpc_coins: number; status: string; targeting: { genres?: string[]; countries?: string[] }; auto: boolean; impressions: number; clicks: number; plays: number; coins_earned: number; created_at: string; games: { id: string; title: string; thumbnail_url: string; genre: string } | null }
 
-const GENRES = ['action', 'adventure', 'strategy', 'sports']
+const GENRES = ['action', 'adventure', 'strategy', 'sports', 'arcade']
 const STATUS: Record<string, [string, string]> = { active: ['진행 중', 'bg-emerald-50 text-emerald-600'], paused: ['일시정지', 'bg-amber-50 text-amber-600'], done: ['종료', 'bg-[#f1ece2] text-[#6b6152]'], rejected: ['반려', 'bg-rose-50 text-rose-600'] }
 const input = 'w-full h-10 rounded-lg border border-[#ddd3bf] bg-white px-3.5 text-[14px] text-[#241f17] outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 transition'
 const label = 'block text-[12px] font-semibold text-[#6b6152] mb-1.5'

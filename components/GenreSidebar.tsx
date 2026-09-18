@@ -11,6 +11,7 @@ const GENRES: { key: Genre | ''; label: string }[] = [
   { key: 'adventure', label: 'ADVENTURE' },
   { key: 'strategy', label: 'STRATEGY' },
   { key: 'sports', label: 'SPORTS' },
+  { key: 'arcade', label: 'ARCADE' },
 ]
 
 // /games 좌측 사이드바 — 카테고리 목록 + 이어서 사이트 메뉴 (틱톡 사이드 문법)
