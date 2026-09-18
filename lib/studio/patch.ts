@@ -12,7 +12,9 @@ export interface ExtractedPatches { blocks: PatchBlock[]; description: string; h
 
 // SEARCH/REPLACE 짝을 <patch> 감싸임과 무관하게 모두 뽑는다.
 // (모델이 <patch> 하나 안에 수십 개의 짝을 넣는 경우가 많다 — 예전엔 '한 <patch>에 한 짝'만 인정해 전부 버려졌다)
-const BLOCK_RE = /<{7}[ \t]*SEARCH[ \t]*\r?\n([\s\S]*?)\r?\n={7}[ \t]*\r?\n([\s\S]*?)\r?\n>{7}[ \t]*REPLACE/g
+// 줄바꿈을 선택으로 둔 것이 중요하다 — REPLACE 가 비어 있는(코드 삭제) 패치도 읽어야 한다.
+// 예전 정규식은 그런 블록을 못 읽고 옆 블록까지 삼켜 버려, 패치 하나 때문에 수정 전체가 버려졌다.
+const BLOCK_RE = /<{7}[ \t]*SEARCH[ \t]*\r?\n([\s\S]*?)\r?\n?={7}[ \t]*\r?\n([\s\S]*?)\r?\n?>{7}[ \t]*REPLACE/g
 
 const MARKER_LINE = /^(<{7}|={7}|>{7})(\s|$)/m
 export function extractPatches(text: string): ExtractedPatches {

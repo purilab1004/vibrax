@@ -36,3 +36,26 @@ test('validatePatchedHtml: 구분자 잔해·문법 오류를 잡는다', () => 
   assert.match(validatePatchedHtml(base.replace('let x=1;', 'let x=1; let x=2;')) ?? '', /syntax/)
   assert.equal(validatePatchedHtml(base), null)
 })
+
+test('REPLACE 가 비어 있는(삭제) 패치도 읽고 적용한다', () => {
+  const text = `설명
+<patch>
+<<<<<<< SEARCH
+  const a = 1;
+  const dead = 2;
+=======
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  const b = 3;
+=======
+  const b = 4;
+>>>>>>> REPLACE
+</patch>`
+  const ex = extractPatches(text)
+  assert.equal(ex.blocks.length, 2)
+  const base = '  const a = 1;\n  const dead = 2;\n  const b = 3;\n'
+  const r = applyPatches(base, ex.blocks)
+  assert.deepEqual(r.failed, [])
+  assert.equal(r.html.includes('dead'), false)
+  assert.equal(r.html.includes('const b = 4;'), true)
+})

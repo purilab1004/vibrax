@@ -7,7 +7,7 @@ import fs from 'node:fs'
 import { parseGeneration, extractTitle } from '../lib/studio/parse'
 import { smokeGame } from './smoke-game.mjs'
 import { hardenHtml } from '../lib/studio/harden'
-import { extractPatches, applyPatches, validatePatchedHtml } from '../lib/studio/patch'
+import { extractPatches, applyPatches, validatePatchedHtml, type PatchBlock } from '../lib/studio/patch'
 
 for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', 'utf8').split('\n') : []) { const m = line.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^"|"$/g, '') }
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
@@ -98,6 +98,29 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   void ensureSaved(job, buf)
 }
 
+// 패치 한두 개가 원문과 안 맞아 통째로 버려지던 문제 — 안 맞는 블록만 따로 고쳐 달라고 해서 살린다.
+// (전체 재생성은 몇 분~십몇 분이 걸리지만, 이건 실패한 블록만 묻는 작은 요청이라 몇 초면 끝난다)
+async function repairFailedBlocks(base: string, blocks: PatchBlock[], failed: number[], model: string, system: string): Promise<PatchBlock[]> {
+  const lines = base.split('\n')
+  const out: PatchBlock[] = []
+  for (const i of failed.slice(0, 4)) {
+    const b = blocks[i]
+    if (!b?.search?.trim()) continue
+    // 이 블록이 바꾸려던 위치 찾기 — SEARCH 안에서 가장 특징적인(긴) 줄을 기준으로
+    const anchor = b.search.split('\n').map(l => l.trim()).filter(l => l.length >= 12).sort((a, c) => c.length - a.length)[0] ?? ''
+    let at = anchor ? lines.findIndex(l => l.trim() === anchor) : -1
+    if (at < 0 && anchor.length > 20) at = lines.findIndex(l => l.includes(anchor.slice(0, 20)))
+    const from = Math.max(0, at - 30), to = at < 0 ? Math.min(lines.length, 60) : Math.min(lines.length, at + 30)
+    const context = lines.slice(from, to).join('\n')
+    const prompt = `[USER]\n수정 패치 하나가 원문과 정확히 맞지 않아 적용되지 않았다. 아래는 (1) 적용하려던 패치와 (2) 실제 파일의 해당 부분이다.\n실제 파일 내용을 그대로 복사해 SEARCH 로 쓰고, 의도한 변경을 담은 REPLACE 를 만들어 <patch> 블록 하나만 출력해라. 설명 금지.\n\n[적용하려던 패치]\n<<<<<<< SEARCH\n${b.search}\n=======\n${b.replace}\n>>>>>>> REPLACE\n\n[실제 파일의 해당 부분]\n${context}\n\n[ASSISTANT]\n`
+    const res = await runClaudeOnce(system, model, prompt, () => {})
+    const fixed = extractPatches(res).blocks
+    if (fixed.length) { out.push(...fixed); console.log('  패치 재작성 성공(블록', i, ')') }
+    else console.log('  패치 재작성 실패(블록', i, ')')
+  }
+  return out
+}
+
 // 작업 결과를 '실행 가능한 HTML' 로 만든다 — 전체 완성본(<game>)이면 그대로, 부분 패치면 최신 버전에 적용해서
 async function materialize(jobId: string, out: string): Promise<{ html: string | null; fromPatch: boolean }> {
   const direct = parseGeneration(out).html
@@ -110,8 +133,20 @@ async function materialize(jobId: string, out: string): Promise<{ html: string |
   const { data: v } = await sb.from('studio_versions').select('html').eq('project_id', projectId).order('version', { ascending: false }).limit(1).maybeSingle()
   const base = (v as { html?: string } | null)?.html
   if (!base) return { html: null, fromPatch: true }
-  const applied = applyPatches(base, ex.blocks)
-  if (applied.failed.length || validatePatchedHtml(applied.html)) return { html: null, fromPatch: true }
+  let applied = applyPatches(base, ex.blocks)
+  if (applied.failed.length) {
+    console.log(`  패치 ${ex.blocks.length}개 중 ${applied.failed.length}개가 원문과 안 맞음 → 그 블록만 다시 요청`)
+    const { data: job } = await sb.from('studio_jobs').select('model,system').eq('id', jobId).maybeSingle()
+    const j = job as { model: string | null; system: string } | null
+    const redone = await repairFailedBlocks(base, ex.blocks, applied.failed, cliModel(j?.model ?? null), j?.system ?? '')
+    if (redone.length) {
+      const keep = ex.blocks.filter((_, i) => !applied.failed.includes(i))
+      applied = applyPatches(base, [...keep, ...redone])
+      console.log(`  재적용 결과 — 실패 ${applied.failed.length}개`)
+    }
+  }
+  const bad = validatePatchedHtml(applied.html)
+  if (applied.failed.length || bad) { console.log('  패치 적용 실패:', applied.failed.length, bad ?? ''); return { html: null, fromPatch: true } }
   return { html: applied.html, fromPatch: true }
 }
 
@@ -180,7 +215,21 @@ async function ensureSaved(job: { id: string; project_id?: string; messages: Msg
     if (!row?.project_id) return
     const parsed = parseGeneration(result)
     const { html: finalHtml } = await materialize(job.id, result)
-    if (!finalHtml) return
+    const desc = (parsed.description || extractPatches(result).description || '').slice(0, 4000)
+    if (!finalHtml) {
+      // 만들지 못했어도 기록은 반드시 남긴다 — 화면에서 대화가 통째로 사라지지 않게
+      const { data: jr } = await sb.from('studio_jobs').select('project_id,created_at').eq('id', job.id).maybeSingle()
+      const pid = (jr as { project_id?: string; created_at?: string } | null)?.project_id
+      const since = (jr as { created_at?: string } | null)?.created_at
+      if (!pid) return
+      const { data: newer } = await sb.from('studio_messages').select('id').eq('project_id', pid).gt('created_at', since ?? '').limit(1)
+      if ((newer ?? []).length) return   // 서버가 이미 기록함
+      await sb.from('studio_messages').insert([
+        { project_id: pid, role: 'assistant', content: (desc ? desc + '\n\n' : '') + '⚠ 이번 수정은 코드에 반영하지 못했어요(패치가 현재 코드와 맞지 않았어요). 크레딧은 돌려드렸어요 — 같은 요청을 한 번 더 보내 주시면 이번엔 전체 완성본으로 만들게요.' },
+      ] as never)
+      console.log('  [기록] 실패 사유를 대화에 남김')
+      return
+    }
     const { data: after } = await sb.from('studio_versions').select('id').eq('project_id', row.project_id).gt('created_at', row.created_at).limit(1)
     if ((after ?? []).length) return   // 서버가 이미 저장함
     const { data: last } = await sb.from('studio_versions').select('version').eq('project_id', row.project_id).order('version', { ascending: false }).limit(1).maybeSingle()
@@ -191,7 +240,7 @@ async function ensureSaved(job: { id: string; project_id?: string; messages: Msg
     const prompt = typeof lastUser?.content === 'string' ? lastUser.content : (lastUser?.content ?? []).map(c => c.text ?? '').join('\n')
     await sb.from('studio_messages').insert([
       { project_id: row.project_id, role: 'user', content: (prompt || '(요청)').slice(0, 4000) },
-      { project_id: row.project_id, role: 'assistant', content: parsed.description || extractPatches(result).description },
+      { project_id: row.project_id, role: 'assistant', content: (desc || '수정했어요.') + (result.includes('[[VBX_TEST]]') ? `\n\n${result.split('[[VBX_TEST]]')[1]?.split('[[/VBX_TEST]]')[0] ?? ''}` : '') },
     ] as never)
     if (next === 1) { const t = extractTitle(finalHtml); if (t) await sb.from('studio_projects').update({ title: t } as never).eq('id', row.project_id) }
     console.log('  [저장 안전장치] 서버가 저장하지 못해 워커가 v' + next + ' 저장함')
