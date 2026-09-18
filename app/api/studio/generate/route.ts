@@ -339,7 +339,7 @@ export async function POST(req: Request) {
   }
 
   const encoder = new TextEncoder()
-  let aborted = false   // 클라이언트가 취소(연결 끊김) — 모델 중단, 버전 저장 안 함, 환불
+  let aborted = false   // 클라이언트 연결 끊김 — 모델은 멈추지만, 이미 완성된 결과가 있으면 저장은 그대로 진행한다
   const readable = new ReadableStream({
     cancel() { aborted = true; try { stream?.abort?.() } catch { /* noop */ } },
     async start(controller) {
@@ -347,7 +347,7 @@ export async function POST(req: Request) {
       let versionPersisted = false
       const safeEnqueue = (t: string) => { if (aborted) return; try { controller.enqueue(encoder.encode(t)) } catch { aborted = true } }
       try {
-        if (templateNote) { full += templateNote; controller.enqueue(encoder.encode(templateNote)) }
+        if (templateNote) { full += templateNote; safeEnqueue(templateNote) }
         // 부분 패치 모드: 모델이 <patch> 블록을 내기 시작하면 그 뒤 원문은 클라이언트에 보내지 않고(설명만 보임) 끝에 조립한 <game> 을 보낸다
         let raw = '', sentUpTo = 0, patchMode = false
         const forward = (final = false) => {
@@ -361,8 +361,11 @@ export async function POST(req: Request) {
           if (aborted) break
           if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { raw += chunk.delta.text ?? ''; forward() }
         }
-        if (aborted) { await refund(); console.log('[studio/generate] cancelled by user'); return }
         forward(true)
+        // 연결이 끊겼어도(탭 이동·새로고침·프록시 종료) 완성본이 이미 나왔으면 저장은 끝까지 한다.
+        // 건진 게 없을 때만 환불하고 끝낸다.
+        if (aborted && !parseGeneration(full).html) { await refund(); console.log('[studio/generate] cancelled by user — nothing to save'); return }
+        if (aborted) console.warn('[studio/generate] client gone, but generation complete → saving anyway')
         if (patchMode) {
           const ex = extractPatches(raw)
           const patchBase = modelBase
@@ -371,7 +374,7 @@ export async function POST(req: Request) {
           if (invalid) console.warn('[studio/generate] patched html invalid:', invalid)
           if (applied && applied.failed.length === 0 && !invalid) {
             const tail = `\n<game>${applied.html}</game>`
-            full = ex.description + tail; controller.enqueue(encoder.encode(tail))
+            full = ex.description + tail; safeEnqueue(tail)
             console.log('[studio/generate] patch mode', ex.blocks.length, 'blocks, out', raw.length, 'chars')
           } else {
             // 패치를 못 붙이면 전체 완성본으로 한 번 더 (API) — 느리지만 확실
@@ -392,7 +395,7 @@ export async function POST(req: Request) {
               if (aborted) { try { retry.abort?.() } catch { /* noop */ } break }
               if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { const t = chunk.delta.text ?? ''; full += t; safeEnqueue(t) }
             }
-            if (aborted) { await refund(); return }
+            if (aborted && !parseGeneration(full).html) { await refund(); return }
           }
         }
         // ── 출력이 잘렸으면 이어받는다 ──
@@ -430,7 +433,7 @@ export async function POST(req: Request) {
         try {
           const fin = await stream.finalMessage()
           usedIn = fin.usage?.input_tokens ?? 0; usedOut = fin.usage?.output_tokens ?? 0
-          controller.enqueue(encoder.encode(`\n[[USAGE:${usedIn}:${usedOut}]]`))
+          safeEnqueue(`\n[[USAGE:${usedIn}:${usedOut}]]`)
         } catch { /* usage 실패는 무시 — 생성 자체엔 영향 없음 */ }
         const parsed = parseGeneration(full)
         if (!parsed.html) {
@@ -438,16 +441,16 @@ export async function POST(req: Request) {
           const answer = parsed.description.replace(/<patch>[\s\S]*$/, '').trim()
           if (full.includes('<offtopic')) {
             // 게임과 무관한 요청 — 실패가 아니라 안내로 처리 (크레딧은 위에서 환불됨)
-            controller.enqueue(encoder.encode(OFF_TOPIC_MARKER))
+            safeEnqueue(OFF_TOPIC_MARKER)
           } else if (latest && !patchMode && answer.length >= 20) {
             // 기존 게임에 대한 질문/진단에 설명만 한 경우 — 답변으로 보여 주고 대화에 남긴다 (버전 없음, 환불됨)
             try { await supabase.from('studio_messages').insert([{ project_id: projectId, role: 'user', content: prompt + attachNote }, { project_id: projectId, role: 'assistant', content: answer }] as never) } catch { /* noop */ }
-            controller.enqueue(encoder.encode(ANSWER_MARKER))
+            safeEnqueue(ANSWER_MARKER)
           } else {
             // 실패해도 대화는 남긴다 — 예전엔 새로고침하면 요청과 답변이 통째로 사라졌다
             const note = answer.length >= 10 ? answer : '만들다가 중간에 끊겼어요. 크레딧은 돌려드렸으니 한 번 더 시도해 주세요. (게임이 크면 "핵심만 먼저" 처럼 나눠서 요청하면 잘 됩니다)'
             try { await supabase.from('studio_messages').insert([{ project_id: projectId, role: 'user', content: prompt + attachNote }, { project_id: projectId, role: 'assistant', content: note }] as never) } catch { /* noop */ }
-            controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
+            safeEnqueue(GEN_ERROR_MARKER)
           }
         } else {
           const nextVersion = (latest?.version ?? 0) + 1
@@ -460,7 +463,7 @@ export async function POST(req: Request) {
           ] as never).select('id').maybeSingle()
           if (vErr) {
             await refund()
-            controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
+            safeEnqueue(GEN_ERROR_MARKER)
           } else {
             // 버전이 저장된 이상 생성은 성공이다 — 이후 실패는 환불도, 에러 마커도 없다.
             versionPersisted = true
@@ -511,7 +514,7 @@ export async function POST(req: Request) {
           // Max 워커 오류(한도·추가 사용량 소진 등)는 사유를 그대로 보여 준다
           const m = err instanceof Error ? err.message : ''
           if (m.startsWith('max worker:')) controller.enqueue(encoder.encode(`\n[[GEN_MSG]]${m.replace(/^max worker:\s*/, '')}[[/GEN_MSG]]`))
-          controller.enqueue(encoder.encode(GEN_ERROR_MARKER))
+          safeEnqueue(GEN_ERROR_MARKER)
         } else {
           console.error('[studio/generate] error after version persisted', err)
           void logServerError('api', err, { path: '/api/studio/generate' })

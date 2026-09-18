@@ -4,6 +4,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
+import { parseGeneration, extractTitle } from '../lib/studio/parse'
+import { hardenHtml } from '../lib/studio/harden'
 
 for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', 'utf8').split('\n') : []) { const m = line.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^"|"$/g, '') }
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
@@ -84,6 +86,35 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   if (code !== 0 && !buf) { await sb.from('studio_jobs').update({ status: 'error', error: err.slice(0, 500) || `exit ${code}`, finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  error', err.slice(0, 200)); return }
   await sb.from('studio_jobs').update({ status: 'done', result: buf, finished_at: new Date().toISOString() }).eq('id', job.id)
   console.log('  done', buf.length, 'chars')
+  void ensureSaved(job, buf)
+}
+
+// ── 저장 안전장치 ──
+// 생성이 3~4분 걸리면 서버(Vercel) 함수가 먼저 끊겨 버전이 저장되지 않는 일이 있었다(화면엔 답변이 보이지만 새로고침하면 사라짐).
+// 서버가 저장할 시간을 준 뒤에도 새 버전이 없으면 워커가 직접 저장한다.
+async function ensureSaved(job: { id: string; project_id?: string; messages: Msg[] }, result: string) {
+  try {
+    await new Promise(r => setTimeout(r, 20_000))
+    const { data: jobRow } = await sb.from('studio_jobs').select('project_id,created_at').eq('id', job.id).maybeSingle()
+    const row = jobRow as { project_id: string; created_at: string } | null
+    if (!row?.project_id) return
+    const parsed = parseGeneration(result)
+    if (!parsed.html) return
+    const { data: after } = await sb.from('studio_versions').select('id').eq('project_id', row.project_id).gt('created_at', row.created_at).limit(1)
+    if ((after ?? []).length) return   // 서버가 이미 저장함
+    const { data: last } = await sb.from('studio_versions').select('version').eq('project_id', row.project_id).order('version', { ascending: false }).limit(1).maybeSingle()
+    const next = ((last as { version?: number } | null)?.version ?? 0) + 1
+    const { error: vErr } = await sb.from('studio_versions').insert([{ project_id: row.project_id, version: next, html: hardenHtml(parsed.html) }] as never)
+    if (vErr) { console.log('  [저장 안전장치] 버전 저장 실패', vErr.message); return }
+    const lastUser = [...job.messages].reverse().find(m => m.role !== 'assistant')
+    const prompt = typeof lastUser?.content === 'string' ? lastUser.content : (lastUser?.content ?? []).map(c => c.text ?? '').join('\n')
+    await sb.from('studio_messages').insert([
+      { project_id: row.project_id, role: 'user', content: (prompt || '(요청)').slice(0, 4000) },
+      { project_id: row.project_id, role: 'assistant', content: parsed.description },
+    ] as never)
+    if (next === 1) { const t = extractTitle(parsed.html); if (t) await sb.from('studio_projects').update({ title: t } as never).eq('id', row.project_id) }
+    console.log('  [저장 안전장치] 서버가 저장하지 못해 워커가 v' + next + ' 저장함')
+  } catch (e) { console.log('  [저장 안전장치] 실패', e) }
 }
 
 console.log(`max-worker: 대기 중 (모델 ${FORCE_MODEL || '스튜디오 선택값'}, Max 로그인 사용 · Ctrl+C 로 종료)`)
