@@ -13,6 +13,9 @@ export function extractTestNote(text: string): string | null {
   return m ? m[1].trim() : null
 }
 export function hasAnswerOnly(text: string): boolean { return text.includes(ANSWER_MARKER) }
+// 서버 함수 시간이 다 됐지만 생성은 계속 진행 중 — 클라이언트는 완성될 때까지 기다린다
+const PENDING_RE = /\[\[PENDING:([0-9a-f-]{36})\]\]/
+export function pendingJobId(text: string): string | null { return PENDING_RE.exec(text)?.[1] ?? null }
 
 export function hasOffTopic(text: string): boolean {
   return text.includes(OFF_TOPIC_MARKER) || text.includes('<offtopic')
@@ -26,7 +29,7 @@ export interface ParsedGeneration {
 }
 
 export function parseGeneration(text: string): ParsedGeneration {
-  const clean = text.replace(/\n\[\[GEN_MSG\]\][\s\S]*?\[\[\/GEN_MSG\]\]/g, '').replace(/\n?\[\[VBX_TEST\]\][\s\S]*?\[\[\/VBX_TEST\]\]/g, '').split(GEN_ERROR_MARKER).join('').split(OFF_TOPIC_MARKER).join('').split(ANSWER_MARKER).join('').replace(/<offtopic\/?>/g, '')
+  const clean = text.replace(/\n\[\[GEN_MSG\]\][\s\S]*?\[\[\/GEN_MSG\]\]/g, '').replace(/\n?\[\[VBX_TEST\]\][\s\S]*?\[\[\/VBX_TEST\]\]/g, '').replace(/\n?\[\[PENDING:[0-9a-f-]{36}\]\]/g, '').split(GEN_ERROR_MARKER).join('').split(OFF_TOPIC_MARKER).join('').split(ANSWER_MARKER).join('').replace(/<offtopic\/?>/g, '')
   const first = clean.indexOf('<game>')
   // 실행 테스트에서 고친 완성본이 뒤에 다시 올 수 있으므로 '마지막' 게임 블록을 쓴다
   const open = clean.lastIndexOf('<game>')

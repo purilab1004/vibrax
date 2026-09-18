@@ -13,7 +13,7 @@ import GamePreview from '@/components/studio/GamePreview'
 import PublishModal from '@/components/studio/PublishModal'
 import EditInfoModal from '@/components/studio/EditInfoModal'
 import StudyPanel from '@/components/studio/StudyPanel'
-import { parseGeneration, hasGenError, hasOffTopic, hasAnswerOnly } from '@/lib/studio/parse'
+import { parseGeneration, hasGenError, hasOffTopic, hasAnswerOnly, pendingJobId } from '@/lib/studio/parse'
 import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import type { StudioProject, StudioVersionMeta } from '@/lib/supabase/types'
 import { loadAvatarConfig } from '@/lib/jeumto/storage'
@@ -184,10 +184,33 @@ export default function StudioComposerPage() {
     }
   }
 
+  // 오래 걸리는 생성 — 워커가 다 만들면 새 버전이 저장된다. 그때까지 기다렸다가 화면을 갱신한다(최대 20분)
+  const waitForBackground = async (prevTopVersion: string | null) => {
+    const started = Date.now()
+    setStreaming({ description: '만드는 데 시간이 걸리고 있어요 — 계속 진행 중이고, 완성되면 여기에 자동으로 나타납니다. (창을 닫아도 계속 만들어요)', htmlBytes: 0, codeTail: '' })
+    try {
+      while (Date.now() - started < 20 * 60_000) {
+        await new Promise(r => setTimeout(r, 5000))
+        const list = await refreshVersions().catch(() => [] as StudioVersionMeta[])
+        if (list.length && list[0].id !== prevTopVersion) {
+          setCurrentVersionId(list[0].id)
+          await loadVersionHtml(list[0].id)
+          if (view === 'chat') setView('game')
+          const { data: msgs } = await supabase.from('studio_messages').select('role, content').eq('project_id', id).order('created_at', { ascending: true })
+          if (msgs) setMessages(msgs as ChatMsg[])
+          await refreshBalance().catch(() => {})
+          return
+        }
+      }
+      setError('생성이 예상보다 오래 걸리고 있어요. 잠시 뒤 새로고침하면 결과가 보일 수 있어요.')
+    } finally { setStreaming(null) }
+  }
+
   const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[], pickedAssets?: { name: string; kind: string; url?: string }[]) => {
     setError(null)
     setMessages(m => [...m, { role: 'user', content: prompt, images: images?.map(i => i.previewUrl), sounds: sounds?.map(x => x.name), assets: pickedAssets }])
     balanceBeforeRef.current = balance
+    const prevTopVersion = versions[0]?.id ?? null
     // 낙관적 user 메시지가 아직 롤백 대상인지 추적 (성공/GEN_ERROR 처리 후에는 롤백 금지)
     let optimisticPending = true
     setStreaming({ description: '', htmlBytes: 0, codeTail: '' })
@@ -252,6 +275,16 @@ export default function StudioComposerPage() {
         setUsage({ input: Number(um[1]), output: Number(um[2]), credits: before != null ? Math.max(0, before - after) : undefined, balance: after })
       }
       setStreaming(null)
+
+      // 서버 시간이 다 돼 백그라운드(로컬 워커)에서 계속 만들고 있는 경우 — 완성될 때까지 기다렸다가 자동 반영
+      const bgJob = pendingJobId(full)
+      if (bgJob) {
+        const p = parseGeneration(full)
+        if (p.description) setMessages(m => [...m, { role: 'assistant', content: p.description }])
+        optimisticPending = false
+        await waitForBackground(prevTopVersion)
+        return
+      }
 
       if (hasOffTopic(full)) {
         setMessages(m => m.slice(0, -1))

@@ -7,8 +7,12 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export type MsgStream = AsyncIterable<{ type: string; delta?: { type: string; text?: string } }> & {
   finalMessage(): Promise<{ usage?: { input_tokens?: number; output_tokens?: number } }>
   abort?: () => void   // 사용자가 취소하면 호출 — 모델/워커 중단
+  jobId?: string       // Max 워커 작업 id (백그라운드로 이어질 때 클라이언트가 기다릴 대상)
+  pending?: boolean    // 서버 함수 시간이 다 됐지만 워커는 계속 만들고 있는 상태
 }
-const PICKUP_MS = 25_000, TOTAL_MS = 280_000, POLL_MS = 500
+// 서버(Vercel) 함수는 300초에서 끊긴다. 그 전에 스트림만 끝내고(=pending) 워커는 계속 만들게 둔다 —
+// 완성되면 워커가 직접 버전을 저장하고, 화면은 그걸 받아 자동으로 갱신한다(몇 분이 걸려도 무방).
+const PICKUP_MS = 25_000, SOFT_MS = 225_000, POLL_MS = 500
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
 export async function tryMaxJob(admin: SupabaseClient, job: { projectId: string; userId: string; model: string; system: string; messages: unknown }): Promise<MsgStream | null> {
@@ -26,6 +30,7 @@ export async function tryMaxJob(admin: SupabaseClient, job: { projectId: string;
   if (!picked) { await admin.from('studio_jobs').update({ status: 'abandoned', error: 'no worker', finished_at: new Date().toISOString() }).eq('id', id); return null }
   let sent = 0, ended = false
   const stream: MsgStream = {
+    jobId: id,
     async *[Symbol.asyncIterator]() {
       const start = Date.now()
       while (!ended) {
@@ -36,7 +41,7 @@ export async function tryMaxJob(admin: SupabaseClient, job: { projectId: string;
         if (text.length > sent) { const d = text.slice(sent); sent = text.length; yield { type: 'content_block_delta', delta: { type: 'text_delta', text: d } } }
         if (r?.status === 'done') { ended = true; break }
         if (r?.status === 'error') { ended = true; throw new Error(`max worker: ${r.error ?? 'failed'}`) }
-        if (Date.now() - start > TOTAL_MS) { ended = true; await admin.from('studio_jobs').update({ status: 'timeout', finished_at: new Date().toISOString() }).eq('id', id); throw new Error('max worker timeout') }
+        if (Date.now() - start > SOFT_MS) { ended = true; stream.pending = true; console.log('[max-job] 서버 시간 한계 — 워커는 계속 진행', id); break }
       }
     },
     async finalMessage() { return { usage: { input_tokens: 0, output_tokens: 0 } } },

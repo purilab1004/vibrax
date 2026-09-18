@@ -362,6 +362,14 @@ export async function POST(req: Request) {
           if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') { raw += chunk.delta.text ?? ''; forward() }
         }
         forward(true)
+        // 서버 함수 시간이 다 됐는데 워커는 계속 만들고 있다 → 실패·환불이 아니라 '계속 진행 중' 으로 알린다.
+        // 완성되면 워커가 직접 버전·메시지를 저장하고, 화면은 그걸 받아 자동으로 갱신한다.
+        if (stream && (stream as MsgStream).pending) {
+          const jid = (stream as MsgStream).jobId
+          console.log('[studio/generate] 백그라운드로 계속 —', jid)
+          safeEnqueue(`\n[[PENDING:${jid}]]`)
+          return
+        }
         // 연결이 끊겼어도(탭 이동·새로고침·프록시 종료) 완성본이 이미 나왔으면 저장은 끝까지 한다.
         // 건진 게 없을 때만 환불하고 끝낸다.
         // 부분 패치도 '건진 결과' 다 — 패치가 있으면 아래에서 적용해 저장한다
