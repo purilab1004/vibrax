@@ -1,17 +1,28 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useLang } from '@/lib/i18n/context'
 import { useIsNativeApp } from '@/lib/isNativeApp'
 
 const ICON = 'w-[26px] h-[26px]'
 
 // 모바일 하단 앱 내비게이션 — 홈 / 게임 / 만들기(중앙 강조) / 토너먼트 / MY
+const TAB_PATHS = ['/', '/games', '/studio', '/tournament', '/profile']
+
 export default function MobileNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const { T } = useLang()
   const isApp = useIsNativeApp()
+
+  // 탭 화면을 미리 받아둔다 — 눌렀을 때 로딩 없이 바로 넘어가게 (한가할 때 한 번)
+  useEffect(() => {
+    const idle = (cb: () => void) => (window.requestIdleCallback ? window.requestIdleCallback(cb, { timeout: 2000 }) : window.setTimeout(cb, 600))
+    const id = idle(() => { for (const p of TAB_PATHS) { try { router.prefetch(p) } catch { /* noop */ } } })
+    return () => { try { window.cancelIdleCallback?.(id as number) } catch { /* noop */ } }
+  }, [router])
 
   // 네이티브 앱에서는 RN 하단 탭바가 대신하므로 웹 내비는 숨김 (App.tsx 주입 CSS 와 이중 안전장치)
   if (isApp) return null
@@ -22,6 +33,7 @@ export default function MobileNav() {
   const item = (href: string, label: string, icon: (active: boolean) => React.ReactNode, active: boolean) => (
     <Link
       href={href}
+      prefetch
       aria-label={label}
       title={label}
       aria-current={active ? 'page' : undefined}
@@ -52,7 +64,7 @@ export default function MobileNav() {
           </svg>
         ), pathname.startsWith('/games'))}
         {/* 중앙 만들기 — 그라디언트 원형 강조 */}
-        <Link href="/studio" className="flex flex-col items-center justify-center flex-1" aria-label={T.nav.studio}>
+        <Link href="/studio" prefetch className="flex flex-col items-center justify-center flex-1" aria-label={T.nav.studio}>
           {/* 큰 네모 점토 캐릭터 — 로고 그대로, 가끔 윙크 */}
           <span className="-mt-2 block w-12 h-12 drop-shadow-[0_6px_14px_rgba(240,90,40,0.45)] active:scale-95 transition-transform">
             <svg viewBox="0 0 32 32" className="w-full h-full" aria-hidden>

@@ -33,6 +33,9 @@ export default function NativeBridge() {
       document.documentElement.style.setProperty('--app-top', `${ins?.top ?? 0}px`)
       document.documentElement.style.setProperty('--app-bottom', `${ins?.bottom ?? 0}px`)
     } catch { /* noop */ }
+    // 탭 화면 미리 받기 — 앱 하단 탭을 눌렀을 때 마스코트 로더 없이 바로 전환되게
+    const idle = (cb: () => void) => (window.requestIdleCallback ? window.requestIdleCallback(cb, { timeout: 2500 }) : window.setTimeout(cb, 800))
+    idle(() => { for (const p of ['/', '/games', '/studio', '/tournament', '/profile']) { try { router.prefetch(p) } catch { /* noop */ } } })
     return () => { delete w.__vibexNav }
   }, [router])
 

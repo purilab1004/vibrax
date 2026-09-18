@@ -26,13 +26,14 @@ const isInternal = (url: string) => {
 // 앱에서는 스크롤 성능을 위해 카드 상시 애니메이션을 끈다(웹은 그대로 화려하게 유지, globals.css 의 .vbx-app 규칙).
 const APP_TWEAKS = `(function(){try{var d=document.documentElement;d.classList.add('vbx-app');var s=document.createElement('style');s.setAttribute('data-vbx','1');s.innerHTML="nav[aria-label='mobile navigation']{display:none !important}";(document.head||d).appendChild(s);}catch(e){}})();true;`
 
-type TabDef = { key: string; label: string; icon?: number; center?: boolean }
+// 인스타그램식 — 선택된 탭은 파란 '채움' 아이콘, 나머지는 연회색 '외곽선' 아이콘(웹 하단 내비와 같은 모양)
+type TabDef = { key: string; label: string; icon?: number; iconOn?: number; center?: boolean }
 const TABS: TabDef[] = [
-  { key: '/', label: 'Home', icon: require('./assets/nav-home.png') },
-  { key: '/games', label: 'Games', icon: require('./assets/nav-games.png') },
+  { key: '/', label: 'Home', icon: require('./assets/nav-home.png'), iconOn: require('./assets/nav-home-on.png') },
+  { key: '/games', label: 'Games', icon: require('./assets/nav-games.png'), iconOn: require('./assets/nav-games-on.png') },
   { key: '/studio', label: 'Create', center: true },
-  { key: '/tournament', label: 'Event', icon: require('./assets/nav-trophy.png') },
-  { key: '/profile', label: 'My', icon: require('./assets/nav-profile.png') },
+  { key: '/tournament', label: 'Event', icon: require('./assets/nav-trophy.png'), iconOn: require('./assets/nav-trophy-on.png') },
+  { key: '/profile', label: 'My', icon: require('./assets/nav-profile.png'), iconOn: require('./assets/nav-profile-on.png') },
 ]
 
 // 현재 경로 → 활성 탭 키
@@ -228,7 +229,7 @@ function TabItem({ tab, active, onPress }: { tab: TabDef; active: boolean; onPre
   return (
     <Pressable style={styles.tabItem} onPressIn={() => press(0.88)} onPressOut={() => press(1)} onPress={onPress} hitSlop={6}>
       {/* 글씨 없이 아이콘만 — 선택된 탭만 파랑 */}
-      <Animated.Image source={tab.icon} style={[styles.tabIcon, { tintColor: active ? BLUE : GRAY, transform: [{ scale }] }]} resizeMode="contain" />
+      <Animated.Image source={active && tab.iconOn ? tab.iconOn : tab.icon} style={[styles.tabIcon, { tintColor: active ? BLUE : GRAY, transform: [{ scale }] }]} resizeMode="contain" />
     </Pressable>
   )
 }
