@@ -301,7 +301,7 @@ export const t = {
     },
     about: {
       badge: 'THE STORY OF VIBREXCUP',
-      heading: '네 가지 이유,\n하나의 플랫폼',
+      heading: '세 가지 이유,\n하나의 플랫폼',
       p1: {
         phase: 'PHASE 01',
         label: 'REMEMBER & CREATE',
@@ -316,17 +316,11 @@ export const t = {
       },
       p3: {
         phase: 'PHASE 03',
-        label: 'GO LIVE, FACE TO FACE',
-        quote: '"폰 하나로 지금 바로 라이브"',
-        body: '준비물은 폰 하나. 카메라를 켜고 게임을 시작하면 내 얼굴과 플레이 화면이 그대로 생중계됩니다. 얼굴을 드러내기 싫다면 내 AJ 아바타가 대신 나와요 — 3D 아바타가 내 고개 방향과 입 모양을 그대로 따라 합니다. 시청자는 쇼츠를 넘기다 라이브 카드를 만나 바로 관전하고, 방송 중에도 채팅으로 함께 합니다.',
+        label: 'GO LIVE, YOUR INCOME',
+        quote: '"폰 하나로 라이브, 그리고 수익까지"',
+        body: '준비물은 폰 하나. 카메라를 켜고 게임을 시작하면 내 얼굴과 플레이 화면이 그대로 생중계됩니다. 얼굴을 드러내기 싫다면 내 AJ 아바타가 대신 나와요 — 3D 아바타가 내 고개 방향과 입 모양을 그대로 따라 합니다. 시청자는 쇼츠를 넘기다 라이브를 만나 바로 관전하고 채팅으로 함께하죠. 이렇게 사람이 모이고 조회수가 쌓일수록 제작자에게 수익의 기회가 열립니다. 웹은 물론 안드로이드·iOS 앱에서도 똑같이 돌아가요.',
       },
-      p4: {
-        phase: 'PHASE 04',
-        label: 'PLAY, WIN, EARN',
-        quote: '"내 게임이 돈이 되는 순간"',
-        body: '코인 한 개로 도전하고, 코인 잭팟에서는 실제 상품과 프롬코인을 걸고 당첨자를 뽑습니다. 토너먼트에서는 같은 게임으로 전 세계와 순위를 다투고요. 사람이 모이고 조회수가 쌓일수록 제작자에게 수익의 기회가 열립니다. 웹은 물론 안드로이드·iOS 앱에서도 똑같이 돌아가요.',
-      },
-      s5: { label: 'START NOW', heading: '지금 바로 시작하세요', cta: '한 줄로 만들고 · AI 와 중계하고 · 라이브로 함께', body: '프롬프트로 2D·3D 게임을 만들고, AJ 가 중계하고, 폰 카메라로 라이브까지. 잭팟과 토너먼트로 즐기는 새로운 플랫폼 — 지금 Vibrexcup 에서 시작하세요.', btn1: '▶ 게임 보러가기', btn2: '+ 게임 등록하기' },
+      s5: { label: 'START NOW', heading: '지금 바로 시작하세요', cta: '한 줄로 만들고 · AI 와 중계하고 · 라이브로 벌고', body: '프롬프트로 2D·3D 게임을 만들고, AJ 가 중계하고, 폰 카메라로 라이브까지 — 지금 Vibrexcup 에서 시작하세요.', btn1: '▶ 게임 보러가기', btn2: '+ 게임 등록하기' },
     },
     footer: {
       copyright: 'VIBREX © COPYRIGHT 2026',
@@ -635,7 +629,7 @@ export const t = {
     },
     about: {
       badge: 'THE STORY OF VIBREXCUP',
-      heading: 'Four Reasons,\nOne Platform',
+      heading: 'Three Reasons,\nOne Platform',
       p1: {
         phase: 'PHASE 01',
         label: 'REMEMBER & CREATE',
@@ -650,17 +644,11 @@ export const t = {
       },
       p3: {
         phase: 'PHASE 03',
-        label: 'GO LIVE, FACE TO FACE',
-        quote: '"One phone. You are on air."',
-        body: "All you need is a phone. Turn on the camera, start playing, and your face and your gameplay go out live. Don't want to show your face? Your AJ avatar takes over — a 3D character that follows your head turns and mouth in real time. Viewers meet your live card while swiping shorts, jump straight into spectating, and chat with you as you play.",
+        label: 'GO LIVE, YOUR INCOME',
+        quote: '"One phone. You are on air — and earning."',
+        body: "All you need is a phone. Turn on the camera, start playing, and your face and your gameplay go out live. Don't want to show your face? Your AJ avatar takes over — a 3D character that follows your head turns and mouth in real time. Viewers meet your live stream while swiping shorts, jump straight into spectating, and chat as you play. As players gather and views add up, monetization opens for creators — the same on the web and in the Android and iOS apps.",
       },
-      p4: {
-        phase: 'PHASE 04',
-        label: 'PLAY, WIN, EARN',
-        quote: '"The moment your game pays off."',
-        body: "One coin gets you in. Coin Jackpot puts real prizes and prompt coins on the line and draws winners. Tournaments pit the same game against the whole world. As players gather and views add up, monetization opens for creators. It all works the same on the web and in the Android and iOS apps.",
-      },
-      s5: { label: 'START NOW', heading: 'Start right now', cta: 'Build in one line · Stream with AI · Go live', body: 'Make 2D and 3D games from a prompt, let AJ call the action, and go live from your phone — with jackpots and tournaments on top. Start on Vibrexcup today.', btn1: '▶ Browse Games', btn2: '+ Submit Game' },
+      s5: { label: 'START NOW', heading: 'Start right now', cta: 'Build in one line · Stream with AI · Go live and earn', body: 'Make 2D and 3D games from a prompt, let AJ call the action, and go live from your phone. Start on Vibrexcup today.', btn1: '▶ Browse Games', btn2: '+ Submit Game' },
     },
     footer: {
       copyright: 'VIBREX © COPYRIGHT 2026',

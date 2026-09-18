@@ -125,12 +125,8 @@ export default function AboutPage() {
       brief: ko ? 'AI 스트리머 AJ가 내 게임을 실시간으로 중계합니다' : 'AI streamer AJ broadcasts your game live',
     },
     {
-      ...a.p3, accent: ko ? '켜다' : 'Go Live', color: '#e11d48', seed: 'about-live-33', views: 2100,
-      brief: ko ? '폰 카메라로 얼굴·플레이 화면을 그대로 생중계합니다' : 'Stream your face and your gameplay straight from your phone',
-    },
-    {
-      ...a.p4, accent: ko ? '벌다' : 'Earn', color: '#c9940c', seed: 'about-earn-x7', views: 4500,
-      brief: ko ? '잭팟·토너먼트로 즐기고, 모인 조회수가 수익이 됩니다' : 'Jackpots, tournaments, and views that turn into income',
+      ...a.p3, accent: ko ? '켜다' : 'Go Live', color: '#e11d48', seed: 'about-live-33', views: 4500,
+      brief: ko ? '폰 카메라로 생중계하고, 모인 조회수가 수익이 됩니다' : 'Go live from your phone — and the views you gather turn into income',
     },
   ]
 
