@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { logServerError } from '@/lib/log/server'
 import { GENERATION_COST } from '@/lib/studio/constants'
 import { buildSystemPrompt, buildMessages, type ChatTurn } from '@/lib/studio/prompt'
-import { parseGeneration, extractTitle, GEN_ERROR_MARKER, OFF_TOPIC_MARKER, ANSWER_MARKER } from '@/lib/studio/parse'
+import { parseGeneration, extractTitle, extractTestNote, GEN_ERROR_MARKER, OFF_TOPIC_MARKER, ANSWER_MARKER } from '@/lib/studio/parse'
 import { templateOnly, extrasOf } from '@/lib/studio/templates'
 import { matchTemplateIn } from '@/lib/studio/template-match'
 import { loadDbTemplates, saveTemplateCandidate, bumpTemplateUse } from '@/lib/studio/db-templates'
@@ -487,7 +487,7 @@ export async function POST(req: Request) {
             try {
               const { error: mErr } = await supabase.from('studio_messages').insert([
                 { project_id: projectId, role: 'user', content: prompt + (pickedAssets.length ? await buildAttachNote(images, sounds, pickedAssets.map(a => ({ name: a.name, kind: a.kind, url: a.url }))).catch(() => attachNote) : attachNote) },
-                { project_id: projectId, role: 'assistant', content: parsed.description + skipNote },
+                { project_id: projectId, role: 'assistant', content: parsed.description + skipNote + (extractTestNote(full) ? `\n\n${extractTestNote(full)}` : '') },
               ] as never)
               if (mErr) console.error('[studio/generate] messages insert failed', mErr)
               if (nextVersion === 1 && !tmatch && !hasAttach) {

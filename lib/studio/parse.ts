@@ -6,6 +6,12 @@ export const GEN_ERROR_MARKER = '\n[[GEN_ERROR]]'
 export const OFF_TOPIC_MARKER = '\n[[OFF_TOPIC]]'
 // 수정 요청에 대해 모델이 코드 변경 없이 설명·질문만 한 경우 (예: 필요한 에셋이 없음) — 실패가 아니라 답변으로 표시, 크레딧 환불
 export const ANSWER_MARKER = '\n[[ANSWER_ONLY]]'
+// 실행 테스트 결과 — 워커가 결과 끝에 붙인다(본문에는 보이지 않고, 저장되는 답변 끝에 한 줄로 들어간다)
+const TEST_RE = /\n?\[\[VBX_TEST\]\]([\s\S]*?)\[\[\/VBX_TEST\]\]/
+export function extractTestNote(text: string): string | null {
+  const m = TEST_RE.exec(text)
+  return m ? m[1].trim() : null
+}
 export function hasAnswerOnly(text: string): boolean { return text.includes(ANSWER_MARKER) }
 
 export function hasOffTopic(text: string): boolean {
@@ -20,12 +26,14 @@ export interface ParsedGeneration {
 }
 
 export function parseGeneration(text: string): ParsedGeneration {
-  const clean = text.replace(/\n\[\[GEN_MSG\]\][\s\S]*?\[\[\/GEN_MSG\]\]/g, '').split(GEN_ERROR_MARKER).join('').split(OFF_TOPIC_MARKER).join('').split(ANSWER_MARKER).join('').replace(/<offtopic\/?>/g, '')
-  const open = clean.indexOf('<game>')
+  const clean = text.replace(/\n\[\[GEN_MSG\]\][\s\S]*?\[\[\/GEN_MSG\]\]/g, '').replace(/\n?\[\[VBX_TEST\]\][\s\S]*?\[\[\/VBX_TEST\]\]/g, '').split(GEN_ERROR_MARKER).join('').split(OFF_TOPIC_MARKER).join('').split(ANSWER_MARKER).join('').replace(/<offtopic\/?>/g, '')
+  const first = clean.indexOf('<game>')
+  // 실행 테스트에서 고친 완성본이 뒤에 다시 올 수 있으므로 '마지막' 게임 블록을 쓴다
+  const open = clean.lastIndexOf('<game>')
   if (open === -1) {
     return { description: clean.trim(), html: null, htmlBytes: 0, generating: false }
   }
-  const description = clean.slice(0, open).trim()
+  const description = clean.slice(0, first).trim()
   const rest = clean.slice(open + '<game>'.length)
   const close = rest.indexOf('</game>')
   if (close === -1) {

@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
 import { parseGeneration, extractTitle } from '../lib/studio/parse'
+import { smokeGame } from './smoke-game.mjs'
 import { hardenHtml } from '../lib/studio/harden'
 
 for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', 'utf8').split('\n') : []) { const m = line.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^"|"$/g, '') }
@@ -84,9 +85,65 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   // CLI 가 인증·크레딧 오류를 '결과 텍스트'로 돌려주면 게임 코드로 저장하지 말고 오류로 — 서버가 API 폴백/안내
   if (buf.length < 300 && /credit balance is too low|invalid api key|not logged in|please run \/login|authentication/i.test(buf)) { await sb.from('studio_jobs').update({ status: 'error', error: buf.slice(0, 500), finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  auth/credit error', buf); return }
   if (code !== 0 && !buf) { await sb.from('studio_jobs').update({ status: 'error', error: err.slice(0, 500) || `exit ${code}`, finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  error', err.slice(0, 200)); return }
+  // ── 실제로 실행해 본다 → 실패하면 오류를 넣어 자동 수정(최대 2회) ──
+  buf = await testAndRepair(job, buf, (t) => { buf += t; dirty = true; void flush() })
   await sb.from('studio_jobs').update({ status: 'done', result: buf, finished_at: new Date().toISOString() }).eq('id', job.id)
   console.log('  done', buf.length, 'chars')
   void ensureSaved(job, buf)
+}
+
+// CLI 한 번 실행 — 수정 라운드용(도구 없이, 텍스트만 받는다)
+function runClaudeOnce(system: string, model: string, input: string, onText: (t: string) => void): Promise<string> {
+  return new Promise((resolve) => {
+    let out = '', rest = ''
+    const child = spawn('claude', ['-p', '--tools', '', '--model', model, '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--no-session-persistence', '--effort', 'medium', '--system-prompt', system], { env: cliEnv, stdio: ['pipe', 'pipe', 'pipe'] })
+    child.stdin.write(input); child.stdin.end()
+    child.stdout.on('data', (d: Buffer) => {
+      rest += d.toString('utf8'); const lines = rest.split('\n'); rest = lines.pop() ?? ''
+      for (const line of lines) {
+        if (!line.trim()) continue
+        try {
+          const ev = JSON.parse(line) as { type?: string; event?: { type?: string; delta?: { type?: string; text?: string } }; result?: string }
+          if (ev.type === 'stream_event' && ev.event?.type === 'content_block_delta' && ev.event.delta?.type === 'text_delta') { const t = ev.event.delta.text ?? ''; out += t; onText(t) }
+          else if (ev.type === 'result' && typeof ev.result === 'string' && !out) { out = ev.result; onText(ev.result) }
+        } catch { /* 비 JSON 줄 무시 */ }
+      }
+    })
+    child.on('close', () => resolve(out))
+  })
+}
+
+// 생성된 게임을 헤드리스 크롬에서 실제로 띄워 보고, 안 돌아가면 오류를 알려 주고 고치게 한다.
+// 고친 완성본은 결과 뒤에 이어 붙이고(파서가 '마지막 게임 블록'을 쓴다), 끝에 테스트 결과 한 줄을 남긴다.
+async function testAndRepair(job: { id: string; model: string | null; system: string }, buf: string, append: (t: string) => void): Promise<string> {
+  let out = buf
+  for (let round = 0; round <= 2; round++) {
+    const html = parseGeneration(out).html
+    if (!html) return out                       // 게임이 없으면 테스트할 것도 없다
+    let r
+    try { r = await smokeGame(html) } catch (e) { console.log('  실행 테스트 불가', e); return out }
+    console.log(`  실행 테스트 ${round + 1}회: ${r.ok ? '통과' : '실패'} (frames ${r.ticks}${r.errors.length ? ', ' + r.errors[0] : ''})`)
+    if (r.ok) {
+      const note = `✅ 브라우저에서 실제로 실행해 확인했어요${r.warnings.length ? ` (참고: ${r.warnings[0]})` : ''}.`
+      const tail = `\n[[VBX_TEST]]${note}[[/VBX_TEST]]`
+      append(tail); return out + tail
+    }
+    if (round === 2) {
+      const tail = `\n[[VBX_TEST]]⚠ 실행 테스트에서 아직 문제가 남아 있어요: ${r.errors.slice(0, 2).join(' / ')} — 한 번 더 고쳐 달라고 말씀해 주세요.[[/VBX_TEST]]`
+      append(tail); return out + tail
+    }
+    // 고치기 — 오류를 그대로 알려 주고 전체 완성본을 다시 받는다
+    const fixPrompt = `[USER]\n아래 게임을 실제 브라우저(헤드리스 크롬)에서 실행해 봤더니 이런 문제가 났다:\n${r.errors.map(e => '- ' + e).join('\n')}${r.warnings.length ? '\n(주의)\n' + r.warnings.map(w => '- ' + w).join('\n') : ''}\n\n원인을 찾아 고친 "전체 완성본" HTML 을 <game>…</game> 으로 다시 출력해라. 설명은 무엇을 고쳤는지 1~2문장만. 다른 기능은 그대로 유지할 것.\n\n<game>${html}</game>\n\n[ASSISTANT]\n`
+    console.log('  → 자동 수정 요청')
+    const fixed = await runClaudeOnce(job.system, cliModel(job.model), fixPrompt, () => { /* 수정 과정은 화면에 흘리지 않는다 */ })
+    if (!parseGeneration(fixed).html) {
+      const tail = `\n[[VBX_TEST]]⚠ 실행 테스트 실패: ${r.errors[0]} (자동 수정도 실패했어요)[[/VBX_TEST]]`
+      append(tail); return out + tail
+    }
+    const add = `\n\n${fixed}`
+    append(add); out += add
+  }
+  return out
 }
 
 // ── 저장 안전장치 ──
