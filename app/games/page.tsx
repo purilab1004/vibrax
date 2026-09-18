@@ -4,7 +4,7 @@ import HtmlClass from '@/components/HtmlClass'
 import PullToHome from '@/components/PullToHome'
 import MobileGamesTools from '@/components/MobileGamesTools'
 import { Suspense } from 'react'
-import type { Genre, GameWithCreator } from '@/lib/supabase/types'
+import type { Genre, GameWithCreator, Webtoon } from '@/lib/supabase/types'
 import { selectGamesWithCreator } from '@/lib/supabase/games'
 
 const VALID_GENRES: Genre[] = ['action', 'adventure', 'strategy', 'sports', 'arcade']
@@ -16,6 +16,13 @@ interface Props {
 async function GameGrid({ genre, q, creator, reward }: { genre?: string; q?: string; creator?: string; reward?: boolean }) {
   if (reward) return <GamesBrowse games={[]} filter="reward" /> // REWARD — 진행 중인 코인 잭팟만
   const supabase = await createClient()
+  // 웹툰 쇼츠 — 게임 사이에 섞어 보여 준다 (검색·장르 필터 중에는 빼서 결과를 흐리지 않게)
+  const webtoons = (genre || q || creator) ? [] : ((await supabase
+    .from('webtoons')
+    .select('id, user_id, title, intro, cuts, thumbnail_url, game_id, published, view_count, like_count, created_at, profiles(username, agent_name, country, avatar_config)')
+    .eq('published', true)
+    .order('created_at', { ascending: false })
+    .limit(20)).data ?? []) as unknown as Webtoon[]
   const validGenre = VALID_GENRES.includes(genre as Genre) ? (genre as Genre) : undefined
   const term = q?.trim()
 
@@ -43,7 +50,7 @@ async function GameGrid({ genre, q, creator, reward }: { genre?: string; q?: str
     )
   }
 
-  return <GamesBrowse games={games} />
+  return <GamesBrowse games={games} webtoons={webtoons} />
 }
 
 export default async function GamesPage({ searchParams }: Props) {

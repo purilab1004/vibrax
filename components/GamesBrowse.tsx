@@ -14,7 +14,7 @@ import { formatViewers } from '@/lib/format'
 import { useLang } from '@/lib/i18n/context'
 import LOCAL_TEASERS from '@/lib/teasers-local.json'
 import { titleFont, galaxyFont } from '@/lib/fonts'
-import type { GameWithCreator } from '@/lib/supabase/types'
+import type { GameWithCreator, Webtoon } from '@/lib/supabase/types'
 import { avatarPreviewUrl, avatarFrames } from '@/lib/jeumto/config'
 import { useLiveBroadcasts } from '@/lib/live/useLiveBroadcasts'
 import { countryFlag, flagRingStyle } from '@/lib/country'
@@ -22,6 +22,7 @@ import LiveCard from '@/components/LiveCard'
 import FeedEndCard from '@/components/FeedEndCard'
 import JackpotCard, { type Jackpot } from '@/components/JackpotCard'
 import ThumbBackdrop from '@/components/home/ThumbBackdrop'
+import WebtoonCard from '@/components/WebtoonCard'
 import { useDominantHue } from '@/lib/dominantHue'
 import PlayModeBadge from '@/components/PlayModeBadge'
 import { recordShare } from '@/lib/shares'
@@ -220,7 +221,7 @@ export type FeedFilter = 'all' | 'video' | 'game' | 'reward' // reward = 코인 
 
 // filter: all = 게임 사이에 라이브를 끼워 넣기, video = 라이브만, game = 게임만. shuffleLives = 라이브 순서를 랜덤으로
 // pageScroll: 데스크톱에서 별도 스크롤 박스 대신 페이지 스크롤로 한 장씩 스냅 (홈 — 프롬프트 섹션을 넘기면 쇼츠 섹션으로 이어진다)
-export default function GamesBrowse({ games: input, filter = 'all', shuffleLives = false, pageScroll = false, onOverscrollTop }: { games: GameWithCreator[]; filter?: FeedFilter; shuffleLives?: boolean; pageScroll?: boolean; onOverscrollTop?: () => void }) {
+export default function GamesBrowse({ games: input, webtoons = [], filter = 'all', shuffleLives = false, pageScroll = false, onOverscrollTop }: { games: GameWithCreator[]; webtoons?: Webtoon[]; filter?: FeedFilter; shuffleLives?: boolean; pageScroll?: boolean; onOverscrollTop?: () => void }) {
   const feedRef = useRef<HTMLDivElement>(null)
   useFeedBgmHost()   // 쇼츠 배경음 — 첫 입력에서 재생 시작, 피드를 떠나면 정지
   // 방송 카드 — 게임 카드와 별개로 피드에 끼워 넣는다
@@ -248,16 +249,19 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
     fetch('/api/jackpots').then((r) => r.json()).then((j) => setJack({ open: j.open ?? [], mine: j.mine ?? {} })).catch(() => {})
   }, [filter])
   // 라이브 카드를 몰아넣지 않고 게임 사이에 고르게 끼워 넣는다 (첫 번째는 맨 앞, 이후 게임 2~3장 간격)
-  type Item = { kind: 'game'; game: GameWithCreator; rank?: number; ad?: { campaignId: string; badge: string; hook?: string } } | { kind: 'live'; live: (typeof lives)[number] } | { kind: 'jackpot'; jackpot: Jackpot }
+  type Item = { kind: 'game'; game: GameWithCreator; rank?: number; ad?: { campaignId: string; badge: string; hook?: string } } | { kind: 'live'; live: (typeof lives)[number] } | { kind: 'jackpot'; jackpot: Jackpot } | { kind: 'webtoon'; webtoon: Webtoon }
   const items: Item[] = []
   {
     const gap = Math.max(2, Math.min(4, Math.floor(games.length / Math.max(1, lives.length))))
-    let li = 0, ai = 0
+    const toons = filter === 'video' || filter === 'reward' ? [] : webtoons
+    let li = 0, ai = 0, wi = 0
     games.forEach((g, i) => {
       if (li < lives.length && i % gap === 0) items.push({ kind: 'live', live: lives[li++] })
       items.push({ kind: 'game', game: g, rank: i < 10 ? i + 1 : undefined })
       if (ai < ads.length && (i + 1) % 5 === 0) { const a = ads[ai++]; items.push({ kind: 'game', game: a.game, ad: { campaignId: a.campaignId, badge: a.creative?.badge ?? 'AJ PICK', hook: a.creative?.hook } }) }
+      if (wi < toons.length && (i + 1) % 3 === 0) items.push({ kind: 'webtoon', webtoon: toons[wi++] })   // 게임 3장마다 웹툰 1장
     })
+    while (wi < toons.length) items.push({ kind: 'webtoon', webtoon: toons[wi++] })
     while (li < lives.length) items.push({ kind: 'live', live: lives[li++] })
     // 잭팟: 세션마다 랜덤 자리(2~7번째 사이)에 1장씩, 여러 개면 6장 간격
     jack.open.forEach((jp, k) => { const pos = Math.min(items.length, 2 + (hashOf(jp.id + seed) % 6) + k * 6); items.splice(pos, 0, { kind: 'jackpot', jackpot: jp }) })
@@ -305,6 +309,8 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
       <div className="md:hidden">
         {items.map((it, idx) => it.kind === 'jackpot'
           ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-mobile" />
+          : it.kind === 'webtoon'
+          ? <WebtoonCard key={`wt-${it.webtoon.id}`} webtoon={it.webtoon} layout="feed-mobile" priority={idx === 0} />
           : it.kind === 'live'
           ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-mobile" />
           : it.ad ? adWrap(it.ad, <FeedScreen game={it.game} priority={idx === 0} />, `ad-${it.ad.campaignId}`) : <FeedScreen key={it.game.id} game={it.game} priority={idx === 0} />)}
@@ -322,6 +328,8 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
         >
           {items.map((it, idx) => it.kind === 'jackpot'
             ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-desktop" />
+            : it.kind === 'webtoon'
+            ? <WebtoonCard key={`wt-${it.webtoon.id}`} webtoon={it.webtoon} layout="feed-desktop" priority={idx === 0} />
             : it.kind === 'live'
             ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-desktop" />
             : it.ad ? adWrap(it.ad, <DesktopFeedCard game={it.game} priority={idx === 0} />, `ad-${it.ad.campaignId}`) : <DesktopFeedCard key={it.game.id} game={it.game} rank={it.rank} priority={idx === 0} />)}

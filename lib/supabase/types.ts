@@ -24,6 +24,23 @@ export interface Game {
   goal_score?: number | null   // 목표 점수 — 달성하면 다음 게임으로 이동(transport) 활성. null 이면 플레이 데이터로 자동
 }
 
+// 웹툰 쇼츠 — 컷 이미지를 탭으로 넘겨 본다. 게임과 연결하면 마지막에 '게임 하러 가기' 가 뜬다
+export interface WebtoonCut { url: string; w?: number; h?: number }
+export interface Webtoon {
+  id: string
+  user_id: string
+  title: string
+  intro?: string | null
+  cuts: WebtoonCut[]
+  thumbnail_url?: string | null
+  game_id?: string | null
+  published: boolean
+  view_count: number
+  like_count: number
+  created_at: string
+  profiles?: { username: string | null; agent_name?: string | null; country?: string | null; avatar_config?: AvatarConfig | null } | null
+}
+
 export interface GameLike {
   id: string
   game_id: string
