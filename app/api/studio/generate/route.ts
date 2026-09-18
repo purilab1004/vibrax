@@ -335,6 +335,11 @@ export async function POST(req: Request) {
     await refund()
     console.error('[studio/generate]', e)
     void logServerError('api', e, { path: '/api/studio/generate' })
+    const msg = String((e as Error)?.message ?? '')
+    // 관리자 Max 워커가 꺼져 있어 API 로 넘어갔는데 그 API 키에 잔액이 없는 경우 — 회원 프롬코인 부족과 헷갈리지 않게
+    if (/credit balance is too low|insufficient_quota|billing/i.test(msg)) {
+      return new Response(useMax ? 'Max 워커가 꺼져 있어 API 로 넘어갔는데 API 키 잔액이 없어요 — 워커(npm run max-worker)를 켜거나 엔진을 바꿔 주세요.' : 'API 키 잔액이 없어요 — 관리자에게 문의해 주세요.', { status: 503 })
+    }
     return new Response('generation failed', { status: 500 })
   }
 

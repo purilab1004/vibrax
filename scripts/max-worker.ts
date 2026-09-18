@@ -43,6 +43,7 @@ function flatten(messages: Msg[], tmpDir: string): { text: string; files: string
 
 async function runJob(job: { id: string; model: string | null; system: string; messages: Msg[] }) {
   console.log(new Date().toISOString(), 'job', job.id.slice(0, 8), 'model', cliModel(job.model))
+  void beat(true)
   await sb.from('studio_jobs').update({ status: 'running', started_at: new Date().toISOString() }).eq('id', job.id)
   let buf = '', dirty = false, lastFlush = 0
   const flush = async (force = false) => { if (!dirty && !force) return; if (!force && Date.now() - lastFlush < 400) return; dirty = false; lastFlush = Date.now(); await sb.from('studio_jobs').update({ result: buf }).eq('id', job.id) }
@@ -192,6 +193,17 @@ async function ensureSaved(job: { id: string; project_id?: string; messages: Msg
     console.log('  [저장 안전장치] 서버가 저장하지 못해 워커가 v' + next + ' 저장함')
   } catch (e) { console.log('  [저장 안전장치] 실패', e) }
 }
+
+// 살아 있음을 알린다 — 서버는 이 신호가 있으면 워커가 바쁠 때도 API 로 넘기지 않고 대기열에 넣는다
+let beating = false
+const beat = async (busy: boolean) => {
+  if (beating) return
+  beating = true
+  try { await sb.from('site_settings').upsert({ key: 'max_worker', value: { at: new Date().toISOString(), busy }, updated_at: new Date().toISOString() } as never) } catch { /* noop */ }
+  beating = false
+}
+void beat(false)
+setInterval(() => void beat(false), 10_000)
 
 console.log(`max-worker: 대기 중 (모델 ${FORCE_MODEL || '스튜디오 선택값'}, Max 로그인 사용 · Ctrl+C 로 종료)`)
 for (;;) {

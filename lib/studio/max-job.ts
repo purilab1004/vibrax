@@ -27,7 +27,26 @@ export async function tryMaxJob(admin: SupabaseClient, job: { projectId: string;
     const st = (row as { status?: string } | null)?.status
     if (st && st !== 'pending') { picked = true; break }
   }
-  if (!picked) { await admin.from('studio_jobs').update({ status: 'abandoned', error: 'no worker', finished_at: new Date().toISOString() }).eq('id', id); return null }
+  if (!picked) {
+    // 워커가 살아 있는데 다른 작업 중이라 아직 못 집은 것이라면 — API 로 넘기지 않고 대기열에 둔다.
+    // (예전엔 여기서 API 폴백 → API 키 크레딧 부족 오류가 '크레딧이 부족합니다' 로 보였다)
+    const { data: beat } = await admin.from('site_settings').select('value').eq('key', 'max_worker').maybeSingle()
+    const at = (beat as { value?: { at?: string } } | null)?.value?.at
+    const alive = !!at && Date.now() - new Date(at).getTime() < 60_000
+    if (alive) {
+      console.log('[max-job] 워커가 바쁨 — 대기열에 두고 백그라운드로 진행', id)
+      const queued: MsgStream = {
+        jobId: id, pending: true,
+        // eslint-disable-next-line require-yield
+        async *[Symbol.asyncIterator]() { return },
+        async finalMessage() { return { usage: { input_tokens: 0, output_tokens: 0 } } },
+        abort() { void admin.from('studio_jobs').update({ status: 'cancelled', finished_at: new Date().toISOString() }).eq('id', id).in('status', ['pending', 'running']) },
+      }
+      return queued
+    }
+    await admin.from('studio_jobs').update({ status: 'abandoned', error: 'no worker', finished_at: new Date().toISOString() }).eq('id', id)
+    return null
+  }
   let sent = 0, ended = false
   const stream: MsgStream = {
     jobId: id,
