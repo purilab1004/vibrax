@@ -213,6 +213,10 @@ async function ensureSaved(job: { id: string; project_id?: string; messages: Msg
     const { data: jobRow } = await sb.from('studio_jobs').select('project_id,created_at').eq('id', job.id).maybeSingle()
     const row = jobRow as { project_id: string; created_at: string } | null
     if (!row?.project_id) return
+    // 서버가 이미 저장했으면 여기서 끝 — 예전엔 이 확인을 뒤에서 해서, 이미 반영된 패치를 다시 적용하려다 전부 실패하고
+    // 쓸데없이 '패치 재작성' 까지 돌았다(그 결과가 저장되면 같은 수정이 두 번 들어갈 위험도 있었다)
+    const { data: already } = await sb.from('studio_versions').select('id').eq('project_id', row.project_id).gt('created_at', row.created_at).limit(1)
+    if ((already ?? []).length) { console.log('  [저장 안전장치] 서버가 이미 저장함 — 건너뜀'); return }
     const parsed = parseGeneration(result)
     const { html: finalHtml } = await materialize(job.id, result)
     const desc = (parsed.description || extractPatches(result).description || '').slice(0, 4000)
@@ -230,8 +234,6 @@ async function ensureSaved(job: { id: string; project_id?: string; messages: Msg
       console.log('  [기록] 실패 사유를 대화에 남김')
       return
     }
-    const { data: after } = await sb.from('studio_versions').select('id').eq('project_id', row.project_id).gt('created_at', row.created_at).limit(1)
-    if ((after ?? []).length) return   // 서버가 이미 저장함
     const { data: last } = await sb.from('studio_versions').select('version').eq('project_id', row.project_id).order('version', { ascending: false }).limit(1).maybeSingle()
     const next = ((last as { version?: number } | null)?.version ?? 0) + 1
     const { error: vErr } = await sb.from('studio_versions').insert([{ project_id: row.project_id, version: next, html: hardenHtml(finalHtml) }] as never)
