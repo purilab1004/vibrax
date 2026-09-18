@@ -12,6 +12,7 @@ import { titleFont } from '@/lib/fonts'
 import { countryFlag, flagRingStyle } from '@/lib/country'
 import { avatarPreviewUrl } from '@/lib/jeumto/config'
 import { useFeedTrack } from '@/lib/feedBgm'
+import { useImageRevive } from '@/lib/useImageRevive'
 
 export default function WebtoonCard({ webtoon, layout, priority = false }: { webtoon: Webtoon; layout: 'feed-mobile' | 'feed-desktop'; priority?: boolean }) {
   const cuts = Array.isArray(webtoon.cuts) ? webtoon.cuts.filter(c => c?.url) : []
@@ -20,6 +21,7 @@ export default function WebtoonCard({ webtoon, layout, priority = false }: { web
   const rootRef = useRef<HTMLDivElement>(null)
   const viewed = useRef(false)
   useFeedTrack(rootRef, 'webtoon')
+  useImageRevive(rootRef)   // 앱 복귀 시 컷이 하얗게 비지 않게
 
   // 카드가 화면에 들어오면 조회수 1회
   useEffect(() => {

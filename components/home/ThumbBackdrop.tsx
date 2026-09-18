@@ -3,12 +3,17 @@
 // revealed — 코인을 넣으면 제목·캐릭터가 빠지고 앞 썸네일이 또렷하게 드러난다(블러 0·밝게·살짝 확대)
 // 원본 썸네일은 장당 2MB 가 넘는다 → next/image 로 화면 크기에 맞게 줄여서 받는다(뒤 배경은 어차피 흐리므로 아주 작게).
 // priority — 첫 카드만 먼저 받고 나머지는 스크롤할 때 받는다(모바일에서 게임 탭이 한참 걸리던 원인).
+'use client'
+import { useRef } from 'react'
 import Image from 'next/image'
+import { useImageRevive } from '@/lib/useImageRevive'
 
 export default function ThumbBackdrop({ src, alt = '', revealed = false, priority = false }: { src?: string | null; alt?: string; revealed?: boolean; priority?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useImageRevive(ref)   // 앱이 백그라운드에 갔다 오면 iOS 가 이미지를 버린다 → 돌아왔을 때 다시 받아온다
   if (!src) return null
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+    <div ref={ref} className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
       {/* 뒤: 크게 흐린 채움(카드가 9:16 보다 길어도 빈 곳 없음) — 흐릿하게만 쓰이니 작게 받는다 */}
       <Image
         src={src} alt="" fill sizes="30vw" quality={30} unoptimized={false}
