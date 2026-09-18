@@ -57,14 +57,17 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
   }
   return (
     <div className="fixed inset-0 z-[90] bg-[#241f17]/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={close}>
-      <div className="w-full max-w-3xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-[#ebe4d6] max-h-[88vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#ebe4d6] shrink-0">
-          <h2 className="text-[14px] font-bold text-[#241f17] shrink-0">미디어 라이브러리</h2>
-          <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="검색 — 기사, 우주, 숲, 픽셀…" className="flex-1 h-8 rounded-lg border border-[#ddd3bf] px-3 text-[13px] outline-none focus:border-[#2563eb]" />
-          <button onClick={close} className="w-8 h-8 rounded-md text-[#6b6152] hover:bg-[#f1ede4]" aria-label="닫기">✕</button>
+      <div className="w-full max-w-3xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-[#ebe4d6] h-[92svh] sm:h-auto sm:max-h-[88vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="px-4 pt-3 pb-2.5 border-b border-[#ebe4d6] shrink-0" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+          <div className="flex items-center gap-3">
+            <h2 className="text-[14px] font-bold text-[#241f17] flex-1 min-w-0 truncate">미디어 라이브러리</h2>
+            <button onClick={close} className="w-9 h-9 -mr-1 rounded-lg text-[#6b6152] hover:bg-[#f1ede4] text-[16px] shrink-0" aria-label="닫기">✕</button>
+          </div>
+          {/* 검색은 항상 한 줄을 통째로 — 좁은 화면에서 밀려 잘리지 않게 */}
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="검색 — 기사, 우주, 숲, 픽셀…" className="mt-2 w-full h-10 rounded-xl border border-[#ddd3bf] px-3.5 text-[15px] outline-none focus:border-[#2563eb]" />
         </div>
-        <div className="flex gap-1.5 px-4 py-2 overflow-x-auto overflow-y-hidden border-b border-[#f1ede4] shrink-0">
-          {KINDS.map(([v, l]) => <button key={v} onClick={() => setKind(v)} className={`shrink-0 h-7 px-3 rounded-full text-[12px] border transition-colors ${kind === v ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white text-[#6b6152] border-[#ddd3bf] hover:border-[#241f17]'}`}>{l}</button>)}
+        <div className="flex items-center gap-1.5 px-4 py-2 overflow-x-auto overflow-y-hidden border-b border-[#f1ede4] shrink-0 no-scrollbar">
+          {KINDS.map(([v, l]) => <button key={v} onClick={() => setKind(v)} className={`shrink-0 h-9 px-3.5 rounded-full text-[13px] whitespace-nowrap leading-none border transition-colors ${kind === v ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white text-[#6b6152] border-[#ddd3bf] hover:border-[#241f17]'}`}>{l}</button>)}
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto p-4">
           {err && <p className="text-[12.5px] text-red-600 mb-2">{err}</p>}
@@ -72,7 +75,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
             : loading || items === null ? (
               <div>
                 <p className="mb-2.5 inline-flex items-center gap-2 text-[12.5px] text-[#9d9280]"><span className="w-3.5 h-3.5 rounded-full border-2 border-[#ddd3bf] border-t-[#241f17] animate-spin" />불러오는 중…</p>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
                   {Array.from({ length: 10 }).map((_, i) => (
                     <div key={i} className="rounded-xl overflow-hidden bg-[#f8f6f1] border-2 border-transparent animate-pulse" style={{ animationDelay: `${i * 60}ms` }}>
                       <div className="aspect-square bg-[#efeade]" />
@@ -83,7 +86,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
               </div>
             )
             : items.length === 0 ? <div className="min-h-[40vh] flex flex-col items-center justify-center gap-2 text-center"><span className="text-[28px]">🗂️</span><p className="text-[15px] font-bold text-[#241f17]">{q ? '검색에 없습니다.' : '이 카테고리에 등록된 에셋이 없어요.'}</p>{q && <p className="text-[12.5px] text-[#9d9280]">다른 단어로 검색하거나 카테고리를 골라 보세요.</p>}</div>
-            : <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+            : <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
               {items.map(it => (
                 <button key={it.id} onClick={() => toggle(it)} className={`group relative rounded-xl border-2 overflow-hidden text-left bg-[#f8f6f1] transition-all ${has(it.id) ? 'border-[#2563eb] shadow-[0_0_0_3px_rgba(37,99,235,0.15)]' : 'border-transparent hover:border-[#ddd3bf]'}`}>
                   <div className="aspect-square flex items-center justify-center bg-[repeating-conic-gradient(#ece8df_0_25%,#f8f6f1_0_50%)] bg-[length:16px_16px]">
@@ -100,18 +103,18 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
                     ) : /* eslint-disable-next-line @next/next/no-img-element */ <img src={it.url} alt={it.title} loading="lazy" className="max-w-full max-h-full object-contain" style={{ imageRendering: (it.width ?? 999) <= 128 ? 'pixelated' : 'auto' }} />}
                   </div>
                   <div className="px-2 py-1.5">
-                    <p className="text-[12px] font-semibold text-[#241f17] truncate">{it.title}</p>
+                    <p className="text-[12.5px] font-semibold text-[#241f17] truncate whitespace-nowrap">{it.title}</p>
                     {(it.credit_cost ?? 0) > 0 && <span className="absolute top-1.5 right-1.5 rounded-full bg-[#241f17]/85 text-[#ffd166] text-[10.5px] font-bold px-1.5 py-0.5">🪙 {it.credit_cost}</span>}
-                    <p className="text-[10.5px] text-[#9d9280] truncate">{KINDS.find(k => k[0] === it.kind)?.[1] ?? it.kind}{it.kind === 'audio' && it.meta?.role ? ` · ${ROLE[it.meta.role] ?? it.meta.role}` : it.width ? ` · ${it.width}×${it.height}` : ''}</p>
+                    <p className="text-[11px] text-[#9d9280] truncate whitespace-nowrap">{KINDS.find(k => k[0] === it.kind)?.[1] ?? it.kind}{it.kind === 'audio' && it.meta?.role ? ` · ${ROLE[it.meta.role] ?? it.meta.role}` : it.width ? ` · ${it.width}×${it.height}` : ''}</p>
                   </div>
                   {has(it.id) && <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#2563eb] text-white text-[11px] flex items-center justify-center">✓</span>}
                 </button>
               ))}
             </div>}
         </div>
-        <div className="flex items-center justify-between px-4 py-3 border-t border-[#ebe4d6]">
-          <p className="text-[12px] text-[#6b6152]">{picked.length}/10 선택 — 고른 에셋은 게임에 바로 들어가고, AI 가 캐릭터·배경으로 써요.{(() => { const c = picked.reduce((s, p) => s + ((items ?? []).find(i => i.id === p.id)?.credit_cost ?? 0), 0); return c > 0 ? <b className="ml-1 text-[#b45309]">추가 {c}크레딧 (디자이너에게 100% 적립)</b> : null })()}</p>
-          <button onClick={close} className="h-8 px-4 rounded-lg bg-[#2563eb] text-white text-[12.5px] font-semibold hover:bg-[#1d4ed8]">완료</button>
+        <div className="flex items-center gap-3 px-4 py-3 border-t border-[#ebe4d6] shrink-0" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+          <p className="flex-1 min-w-0 text-[12px] leading-snug text-[#6b6152] line-clamp-2">{picked.length}/10 선택 — 고른 에셋은 게임에 바로 들어가고, AI 가 캐릭터·배경으로 써요.{(() => { const c = picked.reduce((s, p) => s + ((items ?? []).find(i => i.id === p.id)?.credit_cost ?? 0), 0); return c > 0 ? <b className="ml-1 text-[#b45309]">추가 {c}크레딧 (디자이너에게 100% 적립)</b> : null })()}</p>
+          <button onClick={close} className="shrink-0 h-10 px-5 rounded-xl bg-[#2563eb] text-white text-[13.5px] font-bold hover:bg-[#1d4ed8]">완료</button>
         </div>
       </div>
     </div>
