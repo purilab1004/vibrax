@@ -24,7 +24,7 @@ import PlayModeBadge from '@/components/PlayModeBadge'
 import { useFeedTrack } from '@/lib/feedBgm'
 
 // 모바일 쇼츠 화면 한 장 — 하단에 아케이드 코인 투입 → PRESS START 플로우
-export default function FeedScreen({ game, golden = false, rank }: { game: GameWithCreator; golden?: boolean; rank?: number }) {
+export default function FeedScreen({ game, golden = false, rank, priority = false }: { game: GameWithCreator; golden?: boolean; rank?: number; priority?: boolean }) {
   const { T, lang } = useLang()
   const router = useRouter()
   const supabase = createClient()
@@ -88,7 +88,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
   const inner = (
     <>
       {/* 배경 — 게임 썸네일을 흐려 은은하게 */}
-      <ThumbBackdrop src={game.thumbnail_url} alt={game.title} revealed={revealed} />
+      <ThumbBackdrop src={game.thumbnail_url} alt={game.title} revealed={revealed} priority={priority} />
       {/* 싱글/멀티 라벨 — 상단 좌측 */}
       <div className="absolute top-4 left-4 right-16 z-10 flex items-center gap-2">
         <PlayModeBadge mode={game.play_mode} />

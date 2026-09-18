@@ -28,7 +28,7 @@ import { recordShare } from '@/lib/shares'
 import { useFeedBgmHost, useFeedTrack } from '@/lib/feedBgm'
 
 // 데스크톱 틱톡형 카드 — 중앙 세로 카드 + 우측 액션 레일
-function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number }) {
+function DesktopFeedCard({ game, rank, priority = false }: { game: GameWithCreator; rank?: number; priority?: boolean }) {
   const { T, lang } = useLang()
   const router = useRouter()
   const supabase = createClient()
@@ -95,7 +95,7 @@ function DesktopFeedCard({ game, rank }: { game: GameWithCreator; rank?: number 
         className="grain relative h-[96%] aspect-[9/15] rounded-2xl overflow-hidden shadow-[0_18px_60px_rgba(36,31,23,0.22)]"
         style={auroraOf(game.id, rank === 1 && (game.view_count ?? 0) > 0)}
       >
-        <ThumbBackdrop src={game.thumbnail_url} alt={game.title} revealed={revealed} />
+        <ThumbBackdrop src={game.thumbnail_url} alt={game.title} revealed={revealed} priority={priority} />
         <div className="absolute top-4 left-4 right-16 z-10 flex items-center gap-2">
           <PlayModeBadge mode={game.play_mode} />
           <span className="flex items-center gap-1.5 rounded-full bg-black/45 backdrop-blur pl-1 pr-2.5 py-1 text-white text-[12px] font-semibold max-w-[70%]">
@@ -303,11 +303,11 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
       )}
       {/* 모바일: 한 화면 한 게임, 스와이프로 다음 */}
       <div className="md:hidden">
-        {items.map((it) => it.kind === 'jackpot'
+        {items.map((it, idx) => it.kind === 'jackpot'
           ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-mobile" />
           : it.kind === 'live'
           ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-mobile" />
-          : it.ad ? adWrap(it.ad, <FeedScreen game={it.game} />, `ad-${it.ad.campaignId}`) : <FeedScreen key={it.game.id} game={it.game} />)}
+          : it.ad ? adWrap(it.ad, <FeedScreen game={it.game} priority={idx === 0} />, `ad-${it.ad.campaignId}`) : <FeedScreen key={it.game.id} game={it.game} priority={idx === 0} />)}
         {/* 맨 끝: 더 내려갈 게임이 없을 때 — 직접 만들기 권유 */}
         {items.length > 0 && <FeedEndCard layout="mobile" />}
       </div>
@@ -320,11 +320,11 @@ export default function GamesBrowse({ games: input, filter = 'all', shuffleLives
             ? 'md-page-feed'
             : 'h-[calc(100svh-3.75rem)] min-h-[540px] pt-1 pb-2 overflow-y-auto snap-y snap-mandatory scrollbar-hide'}
         >
-          {items.map((it) => it.kind === 'jackpot'
+          {items.map((it, idx) => it.kind === 'jackpot'
             ? <JackpotCard key={`jp-${it.jackpot.id}`} jackpot={it.jackpot} mine={jack.mine[it.jackpot.id] ?? 0} layout="feed-desktop" />
             : it.kind === 'live'
             ? <LiveCard key={`live-${it.live.hostId}-${it.live.gameId}-${it.live.kind === 'link' ? it.live.src : 'cam'}`} live={it.live} game={games.find((g) => g.id === it.live.gameId) ?? null} layout="feed-desktop" />
-            : it.ad ? adWrap(it.ad, <DesktopFeedCard game={it.game} />, `ad-${it.ad.campaignId}`) : <DesktopFeedCard key={it.game.id} game={it.game} rank={it.rank} />)}
+            : it.ad ? adWrap(it.ad, <DesktopFeedCard game={it.game} priority={idx === 0} />, `ad-${it.ad.campaignId}`) : <DesktopFeedCard key={it.game.id} game={it.game} rank={it.rank} priority={idx === 0} />)}
           {items.length > 0 && <FeedEndCard layout="desktop" />}
         </div>
         {/* 위/아래 화살표 — 다음/이전 게임 */}
