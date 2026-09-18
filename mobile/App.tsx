@@ -11,7 +11,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {})
 
 const SITE = (Constants.expoConfig?.extra?.siteUrl as string) || 'https://vibrexcup.com'
 const BLUE = '#2563eb'
-const GRAY = '#8a8172'
+const GRAY = '#c7cbd4'   // 선택 안 된 탭 — 연한 회색(인스타그램식)
 
 // 앱 안에서 열 우리 도메인. 그 외(구글 로그인·외부 링크)는 시스템 브라우저로 연다.
 const EMBED_HOSTS = ['youtube.com', 'youtube-nocookie.com', 'googlevideo.com', 'ytimg.com', 'twitch.tv', 'jtvnw.net']
@@ -227,8 +227,8 @@ function TabItem({ tab, active, onPress }: { tab: TabDef; active: boolean; onPre
   const press = (to: number) => Animated.spring(scale, { toValue: to, useNativeDriver: true, speed: 40, bounciness: 6 }).start()
   return (
     <Pressable style={styles.tabItem} onPressIn={() => press(0.88)} onPressOut={() => press(1)} onPress={onPress} hitSlop={6}>
+      {/* 글씨 없이 아이콘만 — 선택된 탭만 파랑 */}
       <Animated.Image source={tab.icon} style={[styles.tabIcon, { tintColor: active ? BLUE : GRAY, transform: [{ scale }] }]} resizeMode="contain" />
-      <Text numberOfLines={1} style={[styles.tabLabel, { color: active ? BLUE : GRAY }]}>{tab.label}</Text>
     </Pressable>
   )
 }
@@ -258,7 +258,7 @@ function CenterButton({ label, onPress }: { label: string; onPress: () => void }
         <Image source={require('./assets/mascot-open.png')} style={styles.centerImg} resizeMode="contain" />
         <Animated.Image source={require('./assets/mascot-wink.png')} style={[styles.centerImg, StyleSheet.absoluteFillObject, { opacity: wink }]} resizeMode="contain" />
       </Animated.View>
-      <Text numberOfLines={1} style={[styles.tabLabel, { color: '#F05A28', marginTop: 1 }]}>{label}</Text>
+
     </Pressable>
   )
 }
@@ -302,8 +302,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.98)', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#ebe4d6',
   },
   tabItem: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 1 },
-  tabIcon: { width: 24, height: 24 },
-  tabLabel: { fontSize: 9.5, fontWeight: '800', letterSpacing: 0.7, textTransform: 'uppercase' },
+  tabIcon: { width: 27, height: 27 },
   centerWrap: { width: 30, height: 30 },
   centerImg: { width: 30, height: 30 },
   splash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff' },
