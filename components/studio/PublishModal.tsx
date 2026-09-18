@@ -275,11 +275,12 @@ export default function PublishModal({
           </form>
         )}
 
+        {/* 게시가 끝났거나 이미 게시된 게임이면 '취소'가 아니라 '닫기' */}
         <button
           onClick={onClose}
           className="w-full mt-3 border border-[#ddd3bf] text-[#6b6152] font-pixel text-[11px] py-2.5 hover:border-gray-500 transition-colors tracking-widest rounded-lg"
         >
-          {s.cancel}
+          {done || alreadyPublished ? s.close : s.cancel}
         </button>
       </div>
     </div>
