@@ -36,10 +36,18 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
   const [revealedRaw, setRevealed] = useState(false)
   useEffect(() => {
     const el = rootRef.current; if (!el) return
-    const io = new IntersectionObserver(([e]) => { if (!e.isIntersecting) setRevealed(false) }, { threshold: 0 })
-    io.observe(el); return () => io.disconnect()
+    let t = 0
+    // 화면에 들어오면 썸네일을 먼저 또렷하게 보여주고, 잠시 뒤 흐려지며 제목·캐릭터가 나타난다(다시 들어오면 또 재생)
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { clearTimeout(t); t = window.setTimeout(() => setRevealed(true), 1100) }
+      else { clearTimeout(t); setRevealed(false) }
+    }, { threshold: 0.35 })
+    io.observe(el); return () => { clearTimeout(t); io.disconnect() }
   }, [])
-  const revealed = revealedRaw && !!game.thumbnail_url
+  // 썸네일이 있는 게임: 처음엔 썸네일이 또렷하고 제목·캐릭터는 숨김 → 곧 썸네일이 흐려지며 제목·캐릭터가 나타난다
+  const hasThumb = !!game.thumbnail_url
+  const thumbSharp = hasThumb && !revealedRaw
+  const showStage = !hasThumb || revealedRaw
 
   const creatorName = game.profiles?.agent_name ?? game.profiles?.username ?? 'unknown'
   const avatarUrl = avatarPreviewUrl(game.profiles?.avatar_config)
@@ -48,8 +56,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
     ? (game.teaser_en || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
     : (game.teaser || (LOCAL_TEASERS as Record<string, string>)[game.id] || T.games.teasers[hashOf(game.id) % T.games.teasers.length])
 
-  // 이미 투입한 티켓이 있으면(뒤로가기·재렌더) 바로 READY — 다시 눌러도 이중 차감되지 않게
-  useEffect(() => { if (hasCoinTicket(game.id)) { const t = setTimeout(() => setCoinState('ready'), 0); return () => clearTimeout(t) } }, [game.id])
+  // 화면을 다시 열면 버튼은 항상 '코인 넣기' 로 시작한다 — 이미 낸 티켓이 있으면 다시 눌러도 차감 없이 바로 START
   const coinLock = useRef(false)
   const insertCoin = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -63,12 +70,12 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
     try {
       // 로컬 세션으로 로그인 판정(네트워크 왕복 없음) → 즉시 반응
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) { setCoinState('idle'); setRevealed(false); router.push('/login?redirect=/'); return }
+      if (!session?.user) { setCoinState('idle'); router.push('/login?redirect=/'); return }
       const { error } = await supabase.rpc('spend_credits_for_game', { p_game_id: game.id } as never)
       if (error) {
         if (/insufficient_vcoin|INSUFFICIENT_CREDITS/.test(error.message)) {
           alert(T.games.insufficientCoin)
-          setCoinState('idle'); setRevealed(false)
+          setCoinState('idle')
           return
         }
         console.warn('vcoin spend skipped:', error.message)
@@ -88,7 +95,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
   const inner = (
     <>
       {/* 배경 — 게임 썸네일을 흐려 은은하게 */}
-      <ThumbBackdrop src={game.thumbnail_url} alt={game.title} revealed={revealed} />
+      <ThumbBackdrop src={game.thumbnail_url} alt={game.title} revealed={thumbSharp} />
       {/* 싱글/멀티 라벨 — 상단 좌측 */}
       <div className="absolute top-4 left-4 right-16 z-10 flex items-center gap-2">
         <PlayModeBadge mode={game.play_mode} />
@@ -109,7 +116,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
         </span>
       )}
       {/* 상단 중앙 — Jua 포스터 타이틀 */}
-      <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]" style={{ ...{ opacity: revealed ? 0 : 1, transform: revealed ? 'translateY(-18px) scale(.9)' : 'none', transition: 'opacity .5s ease, transform .6s ease', pointerEvents: revealed ? 'none' : undefined }, '--ttl-glow': `hsl(${golden ? 42 : (322 + ((hashOf(game.id) >> 3) % 36) - 18 + 360) % 360} 95% 62% / .6)` } as React.CSSProperties}>
+      <div className="absolute inset-x-0 top-[16%] px-5 text-center z-[5]" style={{ ...{ opacity: showStage ? 1 : 0, transform: showStage ? 'none' : 'translateY(-18px) scale(.9)', transition: 'opacity .5s ease, transform .6s ease', pointerEvents: showStage ? undefined : 'none' }, '--ttl-glow': `hsl(${golden ? 42 : (322 + ((hashOf(game.id) >> 3) % 36) - 18 + 360) % 360} 95% 62% / .6)` } as React.CSSProperties}>
         <span className="relative inline-block feed-title-pop">
           <span className="relative inline-block feed-title-float" style={hue != null ? ({ '--th': Math.round((hue + 180) % 360) } as React.CSSProperties) : undefined}>
             <h3 className={`${galaxyFont.className} feed-title relative z-[1] text-[46px] leading-[1.2]`}>{teaser}</h3>
@@ -118,7 +125,7 @@ export default function FeedScreen({ game, golden = false, rank }: { game: GameW
         </span>
       </div>
       {/* 방 디오라마 — 캐릭터는 중앙 (앱에서는 정적 렌더로 부드럽게) */}
-      <div className="absolute inset-x-1 top-[30%] bottom-[20%] scale-[.84] origin-center" style={{ opacity: revealed ? 0 : 1, transform: revealed ? 'translateY(28px)' : 'none', transition: 'opacity .45s ease, transform .6s ease', pointerEvents: revealed ? 'none' : undefined }}>
+      <div className="absolute inset-x-1 top-[30%] bottom-[20%] scale-[.84] origin-center" style={{ opacity: showStage ? 1 : 0, transform: showStage ? 'none' : 'translateY(28px)', transition: 'opacity .45s ease, transform .6s ease', pointerEvents: showStage ? undefined : 'none' }}>
         <RoomScene id={game.id} views={game.view_count ?? 0} avatar={avatarFramesV} />
       </div>
       {/* 우측 액션 레일 — 틱톡 스타일 */}
