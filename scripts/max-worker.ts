@@ -210,10 +210,14 @@ void beat(false)
 setInterval(() => void beat(false), 10_000)
 
 // 이전 워커가 중간에 죽어 'running' 으로 멈춘 작업을 다시 대기열로 — 사용자는 기다리고 있는데 아무도 안 만드는 상태를 막는다
+const WORKER_START = new Date().toISOString()
 async function reclaimStuck() {
+  // 이 워커가 시작되기 '전에' 시작된 작업만 대상 — 지금 내가 만들고 있는 작업(몇 분씩 걸린다)은 절대 건드리지 않는다
   const cutoff = new Date(Date.now() - 3 * 60_000).toISOString()
-  const { data } = await sb.from('studio_jobs').select('id,started_at,result').eq('status', 'running').lt('started_at', cutoff)
+  const limit = WORKER_START < cutoff ? WORKER_START : cutoff
+  const { data } = await sb.from('studio_jobs').select('id,started_at,result').eq('status', 'running').lt('started_at', limit)
   for (const j of (data ?? []) as { id: string; result: string | null }[]) {
+    if (j.id === currentJobId) continue
     await sb.from('studio_jobs').update({ status: 'pending', started_at: null, result: null }).eq('id', j.id)
     console.log('  멈춰 있던 작업을 다시 대기열로:', j.id.slice(0, 8))
   }
