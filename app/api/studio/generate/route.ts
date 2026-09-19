@@ -425,7 +425,7 @@ export async function POST(req: Request) {
         // ── 출력이 잘렸으면 이어받는다 ──
         // 3D(three.js) 게임처럼 코드가 길면 max_tokens 에서 끊겨 </game> 이 안 온다.
         // 예전엔 이 경우 통째로 실패 처리돼 화면의 답변마저 새로고침하면 사라졌다 → 이어서 최대 2번 더 받아 완성한다.
-        for (let cont = 0; cont < 2 && full.includes('<game>') && !full.includes('</game>'); cont++) {
+        for (let cont = 0; cont < 5 && full.includes('<game>') && !full.includes('</game>'); cont++) {
           if (aborted) break
           console.warn('[studio/generate] output truncated → continue', cont + 1, 'chars so far', full.length)
           const prefill = full.replace(/\s+$/, '')   // 프리필은 끝에 공백이 있으면 API 가 거부한다

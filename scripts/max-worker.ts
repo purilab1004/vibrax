@@ -91,7 +91,9 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   if (buf.length < 300 && /credit balance is too low|invalid api key|not logged in|please run \/login|authentication/i.test(buf)) { await sb.from('studio_jobs').update({ status: 'error', error: buf.slice(0, 500), finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  auth/credit error', buf); return }
   if (code !== 0 && !buf) { await sb.from('studio_jobs').update({ status: 'error', error: err.slice(0, 500) || `exit ${code}`, finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  error', err.slice(0, 200)); return }
   // ── 실제로 실행해 본다 → 실패하면 오류를 넣어 자동 수정(최대 2회) ──
-  buf = await testAndRepair(job, buf, (t) => { buf += t; dirty = true; void flush() })
+  const append = (t: string) => { buf += t; dirty = true; void flush() }
+  buf = await testAndRepair(job, buf, append)
+  buf = await finishRemaining(job, buf, append)   // 길어서 한 번에 못 끝낸 작업을 나눠서 끝까지
   await sb.from('studio_jobs').update({ status: 'done', result: buf, finished_at: new Date().toISOString() }).eq('id', job.id)
   currentJobId = null
   console.log('  done', buf.length, 'chars')
@@ -119,6 +121,25 @@ async function repairFailedBlocks(base: string, blocks: PatchBlock[], failed: nu
     else console.log('  패치 재작성 실패(블록', i, ')')
   }
   return out
+}
+
+/** 이 작업이 속한 프로젝트의 최신 버전 HTML — 전체 완성본을 다시 받을 때 기준으로 쓴다 */
+async function baseHtmlOf(jobId: string): Promise<string | null> {
+  const { data: jobRow } = await sb.from('studio_jobs').select('project_id,messages').eq('id', jobId).maybeSingle()
+  const row = jobRow as { project_id?: string; messages?: Msg[] } | null
+  if (row?.project_id) {
+    const { data: v } = await sb.from('studio_versions').select('html').eq('project_id', row.project_id).order('version', { ascending: false }).limit(1).maybeSingle()
+    const html = (v as { html?: string } | null)?.html
+    if (html) return html
+  }
+  // 저장된 버전이 없으면 작업 메시지에 담긴 '현재 게임 HTML' 을 쓴다(템플릿에서 시작한 경우)
+  const msgs = row?.messages ?? []
+  for (const m of [...msgs].reverse()) {
+    const t = typeof m.content === 'string' ? m.content : (m.content ?? []).map(c => c.text ?? '').join('\n')
+    const g = /<game>([\s\S]*?)<\/game>/.exec(t)
+    if (g) return g[1]
+  }
+  return null
 }
 
 // 작업 결과를 '실행 가능한 HTML' 로 만든다 — 전체 완성본(<game>)이면 그대로, 부분 패치면 최신 버전에 적용해서
@@ -171,13 +192,56 @@ function runClaudeOnce(system: string, model: string, input: string, onText: (t:
   })
 }
 
+// 요청이 한 번에 다 반영되지 않았을 수 있다(길거나 항목이 많을 때).
+// 지금까지 만든 결과를 보여 주고 "남은 게 있으면 이어서, 다 됐으면 DONE" 을 최대 3번까지 물어 끝을 낸다.
+async function finishRemaining(job: { id: string; model: string | null; system: string; messages: Msg[] }, buf: string, append: (t: string) => void): Promise<string> {
+  let out = buf
+  const lastUser = [...(job.messages ?? [])].reverse().find(m => m.role !== 'assistant')
+  const request = (typeof lastUser?.content === 'string' ? lastUser.content : (lastUser?.content ?? []).map(c => c.text ?? '').join('\n'))
+    .replace(/현재 게임 HTML:[\s\S]*$/, '').trim().slice(0, 2000)
+  if (!request) return out
+  for (let round = 1; round <= 3; round++) {
+    const { html } = await materialize(job.id, out)
+    if (!html) return out
+    const ask = `[USER]\n아래는 요청을 반영해 지금까지 만든 게임이다.\n\n[원래 요청]\n${request}\n\n[지금 코드]\n<game>${html}</game>\n\n원래 요청 중 **아직 반영되지 않은 부분**이 있는지 코드로 확인해라.\n- 남아 있으면: 그 부분만 <patch> SEARCH/REPLACE 로 내라(설명 한 줄).\n- 전부 반영됐으면: 다른 말 없이 정확히 DONE 이라고만 출력해라.\n\n[ASSISTANT]\n`
+    const res = await runClaudeOnce(job.system, cliModel(job.model), ask, () => { /* 확인 과정은 화면에 흘리지 않는다 */ })
+    if (/^\s*DONE\s*$/m.test(res) || (!extractPatches(res).blocks.length && !parseGeneration(res).html)) {
+      console.log(`  완료 확인 ${round}회: 남은 작업 없음`)
+      return out
+    }
+    console.log(`  완료 확인 ${round}회: 남은 작업을 이어서 반영`)
+    const add = `\n\n${res}`
+    const probe = out + add
+    const { html: next } = await materialize(job.id, probe)
+    if (!next) { console.log('  이어서 받은 패치를 적용하지 못해 여기서 마무리'); return out }
+    out = probe; append(add)
+    // 이어 붙인 뒤에도 실제로 돌아가는지 확인하고, 깨졌으면 고친다
+    out = await testAndRepair(job, out, append)
+  }
+  return out
+}
+
 // 생성된 게임을 헤드리스 크롬에서 실제로 띄워 보고, 안 돌아가면 오류를 알려 주고 고치게 한다.
 // 고친 완성본은 결과 뒤에 이어 붙이고(파서가 '마지막 게임 블록'을 쓴다), 끝에 테스트 결과 한 줄을 남긴다.
-async function testAndRepair(job: { id: string; model: string | null; system: string }, buf: string, append: (t: string) => void): Promise<string> {
+async function testAndRepair(job: { id: string; model: string | null; system: string; messages?: Msg[] }, buf: string, append: (t: string) => void): Promise<string> {
   let out = buf
-  for (let round = 0; round <= 2; round++) {
-    const { html } = await materialize(job.id, out)
-    if (!html) return out                       // 만들어진 게임이 없으면(설명만·패치 적용 실패) 테스트할 것도 없다
+  let rewrote = false
+  for (let round = 0; round <= 3; round++) {
+    let { html } = await materialize(job.id, out)
+    if (!html && !rewrote) {
+      // 패치를 살리지 못했다 — 여기서 포기하지 말고 '전체 완성본'으로 한 번 더 받아 끝을 낸다
+      rewrote = true
+      const base = await baseHtmlOf(job.id)
+      const lastUser = [...(job.messages ?? [])].reverse().find(m => m.role !== 'assistant')
+      const request = (typeof lastUser?.content === 'string' ? lastUser.content : (lastUser?.content ?? []).map(c => c.text ?? '').join('\n')).replace(/현재 게임 HTML:[\s\S]*$/, '').trim().slice(0, 2000)
+      if (base && request) {
+        console.log('  패치를 못 살림 → 전체 완성본으로 다시 요청')
+        const ask = `[USER]\n아래 게임에 이 요청을 반영해 "전체 완성본" HTML 을 <game>…</game> 으로 출력해라. 패치 형식은 쓰지 마라. 설명은 1~2문장.\n\n[요청]\n${request}\n\n[현재 코드]\n<game>${base}</game>\n\n[ASSISTANT]\n`
+        const res = await runClaudeOnce(job.system, cliModel(job.model), ask, () => {})
+        if (parseGeneration(res).html) { const add = `\n\n${res}`; append(add); out += add; html = parseGeneration(out).html }
+      }
+    }
+    if (!html) return out                       // 그래도 없으면(설명만 한 경우 등) 테스트할 것도 없다
     let r
     try { r = await smokeGame(html) } catch (e) { console.log('  실행 테스트 불가', e); return out }
     console.log(`  실행 테스트 ${round + 1}회: ${r.ok ? '통과' : '실패'} (frames ${r.ticks}${r.errors.length ? ', ' + r.errors[0] : ''})`)
