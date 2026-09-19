@@ -9,7 +9,16 @@ export async function loadAvatarConfig(supabase: SupabaseClient, userId: string)
 }
 
 export async function saveAvatarConfig(supabase: SupabaseClient, userId: string, config: AvatarConfig): Promise<{ error: string | null }> {
-  const { error } = await supabase.from('profiles').update({ avatar_config: config } as never).eq('id', userId)
+  // avatar_config 한 칸에 아바타와 방송 설정이 함께 들어 있다. AJ 외모 저장은 새 객체를 통째로 덮어쓰기 때문에
+  // 그대로 두면 방송(카메라)·라이브/영상 목록이 날아간다 → 넘어온 값에 없는 항목은 기존 값을 살린다.
+  const { data } = await supabase.from('profiles').select('avatar_config').eq('id', userId).maybeSingle()
+  const prev = ((data as { avatar_config?: AvatarConfig } | null)?.avatar_config ?? null)
+  const merged: AvatarConfig = { ...config }
+  if (prev) {
+    if (merged.broadcast === undefined && prev.broadcast) merged.broadcast = prev.broadcast
+    if (merged.broadcasts === undefined && prev.broadcasts) merged.broadcasts = prev.broadcasts
+  }
+  const { error } = await supabase.from('profiles').update({ avatar_config: merged } as never).eq('id', userId)
   return { error: error?.message ?? null }
 }
 

@@ -215,8 +215,23 @@ export default function ProfilePage() {
       const { error } = await supabase.from('games').delete().eq('id', gameId)
       if (error) { flash(setGameMsg, '삭제 실패: ' + error.message, false); return }
       setGames(prev => prev.filter(g => g.id !== gameId))
+      setOnAirGames(prev => prev.filter(g => g.id !== gameId))
       setDeleteConfirm(null)
       flash(setGameMsg, '삭제되었습니다.', true)
+    })
+  }
+
+  // 방송이 켜진 채로 남아 있을 때 바로 끄기 (폰을 닫아 종료가 기록되지 않은 경우)
+  const stopMyBroadcast = () => {
+    if (!user) return
+    startTransition(async () => {
+      const base = myAvatarConfig ?? null
+      const next = { ...(base ?? {}), broadcast: { ...(base?.broadcast ?? { mode: 'camera' as const, url: '' }), mode: 'camera' as const, url: base?.broadcast?.url ?? '', on: false, screenOn: false } }
+      const { error } = await saveAvatarConfig(supabase, user.id, next as typeof myAvatarConfig extends null ? never : NonNullable<typeof myAvatarConfig>)
+      if (error) { flash(setGameMsg, '방송 끄기 실패: ' + error, false); return }
+      setMyAvatarConfig(next as NonNullable<typeof myAvatarConfig>)
+      setOnAirGames([])
+      flash(setGameMsg, '방송을 껐어요.', true)
     })
   }
 
@@ -480,6 +495,23 @@ export default function ProfilePage() {
               <a href="/broadcast" aria-label="방송 관리" title="방송 관리" className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-[#e11d48] text-white hover:bg-[#be123c] transition-colors">
                 <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="7" width="13" height="10" rx="2" /><path d="m16 10 5-2v8l-5-2" /></svg>
               </a>
+              {/* 방송이 켜진 채로 남아 있을 때 바로 끄기 */}
+              <button onClick={stopMyBroadcast} aria-label="방송 끄기" title="방송 끄기" className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[#ddd3bf] bg-white text-[#4a4337] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><rect x="7" y="7" width="10" height="10" rx="2" /></svg>
+              </button>
+              {/* 방송 중인 게임도 삭제할 수 있게 — 내 게임일 때만 */}
+              {onAirGame.user_id === user?.id && (
+                deleteConfirm === onAirGame.id ? (
+                  <>
+                    <button onClick={() => handleDeleteGame(onAirGame.id)} disabled={isPending} className="inline-flex items-center h-9 px-3 rounded-lg bg-[#e11d48] text-white text-[12.5px] font-semibold hover:bg-[#be123c] disabled:opacity-50">삭제 확인</button>
+                    <button onClick={() => setDeleteConfirm(null)} className="inline-flex items-center h-9 px-3 rounded-lg border border-[#ddd3bf] bg-white text-[12.5px] font-semibold text-[#6b6152]">취소</button>
+                  </>
+                ) : (
+                  <button onClick={() => setDeleteConfirm(onAirGame.id)} aria-label="게임 삭제" title="게임 삭제" className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[#ddd3bf] bg-white text-[#a79fb5] hover:border-[#e11d48] hover:text-[#e11d48] transition-colors">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13" /></svg>
+                  </button>
+                )
+              )}
             </div>
           </div>
         ))}
