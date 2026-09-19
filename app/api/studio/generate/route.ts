@@ -357,7 +357,9 @@ export async function POST(req: Request) {
         let raw = '', sentUpTo = 0, patchMode = false
         const forward = (final = false) => {
           if (patchMode) return
-          const pi = raw.indexOf('<patch>')
+          const pw = raw.indexOf('<patch>')
+          const pb = raw.search(/<{7}[ \t]*SEARCH/)          // <patch> 없이 바로 SEARCH 를 내는 경우
+          const pi = pw >= 0 && pb >= 0 ? Math.min(pw, pb) : pw >= 0 ? pw : pb
           const upto = pi >= 0 ? pi : final ? raw.length : Math.max(sentUpTo, raw.length - 7)   // '<patch>' 가 잘려 오는 중일 수 있어 끝 7자는 보류
           if (pi >= 0) patchMode = true
           if (upto > sentUpTo) { const seg = raw.slice(sentUpTo, upto); sentUpTo = upto; full += seg; safeEnqueue(seg) }

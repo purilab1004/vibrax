@@ -30,13 +30,20 @@ export interface ParsedGeneration {
 
 export function parseGeneration(text: string): ParsedGeneration {
   const clean = text.replace(/\n\[\[GEN_MSG\]\][\s\S]*?\[\[\/GEN_MSG\]\]/g, '').replace(/\n?\[\[VBX_TEST\]\][\s\S]*?\[\[\/VBX_TEST\]\]/g, '').replace(/\n?\[\[PENDING:[0-9a-f-]{36}\]\]/g, '').split(GEN_ERROR_MARKER).join('').split(OFF_TOPIC_MARKER).join('').split(ANSWER_MARKER).join('').replace(/<offtopic\/?>/g, '')
+  // 모델이 <patch> 없이 SEARCH/REPLACE 만 낼 때가 있다 — 그 원문이 말풍선에 그대로 보이지 않게 잘라 낸다
+  const patchAt = (() => {
+    const a = clean.indexOf('<patch>')
+    const b = clean.search(/<{7}[ \t]*SEARCH/)
+    return a >= 0 && b >= 0 ? Math.min(a, b) : a >= 0 ? a : b
+  })()
   const first = clean.indexOf('<game>')
   // 실행 테스트에서 고친 완성본이 뒤에 다시 올 수 있으므로 '마지막' 게임 블록을 쓴다
   const open = clean.lastIndexOf('<game>')
   if (open === -1) {
-    return { description: clean.trim(), html: null, htmlBytes: 0, generating: false }
+    return { description: (patchAt >= 0 ? clean.slice(0, patchAt) : clean).trim(), html: null, htmlBytes: 0, generating: false }
   }
-  const description = clean.slice(0, first).trim()
+  const cut = patchAt >= 0 ? Math.min(patchAt, first) : first
+  const description = clean.slice(0, cut).trim()
   const rest = clean.slice(open + '<game>'.length)
   const close = rest.indexOf('</game>')
   if (close === -1) {

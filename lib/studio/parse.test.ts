@@ -34,3 +34,10 @@ test('extractTitle은 title 태그 내용을 돌려준다', () => {
   assert.equal(extractTitle('<html><head><title>PIXEL JUMP</title></head></html>'), 'PIXEL JUMP')
   assert.equal(extractTitle('<html></html>'), null)
 })
+
+test('패치 원문(<patch> 없이 SEARCH 만)이 설명에 섞이지 않는다', () => {
+  const text = `스테이지를 5단계로 나눴어요.\n<<<<<<< SEARCH\nconst a = 1;\n=======\nconst a = 2;\n>>>>>>> REPLACE`
+  const p = parseGeneration(text)
+  assert.equal(p.description, '스테이지를 5단계로 나눴어요.')
+  assert.equal(p.description.includes('SEARCH'), false)
+})
