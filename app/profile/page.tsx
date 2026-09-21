@@ -238,7 +238,8 @@ export default function ProfilePage() {
   const [gameQuery, setGameQuery] = useState('')
   const gq = gameQuery.trim().toLowerCase()
   const visibleGames = gq ? games.filter(g => `${g.title} ${g.genre} ${g.description ?? ''}`.toLowerCase().includes(gq)) : games
-  const darkInput = 'w-full h-10 rounded-xl bg-white/10 border border-white/15 focus:border-[#8ea4ff] focus:ring-4 focus:ring-[#8ea4ff]/15 px-3 text-[13.5px] outline-none transition text-white placeholder-white/35 [&>option]:text-[#1d1530]'
+  // 프로필 카드는 흰 배경 — 입력도 밝은 톤으로
+  const darkInput = 'w-full h-10 rounded-xl bg-white border border-[#e6e2ef] focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10 px-3 text-[13.5px] outline-none transition text-[#1d1530] placeholder-[#a79fb5]'
   const inputClass = 'w-full h-11 rounded-xl bg-[#faf8fd] border border-[#e9e2f3] focus:border-[#8b3dff] focus:ring-4 focus:ring-[#8b3dff]/10 focus:bg-white px-3.5 text-[14px] outline-none transition text-[#1d1530] placeholder-[#a79fb5]'
 
   if (loading) return <MascotLoader />
@@ -252,12 +253,10 @@ export default function ProfilePage() {
         <div className="absolute top-1/3 -right-32 w-[32rem] h-[32rem] rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.14),transparent)]" />
       </div>
       {/* 내 프로필 — 이메일·사용자 이름·국가를 이 카드 안에서 바로 고친다. 아래 섹션은 곧바로 내 게임 */}
-      <section id="profile" className="relative overflow-hidden rounded-3xl text-white px-4 py-4 sm:px-6 sm:py-5 shadow-[0_24px_50px_-30px_rgba(11,16,32,0.8)]" style={{ background: 'linear-gradient(135deg,#182039 0%,#0d1326 55%,#0a0f1f 100%)' }}>
-        <div aria-hidden className="absolute inset-0 pointer-events-none opacity-[0.35]" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.35) 1px, transparent 1.5px)', backgroundSize: '22px 22px' }} />
-        <div aria-hidden className="absolute -bottom-24 right-[8%] w-[22rem] h-[22rem] rounded-full pointer-events-none" style={{ background: 'radial-gradient(closest-side,rgba(245,158,11,0.22),transparent)' }} />
+      <section id="profile" className="relative overflow-hidden rounded-3xl bg-white text-[#1d1530] px-4 py-4 sm:px-6 sm:py-5 border border-[#efe8f7] shadow-[0_18px_40px_-28px_rgba(91,33,182,0.35)]">
         <div className="relative flex items-center gap-3.5 sm:gap-4">
           <span className="shrink-0 rounded-full p-[2.5px] bg-gradient-to-br from-[#ff2d6f] to-[#8b3dff]">
-            <span className="flex w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-[#0d1326] ring-2 ring-[#0d1326] items-center justify-center">
+            <span className="flex w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-[#f6f7fa] ring-2 ring-white items-center justify-center">
               {myAvatarConfig?.previewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={myAvatarConfig.previewUrl} alt="" className="avatar-bob w-full h-full object-cover object-top" />
@@ -265,39 +264,39 @@ export default function ProfilePage() {
             </span>
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[9.5px] font-extrabold tracking-[0.28em] text-[#8ea4ff]">MY PAGE · 프로필</p>
+            <p className="text-[9.5px] font-extrabold tracking-[0.28em] text-[#9aa1ae]">MY PAGE · 프로필</p>
             <p className="text-[21px] sm:text-[26px] font-extrabold leading-tight truncate">{agentName || username || '내 계정'}</p>
-            <p className="text-[11.5px] sm:text-[12.5px] text-white/55 truncate">{username ? `@${username}` : ''}{username && user?.email ? ' · ' : ''}{user?.email}{country ? ` · ${COUNTRIES.find(c => c.code === country)?.flag ?? ''} ${COUNTRIES.find(c => c.code === country)?.name ?? ''}` : ''}</p>
+            <p className="text-[11.5px] sm:text-[12.5px] text-[#857a90] truncate">{username ? `@${username}` : ''}{username && user?.email ? ' · ' : ''}{user?.email}{country ? ` · ${COUNTRIES.find(c => c.code === country)?.flag ?? ''} ${COUNTRIES.find(c => c.code === country)?.name ?? ''}` : ''}</p>
           </div>
           <div className="hidden sm:flex items-center gap-2 shrink-0">
             <a href="/credits" className="hover:opacity-85 transition-opacity"><PromptCreditBadge amount={creditBalance} size="sm" /></a>
-            <Link href="/studio" className="inline-flex items-center h-9 px-4 rounded-full bg-white text-[#0d1326] text-[12.5px] font-bold hover:bg-[#e8f1ff] transition-colors">게임 만들기</Link>
+            <Link href="/studio" className="inline-flex items-center h-9 px-4 rounded-full bg-[#2563eb] text-white text-[12.5px] font-bold hover:bg-[#1d4ed8] transition-colors">게임 만들기</Link>
           </div>
         </div>
         <div className="relative sm:hidden mt-3 flex items-center gap-2">
           <a href="/credits" className="shrink-0"><PromptCreditBadge amount={creditBalance} size="sm" label={false} /></a>
-          <Link href="/studio" className="flex-1 inline-flex items-center justify-center h-9 rounded-full bg-white text-[#0d1326] text-[12.5px] font-bold">게임 만들기</Link>
+          <Link href="/studio" className="flex-1 inline-flex items-center justify-center h-9 rounded-full bg-[#2563eb] text-white text-[12.5px] font-bold">게임 만들기</Link>
         </div>
 
         {/* 계정 설정 — 사용자 이름·국가 */}
-        <div className="relative mt-4 pt-4 border-t border-white/10 grid gap-3 sm:grid-cols-2">
+        <div className="relative mt-4 pt-4 border-t border-[#f0ecf7] grid gap-3 sm:grid-cols-2">
           <div>
-            <p className="text-[10.5px] font-semibold tracking-wider text-white/45 mb-1.5">사용자 이름</p>
+            <p className="text-[10.5px] font-semibold tracking-wider text-[#9aa1ae] mb-1.5">사용자 이름</p>
             {editingUsername ? (
               <div className="flex items-center gap-2">
                 <input className={darkInput} value={newUsername} onChange={e => setNewUsername(e.target.value)} autoFocus />
                 <button onClick={handleSaveUsername} disabled={isPending} className="shrink-0 inline-flex items-center h-10 px-4 rounded-xl bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white text-[12.5px] font-bold disabled:opacity-40">저장</button>
-                <button onClick={() => { setEditingUsername(false); setNewUsername('') }} className="shrink-0 inline-flex items-center h-10 px-3 rounded-xl border border-white/20 text-[12.5px] font-medium text-white/70 hover:text-white transition-colors">취소</button>
+                <button onClick={() => { setEditingUsername(false); setNewUsername('') }} className="shrink-0 inline-flex items-center h-10 px-3 rounded-xl border border-[#e6e2ef] text-[12.5px] font-medium text-[#6b6152] hover:text-[#1d1530] transition-colors">취소</button>
               </div>
             ) : (
               <div className="flex items-center gap-2.5">
                 <span className="text-[14px] font-semibold truncate">{username || '—'}</span>
-                <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="shrink-0 inline-flex items-center h-8 px-3 rounded-full border border-white/20 bg-white/5 text-[12px] font-semibold text-white/80 hover:bg-white/10 hover:text-white transition-colors">수정</button>
+                <button onClick={() => { setEditingUsername(true); setNewUsername(username) }} className="shrink-0 inline-flex items-center h-8 px-3 rounded-full border border-[#e6e2ef] bg-white text-[12px] font-semibold text-[#6b6152] hover:border-[#2563eb] hover:text-[#2563eb] transition-colors">수정</button>
               </div>
             )}
           </div>
           <div>
-            <p className="text-[10.5px] font-semibold tracking-wider text-white/45 mb-1.5">국가</p>
+            <p className="text-[10.5px] font-semibold tracking-wider text-[#9aa1ae] mb-1.5">국가</p>
             <select value={country} onChange={e => handleChangeCountry(e.target.value)} disabled={isPending} className={darkInput + ' cursor-pointer disabled:opacity-50'}>
               <option value="">선택 안 함</option>
               {COUNTRIES.map(c => (
@@ -307,9 +306,9 @@ export default function ProfilePage() {
           </div>
         </div>
         <div className="relative mt-3 flex items-center gap-3 flex-wrap">
-          <span className="text-[11.5px] text-white/40">이메일 {user?.email}</span>
-          <a href="#password" className="text-[11.5px] font-semibold text-[#8ea4ff] hover:text-white transition-colors">비밀번호 변경</a>
-          {profileMsg && <span className={`text-[11.5px] font-semibold ${profileMsg.ok ? 'text-[#4ade80]' : 'text-[#fda4af]'}`}>{profileMsg.text}</span>}
+          <span className="text-[11.5px] text-[#a79fb5]">이메일 {user?.email}</span>
+          <a href="#password" className="text-[11.5px] font-semibold text-[#2563eb] hover:text-[#1d4ed8] transition-colors">비밀번호 변경</a>
+          {profileMsg && <span className={`text-[11.5px] font-semibold ${profileMsg.ok ? 'text-[#059669]' : 'text-[#e11d48]'}`}>{profileMsg.text}</span>}
         </div>
       </section>
 
