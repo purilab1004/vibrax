@@ -63,15 +63,21 @@ export const THREE_URL = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://vibrexc
 const THREE_TAG = `<script src="${THREE_URL}"></script>`
 const THREE_SRC_RE = /<script\b[^>]*\bsrc=["'][^"']*\bthree(?:\.module|\.core|\.webgpu)?(?:\.min)?\.js[^"']*["'][^>]*>\s*<\/script>/gi
 
+// 3D 모델(.glb)·카메라 조작이 필요하면 addons 도 함께 (GLTFLoader·DRACOLoader·OrbitControls·SkeletonUtils + THREE.loadGLB)
+const ADDONS_URL = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://vibrexcup.com'}/vendor/three-addons.js`
+const ADDONS_TAG = `<script src="${ADDONS_URL}"></script>`
+const NEEDS_ADDONS = /GLTFLoader|DRACOLoader|OrbitControls|SkeletonUtils|loadGLB|\.glb\b|\.gltf\b/i
+
 /** 게임이 three.js 를 쓰면(THREE.* 사용 또는 three 스크립트 태그) 우리 사본으로 바꿔/넣어 준다 */
 function injectThree(html: string): string {
   const usesThree = /\bTHREE\s*\./.test(html) || THREE_SRC_RE.test(html)
   THREE_SRC_RE.lastIndex = 0
   if (!usesThree) return html
   html = html.replace(THREE_SRC_RE, '')                       // CDN·모듈 태그는 걷어내고
-  if (html.includes(THREE_URL)) return html
+  const tags = (html.includes(THREE_URL) ? '' : THREE_TAG) + (NEEDS_ADDONS.test(html) && !html.includes(ADDONS_URL) ? ADDONS_TAG : '')
+  if (!tags) return html
   const i = html.search(/<head[^>]*>/i)                        // 게임 스크립트보다 먼저 로드되게 <head> 맨 앞
-  return i >= 0 ? html.slice(0, html.indexOf('>', i) + 1) + THREE_TAG + html.slice(html.indexOf('>', i) + 1) : THREE_TAG + html
+  return i >= 0 ? html.slice(0, html.indexOf('>', i) + 1) + tags + html.slice(html.indexOf('>', i) + 1) : tags + html
 }
 
 export function hardenHtml(html: string, opts: { controls?: ControlChannel[] } = {}): string {

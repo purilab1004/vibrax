@@ -4,6 +4,8 @@ import { loadControls } from '@/lib/controls-server'
 
 // 3D 게임이 불러오는 자체 호스팅 three.js 의 출처 (배포 도메인 + www)
 const SITE_ORIGINS = 'https://vibrexcup.com https://www.vibrexcup.com'
+// 미디어 라이브러리(3D 모델·이미지)가 올라가는 스토리지
+const MEDIA_ORIGIN = 'https://*.supabase.co'
 
 // 게시된 스튜디오 게임 HTML 서빙.
 // studio_versions는 RLS로 소유자만 읽을 수 있으므로 admin 클라이언트를 쓰되,
@@ -70,7 +72,9 @@ export async function GET(
     // 최상위 문서로 열려도 스크립트 격리 유지
     'Content-Security-Policy':
       // script-src 에 우리 도메인 — 3D 게임용 자체 호스팅 three.js(/vendor/three.min.js) 만 불러올 수 있다
-      `sandbox allow-scripts allow-pointer-lock; default-src 'none'; script-src 'unsafe-inline' ${new URL(req.url).origin} ${SITE_ORIGINS}; style-src 'unsafe-inline'; img-src data:; media-src data:; frame-ancestors *;`,
+      // script-src 에 우리 도메인 — 3D 게임용 자체 호스팅 three.js/addons(/vendor/*)
+      // 3D 모델(.glb)·드라코 디코더는 fetch 로 받아야 해서 connect-src 에 우리 도메인·스토리지·blob 을 연다(그 외 외부 통신은 계속 차단)
+      `sandbox allow-scripts allow-pointer-lock; default-src 'none'; script-src 'unsafe-inline' blob: ${new URL(req.url).origin} ${SITE_ORIGINS}; style-src 'unsafe-inline'; img-src data: blob: ${SITE_ORIGINS} ${MEDIA_ORIGIN}; media-src data: blob:; connect-src data: blob: ${new URL(req.url).origin} ${SITE_ORIGINS} ${MEDIA_ORIGIN}; worker-src blob:; child-src blob:; frame-ancestors *;`,
     // 전역 X-Frame-Options(SAMEORIGIN) 대신 위 frame-ancestors 로 허용 (www ↔ apex, 관리자 호스트에서의 임베드)
     'X-Frame-Options': 'ALLOWALL',
     'Cache-Control': 'no-store',
