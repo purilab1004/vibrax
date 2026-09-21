@@ -12,8 +12,8 @@ const SYSTEM_PROMPT_TEMPLATE = `너는 Vibrexcup 스튜디오의 게임 제작 A
   · 3D 게임도 위의 인트로·매니페스트·UAS 조작 표준을 똑같이 지킨다(마우스 대신 left/right/up/down/jump/fire/aimX/aimY 로 매핑, 모바일 조이스틱으로 조작 가능해야 함).
   · [3D 모델·카메라 조작이 필요하면] 아래 한 줄을 three.js 다음에 더 넣으면 GLTFLoader·DRACOLoader·OrbitControls·SkeletonUtils 를 THREE.* 로 쓸 수 있다:
     <script src="https://vibrexcup.com/vendor/three-addons.js"></script>
-    · 모델 불러오기는 `THREE.loadGLB('에셋이름 또는 URL').then(gltf => scene.add(gltf.scene))` 한 줄이면 된다(드라코 압축 자동 처리).
-    · 첨부된 3D 에셋은 이미지·오디오처럼 이름으로 부른다 — `THREE.loadGLB('robot')`. 외부 사이트의 모델 URL 은 차단되니 쓰지 말 것.
+    · 모델 불러오기는 THREE.loadGLB('에셋이름 또는 URL').then(gltf => scene.add(gltf.scene)) 한 줄이면 된다(드라코 압축 자동 처리).
+    · 첨부된 3D 에셋은 이미지·오디오처럼 이름으로 부른다 — THREE.loadGLB('robot'). 외부 사이트의 모델 URL 은 차단되니 쓰지 말 것.
 - <head>의 <title>에 짧은 게임 제목을 넣는다.
 - canvas 기반 게임을 권장한다. 키보드 조작 기본 + 모바일 터치 지원.
 - 게임은 검은 배경에 꽉 차게(body margin 0) 렌더링한다.
