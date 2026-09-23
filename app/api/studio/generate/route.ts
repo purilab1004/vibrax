@@ -147,7 +147,15 @@ export async function POST(req: Request) {
   const staticList = await effectiveStaticTemplates()
   const auto = await loadAutomation()
   const dbList = !hasAttach ? await loadDbTemplates() : []
-  let tmatch = !hasAttach ? (matchTemplateIn(staticList, prompt) ?? matchTemplateIn(dbList, prompt)) : null
+  // 기본 템플릿과 관리자가 등록한 DB 템플릿을 함께 보고 '가장 긴 키워드'가 맞는 쪽을 쓴다.
+  // (예전엔 기본 템플릿이 먼저라, "메이플 어드벤처" 요청에 '어드벤처'(기본·탑다운)가 '메이플'(DB)을 눌렀다)
+  let tmatch = !hasAttach ? (() => {
+    const sm = matchTemplateIn(staticList, prompt)
+    const dm = matchTemplateIn(dbList, prompt)
+    if (!sm) return dm
+    if (!dm) return sm
+    return dm.keyword.length >= sm.keyword.length ? dm : sm   // 같은 길이면 직접 등록한 DB 템플릿 우선
+  })() : null
   // 이미 게임이 있는 프로젝트에서도 "로그라이크 던전 만들어줘" 처럼 장르 이름뿐인 새 게임 요청이면 템플릿을 다음 버전으로 그대로 불러온다(LLM 0).
   // 반면 "테트리스처럼 블록이 떨어지게 해줘" 같은 수정 요청(추가 문장 있음)은 기존 게임 수정 경로를 유지한다.
   if (latest && tmatch && !templateOnly(prompt, tmatch.keyword, tmatch.template.keywords)) tmatch = null
