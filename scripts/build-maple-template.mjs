@@ -22,6 +22,60 @@ for (const rel of scripts) {
 // 스프라이트 경로 → 우리 도메인
 html = html.replace(/(["'`])assets\/sprites\//g, `$1${BASE}/`)
 
+// ── 모바일(가로) 최적화 ──
+// 원본은 1024x680 고정 크기 → 화면에 맞춰 통째로 축소/확대하고, 세로로 들면 '가로로 돌려주세요' 안내를 띄운다.
+const MOBILE = `
+<style>
+  html, body { overflow: hidden; touch-action: none; }
+  body { margin: 0; }
+  /* body 가 flex 라 1024px 짜리 게임이 화면 폭에 맞춰 찌그러졌다 → 원래 크기 유지하고 통째로 축소한다 */
+  #wrap { transform-origin: center center; flex: 0 0 auto !important; }
+  /* 터치 기기: PC 조작 안내문을 숨기고, HUD 를 캔버스 위로 겹쳐 올려 화면을 더 크게 쓴다 */
+  html.vbx-touch #help { display: none !important; }
+  html.vbx-touch #wrap { height: 600px; }          /* 캔버스 높이만큼만 — HUD 는 위에 겹친다 */
+  html.vbx-touch #hud { height: 64px; background: linear-gradient(rgba(35,38,58,0), rgba(24,26,40,.88) 45%); border-top: 0; padding: 0 10px; gap: 10px; }
+  html.vbx-touch #hud .lv { font-size: 17px; min-width: 56px; }
+  html.vbx-touch #hud .stats { min-width: 96px; font-size: 14px; }
+  html.vbx-touch #hud .stats .small { font-size: 10.5px; }
+  html.vbx-touch #hud button { font-size: 11px; padding: 5px 8px; }
+  html.vbx-touch #hud .quick { transform: scale(.85); transform-origin: right center; }
+  #vbx-rotate {
+    position: fixed; inset: 0; z-index: 2147483600; display: none;
+    background: #12141f; color: #fff; align-items: center; justify-content: center; text-align: center;
+    font: 700 16px/1.6 -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif;
+  }
+  #vbx-rotate.on { display: flex; }
+  #vbx-rotate .ico { font-size: 44px; display: block; margin-bottom: 12px; animation: vbxRot 1.8s ease-in-out infinite; }
+  @keyframes vbxRot { 0%, 100% { transform: rotate(-12deg) } 50% { transform: rotate(78deg) } }
+</style>
+<div id="vbx-rotate"><div><span class="ico">📱</span>가로로 돌려서 플레이해 주세요<br><span style="font-weight:500;opacity:.7;font-size:13.5px">화면을 눕히면 바로 시작합니다</span></div></div>
+<script>
+(function () {
+  var W = 1024;
+  // 터치 기기 판정 — 에뮬레이터/기기마다 pointer:coarse 가 어긋나므로 터치 지원 여부로 직접 본다
+  var touch = (navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
+  function compact() { return touch || innerWidth < 980 || innerHeight < 620 }   // 작은 화면도 같은 취급
+  var wrap = document.getElementById('wrap');
+  var rot = document.getElementById('vbx-rotate');
+  function fit() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var small = compact();
+    document.documentElement.classList.toggle('vbx-touch', small);
+    var H = small ? 600 : 680;    // 좁은 화면에선 HUD 를 캔버스 위로 겹쳐 화면을 더 크게 쓴다
+    var k = Math.min(vw / W, vh / H);
+    wrap.style.transform = 'scale(' + k + ')';
+    // 세로로 들었고 화면이 좁으면 가로 안내 (가로로 눕히면 자동으로 사라진다)
+    var portrait = vh > vw && touch;
+    rot.classList.toggle('on', portrait);
+  }
+  addEventListener('resize', fit);
+  addEventListener('orientationchange', function () { setTimeout(fit, 120) });
+  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', fit); else fit();
+  setTimeout(fit, 300);
+})();
+</script>`
+html = html.replace(/<\/body>/i, MOBILE + '\n</body>')
+
 // ── 플랫폼 표준 래퍼 ──
 // 이 게임은 '캐릭터 만들기' 화면에서 시작한다 → 그 버튼에 표준 역할을 달고, 매니페스트로 조작을 연결한다
 const WRAP = `
