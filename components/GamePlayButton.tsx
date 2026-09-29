@@ -266,15 +266,22 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   }
 
   // 게임 저장 — 게임 안 localStorage 를 통째로 받아 계정에 보관(기기가 바뀌어도 이어하기)
-  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'guest'>('idle')
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'guest' | 'fail'>('idle')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const flashSave = useCallback((st: 'saved' | 'guest' | 'fail', ms = 2200) => {
+    setSaveState(st)
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => setSaveState('idle'), ms)
+  }, [])
   const putSave = useCallback(async (data: Record<string, string>, manual: boolean) => {
     try {
       const r = await fetch('/api/game-save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId: game.id, data }) })
-      if (r.status === 401) { if (manual) { setSaveState('guest'); setTimeout(() => setSaveState('idle'), 2500) } return }
-      if (manual && r.ok) { setSaveState('saved'); if (saveTimer.current) clearTimeout(saveTimer.current); saveTimer.current = setTimeout(() => setSaveState('idle'), 1800) }
-    } catch { if (manual) setSaveState('idle') }
-  }, [game.id])
+      if (r.status === 401) { if (manual) flashSave('guest'); return }
+      if (r.ok) { if (manual) flashSave('saved', 1800); return }
+      console.warn('[game-save] 실패', r.status, await r.text().catch(() => ''))
+      if (manual) flashSave('fail', 2600)
+    } catch (e) { console.warn('[game-save]', e); if (manual) flashSave('fail', 2600) }
+  }, [game.id, flashSave])
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
       const d = e.data as { type?: string; data?: Record<string, string> } | null
@@ -285,9 +292,12 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   }, [putSave, saveState])
   const saveNow = () => {
     const el = frameRef.current
-    if (!el?.contentWindow) return
+    if (!el?.contentWindow) { flashSave('fail'); return }
     setSaveState('saving')
     el.contentWindow.postMessage({ type: 'vibrex:save-dump' }, '*')
+    // 게임이 응답하지 않으면(옛 버전 캐시 등) 계속 도는 대신 실패로 알린다
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => setSaveState(st => (st === 'saving' ? 'fail' : st)), 4000)
   }
 
   // 상단 바(일시정지·게이지·닫기) 숨기기 — 모바일에서 실수로 닫는 것을 막고 화면을 넓게 쓴다. 선택은 기기에 기억한다

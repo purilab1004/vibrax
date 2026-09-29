@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 // genreLabel/genreColor 는 헤더에서 더 이상 표시하지 않지만(모바일·PC 동일 배치) 호출부 호환을 위해 받는다
-export default function PlayHeader({ title, onClose, paused, onTogglePause, rotated, onToggleRotate, live, onToggleLive, onHide, onSave, saveState }: { genreLabel?: string; genreColor?: string; title: string; gameId?: string; onClose: () => void; paused?: boolean; onTogglePause?: () => void; rotated?: boolean; onToggleRotate?: () => void; live?: { viewers: number } | null; onToggleLive?: () => void; onHide?: () => void; onSave?: () => void; saveState?: 'idle' | 'saving' | 'saved' | 'guest' }) {
+export default function PlayHeader({ title, onClose, paused, onTogglePause, rotated, onToggleRotate, live, onToggleLive, onHide, onSave, saveState }: { genreLabel?: string; genreColor?: string; title: string; gameId?: string; onClose: () => void; paused?: boolean; onTogglePause?: () => void; rotated?: boolean; onToggleRotate?: () => void; live?: { viewers: number } | null; onToggleLive?: () => void; onHide?: () => void; onSave?: () => void; saveState?: 'idle' | 'saving' | 'saved' | 'guest' | 'fail' }) {
   const [line, setLine] = useState<string | null>(title)
   const [key, setKey] = useState(0)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -48,9 +48,10 @@ export default function PlayHeader({ title, onClose, paused, onTogglePause, rota
           {onSave && (
             /* 게임 저장 — 게임 안 진행 상황을 계정에 보관해 다른 기기에서도 이어서 한다 */
             <button onClick={onSave} aria-label="게임 저장" title="게임 저장 (진행 상황을 계정에 보관)"
-              className={`h-9 rounded-full backdrop-blur-md border text-white flex items-center justify-center shrink-0 shadow-[0_2px_10px_rgba(0,0,0,0.35)] transition-all ${saveState === 'saved' ? 'w-auto px-3 bg-[#16a34a] border-[#16a34a]' : saveState === 'guest' ? 'w-auto px-3 bg-[#b45309] border-[#b45309]' : 'w-9 bg-black/45 border-white/15 hover:bg-white hover:text-black'}`}>
+              className={`h-9 rounded-full backdrop-blur-md border text-white flex items-center justify-center shrink-0 shadow-[0_2px_10px_rgba(0,0,0,0.35)] transition-all ${saveState === 'saved' ? 'w-auto px-3 bg-[#16a34a] border-[#16a34a]' : saveState === 'guest' ? 'w-auto px-3 bg-[#b45309] border-[#b45309]' : saveState === 'fail' ? 'w-auto px-3 bg-[#dc2626] border-[#dc2626]' : 'w-9 bg-black/45 border-white/15 hover:bg-white hover:text-black'}`}>
               {saveState === 'saved' ? <span className="text-[12px] font-bold">저장됨 ✓</span>
                 : saveState === 'guest' ? <span className="text-[12px] font-bold">로그인 필요</span>
+                : saveState === 'fail' ? <span className="text-[12px] font-bold">저장 실패</span>
                 : saveState === 'saving' ? <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
                 : <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h11l3 3v13H5z" /><path d="M8 4v5h7V4" /><rect x="8" y="13" width="8" height="7" /></svg>}
             </button>
