@@ -74,7 +74,8 @@ export async function GET(
         const { data: sv } = await supa.from('game_saves').select('data').eq('user_id', user.id).eq('game_id', gameId).maybeSingle()
         const saved = (sv as { data?: Record<string, string> } | null)?.data
         if (saved && Object.keys(saved).length) {
-          saveTag = `<script>try{var S=${JSON.stringify(saved).replace(/</g, '\\u003c')};for(var k in S)localStorage.setItem(k,S[k]);window.VIBREX_SAVE_LOADED=true}catch(e){}</script>`
+          // 전역을 만들지 않는다 — 예전엔 var S 를 써서 게임의 S(상태 변수)와 충돌해 게임이 통째로 죽었다
+          saveTag = `<script>try{(function(){var d=${JSON.stringify(saved).replace(/</g, '\\u003c')};for(var k in d)localStorage.setItem(k,d[k]);window.VIBREX_SAVE_LOADED=true})()}catch(e){}</script>`
         }
       }
     }
