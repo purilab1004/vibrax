@@ -21,6 +21,8 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null) as { gameId?: string; data?: Record<string, string> } | null
   const gameId = body?.gameId ?? ''
   if (!/^[0-9a-f-]{36}$/i.test(gameId) || !body?.data || typeof body.data !== 'object') return Response.json({ error: 'bad request' }, { status: 400 })
+  // 빈 스냅샷은 저장하지 않는다 — 시작 전에 눌린 저장이 기존 진행을 지우지 않게
+  if (Object.keys(body.data).length === 0) return Response.json({ error: 'empty save' }, { status: 400 })
   const json = JSON.stringify(body.data)
   if (json.length > MAX_BYTES) return Response.json({ error: 'too large', bytes: json.length }, { status: 413 })
   const supabase = await createClient()

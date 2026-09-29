@@ -266,14 +266,16 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
   }
 
   // 게임 저장 — 게임 안 localStorage 를 통째로 받아 계정에 보관(기기가 바뀌어도 이어하기)
-  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'guest' | 'fail'>('idle')
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'guest' | 'fail' | 'empty'>('idle')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const flashSave = useCallback((st: 'saved' | 'guest' | 'fail', ms = 2200) => {
+  const flashSave = useCallback((st: 'saved' | 'guest' | 'fail' | 'empty', ms = 2200) => {
     setSaveState(st)
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => setSaveState('idle'), ms)
   }, [])
   const putSave = useCallback(async (data: Record<string, string>, manual: boolean) => {
+    // 게임이 아직 아무것도 저장하지 않았으면(시작 전) 보내지 않는다 — 기존 저장을 빈 값으로 덮어쓰지 않게
+    if (!data || Object.keys(data).length === 0) { if (manual) flashSave('empty', 2600); return }
     try {
       const r = await fetch('/api/game-save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId: game.id, data }) })
       if (r.status === 401) { if (manual) flashSave('guest'); return }
