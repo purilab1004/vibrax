@@ -13,7 +13,7 @@ type Row = Game & { profiles?: { username?: string | null; agent_name?: string |
 async function fetchGamesByIds(ids: string[]): Promise<Row[]> {
   if (!ids.length) return []
   const supabase = createClient()
-  const { data } = await supabase.from('games').select('*, profiles(username, agent_name)').in('id', ids)
+  const { data } = await supabase.from('games').select('*, profiles!user_id(username, agent_name)').in('id', ids)
   const byId = new Map(((data ?? []) as Row[]).map((g) => [g.id, g]))
   return ids.map((id) => byId.get(id)).filter(Boolean) as Row[]
 }

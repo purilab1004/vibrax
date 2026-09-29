@@ -16,7 +16,7 @@ export default async function AjRankingPage() {
   const since7 = new Date(Date.now() - 7 * 86400_000).toISOString()
   const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0)
   const [{ data: games }, { data: coins }, { data: sess }, { data: reports }] = await Promise.all([
-    admin.from('games').select('id,title,genre,view_count,thumbnail_url,user_id,profiles(username,agent_name,avatar_config)').order('view_count', { ascending: false }).limit(500),
+    admin.from('games').select('id,title,genre,view_count,thumbnail_url,user_id,profiles!user_id(username,agent_name,avatar_config)').order('view_count', { ascending: false }).limit(500),
     admin.from('game_coin_events').select('game_id,coins,created_at').gte('created_at', since7).limit(20000),
     admin.from('game_sessions').select('game_id,duration_sec').gte('started_at', since7).limit(20000),
     admin.from('aj_reports').select('game_id,report,created_at').order('created_at', { ascending: false }).limit(500),

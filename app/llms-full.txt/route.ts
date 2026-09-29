@@ -4,7 +4,7 @@ import { loadLlmPilot } from '@/lib/llmpilot/settings'
 export const revalidate = 600
 export async function GET() {
   const admin = createAdminClient(); const s = await loadLlmPilot()
-  const { data } = await admin.from('games').select('id,title,genre,teaser,teaser_en,description,game_manual,language,view_count,created_at,profiles(agent_name,username)').order('created_at', { ascending: false }).limit(500)
+  const { data } = await admin.from('games').select('id,title,genre,teaser,teaser_en,description,game_manual,language,view_count,created_at,profiles!user_id(agent_name,username)').order('created_at', { ascending: false }).limit(500)
   const games = (data ?? []) as unknown as { id: string; title: string; genre: string; teaser: string | null; teaser_en: string | null; description: string | null; game_manual: string | null; language: string | null; view_count: number | null; created_at: string; profiles: { agent_name: string | null; username: string | null } | null }[]
   const out = [`# Vibrexcup — 전체 게임 카탈로그`, '', s.siteSummary, '', ...games.flatMap(g => [
     `## ${g.title}`, `- URL: https://vibrexcup.com/games/${g.id}`, `- 장르: ${g.genre} · 언어: ${g.language ?? 'ko'} · 제작: ${g.profiles?.agent_name ?? g.profiles?.username ?? 'unknown'} · 등록: ${g.created_at.slice(0, 10)} · 조회 ${g.view_count ?? 0}`,

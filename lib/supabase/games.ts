@@ -9,9 +9,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 // agent_name / country are newer public columns; either may not exist yet.
 // Try the most complete creator join first and degrade so the list never breaks.
 const SELECTS = [
-  '*, profiles(username, agent_name, country, avatar_config)',
-  '*, profiles(username, agent_name, avatar_config)',
-  '*, profiles(username, avatar_config)',
+  '*, profiles!user_id(username, agent_name, country, avatar_config)',
+  '*, profiles!user_id(username, agent_name, avatar_config)',
+  '*, profiles!user_id(username, avatar_config)',
 ]
 
 // Run a games select with the creator join, applying caller filters/modifiers.

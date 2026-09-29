@@ -15,7 +15,7 @@ export default async function AjGamePage({ params }: { params: Promise<{ gameId:
   const admin = createAdminClient()
   const supabase = await createClient()
   const [{ data: game }, { data: { user } }] = await Promise.all([
-    admin.from('games').select('id,title,genre,thumbnail_url,user_id,studio_project_id,profiles(username,agent_name,avatar_config)').eq('id', gameId).maybeSingle(),
+    admin.from('games').select('id,title,genre,thumbnail_url,user_id,studio_project_id,profiles!user_id(username,agent_name,avatar_config)').eq('id', gameId).maybeSingle(),
     supabase.auth.getUser(),
   ])
   const g = game as unknown as { id: string; title: string; genre: string; thumbnail_url: string; user_id: string; studio_project_id: string | null; profiles: { username: string | null; agent_name: string | null; avatar_config: unknown } | null } | null

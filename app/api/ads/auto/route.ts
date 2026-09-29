@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 })
   const admin = createAdminClient()
   const [{ data: g }, { data: rep }, { data: coins }] = await Promise.all([
-    admin.from('games').select('id,title,genre,teaser,teaser_en,user_id,profiles(agent_name,username)').eq('id', b.gameId).maybeSingle(),
+    admin.from('games').select('id,title,genre,teaser,teaser_en,user_id,profiles!user_id(agent_name,username)').eq('id', b.gameId).maybeSingle(),
     admin.from('aj_reports').select('report').eq('game_id', b.gameId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     admin.from('game_coin_events').select('coins').eq('game_id', b.gameId).gte('created_at', new Date(Date.now() - 7 * 864e5).toISOString()),
   ])

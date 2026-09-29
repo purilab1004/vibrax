@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const genre = url.searchParams.get('genre')
   const exclude = new Set((url.searchParams.get('exclude') ?? '').split(',').filter(Boolean))
   const admin = createAdminClient()
-  const { data, error } = await admin.from('ad_campaigns').select('id,game_id,cpc_coins,budget_coins,spent_coins,impressions,clicks,targeting,status,creative,title, games(id,title,genre,thumbnail_url,play_url,user_id,coin_cost,teaser,teaser_en,view_count,created_at,country,profiles(username,agent_name,country,avatar_config))').eq('status', 'active').limit(200)
+  const { data, error } = await admin.from('ad_campaigns').select('id,game_id,cpc_coins,budget_coins,spent_coins,impressions,clicks,targeting,status,creative,title, games(id,title,genre,thumbnail_url,play_url,user_id,coin_cost,teaser,teaser_en,view_count,created_at,country,profiles!user_id(username,agent_name,country,avatar_config))').eq('status', 'active').limit(200)
   if (error) return Response.json({ ads: [] })
   const rows = ((data ?? []) as unknown as (CampaignLite & { creative: Record<string, unknown>; title: string | null; games: Record<string, unknown> | null })[]).filter(c => c.games && !exclude.has(c.game_id))
   const country = geoFromHeaders(req.headers).country

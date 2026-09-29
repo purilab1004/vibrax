@@ -30,7 +30,7 @@ export default function AdminGamesPage() {
   const say = (msg: string, kind: 'ok' | 'err' = 'ok') => { setToast({ msg, kind }); setTimeout(() => setToast(null), 2600) }
 
   const load = () => {
-    let q = supabase.from('games').select('*, profiles(username, agent_name, avatar_config)')
+    let q = supabase.from('games').select('*, profiles!user_id(username, agent_name, avatar_config)')
     if (query.trim()) q = q.ilike('title', `%${query.trim()}%`)
     q = sort === 'views' ? q.order('view_count', { ascending: false }) : q.order('created_at', { ascending: false })
     q.limit(300).then(({ data }) => setGames((data as unknown as GameWithCreator[] | null) ?? []))

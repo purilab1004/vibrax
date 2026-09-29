@@ -19,7 +19,7 @@ async function GameGrid({ genre, q, creator, reward }: { genre?: string; q?: str
   // 웹툰 쇼츠 — 게임 사이에 섞어 보여 준다 (검색·장르 필터 중에는 빼서 결과를 흐리지 않게)
   const webtoons = (genre || q || creator) ? [] : ((await supabase
     .from('webtoons')
-    .select('id, user_id, title, intro, cuts, thumbnail_url, game_id, published, view_count, like_count, created_at, profiles(username, agent_name, country, avatar_config)')
+    .select('id, user_id, title, intro, cuts, thumbnail_url, game_id, published, view_count, like_count, created_at, profiles!user_id(username, agent_name, country, avatar_config)')
     .eq('published', true)
     .order('created_at', { ascending: false })
     .limit(20)).data ?? []) as unknown as Webtoon[]

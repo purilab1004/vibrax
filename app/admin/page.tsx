@@ -44,9 +44,9 @@ export default function AdminDashboardPage() {
     supabase.rpc('admin_dashboard_stats' as never).then(({ data, error }) => {
       if (error || !data) { console.error('[admin]', error); setError(true) } else setStats(data as unknown as DashboardStats)
     })
-    supabase.from('games').select('*, profiles(username, agent_name, avatar_config)').order('created_at', { ascending: false }).limit(6)
+    supabase.from('games').select('*, profiles!user_id(username, agent_name, avatar_config)').order('created_at', { ascending: false }).limit(6)
       .then(({ data }) => setRecentGames((data as unknown as GameWithCreator[] | null) ?? []))
-    supabase.from('games').select('*, profiles(username, agent_name, avatar_config)').order('view_count', { ascending: false }).limit(5)
+    supabase.from('games').select('*, profiles!user_id(username, agent_name, avatar_config)').order('view_count', { ascending: false }).limit(5)
       .then(({ data }) => setTopGames((data as unknown as GameWithCreator[] | null) ?? []))
     supabase.rpc('admin_list_members' as never, { p_query: null } as never).then(({ data }) => setRecentMembers(((data as unknown as AdminMember[] | null) ?? []).slice(0, 6)))
     fetch('/api/admin/access?days=30').then(r => r.ok ? r.json() : null).then(j => { if (!j) return; const today = j.byDay[j.byDay.length - 1]; setVisits({ today: today?.pv ?? 0, todaySessions: today?.sessions ?? 0, online: j.online, byDay: j.byDay }) }).catch(() => {})
