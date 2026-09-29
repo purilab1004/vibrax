@@ -290,6 +290,22 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
   }, [putSave, saveState])
+  // 이어하기 안전장치 — 서버가 주입하지 못한 경우(외부 게임 등) 저장본을 프레임에 넣어 준다
+  useEffect(() => {
+    if (!open) return
+    let alive = true
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/game-save?gameId=${game.id}`)
+        if (!r.ok) return
+        const j = await r.json() as { save?: Record<string, string> | null }
+        if (!alive || !j.save || !Object.keys(j.save).length) return
+        frameRef.current?.contentWindow?.postMessage({ type: 'vibrex:save-restore', data: j.save }, '*')
+      } catch { /* noop */ }
+    }, 1200)
+    return () => { alive = false; clearTimeout(t) }
+  }, [open, game.id])
+
   const saveNow = () => {
     const el = frameRef.current
     if (!el?.contentWindow) { flashSave('fail'); return }
