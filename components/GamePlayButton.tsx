@@ -19,6 +19,8 @@ import type { AvatarConfig } from '@/lib/jeumto/config'
 import AiBjPanel from './AiBjPanel'
 const CameraBjView = dynamic(() => import('./CameraBjView'), { ssr: false })
 import PlayHeader from './PlayHeader'
+import { SlotChooser, SlotPanel } from './SaveSlots'
+import type { SlotNo, SlotSummary } from '@/lib/game-saves'
 import TransportBar, { type Cand } from './TransportBar'
 import { hasCoinTicket, ticketKeyOf } from './GameCard'
 
@@ -265,40 +267,81 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     supabase.rpc('increment_view_count', { game_id: game.id }).then(() => {})
   }
 
-  // 게임 저장 — 게임 안 localStorage 를 통째로 받아 계정에 보관(기기가 바뀌어도 이어하기)
+  // 게임 저장 — 게임 안 localStorage 를 통째로 받아 계정에 보관(기기가 바뀌어도 이어하기). 게임마다 슬롯 최대 3칸.
+  //  시작할 때 저장이 있으면 어느 슬롯으로 이어할지(또는 처음부터) 고르고, 그 슬롯이 '플레이 중 슬롯'이 되어 자동 저장도 거기로 간다.
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'guest' | 'fail' | 'empty'>('idle')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [slots, setSlots] = useState<(SlotSummary | null)[] | null>(null)     // null = 아직 불러오는 중
+  const [slotChoice, setSlotChoice] = useState<SlotNo | 'new' | null>(null)   // 시작 선택 (null 이면 고르는 창)
+  const [restartNonce, setRestartNonce] = useState(0)
+  const [slotPanel, setSlotPanel] = useState(false)
+  const [slotMsg, setSlotMsg] = useState<string | null>(null)
+  const curSlot = useRef<SlotNo | null>(null)          // 플레이 중 슬롯 — 자동 저장 대상
+  const [curSlotView, setCurSlotView] = useState<SlotNo | null>(null)   // 화면 표시용 사본
+  const setPlaySlot = (n: SlotNo | null) => { curSlot.current = n; setCurSlotView(n) }
+  const manualSlot = useRef<SlotNo | null>(null)       // 💾 패널에서 고른 슬롯 (응답 기다리는 중)
   const flashSave = useCallback((st: 'saved' | 'guest' | 'fail' | 'empty', ms = 2200) => {
     setSaveState(st)
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => setSaveState('idle'), ms)
   }, [])
+  // 게임을 열 때마다 슬롯 목록을 새로 받는다
+  useEffect(() => {
+    if (!open) { const t = setTimeout(() => { setSlots(null); setSlotChoice(null); setSlotPanel(false); setPlaySlot(null) }, 0); return () => clearTimeout(t) }
+    let alive = true
+    fetch(`/api/game-save?gameId=${game.id}`).then(r => r.ok ? r.json() : null).then((j: { slots?: (SlotSummary | null)[]; guest?: boolean } | null) => {
+      if (!alive) return
+      const list = j?.slots ?? [null, null, null]
+      setSlots(list)
+      if (j?.guest || !list.some(Boolean)) {
+        // 저장이 없으면 고를 것도 없다 — 바로 새로 시작, 자동 저장은 1번 칸
+        setPlaySlot(j?.guest ? null : 1)
+        setSlotChoice('new')
+      }
+    }).catch(() => { if (alive) { setSlots([null, null, null]); setSlotChoice('new') } })
+    return () => { alive = false }
+  }, [open, game.id])
+  const pickStart = (c: SlotNo | 'new') => {
+    if (c === 'new') {
+      // 새로 하기 — 빈 칸이 있으면 그 칸에 자동 저장, 3칸이 다 차 있으면 직접 고를 때까지 자동 저장하지 않는다
+      const empty = (slots ?? []).findIndex(v => !v)
+      setPlaySlot(empty >= 0 ? ((empty + 1) as SlotNo) : null)
+    } else setPlaySlot(c)
+    setSlotChoice(c)
+  }
   const putSave = useCallback(async (data: Record<string, string>, manual: boolean) => {
     // 게임이 아직 아무것도 저장하지 않았으면(시작 전) 보내지 않는다 — 기존 저장을 빈 값으로 덮어쓰지 않게
-    if (!data || Object.keys(data).length === 0) { if (manual) flashSave('empty', 2600); return }
+    if (!data || Object.keys(data).length === 0) { if (manual) { flashSave('empty', 2600); setSlotMsg('아직 저장할 진행이 없어요 — 게임을 조금 진행한 뒤 저장하세요') } return }
+    const slot = manual ? manualSlot.current : curSlot.current
+    if (!slot) return
     try {
-      const r = await fetch('/api/game-save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId: game.id, data }) })
+      const r = await fetch('/api/game-save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId: game.id, slot, data }) })
       if (r.status === 401) { if (manual) flashSave('guest'); return }
-      if (r.ok) { if (manual) flashSave('saved', 1800); return }
+      if (r.ok) {
+        const j = await r.json().catch(() => null) as { slots?: (SlotSummary | null)[] } | null
+        if (j?.slots) setSlots(j.slots)
+        if (manual) { setPlaySlot(slot); manualSlot.current = null; flashSave('saved', 1800); setSlotMsg(`${slot}번 슬롯에 저장했어요`) }
+        return
+      }
       console.warn('[game-save] 실패', r.status, await r.text().catch(() => ''))
-      if (manual) flashSave('fail', 2600)
+      if (manual) { flashSave('fail', 2600); setSlotMsg('저장하지 못했어요 — 잠시 뒤 다시 시도해 주세요') }
     } catch (e) { console.warn('[game-save]', e); if (manual) flashSave('fail', 2600) }
   }, [game.id, flashSave])
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
       const d = e.data as { type?: string; data?: Record<string, string> } | null
-      if (d?.type === 'vibrex:save-data' && d.data) void putSave(d.data, saveState === 'saving')
+      if (d?.type === 'vibrex:save-data' && d.data) void putSave(d.data, saveState === 'saving' && !!manualSlot.current)
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
   }, [putSave, saveState])
-  // 이어하기 안전장치 — 서버가 주입하지 못한 경우(외부 게임 등) 저장본을 프레임에 넣어 준다
+  // 이어하기 안전장치 — 서버가 주입하지 못한 경우(외부 게임 등) 고른 슬롯의 저장본을 프레임에 넣어 준다. 새로 하기면 넣지 않는다
   useEffect(() => {
-    if (!open) return
+    if (!open || !slotChoice || slotChoice === 'new') return
     let alive = true
     const t = setTimeout(async () => {
       try {
-        const r = await fetch(`/api/game-save?gameId=${game.id}`)
+        const r = await fetch(`/api/game-save?gameId=${game.id}&slot=${slotChoice}`)
         if (!r.ok) return
         const j = await r.json() as { save?: Record<string, string> | null }
         if (!alive || !j.save || !Object.keys(j.save).length) return
@@ -306,16 +349,42 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
       } catch { /* noop */ }
     }, 1200)
     return () => { alive = false; clearTimeout(t) }
-  }, [open, game.id])
+  }, [open, game.id, slotChoice, restartNonce])
 
+  // 💾 — 슬롯 패널 열기 (비회원은 로그인 안내)
   const saveNow = () => {
+    if (isGuest) { flashSave('guest'); return }
+    setSlotMsg(null); setSlotPanel(true)
+  }
+  const saveToSlot = (n: SlotNo) => {
     const el = frameRef.current
     if (!el?.contentWindow) { flashSave('fail'); return }
-    setSaveState('saving')
+    manualSlot.current = n
+    setSaveState('saving'); setSlotMsg(null)
     el.contentWindow.postMessage({ type: 'vibrex:save-dump' }, '*')
     // 게임이 응답하지 않으면(옛 버전 캐시 등) 계속 도는 대신 실패로 알린다
     if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => setSaveState(st => (st === 'saving' ? 'fail' : st)), 4000)
+    saveTimer.current = setTimeout(() => setSaveState(st => { if (st === 'saving') { manualSlot.current = null; setSlotMsg('게임이 응답하지 않아 저장하지 못했어요'); return 'fail' } return st }), 4000)
+  }
+  const deleteSlot = async (n: SlotNo) => {
+    const r = await fetch(`/api/game-save?gameId=${game.id}&slot=${n}`, { method: 'DELETE' }).catch(() => null)
+    const j = r?.ok ? await r.json().catch(() => null) as { slots?: (SlotSummary | null)[] } | null : null
+    if (!j?.slots) { setSlotMsg('지우지 못했어요'); return }
+    setSlots(j.slots)
+    if (curSlot.current === n) setPlaySlot(null)     // 지운 칸에는 자동 저장하지 않는다(다시 고를 때까지)
+    setSlotMsg(`${n}번 슬롯을 지웠어요`)
+  }
+  const restartFresh = () => {
+    // 처음부터 — 저장본을 심지 않고 게임을 새로 불러온다. 자동 저장은 빈 칸이 있을 때만
+    const empty = (slots ?? []).findIndex(v => !v)
+    setPlaySlot(empty >= 0 ? ((empty + 1) as SlotNo) : null)
+    setSlotChoice('new'); setRestartNonce(v => v + 1); setSlotPanel(false); setPaused(false)
+  }
+  // 우리 게임(/play/…)은 고른 슬롯을 주소에 실어 서버가 그 저장본을 먼저 심게 한다
+  const srcFor = (g: Game) => {
+    const base = playSrc(g)
+    if (g.id !== game.id || !slotChoice || !base.includes('/play/') || base.includes('/play/ext/')) return base
+    return `${base}${base.includes('?') ? '&' : '?'}slot=${slotChoice}${restartNonce ? `&r=${restartNonce}` : ''}`
   }
 
   // 상단 바(일시정지·게이지·닫기) 숨기기 — 모바일에서 실수로 닫는 것을 막고 화면을 넓게 쓴다. 선택은 기기에 기억한다
@@ -476,10 +545,12 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                 </div>
               ) : [game, ...(pending ? [pending] : [])].map((g) => {
                 const isPending = pending?.id === g.id && g.id !== game.id
+                // 저장 슬롯을 고르기 전에는 게임을 불러오지 않는다(고른 슬롯으로 한 번에 시작)
+                if (g.id === game.id && !slotChoice) return null
                 return (
                   <iframe
-                    key={g.id}
-                    src={playSrc(g)}
+                    key={g.id === game.id ? `${g.id}:${slotChoice}:${restartNonce}` : g.id}
+                    src={srcFor(g)}
                     className={`absolute inset-0 w-full h-full border-0 ${isPending ? 'opacity-0 pointer-events-none' : warp === 'out' ? 'teleport-out' : warp === 'hold' ? 'opacity-0' : warp === 'in' ? 'teleport-in' : ''}`}
                     allow="fullscreen; autoplay"
                     title={g.title}
@@ -490,6 +561,12 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                   />
                 )
               })}
+              {/* 저장 슬롯 — 시작할 때 이어하기/처음부터 고르기, 💾 로 여는 슬롯 패널 */}
+              {!spectate && slots && !slotChoice && <SlotChooser slots={slots} onPick={pickStart} />}
+              {!spectate && slotPanel && slots && (
+                <SlotPanel slots={slots} current={curSlotView} busy={saveState === 'saving'} message={slotMsg}
+                  onSave={saveToSlot} onDelete={n => void deleteSlot(n)} onRestart={restartFresh} onClose={() => setSlotPanel(false)} />
+              )}
               {/* 모바일: 하단 AJ 위젯 영역이 게임과 딱 나뉘지 않게 — 게임 위로 검정이 서서히 내려오는 그라데이션 */}
               <div className="md:hidden absolute inset-x-0 bottom-0 h-[120px] bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none" />
             </div>

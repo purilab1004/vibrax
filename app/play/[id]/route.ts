@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { hardenHtml, LS_SHIM } from '@/lib/studio/harden'
 import { loadControls } from '@/lib/controls-server'
+import { parseSlots, latestSlot, isSlotNo } from '@/lib/game-saves'
 
 // 3D 게임이 불러오는 자체 호스팅 three.js 의 출처 (배포 도메인 + www)
 const SITE_ORIGINS = 'https://vibrexcup.com https://www.vibrexcup.com'
@@ -64,15 +65,21 @@ export async function GET(
   if (!version) return new Response('Not Found', { status: 404 })
 
   // 이어하기 — 로그인한 회원의 저장본을 게임 스크립트보다 먼저 localStorage 에 심는다(게임은 평소처럼 자기 저장을 읽는다)
+  //   ?slot=1~3 → 그 슬롯, ?slot=new → 아무것도 심지 않음(처음부터), 없으면 가장 최근 슬롯
   let saveTag = ''
+  const slotParam = new URL(req.url).searchParams.get('slot')
   try {
     const gameId = (withCols.data as { id?: string } | null)?.id
-    if (gameId) {
+    if (gameId && slotParam !== 'new') {
       const supa = await createClient()
       const { data: { user } } = await supa.auth.getUser()
       if (user) {
-        const { data: sv } = await supa.from('game_saves').select('data').eq('user_id', user.id).eq('game_id', gameId).maybeSingle()
-        const saved = (sv as { data?: Record<string, string> } | null)?.data
+        const { data: sv } = await supa.from('game_saves').select('data, updated_at').eq('user_id', user.id).eq('game_id', gameId).maybeSingle()
+        const row = sv as { data?: unknown; updated_at?: string } | null
+        const slots = parseSlots(row?.data, row?.updated_at)
+        const want = Number(slotParam)
+        const pick = isSlotNo(want) ? want : latestSlot(slots)
+        const saved = pick ? slots[String(pick) as '1']?.data : null
         if (saved && Object.keys(saved).length) {
           // 전역을 만들지 않는다 — 예전엔 var S 를 써서 게임의 S(상태 변수)와 충돌해 게임이 통째로 죽었다
           saveTag = `<script>try{(function(){var d=${JSON.stringify(saved).replace(/</g, '\\u003c')};for(var k in d)localStorage.setItem(k,d[k]);window.VIBREX_SAVE_LOADED=true})()}catch(e){}</script>`
