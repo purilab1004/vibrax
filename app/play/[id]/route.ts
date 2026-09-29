@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
-import { hardenHtml } from '@/lib/studio/harden'
+import { hardenHtml, LS_SHIM } from '@/lib/studio/harden'
 import { loadControls } from '@/lib/controls-server'
 
 // 3D 게임이 불러오는 자체 호스팅 three.js 의 출처 (배포 도메인 + www)
@@ -81,9 +81,17 @@ export async function GET(
   } catch { /* 저장 테이블이 아직 없거나 비로그인 — 기기 저장만 쓴다 */ }
 
   // 서빙된 버전 꼬리표 — 부모(텔레메트리)가 세션에 version_id 를 기록한다
-  const tag = saveTag + `<script>window.VIBREX_VERSION_ID=${JSON.stringify(version.id)};try{parent.postMessage({type:'vibrex:version',id:window.VIBREX_VERSION_ID},'*')}catch(e){}</script>`
+  const tag = `<script>window.VIBREX_VERSION_ID=${JSON.stringify(version.id)};try{parent.postMessage({type:'vibrex:version',id:window.VIBREX_VERSION_ID},'*')}catch(e){}</script>`
   let html = hardenHtml(version.html, { controls: await loadControls() })
   html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (h) => h + tag) : tag + html
+  // 이어하기 주입은 반드시 저장소 폴백(LS_SHIM) '뒤' 에 와야 한다.
+  // 앞에 두면 저장소가 막힌 환경(앱 웹뷰·사파리)에서 복원이 통째로 실패하고 게임이 처음부터 시작된다.
+  if (saveTag) {
+    const at = html.indexOf(LS_SHIM)
+    html = at >= 0
+      ? html.slice(0, at + LS_SHIM.length) + saveTag + html.slice(at + LS_SHIM.length)
+      : (/<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (h) => h + saveTag) : saveTag + html)
+  }
 
   const headers: Record<string, string> = {
     'Content-Type': 'text/html; charset=utf-8',
