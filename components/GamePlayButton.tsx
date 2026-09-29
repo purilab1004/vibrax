@@ -568,7 +568,8 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
                   onSave={saveToSlot} onDelete={n => void deleteSlot(n)} onRestart={restartFresh} onClose={() => setSlotPanel(false)} />
               )}
               {/* 모바일: 하단 AJ 위젯 영역이 게임과 딱 나뉘지 않게 — 게임 위로 검정이 서서히 내려오는 그라데이션 */}
-              <div className="md:hidden absolute inset-x-0 bottom-0 h-[120px] bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none" />
+              {/* 가로 화면(기기 가로·회전 모드)에선 게임 바닥을 가리므로 뺀다 */}
+              {!rotated && <div className="md:hidden landscape:hidden absolute inset-x-0 bottom-0 h-[120px] bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none" />}
             </div>
             </div>
             {isGuest ? (
