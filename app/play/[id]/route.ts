@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { hardenHtml } from '@/lib/studio/harden'
 import { loadControls } from '@/lib/controls-server'
 
@@ -62,8 +63,25 @@ export async function GET(
   }
   if (!version) return new Response('Not Found', { status: 404 })
 
+  // 이어하기 — 로그인한 회원의 저장본을 게임 스크립트보다 먼저 localStorage 에 심는다(게임은 평소처럼 자기 저장을 읽는다)
+  let saveTag = ''
+  try {
+    const gameId = (withCols.data as { id?: string } | null)?.id
+    if (gameId) {
+      const supa = await createClient()
+      const { data: { user } } = await supa.auth.getUser()
+      if (user) {
+        const { data: sv } = await supa.from('game_saves').select('data').eq('user_id', user.id).eq('game_id', gameId).maybeSingle()
+        const saved = (sv as { data?: Record<string, string> } | null)?.data
+        if (saved && Object.keys(saved).length) {
+          saveTag = `<script>try{var S=${JSON.stringify(saved).replace(/</g, '\\u003c')};for(var k in S)localStorage.setItem(k,S[k]);window.VIBREX_SAVE_LOADED=true}catch(e){}</script>`
+        }
+      }
+    }
+  } catch { /* 저장 테이블이 아직 없거나 비로그인 — 기기 저장만 쓴다 */ }
+
   // 서빙된 버전 꼬리표 — 부모(텔레메트리)가 세션에 version_id 를 기록한다
-  const tag = `<script>window.VIBREX_VERSION_ID=${JSON.stringify(version.id)};try{parent.postMessage({type:'vibrex:version',id:window.VIBREX_VERSION_ID},'*')}catch(e){}</script>`
+  const tag = saveTag + `<script>window.VIBREX_VERSION_ID=${JSON.stringify(version.id)};try{parent.postMessage({type:'vibrex:version',id:window.VIBREX_VERSION_ID},'*')}catch(e){}</script>`
   let html = hardenHtml(version.html, { controls: await loadControls() })
   html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (h) => h + tag) : tag + html
 

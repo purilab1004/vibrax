@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { playSrc, IOS_IFRAME_FIT } from '@/lib/game-src'
 import { useNetBridge } from '@/lib/net/useNetBridge'
-import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
+import { useState, useEffect, useRef, useSyncExternalStore, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Game } from '@/lib/supabase/types'
@@ -265,6 +265,31 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     supabase.rpc('increment_view_count', { game_id: game.id }).then(() => {})
   }
 
+  // 게임 저장 — 게임 안 localStorage 를 통째로 받아 계정에 보관(기기가 바뀌어도 이어하기)
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'guest'>('idle')
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const putSave = useCallback(async (data: Record<string, string>, manual: boolean) => {
+    try {
+      const r = await fetch('/api/game-save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId: game.id, data }) })
+      if (r.status === 401) { if (manual) { setSaveState('guest'); setTimeout(() => setSaveState('idle'), 2500) } return }
+      if (manual && r.ok) { setSaveState('saved'); if (saveTimer.current) clearTimeout(saveTimer.current); saveTimer.current = setTimeout(() => setSaveState('idle'), 1800) }
+    } catch { if (manual) setSaveState('idle') }
+  }, [game.id])
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      const d = e.data as { type?: string; data?: Record<string, string> } | null
+      if (d?.type === 'vibrex:save-data' && d.data) void putSave(d.data, saveState === 'saving')
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [putSave, saveState])
+  const saveNow = () => {
+    const el = frameRef.current
+    if (!el?.contentWindow) return
+    setSaveState('saving')
+    el.contentWindow.postMessage({ type: 'vibrex:save-dump' }, '*')
+  }
+
   // 상단 바(일시정지·게이지·닫기) 숨기기 — 모바일에서 실수로 닫는 것을 막고 화면을 넓게 쓴다. 선택은 기기에 기억한다
   const [hudHidden, setHudHidden] = useState(false)
   useEffect(() => { const t = setTimeout(() => { try { setHudHidden(localStorage.getItem('vbx_hud_hidden') === '1') } catch { /* noop */ } }, 0); return () => clearTimeout(t) }, [])
@@ -392,7 +417,7 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 10l6 6 6-6" /></svg>
             </button>
           ) : (
-            <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={close} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} live={screenLive} onToggleLive={!isGuest && !spectate ? toggleScreenLive : undefined} onHide={() => toggleHud(true)} />
+            <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={close} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} live={screenLive} onToggleLive={!isGuest && !spectate ? toggleScreenLive : undefined} onHide={() => toggleHud(true)} onSave={saveNow} saveState={saveState} />
           )}
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0 overflow-hidden">

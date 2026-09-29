@@ -5,6 +5,11 @@ const KEYCODE_JSON = JSON.stringify(KEYCODE)
 
 // lib/studio/harden.ts — 생성된 게임 HTML 을 샌드박스(iframe sandbox="allow-scripts")에서도 안전하게.
 // 샌드박스 iframe 에선 localStorage 접근이 SecurityError 를 던져 게임 전체가 멈추므로, 메모리 폴백을 먼저 심는다.
+// 게임 저장 브리지 — 게임이 쓰는 localStorage 를 통째로 다뤄 계정에 보관한다(게임 코드 수정 불필요).
+//  · 부모가 vibrex:save-dump 를 보내면 현재 저장소를 그대로 돌려준다
+//  · 30초마다 · 화면을 벗어날 때 자동으로 보낸다(바뀐 게 있을 때만)
+export const SAVE_SHIM = `<script>(function(){function dump(){try{var o={},ls=window.localStorage;for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.indexOf('vbx_')!==0)o[k]=ls.getItem(k)}return o}catch(e){return null}}var lastSent='';function send(force){try{var d=dump();if(!d)return;var j=JSON.stringify(d);if(!force&&j===lastSent)return;if(j.length>65000)return;lastSent=j;parent.postMessage({type:'vibrex:save-data',data:d},'*')}catch(e){}}window.addEventListener('message',function(e){var d=e.data;if(!d)return;if(d.type==='vibrex:save-dump')send(true)});setInterval(function(){send(false)},30000);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')send(false)});window.addEventListener('pagehide',function(){send(false)});window.VIBREX_SAVE_DUMP=function(){send(true)};})();</script>`
+
 export const LS_SHIM = `<script>try{window.localStorage.getItem('__t')}catch(e){(function(){var m={};var s={getItem:function(k){return k in m?m[k]:null},setItem:function(k,v){m[k]=String(v)},removeItem:function(k){delete m[k]},clear:function(){m={}},key:function(i){return Object.keys(m)[i]||null},get length(){return Object.keys(m).length}};try{Object.defineProperty(window,'localStorage',{value:s,configurable:true})}catch(_){}try{Object.defineProperty(window,'sessionStorage',{value:s,configurable:true})}catch(_){}})()}</script>`
 
 // AJ 텔레메트리 브리지 — 게임이 AJ.event('start'|'score'|'over'|'level'|'restart', {...}) 를 부르면 부모(플레이어)로 postMessage.
@@ -95,6 +100,8 @@ export function hardenHtml(html: string, opts: { controls?: ControlChannel[] } =
   // 키·터치 브리지는 표준이 바뀔 수 있으므로 항상 최신으로 갈아끼운다 (/play 서빙 시 재하든)
   html = html.replace(/<script>\(function\(\)\{var held=\{\};var FB=[\s\S]*?<\/script>/, '')
   { const k = html.search(/<\/body>/i); html = k >= 0 ? html.slice(0, k) + KEY_SHIM + html.slice(k) : html + KEY_SHIM }
+  html = html.replace(/<script>\(function\(\)\{function dump\(\)[\s\S]*?<\/script>/, '')
+  { const k = html.search(/<\/body>/i); html = k >= 0 ? html.slice(0, k) + SAVE_SHIM + html.slice(k) : html + SAVE_SHIM }
   html = html.replace(/<script>\(function\(\)\{if\(!\('ontouchstart' in window\)[\s\S]*?<\/script>/, '')
   { const i1 = html.search(/<\/body>/i); html = i1 >= 0 ? html.slice(0, i1) + TOUCH_SHIM + html.slice(i1) : html + TOUCH_SHIM }
   // 오토파일럿·아바타 브리지도 항상 최신으로 갈아끼운다 (예전엔 존재 여부만 보고 건너뛰어 옛 shim 이 남았음)

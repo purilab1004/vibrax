@@ -145,7 +145,7 @@ export default function TransportBar({ gameId, active, locked = false }: { gameI
         <div className="relative px-2 pb-[60px] flex flex-col gap-2">{boardOpen ? boardPanel : pickPanel}</div>
       </div>
     )}
-    <div className="pointer-events-none absolute z-30 flex flex-col-reverse items-end gap-2 left-[calc(60px+var(--vbx-safe-left,0px))] right-[calc(108px+var(--vbx-safe-right,0px))] md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[min(560px,56vw)]" style={{ top: 'calc(0.75rem + var(--vbx-safe-top, 0px))' }}>
+    <div className="pointer-events-none absolute z-30 flex flex-col-reverse items-end gap-2 left-[calc(58px+var(--vbx-safe-left,0px))] right-[calc(196px+var(--vbx-safe-right,0px))] md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[min(560px,56vw)]" style={{ top: 'calc(0.75rem + var(--vbx-safe-top, 0px))' }}>
       {!mobile && boardOpen && boardPanel}
       {!mobile && pickOpen && pickPanel}
       {/* 진행 바 + 이동 화살표 */}
