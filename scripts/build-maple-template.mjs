@@ -39,16 +39,21 @@ const MOBILE = `
   html.vbx-touch #hud .stats .small { font-size: 10.5px; }
   html.vbx-touch #hud button { font-size: 11px; padding: 5px 8px; }
   html.vbx-touch #hud .quick { transform: scale(.85); transform-origin: right center; }
+  /* 세로로 들었을 때는 막지 않고, 잠깐 뜨는 안내만 (게임은 그대로 할 수 있다) */
   #vbx-rotate {
-    position: fixed; inset: 0; z-index: 2147483600; display: none;
-    background: #12141f; color: #fff; align-items: center; justify-content: center; text-align: center;
-    font: 700 16px/1.6 -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif;
+    position: fixed; left: 50%; transform: translateX(-50%); z-index: 2147483600; display: none;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    background: rgba(18,20,31,.9); color: #fff; border: 1px solid rgba(255,255,255,.14); border-radius: 999px;
+    padding: 8px 14px; align-items: center; gap: 8px; white-space: nowrap;
+    font: 600 12.5px/1 -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif;
+    box-shadow: 0 6px 20px rgba(0,0,0,.4);
   }
   #vbx-rotate.on { display: flex; }
-  #vbx-rotate .ico { font-size: 44px; display: block; margin-bottom: 12px; animation: vbxRot 1.8s ease-in-out infinite; }
-  @keyframes vbxRot { 0%, 100% { transform: rotate(-12deg) } 50% { transform: rotate(78deg) } }
+  #vbx-rotate .ico { font-size: 15px; animation: vbxRot 1.8s ease-in-out infinite; }
+  #vbx-rotate .x { opacity: .55; padding: 0 2px; }
+  @keyframes vbxRot { 0%, 100% { transform: rotate(-10deg) } 50% { transform: rotate(70deg) } }
 </style>
-<div id="vbx-rotate"><div><span class="ico">📱</span>가로로 돌려서 플레이해 주세요<br><span style="font-weight:500;opacity:.7;font-size:13.5px">화면을 눕히면 바로 시작합니다</span></div></div>
+<div id="vbx-rotate"><span class="ico">📱</span>가로로 돌리면 더 크게 즐길 수 있어요<span class="x">✕</span></div>
 <script>
 (function () {
   var W = 1024;
@@ -57,6 +62,9 @@ const MOBILE = `
   function compact() { return touch || innerWidth < 980 || innerHeight < 620 }   // 작은 화면도 같은 취급
   var wrap = document.getElementById('wrap');
   var rot = document.getElementById('vbx-rotate');
+  var rotDismissed = false;
+  rot.addEventListener('click', function () { rotDismissed = true; rot.classList.remove('on') });
+  setTimeout(function () { rotDismissed = true; rot.classList.remove('on') }, 6000);   // 6초 뒤 자동으로 사라짐
   function fit() {
     var vw = window.innerWidth, vh = window.innerHeight;
     var small = compact();
@@ -64,9 +72,9 @@ const MOBILE = `
     var H = small ? 600 : 680;    // 좁은 화면에선 HUD 를 캔버스 위로 겹쳐 화면을 더 크게 쓴다
     var k = Math.min(vw / W, vh / H);
     wrap.style.transform = 'scale(' + k + ')';
-    // 세로로 들었고 화면이 좁으면 가로 안내 (가로로 눕히면 자동으로 사라진다)
+    // 세로로 들었을 때 안내(막지 않음). 한 번 닫으면 다시 뜨지 않는다
     var portrait = vh > vw && touch;
-    rot.classList.toggle('on', portrait);
+    rot.classList.toggle('on', portrait && !rotDismissed);
   }
   addEventListener('resize', fit);
   addEventListener('orientationchange', function () { setTimeout(fit, 120) });
