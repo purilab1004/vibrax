@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 // genreLabel/genreColor 는 헤더에서 더 이상 표시하지 않지만(모바일·PC 동일 배치) 호출부 호환을 위해 받는다
-export default function PlayHeader({ title, onClose, paused, onTogglePause, rotated, onToggleRotate, live, onToggleLive }: { genreLabel?: string; genreColor?: string; title: string; gameId?: string; onClose: () => void; paused?: boolean; onTogglePause?: () => void; rotated?: boolean; onToggleRotate?: () => void; live?: { viewers: number } | null; onToggleLive?: () => void }) {
+export default function PlayHeader({ title, onClose, paused, onTogglePause, rotated, onToggleRotate, live, onToggleLive, onHide }: { genreLabel?: string; genreColor?: string; title: string; gameId?: string; onClose: () => void; paused?: boolean; onTogglePause?: () => void; rotated?: boolean; onToggleRotate?: () => void; live?: { viewers: number } | null; onToggleLive?: () => void; onHide?: () => void }) {
   const [line, setLine] = useState<string | null>(title)
   const [key, setKey] = useState(0)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -50,6 +50,12 @@ export default function PlayHeader({ title, onClose, paused, onTogglePause, rota
               {rotated
                 ? <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2" /><path d="M11 18.5h2" /></svg>
                 : <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2.5" y="7" width="19" height="10" rx="2" /><path d="M5.5 11v2" /><path d="M16 3.5l2.5 2.5L16 8.5" /><path d="M18.5 6H13" /></svg>}
+            </button>
+          )}
+          {onHide && (
+            /* 상단 바 숨기기 — 모바일에서 실수로 닫기(X)를 누르는 것을 막고 화면을 넓게 쓴다 */
+            <button onClick={onHide} aria-label="상단 바 숨기기" title="상단 바 숨기기" className="h-9 w-9 rounded-full bg-black/45 backdrop-blur-md border border-white/15 text-white/90 hover:bg-white hover:text-black transition-colors flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+              <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 14l6-6 6 6" /><path d="M5 19h14" /></svg>
             </button>
           )}
           <button onClick={onClose} aria-label="닫기" title="닫기 (ESC)" className="h-9 w-9 rounded-full bg-black/45 backdrop-blur-md border border-white/15 text-white/90 hover:bg-white hover:text-black transition-colors flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.35)]">

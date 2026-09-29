@@ -265,6 +265,11 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
     supabase.rpc('increment_view_count', { game_id: game.id }).then(() => {})
   }
 
+  // 상단 바(일시정지·게이지·닫기) 숨기기 — 모바일에서 실수로 닫는 것을 막고 화면을 넓게 쓴다. 선택은 기기에 기억한다
+  const [hudHidden, setHudHidden] = useState(false)
+  useEffect(() => { const t = setTimeout(() => { try { setHudHidden(localStorage.getItem('vbx_hud_hidden') === '1') } catch { /* noop */ } }, 0); return () => clearTimeout(t) }, [])
+  const toggleHud = (hide: boolean) => { setHudHidden(hide); try { localStorage.setItem('vbx_hud_hidden', hide ? '1' : '0') } catch { /* noop */ } }
+
   // 텔레포트 — TransportBar 가 고른 다음 게임으로 오버레이 안에서 바로 전환 (START 화면을 거치지 않음)
   //  out(현재 게임 빨려들어감, 그동안 코인 차감·다음 게임 iframe 을 뒤에서 미리 로드) → hold(로드 끝날 때까지 파동만) → in(새 게임 튀어나옴)
   const [pending, setPending] = useState<Game | null>(null)
@@ -379,10 +384,19 @@ export default function GamePlayButton({ game: initialGame, genreColor: initialC
           onClick={e => { if (e.target === e.currentTarget) close() }}
         >
           <div className={`${rotated ? '' : 'absolute inset-0'} flex flex-col`} style={{ ...(rotStyle ?? {}), ...safeVars } as React.CSSProperties} data-rotated={rotated ? '1' : undefined}>
-          <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={close} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} live={screenLive} onToggleLive={!isGuest && !spectate ? toggleScreenLive : undefined} />
+          {hudHidden ? (
+            /* 숨김 상태 — 상단 가운데 작은 손잡이만 남는다(실수로 눌리지 않게 작고 반투명) */
+            <button onClick={() => toggleHud(false)} aria-label="상단 바 보이기" title="상단 바 보이기"
+              className="absolute left-1/2 -translate-x-1/2 z-30 h-6 w-16 rounded-b-xl bg-black/35 backdrop-blur-md border-x border-b border-white/10 text-white/70 hover:text-white hover:bg-black/55 transition-colors flex items-center justify-center"
+              style={{ top: 'var(--vbx-safe-top, 0px)' }}>
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 10l6 6 6-6" /></svg>
+            </button>
+          ) : (
+            <PlayHeader genreLabel={genreLabel} genreColor={genreColor} title={game.title} gameId={game.id} onClose={close} paused={paused} onTogglePause={togglePause} rotated={rotated} onToggleRotate={() => setRotated(v => !v)} live={screenLive} onToggleLive={!isGuest && !spectate ? toggleScreenLive : undefined} onHide={() => toggleHud(true)} />
+          )}
           <div className="relative flex flex-row flex-1 min-h-0">
             <div className="relative flex-1 min-h-0 overflow-hidden">
-              <TransportBar key={game.id} gameId={game.id} active={open} locked={liveLocked} />
+              {!hudHidden && <TransportBar key={game.id} gameId={game.id} active={open} locked={liveLocked} />}
               {/* 게임은 항상 화면 전체(카메라·홈바 뒤까지) — 헤더는 그 위에 겹친다. 게임엔 topInset(헤더 아래 y) 을 알려 AI PLAYING 배지·HUD 를 헤더 밑에 두게 한다 */}
               <div className="absolute inset-0">
               {warp && (
