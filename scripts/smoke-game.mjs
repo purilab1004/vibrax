@@ -76,6 +76,11 @@ export async function smokeGame(html, { timeoutMs = 45_000 } = {}) {
       if (flat) errors.push('게임 화면이 단색이에요(아무것도 그려지지 않음)')
     } catch { /* 스크린샷 검사 실패는 무시 */ }
     if (after.phase === 'over') warnings.push('시작하자마자 게임오버가 됐어요(난이도·충돌 판정 확인 필요)')
+    // 진행 저장 — 플레이 뒤에도 아무것도 저장하지 않으면 '이어하기' 가 안 된다
+    const saved = await page.evaluate(() => {
+      try { const ks = []; for (let i = 0; i < localStorage.length; i++) ks.push(localStorage.key(i)); return ks } catch (e) { return [] }
+    })
+    if (!saved.length) warnings.push('진행을 저장하지 않아요 — saveProgress({level,...}) 로 저장해야 나갔다 와도 이어서 할 수 있어요')
 
     return { ok: errors.length === 0, errors, warnings: warnings.slice(0, 6), phase: after.phase ?? phase, ticks, manifest: before.manifest, state: after.state }
   } catch (e) {
