@@ -3,7 +3,7 @@
 //  2) (--wipe) 기존 blog 글을 전부 삭제
 //  3) 게임마다 연재 계획 → 1화(도입부) + 지도 순서대로 다음 화들을 쓴다. 글은 claude -p(Max 구독)로 — API 크레딧을 쓰지 않는다
 //  4) site_settings.story_state 에 게임별 진행 상태(나온 지도·몬스터, 기준 버전)를 저장 → 이후 업데이트 감지의 기준
-// 실행: node --import ./scripts/ts-resolve.mjs scripts/story-backfill.ts [--wipe] [--only=<gameId앞자리>] [--no-shots] [--dry]
+// 실행: node --import ./scripts/ts-resolve.mjs scripts/story-backfill.ts [--wipe] [--only=<gameId앞자리>] [--no-shots] [--dry] [--resume]
 import { createClient } from '@supabase/supabase-js'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
@@ -15,13 +15,14 @@ const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPAB
 const args = process.argv.slice(2)
 const WIPE = args.includes('--wipe'), DRY = args.includes('--dry'), NO_SHOTS = args.includes('--no-shots')
 const ONLY = args.find(a => a.startsWith('--only='))?.slice(7)
+const RESUME = args.includes('--resume')   // 중간에 끊긴 연재를 이어 쓴다(이미 쓴 화 다음부터)
 const SHOT_DIR = process.env.STORY_SHOT_DIR || '/tmp/story-shots'
 const BUCKET = 'blog-images'
 
 // claude CLI 가 .env.local 의 ANTHROPIC_API_KEY 가 아니라 claude.ai(Max) 로그인으로 돌도록 키를 뺀 환경
 const cliEnv = (() => { const e: NodeJS.ProcessEnv = { ...process.env, CLAUDECODE: '' }; delete e.ANTHROPIC_API_KEY; delete e.ANTHROPIC_AUTH_TOKEN; return e })()
 const claudeLlm: Llm = (prompt) => new Promise((resolve, reject) => {
-  const p = spawn('claude', ['-p', '--model', 'sonnet', '--output-format', 'text'], { env: cliEnv, stdio: ['pipe', 'pipe', 'pipe'] })
+  const p = spawn('claude', ['-p', '--tools', '', '--no-session-persistence', '--effort', 'medium', '--model', 'sonnet', '--output-format', 'text', '--system-prompt', '너는 한국 웹소설 작가이자 게임 분석가다. 요청한 JSON 만 출력한다.'], { env: cliEnv, stdio: ['pipe', 'pipe', 'pipe'] })
   let out = '', err = ''
   p.stdout.on('data', d => { out += d })
   p.stderr.on('data', d => { err += d })
@@ -107,7 +108,8 @@ async function upload(file: string, gameId: string): Promise<string | null> {
 async function writeSeries(g: G, shots: Awaited<ReturnType<typeof capture>>[string] | undefined, authorId: string) {
   const game = await loadStoryGame(sb, g.id)
   if (!game) return
-  if ((await listEpisodes(sb, g.id)).length) { console.log('⏭ 이미 연재 중', g.title); return }
+  const existing = await listEpisodes(sb, g.id)
+  if (existing.length && !RESUME) { console.log('⏭ 이미 연재 중', g.title); return }
   const { html, versionId } = await loadGameHtml(sb, game)
   const multiMap = !!shots?.maps?.length
   const plan = await makePlan(claudeLlm, game, digestGame(html))
@@ -126,8 +128,10 @@ async function writeSeries(g: G, shots: Awaited<ReturnType<typeof capture>>[stri
     return url ? [{ url, caption: hit!.name }] : []
   }
   let covered = mergeCovered([], plan.elements.filter(e => e.kind === 'character'))
-  const prev: { no: number; title: string; excerpt: string }[] = []
-  for (let i = 0; i < episodes.length; i++) {
+  const prev: { no: number; title: string; excerpt: string }[] = [...existing]
+  for (let i = 0; i < existing.length && i < episodes.length; i++) covered = mergeCovered(covered, episodes[i].focus)
+  if (existing.length >= episodes.length) console.log('⏭ 계획한 화를 모두 씀', g.title)
+  for (let i = existing.length; i < episodes.length; i++) {
     const ep = episodes[i]
     let cuts: StoryCut[] = []
     if (multiMap) cuts = await mapCut(ep.focus.filter(f => f.kind === 'map' || f.kind === 'stage').map(f => f.name))
@@ -142,6 +146,8 @@ async function writeSeries(g: G, shots: Awaited<ReturnType<typeof capture>>[stri
     prev.push({ no: i + 1, title: written.title, excerpt: ep.hint })
     covered = mergeCovered(covered, ep.focus)
     console.log(`  ✍ ${g.title} ${i + 1}화 「${written.title}」`)
+    // 화마다 상태 저장 — 중간에 끊겨도 --resume 으로 이어 쓰고, 업데이트 감지 기준이 남는다
+    await saveGameState(sb, g.id, { version: versionId, covered, checkedAt: new Date().toISOString(), hero: plan.hero, world: plan.world, pending: [] })
   }
   if (!DRY) await saveGameState(sb, g.id, { version: versionId, covered, checkedAt: new Date().toISOString(), hero: plan.hero, world: plan.world, pending: [] })
 }
@@ -150,8 +156,10 @@ async function main() {
   const { data } = await sb.from('games').select('id,title,studio_project_id').order('created_at', { ascending: true })
   const games = ((data ?? []) as G[]).filter(g => !ONLY || g.id.startsWith(ONLY))
   console.log(`게임 ${games.length}개`)
-  const shots = NO_SHOTS ? {} : await capture(games)
-  fs.writeFileSync(`${SHOT_DIR}/shots.json`, JSON.stringify(shots, null, 2))
+  // --no-shots: 지난번 찍어 둔 컷(shots.json)을 다시 쓴다
+  const saved = `${SHOT_DIR}/shots.json`
+  const shots = NO_SHOTS ? (fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : {}) : await capture(games)
+  if (!NO_SHOTS) fs.writeFileSync(saved, JSON.stringify(shots, null, 2))
 
   if (WIPE && !DRY) {
     const a = await sb.from('blog_posts').delete({ count: 'exact' }).is('source', null)
@@ -161,9 +169,9 @@ async function main() {
   const { data: adm } = await sb.from('profiles').select('id').eq('role', 'admin').limit(1).maybeSingle()
   const authorId = (adm as { id: string }).id
 
-  // 게임 3개씩 동시에(각 게임 안의 회차는 순서대로)
   const queue = [...games]
-  await Promise.all([0, 1, 2].map(async () => {
+  // story_state 는 한 값(site_settings)이라 동시에 쓰면 서로 덮는다 — 게임은 하나씩
+  await Promise.all([0].map(async () => {
     for (let g = queue.shift(); g; g = queue.shift()) {
       try { await writeSeries(g, (shots as Record<string, never>)[g.id], authorId) } catch (e) { console.error('❌', g.title, (e as Error).message) }
     }
