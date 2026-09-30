@@ -93,7 +93,7 @@ export default async function EpisodePage({ params }: { params: Promise<{ id: st
             <div className="flex gap-3 items-center min-w-0 flex-1">
               {game.thumbnail_url && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={game.thumbnail_url} alt="" className="w-[72px] aspect-video object-cover rounded-[6px] shrink-0" />
+                <img src={game.thumbnail_url} alt="" className="w-[52px] aspect-[9/16] object-cover rounded-[6px] shrink-0" />
               )}
               <div className="min-w-0">
                 <p className="text-[12.5px] text-[#6b7280]">{no}화의 무대를 직접 뛰어 보세요</p>

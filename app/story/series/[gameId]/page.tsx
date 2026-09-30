@@ -58,7 +58,7 @@ export default async function SeriesPage({ params, searchParams }: { params: Pro
             <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="m15 18-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>STORY
           </Link>
           <div className="mt-4 flex gap-4 md:gap-7 items-end">
-            <div className="relative w-[112px] md:w-[184px] shrink-0 aspect-[3/4] rounded-[8px] overflow-hidden bg-white/10 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.6)]">
+            <div className="relative w-[112px] md:w-[184px] shrink-0 aspect-[9/16] rounded-[8px] overflow-hidden bg-white/10 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.6)]">
               {s.cover && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={s.cover} alt={s.game.title} className="absolute inset-0 w-full h-full object-cover" />

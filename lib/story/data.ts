@@ -21,7 +21,7 @@ export interface StorySeries {
   episodes: StoryEpisode[]      // 1화부터
   latestAt: string              // 최신 회차 게시 시각
   views: number                 // 회차 조회 합
-  cover: string | null          // 첫 컷(없으면 게임 썸네일)
+  cover: string | null          // 표지 = 크리에이터가 만든 쇼츠 썸네일(9:16, 없으면 1화 첫 컷)
 }
 
 type Row = Omit<StoryEpisode, 'no'> & { created_at: string; games: (StorySeries['game'] & { profiles: { username: string | null; agent_name: string | null } | null }) | null }
@@ -45,7 +45,7 @@ export const getStoryData = unstable_cache(
       s.views += r.view_count ?? 0
       if ((r.published_at ?? '') > s.latestAt) s.latestAt = r.published_at ?? ''
     }
-    for (const s of map.values()) s.cover = s.episodes[0]?.thumbnail_url ?? s.game.thumbnail_url
+    for (const s of map.values()) s.cover = s.game.thumbnail_url ?? s.episodes[0]?.thumbnail_url ?? null
     return [...map.values()].sort((a, b) => b.latestAt.localeCompare(a.latestAt))
   },
   ['story-series'], { revalidate: 120 },

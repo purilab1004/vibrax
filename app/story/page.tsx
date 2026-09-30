@@ -27,8 +27,8 @@ function Cover({ s, className = '' }: { s: StorySeries; className?: string }) {
 function SeriesCard({ s }: { s: StorySeries }) {
   return (
     <Link href={`/story/series/${s.game.id}`} className="group block min-w-0">
-      <Cover s={s} className="aspect-[3/4] ring-1 ring-black/5" />
-      <p className="mt-2 text-[14px] font-bold leading-snug text-[#1a1d24] line-clamp-2 group-hover:text-[#1f6fff]">{s.game.title}</p>
+      <Cover s={s} className="aspect-[9/16] ring-1 ring-black/5" />
+      <p className="mt-2.5 text-[15px] md:text-[16px] font-bold leading-snug text-[#1a1d24] line-clamp-2 group-hover:text-[#1f6fff]">{s.game.title}</p>
       <p className="mt-0.5 text-[12px] text-[#7a808c] truncate">{s.author}</p>
       <p className="mt-0.5 text-[12px] text-[#1f6fff] font-semibold">연재 중 · {GENRE_KO[s.game.genre] ?? s.game.genre}</p>
     </Link>
@@ -106,12 +106,17 @@ export default async function StoryPage({ searchParams }: { searchParams: Promis
                     const last = s.episodes[s.episodes.length - 1]
                     return (
                       <Link key={s.game.id} href={`/story/series/${s.game.id}`} className="group snap-start shrink-0 w-[86%] sm:w-[62%] md:w-[calc(50%-8px)] relative overflow-hidden rounded-[14px] bg-[#1a1d24] aspect-[4/3] md:aspect-[16/10]">
+                        {/* 표지(9:16 쇼츠 썸네일)는 자르지 않고 오른쪽에 통째로, 배경은 같은 그림을 흐리게 */}
                         {s.cover && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={s.cover} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-[1.03] transition-transform duration-500" />
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={s.cover} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-60" />
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={s.cover} alt="" className="absolute right-3 md:right-5 top-3 md:top-5 bottom-3 md:bottom-5 h-[calc(100%-24px)] md:h-[calc(100%-40px)] w-auto aspect-[9/16] object-cover rounded-[8px] shadow-[0_14px_36px_-10px_rgba(0,0,0,0.7)] group-hover:scale-[1.02] transition-transform duration-500" />
+                          </>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
-                        <div className="absolute inset-x-0 bottom-0 p-4 md:p-6 text-white">
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
+                        <div className="absolute left-0 bottom-0 right-[42%] md:right-[36%] p-4 md:p-6 text-white">
                           <div className="flex gap-1.5 mb-2">
                             {isUp(s.latestAt) && <span className="px-1.5 h-5 inline-flex items-center rounded-[3px] bg-[#ff3b47] text-[11px] font-extrabold">UP</span>}
                             <span className="px-1.5 h-5 inline-flex items-center rounded-[3px] bg-white/20 text-[11px] font-bold backdrop-blur-sm">{s.episodes.length}화 연재 중</span>
@@ -133,9 +138,9 @@ export default async function StoryPage({ searchParams }: { searchParams: Promis
                 <SectionHead title="새로 올라온 회차" sub="최신 순" />
                 <div className="-mx-4 md:mx-0 px-4 md:px-0 flex gap-3 md:gap-4 overflow-x-auto no-scrollbar">
                   {fresh.map(({ s, e }) => (
-                    <Link key={e.id} href={`/story/${e.id}`} className="group shrink-0 w-[118px] md:w-[152px]">
-                      <Cover s={s} className="aspect-[3/4] ring-1 ring-black/5" />
-                      <p className="mt-2 text-[13.5px] font-bold leading-snug line-clamp-1 group-hover:text-[#1f6fff]">{s.game.title}</p>
+                    <Link key={e.id} href={`/story/${e.id}`} className="group shrink-0 w-[160px] md:w-[220px]">
+                      <Cover s={s} className="aspect-[9/16] ring-1 ring-black/5" />
+                      <p className="mt-2.5 text-[14.5px] md:text-[15px] font-bold leading-snug line-clamp-1 group-hover:text-[#1f6fff]">{s.game.title}</p>
                       <p className="mt-0.5 text-[12px] text-[#6b7280] line-clamp-2 leading-snug">{e.no}화 {e.title}</p>
                       <p className="mt-0.5 text-[11.5px] text-[#a3a9b4] tabular-nums">{fmtDate(e.published_at)}</p>
                     </Link>
@@ -148,14 +153,14 @@ export default async function StoryPage({ searchParams }: { searchParams: Promis
             {ranking.length > 1 && (
               <section className="mt-9 md:mt-12">
                 <SectionHead title="많이 보는 작품" sub="조회 기준" />
-                <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3.5">
+                <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 md:gap-y-5">
                   {ranking.map((s, i) => (
                     <li key={s.game.id}>
                       <Link href={`/story/series/${s.game.id}`} className="group flex items-center gap-3">
-                        <Cover s={s} className="w-[60px] md:w-[68px] shrink-0 aspect-[3/4] ring-1 ring-black/5" />
-                        <span className={`w-6 shrink-0 text-center text-[19px] font-black tabular-nums ${i < 3 ? 'text-[#1f6fff]' : 'text-[#1a1d24]'}`}>{i + 1}</span>
+                        <Cover s={s} className="w-[96px] md:w-[120px] shrink-0 aspect-[9/16] ring-1 ring-black/5" />
+                        <span className={`w-7 shrink-0 text-center text-[22px] font-black tabular-nums ${i < 3 ? 'text-[#1f6fff]' : 'text-[#1a1d24]'}`}>{i + 1}</span>
                         <span className="min-w-0">
-                          <span className="block text-[15px] font-bold leading-snug line-clamp-1 group-hover:text-[#1f6fff]">{s.game.title}</span>
+                          <span className="block text-[16px] md:text-[17px] font-bold leading-snug line-clamp-2 group-hover:text-[#1f6fff]">{s.game.title}</span>
                           <span className="block mt-0.5 text-[12.5px] text-[#7a808c] truncate">{s.author}</span>
                           <span className="block mt-0.5 text-[12px] text-[#a3a9b4]">{GENRE_KO[s.game.genre] ?? s.game.genre} · {s.episodes.length}화</span>
                         </span>
@@ -169,7 +174,7 @@ export default async function StoryPage({ searchParams }: { searchParams: Promis
             {/* ── 전체 작품 ── */}
             <section className="mt-9 md:mt-12">
               <SectionHead title={q ? '검색 결과' : genre ? `${GENRE_KO[genre] ?? genre} 작품` : '전체 작품'} sub={`${list.length}작품`} />
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-3 md:gap-x-5 gap-y-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 md:gap-x-5 gap-y-7">
                 {list.map(s => <SeriesCard key={s.game.id} s={s} />)}
               </div>
             </section>
