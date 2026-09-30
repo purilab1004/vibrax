@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 
-// 블로그 RSS 2.0 피드 — 네이버 서치어드바이저는 RSS 제출 시 글 단위 수집이 빨라진다
+// STORY(게임별 연재 웹소설) RSS 2.0 피드 — 네이버 서치어드바이저는 RSS 제출 시 글 단위 수집이 빨라진다
 export const revalidate = 3600
 
 const esc = (s: string) =>
@@ -12,6 +12,7 @@ export async function GET() {
     .from('blog_posts')
     .select('id, title, excerpt, published_at')
     .eq('published', true)
+    .eq('source', 'story')
     .order('published_at', { ascending: false })
     .limit(50)
 
@@ -21,8 +22,8 @@ export async function GET() {
     .map(
       p => `    <item>
       <title>${esc(p.title)}</title>
-      <link>https://vibrexcup.com/blog/${p.id}</link>
-      <guid isPermaLink="true">https://vibrexcup.com/blog/${p.id}</guid>
+      <link>https://vibrexcup.com/story/${p.id}</link>
+      <guid isPermaLink="true">https://vibrexcup.com/story/${p.id}</guid>
       <description>${esc(p.excerpt ?? '')}</description>
       <pubDate>${new Date(p.published_at).toUTCString()}</pubDate>
     </item>`,
@@ -32,9 +33,9 @@ export async function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>Vibrexcup 비브렉스컵 블로그</title>
-    <link>https://vibrexcup.com/blog</link>
-    <description>바이브코딩 가이드, 프롬프트 팁, AI 게임 트렌드, Vibrexcup 플랫폼 소식</description>
+    <title>Vibrexcup STORY — 게임으로 이어지는 웹소설</title>
+    <link>https://vibrexcup.com/story</link>
+    <description>게임마다 연재되는 웹소설 — 새 지도와 몬스터가 생길 때마다 다음 화</description>
     <language>ko</language>
     <lastBuildDate>${new Date(posts[0]?.published_at ?? Date.now()).toUTCString()}</lastBuildDate>
 ${items}

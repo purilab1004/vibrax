@@ -4,21 +4,22 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
-import type { BlogCategory, BlogPost } from '@/lib/supabase/types'
+import type { BlogPost } from '@/lib/supabase/types'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import { uploadBlogImage } from '@/lib/blog/upload'
 import { makeExcerpt } from '@/lib/blog/excerpt'
 import Link from 'next/link'
 import { PageHeader, Card, Badge, Toast, Skeleton, btn, input, label as labelCls } from '@/components/admin/ui'
 
-export default function BlogPostForm({ postId }: { postId?: string }) {
+// STORY 회차 작성·수정 — 자동 생성된 회차를 다듬거나, 웹툰 컷(이미지)을 본문 사이에 넣을 때
+export default function StoryEpisodeForm({ postId }: { postId?: string }) {
   const [loaded, setLoaded] = useState(!postId)
   const [title, setTitle] = useState('')
-  const [categoryId, setCategoryId] = useState<string>('')
+  const [gameId, setGameId] = useState<string>('')
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
   const [content, setContent] = useState('')
   const [published, setPublished] = useState(false)
-  const [cats, setCats] = useState<BlogCategory[]>([])
+  const [games, setGames] = useState<{ id: string; title: string }[]>([])
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<'saved' | 'failed' | null>(null)
   const router = useRouter()
@@ -27,14 +28,14 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
   const a = T.admin
 
   useEffect(() => {
-    supabase.from('blog_categories').select('*').order('sort_order')
-      .then(({ data }) => setCats((data as BlogCategory[] | null) ?? []))
+    supabase.from('games').select('id, title').order('created_at', { ascending: false })
+      .then(({ data }) => setGames((data as { id: string; title: string }[] | null) ?? []))
     if (postId) {
       supabase.from('blog_posts').select('*').eq('id', postId).maybeSingle().then(({ data }) => {
         const p = data as BlogPost | null
         if (p) {
           setTitle(p.title)
-          setCategoryId(p.category_id ?? '')
+          setGameId(p.game_id ?? '')
           setThumbnailUrl(p.thumbnail_url)
           setContent(p.content)
           setPublished(p.published)
@@ -61,7 +62,8 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
       if (!user) return
       const row = {
         title: title.trim() || a.postTitle,
-        category_id: categoryId || null,
+        game_id: gameId || null,
+        source: 'story',
         thumbnail_url: thumbnailUrl,
         content,
         excerpt: makeExcerpt(content),
@@ -78,7 +80,7 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
         const { data, error } = await supabase.from('blog_posts')
           .insert([{ ...row, author_id: user.id }] as never).select().single()
         if (error) throw error
-        router.replace(`/admin/blog/${(data as BlogPost).id}`)
+        router.replace(`/admin/story/${(data as BlogPost).id}`)
       }
     } catch (err) {
       console.error('[admin]', err)
@@ -92,8 +94,8 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
 
   return (
     <div>
-      <PageHeader title={postId ? '글 수정' : a.newPost}
-        desc={<span className="inline-flex items-center gap-2"><Link href="/admin/blog" className="hover:text-[#2563eb]">← 블로그 관리</Link>{published ? <Badge color="#059669">{a.published}</Badge> : <Badge color="#857a68">{a.draft}</Badge>}</span>}
+      <PageHeader title={postId ? '회차 수정' : '새 회차'}
+        desc={<span className="inline-flex items-center gap-2"><Link href="/admin/story" className="hover:text-[#2563eb]">← STORY 관리</Link>{published ? <Badge color="#059669">{a.published}</Badge> : <Badge color="#857a68">{a.draft}</Badge>}</span>}
         actions={<>
           <button onClick={() => save(published)} disabled={saving} className={btn.ghost}>{a.save}</button>
           <button onClick={() => save(!published)} disabled={saving} className={published ? btn.ghost : btn.primary}>{published ? a.unpublishToggle : a.publishToggle}</button>
@@ -106,11 +108,12 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
         <div className="space-y-4">
           <Card className="p-5 space-y-4">
             <p className="text-[13px] font-bold text-[#1f2430]">게시 설정</p>
-            <div><label className={labelCls}>{a.postCategory}</label>
-              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className={input}>
-                <option value="">{a.noCategory}</option>
-                {cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select></div>
+            <div><label className={labelCls}>작품(게임)</label>
+              <select value={gameId} onChange={e => setGameId(e.target.value)} className={input}>
+                <option value="">선택 안 함</option>
+                {games.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
+              </select>
+              <p className="mt-1.5 text-[11.5px] text-[#9aa1ad]">화 번호는 작품 안에서 만든 순서로 정해져요. 본문에 이미지를 넣으면 웹툰 컷처럼 보여요.</p></div>
             <div><label className={labelCls}>{a.postThumb}</label>
               <label className="block cursor-pointer rounded-xl border border-dashed border-[#cfc4ab] hover:border-[#2563eb] bg-[#f7f8fa] overflow-hidden transition-colors">
                 {thumbnailUrl ? (
@@ -122,7 +125,7 @@ export default function BlogPostForm({ postId }: { postId?: string }) {
               {thumbnailUrl && <button onClick={() => setThumbnailUrl(null)} className="mt-1.5 text-[11.5px] text-[#9aa1ad] hover:text-[#e11d48]">썸네일 제거</button>}
             </div>
           </Card>
-          {postId && <Card className="p-5 text-[12px] text-[#6b7280]"><p>글 ID · <span className="font-mono text-[11px]">{postId}</span></p>{published && <a href={`/blog/${postId}`} target="_blank" rel="noreferrer" className="inline-block mt-2 text-[#2563eb] hover:underline">공개 페이지 보기 →</a>}</Card>}
+          {postId && <Card className="p-5 text-[12px] text-[#6b7280]"><p>회차 ID · <span className="font-mono text-[11px]">{postId}</span></p>{published && <a href={`/story/${postId}`} target="_blank" rel="noreferrer" className="inline-block mt-2 text-[#2563eb] hover:underline">공개 페이지 보기 →</a>}</Card>}
         </div>
       </div>
       <Toast msg={msg === 'saved' ? a.saved : msg === 'failed' ? a.saveFailed : null} kind={msg === 'failed' ? 'err' : 'ok'} />

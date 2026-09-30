@@ -229,7 +229,7 @@ export default function NavBar() {
                 🏆 {T.nav.tournament}
               </Link>
               {navLinkDesktop('/gallery', T.nav.library)}
-              {navLinkDesktop('/blog', T.nav.blog)}
+              {navLinkDesktop('/story', T.nav.blog)}
               {navLinkDesktop('/partner', T.nav.partner)}
               {navLinkDesktop('/dev', T.nav.dev)}
               {navLinkDesktop('/about', T.nav.about)}
@@ -394,7 +394,7 @@ export default function NavBar() {
             {/* 더보기 — 작은 목록 */}
             <div className="rounded-2xl bg-white border border-[#ebe4d6] divide-y divide-[#f1ece2] overflow-hidden">
               {([
-                ['/blog', T.nav.blog],
+                ['/story', T.nav.blog],
                 ['/partner', T.nav.partner],
                 ['/dev', T.nav.dev],
                 ['/about', T.nav.about],

@@ -55,6 +55,8 @@ export default function StudioComposerPage() {
     const { error } = await supabase.from('games').update({ live_version_id: versionId } as never).eq('id', publishedGameId)
     if (error) { setError(error.message); return }
     setLiveVersionId(versionId)
+    // 새 지도·몬스터가 생긴 업데이트면 STORY 다음 화 자동 생성 (fire-and-forget)
+    fetch('/api/story/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gameId: publishedGameId }), keepalive: true }).catch(() => {})
   }
   const [showEdit, setShowEdit] = useState(false)
   const [study, setStudy] = useState<'code' | 'scenario' | null>(null) // 학습 노트 패널

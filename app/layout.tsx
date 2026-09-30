@@ -226,7 +226,7 @@ export default async function RootLayout({
       { name: 'Games', description: 'AI 바이브코딩 게임 모음 — 바로 플레이', url: 'https://vibrexcup.com/games' },
       { name: 'Studio', description: '프롬프트 한 줄로 게임 만들기', url: 'https://vibrexcup.com/studio' },
       { name: 'Tournament', description: '개인·학교·세계·회사 4개 부문 게임 제작 토너먼트', url: 'https://vibrexcup.com/tournament' },
-      { name: 'Blog', description: '바이브코딩 가이드·프롬프트 팁·플랫폼 소식', url: 'https://vibrexcup.com/blog' },
+      { name: 'STORY', description: '게임마다 연재되는 웹소설 — 다 읽으면 바로 플레이', url: 'https://vibrexcup.com/story' },
       { name: 'Partner', description: '학교·기업·단체·기관 파트너 모집', url: 'https://vibrexcup.com/partner' },
       { name: 'Dev', description: 'AJ API · 크롬 확장 개발자 가이드', url: 'https://vibrexcup.com/dev' },
       { name: 'Engineering', description: '시스템 설계 — 게임 계약·보편 행동 공간·자율 디자이너·모방 학습', url: 'https://vibrexcup.com/tech' },

@@ -12,7 +12,7 @@ export default function AdminNav() {
   const [open, setOpen] = useState(false)
   const groups: { title: string; items: [string, string, string][] }[] = [
     { title: '운영', items: [['/admin', a.navDashboard, '📊'], ['/admin-ops', 'AI 대시보드', '🤖'], ['/admin/map', '지도보드', '🗺️'], ['/admin/access', '접속 관리', '📈'], ['/admin/logs', '에러 로그', '⚠️'], ['/admin/security', '보안·서버', '🛡️']] },
-    { title: '콘텐츠', items: [['/admin/games', a.navGames, '🎮'], ['/admin/templates', '템플릿', '🧩'], ['/admin/media', '미디어 라이브러리', '🖼️'], ['/admin/blog', a.navBlog, '📝'], ['/admin/notices', a.navNotices, '📢'], ['/admin/legal', '약관 관리', '📄']] },
+    { title: '콘텐츠', items: [['/admin/games', a.navGames, '🎮'], ['/admin/templates', '템플릿', '🧩'], ['/admin/media', '미디어 라이브러리', '🖼️'], ['/admin/story', a.navBlog, '📝'], ['/admin/notices', a.navNotices, '📢'], ['/admin/legal', '약관 관리', '📄']] },
     { title: '회원·커뮤니티', items: [['/admin/members', a.navMembers, '👥'], ['/admin/applications', a.navApplications, '📨'], ['/admin/designers', '디자이너', '🎨'], ['/admin/broadcasts', '방송 관리', '📡'], ['/admin/aj', 'AJ 랭킹', '🏆'], ['/admin/jackpots', '토큰동전 잭팟', '🎰']] },
     { title: '수익·AI·설정', items: [['/admin/payments', '결제 관리', '💳'], ['/admin/ads', 'AdPilot', '📣'], ['/admin/costs', 'TokenPilot', '🪙'], ['/admin/llmpilot', 'LLMPilot', '🧠'], ['/admin/mlpilot', 'MLPilot', '🔬'], ['/admin/controls', '컨트롤러', '🕹️'], ['/admin/settings', a.navSettings, '⚙️']] },
   ]

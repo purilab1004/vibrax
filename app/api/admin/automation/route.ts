@@ -2,7 +2,7 @@
 import { requireAdmin } from '@/lib/admin/guard'
 import { AUTOMATION_MODULES, loadAutomation, saveAutomation, type AutomationKey } from '@/lib/automation'
 
-export const MENU_MODULE: Record<string, string> = { '/admin/templates': 'templates', '/admin/games': 'games', '/admin/notices': 'notices', '/admin/applications': 'applications', '/admin/mlpilot': 'mlpilot', '/admin/costs': 'tokenpilot', '/admin/ads': 'adpilot', '/admin/blog': 'blog', '/admin/aj': 'aj', '/admin/payments': 'payments', '/admin/broadcasts': 'broadcasts', '/admin/security': 'security' }
+export const MENU_MODULE: Record<string, string> = { '/admin/templates': 'templates', '/admin/games': 'games', '/admin/notices': 'notices', '/admin/applications': 'applications', '/admin/mlpilot': 'mlpilot', '/admin/costs': 'tokenpilot', '/admin/ads': 'adpilot', '/admin/story': 'blog', '/admin/aj': 'aj', '/admin/payments': 'payments', '/admin/broadcasts': 'broadcasts', '/admin/security': 'security' }
 
 export async function GET(req: Request) {
   const g = await requireAdmin(); if ('error' in g) return g.error

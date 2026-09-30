@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
         destination: 'https://vibrexcup.com/:path*',
         permanent: true,
       },
+      // BLOG → STORY 개편 — 예전에 공유된 /blog 링크가 깨지지 않게
+      { source: '/blog', destination: '/story', permanent: true },
+      { source: '/blog/:path*', destination: '/story/:path*', permanent: true },
+      { source: '/admin/blog', destination: '/admin/story', permanent: true },
+      { source: '/admin/blog/:path*', destination: '/admin/story/:path*', permanent: true },
+      { source: '/api/blog/game-post', destination: '/api/story/game-post', permanent: true },   // 308 — POST 유지(배포 직후 옛 번들용)
     ]
   },
   images: {

@@ -5,7 +5,7 @@ import type { AdminRole } from '@/lib/supabase/types'
 import { Card, Badge, Modal, btn, input, label as labelCls, IconAction } from '@/components/admin/ui'
 
 const PERMS: [string, string][] = [
-  ['games', '게임 관리'], ['members', '회원 관리'], ['blog', '블로그'], ['notices', '공지'],
+  ['games', '게임 관리'], ['members', '회원 관리'], ['blog', 'STORY'], ['notices', '공지'],
   ['applications', '신청 관리'], ['costs', 'LLM 원가'], ['settings', '설정'],
 ]
 const COLORS = ['#e11d48', '#2563eb', '#059669', '#f59e0b', '#7c3aed', '#0891b2', '#db2777', '#4b5563']

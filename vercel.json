@@ -6,6 +6,10 @@
     {
       "path": "/api/cron/aj-design",
       "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/story",
+      "schedule": "0 19 * * *"
     }
   ]
 }

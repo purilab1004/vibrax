@@ -24,7 +24,7 @@ export default function GenreSidebar() {
     ['/', T.nav.home],
     ['/studio', T.nav.studio],
     ['/tournament', `🏆 ${T.nav.tournament}`],
-    ['/blog', T.nav.blog],
+    ['/story', T.nav.blog],
     ['/partner', T.nav.partner],
     ['/dev', T.nav.dev],
     ['/about', T.nav.about],

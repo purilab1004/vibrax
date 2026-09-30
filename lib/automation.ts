@@ -10,7 +10,7 @@ export const AUTOMATION_MODULES = [
   { key: 'mlpilot.autoLearn', menu: 'MLPilot', label: '매핑 성공 시 키워드 자동 학습', desc: 'off 면 관리자가 "학습" 버튼으로만' },
   { key: 'tokenpilot.guard', menu: 'TokenPilot', label: '원가 가드 자동 차단(오토 모드)', desc: 'off 면 매뉴얼 — 관리자가 정지/재개' },
   { key: 'adpilot.autoCreative', menu: 'AdPilot', label: 'AJ 가 캠페인 문구·예산을 자동 제안', desc: 'off 면 광고주가 직접 입력' },
-  { key: 'blog.autoPost', menu: '블로그', label: '게임 게시 시 출시 노트 자동 발행', desc: 'off 면 초안으로만 저장' },
+  { key: 'blog.autoPost', menu: 'STORY', label: '게임 게시·업데이트 시 STORY 회차 자동 발행', desc: 'off 면 초안으로만 저장(관리자 검토 후 발행)' },
   { key: 'aj.autoReport', menu: 'AJ', label: 'AJ 리포트 자동 생성(주 1회, 플레이 있는 게임)', desc: 'off 면 사람이 "분석 실행"' },
   { key: 'aj.autoDesign', menu: 'AJ', label: '자율 게임 튜닝 — 리포트 제안으로 새 버전을 만들어 20% 카나리 후 지표가 좋아지면 채택', desc: 'off 면 진행 중 실험 평가만 하고 새 실험은 크리에이터가 수동 시작' },
   { key: 'payments.autoRevoke', menu: '결제', label: '환불/차지백 시 크레딧 자동 회수', desc: 'off 면 관리자가 확인 후 회수' },

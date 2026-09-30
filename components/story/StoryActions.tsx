@@ -4,8 +4,8 @@ import { useEffect, useState, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/lib/i18n/context'
 
-// 블로그 좋아요 + 공유 — 목록 행과 상세 페이지 공용
-export default function BlogActions({ postId, size = 'sm' }: { postId: string; size?: 'sm' | 'md' }) {
+// STORY 회차 좋아요 + 공유
+export default function StoryActions({ postId, size = 'sm' }: { postId: string; size?: 'sm' | 'md' }) {
   const [liked, setLiked] = useState(false)
   const [count, setCount] = useState(0)
   const [userId, setUserId] = useState<string | null>(null)
@@ -44,7 +44,7 @@ export default function BlogActions({ postId, size = 'sm' }: { postId: string; s
   }
 
   const share = async () => {
-    const url = `${window.location.origin}/blog/${postId}`
+    const url = `${window.location.origin}/story/${postId}`
     try {
       if (navigator.share) {
         await navigator.share({ url })

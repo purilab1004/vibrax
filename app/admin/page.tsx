@@ -65,7 +65,7 @@ export default function AdminDashboardPage() {
     <div>
       <PageHeader title={a.dashHeading} desc={`${greeting} · ${today.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })} 기준`}
         actions={<>
-          <Link href="/admin/blog/new" className={btn.ghost}>새 글</Link>
+          <Link href="/admin/story/new" className={btn.ghost}>새 글</Link>
           <Link href="/admin/notices" className={btn.ghost}>공지</Link>
           <Link href="/admin/aj" className={btn.primary}>AJ 랭킹</Link>
         </>} />
