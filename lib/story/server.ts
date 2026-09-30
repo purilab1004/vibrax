@@ -3,7 +3,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   STORY_SOURCE, STORY_STATE_KEY, digestGame, planPrompt, detectPrompt, episodePrompt, parseJson,
-  composeEpisodeHtml, storyExcerpt, mergeCovered, realAdditions,
+  composeEpisodeHtml, storyExcerpt, parseEpisode, mergeCovered, realAdditions,
   type StoryGame, type StoryPlan, type PlanEpisode, type DetectResult, type EpisodeDraft, type StoryCut, type StoryElement, type PrevEpisode, type StoryGameState,
 } from './core'
 
@@ -93,7 +93,7 @@ export interface WriteArgs {
 export async function writeEpisode(sb: SupabaseClient, llm: Llm, a: WriteArgs): Promise<{ id: string; title: string }> {
   const prompt = episodePrompt({ game: a.game, episodeNo: a.episodeNo, hero: a.hero, world: a.world, focus: a.focus, hint: a.hint, prev: a.prev.slice(-4), cuts: a.cuts })
   let draft: EpisodeDraft | null = null
-  for (let i = 0; i < 2 && !draft?.html; i++) draft = parseJson<EpisodeDraft>(await llm(prompt, { maxTokens: 4000, purpose: 'write', gameId: a.game.id }))
+  for (let i = 0; i < 3 && !draft?.html; i++) draft = parseEpisode(await llm(prompt, { maxTokens: 4000, purpose: 'write', gameId: a.game.id }))
   if (!draft?.title || !draft.html) throw new Error('episode generation failed')
   const now = new Date().toISOString()
   const { data, error } = await sb.from('blog_posts').insert([{

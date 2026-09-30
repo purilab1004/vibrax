@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { composeEpisodeHtml, realAdditions, mergeCovered, parseJson, digestGame } from './core'
+import { composeEpisodeHtml, realAdditions, mergeCovered, parseJson, digestGame, parseEpisode } from './core'
 
 test('composeEpisodeHtml: [[CUT:n]] 자리에 컷을 넣고, 자리 없는 컷은 문단 사이에 끼운다', () => {
   const html = '<p>a</p><p>[[CUT:1]]</p><p>b</p><p>c</p>'
@@ -40,4 +40,17 @@ test('digestGame: base64·style 을 버리고 이름 줄만 남긴다', () => {
   const d = digestGame(html)
   assert.match(d, /새싹 마을/)
   assert.doesNotMatch(d, /AAAA|foo\(\)/)
+})
+
+test('parseEpisode: 태그 형식은 본문 따옴표에 깨지지 않고, JSON 도 받는다', () => {
+  const t = parseEpisode('<title>용의 둥지</title>\n<excerpt>"오너라"</excerpt>\n<body><p>"크아앙!" 드래곤이 "울었다".</p></body>')
+  assert.deepEqual(t, { title: '용의 둥지', excerpt: '"오너라"', html: '<p>"크아앙!" 드래곤이 "울었다".</p>' })
+  assert.equal(parseEpisode('{"title":"a","excerpt":"b","html":"<p>c</p>"}')?.html, '<p>c</p>')
+  assert.equal(parseEpisode('실패'), null)
+})
+
+test('composeEpisodeHtml: 마커 옆에 붙은 컷 설명 글은 버린다', () => {
+  const out = composeEpisodeHtml('<p>a</p><p>[[CUT:1]] 동굴에 들어서는 장면</p><p>b</p>', [{ url: 'u' }])
+  assert.doesNotMatch(out, /장면/)
+  assert.match(out, /<p>a<\/p><figure class="story-cut">.*<\/figure><p>b<\/p>/)
 })

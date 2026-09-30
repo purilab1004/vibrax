@@ -142,13 +142,25 @@ export function episodePrompt(e: EpisodeInput): string {
     '- 짧은 문단, 대사와 긴장감, 마지막 문단은 다음이 궁금해지는 절단(클리프행어).',
     '- 1200~2000자. 문단 8~16개.',
     e.cuts.length
-      ? `- 웹툰 컷 ${e.cuts.length}장을 본문 사이에 넣는다. 컷이 들어갈 자리에 단독 문단으로 [[CUT:1]] ... [[CUT:${e.cuts.length}]] 를 순서대로 한 번씩. 각 컷 설명: ${e.cuts.map((c, i) => `${i + 1}=${c.caption ?? '게임 장면'}`).join(', ')}`
+      ? `- 웹툰 컷 ${e.cuts.length}장을 본문 사이에 넣는다. 컷이 들어갈 자리에 마커만 있는 단독 문단(컷 설명 글은 쓰지 말 것)으로 [[CUT:1]] ... [[CUT:${e.cuts.length}]] 를 순서대로 한 번씩. 각 컷 설명: ${e.cuts.map((c, i) => `${i + 1}=${c.caption ?? '게임 장면'}`).join(', ')}`
       : null,
     '- html 은 <p>, <strong>, <em> 만 사용. 대사는 <p>"…"</p>.',
     '- title 은 "N화" 없이 회차 제목만(예: "용의 둥지에서 보석 드래곤을 만나다"). 25자 이내.',
     '- excerpt 는 다음 화가 궁금해지는 한 줄(70자 이내).',
-    '출력은 JSON 하나만: {"title":"...","excerpt":"...","html":"<p>...</p>"}',
+    '출력은 아래 태그 세 개만(설명·코드펜스 없이):',
+    '<title>회차 제목</title>',
+    '<excerpt>한 줄</excerpt>',
+    '<body><p>...</p>...</body>',
   ].filter(v => v !== null).join('\n')
+}
+
+/** 회차 출력 파싱 — 태그 형식(<title>/<excerpt>/<body>)을 우선, 예전 JSON 형식도 받는다. 본문의 따옴표에 깨지지 않는다 */
+export function parseEpisode(text: string): EpisodeDraft | null {
+  const tag = (n: string) => text.match(new RegExp(`<${n}>([\\s\\S]*?)</${n}>`, 'i'))?.[1]?.trim()
+  const title = tag('title'), body = tag('body')
+  if (title && body) return { title, excerpt: tag('excerpt') ?? '', html: body }
+  const j = parseJson<EpisodeDraft>(text)
+  return j?.title && j.html ? j : null
 }
 
 // ── 파싱·조립 ──────────────────────────────────────────────────────────────────
@@ -168,7 +180,8 @@ export function cutFigure(c: StoryCut): string {
 /** 본문의 [[CUT:n]] 자리에 컷 이미지를 넣는다. 자리를 못 받은 컷은 적당한 간격으로 끼워 넣는다 */
 export function composeEpisodeHtml(html: string, cuts: StoryCut[]): string {
   const used = new Set<number>()
-  let out = html.replace(/<p>\s*\[\[CUT:(\d+)\]\]\s*<\/p>|\[\[CUT:(\d+)\]\]/g, (_m, a, b) => {
+  // 마커가 든 문단은 통째로 컷이 된다(모델이 마커 옆에 컷 설명을 붙여 쓰는 경우가 있어 그 글은 버림)
+  let out = html.replace(/<p>[^<]*?\[\[CUT:(\d+)\]\][\s\S]*?<\/p>|\[\[CUT:(\d+)\]\]/g, (_m, a, b) => {
     const i = Number(a ?? b) - 1
     if (!cuts[i] || used.has(i)) return ''
     used.add(i)
