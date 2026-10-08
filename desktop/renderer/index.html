@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-src game:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>Vibrex</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="top">
+  <div class="brand"><img src="../assets/icon.png" alt=""><b>Vibrex</b><span>Builder</span></div>
+  <div id="projTitle" class="ptitle"></div>
+  <div class="topright">
+    <span id="bal" class="pill" title="프롬코인 잔액 · 생성 1회 비용"></span>
+    <button id="wsBtn" class="ghost" title="게임을 저장할 폴더">📁 <span id="wsName"></span></button>
+    <button id="logoutBtn" class="ghost">로그아웃</button>
+  </div>
+</header>
+
+<main id="app">
+  <aside id="side">
+    <div class="sect"><span>프로젝트</span><button id="newBtn" class="mini">＋ 새 게임</button></div>
+    <ul id="projects"></ul>
+    <div class="sect"><span>파일</span><button id="folderBtn" class="mini" title="폴더 열기">열기</button></div>
+    <ul id="files"></ul>
+  </aside>
+
+  <section id="center">
+    <div class="tabs">
+      <button data-tab="preview" class="on">▶ 미리보기</button>
+      <button data-tab="code">{ } 코드</button>
+      <div class="grow"></div>
+      <select id="verSel" title="버전"></select>
+      <button id="reloadBtn" class="ghost" title="다시 실행">↻</button>
+      <button id="browserBtn" class="ghost">브라우저로 열기</button>
+      <button id="publishBtn" class="accent">vibrexcup 에 게시 ↗</button>
+    </div>
+    <div id="previewWrap" class="pane on">
+      <iframe id="preview" sandbox="allow-scripts allow-same-origin allow-pointer-lock" allow="autoplay; fullscreen; gamepad"></iframe>
+      <div id="empty" class="empty">
+        <img src="../assets/icon.png" alt="">
+        <h2>프롬프트로 게임을 만들어 보세요</h2>
+        <p>오른쪽 채팅에 만들고 싶은 게임을 적으면 vibrexcup 생성 엔진이 게임을 만들고,<br>내 컴퓨터 폴더에 <code>index.html</code> 과 버전 파일로 저장해요.</p>
+        <div class="ideas"></div>
+      </div>
+      <div id="building" class="building"><div class="spin"></div><b>게임을 만드는 중…</b><span id="buildStat"></span><pre id="codeTail"></pre></div>
+    </div>
+    <div id="codeWrap" class="pane">
+      <div class="codebar"><span id="codeFile">index.html</span><div class="grow"></div><button id="saveBtn" class="mini">저장 (⌘S)</button></div>
+      <textarea id="code" spellcheck="false"></textarea>
+    </div>
+  </section>
+
+  <aside id="chat">
+    <div class="sect"><span>AI 빌더</span><span id="costHint" class="hint"></span></div>
+    <div id="msgs"></div>
+    <form id="ask">
+      <textarea id="prompt" rows="3" placeholder="예) 우주선이 운석을 피하는 슈팅 게임, 점수와 3단계 보스"></textarea>
+      <div class="askbar"><span class="hint">Enter 보내기 · Shift+Enter 줄바꿈</span><button type="button" id="stopBtn" class="ghost hidden">■ 멈춤</button><button type="submit" id="sendBtn" class="accent">만들기</button></div>
+    </form>
+  </aside>
+</main>
+
+<div id="login" class="overlay">
+  <div class="card">
+    <img src="../assets/icon.png" alt="">
+    <h1>Vibrex</h1>
+    <p>프롬프트로 게임을 만드는 데스크톱 빌더.<br>vibrexcup <b>개발자 API 키</b>로 로그인하세요.</p>
+    <ol>
+      <li><a href="#" data-ext="https://vibrexcup.com/profile#api">vibrexcup.com → 내 정보 → AJ API</a> 에서 <b>개발자 API 키</b> 발급</li>
+      <li>아래에 붙여 넣기 (키는 이 컴퓨터의 키체인에 암호화해 저장)</li>
+    </ol>
+    <input id="keyIn" type="password" placeholder="vxaj_…" autocomplete="off">
+    <button id="keyBtn" class="accent big">로그인</button>
+    <p id="keyErr" class="err"></p>
+    <p class="small">게임 생성 1회마다 프롬코인이 차감돼요 · <a href="#" data-ext="https://vibrexcup.com/credits">충전</a> · <a href="#" data-ext="https://vibrexcup.com/dev#builder">도움말</a></p>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

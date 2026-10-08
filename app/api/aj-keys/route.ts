@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     if (balance < s.minBalanceToIssue) return Response.json({ error: `개발자 API 키는 프롬코인이 있어야 발급돼요 (현재 ${balance}). 충전 후 다시 시도하세요.`, charge: '/credits' }, { status: 402 })
   }
   const k = generateKey()
-  const scopes = kind === 'chrome' ? ['chat', 'profile'] : ['chat', 'profile', 'tts']
+  const scopes = kind === 'chrome' ? ['chat', 'profile'] : ['chat', 'profile', 'tts', 'build']
   const { data: row, error: insErr } = await admin.from('aj_api_keys').insert([{ user_id: user.id, kind, name, prefix: k.prefix, key_hash: k.hash, scopes }] as never).select('id,kind,name,prefix,scopes,created_at').maybeSingle()
   if (insErr || !row) return Response.json({ error: insErr?.message ?? 'insert failed' }, { status: 500 })
   return Response.json({ key: k.raw, row })

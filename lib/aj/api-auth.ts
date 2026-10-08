@@ -5,7 +5,7 @@ import { rateLimit } from '@/lib/security/ratelimit'
 import type { AvatarConfig } from '@/lib/jeumto/config'
 
 export const API_KEY_PREFIX = 'vxaj_'
-export type Scope = 'chat' | 'profile' | 'tts'
+export type Scope = 'chat' | 'profile' | 'tts' | 'build'   // build = 데스크톱 게임 빌더 (개발자 API 키면 모두 허용)
 export type KeyKind = 'chrome' | 'api'
 
 export interface ApiSettings { chromeDailyQuota: number; apiDailyQuota: number; perMinute: number; maxKeysPerUser: number; creditsPerChat: number; creditsPerTts: number; minBalanceToIssue: number }
@@ -65,7 +65,7 @@ export async function authenticateApi(req: Request, scope: Scope, opts: { count?
   if (error) return apiError(503, 'api not ready (migration missing)')
   const k = key as { id: string; user_id: string; kind: KeyKind; scopes: string[]; revoked_at: string | null; calls_today: number; calls_day: string | null } | null
   if (!k || k.revoked_at) return apiError(401, 'invalid or revoked api key')
-  if (!k.scopes.includes(scope)) return apiError(403, `scope '${scope}' not granted`)
+  if (!k.scopes.includes(scope) && !(scope === 'build' && k.kind === 'api')) return apiError(403, `scope '${scope}' not granted`)   // 예전에 만든 개발자 키도 빌더에 쓸 수 있게
   const s = await loadApiSettings()
   // 크롬 확장 키는 브라우저 확장에서 온 요청만. 확장의 GET 요청엔 Origin 이 안 붙으므로
   // Origin(chrome-extension://…) 또는 확장이 항상 보내는 X-Vibrex-Ext 헤더 중 하나로 식별한다. 그 외 사용은 유료 API 키로.

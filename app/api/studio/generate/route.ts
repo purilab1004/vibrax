@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@/lib/supabase/server'
+import { resolveStudioActor } from '@/lib/studio/actor'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logServerError } from '@/lib/log/server'
 import { GENERATION_COST } from '@/lib/studio/constants'
@@ -66,9 +66,11 @@ export async function POST(req: Request) {
     return new Response('bad request', { status: 400 })
   }
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return new Response('unauthorized', { status: 401 })
+  // 웹(쿠키) 또는 데스크톱 빌더(개발자 API 키) — 키로 오면 서비스 롤이므로 아래에서 프로젝트 주인을 직접 확인
+  const actor = await resolveStudioActor(req)
+  if (actor instanceof Response) return actor
+  const supabase = actor.db
+  const user = { id: actor.userId }
 
   // 밴 유저 차단 + 생성 비용을 설정에서 읽기 (실패 시 GENERATION_COST 폴백)
   const [{ data: profileRow }, { data: costRow }] = await Promise.all([
@@ -93,7 +95,7 @@ export async function POST(req: Request) {
 
   // RLS로 본인 프로젝트만 조회됨 — 없으면 404
   const { data: project } = await supabase
-    .from('studio_projects').select('id, title').eq('id', projectId).maybeSingle()
+    .from('studio_projects').select('id, title').eq('id', projectId).eq('user_id', user.id).maybeSingle()
   if (!project) return new Response('not found', { status: 404 })
 
   // 컨텍스트(최신 버전·대화) 먼저 — 첫 생성이면 템플릿(기본 셋팅 게임)을 1차로 확인한다
@@ -114,10 +116,7 @@ export async function POST(req: Request) {
   // 크레딧 원자적 차감 — 실패 경로에서 이 ref로 환불 (관리자는 차감 없음)
   const spendRef = `gen:${projectId}:${crypto.randomUUID()}`
   if (chargeUser) {
-    const { error: spendError } = await supabase.rpc('spend_credits', {
-      p_amount: cost,
-      p_ref: spendRef,
-    } as never)
+    const { error: spendError } = await actor.spend(cost, spendRef)
     if (spendError) {
       const insufficient = spendError.message.includes('INSUFFICIENT_CREDITS')
       return new Response(insufficient ? 'insufficient credits' : 'spend failed', {
@@ -299,7 +298,7 @@ export async function POST(req: Request) {
     }
   } catch (e) { console.error('[studio/generate] media pick failed', e); mediaAssets = [] }
   if (chargeUser && assetCost > 0) {
-    const { error: assetSpendError } = await supabase.rpc('spend_credits', { p_amount: assetCost, p_ref: spendRef + ':assets' } as never)
+    const { error: assetSpendError } = await actor.spend(assetCost, spendRef + ':assets')
     if (assetSpendError) {
       assetCost = 0
       await refund()
