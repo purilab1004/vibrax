@@ -1,4 +1,4 @@
-:root {
+:root { color-scheme: dark;
   --bg: #0e1016; --panel: #151821; --panel2: #1b1f2b; --line: #262b3a; --text: #e7e9f0; --dim: #8b91a5;
   --accent: #6d5cff; --accent2: #a78bfa; --ok: #34d399; --err: #f87171;
   font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
@@ -95,3 +95,11 @@ select { background: var(--panel2); color: var(--text); border: 1px solid var(--
 .big { width: 100%; padding: 11px; font-size: 14px; }
 .err { color: var(--err) !important; min-height: 1em; }
 .small { font-size: 11.5px; }
+
+/* 스크롤바: 어두운 배경에 맞게 얇고 투명 (Cursor 처럼) — 트랙 없음, 손잡이만 옅게, 올리면 조금 밝게 */
+* { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .14) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; background: transparent; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .12); border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .26); background-clip: padding-box; }
+::-webkit-scrollbar-thumb:active { background: rgba(167, 139, 250, .55); background-clip: padding-box; }

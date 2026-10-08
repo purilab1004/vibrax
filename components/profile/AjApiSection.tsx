@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 
-interface KeyRow { id: string; kind: 'chrome' | 'api'; name: string; prefix: string; scopes: string[]; calls_total: number; calls_today: number; calls_day: string | null; last_used_at: string | null; revoked_at: string | null; created_at: string }
+interface KeyRow { id: string; kind: 'chrome' | 'api'; name: string; prefix: string; scopes: string[]; calls_total: number; calls_today: number; calls_day: string | null; last_used_at: string | null; revoked_at: string | null; created_at: string; stored?: boolean }
 interface Settings { chromeDailyQuota: number; apiDailyQuota: number; perMinute: number; maxKeysPerUser: number; creditsPerChat: number; creditsPerTts: number; minBalanceToIssue: number }
 interface State { ready: boolean; keys: KeyRow[]; settings: Settings; balance: number }
 
@@ -33,6 +33,28 @@ export default function AjApiSection() {
     catch (e) { setErr(e instanceof Error ? e.message : '폐기 실패') } finally { setBusy(null) }
   }
   const copy = async () => { if (!fresh) return; try { await navigator.clipboard.writeText(fresh.key); setCopied(true) } catch { /* ignore */ } }
+  // 키 원문 보기·복사 (보관된 키만) — 한 번 받아 온 원문은 화면을 떠날 때까지 기억
+  const [shown, setShown] = useState<Record<string, string>>({})
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const fetchKey = async (id: string) => {
+    if (shown[id]) return shown[id]
+    const r = await fetch('/api/aj-keys?reveal=' + id, { cache: 'no-store' }); const j = await r.json()
+    if (!r.ok) { setErr(j.error ?? '키를 불러오지 못했어요'); return null }
+    setShown(m => ({ ...m, [id]: j.key })); return j.key as string
+  }
+  const toggleShow = async (id: string) => { if (shown[id]) setShown(m => { const n = { ...m }; delete n[id]; return n }); else await fetchKey(id) }
+  const copyKey = async (id: string) => { const k = await fetchKey(id); if (!k) return; try { await navigator.clipboard.writeText(k); setCopiedId(id); setTimeout(() => setCopiedId(c => (c === id ? null : c)), 1500) } catch { /* ignore */ } }
+  const keyLine = (k: KeyRow) => (
+    <div className="flex items-start gap-2">
+      <code className="flex-1 min-w-0 break-all rounded-lg bg-[#f5efe3] px-2.5 py-1.5 text-[12px] leading-relaxed text-[#241f17] font-mono">{shown[k.id] ?? `${k.prefix}${'•'.repeat(18)}`}</code>
+      {k.stored ? (
+        <>
+          <button onClick={() => toggleShow(k.id)} className="shrink-0 h-8 px-2.5 rounded-lg border border-[#ddd3bf] text-[11.5px] font-semibold text-[#4a4337] hover:border-[#2563eb] hover:text-[#2563eb]">{shown[k.id] ? '숨기기' : '보기'}</button>
+          <button onClick={() => copyKey(k.id)} className="shrink-0 h-8 px-2.5 rounded-lg bg-[#241f17] text-white text-[11.5px] font-bold">{copiedId === k.id ? '복사됨 ✓' : '복사'}</button>
+        </>
+      ) : <span className="shrink-0 self-center text-[11px] text-[#9d9280]" title="예전에 발급한 키는 원문이 보관되지 않아요. 폐기 후 새로 발급하면 언제든 다시 볼 수 있어요.">원문 미보관</span>}
+    </div>
+  )
 
   const s = st?.settings
   const active = (st?.keys ?? []).filter(k => !k.revoked_at)
@@ -60,9 +82,9 @@ const { reply } = await r.json()`
 
         {fresh && (
           <div className="mt-4 rounded-xl border border-[#2563eb]/40 bg-[#2563eb]/[0.05] p-4">
-            <p className="text-[12.5px] font-bold text-[#241f17]">{fresh.kind === 'chrome' ? '크롬 확장 키' : '개발자 API 키'}가 발급됐어요. <span className="text-[#e11d48]">지금만 볼 수 있어요</span> — 복사해서 안전한 곳에 두세요.</p>
+            <p className="text-[12.5px] font-bold text-[#241f17]">{fresh.kind === 'chrome' ? '크롬 확장 키' : '개발자 API 키'}가 발급됐어요. 복사해서 쓰세요 — 아래 키 목록에서도 언제든 다시 보고 복사할 수 있어요.</p>
             <div className="mt-2 flex items-center gap-2">
-              <code className="flex-1 min-w-0 truncate rounded-lg bg-white border border-[#ddd3bf] px-3 py-2 text-[12.5px] text-[#241f17]">{fresh.key}</code>
+              <code className="flex-1 min-w-0 break-all rounded-lg bg-white border border-[#ddd3bf] px-3 py-2 text-[12.5px] text-[#241f17] font-mono">{fresh.key}</code>
               <button onClick={copy} className="h-9 px-3 rounded-lg bg-[#241f17] text-white text-[12px] font-bold shrink-0">{copied ? '복사됨 ✓' : '복사'}</button>
             </div>
             {fresh.kind === 'chrome' && <p className="mt-2 text-[12px] text-[#6b6152]">확장 팝업의 “키 붙여넣기”에 넣으면 바로 연결돼요.</p>}
@@ -89,7 +111,8 @@ const { reply } = await r.json()`
           <div className="mt-4 flex items-center gap-2 flex-wrap">
             {chromeKey ? (
               <>
-                <span className="text-[12px] text-[#4a4337]">연결된 키 <code className="bg-[#f5efe3] px-1.5 py-0.5 rounded">{chromeKey.prefix}…</code> · 오늘 {chromeKey.calls_day === new Date().toISOString().slice(0, 10) ? chromeKey.calls_today : 0}/{s?.chromeDailyQuota} · 누적 {chromeKey.calls_total}</span>
+                <div className="w-full">{keyLine(chromeKey)}</div>
+                <span className="text-[12px] text-[#6b6152]">오늘 {chromeKey.calls_day === new Date().toISOString().slice(0, 10) ? chromeKey.calls_today : 0}/{s?.chromeDailyQuota} · 누적 {chromeKey.calls_total}</span>
                 <button onClick={() => revoke(chromeKey.id)} disabled={!!busy} className="h-8 px-3 rounded-lg border border-[#ddd3bf] text-[12px] font-semibold text-[#6b6152] hover:border-[#e11d48] hover:text-[#e11d48] disabled:opacity-50">키 폐기</button>
               </>
             ) : (
@@ -115,10 +138,12 @@ const { reply } = await r.json()`
           {apiKeys.length > 0 && (
             <ul className="mt-4 divide-y divide-[#f0e9dc]">
               {apiKeys.map(k => (
-                <li key={k.id} className="py-2 flex items-center gap-3">
-                  <code className="text-[12px] bg-[#f5efe3] px-1.5 py-0.5 rounded">{k.prefix}…</code>
+                <li key={k.id} className="py-3 space-y-1.5">
+                  {keyLine(k)}
+                  <div className="flex items-center gap-3">
                   <span className="flex-1 min-w-0 text-[12px] text-[#6b6152] truncate">{k.name} · 오늘 {k.calls_day === new Date().toISOString().slice(0, 10) ? k.calls_today : 0} · 누적 {k.calls_total}{k.last_used_at ? ` · ${new Date(k.last_used_at).toLocaleDateString()}` : ''}</span>
                   <button onClick={() => revoke(k.id)} disabled={!!busy} className="text-[11.5px] font-semibold text-[#9d9280] hover:text-[#e11d48] disabled:opacity-50">폐기</button>
+                  </div>
                 </li>
               ))}
             </ul>
