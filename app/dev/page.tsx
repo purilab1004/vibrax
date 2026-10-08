@@ -1,8 +1,9 @@
 'use client'
-// /dev — 개발자 가이드: 내 AJ 를 밖에서 쓰기 (크롬 확장 · 개발자 API). 가이드라인 시트 한 장.
-import { useEffect, useState } from 'react'
+// /dev — 개발자 페이지: 데스크톱 게임 빌더(Vibrex) · 크롬 확장 · 개발자 API. 검정 바탕 + 보라 포인트의 제품 랜딩 형식
+import { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { useLang } from '@/lib/i18n/context'
+import { devDisplay, devMono } from '@/lib/fonts'
 
 const SITE = 'https://vibrexcup.com'
 // Chrome 웹스토어 게시 후 실제 항목 URL 로 교체 (null 이면 '심사 중' 표시)
@@ -155,6 +156,55 @@ X-AJ-Name: <url-encoded name>   X-AJ-Charged: 1   X-AJ-Quota: 13/5000` },
   },
 } as const
 
+const LAND = {
+  ko: {
+    eyebrow: 'VIBREXCUP FOR DEVELOPERS',
+    h1a: '프롬프트를 게임으로,', h1b: '내 컴퓨터에서.',
+    sub: 'Vibrex 는 설치해서 쓰는 게임 빌더예요. 만들고 싶은 게임을 적으면 vibrexcup 생성 엔진이 게임을 짓고, 내 폴더에 진짜 파일로 남깁니다. 내 AJ 는 크롬 확장과 API 로 어디서든 불러요.',
+    dlMac: 'Mac 다운로드', dlMacIntel: 'Intel Mac', dlWin: 'Windows 다운로드', key: '키 발급', other: '다른 OS',
+    news: 'WHAT’S NEW', newsItems: [['🎮 Vibrex 0.1.0 출시', '데스크톱 게임 빌더 미리보기 빌드 — Mac · Windows', '#builder'], ['AJ 개발자 API', '내 AJ 와 대화·목소리를 내 앱에서', '#api'], ['크롬 확장', '웹스토어 심사 중', '#chrome']],
+    shotCap: 'Vibrex — 프롬프트 한 줄로 만든 벽돌깨기, 이어서 "배경을 우주로"',
+    rows: [
+      { id: 'builder', h: '말하면 게임이 지어져요', p: '"우주 슈팅, 보스 3단계" 처럼 적으면 웹 스튜디오와 같은 엔진·템플릿·에셋으로 게임을 만들어요. 코드가 실시간으로 흘러가고, 이어서 말하면 그 위에 고쳐요. 실패하면 프롬코인은 자동 환불.', link: '다운로드', href: '#cta' },
+      { id: 'files', h: '내 컴퓨터에 남는 진짜 파일', p: '문서 › Vibrex Games 에 index.html, 버전별 versions/v1.html…, game.json, README.md 가 생겨요. 앱 안에서 바로 플레이하고, 코드 탭에서 고쳐 저장하면 다시 실행돼요. 웹 스튜디오와 같은 프로젝트라 vibrexcup 에 바로 게시할 수 있어요.', link: '사용법 보기', href: '#start' },
+      { id: 'chrome', h: '내 AJ 를 모든 웹페이지 위에', p: '크롬 확장을 켜면 내 AJ 캐릭터가 페이지 위를 걸어 다니다가, 클릭하면 지금 보는 페이지를 읽고 대화해요. 이름·성격·말투·내 게임 지식이 그대로 따라와요. 무료 · 하루 200회.', link: '설치 방법', href: '#start' },
+      { id: 'api', h: '개발자 API 로 내 앱에', p: 'REST 한 번이면 웹·앱·디스코드 봇에서 내 AJ 와 대화하고(스트리밍), AJ 목소리(TTS)로 읽어 줘요. CORS 가 열려 있어 브라우저에서도 바로. 같은 키로 데스크톱 빌더도 씁니다.', link: 'API 레퍼런스', href: '#ref' },
+    ],
+    waysH: '만드는 방식에 맞게',
+    ways: [['🖥', '데스크톱 빌더', 'Mac · Windows 앱. 프롬프트 → 게임 → 내 폴더의 파일.', '생성 1회 = 스튜디오 요금'], ['🧩', '크롬 확장', '내 AJ 가 웹페이지 위에. 읽고, 대화하고, 따라다녀요.', '무료 · 하루 200회'], ['⚡', '개발자 API', 'chat · tts · profile · build 엔드포인트. 스트리밍 지원.', '채팅 1 · TTS 2 프롬코인']],
+    startH: '몇 분이면 시작해요',
+    startBig: ['QUICK START', '첫 게임을 5분 안에', '설치 → 키 붙여넣기 → "벽돌깨기" 한 줄. 첫 버전이 폴더에 생기는 것까지 그대로 따라 해 보세요.'],
+    startSide: [['GUIDE', '크롬 확장 설치하고 AJ 소환하기', '#chrome-steps'], ['REFERENCE', '/api/v1 엔드포인트와 에러 코드', '#ref']],
+    stepsH: '설치부터 첫 게임까지',
+    ctaH1: '몇 분 만에,', ctaH2: '진짜 게임을.', ctaSub: 'Vibrex 0.1.0 · 무료 다운로드 · 생성할 때만 프롬코인',
+    unsigned: '미리보기 빌드라 처음 열 때 경고가 떠요 — Mac: 경고창에서 "완료" 후 시스템 설정 › 개인정보 보호 및 보안 › 맨 아래 "그래도 열기" · Windows: 추가 정보 → 실행',
+    copy: '복사', copied: '복사됨',
+  },
+  en: {
+    eyebrow: 'VIBREXCUP FOR DEVELOPERS',
+    h1a: 'Prompts into games,', h1b: 'on your own machine.',
+    sub: 'Vibrex is a game builder you install. Describe a game and the vibrexcup engine builds it, leaving real files in your folder. Your AJ comes along everywhere through the Chrome extension and the API.',
+    dlMac: 'Download for Mac', dlMacIntel: 'Intel Mac', dlWin: 'Download for Windows', key: 'Get a key', other: 'Other OS',
+    news: 'WHAT’S NEW', newsItems: [['🎮 Vibrex 0.1.0 is out', 'Desktop game builder preview — Mac · Windows', '#builder'], ['AJ developer API', 'Chat and voice from your AJ, in your app', '#api'], ['Chrome extension', 'In Web Store review', '#chrome']],
+    shotCap: 'Vibrex — a brick breaker from one prompt, then "make the background space"',
+    rows: [
+      { id: 'builder', h: 'Say it, and the game gets built', p: 'Write "space shooter with a 3-phase boss" and the same engine, templates and assets as the web studio build it. Code streams in live; keep talking to edit on top. Failed builds are refunded automatically.', link: 'Download', href: '#cta' },
+      { id: 'files', h: 'Real files on your disk', p: 'Documents › Vibrex Games gets index.html, versions/v1.html…, game.json and README.md. Play inside the app, edit the code tab and save to rerun. Projects are shared with the web studio, so you can publish on vibrexcup right away.', link: 'How it works', href: '#start' },
+      { id: 'chrome', h: 'Your AJ on every web page', p: 'Turn on the Chrome extension and your AJ walks around the page; click it to chat about what you are reading. Name, personality, tone and game knowledge come along. Free · 200 a day.', link: 'Install', href: '#start' },
+      { id: 'api', h: 'Into your app with the developer API', p: 'One REST call and your AJ chats (streaming) and speaks (TTS) inside your web app, mobile app or Discord bot. CORS is open for browsers. The same key powers the desktop builder.', link: 'API reference', href: '#ref' },
+    ],
+    waysH: 'Built for the way you make things',
+    ways: [['🖥', 'Desktop builder', 'Mac · Windows app. Prompt → game → files in your folder.', 'Studio pricing per build'], ['🧩', 'Chrome extension', 'Your AJ on top of the web. Reads, chats, follows you.', 'Free · 200 a day'], ['⚡', 'Developer API', 'chat · tts · profile · build endpoints, streaming.', 'chat 1 · TTS 2 credits']],
+    startH: 'Up and running in minutes',
+    startBig: ['QUICK START', 'Your first game in 5 minutes', 'Install → paste a key → type "brick breaker". Follow along until v1 shows up in your folder.'],
+    startSide: [['GUIDE', 'Install the extension and summon AJ', '#chrome-steps'], ['REFERENCE', '/api/v1 endpoints and error codes', '#ref']],
+    stepsH: 'From install to your first game',
+    ctaH1: 'Build something', ctaH2: 'real in minutes.', ctaSub: 'Vibrex 0.1.0 · free download · credits only when you build',
+    unsigned: 'Preview build, so the first launch warns you — Mac: click Done, then System Settings › Privacy & Security › "Open Anyway" · Windows: More info → Run anyway',
+    copy: 'Copy', copied: 'Copied',
+  },
+} as const
+
 const CURL = `curl -N ${SITE}/api/v1/aj/chat \\
   -H "Authorization: Bearer vxaj_…" \\
   -H "Content-Type: application/json" \\
@@ -181,197 +231,320 @@ const TTS = `const r = await fetch('${SITE}/api/v1/aj/tts', {
 })
 new Audio(URL.createObjectURL(await r.blob())).play()`
 
-function H({ id, children }: { id: string; children: React.ReactNode }) {
-  return <h2 id={id} className="scroll-mt-24 text-[22px] md:text-[26px] font-extrabold tracking-tight text-[#241f17]">{children}</h2>
-}
+// ── 공통 조각 ──
+const mono = devMono.className
+const disp = devDisplay.className
 
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className={`${mono} flex items-center gap-2 text-[11.5px] tracking-[0.18em] text-[#c4a3ff]`}><span className="w-1.5 h-1.5 bg-[#9046ff]" />{children}</p>
+}
+function H2({ id, children, center }: { id?: string; children: React.ReactNode; center?: boolean }) {
+  return <h2 id={id} className={`${disp} scroll-mt-28 text-[30px] md:text-[44px] leading-[1.1] font-bold tracking-tight text-white ${center ? 'text-center' : ''}`}>{children}</h2>
+}
 function Code({ title, code }: { title: string; code: string }) {
   return (
-    <div className="rounded-xl overflow-hidden border border-[#2c3242] bg-[#171b26]">
-      <div className="px-3 py-1.5 text-[10.5px] font-pixel tracking-widest text-[#8f8a7c] border-b border-[#2c3242]">{title}</div>
-      <pre className="p-4 text-[12px] leading-relaxed text-[#ece7dc] overflow-x-auto"><code>{code}</code></pre>
+    <div className="rounded-2xl overflow-hidden border border-[#2a2933] bg-[#0c0b10]">
+      <div className={`${mono} px-4 py-2 text-[10.5px] tracking-widest text-[#8d8a99] border-b border-[#2a2933]`}>{title}</div>
+      <pre className={`${mono} p-4 text-[12px] leading-relaxed text-[#e6e3f0] overflow-x-auto`}><code>{code}</code></pre>
+    </div>
+  )
+}
+const AppleIco = () => <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-current" aria-hidden><path d="M16.37 12.76c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.65.8-3.33.8-.7 0-1.75-.78-2.88-.76-1.48.02-2.85.87-3.6 2.19-1.55 2.68-.4 6.64 1.1 8.82.74 1.06 1.61 2.26 2.75 2.21 1.11-.05 1.52-.71 2.86-.71 1.33 0 1.71.71 2.88.69 1.19-.02 1.94-1.08 2.66-2.15.85-1.23 1.19-2.43 1.21-2.49-.03-.01-2.32-.89-2.35-3.56ZM14.18 6.3c.6-.74 1.02-1.75.9-2.77-.87.04-1.94.59-2.56 1.32-.56.64-1.05 1.68-.92 2.67.97.08 1.97-.49 2.58-1.22Z" /></svg>
+const WinIco = () => <svg viewBox="0 0 24 24" className="w-[16px] h-[16px] fill-current" aria-hidden><path d="M3 5.5 10.5 4.4v7.1H3V5.5Zm0 13 7.5 1.1v-7H3v5.9Zm8.4 1.2L21 21V12.6h-9.6v7.1Zm0-15.4v7.2H21V3l-9.6 1.3Z" /></svg>
+const DlIco = () => <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current" strokeWidth="2" aria-hidden><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14" strokeLinecap="round" strokeLinejoin="round" /></svg>
+
+// 내 OS 에 맞는 다운로드를 앞에 (서버 렌더는 Mac 기준, 화면에서 바로 바뀜)
+const noSub = () => () => {}
+function useOs(): 'mac' | 'win' {
+  return useSyncExternalStore(noSub, () => (/Windows/i.test(navigator.userAgent) ? 'win' : 'mac'), () => 'mac')
+}
+function DownloadButtons({ l, light }: { l: (typeof LAND)['ko'] | (typeof LAND)['en']; light?: boolean }) {
+  const os = useOs()
+  const base = `inline-flex items-center gap-2.5 h-12 px-6 rounded-2xl text-[15px] font-semibold transition ${mono}`
+  const prim = light ? 'bg-white text-[#0b0a0f] hover:bg-[#f1ebff]' : 'bg-[#9046ff] text-white hover:bg-[#7d33f0] shadow-[0_8px_30px_rgba(144,70,255,.35)]'
+  const sec = light ? 'bg-white/10 text-white border border-white/40 hover:bg-white/20' : 'bg-transparent text-white border border-[#3a3845] hover:border-[#9046ff]'
+  const mac = <a key="mac" href={`${BUILDER_REL}/${BUILDER_DL[0].file}`} className={`${base} ${os === 'mac' ? prim : sec}`}><AppleIco />{l.dlMac}<DlIco /></a>
+  const win = <a key="win" href={`${BUILDER_REL}/${BUILDER_DL[2].file}`} className={`${base} ${os === 'win' ? prim : sec}`}><WinIco />{l.dlWin}<DlIco /></a>
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-3">{os === 'win' ? [win, mac] : [mac, win]}</div>
+      <p className={`${mono} text-[11.5px] ${light ? 'text-white/70' : 'text-[#8d8a99]'}`}>
+        <a href={`${BUILDER_REL}/${BUILDER_DL[1].file}`} className="underline underline-offset-4 hover:text-white">{l.dlMacIntel} (.dmg)</a>
+        <span className="mx-2">·</span>v{BUILDER_VERSION}<span className="mx-2">·</span>
+        <a href={`https://github.com/purilab1004/vibrax/releases/tag/builder-v${BUILDER_VERSION}`} target="_blank" rel="noopener" className="underline underline-offset-4 hover:text-white">{l.other}</a>
+      </p>
+    </div>
+  )
+}
+
+// ── 오른쪽 카드에 들어가는 제품 화면 목업 ──
+function ChatMock({ ko }: { ko: boolean }) {
+  const lines = ['<canvas id="game"></canvas>', 'const ship = { x: 240, y: 560, hp: 3 }', 'function spawnBoss(phase) {', '  boss = { phase, hp: 900 * phase }', '}', 'requestAnimationFrame(loop)']
+  return (
+    <div className="p-6 md:p-8 space-y-3">
+      <div className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-[#9046ff]/25 border border-[#9046ff]/50 px-4 py-2.5 text-[13.5px] text-white">{ko ? '우주선 슈팅 게임, 보스 3단계로 만들어 줘' : 'Space shooter with a 3-phase boss'}</div>
+      <div className="max-w-[90%] rounded-2xl rounded-bl-md bg-[#25242d] border border-[#33323c] px-4 py-3 text-[13px] text-[#d9d6e4] leading-relaxed">{ko ? '「스타 브레이커」를 만들고 있어요. 운석 회피, 파워업, 3단계로 변신하는 보스까지 넣을게요.' : 'Building "Star Breaker" — meteor dodging, power-ups and a boss that transforms in 3 phases.'}</div>
+      <div className="rounded-xl bg-[#0c0b10] border border-[#2a2933] p-4">
+        <p className={`${mono} text-[10.5px] tracking-widest text-[#c4a3ff] flex items-center gap-2`}><span className="w-2 h-2 rounded-full bg-[#9046ff] animate-pulse" />{ko ? '코드 23,117자 작성 중' : 'Writing 23,117 chars'}</p>
+        <pre className={`${mono} mt-2 text-[11.5px] leading-[1.6] text-[#a99bff] overflow-hidden`}>{lines.map((x, i) => <div key={i} className="dev-type" style={{ animationDelay: `${i * 0.35}s` }}>{x}</div>)}</pre>
+      </div>
+    </div>
+  )
+}
+function FilesMock() {
+  const files: [string, string, number][] = [['📁', 'Vibrex Games', 0], ['📁', 'Star Breaker', 1], ['📄', 'index.html', 2], ['📄', 'game.json', 2], ['📄', 'README.md', 2], ['📁', 'versions', 2], ['📄', 'v1.html', 3], ['📄', 'v2.html', 3], ['📄', 'v3.html', 3]]
+  return (
+    <div className="grid grid-cols-[minmax(0,200px)_minmax(0,1fr)] h-full">
+      <div className="border-r border-[#2a2933] p-5 space-y-1.5">
+        {files.map(([ic, n, d]) => <p key={n} className={`${mono} text-[12.5px] ${n === 'index.html' ? 'text-[#c4a3ff]' : 'text-[#bdb9c9]'}`} style={{ paddingLeft: d * 14 }}>{ic} {n}</p>)}
+      </div>
+      <div className="p-5">
+        <p className={`${mono} text-[11px] text-[#8d8a99]`}>index.html</p>
+        <pre className={`${mono} mt-2 text-[11.5px] leading-[1.65] text-[#d9d6e4] overflow-hidden`}>{`<!doctype html>
+<html lang="ko">
+<title>Star Breaker</title>
+<style>
+  body { background: #05010f }
+  canvas { touch-action: none }
+</style>
+<script>
+  const STAGES = 3
+  let score = 0, best =
+    +localStorage.best || 0
+</script>`}</pre>
+      </div>
+    </div>
+  )
+}
+function BrowserMock({ ko }: { ko: boolean }) {
+  return (
+    <div className="p-5 md:p-7 h-full">
+      <div className="rounded-xl overflow-hidden border border-[#33323c] bg-[#f6f4f0] h-full min-h-[260px] relative">
+        <div className="flex items-center gap-1.5 px-3 py-2 bg-[#e8e5df]"><span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" /><span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" /><span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" /><span className={`${mono} ml-3 text-[10.5px] text-[#7a756c] bg-white rounded px-2 py-0.5`}>news.example.com/article</span></div>
+        <div className="p-5 space-y-2.5">
+          <div className="h-4 w-3/4 rounded bg-[#d9d4ca]" /><div className="h-2.5 w-full rounded bg-[#e6e1d8]" /><div className="h-2.5 w-11/12 rounded bg-[#e6e1d8]" /><div className="h-2.5 w-4/5 rounded bg-[#e6e1d8]" /><div className="h-2.5 w-2/3 rounded bg-[#e6e1d8]" />
+        </div>
+        <div className="absolute right-4 bottom-3 flex items-end gap-2">
+          <div className="mb-14 max-w-[210px] rounded-2xl rounded-br-sm bg-white border border-[#e2ddd3] shadow-lg px-3 py-2 text-[12px] text-[#241f17]">{ko ? '요약하면 오늘 신작 게임 3개가 공개됐대! 같이 볼래?' : 'Short version: three new games dropped today. Want a look?'}</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon-512.png" alt="" className="w-16 h-16 rounded-2xl dev-bob" />
+        </div>
+      </div>
+    </div>
+  )
+}
+function ApiMock() {
+  const [t, setT] = useState(0)
+  const tabs = [['curl', CURL], ['js', JS], ['python', PY], ['tts', TTS]] as const
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex gap-1 px-4 pt-4">{tabs.map(([n], i) => <button key={n} onClick={() => setT(i)} className={`${mono} text-[12px] px-3 py-1.5 rounded-lg ${t === i ? 'bg-[#9046ff] text-white' : 'text-[#8d8a99] hover:text-white'}`}>{n}</button>)}</div>
+      <pre className={`${mono} flex-1 m-4 mt-3 p-4 rounded-xl bg-[#0c0b10] border border-[#2a2933] text-[11.5px] leading-relaxed text-[#e6e3f0] overflow-auto`}><code>{tabs[t][1]}</code></pre>
     </div>
   )
 }
 
 export default function DevPage() {
   const { lang } = useLang()
-  const c = COPY[lang]
-  const ids = ['start', 'builder', 'chrome', 'api', 'ref', 'code', 'price', 'faq']
-  const [active, setActive] = useState('start')
-  useEffect(() => {
-    const els = ids.map(i => document.getElementById(i)).filter(Boolean) as HTMLElement[]
-    const onScroll = () => { const y = window.scrollY + 140; let cur = ids[0]; for (const e of els) if (e.offsetTop <= y) cur = e.id; setActive(cur) }
-    window.addEventListener('scroll', onScroll, { passive: true }); onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const c = COPY[lang], l = LAND[lang], ko = lang === 'ko'
+  const [copied, setCopied] = useState(false)
+  const mocks = [<ChatMock key="a" ko={ko} />, <FilesMock key="b" />, <BrowserMock key="c" ko={ko} />, <ApiMock key="d" />]
 
   return (
-    <div className="max-w-6xl mx-auto px-6 pb-20">
-      {/* 히어로 */}
-      <section className="pt-10 md:pt-14 pb-8 border-b border-[#ebe4d6]">
-        <p className="font-pixel text-[10px] tracking-[0.3em] text-[#2563eb]">{c.badge}</p>
-        <h1 className="mt-2 text-[34px] md:text-[46px] leading-[1.08] font-extrabold tracking-tight text-[#241f17]">{c.heading}</h1>
-        <p className="mt-3 text-[14.5px] text-[#4a4337] whitespace-pre-line max-w-2xl">{c.tagline}</p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          {CHROME_STORE_URL
-            ? <a href={CHROME_STORE_URL} target="_blank" rel="noopener" className="inline-flex items-center h-11 px-5 rounded-xl bg-[#241f17] text-white text-[13.5px] font-bold hover:bg-[#3a332a]">🧩 {c.chrome.store}</a>
-            : <span className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-[#241f17]/60 text-white text-[13.5px] font-bold cursor-default" title={c.chrome.storePending}>🧩 {c.chrome.store} <span className="text-[10px] font-pixel tracking-widest bg-white/20 rounded px-1.5 py-0.5">{lang === 'ko' ? '심사 중' : 'IN REVIEW'}</span></span>}
-          <a href="#builder" className="inline-flex items-center h-11 px-5 rounded-xl bg-[#6d5cff] text-white text-[13.5px] font-bold hover:bg-[#5b4ae6]">🖥 {lang === 'ko' ? '데스크톱 게임 빌더 받기' : 'Get the desktop builder'}</a>
-          <Link href="/profile#api" className="inline-flex items-center h-11 px-5 rounded-xl bg-white border border-[#ddd3bf] text-[13.5px] font-semibold text-[#241f17] hover:border-[#2563eb] hover:text-[#2563eb]">{c.cta2}</Link>
+    <div className="bg-black text-white overflow-hidden">
+      <style>{`
+        @keyframes devType { from { opacity: 0; transform: translateX(-6px) } to { opacity: 1; transform: none } }
+        .dev-type { opacity: 0; animation: devType .5s ease forwards }
+        @keyframes devBob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+        .dev-bob { animation: devBob 2.4s ease-in-out infinite }
+        @keyframes devFloat { 0%,100% { transform: translateY(0) rotate(-2deg) } 50% { transform: translateY(-14px) rotate(2deg) } }
+        .dev-float { animation: devFloat 5s ease-in-out infinite }
+      `}</style>
+
+      {/* ── 히어로 ── */}
+      <section className="relative max-w-[1280px] mx-auto px-6 md:px-10 pt-16 md:pt-24 pb-14">
+        <div className="pointer-events-none absolute -top-40 left-1/3 w-[640px] h-[640px] rounded-full bg-[#9046ff]/20 blur-[140px]" />
+        <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_260px] gap-12 items-start">
+          <div>
+            <Eyebrow>{l.eyebrow}</Eyebrow>
+            <h1 className={`${disp} mt-5 text-[42px] sm:text-[58px] md:text-[76px] leading-[1.02] font-bold tracking-[-0.02em]`}>{l.h1a}<br /><span className="bg-gradient-to-r from-[#c4a3ff] via-[#9046ff] to-[#c4a3ff] bg-clip-text text-transparent">{l.h1b}</span></h1>
+            <p className="mt-6 max-w-[640px] text-[16.5px] md:text-[18px] leading-[1.65] text-[#bdb9c9]">{l.sub}</p>
+            <div className="mt-9 flex flex-col sm:flex-row gap-4 sm:items-start">
+              <DownloadButtons l={l} />
+              <Link href="/profile#api" className={`${mono} inline-flex items-center h-12 px-5 rounded-2xl border border-[#3a3845] text-[14px] text-[#d9d6e4] hover:border-[#9046ff] hover:text-white`}>🔑 {l.key}</Link>
+            </div>
+          </div>
+          <aside className="hidden lg:block pt-2">
+            <p className={`${mono} flex items-center gap-2 text-[11.5px] tracking-[0.18em] text-[#c4a3ff]`}><span className="w-1.5 h-1.5 bg-[#9046ff]" />{l.news}</p>
+            <ul className="mt-4 divide-y divide-[#26252d]">
+              {l.newsItems.map(([t, d, href]) => <li key={t} className="py-4"><a href={href} className="group block"><p className="text-[14.5px] font-semibold text-white group-hover:text-[#c4a3ff]">{t} <span className="text-[#8d8a99]">↗</span></p><p className="mt-1 text-[13px] text-[#8d8a99]">{d}</p></a></li>)}
+            </ul>
+          </aside>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[200px_minmax(0,1fr)] gap-10 pt-8">
-        {/* 목차 */}
-        <aside className="hidden lg:block">
-          <nav className="sticky top-24 flex flex-col gap-1" aria-label="on this page">
-            {ids.map((id, i) => <a key={id} href={`#${id}`} className={`text-[12.5px] px-2 py-1 rounded-md transition-colors ${active === id ? 'bg-[#2563eb]/10 text-[#2563eb] font-bold' : 'text-[#6b6152] hover:text-[#241f17]'}`}>{c.toc[i]}</a>)}
-          </nav>
-        </aside>
+      {/* ── 제품 화면 (보라 판 위) ── */}
+      <section className="max-w-[1360px] mx-auto px-4 md:px-10">
+        <div className="relative rounded-[28px] md:rounded-[40px] bg-gradient-to-br from-[#b78bff] via-[#9046ff] to-[#6a2ce0] p-3 sm:p-6 md:p-12 pb-10 md:pb-16">
+          <div className="rounded-2xl overflow-hidden border border-black/40 bg-[#0e1016] shadow-[0_40px_120px_rgba(20,0,60,.55)]">
+            <div className="flex items-center gap-1.5 px-3 py-2 bg-[#151821] border-b border-[#262b3a]"><span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" /><span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" /><span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" /><span className={`${mono} ml-3 text-[11px] text-[#8b91a5]`}>Vibrex</span></div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/dev/builder-shot.webp" alt="Vibrex desktop builder" className="w-full block" />
+          </div>
+          <div className={`${mono} hidden md:block absolute -bottom-8 right-10 lg:right-16 w-[380px] rounded-2xl border border-[#2a2933] bg-[#0c0b10] shadow-2xl`}>
+            <div className="flex items-center gap-1.5 px-3 py-2 border-b border-[#2a2933]"><span className="w-2 h-2 rounded-full bg-[#3a3845]" /><span className="w-2 h-2 rounded-full bg-[#3a3845]" /><span className="w-2 h-2 rounded-full bg-[#3a3845]" /><span className="ml-auto text-[10px] text-[#8d8a99]">Terminal</span></div>
+            <pre className="p-4 text-[11.5px] leading-relaxed text-[#e6e3f0]"><span className="text-[#9046ff]">~/Vibrex Games/Star Breaker</span>{'\n'}<span className="text-[#8d8a99]">$</span> ls{'\n'}README.md  game.json  index.html  versions/{'\n'}<span className="text-[#8d8a99]">$</span> open index.html <span className="animate-pulse">▋</span></pre>
+          </div>
+        </div>
+        <p className={`${mono} mt-12 md:mt-14 text-center text-[12px] text-[#8d8a99]`}>{l.shotCap}</p>
+      </section>
 
-        <div className="space-y-14 min-w-0">
-          {/* 시작하기 */}
-          <section className="space-y-4">
-            <H id="start">{c.start.h}</H>
-            <p className="text-[14px] text-[#4a4337]">{c.start.p}</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {c.start.rows.map(([t, d, price, key], i) => (
-                <div key={t} className={`rounded-2xl border p-5 ${['border-[#059669]/40 bg-[#059669]/[0.04]', 'border-[#7c3aed]/40 bg-[#7c3aed]/[0.04]', 'border-[#6d5cff]/50 bg-[#6d5cff]/[0.05]'][i]}`}>
-                  <div className="flex items-start justify-between gap-2"><p className="text-[16px] font-bold text-[#241f17]">{t}</p><span className={`shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full text-white ${['bg-[#059669]', 'bg-[#7c3aed]', 'bg-[#6d5cff]'][i]}`}>{price}</span></div>
-                  <p className="mt-2 text-[13px] text-[#4a4337]">{d}</p>
-                  <p className="mt-2 text-[11.5px] text-[#857a68]">{lang === 'ko' ? '필요한 키' : 'Key'}: <b>{key}</b></p>
-                </div>
-              ))}
+      {/* ── 기능 줄: 글 왼쪽 · 카드 오른쪽 ── */}
+      <section className="max-w-[1280px] mx-auto px-6 md:px-10 py-20 md:py-28 space-y-20 md:space-y-28">
+        {l.rows.map((r, i) => (
+          <div key={r.id} id={r.id} className="scroll-mt-28 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-10 lg:gap-16 items-center">
+            <div>
+              <p className={`${mono} text-[11.5px] tracking-[0.18em] text-[#8d8a99]`}>0{i + 1}</p>
+              <h3 className={`${disp} mt-3 text-[26px] md:text-[34px] leading-[1.15] font-bold`}>{r.h}</h3>
+              <p className="mt-5 text-[15.5px] leading-[1.75] text-[#bdb9c9] max-w-[520px]">{r.p}</p>
+              <a href={r.href} className={`${mono} mt-6 inline-flex items-center gap-1 text-[14px] text-white hover:text-[#c4a3ff]`}>{r.link} <span>›</span></a>
             </div>
-          </section>
+            <div className="rounded-[28px] bg-[#17161c] border border-[#26252d] min-h-[300px] md:min-h-[360px] overflow-hidden">{mocks[i]}</div>
+          </div>
+        ))}
+      </section>
 
-          {/* 데스크톱 게임 빌더 */}
-          <section className="space-y-5">
-            <H id="builder">{c.builder.h}</H>
-            <p className="text-[14px] text-[#4a4337] max-w-3xl">{c.builder.p}</p>
-            <div className="rounded-2xl overflow-hidden border border-[#262b3a] bg-[#0e1016] shadow-[0_20px_60px_rgba(30,20,80,.25)]">
-              <div className="flex items-center gap-1.5 px-3 py-2 bg-[#151821] border-b border-[#262b3a]"><span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" /><span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" /><span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" /><span className="ml-3 text-[11px] text-[#8b91a5]">Vibrex</span></div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/dev/builder-shot.webp" alt="Vibrex desktop builder" className="w-full block" loading="lazy" />
+      {/* ── 세 가지 방식 ── */}
+      <section className="max-w-[1280px] mx-auto px-6 md:px-10 pb-24">
+        <H2 center>{l.waysH}</H2>
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-12">
+          {l.ways.map(([ic, t, d, price]) => (
+            <div key={t}>
+              <p className="text-[26px]">{ic}</p>
+              <p className={`${disp} mt-4 text-[20px] font-bold`}>{t}</p>
+              <p className="mt-2 text-[14.5px] leading-relaxed text-[#bdb9c9]">{d}</p>
+              <p className={`${mono} mt-4 inline-block text-[11.5px] text-[#c4a3ff] border border-[#9046ff]/40 rounded-full px-3 py-1`}>{price}</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {BUILDER_DL.map((d) => (
-                <a key={d.os} href={`${BUILDER_REL}/${d.file}`} className="group rounded-2xl border border-[#ddd3bf] bg-white p-4 hover:border-[#6d5cff] hover:shadow-md transition">
-                  <p className="text-[11px] font-pixel tracking-widest text-[#6d5cff]">{c.builder.dl}</p>
-                  <p className="mt-1 text-[16px] font-extrabold text-[#241f17]">{d.icon} {d.os === 'mac-arm64' ? c.builder.mac : d.os === 'mac-x64' ? c.builder.macIntel : c.builder.win}</p>
-                  <p className="mt-1 text-[11.5px] text-[#857a68]">{d.file.split('.').pop()} · {d.size} · {c.builder.ver} {BUILDER_VERSION}</p>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 빠른 시작 ── */}
+      <section id="start" className="scroll-mt-24 max-w-[1280px] mx-auto px-4 md:px-10 pb-24">
+        <div className="rounded-[28px] md:rounded-[40px] bg-[#17161c] border border-[#26252d] p-6 md:p-14">
+          <H2 center>{l.startH}</H2>
+          <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-3xl bg-[#9046ff] p-7 md:p-9 flex flex-col">
+              <p className={`${mono} text-[11.5px] tracking-widest text-white/80`}>{'{ '}{l.startBig[0]}{' }'}</p>
+              <p className={`${disp} mt-3 text-[26px] md:text-[30px] font-bold leading-tight`}>{l.startBig[1]}</p>
+              <p className="mt-3 text-[14.5px] text-white/85 leading-relaxed">{l.startBig[2]}</p>
+              <ol className="mt-7 space-y-3">
+                {c.builder.steps.map(([t, d], i) => (
+                  <li key={t} className="flex gap-3 rounded-2xl bg-black/20 p-4"><span className={`${mono} shrink-0 w-7 h-7 rounded-full bg-white text-[#9046ff] text-[13px] font-bold flex items-center justify-center`}>{i + 1}</span><div><p className="font-semibold text-[14.5px]">{t}</p><p className="mt-0.5 text-[13px] text-white/80 leading-relaxed">{d}</p></div></li>
+                ))}
+              </ol>
+            </div>
+            <div className="grid grid-rows-2 gap-4">
+              {l.startSide.map(([tag, t, href], i) => (
+                <a key={t} href={href} className="group rounded-3xl bg-[#211f28] border border-[#2e2c37] p-7 flex items-center justify-between gap-4 hover:border-[#9046ff]/60">
+                  <div><p className={`${mono} text-[11.5px] tracking-widest text-[#c4a3ff]`}>{'{ '}{tag}{' }'}</p><p className={`${disp} mt-2 text-[20px] md:text-[22px] font-bold leading-snug group-hover:text-[#c4a3ff]`}>{t}</p></div>
+                  <span className={`shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center text-[34px] ${i ? 'bg-[#2c2a35]' : 'bg-[#c4a3ff]'}`}>{i ? '{ }' : '🧩'}</span>
                 </a>
               ))}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {c.builder.features.map(([t, d]) => (
-                <div key={t} className="rounded-2xl border border-[#ebe4d6] bg-white p-4"><p className="text-[14.5px] font-bold text-[#241f17]">{t}</p><p className="mt-1 text-[13px] text-[#4a4337]">{d}</p></div>
-              ))}
-            </div>
-            <ol className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {c.builder.steps.map(([t, d], i) => (
-                <li key={t} className="rounded-2xl border border-[#ebe4d6] bg-white p-4"><p className="font-pixel text-[10px] tracking-widest text-[#6d5cff]">STEP {i + 1}</p><p className="mt-1 text-[14px] font-bold text-[#241f17]">{t}</p><p className="mt-1 text-[12.5px] text-[#4a4337]">{d}</p></li>
-              ))}
-            </ol>
-            <p className="text-[12.5px] text-[#857a68] bg-[#faf8f3] border border-[#ebe4d6] rounded-xl px-4 py-3">{c.builder.note}</p>
-          </section>
-
-          {/* 크롬 확장 */}
-          <section className="space-y-4">
-            <H id="chrome">{c.chrome.h}</H>
-            {!CHROME_STORE_URL && <p className="text-[12.5px] text-[#b45309] bg-[#f59e0b]/10 border border-[#f59e0b]/30 rounded-xl px-4 py-3">{c.chrome.storePending}</p>}
-            <ol className="space-y-3">
-              {c.chrome.steps.map(([t, d], i) => (
-                <li key={t} className="flex gap-4 rounded-2xl border border-[#ebe4d6] bg-white p-4">
-                  <span className="shrink-0 w-8 h-8 rounded-full bg-[#241f17] text-white text-[13px] font-black flex items-center justify-center">{i + 1}</span>
-                  <div><p className="text-[14.5px] font-bold text-[#241f17]">{t}{i === 0 && CHROME_STORE_URL && <> · <a href={CHROME_STORE_URL} target="_blank" rel="noopener" className="text-[#2563eb] underline">Chrome Web Store</a></>}</p><p className="mt-1 text-[13px] text-[#4a4337]">{d}</p></div>
-                </li>
-              ))}
-            </ol>
-            <p className="text-[12.5px] text-[#857a68] bg-[#faf8f3] border border-[#ebe4d6] rounded-xl px-4 py-3">{c.chrome.note} <Link href="/dev/extension-privacy" className="text-[#2563eb] underline">{lang === 'ko' ? '확장 개인정보처리방침' : 'Extension privacy policy'}</Link></p>
-          </section>
-
-          {/* 개발자 키 */}
-          <section className="space-y-4">
-            <H id="api">{c.api.h}</H>
-            <p className="text-[14px] text-[#4a4337]">{c.api.p}</p>
-            <ol className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {c.api.steps.map(([t, d], i) => (
-                <li key={t} className="rounded-2xl border border-[#ebe4d6] bg-white p-4"><p className="font-pixel text-[10px] tracking-widest text-[#7c3aed]">STEP {i + 1}</p><p className="mt-1 text-[14px] font-bold text-[#241f17]">{t}</p><p className="mt-1 text-[12.5px] text-[#4a4337]">{d}</p></li>
-              ))}
-            </ol>
-          </section>
-
-          {/* 레퍼런스 */}
-          <section className="space-y-4">
-            <H id="ref">{c.ref.h}</H>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="rounded-xl border border-[#ebe4d6] bg-white p-4"><p className="font-pixel text-[10px] tracking-widest text-[#857a68]">{c.ref.base}</p><code className="mt-1 block text-[13px] font-bold text-[#241f17]">{SITE}</code></div>
-              <div className="rounded-xl border border-[#ebe4d6] bg-white p-4"><p className="font-pixel text-[10px] tracking-widest text-[#857a68]">{c.ref.auth}</p><p className="mt-1 text-[12.5px] text-[#4a4337]">{c.ref.authP}</p></div>
-            </div>
-            <div className="space-y-4">
-              {c.ref.endpoints.map(e => (
-                <div key={e.p} className="rounded-2xl border border-[#ebe4d6] bg-white overflow-hidden">
-                  <div className="flex items-center gap-3 px-4 py-3 border-b border-[#f0e9dc] bg-[#faf8f3]">
-                    <span className={`font-pixel text-[10px] px-2 py-1 rounded text-white ${e.m === 'GET' ? 'bg-[#059669]' : 'bg-[#2563eb]'}`}>{e.m}</span>
-                    <code className="text-[13.5px] font-bold text-[#241f17]">{e.p}</code>
-                    <span className="ml-auto text-[11px] text-[#857a68]">scope: {e.s}</span>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    <p className="text-[13px] text-[#4a4337]">{e.d}</p>
-                    <div className={`grid grid-cols-1 ${'req' in e ? 'lg:grid-cols-2' : ''} gap-3`}>
-                      {'req' in e && <Code title="REQUEST" code={e.req} />}
-                      <Code title="RESPONSE" code={e.res} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="rounded-2xl border border-[#ebe4d6] bg-white p-4">
-              <p className="font-pixel text-[10px] tracking-widest text-[#857a68] mb-2">ERRORS</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5">
-                {c.ref.errors.map(([code, d]) => <p key={code} className="text-[12.5px] text-[#4a4337]"><code className="inline-block w-10 font-bold text-[#e11d48]">{code}</code>{d}</p>)}
-              </div>
-            </div>
-          </section>
-
-          {/* 코드 예제 */}
-          <section className="space-y-4">
-            <H id="code">{c.code.h}</H>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <Code title="CURL · STREAMING" code={CURL} />
-              <Code title="JAVASCRIPT · BROWSER / NODE" code={JS} />
-              <Code title="PYTHON" code={PY} />
-              <Code title="TTS · PLAY REPLY IN AJ'S VOICE" code={TTS} />
-            </div>
-          </section>
-
-          {/* 요금 */}
-          <section className="space-y-4">
-            <H id="price">{c.price.h}</H>
-            <div className="overflow-x-auto rounded-2xl border border-[#ebe4d6] bg-white">
-              <table className="w-full text-[13px]">
-                <thead className="bg-[#faf8f3] text-[11.5px] text-[#6b6152]"><tr>{(lang === 'ko' ? ['키', '요금', '일 한도', '분당', '스코프'] : ['Key', 'Price', 'Daily', 'Per minute', 'Scopes']).map(h => <th key={h} className="text-left px-4 py-2.5 font-semibold">{h}</th>)}</tr></thead>
-                <tbody>{c.price.rows.map(r => <tr key={r[0]} className="border-t border-[#f0e9dc]">{r.map((v, i) => <td key={i} className={`px-4 py-3 ${i === 0 ? 'font-bold text-[#241f17]' : 'text-[#4a4337]'}`}>{v}</td>)}</tr>)}</tbody>
-              </table>
-            </div>
-            <p className="text-[12.5px] text-[#857a68]">{c.price.note} <Link href="/credits" className="text-[#2563eb] underline">/credits</Link></p>
-          </section>
-
-          {/* FAQ */}
-          <section className="space-y-3">
-            <H id="faq">{c.faq.h}</H>
-            {c.faq.items.map(([q, a]) => (
-              <details key={q} className="group rounded-xl border border-[#ebe4d6] bg-white px-4 py-3">
-                <summary className="cursor-pointer list-none flex items-center justify-between text-[14px] font-semibold text-[#241f17]">{q}<span className="text-[#9d9280] group-open:rotate-45 transition-transform">+</span></summary>
-                <p className="mt-2 text-[13px] text-[#4a4337]">{a}</p>
-              </details>
-            ))}
-          </section>
+          </div>
+          <p className={`${mono} mt-6 text-[12px] text-[#8d8a99] text-center`}>⚠ {l.unsigned}</p>
         </div>
-      </div>
+      </section>
+
+      {/* ── 크롬 확장 · API 키 단계 ── */}
+      <section id="chrome-steps" className="scroll-mt-24 max-w-[1280px] mx-auto px-6 md:px-10 pb-24 grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div>
+          <Eyebrow>CHROME EXTENSION</Eyebrow>
+          <h3 className={`${disp} mt-3 text-[26px] font-bold`}>{c.chrome.h}</h3>
+          {!CHROME_STORE_URL && <p className="mt-4 text-[13px] text-[#fbbf24] bg-[#fbbf24]/10 border border-[#fbbf24]/30 rounded-xl px-4 py-3">{c.chrome.storePending}</p>}
+          <ol className="mt-5 space-y-3">{c.chrome.steps.map(([t, d], i) => <li key={t} className="flex gap-4 rounded-2xl bg-[#17161c] border border-[#26252d] p-4"><span className={`${mono} shrink-0 w-7 h-7 rounded-full bg-[#9046ff] text-[12.5px] font-bold flex items-center justify-center`}>{i + 1}</span><div><p className="font-semibold text-[14.5px]">{t}</p><p className="mt-1 text-[13px] text-[#bdb9c9] leading-relaxed">{d}</p></div></li>)}</ol>
+          <p className="mt-4 text-[12.5px] text-[#8d8a99]">{c.chrome.note} <Link href="/dev/extension-privacy" className="underline underline-offset-4 hover:text-white">{ko ? '확장 개인정보처리방침' : 'Extension privacy policy'}</Link></p>
+        </div>
+        <div>
+          <Eyebrow>DEVELOPER API KEY</Eyebrow>
+          <h3 className={`${disp} mt-3 text-[26px] font-bold`}>{c.api.h}</h3>
+          <p className="mt-4 text-[14px] text-[#bdb9c9] leading-relaxed">{c.api.p}</p>
+          <ol className="mt-5 space-y-3">{c.api.steps.map(([t, d], i) => <li key={t} className="flex gap-4 rounded-2xl bg-[#17161c] border border-[#26252d] p-4"><span className={`${mono} shrink-0 w-7 h-7 rounded-full bg-[#2c2a35] text-[#c4a3ff] text-[12.5px] font-bold flex items-center justify-center`}>{i + 1}</span><div><p className="font-semibold text-[14.5px]">{t}</p><p className="mt-1 text-[13px] text-[#bdb9c9] leading-relaxed">{d}</p></div></li>)}</ol>
+        </div>
+      </section>
+
+      {/* ── API 레퍼런스 ── */}
+      <section className="max-w-[1280px] mx-auto px-6 md:px-10 pb-24">
+        <H2 id="ref">{c.ref.h}</H2>
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="rounded-2xl bg-[#17161c] border border-[#26252d] p-5">
+            <p className={`${mono} text-[11px] tracking-widest text-[#8d8a99]`}>{c.ref.base}</p>
+            <div className="mt-2 flex items-center gap-2"><code className={`${mono} text-[14px] text-white`}>{SITE}</code>
+              <button onClick={() => { void navigator.clipboard?.writeText(SITE); setCopied(true); setTimeout(() => setCopied(false), 1200) }} className={`${mono} ml-auto text-[11px] px-2.5 py-1 rounded-lg border border-[#3a3845] text-[#bdb9c9] hover:text-white`}>{copied ? l.copied : l.copy}</button></div>
+          </div>
+          <div className="rounded-2xl bg-[#17161c] border border-[#26252d] p-5"><p className={`${mono} text-[11px] tracking-widest text-[#8d8a99]`}>{c.ref.auth}</p><p className="mt-2 text-[13px] text-[#bdb9c9]">{c.ref.authP}</p></div>
+        </div>
+        <div className="mt-4 space-y-4">
+          {c.ref.endpoints.map(e => (
+            <details key={e.p} className="group rounded-2xl bg-[#17161c] border border-[#26252d] overflow-hidden" open={e.p.endsWith('/chat')}>
+              <summary className="cursor-pointer list-none flex items-center gap-3 px-5 py-4">
+                <span className={`${mono} text-[11px] px-2 py-1 rounded-md font-bold ${e.m === 'GET' ? 'bg-[#10b981]/15 text-[#34d399]' : 'bg-[#9046ff]/20 text-[#c4a3ff]'}`}>{e.m}</span>
+                <code className={`${mono} text-[14px] text-white`}>{e.p}</code>
+                <span className={`${mono} ml-auto text-[11px] text-[#8d8a99]`}>scope: {e.s}</span>
+                <span className="text-[#8d8a99] group-open:rotate-45 transition-transform">+</span>
+              </summary>
+              <div className="px-5 pb-5 space-y-3">
+                <p className="text-[13.5px] text-[#bdb9c9]">{e.d}</p>
+                <div className={`grid grid-cols-1 ${'req' in e ? 'lg:grid-cols-2' : ''} gap-3`}>
+                  {'req' in e && <Code title="REQUEST" code={e.req} />}
+                  <Code title="RESPONSE" code={e.res} />
+                </div>
+              </div>
+            </details>
+          ))}
+        </div>
+        <div className="mt-4 rounded-2xl bg-[#17161c] border border-[#26252d] p-5">
+          <p className={`${mono} text-[11px] tracking-widest text-[#8d8a99] mb-3`}>ERRORS</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">{c.ref.errors.map(([code, d]) => <p key={code} className="text-[13px] text-[#bdb9c9]"><code className={`${mono} inline-block w-11 font-bold text-[#f472b6]`}>{code}</code>{d}</p>)}</div>
+        </div>
+      </section>
+
+      {/* ── 요금 ── */}
+      <section className="max-w-[1280px] mx-auto px-6 md:px-10 pb-24">
+        <H2 id="price">{c.price.h}</H2>
+        <div className="mt-8 overflow-x-auto rounded-2xl bg-[#17161c] border border-[#26252d]">
+          <table className="w-full text-[13.5px] min-w-[640px]">
+            <thead className={`${mono} text-[11px] tracking-widest text-[#8d8a99]`}><tr>{(ko ? ['키', '요금', '일 한도', '분당', '스코프'] : ['KEY', 'PRICE', 'DAILY', 'PER MIN', 'SCOPES']).map(h => <th key={h} className="text-left px-5 py-3.5 font-medium">{h}</th>)}</tr></thead>
+            <tbody>{c.price.rows.map(r => <tr key={r[0]} className="border-t border-[#26252d]">{r.map((v, i) => <td key={i} className={`px-5 py-4 ${i === 0 ? 'font-semibold text-white' : 'text-[#bdb9c9]'}`}>{v}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+        <p className="mt-4 text-[12.5px] text-[#8d8a99]">{c.price.note} <Link href="/credits" className="underline underline-offset-4 hover:text-white">/credits</Link></p>
+      </section>
+
+      {/* ── 자주 묻는 질문 ── */}
+      <section className="max-w-[960px] mx-auto px-6 md:px-10 pb-24">
+        <H2 id="faq" center>{c.faq.h}</H2>
+        <div className="mt-10 divide-y divide-[#26252d] border-y border-[#26252d]">
+          {c.faq.items.map(([q, a]) => (
+            <details key={q} className="group py-5">
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-6 text-[16px] font-semibold">{q}<span className="shrink-0 w-8 h-8 rounded-full border border-[#3a3845] flex items-center justify-center text-[#c4a3ff] group-open:rotate-45 transition-transform">+</span></summary>
+              <p className="mt-3 pr-12 text-[14px] leading-relaxed text-[#bdb9c9]">{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 마지막 보라 띠 ── */}
+      <section id="cta" className="scroll-mt-24 px-3 md:px-6 pb-10">
+        <div className="relative overflow-hidden rounded-[32px] md:rounded-[44px] bg-[#9046ff] px-6 pt-20 md:pt-28 pb-44 md:pb-56 text-center">
+          <h2 className={`${disp} text-[40px] md:text-[68px] leading-[1.05] font-bold tracking-tight`}>{l.ctaH1}<br />{l.ctaH2}</h2>
+          <p className="mt-5 text-[17px] md:text-[20px] text-white/85">{l.ctaSub}</p>
+          <div className="mt-9 flex justify-center"><DownloadButtons l={l} light /></div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon-512.png" alt="" className="dev-float absolute left-1/2 -bottom-16 md:-bottom-20 -ml-[88px] md:-ml-[120px] w-44 md:w-60 rounded-[44px] shadow-[0_-10px_60px_rgba(0,0,0,.25)]" />
+        </div>
+      </section>
     </div>
   )
 }
