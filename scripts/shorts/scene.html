@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 쇼츠 장면 (1080×1920 의 절반 540×960 CSS px, 2배로 찍음) — make-short.mjs 가 window.SHORT 를 채워 넣는다 -->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 540px; height: 960px; overflow: hidden; background: #07060c; color: #fff;
+    font-family: "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", sans-serif; -webkit-font-smoothing: antialiased; }
+  .mono { font-family: Menlo, "SF Mono", Consolas, monospace; }
+  #bg { position: absolute; inset: 0; background: radial-gradient(circle at 50% 18%, #3b1d7a 0%, #120a26 45%, #07060c 75%); }
+  #bg::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 36px 36px; }
+  .scene { position: absolute; inset: 0; opacity: 0; transition: opacity .45s ease, transform .45s ease; transform: scale(.98); }
+  .scene.on { opacity: 1; transform: none; }
+
+  /* 1 훅 */
+  #hook { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 36px; }
+  #hook .logo { width: 92px; height: 92px; border-radius: 26px; box-shadow: 0 0 80px rgba(144,70,255,.7); }
+  #hook h1 { margin-top: 34px; font-size: 54px; line-height: 1.15; font-weight: 900; letter-spacing: -1.5px; }
+  #hook h1 em { font-style: normal; background: linear-gradient(90deg, #c4a3ff, #9046ff, #ff7ad9); -webkit-background-clip: text; color: transparent; }
+  #hook p { margin-top: 18px; font-size: 22px; color: #c9c3dc; font-weight: 600; }
+
+  /* 상단 고정 띠 (2~4 장면) */
+  #bar { position: absolute; left: 0; right: 0; top: 0; height: 92px; display: flex; align-items: center; gap: 12px; padding: 0 26px; opacity: 0; transition: opacity .4s; z-index: 5; }
+  #bar.on { opacity: 1; }
+  #bar img { width: 40px; height: 40px; border-radius: 11px; }
+  #bar b { font-size: 22px; font-weight: 900; }
+  #bar span { margin-left: auto; font-size: 15px; color: #c4a3ff; font-weight: 700; padding: 6px 12px; border: 1.5px solid rgba(196,163,255,.5); border-radius: 30px; }
+
+  /* 2 프롬프트 */
+  #ask { display: flex; flex-direction: column; justify-content: center; padding: 0 28px; }
+  #ask .lbl { font-size: 18px; color: #c4a3ff; font-weight: 800; letter-spacing: 1px; }
+  #ask .box { margin-top: 16px; min-height: 170px; border-radius: 26px; background: rgba(255,255,255,.06); border: 2px solid #9046ff; padding: 26px; font-size: 36px; line-height: 1.35; font-weight: 800; box-shadow: 0 0 60px rgba(144,70,255,.35); }
+  #ask .cur { display: inline-block; width: 4px; height: 40px; background: #fff; vertical-align: -6px; margin-left: 3px; animation: blink .8s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  #ask .btn { margin-top: 22px; align-self: flex-end; padding: 16px 34px; border-radius: 18px; background: #9046ff; font-size: 24px; font-weight: 900; transition: transform .15s; }
+  #ask .btn.press { transform: scale(.92); background: #b78bff; }
+
+  /* 3 코드 */
+  #build { padding: 120px 26px 0; }
+  #build .st { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 800; }
+  #build .dot { width: 14px; height: 14px; border-radius: 50%; background: #9046ff; box-shadow: 0 0 18px #9046ff; animation: pulse .7s ease-in-out infinite alternate; }
+  @keyframes pulse { to { transform: scale(1.5); opacity: .5; } }
+  #build .cnt { margin-left: auto; font-size: 20px; color: #c4a3ff; }
+  #build .desc { margin-top: 18px; font-size: 19px; line-height: 1.55; color: #ddd8ea; min-height: 90px; }
+  #build pre { margin-top: 18px; height: 560px; overflow: hidden; border-radius: 20px; background: #0c0a14; border: 1.5px solid #2a2440; padding: 18px; font-size: 12.5px; line-height: 1.55; color: #a99bff; white-space: pre-wrap; word-break: break-all;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%); }
+
+  /* 4 게임 */
+  #play { padding-top: 98px; }
+  #play .ttl { text-align: center; font-size: 30px; font-weight: 900; }
+  #play .ttl small { display: block; font-size: 17px; color: #34d399; font-weight: 800; letter-spacing: .5px; margin-bottom: 6px; }
+  #play .frame { position: absolute; left: 18px; right: 18px; top: 196px; bottom: 110px; border-radius: 26px; overflow: hidden; border: 3px solid #9046ff; box-shadow: 0 0 70px rgba(144,70,255,.45); background: #000; }
+  #play iframe { width: 100%; height: 100%; border: 0; display: block; }
+  #play .foot { position: absolute; left: 0; right: 0; bottom: 34px; text-align: center; font-size: 20px; color: #c9c3dc; font-weight: 700; }
+  #play .foot b { color: #fff; }
+
+  /* 5 엔딩 */
+  #end { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: linear-gradient(160deg, #a46bff, #7c2ff0 55%, #5a1fc4); }
+  #end .logo { width: 120px; height: 120px; border-radius: 32px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+  #end h2 { margin-top: 34px; font-size: 50px; line-height: 1.18; font-weight: 900; letter-spacing: -1px; }
+  #end .url { margin-top: 30px; padding: 18px 34px; border-radius: 22px; background: #fff; color: #5a1fc4; font-size: 34px; font-weight: 900; }
+  #end p { margin-top: 18px; font-size: 21px; color: rgba(255,255,255,.88); font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="bar"><img src="/logo.png" alt=""><b>vibrexcup</b><span>AI 게임 메이커</span></div>
+
+<section id="hook" class="scene"><img class="logo" src="/logo.png" alt=""><h1 id="hookH"></h1><p id="hookP"></p></section>
+<section id="ask" class="scene"><p class="lbl">💬 프롬프트 한 줄</p><div class="box"><span id="typed"></span><span class="cur"></span></div><div id="go" class="btn">만들기 ▶</div></section>
+<section id="build" class="scene"><div class="st"><span class="dot"></span>AI 가 게임을 만드는 중<span class="cnt mono" id="cnt">0자</span></div><p class="desc" id="desc"></p><pre class="mono" id="code"></pre></section>
+<section id="play" class="scene"><p class="ttl"><small>✓ 완성! 바로 플레이</small><span id="gtitle"></span></p><div class="frame"><iframe id="game" allow="autoplay"></iframe></div><p class="foot">프롬프트 한 줄 → <b id="secs"></b></p></section>
+<section id="end" class="scene"><img class="logo" src="/logo.png" alt=""><h2 id="endH"></h2><div class="url">vibrexcup.com</div><p id="endP"></p></section>
+
+<script>
+const S = window.SHORT
+const $ = (id) => document.getElementById(id)
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+const show = (id) => { document.querySelectorAll('.scene').forEach((s) => s.classList.toggle('on', s.id === id)); $('bar').classList.toggle('on', id !== 'hook' && id !== 'end') }
+$('hookH').innerHTML = S.hook; $('hookP').textContent = S.hookSub
+$('desc').textContent = S.desc; $('gtitle').textContent = '「' + S.title + '」'; $('secs').textContent = S.took
+$('endH').innerHTML = S.endH; $('endP').textContent = S.endP
+
+window.runShort = async function () {
+  const T = S.timing
+  show('hook'); await sleep(T.hook)
+  show('ask'); await sleep(450)
+  for (const ch of [...S.prompt]) { $('typed').textContent += ch; await sleep(ch === ' ' ? 40 : 75) }
+  await sleep(500); $('go').classList.add('press'); await sleep(220); $('go').classList.remove('press'); await sleep(250)
+  show('build')
+  const code = S.code, total = code.length, t0 = performance.now()
+  $('game').src = '/game.html'                                 // 코드가 흐르는 동안 게임을 미리 띄워 둔다
+  await new Promise((done) => {
+    const step = () => {
+      const u = Math.min(1, (performance.now() - t0) / T.build), n = Math.floor(total * u)
+      $('code').textContent = code.slice(Math.max(0, n - 1800), n); $('cnt').textContent = n.toLocaleString() + '자'
+      u < 1 ? requestAnimationFrame(step) : done()
+    }
+    step()
+  })
+  await sleep(300)
+  show('play'); window.__playing = true; await sleep(T.play); window.__playing = false
+  show('end'); await sleep(T.end)
+  window.__done = true
+}
+</script>
+</body>
+</html>
