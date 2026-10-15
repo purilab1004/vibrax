@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import MediaPicker, { type PickedAsset } from '@/components/studio/MediaPicker'
 import { useLang } from '@/lib/i18n/context'
 import EngineSelect from '@/components/studio/EngineSelect'
+import DevSpecPanel, { type DevPlanOption } from '@/components/studio/DevSpecPanel'
+import type { DevSpec } from '@/lib/studio/dev-spec'
 
 // 생성 대기 중 돌아가며 보여 주는 문구 — 심심하지 않게, 동물 친구들이 일하는 느낌으로
 const THINKING_KO = ['생각 중...', '야옹이가 요청을 해석하는 중...', '강아지가 열심히 고민하는 중...', '픽셀을 한 알씩 고르는 중...', '토끼가 규칙을 정리하는 중...', '거북이가 코드를 차근차근 쓰는 중...', '햄스터가 쳇바퀴 돌리며 계산하는 중...', '고양이가 버그를 노려보는 중...', '펭귄이 아이디어를 굴리는 중...', '다람쥐가 점수 규칙을 모으는 중...', '여우가 조작법을 다듬는 중...', '거의 다 됐어요, 마지막 손질 중...']
@@ -26,7 +28,7 @@ export default function StudioChat({
   usage?: { input: number; output: number; credits?: number; balance?: number } | null
   generationCost?: number
   error: string | null
-  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[], pickedAssets?: AttachAsset[]) => void
+  onSend: (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[], pickedAssets?: AttachAsset[], dev?: DevSpec) => void
   busy: boolean
   onStop?: () => void   // 진행 중 생성 취소(✕)
   /* 외부(학습 노트 '다음 도전')에서 입력창에 채워 넣을 문장 */
@@ -49,7 +51,7 @@ export default function StudioChat({
   const [pickerOpen, setPickerOpen] = useState(false)
   const assetIdsRef = useRef<string[]>([])
   const pickedMetaRef = useRef<AttachAsset[]>([])
-  const go = (p: string, imgs?: { media_type: string; data: string; previewUrl: string }[], snds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string) => onSend(p, imgs, snds, variantSlug, assetIdsRef.current.length ? assetIdsRef.current : undefined, pickedMetaRef.current.length ? pickedMetaRef.current : undefined)
+  const go = (p: string, imgs?: { media_type: string; data: string; previewUrl: string }[], snds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, dev?: DevSpec) => onSend(p, imgs, snds, variantSlug, assetIdsRef.current.length ? assetIdsRef.current : undefined, pickedMetaRef.current.length ? pickedMetaRef.current : undefined, dev)
   const fileRef = useRef<HTMLInputElement>(null)
   const soundRef = useRef<HTMLInputElement>(null)
   const addSounds = (files: FileList | null) => {
@@ -149,6 +151,29 @@ export default function StudioChat({
     setPlanData(null)
     go(augmented, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined, opt?.variantSlug)
   }
+  // ── 개발 AI 모드 — 첫 생성 전에 상세 설정(2D/3D·그래픽·플레이·스토리·조작·기기·난이도·목표)을 AI 가 채우고 사용자가 고친다 ──
+  const [devMode, setDevModeState] = useState(false)
+  useEffect(() => { try { if (localStorage.getItem('vx_studio_mode') === 'dev') setDevModeState(true) } catch { /* 저장소 없음 */ } }, [])   // eslint-disable-line react-hooks/set-state-in-effect
+  const setDevMode = (on: boolean) => { setDevModeState(on); try { localStorage.setItem('vx_studio_mode', on ? 'dev' : 'normal') } catch { /* 저장소 없음 */ } }
+  const [devPlan, setDevPlan] = useState<{ genre: string; spec: DevSpec; options: DevPlanOption[]; pending: { prompt: string; imgs: typeof attachments; snds: typeof sounds } } | null>(null)
+  const runDevPlan = async (prompt: string, imgs: typeof attachments, snds: typeof sounds) => {
+    setPlanning(true)
+    try {
+      const res = await fetch('/api/studio/plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, mode: 'dev' }) })
+      const data = await res.json() as { genre: string; spec: DevSpec; options: DevPlanOption[] }
+      setDevPlan({ genre: data.genre, spec: data.spec, options: data.options, pending: { prompt, imgs, snds } })
+    } catch {
+      go(prompt, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
+    } finally { setPlanning(false) }
+  }
+  const confirmDev = (spec: DevSpec) => {
+    if (!devPlan) return
+    const { prompt, imgs, snds } = devPlan.pending
+    setDevPlan(null)
+    go(prompt, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined, undefined, spec)
+  }
+  const cancelDev = () => { if (!devPlan) return; setInput(devPlan.pending.prompt); setDevPlan(null) }
+
   // 직접 정하기 → 카드 닫고 원래 설명을 입력창에 되살려 사용자가 이어서 조작을 적게 한다
   const editControls = () => {
     if (!planData) return
@@ -159,13 +184,14 @@ export default function StudioChat({
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     const p = input.trim()
-    if (!p || busy || planning || planData) return
+    if (!p || busy || planning || planData || devPlan) return
     setInput('')
     const imgs = attachments
     const snds = sounds
     setAttachments([]); setSounds([])
     assetIdsRef.current = picked.map(a => a.id); pickedMetaRef.current = picked.map(a => ({ name: a.name, kind: a.kind, url: a.url })); setPicked([])
     // 첫 게임 설명이고 조작을 안 적었으면 → 조작안 제안 단계
+    if (messages.length === 0 && devMode) { runDevPlan(p, imgs, snds); return }   // 개발 AI 모드: 상세 설정 단계
     if (messages.length === 0 && !hasControlWords(p)) { runPlan(p, imgs, snds); return }
     go(p, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined)
   }
@@ -180,9 +206,13 @@ export default function StudioChat({
             <span className="avatar-wave w-14 h-14 rounded-full inline-flex items-center justify-center text-2xl shadow-md overflow-hidden" aria-hidden>{ajAvatarUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={ajAvatarUrl} alt="" className="w-full h-full object-cover" /> : '🧸'}</span>
             <p className="mt-4 text-[14px] font-semibold text-[#241f17] flex items-center justify-center gap-2">
               <svg viewBox="0 0 24 24" className="w-4 h-4 animate-spin text-[#2563eb]" fill="none" aria-hidden><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" /><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
-              어울리는 조작 방식을 고르는 중…
+              {devMode ? '설명을 읽고 개발 설정을 채우는 중…' : '어울리는 조작 방식을 고르는 중…'}
             </p>
           </div>
+        )}
+        {/* 개발 AI 모드 상세 설정 */}
+        {messages.length === 0 && !streaming && devPlan && (
+          <DevSpecPanel prompt={devPlan.pending.prompt} genre={devPlan.genre} initial={devPlan.spec} options={devPlan.options} cost={generationCost} onConfirm={confirmDev} onCancel={cancelDev} />
         )}
         {/* 조작안 카드 — 사용자가 선택 */}
         {messages.length === 0 && !streaming && planData && (
@@ -207,7 +237,7 @@ export default function StudioChat({
             </div>
           </div>
         )}
-        {messages.length === 0 && !streaming && !planning && !planData && (
+        {messages.length === 0 && !streaming && !planning && !planData && !devPlan && (
           <div className="pt-10 text-center max-w-md mx-auto">
             <span className="avatar-wave w-14 h-14 rounded-full inline-flex items-center justify-center text-2xl shadow-md overflow-hidden" aria-hidden>{ajAvatarUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={ajAvatarUrl} alt="" className="w-full h-full object-cover" /> : '🧸'}</span>
             <p className="mt-3 text-[15px] font-semibold text-[#241f17]">{s.emptyPreview}</p>
@@ -404,6 +434,13 @@ export default function StudioChat({
           )}
           <div className="flex items-center justify-between px-3 pb-2.5">
             <div className="flex items-center gap-2">
+              {/* 일반 AI / 개발 AI 모드 — 개발 AI 는 첫 생성 전에 상세 설정 단계를 거친다 */}
+              <div className="flex items-center rounded-full bg-[#f1ede4] p-0.5 border border-[#e6dfd0]" role="radiogroup" aria-label="AI 모드">
+                <button type="button" role="radio" aria-checked={!devMode} onClick={() => setDevMode(false)} title="프롬프트만으로 바로 만들기"
+                  className={`h-7 px-2.5 rounded-full text-[11.5px] font-bold transition-colors ${!devMode ? 'bg-white text-[#241f17] shadow-sm' : 'text-[#9d9280] hover:text-[#4a4337]'}`}>일반 AI</button>
+                <button type="button" role="radio" aria-checked={devMode} onClick={() => setDevMode(true)} title="2D/3D·그래픽·플레이·스토리·조작·난이도를 정하고 만들기 (새 게임의 첫 생성에서)"
+                  className={`h-7 px-2.5 rounded-full text-[11.5px] font-bold transition-colors ${devMode ? 'bg-gradient-to-r from-[#7c3aed] to-[#2563eb] text-white shadow-sm' : 'text-[#9d9280] hover:text-[#4a4337]'}`}>🛠 개발 AI</button>
+              </div>
               {/* 이미지 첨부 */}
               <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={e => { addFiles(e.target.files); e.target.value = '' }} />
               <button

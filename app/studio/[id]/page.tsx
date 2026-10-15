@@ -18,6 +18,7 @@ import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import type { StudioProject, StudioVersionMeta } from '@/lib/supabase/types'
 import { loadAvatarConfig } from '@/lib/jeumto/storage'
 import { getEngine } from '@/lib/studio/engine'
+import type { DevSpec } from '@/lib/studio/dev-spec'
 
 export default function StudioComposerPage() {
   const { id } = useParams<{ id: string }>()
@@ -208,7 +209,7 @@ export default function StudioComposerPage() {
     } finally { setStreaming(null) }
   }
 
-  const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[], pickedAssets?: { name: string; kind: string; url?: string }[]) => {
+  const send = async (prompt: string, images?: { media_type: string; data: string; previewUrl: string }[], sounds?: { name: string; media_type: string; data: string; role: string }[], variantSlug?: string, assetIds?: string[], pickedAssets?: { name: string; kind: string; url?: string }[], dev?: DevSpec) => {
     setError(null)
     setMessages(m => [...m, { role: 'user', content: prompt, images: images?.map(i => i.previewUrl), sounds: sounds?.map(x => x.name), assets: pickedAssets }])
     balanceBeforeRef.current = balance
@@ -229,6 +230,7 @@ export default function StudioComposerPage() {
           images: images?.map(i => ({ media_type: i.media_type, data: i.data })),
           sounds: sounds?.map(x => ({ name: x.name, media_type: x.media_type, data: x.data, role: x.role })),
           variantSlug,
+          dev,          // 개발 AI 모드 상세 설정
           assetIds,
           engine: getEngine(),   // 관리자 생성 엔진(Max Opus/Fable, API) — 서버가 관리자일 때만 반영
         }),

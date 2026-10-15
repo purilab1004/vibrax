@@ -17,6 +17,7 @@ import { hardenHtml, injectSounds, stripShims } from '@/lib/studio/harden'
 import { tryMaxJob, type MsgStream } from '@/lib/studio/max-job'
 import { extractPatches, applyPatches, validatePatchedHtml } from '@/lib/studio/patch'
 import { stripAttach } from '@/lib/studio/attach'
+import { sanitizeDevSpec, devSpecPrompt, devSpecSummary } from '@/lib/studio/dev-spec'
 import { buildAttachNote } from '@/lib/studio/attach-server'
 import { loadControls } from '@/lib/controls-server'
 import { extractAssetIds, stripAssets, injectAssets, assetPromptNote, scoreAssets, listAutoAssets, getAssetsByIds, loadAssetData, type MediaAssetLite } from '@/lib/media/assets'
@@ -37,7 +38,9 @@ export async function POST(req: Request) {
   } catch {
     return new Response('bad request', { status: 400 })
   }
-  const { projectId, prompt, images: rawImages, sounds: rawSounds, variantSlug: rawVariantSlug, assetIds: rawAssetIds, engine: rawEngine } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown; sounds?: unknown; variantSlug?: unknown; assetIds?: unknown; engine?: unknown }
+  const { projectId, prompt, images: rawImages, sounds: rawSounds, variantSlug: rawVariantSlug, assetIds: rawAssetIds, engine: rawEngine, dev: rawDev } = (body ?? {}) as { projectId?: unknown; prompt?: unknown; images?: unknown; sounds?: unknown; variantSlug?: unknown; assetIds?: unknown; engine?: unknown; dev?: unknown }
+  // 개발 AI 모드 상세 설정 (첫 생성에서만 보냄)
+  const dev = sanitizeDevSpec(rawDev)
   // 관리자 엔진 선택 — max-opus / max-fable(로컬 Max 워커), api(API 토큰). 일반 회원은 무시
   const engine = rawEngine === 'api' || rawEngine === 'max-fable' || rawEngine === 'max-opus' ? rawEngine : 'max-opus'
   // 미디어 라이브러리 에셋 (스튜디오에서 고른 것) — 최대 10개
@@ -60,7 +63,7 @@ export async function POST(req: Request) {
     .map(x => ({ name: String(x.name).slice(0, 60), media_type: x.media_type, data: x.data, role: typeof (x as { role?: string }).role === 'string' ? String((x as { role?: string }).role).slice(0, 20) : '' }))
   const hasAttach = images.length > 0 || sounds.length > 0
   // 채팅에 남길 첨부 표시(이미지 썸네일·사운드 이름) — 메시지 content 끝에 마커로 저장
-  const attachNote = hasAttach ? await buildAttachNote(images, sounds).catch(() => '') : ''
+  const attachNote = (hasAttach ? await buildAttachNote(images, sounds).catch(() => '') : '') + (dev ? `\n🛠 개발 설정: ${devSpecSummary(dev)}` : '')
 
   if (typeof projectId !== 'string' || typeof prompt !== 'string' || !projectId || !prompt.trim()) {
     return new Response('bad request', { status: 400 })
@@ -163,10 +166,11 @@ export async function POST(req: Request) {
     const vt = staticList.find(t => t.slug === variantSlug) ?? dbList.find(t => t.slug === variantSlug)
     if (vt) tmatch = { template: vt, keyword: vt.keywords[0] ?? vt.name }
   }
+  if (dev && tmatch && dev.dimension === '3d' && !tmatch.template.html.includes('three.min.js')) tmatch = null   // 개발 설정 3D 인데 2D 템플릿이면 쓰지 않는다
   let mapMethod: 'keyword' | 'similarity' | 'ml' | 'none' = tmatch ? 'keyword' : 'none'
   let mapConf: number | null = tmatch ? 1 : null
   // MLPilot: 키워드로 못 잡으면 유사도 매퍼(문자 n-gram, LLM 없음)로 가장 가까운 템플릿을 고른다
-  if (!tmatch && !latest && !hasAttach) {
+  if (!tmatch && !latest && !hasAttach && !(dev && dev.dimension === '3d')) {
     const ml = await loadMl()
     ml.aiJudge = ml.aiJudge && auto['mlpilot.aiJudge']; ml.autoLearn = ml.autoLearn && auto['mlpilot.autoLearn']
     if (ml.enabled) {
@@ -191,7 +195,7 @@ export async function POST(req: Request) {
     }
   }
   if (tmatch && !staticList.includes(tmatch.template)) void bumpTemplateUse(tmatch.template.slug)
-  void logMapping({ userId: user.id, projectId, prompt, templateSlug: tmatch?.template.slug ?? null, method: mapMethod, confidence: mapConf, usedLlm: !(tmatch && (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword, tmatch.template.keywords))) })
+  void logMapping({ userId: user.id, projectId, prompt, templateSlug: tmatch?.template.slug ?? null, method: mapMethod, confidence: mapConf, usedLlm: !!dev || !(tmatch && (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword, tmatch.template.keywords))) })
   let baseHtml: string | null = latest?.html ?? null
   let effectivePrompt = prompt
   // 첨부 사운드 — 이름·역할만 프롬프트로 (데이터는 HTML 주입). LLM 이 적절한 상황에 재생 코드를 넣게 한다.
@@ -201,7 +205,7 @@ export async function POST(req: Request) {
   }
   let templateNote = ''
   if (tmatch) {
-    if (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword, tmatch.template.keywords)) {
+    if (!dev && (mapMethod === 'similarity' || mapMethod === 'ml' || templateOnly(prompt, tmatch.keyword, tmatch.template.keywords))) {   // 개발 설정이 있으면 그대로 복사하지 않고 설정을 반영해 수정
       // 회원·프로젝트마다 제목/색조를 다르게 (LLM 없이) — 같은 템플릿이라도 다른 게임처럼
       const personalized = personalizeTemplate(tmatch.template.slug, tmatch.template.html, `${user.id}:${projectId}`)
       let html = personalized.html; const pTitle = personalized.title
@@ -268,6 +272,7 @@ export async function POST(req: Request) {
     effectivePrompt = `이 게임은 「${tmatch.template.name}」 이야. 반드시 이 장르와 핵심 규칙(조작·목표·진행)을 그대로 유지한 채, 아래 요구만 반영해 수정한 전체 완성본을 만들어줘. 다른 장르의 게임으로 바꾸거나 처음부터 새로 만들지 마. 요구: ${extras || prompt}`
     templateNote = `「${tmatch.template.name}」 게임을 만들면서 요청하신 내용을 함께 반영했어요. `
   }
+  if (dev) effectivePrompt += `\n\n${devSpecPrompt(dev)}`
 
   // ── 미디어 라이브러리 — 이전 버전에 주입돼 있던 에셋은 유지하고, 고른 것 + 프롬프트·장르에 맞는 것(auto_use)을 더한다. LLM 에는 base64 대신 이름·용도만 보낸다.
   const prevAssetIds = extractAssetIds(latest?.html)
