@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   try {
     const admin = createAdminClient()
     const build = (withDesigner: boolean, withVis = withDesigner) => {
-      const sel: string = `id,kind,name,title,description,genres,tags,url,width,height,bytes,uses,created_at${withDesigner ? ',designer_id' : ''}`
+      const sel: string = `id,kind,name,title,description,genres,tags,url,width,height,bytes,uses,created_at,meta${withDesigner ? ',designer_id' : ''}`
       let query = admin.from('media_assets').select(sel).eq('status', 'active').in('kind', [...INJECTABLE]).order('created_at', { ascending: false }).limit(limit)
       if (withVis) query = query.eq('visibility', 'public') // 관리자 전용 에셋은 갤러리에 안 보인다
       if (kind) query = query.eq('kind', kind)

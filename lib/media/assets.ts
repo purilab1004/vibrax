@@ -6,7 +6,8 @@ export const MEDIA_KINDS = ['character', 'background', 'tile', 'item', 'ui', 'ef
 export type MediaKind = typeof MEDIA_KINDS[number]
 export const KIND_LABEL: Record<MediaKind, string> = { character: '캐릭터', background: '배경', tile: '타일·맵', item: '아이템', ui: 'UI', effect: '이펙트', sprite: '스프라이트', audio: '오디오', model3d: '3D 모델', font: '폰트', other: '기타' }
 /** 게임에 인라인 주입 가능한 종류 (이미지·오디오). 3D·폰트는 보관·미리보기만 */
-export const INJECTABLE: ReadonlySet<string> = new Set(['character', 'background', 'tile', 'item', 'ui', 'effect', 'sprite', 'audio'])
+export const INJECTABLE: ReadonlySet<string> = new Set(['character', 'background', 'tile', 'item', 'ui', 'effect', 'sprite', 'audio', 'model3d'])
+export const MODEL3D_MAX_BYTES = 30_000_000   // 3D 모델(GLB)은 인라인하지 않고 URL 로 넣으므로 크게 허용
 
 export interface MediaAsset {
   id: string; kind: MediaKind; name: string; title: string; description: string | null
@@ -52,7 +53,7 @@ export function injectAssets(html: string, assets: LoadedAsset[]): string {
   const meta: Record<string, unknown> = {}
   for (const a of assets) { map[a.name] = a.dataUri; meta[a.name] = { kind: a.kind, w: a.width, h: a.height, ...(a.meta.frames ? { frames: a.meta.frames } : {}), ...(a.meta.role ? { role: a.meta.role } : {}) } }
   const ids = assets.map(a => a.id).join(',')
-  const shim = `${SHIM_OPEN}${ids}">window.VIBREX_ASSETS=${JSON.stringify(map)};window.VIBREX_ASSET_META=${JSON.stringify(meta)};(function(){var c={};window.getAsset=function(n){if(c[n])return c[n];var s=window.VIBREX_ASSETS[n];if(!s)return null;var m=window.VIBREX_ASSET_META[n]||{};var el;if(m.kind==='audio'){el=new Audio(s)}else{el=new Image();el.src=s}c[n]=el;return el};window.drawAsset=function(ctx,n,x,y,w,h,f){var img=window.getAsset(n);if(!img||!img.complete||!img.naturalWidth)return false;var m=window.VIBREX_ASSET_META[n]||{};var fr=m.frames;if(fr&&fr.cols){var cols=fr.cols,rows=fr.rows||1,fw=img.naturalWidth/cols,fh=img.naturalHeight/rows,i=(f|0)%(cols*rows);ctx.drawImage(img,(i%cols)*fw,Math.floor(i/cols)*fh,fw,fh,x,y,w==null?fw:w,h==null?fh:h)}else{ctx.drawImage(img,x,y,w==null?img.naturalWidth:w,h==null?img.naturalHeight:h)}return true};window.playAsset=function(n,o){try{var a=window.getAsset(n);if(!a||!(a instanceof Audio))return null;o=o||{};var el=o.loop?a:a.cloneNode(true);el.loop=!!o.loop;el.volume=o.volume==null?1:o.volume;if(o.loop&&!el.paused)return el;var p=el.play();if(p&&p.catch)p.catch(function(){});return el}catch(e){return null}};Object.keys(window.VIBREX_ASSETS).forEach(function(n){try{window.getAsset(n)}catch(e){}})})();</script>`
+  const shim = `${SHIM_OPEN}${ids}">window.VIBREX_ASSETS=${JSON.stringify(map)};window.VIBREX_ASSET_META=${JSON.stringify(meta)};(function(){var c={};window.getAsset=function(n){if(c[n])return c[n];var s=window.VIBREX_ASSETS[n];if(!s)return null;var m=window.VIBREX_ASSET_META[n]||{};if(m.kind==='model3d')return s;var el;if(m.kind==='audio'){el=new Audio(s)}else{el=new Image();el.src=s}c[n]=el;return el};window.drawAsset=function(ctx,n,x,y,w,h,f){var img=window.getAsset(n);if(!img||!img.complete||!img.naturalWidth)return false;var m=window.VIBREX_ASSET_META[n]||{};var fr=m.frames;if(fr&&fr.cols){var cols=fr.cols,rows=fr.rows||1,fw=img.naturalWidth/cols,fh=img.naturalHeight/rows,i=(f|0)%(cols*rows);ctx.drawImage(img,(i%cols)*fw,Math.floor(i/cols)*fh,fw,fh,x,y,w==null?fw:w,h==null?fh:h)}else{ctx.drawImage(img,x,y,w==null?img.naturalWidth:w,h==null?img.naturalHeight:h)}return true};window.playAsset=function(n,o){try{var a=window.getAsset(n);if(!a||!(a instanceof Audio))return null;o=o||{};var el=o.loop?a:a.cloneNode(true);el.loop=!!o.loop;el.volume=o.volume==null?1:o.volume;if(o.loop&&!el.paused)return el;var p=el.play();if(p&&p.catch)p.catch(function(){});return el}catch(e){return null}};Object.keys(window.VIBREX_ASSETS).forEach(function(n){try{window.getAsset(n)}catch(e){}})})();</script>`
   const i = base.search(/<head[^>]*>/i)
   if (i >= 0) { const end = base.indexOf('>', i) + 1; return base.slice(0, end) + shim + base.slice(end) }
   return shim + base
@@ -67,7 +68,7 @@ export function assetPromptNote(assets: Pick<LoadedAsset, 'name' | 'kind' | 'wid
     const role = a.kind === 'audio' ? audioRoleLabel(a.meta?.role) : ''
     return `- "${a.name}" (${KIND_LABEL[a.kind] ?? a.kind}${role ? `: ${role}` : ''}${a.width && a.height ? `, ${a.width}x${a.height}` : ''}${fr?.cols ? `, 스프라이트시트 ${fr.cols}x${fr.rows ?? 1} ${fr.fps ?? 8}fps` : ''})${t ? ` — ${t.title}${t.description ? `: ${t.description}` : ''}` : ''}`
   })
-  return `\n\n[미디어 에셋] 아래 에셋이 이미 window.VIBREX_ASSETS 에 data URI 로 주입되어 있다(직접 정의·재선언 금지, 외부 URL 금지):\n${lines.join('\n')}\n사용법: window.drawAsset(ctx, "이름", x, y, w, h, frameIndex) 는 로드된 이미지를 그리고 true 를 반환(스프라이트시트면 frameIndex 로 프레임 선택). 로드 전이거나 없으면 false 를 반환하므로 그때는 도형으로 대체해 그려라. window.getAsset("이름") 은 Image/Audio 객체를 돌려준다. 캐릭터·배경·아이템은 이 에셋을 우선 사용하고, 배경은 캔버스 크기에 맞춰 늘려 그려라(비율 유지 crop 권장). 오디오 에셋은 window.playAsset("이름", {loop:true|false, volume:0~1}) 로 재생 — 배경음(루프)은 첫 사용자 입력 후 시작하고, 점프·타격·획득·게임오버 등 역할에 맞는 순간에 효과음을 재생하라.`
+  return `\n\n[미디어 에셋] 아래 에셋이 이미 window.VIBREX_ASSETS 에 data URI 로 주입되어 있다(직접 정의·재선언 금지, 외부 URL 금지):\n${lines.join('\n')}\n사용법: window.drawAsset(ctx, "이름", x, y, w, h, frameIndex) 는 로드된 이미지를 그리고 true 를 반환(스프라이트시트면 frameIndex 로 프레임 선택). 로드 전이거나 없으면 false 를 반환하므로 그때는 도형으로 대체해 그려라. window.getAsset("이름") 은 Image/Audio 객체를 돌려준다. 캐릭터·배경·아이템은 이 에셋을 우선 사용하고, 배경은 캔버스 크기에 맞춰 늘려 그려라(비율 유지 crop 권장). 오디오 에셋은 window.playAsset("이름", {loop:true|false, volume:0~1}) 로 재생 — 배경음(루프)은 첫 사용자 입력 후 시작하고, 점프·타격·획득·게임오버 등 역할에 맞는 순간에 효과음을 재생하라.${assets.some(a => a.kind === 'model3d') ? ' 3D 모델(GLB) 에셋은 three.js 게임에서 쓴다: three.min.js 다음에 <script src="https://vibrexcup.com/vendor/three-addons.js"></script> 를 넣고 const gltf = await THREE.loadGLB("이름") 으로 불러와 scene.add(gltf.scene) 한다(크기·위치는 Box3 로 재서 맞추고, 로드 전에는 기본 도형으로 대신 보여 준다).' : ''}`
 }
 
 /** 프롬프트·장르에 맞는 에셋 자동 선택 */
@@ -125,6 +126,8 @@ export async function loadAssetData(assets: MediaAssetLite[], opts: { totalMax?:
   // 배경음(bgm)은 합계 제한에 걸려 마지막에 잘리기 쉬우니 먼저 싣는다
   const ordered = [...assets].sort((a, b) => Number(b.kind === 'audio' && b.meta?.role === 'bgm') - Number(a.kind === 'audio' && a.meta?.role === 'bgm'))
   for (const a of ordered.slice(0, maxCount)) {
+    // 3D 모델(GLB, 수 MB)은 data URI 로 싣지 않고 공개 URL 그대로 — THREE.loadGLB('이름') 이 그 URL 을 읽는다. 합계 제한에도 넣지 않는다
+    if (a.kind === 'model3d') { if (a.bytes <= MODEL3D_MAX_BYTES) out.push({ id: a.id, name: a.name, kind: a.kind, dataUri: a.url, width: null, height: null, meta: a.meta ?? {}, bytes: 0 }); continue }
     const cap = a.kind === 'audio' ? AUDIO_MAX_BYTES : ASSET_MAX_BYTES
     if (!INJECTABLE.has(a.kind) || a.bytes > cap || total + a.bytes > totalMax) continue
     try {

@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 
 export interface PickedAsset { id: string; kind: string; name: string; title: string; url: string }
-interface Item extends PickedAsset { credit_cost?: number; description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string } }
+interface Item extends PickedAsset { credit_cost?: number; description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string; thumb?: string | null } }
 const ROLE: Record<string, string> = { bgm: '배경음', jump: '점프', hit: '타격', coin: '획득', shoot: '발사', explosion: '폭발', powerup: '파워업', gameover: '게임오버', clear: '클리어', click: 'UI', ambient: '환경음', other: '기타' }
 
-const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '오디오']]
+const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '오디오'], ['model3d', '3D 모델']]
 
 export default function MediaPicker({ open, onClose, picked, onChange }: { open: boolean; onClose: () => void; picked: PickedAsset[]; onChange: (next: PickedAsset[]) => void }) {
   const [q, setQ] = useState(''); const [kind, setKind] = useState('')
@@ -100,6 +100,8 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
                           <svg viewBox="0 0 24 24" className="w-6 h-6 translate-x-[1px]" fill="currentColor"><path d="M8 5.6v12.8c0 1.2 1.3 1.9 2.3 1.3l10.1-6.4a1.5 1.5 0 0 0 0-2.6L10.3 4.3C9.3 3.7 8 4.4 8 5.6Z" /></svg>
                         )}
                       </span>
+                    ) : it.kind === 'model3d' ? (
+                      it.meta?.thumb ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={it.meta.thumb} alt={it.title} loading="lazy" className="max-w-full max-h-full object-contain" /> : <span className="text-[34px]" aria-hidden>🧊</span>
                     ) : /* eslint-disable-next-line @next/next/no-img-element */ <img src={it.url} alt={it.title} loading="lazy" className="max-w-full max-h-full object-contain" style={{ imageRendering: (it.width ?? 999) <= 128 ? 'pixelated' : 'auto' }} />}
                   </div>
                   <div className="px-2 py-1.5">

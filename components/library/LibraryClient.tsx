@@ -7,9 +7,10 @@ import MiniClay from '@/components/MiniClay'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Model3DGenerator, { GlbViewer } from '@/components/library/Model3DGenerator'
 
-interface Asset { id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url: string; width: number | null; height: number | null; uses: number | null; created_at: string; designer_name: string | null }
-const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['tile', '타일·맵'], ['item', '아이템'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '오디오']]
+interface Asset { id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url: string; width: number | null; height: number | null; uses: number | null; created_at: string; designer_name: string | null; meta?: { thumb?: string | null } | null }
+const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['tile', '타일·맵'], ['item', '아이템'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '오디오'], ['model3d', '3D 모델']]
 
 export default function LibraryClient() {
   const router = useRouter()
@@ -96,6 +97,9 @@ export default function LibraryClient() {
         </div>
       </section>
 
+      {/* AI 3D 생성기 */}
+      <Model3DGenerator loggedIn={!!me?.loggedIn} />
+
       {/* 과정 */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[['1', '접수', '이름·이메일·포트폴리오 링크를 남기면 관리자가 확인해요.'], ['2', '승인 → 디자이너', '승인되면 회원 직분이 디자이너로 바뀌고, 내 정보에 갤러리 메뉴가 생겨요.'], ['3', '등록 → 공개 → 보상', '작품을 올리면 관리자 확인 후 모두에게 공개되고, 게임에 쓰일 때마다 크레딧이 100% 쌓여요.']].map(([n, t, d]) => (
@@ -126,7 +130,10 @@ export default function LibraryClient() {
               {items.map((a) => (
                 <button key={a.id} onClick={() => setPreview(a)} className="group text-left rounded-2xl overflow-hidden bg-white/[0.04] border border-white/10 hover:border-[#a78bfa]/70 hover:shadow-[0_14px_30px_-14px_rgba(139,61,255,.6)] transition-all">
                   <div className="aspect-square bg-[repeating-conic-gradient(#1b1924_0_25%,#131119_0_50%)] bg-[length:16px_16px] flex items-center justify-center overflow-hidden">
-                    {a.kind === 'audio' ? <span className="text-4xl">🎵</span> : (
+                    {a.kind === 'audio' ? <span className="text-4xl">🎵</span> : a.kind === 'model3d' ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      a.meta?.thumb ? <img src={a.meta.thumb} alt={a.title} loading="lazy" className="w-full h-full object-contain group-hover:scale-[1.04] transition-transform duration-500" /> : <span className="text-4xl">🧊</span>
+                    ) : (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={a.url} alt={a.title} loading="lazy" className="w-full h-full object-contain group-hover:scale-[1.04] transition-transform duration-500" />
                     )}
@@ -147,7 +154,7 @@ export default function LibraryClient() {
         <div className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => setPreview(null)}>
           <div className="w-full max-w-lg bg-[#121019] border border-white/10 rounded-3xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="bg-[repeating-conic-gradient(#1b1924_0_25%,#131119_0_50%)] bg-[length:20px_20px] flex items-center justify-center max-h-[60vh]">
-              {preview.kind === 'audio' ? <audio src={preview.url} controls className="my-10 w-[90%]" /> : (
+              {preview.kind === 'audio' ? <audio src={preview.url} controls className="my-10 w-[90%]" /> : preview.kind === 'model3d' ? <div className="w-full h-[60vh] max-h-[460px]"><GlbViewer url={preview.url} /></div> : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={preview.url} alt={preview.title} className="max-h-[60vh] w-auto object-contain" />
               )}
