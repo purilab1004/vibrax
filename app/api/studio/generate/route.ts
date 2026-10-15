@@ -331,7 +331,7 @@ export async function POST(req: Request) {
   const systemPrompt = engineKind === 'unity' ? buildUnitySystemPrompt() : engineKind === 'godot' ? buildGodotSystemPrompt() : buildSystemPrompt(await loadControls())
   // 모델에는 에셋(base64)·플랫폼 shim 을 뺀 순수 게임 코드만 — 절반 이하 크기 (저장 시 다시 주입/하든)
   const modelBase = godotMode ? (godotPrev ? godotFilesAsText(godotPrev.engine === 'unity' ? godotPrev.files.filter(f => f.path.startsWith('Assets/Scripts/')) : godotPrev.files) : null) : baseHtml ? stripShims(stripAssets(baseHtml)) : null
-  const genMessages = buildMessages({ prompt: effectivePrompt, currentHtml: modelBase, history, images })
+  const genMessages = buildMessages({ prompt: effectivePrompt, currentHtml: modelBase, history, images, engine: godotMode })
   let stream: MsgStream | null = null
   // 관리자 + MAX_WORKER=1: 로컬 Claude Code(Max 구독) 워커로 생성 (이미지 입력은 API). 워커가 없으면 API 로 폴백.
   const useMax = isAdminUser && process.env.MAX_WORKER === '1' && engine !== 'api'   // 이미지 첨부도 워커가 임시 파일로 넘겨 처리. 관리자가 'API 토큰'을 고르면 워커를 건너뛴다
@@ -377,7 +377,7 @@ export async function POST(req: Request) {
           if (patchMode) return
           const pw = raw.indexOf('<patch>')
           const pb = raw.search(/<{7}[ \t]*SEARCH/)          // <patch> 없이 바로 SEARCH 를 내는 경우
-          const pi = pw >= 0 && pb >= 0 ? Math.min(pw, pb) : pw >= 0 ? pw : pb
+          const pi = godotMode ? -1 : pw >= 0 && pb >= 0 ? Math.min(pw, pb) : pw >= 0 ? pw : pb   // 엔진 프로젝트는 패치 모드 없음(파일별 적용)
           const upto = pi >= 0 ? pi : final ? raw.length : Math.max(sentUpTo, raw.length - 7)   // '<patch>' 가 잘려 오는 중일 수 있어 끝 7자는 보류
           if (pi >= 0) patchMode = true
           if (upto > sentUpTo) { const seg = raw.slice(sentUpTo, upto); sentUpTo = upto; full += seg; safeEnqueue(seg) }
@@ -479,7 +479,7 @@ export async function POST(req: Request) {
         } catch { /* usage 실패는 무시 — 생성 자체엔 영향 없음 */ }
         // Godot: <game> 안의 프로젝트 파일들 → 프로젝트 뷰어 HTML 로 바꿔 저장 (설명은 그대로)
         if (godotMode) {
-          const viewer = engineVersionHtml(engineKind!, full, finishUnityProject)
+          const viewer = engineVersionHtml(engineKind!, full, finishUnityProject, godotPrev?.files)
           const gi = full.indexOf('<game>')
           full = viewer ? `${gi >= 0 ? full.slice(0, gi) : full}<game>${viewer}</game>` : (gi >= 0 ? full.slice(0, gi) : full)
         }

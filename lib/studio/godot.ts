@@ -2,9 +2,14 @@
 // 저장: 프로젝트 파일들을 '프로젝트 뷰어' HTML 안에 JSON 으로 넣어 studio_versions.html 에 둔다 →
 //       버전·대화·미리보기 흐름은 그대로 쓰고, 미리보기 화면에서 파일을 보고 .zip 으로 받는다. 데스크톱 빌더(Vibrex)는 이 JSON 을 꺼내 폴더로 쓰고 Godot 로 실행한다.
 
+import { extractPatches, applyPatches } from './patch'
+
 export const ENGINE_JOB_MARK = '[[VIBREX_ENGINE_PROJECT]]'   // 워커: 이 표시가 있는 시스템 프롬프트는 HTML 실행 테스트를 건너뛴다
 export const GODOT_JSON_ID = 'vibrex-godot'
 export const UNITY_JSON_ID = 'vibrex-unity'
+export const GODOT_PCK_ID = 'vibrex-godot-pck'          // 웹 빌드(게임 데이터 .pck, base64) — 있으면 미리보기에서 바로 플레이
+export const GODOT_WEB_ENGINE = '4.7.2'                  // public/godot/<버전>/ 에 올려 둔 공용 웹 엔진 (스레드 없는 빌드)
+export const hasGodotWeb = (html: string | null | undefined) => !!html && html.includes(`id="${GODOT_PCK_ID}"`)
 export type EngineKind = 'godot' | 'unity'
 export interface GodotFile { path: string; content: string }
 export interface GodotProject { engine: EngineKind; version: number; dimension: '2d' | '3d'; title: string; files: GodotFile[] }
@@ -25,7 +30,7 @@ export function buildGodotSystemPrompt(): string {
 <file path="main.tscn">…</file>
 <file path="main.gd">…</file>
 </game>
-3) 수정 요청이면 바뀐 파일만이 아니라 **프로젝트의 모든 파일 전체 내용**을 다시 출력한다.
+3) 수정 요청이면 **바뀌는 파일만** 출력한다(파일 전체 내용, 또는 그 <file> 안에 SEARCH/REPLACE 블록). 출력하지 않은 파일은 그대로 유지된다.
 
 [프로젝트 규칙 — 외부 에셋 없이 바로 실행되게]
 - 파일: project.godot · main.tscn · main.gd 는 필수. 필요하면 player.gd 같은 스크립트를 더 만들되 3~6개 파일로 간결하게. 이미지·사운드·폰트 파일은 만들지 않는다(텍스트 파일만).
@@ -59,6 +64,31 @@ script = ExtResource("1")
 - 화면 안의 글자(UI 텍스트)는 **짧은 영어**로 쓴다(웹 내보내기·모든 기기에서 한글 글꼴이 깨지지 않게). 설명 문장(출력 1번)만 한국어.
 - 게임 흐름: 타이틀(제목·조작법·"Press Space") → 플레이(점수·목숨/체력 HUD) → 게임오버/클리어(점수, "R: Restart"). 난이도는 시간에 따라 오른다.
 - 실행 즉시 에러 없이 돌아가야 한다: 존재하지 않는 노드 경로·리소스를 참조하지 말고, 타입이 맞는지 확인하고, 모든 함수가 실제로 정의돼 있게 한다.`
+}
+
+/** 수정 결과 합치기 — 출력된 파일은 전체 교체, 파일 안의 SEARCH/REPLACE 는 이전 내용에 적용, 출력 안 된 파일은 그대로.
+ *  파일 밖의 SEARCH/REPLACE(<patch>) 도 찾는 문장이 들어 있는 이전 파일에 적용한다. failed = 적용하지 못한 블록 수 */
+export function mergeEngineFiles(prev: GodotFile[], raw: string): { files: GodotFile[]; failed: number } {
+  const gi = raw.indexOf('<game>')
+  const body = gi >= 0 ? raw.slice(gi) : raw
+  const out = new Map(prev.map((f) => [f.path, f.content]))
+  let failed = 0
+  for (const f of parseGodotFiles(body)) {
+    const ex = extractPatches(f.content)
+    if (ex.blocks.length) {
+      const base = out.get(f.path)
+      if (base == null) { failed += ex.blocks.length; continue }
+      const r = applyPatches(base, ex.blocks); failed += r.failed.length; out.set(f.path, r.html)
+    } else out.set(f.path, f.content)
+  }
+  // 파일 태그 밖의 패치
+  const outside = body.replace(/<file\s+path="[^"]*"\s*>[\s\S]*?<\/file>/g, '')
+  for (const b of extractPatches(outside).blocks) {
+    const hit = [...out.entries()].find(([, c]) => c.includes(b.search.replace(/\r\n/g, '\n')))
+    if (!hit) { failed++; continue }
+    const r = applyPatches(hit[1], [b]); failed += r.failed.length; out.set(hit[0], r.html)
+  }
+  return { files: [...out.entries()].map(([path, content]) => ({ path, content })), failed }
 }
 
 /** 모델 출력(<game> 안의 <file> 블록들) → 파일 목록. 안전한 상대 경로·텍스트 파일만 */
@@ -101,17 +131,17 @@ export const godotFilesAsText = (files: GodotFile[]) => files.map((f) => `<file 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string)
 
 /** 모델 원문 출력 → 저장할 뷰어 HTML (파일이 없으면 null) */
-export function godotVersionHtml(raw: string): string | null {
+export function godotVersionHtml(raw: string, prev?: GodotFile[] | null): string | null {
   const gi = raw.indexOf('<game>')
-  const files = parseGodotFiles(gi >= 0 ? raw.slice(gi) : raw)
+  const files = prev && prev.length ? mergeEngineFiles(prev, raw).files : parseGodotFiles(gi >= 0 ? raw.slice(gi) : raw)
   if (!files.some((f) => f.path === 'project.godot')) return null
   return godotViewerHtml({ engine: 'godot', version: 4, dimension: godotDimension(files), title: godotTitle(files), files })
 }
 /** 엔진별 모델 출력 → 뷰어 HTML (Unity 는 lib/studio/unity.ts 가 고정 파일을 더한다) */
-export function engineVersionHtml(engine: EngineKind, raw: string, finish?: (files: GodotFile[], raw: string) => GodotProject | null): string | null {
-  if (engine === 'godot') return godotVersionHtml(raw)
+export function engineVersionHtml(engine: EngineKind, raw: string, finish?: (files: GodotFile[], raw: string) => GodotProject | null, prev?: GodotFile[] | null): string | null {
+  if (engine === 'godot') return godotVersionHtml(raw, prev)
   const gi = raw.indexOf('<game>')
-  const files = parseGodotFiles(gi >= 0 ? raw.slice(gi) : raw)
+  const files = prev && prev.length ? mergeEngineFiles(prev, raw).files : parseGodotFiles(gi >= 0 ? raw.slice(gi) : raw)
   const p = finish ? finish(files, raw) : null
   return p ? godotViewerHtml(p) : null
 }
@@ -121,8 +151,9 @@ const VIEW: Record<EngineKind, { name: string; color: string; letter: string; ru
   godot: { name: 'Godot 4', color: '#478cbf', letter: 'G', run: '<b>데스크톱 빌더 Vibrex</b> 에서 열면 Godot 를 자동 설치하고 바로 실행돼요 · 또는 .zip 을 풀어 Godot 4 에서 project.godot 열기' },
   unity: { name: 'Unity', color: '#222c37', letter: 'U', run: '<b>데스크톱 빌더 Vibrex</b> 에서 열면 설치된 Unity 로 바로 열려요 · 또는 .zip 을 풀어 Unity Hub → Add project → 열고 ▶ Play' },
 }
-export function godotViewerHtml(p: GodotProject): string {
+export function godotViewerHtml(p: GodotProject, web?: { pck: string; engine?: string } | null): string {
   const V = VIEW[p.engine], JID = JSON_ID[p.engine]
+  if (web && p.engine === 'godot') return godotPlayerHtml(p, web.pck, web.engine ?? GODOT_WEB_ENGINE)
   const json = JSON.stringify(p).replace(/</g, '\\u003c')
   const lines = p.files.reduce((n, f) => n + f.content.split('\n').length, 0)
   return `<!doctype html>
@@ -165,6 +196,52 @@ function zip(files){var enc=new TextEncoder(),parts=[],cen=[],off=0;
  var cs=cen.reduce(function(a,b){return a+b.length},0),end=new DataView(new ArrayBuffer(22));end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cs,true);end.setUint32(16,off,true);
  return new Blob(parts.concat(cen,[new Uint8Array(end.buffer)]),{type:'application/zip'})}
 document.getElementById('dl').onclick=function(){var a=document.createElement('a');a.href=URL.createObjectURL(zip(P.files));a.download=(P.title||'godot-game').replace(/[\\\\/:*?"<>|]+/g,' ').trim()+'.zip';document.body.appendChild(a);a.click();setTimeout(function(){a.remove()},500)};
+})();
+</script></body></html>`
+}
+
+/** 웹 빌드가 붙은 Godot 프로젝트 — 공용 엔진(vibrexcup.com/godot/<버전>)으로 바로 플레이, 코드 보기·.zip 은 탭으로 */
+function godotPlayerHtml(p: GodotProject, pck: string, ver: string): string {
+  const base = `https://vibrexcup.com/godot/${ver}/godot`
+  const viewer = godotViewerHtml(p)   // 코드 탭 = 기존 뷰어 (iframe srcdoc)
+  const json = JSON.stringify(p).replace(/</g, '\\u003c')
+  return `<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>${esc(p.title)}</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden;font:13px -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+#canvas{display:block;width:100%;height:100%;outline:none}
+#load{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#16181f;color:#c7cbd8}
+#load .bar{width:220px;height:6px;border-radius:6px;background:#2a2e3c;overflow:hidden}#load .bar i{display:block;height:100%;width:0;background:#478cbf;transition:width .2s}
+#load b{color:#fff;font-size:15px}
+#tabs{position:fixed;bottom:10px;right:10px;display:flex;gap:6px;z-index:5;opacity:.88}
+#tabs button{border:0;border-radius:8px;padding:6px 10px;background:rgba(22,24,31,.82);color:#e7e9f0;font-weight:700;cursor:pointer;backdrop-filter:blur(6px)}
+#tabs button.on{background:#478cbf}
+#code{position:fixed;inset:0;border:0;width:100%;height:100%;display:none;background:#16181f}
+</style></head><body>
+<canvas id="canvas" tabindex="0"></canvas>
+<div id="load"><b>${esc(p.title)}</b><div class="bar"><i id="pg"></i></div><span id="lt">Godot 엔진 불러오는 중…</span></div>
+<div id="tabs"><button id="tp" class="on">▶ 플레이</button><button id="tc">{ } 코드 · .zip</button></div>
+<iframe id="code" sandbox="allow-scripts allow-downloads" title="code"></iframe>
+<script type="application/json" id="${GODOT_JSON_ID}">${json}</script>
+<script type="application/octet-stream" id="${GODOT_PCK_ID}">${pck}</script>
+<script src="${base}.js"></script>
+<script>
+(function(){
+var code=document.getElementById('code'),tp=document.getElementById('tp'),tc=document.getElementById('tc');
+code.srcdoc=${JSON.stringify(viewer).replace(/</g, '\\u003c')};
+tp.onclick=function(){code.style.display='none';tp.className='on';tc.className='';document.getElementById('canvas').focus()};
+tc.onclick=function(){code.style.display='block';tc.className='on';tp.className=''};
+var lt=document.getElementById('lt'),pg=document.getElementById('pg');
+function fail(m){lt.textContent=m;lt.style.color='#f87171'}
+if(typeof Engine==='undefined'){fail('엔진을 불러오지 못했어요 (네트워크 확인)');return}
+var miss=Engine.getMissingFeatures({threads:false});if(miss.length){fail('이 브라우저에선 실행할 수 없어요: '+miss.join(', '));return}
+var raw=atob(document.getElementById('${GODOT_PCK_ID}').textContent.trim()),pck=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)pck[i]=raw.charCodeAt(i);
+var engine=new Engine({canvas:document.getElementById('canvas'),canvasResizePolicy:2,ensureCrossOriginIsolationHeaders:false,experimentalVK:false,focusCanvas:true,gdextensionLibs:[],serviceWorker:'',executable:'${base}',args:[],
+ onProgress:function(c,t){if(t>0){pg.style.width=Math.min(100,c/t*100)+'%';lt.textContent='Godot 엔진 불러오는 중 '+Math.round(c/t*100)+'%'}}});
+engine.init('${base}').then(function(){return engine.preloadFile(pck.buffer,'game.pck')}).then(function(){return engine.start({args:['--main-pack','game.pck']})})
+ .then(function(){document.getElementById('load').style.display='none';document.getElementById('canvas').focus()})
+ .catch(function(e){fail('실행 실패: '+(e&&e.message||e))});
 })();
 </script></body></html>`
 }

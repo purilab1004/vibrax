@@ -14,7 +14,7 @@ export function buildUnitySystemPrompt(): string {
 <file path="Assets/Scripts/GameBootstrap.cs">…</file>
 <file path="Assets/Scripts/Game.cs">…</file>
 </game>
-3) 수정 요청이면 **모든 C# 파일의 전체 내용**을 다시 출력한다.
+3) 수정 요청이면 **바뀌는 C# 파일만** 출력한다(파일 전체 내용, 또는 그 <file> 안에 SEARCH/REPLACE 블록). 출력하지 않은 파일은 그대로 유지된다.
 
 [프로젝트 규칙 — 패키지·에셋 없이 바로 컴파일·실행되게]
 - 파일은 Assets/Scripts/ 아래 C# 만. 2~5개로 간결하게. 필수: Assets/Scripts/GameBootstrap.cs, Assets/Scripts/Game.cs. (Packages/manifest.json, 씬, 편집기 스크립트는 플랫폼이 넣으니 만들지 않는다)

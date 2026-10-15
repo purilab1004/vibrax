@@ -132,6 +132,7 @@ export function buildMessages(opts: {
   currentHtml: string | null
   history: ChatTurn[]
   images?: PromptImage[]
+  engine?: boolean   // Godot·Unity 프로젝트 — 현재 내용은 <file> 들, 수정은 바뀐 파일만
 }): BuiltMessage[] {
   // 최근 6턴만, 역할 교대 강제 (기존 app/api/user-agent/chat 패턴)
   const sanitized: ChatTurn[] = []
@@ -146,7 +147,9 @@ export function buildMessages(opts: {
   if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') sanitized.pop()
 
   const parts: string[] = []
-  if (opts.currentHtml) parts.push(`현재 게임 HTML:\n<game>${opts.currentHtml}</game>\n\n(수정은 <patch> SEARCH/REPLACE 블록으로 바뀌는 부분만 출력할 것 — 전체 완성본 재출력 금지. 위 HTML 에는 플랫폼 브리지 스크립트가 빠져 있으니 신경 쓰지 말 것)`)
+  if (opts.currentHtml) parts.push(opts.engine
+    ? `현재 프로젝트 파일:\n<game>${opts.currentHtml}</game>\n\n(수정: <game> 안에 **바뀌는 파일만** <file path="…"> 로 출력한다. 파일 안에는 그 파일의 전체 내용을 쓰거나, 일부만 바꿀 땐 <<<<<<< SEARCH / ======= / >>>>>>> REPLACE 블록들을 쓴다. 출력하지 않은 파일은 그대로 유지된다.)`
+    : `현재 게임 HTML:\n<game>${opts.currentHtml}</game>\n\n(수정은 <patch> SEARCH/REPLACE 블록으로 바뀌는 부분만 출력할 것 — 전체 완성본 재출력 금지. 위 HTML 에는 플랫폼 브리지 스크립트가 빠져 있으니 신경 쓰지 말 것)`)
   parts.push(`요청: ${opts.prompt}`)
   const text = parts.join('\n\n')
   // 현재 HTML 은 별도 블록 + 프롬프트 캐시 — 같은 게임을 연속 수정할 때 수만 자 입력을 다시 처리하지 않는다

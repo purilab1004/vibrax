@@ -8,7 +8,8 @@ import { parseGeneration, extractTitle } from '../lib/studio/parse'
 import { smokeGame } from './smoke-game.mjs'
 import { hardenHtml } from '../lib/studio/harden'
 import { extractPatches, applyPatches, validatePatchedHtml, type PatchBlock } from '../lib/studio/patch'
-import { ENGINE_JOB_MARK, engineVersionHtml } from '../lib/studio/godot'
+import { ENGINE_JOB_MARK, engineVersionHtml, extractEngineProject, godotViewerHtml } from '../lib/studio/godot'
+import { exportPck } from './godot/export-pck.mjs'
 import { finishUnityProject } from '../lib/studio/unity'
 
 for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', 'utf8').split('\n') : []) { const m = line.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^"|"$/g, '') }
@@ -279,16 +280,22 @@ async function testAndRepair(job: { id: string; model: string | null; system: st
 async function ensureSaved(job: { id: string; project_id?: string; system?: string; messages: Msg[] }, result: string) {
   try {
     await new Promise(r => setTimeout(r, 20_000))
-    const { data: jobRow } = await sb.from('studio_jobs').select('project_id,created_at').eq('id', job.id).maybeSingle()
-    const row = jobRow as { project_id: string; created_at: string } | null
+    const { data: jobRow } = await sb.from('studio_jobs').select('project_id,created_at,started_at').eq('id', job.id).maybeSingle()
+    const row = jobRow as { project_id: string; created_at: string; started_at: string | null } | null
     if (!row?.project_id) return
     // 서버가 이미 저장했으면 여기서 끝 — 예전엔 이 확인을 뒤에서 해서, 이미 반영된 패치를 다시 적용하려다 전부 실패하고
     // 쓸데없이 '패치 재작성' 까지 돌았다(그 결과가 저장되면 같은 수정이 두 번 들어갈 위험도 있었다)
-    const { data: already } = await sb.from('studio_versions').select('id').eq('project_id', row.project_id).gt('created_at', row.created_at).limit(1)
+    // 기준은 '작업을 시작한 시각' — 대기열에서 기다리는 동안 같은 프로젝트의 앞 작업이 저장한 버전을 '이미 저장됨' 으로 착각하지 않게
+    const { data: already } = await sb.from('studio_versions').select('id').eq('project_id', row.project_id).gt('created_at', row.started_at ?? row.created_at).limit(1)
     if ((already ?? []).length) { console.log('  [저장 안전장치] 서버가 이미 저장함 — 건너뜀'); return }
     const parsed = parseGeneration(result)
     const engineJob = !!job.system?.includes(ENGINE_JOB_MARK)
-    const finalHtml = engineJob ? engineVersionHtml(job.system?.includes('Unity 게임 개발자') ? 'unity' : 'godot', result, finishUnityProject) : (await materialize(job.id, result)).html
+    let finalHtml: string | null
+    if (engineJob) {   // 수정이면 이전 버전 파일에 합친다 (바뀐 파일만·SEARCH/REPLACE 로 오기 때문)
+      const { data: pv } = await sb.from('studio_versions').select('html').eq('project_id', row.project_id).order('version', { ascending: false }).limit(1).maybeSingle()
+      const prev = extractEngineProject((pv as { html?: string } | null)?.html)
+      finalHtml = engineVersionHtml(job.system?.includes('Unity 게임 개발자') ? 'unity' : 'godot', result, finishUnityProject, prev?.files)
+    } else finalHtml = (await materialize(job.id, result)).html
     const desc = (parsed.description || extractPatches(result).description || '').slice(0, 4000)
     if (!finalHtml) {
       // 만들지 못했어도 기록은 반드시 남긴다 — 화면에서 대화가 통째로 사라지지 않게
@@ -311,13 +318,43 @@ async function ensureSaved(job: { id: string; project_id?: string; system?: stri
     const lastUser = [...job.messages].reverse().find(m => m.role !== 'assistant')
     const prompt = typeof lastUser?.content === 'string' ? lastUser.content : (lastUser?.content ?? []).map(c => c.text ?? '').join('\n')
     await sb.from('studio_messages').insert([
-      { project_id: row.project_id, role: 'user', content: (prompt.replace(/^\s*요청:\s*/, '').replace(/\n+\[개발 설정[\s\S]*$/, '').replace(/\n+현재 (게임 HTML|프로젝트)[\s\S]*$/, '').trim() || '(요청)').slice(0, 4000) },   // 모델용 지시문은 대화에 남기지 않는다
+      { project_id: row.project_id, role: 'user', content: (prompt.replace(/^[\s\S]*?(?:^|\n)요청:\s*/, '').replace(/\n+\[개발 설정[\s\S]*$/, '').replace(/\n+현재 (게임 HTML|프로젝트)[\s\S]*$/, '').trim() || '(요청)').slice(0, 4000) },   // 모델용 지시문은 대화에 남기지 않는다
       { project_id: row.project_id, role: 'assistant', content: (desc || '수정했어요.') + (result.includes('[[VBX_TEST]]') ? `\n\n${result.split('[[VBX_TEST]]')[1]?.split('[[/VBX_TEST]]')[0] ?? ''}` : '') },
     ] as never)
     if (next === 1) { const t = extractTitle(finalHtml); if (t) await sb.from('studio_projects').update({ title: t } as never).eq('id', row.project_id) }
     console.log('  [저장 안전장치] 서버가 저장하지 못해 워커가 v' + next + ' 저장함')
   } catch (e) { console.log('  [저장 안전장치] 실패', e) }
 }
+
+// ── Godot 웹 빌드 ── 최근 저장된 Godot 버전 중 웹 빌드(.pck)가 없는 것을 찾아 만들어 붙인다 → 스튜디오 미리보기·게시에서 바로 플레이
+// 엔진(wasm)은 public/godot/<버전>/ 공용, 게임마다 .pck(수십 KB)만 base64 로 버전 HTML 에 넣는다
+const webFailed = new Set<string>()
+let webBusy = false
+async function godotWebSweep() {
+  if (webBusy) return
+  webBusy = true
+  try {
+    const since = new Date(Date.now() - 3 * 86400_000).toISOString()
+    const { data } = await sb.from('studio_versions').select('id,version,project_id,html').gt('created_at', since).like('html', '%id="vibrex-godot"%').not('html', 'like', '%id="vibrex-godot-pck"%').order('created_at', { ascending: false }).limit(3)
+    for (const v of (data ?? []) as { id: string; version: number; project_id: string; html: string }[]) {
+      if (webFailed.has(v.id)) continue
+      const p = extractEngineProject(v.html)
+      if (!p || p.engine !== 'godot') { webFailed.add(v.id); continue }
+      try {
+        const t0 = Date.now()
+        const r = await exportPck(p.files)
+        const html = godotViewerHtml(p, { pck: r.pck.toString('base64') })
+        const { error } = await sb.from('studio_versions').update({ html }).eq('id', v.id)
+        if (error) throw error
+        // 게시된 게임은 live_version_id 로 이 버전 HTML 을 읽으므로 따로 갱신할 것 없음
+        console.log(`  [Godot 웹 빌드] ${p.title} v${v.version} — pck ${Math.round(r.pck.length / 1024)}KB · ${((Date.now() - t0) / 1000).toFixed(1)}초${r.errors.length ? ' · 경고 ' + r.errors[0].slice(0, 120) : ''}`)
+      } catch (e) { webFailed.add(v.id); console.log('  [Godot 웹 빌드] 실패', v.id.slice(0, 8), (e as Error).message.slice(0, 200)) }
+    }
+  } catch (e) { console.log('  [Godot 웹 빌드] 조회 실패', (e as Error).message) }
+  webBusy = false
+}
+setInterval(() => void godotWebSweep(), 15_000)
+void godotWebSweep()
 
 // 살아 있음을 알린다 — 서버는 이 신호가 있으면 워커가 바쁠 때도 API 로 넘기지 않고 대기열에 넣는다
 let beating = false

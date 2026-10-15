@@ -191,6 +191,20 @@ export default function StudioComposerPage() {
     }
   }
 
+  // Godot 프로젝트인데 아직 웹 빌드(.pck)가 없으면 — 워커가 만들어 붙일 때까지 10초마다 다시 읽는다(최대 5분) → 미리보기가 코드 화면에서 플레이 화면으로 바뀐다
+  useEffect(() => {
+    if (!currentVersionId || !html || !html.includes('id="vibrex-godot"') || html.includes('id="vibrex-godot-pck"')) return
+    let n = 0
+    const t = setInterval(async () => {
+      if (++n > 30) { clearInterval(t); return }
+      const { data } = await supabase.from('studio_versions').select('html').eq('id', currentVersionId).maybeSingle()
+      const h = (data as { html?: string } | null)?.html
+      if (h && h.includes('id="vibrex-godot-pck"')) { clearInterval(t); setHtml(h) }
+    }, 10_000)
+    return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVersionId, html])
+
   // 오래 걸리는 생성 — 워커가 다 만들면 새 버전이 저장된다. 그때까지 기다렸다가 화면을 갱신한다(최대 20분)
   const waitForBackground = async (prevTopVersion: string | null) => {
     const started = Date.now()
