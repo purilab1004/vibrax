@@ -70,6 +70,7 @@ async function openProject(id, version) {
   if (!d.messages.length) addMsg('sys', '만들고 싶은 게임을 적어 보세요. 생성이 끝나면 이 폴더에 파일로 저장돼요.<br>' + esc(d.dir))
   showEmpty(!d.current)
   if (d.current) loadPreview()
+  showGodot(!!d.godot)
   st.file = 'index.html'; if ($('codeWrap').classList.contains('on')) loadCode()
 }
 $('verSel').onchange = () => openProject(st.cur, Number($('verSel').value))
@@ -83,6 +84,28 @@ function renderFiles(files) {
 }
 $('folderBtn').onclick = () => vb.open.folder(st.cur)
 $('browserBtn').onclick = () => st.cur && vb.open.browser(st.cur)
+// ---------- Godot 프로젝트: 실행 · 편집기 (Godot 가 없으면 자동 설치) ----------
+const mb = (n) => (n / 1048576).toFixed(0) + 'MB'
+vb.godot.onProgress((p) => {
+  const el = $('godotStat'); el.classList.remove('hidden')
+  el.textContent = p.phase === 'download' ? `Godot ${p.version} 내려받는 중 ${p.total ? Math.round(p.got / p.total * 100) + '% · ' : ''}${mb(p.got)}${p.total ? ' / ' + mb(p.total) : ''}` : p.phase === 'extract' ? `Godot ${p.version} 설치 중…` : `Godot ${p.version} 설치 완료`
+})
+async function godotStatus() {
+  const g = await vb.godot.status()
+  $('godotStat').classList.remove('hidden')
+  $('godotStat').textContent = g.installed ? `Godot ${g.version === 'system' ? '(설치됨)' : g.version} 준비됨` : 'Godot 없음 — 실행하면 자동 설치 (약 80~160MB)'
+}
+async function runGodot(editor) {
+  if (!st.cur) return
+  $('godotRun').disabled = $('godotEdit').disabled = true
+  const r = await vb.godot.run(st.cur, editor)
+  $('godotRun').disabled = $('godotEdit').disabled = false
+  if (!r.ok) { addMsg('err', esc(r.error)); return }
+  $('godotStat').textContent = `Godot ${r.version} 에서 ${editor ? '편집기를 열었어요' : '실행 중'}`
+}
+$('godotRun').onclick = () => runGodot(false)
+$('godotEdit').onclick = () => runGodot(true)
+function showGodot(on) { for (const id of ['godotRun', 'godotEdit', 'godotStat']) $(id).classList.toggle('hidden', !on); if (on) godotStatus() }
 $('publishBtn').onclick = () => st.data && vb.open.external(st.data.studioUrl)
 
 // ---------- 미리보기 · 코드 ----------

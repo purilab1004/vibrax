@@ -38,7 +38,7 @@ export default function DevSpecPanel({ prompt, genre, initial, options, cost, on
         </div>
         <div className="px-5 py-1">
           <Row label="디자인">{DEV_OPTIONS.dimension.map(([k, l]) => <Chip key={k} on={spec.dimension === k} onClick={() => set('dimension', k)}>{l}</Chip>)}</Row>
-          <Row label="개발 타입" hint="Godot·Unity·Unreal 내보내기는 데스크톱 빌더에서 준비 중">{DEV_ENGINES.map(([k, l, ok]) => <Chip key={k} on={k === 'nocode'} disabled={!ok} badge={ok ? undefined : '곧'}>{l}</Chip>)}</Row>
+          <Row label="개발 타입" hint={spec.engine === 'godot' ? 'Godot 4 프로젝트 파일로 만들어요 — 웹에선 .zip, Vibrex 는 Godot 자동 설치·실행' : '웹에서 바로 플레이·게시'}>{DEV_ENGINES.map(([k, l, ok]) => <Chip key={k} on={spec.engine === k} disabled={!ok} badge={ok ? undefined : '곧'} onClick={ok ? () => set('engine', k as DevSpec['engine']) : undefined}>{l}</Chip>)}</Row>
           <Row label="그래픽">{DEV_OPTIONS.art.map(([k, l]) => <Chip key={k} on={spec.art === k} onClick={() => set('art', k)}>{l}</Chip>)}</Row>
           <Row label="플레이" hint="함께 = 같은 화면 2인부터">{DEV_OPTIONS.online.map(([k, l]) => <Chip key={k} on={spec.online === k} onClick={() => set('online', k)}>{l}</Chip>)}</Row>
           <Row label="스토리">{DEV_OPTIONS.story.map(([k, l]) => <Chip key={String(k)} on={spec.story === k} onClick={() => set('story', k)}>{l}</Chip>)}</Row>

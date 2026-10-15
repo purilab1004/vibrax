@@ -6,8 +6,10 @@ export type ArtStyle = 'auto' | 'pixel' | 'cartoon' | 'neon' | 'realistic' | 'mi
 export type Online = 'offline' | 'coop' | 'versus'
 export type Device = 'both' | 'pc' | 'mobile'
 export type Difficulty = 'easy' | 'normal' | 'hard'
+export type Engine = 'nocode' | 'godot'   // unity · unreal 은 다음 단계
 
 export interface DevSpec {
+  engine: Engine
   dimension: Dimension
   art: ArtStyle
   online: Online
@@ -18,7 +20,7 @@ export interface DevSpec {
   control?: { label: string; desc: string; keys: string } | null
 }
 
-export const DEFAULT_DEV_SPEC: DevSpec = { dimension: '2d', art: 'auto', online: 'offline', story: false, device: 'both', difficulty: 'normal', goal: '', control: null }
+export const DEFAULT_DEV_SPEC: DevSpec = { engine: 'nocode', dimension: '2d', art: 'auto', online: 'offline', story: false, device: 'both', difficulty: 'normal', goal: '', control: null }
 
 // 화면 선택지 (첫 항목 = 기본)
 export const DEV_OPTIONS = {
@@ -30,7 +32,7 @@ export const DEV_OPTIONS = {
   difficulty: [['easy', '쉬움'], ['normal', '보통'], ['hard', '어려움']] as [Difficulty, string][],
 }
 // 다음 단계에서 열 항목 (지금은 노코드 = 브라우저에서 바로 실행되는 HTML5 게임)
-export const DEV_ENGINES = [['nocode', '노코드 (웹)', true], ['godot', 'Godot', false], ['unity', 'Unity', false], ['unreal', 'Unreal', false]] as const
+export const DEV_ENGINES = [['nocode', '노코드 (웹)', true], ['godot', 'Godot', true], ['unity', 'Unity', false], ['unreal', 'Unreal', false]] as const
 
 const pick = <T,>(v: unknown, list: [T, string][], d: T): T => (list.some(([k]) => k === v) ? (v as T) : d)
 export function sanitizeDevSpec(raw: unknown): DevSpec | null {
@@ -38,6 +40,7 @@ export function sanitizeDevSpec(raw: unknown): DevSpec | null {
   const r = raw as Record<string, unknown>, D = DEFAULT_DEV_SPEC
   const c = r.control && typeof r.control === 'object' ? r.control as Record<string, unknown> : null
   return {
+    engine: r.engine === 'godot' ? 'godot' : 'nocode',
     dimension: pick(r.dimension, DEV_OPTIONS.dimension, D.dimension),
     art: pick(r.art, DEV_OPTIONS.art, D.art),
     online: pick(r.online, DEV_OPTIONS.online, D.online),
@@ -53,20 +56,21 @@ const label = <T,>(list: [T, string][], v: T) => list.find(([k]) => k === v)?.[1
 
 /** 채팅에 남는 한 줄 요약 (이후 수정 때도 대화 기록으로 모델이 본다) */
 export function devSpecSummary(s: DevSpec): string {
-  return [label(DEV_OPTIONS.dimension, s.dimension), s.art === 'auto' ? null : label(DEV_OPTIONS.art, s.art), label(DEV_OPTIONS.online, s.online), s.story ? '스토리 있음' : '스토리 없음',
+  return [s.engine === 'godot' ? 'Godot 4' : null, label(DEV_OPTIONS.dimension, s.dimension), s.art === 'auto' ? null : label(DEV_OPTIONS.art, s.art), label(DEV_OPTIONS.online, s.online), s.story ? '스토리 있음' : '스토리 없음',
     label(DEV_OPTIONS.device, s.device), '난이도 ' + label(DEV_OPTIONS.difficulty, s.difficulty), s.control ? '조작: ' + s.control.label : null, s.goal ? '목표: ' + s.goal : null].filter(Boolean).join(' · ')
 }
 
 /** 생성 모델에 붙이는 지시 */
 export function devSpecPrompt(s: DevSpec): string {
   const L: string[] = ['[개발 설정 — 사용자가 개발 AI 모드에서 직접 고른 값. 반드시 지킨다]']
-  L.push(s.dimension === '3d'
+  if (s.engine === 'godot') L.push(s.dimension === '3d' ? '- Godot 4 의 3D 프로젝트(main.tscn 루트 Node3D)로 만든다.' : '- Godot 4 의 2D 프로젝트(main.tscn 루트 Node2D)로 만든다.')
+  else L.push(s.dimension === '3d'
     ? '- 3D 게임으로 만든다: three.js(플랫폼 호스팅 /vendor/three.min.js)로 3D 장면·카메라·조명을 쓰고, 2D 캔버스로 흉내 내지 않는다.'
     : '- 2D 게임으로 만든다(캔버스 2D).')
   const art: Record<ArtStyle, string> = { auto: '', pixel: '도트 픽셀아트(선명한 픽셀, 제한된 팔레트)', cartoon: '밝고 귀여운 카툰 스타일(굵은 외곽선, 둥근 형태)', neon: '어두운 배경의 네온 글로우 스타일', realistic: '사실적인 질감·조명·그림자', minimal: '단색 면과 깔끔한 도형의 미니멀 스타일' }
   if (s.art !== 'auto') L.push(`- 그래픽: ${art[s.art]}.`)
   if (s.online === 'offline') L.push('- 혼자 하는 오프라인 게임.')
-  else L.push(`- 여러 명이 ${s.online === 'coop' ? '함께 협동하는' : '서로 대결하는'} 게임으로 설계한다: 같은 화면 2인(1P 방향키+스페이스 · 2P WASD+F)으로 바로 플레이되게 만들고, 1P/2P 를 구분해 표시한다. (온라인 방 연결은 플랫폼이 추후 붙인다)`)
+  else L.push(`- 여러 명이 ${s.online === 'coop' ? '함께 협동하는' : '서로 대결하는'} 게임으로 설계한다: 같은 화면 2인(1P 방향키+스페이스 · 2P WASD+F)으로 바로 플레이되게 만들고, 1P/2P 를 구분해 표시한다.${s.engine === 'godot' ? '' : ' (온라인 방 연결은 플랫폼이 추후 붙인다)'}`)
   if (s.story) L.push('- 스토리가 있다: 타이틀에 세계관 한 줄, 시작할 때 짧은 도입(2~4줄 대사/자막), 단계가 오를 때 이야기가 이어지는 한 줄, 클리어 시 엔딩 문구를 넣는다.')
   else L.push('- 스토리 없이 바로 플레이(도입 대사 없음).')
   L.push(s.device === 'pc' ? '- 주 기기: PC(키보드). 모바일도 깨지지 않게만.' : s.device === 'mobile' ? '- 주 기기: 모바일 세로 화면 · 터치 우선(큰 탭 영역, 한 손 조작).' : '- PC 키보드와 모바일 터치 모두 잘 되게.')

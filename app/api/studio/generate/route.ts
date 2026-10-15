@@ -18,6 +18,7 @@ import { tryMaxJob, type MsgStream } from '@/lib/studio/max-job'
 import { extractPatches, applyPatches, validatePatchedHtml } from '@/lib/studio/patch'
 import { stripAttach } from '@/lib/studio/attach'
 import { sanitizeDevSpec, devSpecPrompt, devSpecSummary } from '@/lib/studio/dev-spec'
+import { buildGodotSystemPrompt, extractGodotProject, godotFilesAsText, godotVersionHtml } from '@/lib/studio/godot'
 import { buildAttachNote } from '@/lib/studio/attach-server'
 import { loadControls } from '@/lib/controls-server'
 import { extractAssetIds, stripAssets, injectAssets, assetPromptNote, scoreAssets, listAutoAssets, getAssetsByIds, loadAssetData, type MediaAssetLite } from '@/lib/media/assets'
@@ -115,6 +116,9 @@ export async function POST(req: Request) {
   }
   const latest = latestRes.data as { html: string; version: number } | null
   const history = ((historyRes.data ?? []) as ChatTurn[]).map(t => ({ ...t, content: stripAttach(t.content ?? '') }))  // 첨부 마커는 모델에 보내지 않는다
+  // 개발 타입 Godot — 첫 생성에서 골랐거나, 이미 Godot 프로젝트인 프로젝트를 수정하는 경우 (템플릿·에셋·HTML 경로를 쓰지 않는다)
+  const godotPrev = extractGodotProject(latest?.html)
+  const godotMode = dev?.engine === 'godot' || !!godotPrev
 
   // 크레딧 원자적 차감 — 실패 경로에서 이 ref로 환불 (관리자는 차감 없음)
   const spendRef = `gen:${projectId}:${crypto.randomUUID()}`
@@ -151,7 +155,7 @@ export async function POST(req: Request) {
   const dbList = !hasAttach ? await loadDbTemplates() : []
   // 기본 템플릿과 관리자가 등록한 DB 템플릿을 함께 보고 '가장 긴 키워드'가 맞는 쪽을 쓴다.
   // (예전엔 기본 템플릿이 먼저라, "메이플 어드벤처" 요청에 '어드벤처'(기본·탑다운)가 '메이플'(DB)을 눌렀다)
-  let tmatch = !hasAttach ? (() => {
+  let tmatch = !hasAttach && !godotMode ? (() => {
     const sm = matchTemplateIn(staticList, prompt)
     const dm = matchTemplateIn(dbList, prompt)
     if (!sm) return dm
@@ -162,7 +166,7 @@ export async function POST(req: Request) {
   // 반면 "테트리스처럼 블록이 떨어지게 해줘" 같은 수정 요청(추가 문장 있음)은 기존 게임 수정 경로를 유지한다.
   if (latest && tmatch && !templateOnly(prompt, tmatch.keyword, tmatch.template.keywords)) tmatch = null
   // 조작 변형 선택: 사용자가 조작 카드로 특정 변형을 골랐으면 그 템플릿을 강제 사용 (매칭 무시)
-  if (variantSlug && !latest && !hasAttach) {
+  if (variantSlug && !latest && !hasAttach && !godotMode) {
     const vt = staticList.find(t => t.slug === variantSlug) ?? dbList.find(t => t.slug === variantSlug)
     if (vt) tmatch = { template: vt, keyword: vt.keywords[0] ?? vt.name }
   }
@@ -170,7 +174,7 @@ export async function POST(req: Request) {
   let mapMethod: 'keyword' | 'similarity' | 'ml' | 'none' = tmatch ? 'keyword' : 'none'
   let mapConf: number | null = tmatch ? 1 : null
   // MLPilot: 키워드로 못 잡으면 유사도 매퍼(문자 n-gram, LLM 없음)로 가장 가까운 템플릿을 고른다
-  if (!tmatch && !latest && !hasAttach && !(dev && dev.dimension === '3d')) {
+  if (!tmatch && !latest && !hasAttach && !godotMode && !(dev && dev.dimension === '3d')) {
     const ml = await loadMl()
     ml.aiJudge = ml.aiJudge && auto['mlpilot.aiJudge']; ml.autoLearn = ml.autoLearn && auto['mlpilot.autoLearn']
     if (ml.enabled) {
@@ -275,10 +279,10 @@ export async function POST(req: Request) {
   if (dev) effectivePrompt += `\n\n${devSpecPrompt(dev)}`
 
   // ── 미디어 라이브러리 — 이전 버전에 주입돼 있던 에셋은 유지하고, 고른 것 + 프롬프트·장르에 맞는 것(auto_use)을 더한다. LLM 에는 base64 대신 이름·용도만 보낸다.
-  const prevAssetIds = extractAssetIds(latest?.html)
+  const prevAssetIds = godotMode ? [] : extractAssetIds(latest?.html)
   let mediaAssets: MediaAssetLite[] = []
   let pickedAssets: MediaAssetLite[] = []   // 사용자가 미디어 선택기에서 고른 에셋 — 채팅에 표시
-  try {
+  if (!godotMode) try {
     const adminDb = createAdminClient()
     const genreSlugs = tmatch ? [tmatch.template.slug, ...(tmatch.template.genreGroup ? [tmatch.template.genreGroup] : [])] : (variantSlug ? [variantSlug] : [])
     const [prevA, pickedA0, autoPool] = await Promise.all([
@@ -322,9 +326,9 @@ export async function POST(req: Request) {
   const routeTask = tmatch ? 'template_edit' : latest ? 'edit' : 'create'
   const routed = routeModel({ task: routeTask, promptChars: prompt.length, htmlChars: baseHtml?.length ?? 0 }, await loadPolicy())
   const chosenModel = images.length > 0 ? 'claude-sonnet-5' : routed.model  // 이미지 입력은 Sonnet 고정
-  const systemPrompt = buildSystemPrompt(await loadControls())
+  const systemPrompt = godotMode ? buildGodotSystemPrompt() : buildSystemPrompt(await loadControls())
   // 모델에는 에셋(base64)·플랫폼 shim 을 뺀 순수 게임 코드만 — 절반 이하 크기 (저장 시 다시 주입/하든)
-  const modelBase = baseHtml ? stripShims(stripAssets(baseHtml)) : null
+  const modelBase = godotMode ? (godotPrev ? godotFilesAsText(godotPrev.files) : null) : baseHtml ? stripShims(stripAssets(baseHtml)) : null
   const genMessages = buildMessages({ prompt: effectivePrompt, currentHtml: modelBase, history, images })
   let stream: MsgStream | null = null
   // 관리자 + MAX_WORKER=1: 로컬 Claude Code(Max 구독) 워커로 생성 (이미지 입력은 API). 워커가 없으면 API 로 폴백.
@@ -471,6 +475,12 @@ export async function POST(req: Request) {
           usedIn = fin.usage?.input_tokens ?? 0; usedOut = fin.usage?.output_tokens ?? 0
           safeEnqueue(`\n[[USAGE:${usedIn}:${usedOut}]]`)
         } catch { /* usage 실패는 무시 — 생성 자체엔 영향 없음 */ }
+        // Godot: <game> 안의 프로젝트 파일들 → 프로젝트 뷰어 HTML 로 바꿔 저장 (설명은 그대로)
+        if (godotMode) {
+          const viewer = godotVersionHtml(full)
+          const gi = full.indexOf('<game>')
+          full = viewer ? `${gi >= 0 ? full.slice(0, gi) : full}<game>${viewer}</game>` : (gi >= 0 ? full.slice(0, gi) : full)
+        }
         const parsed = parseGeneration(full)
         if (!parsed.html) {
           await refund()
@@ -495,7 +505,7 @@ export async function POST(req: Request) {
           const skipped = mediaAssets.filter(a => !loadedAssets.some(l => l.id === a.id))
           const skipNote = skipped.length ? `\n\n⚠ 크기 제한으로 게임에 실리지 않은 에셋: ${skipped.map(a => `${a.name}(${Math.round(a.bytes / 1024)}KB)`).join(', ')}. 미디어 라이브러리에서 더 작은 파일(오디오 900KB·이미지 450KB 이하)로 바꿔 주세요.` : ''
           const { data: vIns, error: vErr } = await supabase.from('studio_versions').insert([
-            { project_id: projectId, version: nextVersion, html: hardenHtml(injectAssets(injectSounds(parsed.html, sounds), loadedAssets), { controls: await loadControls() }) },
+            { project_id: projectId, version: nextVersion, html: godotMode ? parsed.html : hardenHtml(injectAssets(injectSounds(parsed.html, sounds), loadedAssets), { controls: await loadControls() }) },
           ] as never).select('id').maybeSingle()
           if (vErr) {
             await refund()
@@ -526,7 +536,7 @@ export async function POST(req: Request) {
                 { project_id: projectId, role: 'assistant', content: parsed.description + skipNote + (extractTestNote(full) ? `\n\n${extractTestNote(full)}` : '') },
               ] as never)
               if (mErr) console.error('[studio/generate] messages insert failed', mErr)
-              if (nextVersion === 1 && !tmatch && !hasAttach) {
+              if (nextVersion === 1 && !tmatch && !hasAttach && !godotMode) {
                 // 처음 만들어진 게임 → 템플릿 후보로 저장 (관리자 승인 후 재사용 → 다음부턴 LLM 비용 0)
                 void saveTemplateCandidate({ prompt, title: extractTitle(parsed.html), description: parsed.description, html: hardenHtml(parsed.html), projectId, userId: user.id, autoApprove: auto['templates.autoApprove'] })
               }

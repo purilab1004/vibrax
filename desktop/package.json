@@ -1,7 +1,7 @@
 {
   "name": "vibrex-builder",
   "productName": "Vibrex",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "프롬프트로 게임을 만드는 vibrexcup 데스크톱 빌더",
   "author": "vibrexcup <dev@puritechlab.com>",
   "homepage": "https://vibrexcup.com/dev#builder",

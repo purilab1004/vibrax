@@ -103,3 +103,8 @@ select { background: var(--panel2); color: var(--text); border: 1px solid var(--
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .12); border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .26); background-clip: padding-box; }
 ::-webkit-scrollbar-thumb:active { background: rgba(167, 139, 250, .55); background-clip: padding-box; }
+
+/* Godot 프로젝트 */
+.godot { background: #478cbf; color: #fff; padding: 6px 12px; font-weight: 700; }
+.godot:hover { filter: brightness(1.1); }
+#godotStat { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -8,6 +8,7 @@ import { parseGeneration, extractTitle } from '../lib/studio/parse'
 import { smokeGame } from './smoke-game.mjs'
 import { hardenHtml } from '../lib/studio/harden'
 import { extractPatches, applyPatches, validatePatchedHtml, type PatchBlock } from '../lib/studio/patch'
+import { ENGINE_JOB_MARK, godotVersionHtml } from '../lib/studio/godot'
 
 for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', 'utf8').split('\n') : []) { const m = line.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^"|"$/g, '') }
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
@@ -92,8 +93,11 @@ async function runJob(job: { id: string; model: string | null; system: string; m
   if (code !== 0 && !buf) { await sb.from('studio_jobs').update({ status: 'error', error: err.slice(0, 500) || `exit ${code}`, finished_at: new Date().toISOString() }).eq('id', job.id); console.log('  error', err.slice(0, 200)); return }
   // ── 실제로 실행해 본다 → 실패하면 오류를 넣어 자동 수정(최대 2회) ──
   const append = (t: string) => { buf += t; dirty = true; void flush() }
-  buf = await testAndRepair(job, buf, append)
-  buf = await finishRemaining(job, buf, append)   // 길어서 한 번에 못 끝낸 작업을 나눠서 끝까지
+  // 엔진 프로젝트(Godot 등)는 HTML 게임이 아니다 — 브라우저 실행 테스트·HTML 이어 만들기를 건너뛴다
+  if (!job.system.includes(ENGINE_JOB_MARK)) {
+    buf = await testAndRepair(job, buf, append)
+    buf = await finishRemaining(job, buf, append)   // 길어서 한 번에 못 끝낸 작업을 나눠서 끝까지
+  }
   await sb.from('studio_jobs').update({ status: 'done', result: buf, finished_at: new Date().toISOString() }).eq('id', job.id)
   currentJobId = null
   console.log('  done', buf.length, 'chars')
@@ -271,7 +275,7 @@ async function testAndRepair(job: { id: string; model: string | null; system: st
 // ── 저장 안전장치 ──
 // 생성이 3~4분 걸리면 서버(Vercel) 함수가 먼저 끊겨 버전이 저장되지 않는 일이 있었다(화면엔 답변이 보이지만 새로고침하면 사라짐).
 // 서버가 저장할 시간을 준 뒤에도 새 버전이 없으면 워커가 직접 저장한다.
-async function ensureSaved(job: { id: string; project_id?: string; messages: Msg[] }, result: string) {
+async function ensureSaved(job: { id: string; project_id?: string; system?: string; messages: Msg[] }, result: string) {
   try {
     await new Promise(r => setTimeout(r, 20_000))
     const { data: jobRow } = await sb.from('studio_jobs').select('project_id,created_at').eq('id', job.id).maybeSingle()
@@ -282,7 +286,8 @@ async function ensureSaved(job: { id: string; project_id?: string; messages: Msg
     const { data: already } = await sb.from('studio_versions').select('id').eq('project_id', row.project_id).gt('created_at', row.created_at).limit(1)
     if ((already ?? []).length) { console.log('  [저장 안전장치] 서버가 이미 저장함 — 건너뜀'); return }
     const parsed = parseGeneration(result)
-    const { html: finalHtml } = await materialize(job.id, result)
+    const engineJob = !!job.system?.includes(ENGINE_JOB_MARK)
+    const finalHtml = engineJob ? godotVersionHtml(result) : (await materialize(job.id, result)).html
     const desc = (parsed.description || extractPatches(result).description || '').slice(0, 4000)
     if (!finalHtml) {
       // 만들지 못했어도 기록은 반드시 남긴다 — 화면에서 대화가 통째로 사라지지 않게
@@ -300,7 +305,7 @@ async function ensureSaved(job: { id: string; project_id?: string; messages: Msg
     }
     const { data: last } = await sb.from('studio_versions').select('version').eq('project_id', row.project_id).order('version', { ascending: false }).limit(1).maybeSingle()
     const next = ((last as { version?: number } | null)?.version ?? 0) + 1
-    const { error: vErr } = await sb.from('studio_versions').insert([{ project_id: row.project_id, version: next, html: hardenHtml(finalHtml) }] as never)
+    const { error: vErr } = await sb.from('studio_versions').insert([{ project_id: row.project_id, version: next, html: engineJob ? finalHtml : hardenHtml(finalHtml) }] as never)
     if (vErr) { console.log('  [저장 안전장치] 버전 저장 실패', vErr.message); return }
     const lastUser = [...job.messages].reverse().find(m => m.role !== 'assistant')
     const prompt = typeof lastUser?.content === 'string' ? lastUser.content : (lastUser?.content ?? []).map(c => c.text ?? '').join('\n')

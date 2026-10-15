@@ -1,6 +1,7 @@
 // Vibrex Builder — 데스크톱 게임 빌더 (Electron 메인 프로세스)
 // 프롬프트 → vibrexcup 스튜디오 생성 엔진(/api/studio/generate, 개발자 API 키) → 게임 HTML 을 내 컴퓨터 폴더에 파일로 저장 · 미리보기
 const { app, BrowserWindow, ipcMain, shell, dialog, safeStorage, protocol, net, Menu } = require('electron')
+const { spawn, execFile } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 const { pathToFileURL } = require('url')
@@ -66,7 +67,14 @@ function writeProjectFiles(data) {
     fs.writeFileSync(path.join(dir, 'versions', `v${current.version}.html`), current.html)
     fs.writeFileSync(path.join(dir, 'index.html'), current.html)
   }
-  fs.writeFileSync(path.join(dir, 'game.json'), JSON.stringify({ id: project.id, title: project.title, version: current ? current.version : 0, versions: versions.map((v) => v.version), studioUrl, api: API, savedAt: new Date().toISOString() }, null, 2))
+  // 개발 타입 Godot — 버전 HTML(프로젝트 뷰어) 안의 JSON 을 꺼내 godot/ 폴더에 진짜 프로젝트로 쓴다
+  const gp = current && current.html ? extractGodot(current.html) : null
+  if (gp) {
+    const gdir = path.join(dir, 'godot')
+    fs.rmSync(gdir, { recursive: true, force: true })
+    for (const f of gp.files) { const p = inside(gdir, f.path); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, f.content) }
+  }
+  fs.writeFileSync(path.join(dir, 'game.json'), JSON.stringify({ id: project.id, title: project.title, engine: gp ? 'godot' : 'web', version: current ? current.version : 0, versions: versions.map((v) => v.version), studioUrl, api: API, savedAt: new Date().toISOString() }, null, 2))
   const log = (messages || []).filter((m) => m.role === 'user').map((m, i) => `${i + 1}. ${m.content.split('\n')[0].slice(0, 300)}`).join('\n')
   fs.writeFileSync(path.join(dir, 'README.md'), `# ${project.title}\n\nVibrex Builder 로 만든 게임입니다.\n\n- 실행: index.html 을 브라우저로 열기\n- 웹 스튜디오에서 이어서 수정·게시: ${studioUrl}\n- 버전 기록: versions/\n\n## 프롬프트 기록\n\n${log || '(아직 없음)'}\n`)
   return dir
@@ -81,6 +89,69 @@ function listFiles(dir, base = dir, out = []) {
   return out
 }
 const inside = (dir, rel) => { const p = path.resolve(dir, rel); if (!p.startsWith(path.resolve(dir) + path.sep)) throw new Error('bad path'); return p }
+function extractGodot(html) {
+  const m = html.match(/<script type="application\/json" id="vibrex-godot">([\s\S]*?)<\/script>/)
+  if (!m) return null
+  try { const p = JSON.parse(m[1]); return p && p.engine === 'godot' && Array.isArray(p.files) ? p : null } catch { return null }
+}
+
+// ---------- Godot 자동 설치 · 실행 ----------
+// 설치 위치: <userData>/engines/godot-<버전>/ · GitHub 공식 릴리스(godotengine/godot)의 최신 안정판
+const ENGINES = () => path.join(app.getPath('userData'), 'engines')
+function godotBinIn(dir) {
+  if (!fs.existsSync(dir)) return null
+  if (process.platform === 'darwin') { const app2 = fs.readdirSync(dir).find((f) => f.endsWith('.app')); return app2 ? path.join(dir, app2, 'Contents', 'MacOS', 'Godot') : null }
+  const exe = fs.readdirSync(dir).find((f) => /^Godot.*\.exe$/i.test(f) && !/console/i.test(f))
+  return exe ? path.join(dir, exe) : null
+}
+function findGodot() {
+  const s = loadSettings()
+  if (s.godotPath && fs.existsSync(s.godotPath)) return { path: s.godotPath, version: s.godotVersion || '' }
+  // 이미 설치된 Godot (Mac 응용 프로그램 폴더)
+  if (process.platform === 'darwin' && fs.existsSync('/Applications/Godot.app/Contents/MacOS/Godot')) return { path: '/Applications/Godot.app/Contents/MacOS/Godot', version: 'system' }
+  if (fs.existsSync(ENGINES())) for (const d of fs.readdirSync(ENGINES()).filter((f) => f.startsWith('godot-')).sort().reverse()) { const b = godotBinIn(path.join(ENGINES(), d)); if (b) return { path: b, version: d.slice(6) } }
+  return null
+}
+let installing = null
+async function installGodot(onProgress) {
+  if (installing) return installing
+  installing = (async () => {
+    const rel = await (await fetch('https://api.github.com/repos/godotengine/godot/releases/latest', { headers: { 'User-Agent': 'Vibrex' } })).json()
+    const want = process.platform === 'darwin' ? /macos\.universal\.zip$/ : process.platform === 'win32' ? /win64\.exe\.zip$/ : /linux\.x86_64\.zip$/
+    const asset = (rel.assets || []).find((a) => want.test(a.name) && !/mono/i.test(a.name))
+    if (!asset) throw new Error('이 OS 용 Godot 를 찾지 못했어요')
+    const ver = String(rel.tag_name || 'latest').replace(/-stable$/, '')
+    const dest = path.join(ENGINES(), 'godot-' + ver), zip = dest + '.zip'
+    fs.mkdirSync(ENGINES(), { recursive: true })
+    const res = await fetch(asset.browser_download_url)
+    if (!res.ok || !res.body) throw new Error('다운로드 실패 ' + res.status)
+    const total = Number(res.headers.get('content-length')) || asset.size || 0
+    const out = fs.createWriteStream(zip), reader = res.body.getReader()
+    let got = 0, last = 0
+    for (;;) {
+      const { value, done } = await reader.read(); if (done) break
+      out.write(Buffer.from(value)); got += value.length
+      if (Date.now() - last > 200) { last = Date.now(); onProgress({ phase: 'download', got, total, version: ver }) }
+    }
+    await new Promise((r) => out.end(r))
+    onProgress({ phase: 'extract', got, total, version: ver })
+    fs.rmSync(dest, { recursive: true, force: true }); fs.mkdirSync(dest, { recursive: true })
+    await new Promise((ok, no) => {
+      const cb = (e) => (e ? no(e) : ok())
+      if (process.platform === 'darwin') execFile('ditto', ['-x', '-k', zip, dest], cb)
+      else if (process.platform === 'win32') execFile('powershell', ['-NoProfile', '-Command', `Expand-Archive -LiteralPath '${zip}' -DestinationPath '${dest}' -Force`], cb)
+      else execFile('unzip', ['-o', zip, '-d', dest], cb)
+    })
+    fs.rmSync(zip, { force: true })
+    const bin = godotBinIn(dest) || (process.platform === 'linux' ? path.join(dest, fs.readdirSync(dest)[0]) : null)
+    if (!bin) throw new Error('압축을 풀었지만 Godot 실행 파일이 없어요')
+    if (process.platform !== 'win32') fs.chmodSync(bin, 0o755)
+    const s = loadSettings(); s.godotPath = bin; s.godotVersion = ver; saveSettings(s)
+    onProgress({ phase: 'done', got, total, version: ver })
+    return { path: bin, version: ver }
+  })()
+  try { return await installing } finally { installing = null }
+}
 
 // ---------- IPC ----------
 const dirs = new Map()   // projectId → 폴더
@@ -108,13 +179,29 @@ ipcMain.handle('projects:open', async (_e, id, version) => {
   const data = await (await api(`/api/v1/build/projects/${id}${version ? '?version=' + version : ''}`)).json()
   const dir = writeProjectFiles(data)
   dirs.set(id, dir)
-  return { ...data, dir, files: listFiles(dir) }
+  return { ...data, dir, files: listFiles(dir), godot: fs.existsSync(path.join(dir, 'godot', 'project.godot')) }
 })
 ipcMain.handle('files:list', (_e, id) => { const d = dirs.get(id); return d ? listFiles(d) : [] })
 ipcMain.handle('files:read', (_e, id, rel) => fs.readFileSync(inside(dirs.get(id), rel), 'utf8'))
 ipcMain.handle('files:write', (_e, id, rel, text) => { fs.writeFileSync(inside(dirs.get(id), rel), text); return true })
 ipcMain.handle('open:folder', (_e, id) => shell.openPath(dirs.get(id) || workspace()))
 ipcMain.handle('open:browser', (_e, id) => shell.openPath(path.join(dirs.get(id), 'index.html')))
+ipcMain.handle('godot:status', () => { const g = findGodot(); return g ? { installed: true, ...g } : { installed: false } })
+ipcMain.handle('godot:install', async (e) => {
+  try { return { ok: true, ...(await installGodot((p) => e.sender.send('godot:progress', p))) } } catch (err) { return { ok: false, error: err.message } }
+})
+// 실행: editor=false → 게임 바로 실행 (--path), true → Godot 편집기로 프로젝트 열기 (-e)
+ipcMain.handle('godot:run', async (e, id, editor) => {
+  const dir = dirs.get(id), gdir = dir && path.join(dir, 'godot')
+  if (!gdir || !fs.existsSync(path.join(gdir, 'project.godot'))) return { ok: false, error: 'Godot 프로젝트가 아니에요' }
+  let g = findGodot()
+  if (!g) { try { g = await installGodot((p) => e.sender.send('godot:progress', p)) } catch (err) { return { ok: false, error: 'Godot 설치 실패: ' + err.message } } }
+  // 처음 여는 프로젝트는 편집기가 한 번 가져오기(import)를 해야 실행된다 — 헤드리스로 먼저 가져온다
+  if (!fs.existsSync(path.join(gdir, '.godot'))) await new Promise((r) => execFile(g.path, ['--headless', '--editor', '--quit', '--path', gdir], { timeout: 120000 }, () => r()))
+  const child = spawn(g.path, editor ? ['-e', '--path', gdir] : ['--path', gdir], { detached: true, stdio: 'ignore' })
+  child.unref()
+  return { ok: true, version: g.version }
+})
 ipcMain.handle('open:external', (_e, url) => { if (/^https:\/\/(vibrexcup\.com|www\.vibrexcup\.com)\//.test(url)) shell.openExternal(url) })
 
 // 생성: 스트림을 그대로 렌더러로 흘려보낸다 (gen:chunk) → 끝나면 서버에 저장된 새 버전을 받아 파일로 쓴다 (gen:done)
@@ -142,7 +229,7 @@ ipcMain.handle('gen:start', async (e, id, prompt) => {
       }
     }
     const dir = writeProjectFiles(data); dirs.set(id, dir)
-    return { ok: true, data: { ...data, dir, files: listFiles(dir) } }
+    return { ok: true, data: { ...data, dir, files: listFiles(dir), godot: fs.existsSync(path.join(dir, 'godot', 'project.godot')) } }
   } catch (err) {
     if (ctl.signal.aborted) return { ok: false, error: '멈췄어요' }
     return { ok: false, status: err.status, error: err.status === 402 ? '프롬코인이 부족해요 — vibrexcup.com/credits 에서 충전해 주세요' : err.status === 503 ? '생성 엔진이 잠시 쉬는 중이에요. 잠시 후 다시 시도해 주세요' : err.message }
