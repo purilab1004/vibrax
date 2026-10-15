@@ -9,7 +9,7 @@ const SITE = 'https://vibrexcup.com'
 // Chrome 웹스토어 게시 후 실제 항목 URL 로 교체 (null 이면 '심사 중' 표시)
 const CHROME_STORE_URL: string | null = null
 // 데스크톱 게임 빌더 (desktop/ — Electron) 설치 파일: GitHub Releases
-const BUILDER_VERSION = '0.2.0'
+const BUILDER_VERSION = '0.3.0'
 const BUILDER_REL = `https://github.com/purilab1004/vibrax/releases/download/builder-v${BUILDER_VERSION}`
 const BUILDER_DL = [
   { os: 'mac-arm64', icon: '', file: `Vibrex-${BUILDER_VERSION}-mac-arm64.dmg`, size: '122MB' },

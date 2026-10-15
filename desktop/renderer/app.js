@@ -71,6 +71,7 @@ async function openProject(id, version) {
   showEmpty(!d.current)
   if (d.current) loadPreview()
   showGodot(!!d.godot)
+  showUnity(!!d.unity)
   st.file = 'index.html'; if ($('codeWrap').classList.contains('on')) loadCode()
 }
 $('verSel').onchange = () => openProject(st.cur, Number($('verSel').value))
@@ -105,6 +106,22 @@ async function runGodot(editor) {
 }
 $('godotRun').onclick = () => runGodot(false)
 $('godotEdit').onclick = () => runGodot(true)
+// ---------- Unity 프로젝트 ----------
+async function unityStatusText() {
+  const u = await vb.unity.status()
+  $('godotStat').classList.remove('hidden')
+  $('godotStat').textContent = u.editor ? `Unity ${u.editor.version} 준비됨` : u.hub ? 'Unity Hub 는 있어요 — 에디터(Unity 6 LTS) 설치 필요' : 'Unity 없음 — Unity Hub 설치·로그인 필요'
+}
+$('unityOpen').onclick = async () => {
+  if (!st.cur) return
+  const r = await vb.unity.open(st.cur)
+  if (!r.ok) { addMsg('err', esc(r.error)); return }
+  if (r.action === 'editor') addMsg('sys', `Unity ${esc(r.version)} 로 열고 있어요. 처음 열 때는 가져오기에 몇 분 걸려요 — 다 열리면 ▶ Play 를 누르세요.`)
+  else if (r.action === 'hub') addMsg('sys', 'Unity Hub 를 열었어요. Installs → Install Editor 에서 <b>Unity 6 LTS</b> 를 설치한 뒤 다시 ▶ Unity 로 열기 를 누르세요.')
+  else addMsg('sys', 'Unity 다운로드 페이지를 열었어요. Unity Hub 를 설치하고 로그인 → Unity 6 LTS 에디터를 설치한 뒤 다시 ▶ Unity 로 열기 를 누르세요.')
+  unityStatusText()
+}
+function showUnity(on) { $('unityOpen').classList.toggle('hidden', !on); if (on) { $('godotStat').classList.remove('hidden'); unityStatusText() } }
 function showGodot(on) { for (const id of ['godotRun', 'godotEdit', 'godotStat']) $(id).classList.toggle('hidden', !on); if (on) godotStatus() }
 $('publishBtn').onclick = () => st.data && vb.open.external(st.data.studioUrl)
 

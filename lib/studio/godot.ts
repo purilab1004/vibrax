@@ -4,10 +4,13 @@
 
 export const ENGINE_JOB_MARK = '[[VIBREX_ENGINE_PROJECT]]'   // 워커: 이 표시가 있는 시스템 프롬프트는 HTML 실행 테스트를 건너뛴다
 export const GODOT_JSON_ID = 'vibrex-godot'
+export const UNITY_JSON_ID = 'vibrex-unity'
+export type EngineKind = 'godot' | 'unity'
 export interface GodotFile { path: string; content: string }
-export interface GodotProject { engine: 'godot'; version: 4; dimension: '2d' | '3d'; title: string; files: GodotFile[] }
+export interface GodotProject { engine: EngineKind; version: number; dimension: '2d' | '3d'; title: string; files: GodotFile[] }
+const JSON_ID: Record<EngineKind, string> = { godot: GODOT_JSON_ID, unity: UNITY_JSON_ID }
 
-const OK_EXT = /\.(godot|gd|tscn|tres|cfg|gdshader|json|md|txt|import)$/i
+const OK_EXT = /\.(godot|gd|tscn|tres|cfg|gdshader|json|md|txt|import|cs|asmdef|shader|asset)$/i
 const MAX_FILES = 40, MAX_BYTES = 400_000
 
 export function buildGodotSystemPrompt(): string {
@@ -81,11 +84,16 @@ export const godotDimension = (files: GodotFile[]): '2d' | '3d' => (/type="Node3
 
 /** 버전 HTML 이 Godot 프로젝트 뷰어인지, 맞으면 프로젝트를 꺼낸다 */
 export function extractGodotProject(html: string | null | undefined): GodotProject | null {
-  if (!html || !html.includes(GODOT_JSON_ID)) return null
-  const m = html.match(new RegExp(`<script type="application/json" id="${GODOT_JSON_ID}">([\\s\\S]*?)</script>`))
-  if (!m) return null
-  try { const p = JSON.parse(m[1]) as GodotProject; return p && p.engine === 'godot' && Array.isArray(p.files) ? p : null } catch { return null }
+  if (!html) return null
+  for (const id of [GODOT_JSON_ID, UNITY_JSON_ID]) {
+    if (!html.includes(id)) continue
+    const m = html.match(new RegExp(`<script type="application/json" id="${id}">([\\s\\S]*?)</script>`))
+    if (!m) continue
+    try { const p = JSON.parse(m[1]) as GodotProject; if (p && (p.engine === 'godot' || p.engine === 'unity') && Array.isArray(p.files)) return p } catch { /* 다음 */ }
+  }
+  return null
 }
+export const extractEngineProject = extractGodotProject
 
 /** 수정 요청 때 모델에 보여 줄 현재 프로젝트 */
 export const godotFilesAsText = (files: GodotFile[]) => files.map((f) => `<file path="${f.path}">\n${f.content}</file>`).join('\n')
@@ -99,9 +107,22 @@ export function godotVersionHtml(raw: string): string | null {
   if (!files.some((f) => f.path === 'project.godot')) return null
   return godotViewerHtml({ engine: 'godot', version: 4, dimension: godotDimension(files), title: godotTitle(files), files })
 }
+/** 엔진별 모델 출력 → 뷰어 HTML (Unity 는 lib/studio/unity.ts 가 고정 파일을 더한다) */
+export function engineVersionHtml(engine: EngineKind, raw: string, finish?: (files: GodotFile[], raw: string) => GodotProject | null): string | null {
+  if (engine === 'godot') return godotVersionHtml(raw)
+  const gi = raw.indexOf('<game>')
+  const files = parseGodotFiles(gi >= 0 ? raw.slice(gi) : raw)
+  const p = finish ? finish(files, raw) : null
+  return p ? godotViewerHtml(p) : null
+}
 
 /** 프로젝트 뷰어 — 파일 목록·코드 보기·.zip 받기·실행 방법 (스튜디오 미리보기 칸에 뜬다) */
+const VIEW: Record<EngineKind, { name: string; color: string; letter: string; run: string }> = {
+  godot: { name: 'Godot 4', color: '#478cbf', letter: 'G', run: '<b>데스크톱 빌더 Vibrex</b> 에서 열면 Godot 를 자동 설치하고 바로 실행돼요 · 또는 .zip 을 풀어 Godot 4 에서 project.godot 열기' },
+  unity: { name: 'Unity', color: '#222c37', letter: 'U', run: '<b>데스크톱 빌더 Vibrex</b> 에서 열면 설치된 Unity 로 바로 열려요 · 또는 .zip 을 풀어 Unity Hub → Add project → 열고 ▶ Play' },
+}
 export function godotViewerHtml(p: GodotProject): string {
+  const V = VIEW[p.engine], JID = JSON_ID[p.engine]
   const json = JSON.stringify(p).replace(/</g, '\\u003c')
   const lines = p.files.reduce((n, f) => n + f.content.split('\n').length, 0)
   return `<!doctype html>
@@ -110,9 +131,9 @@ export function godotViewerHtml(p: GodotProject): string {
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#16181f;color:#e7e9f0;font:14px/1.5 -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 .top{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #2a2e3c;background:#1c1f29}
-.logo{width:34px;height:34px;border-radius:9px;background:#478cbf;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff}
+.logo{width:34px;height:34px;border-radius:9px;background:${V.color};border:1px solid #3a4155;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff}
 .top h1{margin:0;font-size:16px}.top small{display:block;color:#8b91a5;font-size:11.5px;font-weight:500}
-.btn{margin-left:auto;border:0;border-radius:10px;padding:9px 14px;background:#478cbf;color:#fff;font-weight:800;cursor:pointer;font-size:13px}
+.btn{margin-left:auto;border:0;border-radius:10px;padding:9px 14px;background:${p.engine === 'unity' ? '#4c7cf0' : V.color};color:#fff;font-weight:800;cursor:pointer;font-size:13px}
 .btn:hover{filter:brightness(1.1)}
 .wrap{display:grid;grid-template-columns:200px 1fr;height:calc(100% - 63px - 46px)}
 .files{border-right:1px solid #2a2e3c;overflow:auto;padding:8px}.files div{padding:6px 8px;border-radius:6px;cursor:pointer;font:12.5px Menlo,Consolas,monospace;color:#c7cbd8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -122,16 +143,16 @@ pre{margin:0;overflow:auto;padding:14px 16px;font:12.5px/1.6 Menlo,Consolas,mono
 .foot b{color:#e7e9f0}
 @media(max-width:600px){.wrap{grid-template-columns:1fr;grid-template-rows:120px 1fr}.files{border-right:0;border-bottom:1px solid #2a2e3c}}
 </style></head><body>
-<div class="top"><div class="logo">G</div><div><h1>${esc(p.title)}</h1><small>Godot 4 · ${p.dimension.toUpperCase()} · 파일 ${p.files.length}개 · ${lines.toLocaleString()}줄</small></div><button class="btn" id="dl">⬇ 프로젝트 .zip</button></div>
+<div class="top"><div class="logo">${V.letter}</div><div><h1>${esc(p.title)}</h1><small>${V.name} · ${p.dimension.toUpperCase()} · 파일 ${p.files.length}개 · ${lines.toLocaleString()}줄</small></div><button class="btn" id="dl">⬇ 프로젝트 .zip</button></div>
 <div class="wrap"><div class="files" id="files"></div><pre id="code"></pre></div>
-<div class="foot">▶ 실행: <b>데스크톱 빌더 Vibrex</b> 에서 열면 Godot 를 자동 설치하고 바로 실행돼요 · 또는 .zip 을 풀어 Godot 4 에서 project.godot 열기</div>
-<script type="application/json" id="${GODOT_JSON_ID}">${json}</script>
+<div class="foot">▶ 실행: ${V.run}</div>
+<script type="application/json" id="${JID}">${json}</script>
 <script>
 (function(){
-var P=JSON.parse(document.getElementById('${GODOT_JSON_ID}').textContent),fl=document.getElementById('files'),code=document.getElementById('code');
+var P=JSON.parse(document.getElementById('${JID}').textContent),fl=document.getElementById('files'),code=document.getElementById('code');
 function show(i){[].forEach.call(fl.children,function(d,j){d.className=j===i?'on':''});code.textContent=P.files[i].content}
-P.files.forEach(function(f,i){var d=document.createElement('div');d.textContent=(/\\.gd$/.test(f.path)?'📜 ':/\\.tscn$/.test(f.path)?'🎬 ':'⚙ ')+f.path;d.onclick=function(){show(i)};fl.appendChild(d)});
-var mi=P.files.findIndex(function(f){return f.path==='main.gd'});show(mi>=0?mi:0);
+P.files.forEach(function(f,i){var d=document.createElement('div'),parts=f.path.split('/'),dir=parts.slice(0,-1).join('/');d.title=f.path;d.innerHTML=(/\\.(gd|cs)$/.test(f.path)?'📜 ':/\\.(tscn|unity)$/.test(f.path)?'🎬 ':'⚙ ')+parts[parts.length-1].replace(/[&<>]/g,'')+(dir?' <span style="color:#6b7186;font-size:10.5px">'+dir.replace(/[&<>]/g,'')+'</span>':'');d.onclick=function(){show(i)};fl.appendChild(d)});
+var mi=P.files.findIndex(function(f){return f.path==='main.gd'||/Assets\\/Scripts\\/Game\\.cs$/.test(f.path)});show(mi>=0?mi:0);
 // 압축 없는(store) zip — 외부 라이브러리 없이
 var T=[];for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;T[n]=c>>>0}
 function crc(b){var c=0xFFFFFFFF;for(var i=0;i<b.length;i++)c=T[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}

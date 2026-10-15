@@ -160,12 +160,12 @@ published ? (
           dev && box.w === 0 ? null : dev ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className={`${dev.radius} border border-[#ddd3bf] overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.6)] bg-black shrink-0`} style={{ width: fw, height: fh, transform: `scale(${scale})`, transformOrigin: 'center', transition: 'width .25s ease, height .25s ease' }}>
-                <iframe key={frameKey} sandbox={`allow-scripts allow-pointer-lock${html?.includes('vibrex-godot') ? ' allow-downloads' : ''}`} {...(frameSrc ? { src: frameSrc } : { srcDoc: html })} className="w-full h-full border-0" title="game preview" style={{ width: fw, height: fh }} />
+                <iframe key={frameKey} sandbox={`allow-scripts allow-pointer-lock${html && /vibrex-(godot|unity)/.test(html) ? ' allow-downloads' : ''}`} {...(frameSrc ? { src: frameSrc } : { srcDoc: html })} className="w-full h-full border-0" title="game preview" style={{ width: fw, height: fh }} />
               </div>
               <span className="absolute bottom-2 right-3 text-[10.5px] text-white/50 tabular-nums">{fw}×{fh}{scale < 1 ? ` · ${Math.round(scale * 100)}%` : ''}</span>
             </div>
           ) : (
-            <iframe key={frameKey} sandbox={`allow-scripts allow-pointer-lock${html?.includes('vibrex-godot') ? ' allow-downloads' : ''}`} {...(frameSrc ? { src: frameSrc } : { srcDoc: html })} className="absolute inset-0 w-full h-full border-0" title="game preview" style={{ width: '1px', minWidth: '100%' }} />
+            <iframe key={frameKey} sandbox={`allow-scripts allow-pointer-lock${html && /vibrex-(godot|unity)/.test(html) ? ' allow-downloads' : ''}`} {...(frameSrc ? { src: frameSrc } : { srcDoc: html })} className="absolute inset-0 w-full h-full border-0" title="game preview" style={{ width: '1px', minWidth: '100%' }} />
           )
         ) : (
           <div className="w-full h-full flex items-center justify-center">

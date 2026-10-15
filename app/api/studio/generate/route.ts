@@ -18,7 +18,8 @@ import { tryMaxJob, type MsgStream } from '@/lib/studio/max-job'
 import { extractPatches, applyPatches, validatePatchedHtml } from '@/lib/studio/patch'
 import { stripAttach } from '@/lib/studio/attach'
 import { sanitizeDevSpec, devSpecPrompt, devSpecSummary } from '@/lib/studio/dev-spec'
-import { buildGodotSystemPrompt, extractGodotProject, godotFilesAsText, godotVersionHtml } from '@/lib/studio/godot'
+import { buildGodotSystemPrompt, extractGodotProject, godotFilesAsText, engineVersionHtml, type EngineKind } from '@/lib/studio/godot'
+import { buildUnitySystemPrompt, finishUnityProject } from '@/lib/studio/unity'
 import { buildAttachNote } from '@/lib/studio/attach-server'
 import { loadControls } from '@/lib/controls-server'
 import { extractAssetIds, stripAssets, injectAssets, assetPromptNote, scoreAssets, listAutoAssets, getAssetsByIds, loadAssetData, type MediaAssetLite } from '@/lib/media/assets'
@@ -118,7 +119,8 @@ export async function POST(req: Request) {
   const history = ((historyRes.data ?? []) as ChatTurn[]).map(t => ({ ...t, content: stripAttach(t.content ?? '') }))  // 첨부 마커는 모델에 보내지 않는다
   // 개발 타입 Godot — 첫 생성에서 골랐거나, 이미 Godot 프로젝트인 프로젝트를 수정하는 경우 (템플릿·에셋·HTML 경로를 쓰지 않는다)
   const godotPrev = extractGodotProject(latest?.html)
-  const godotMode = dev?.engine === 'godot' || !!godotPrev
+  const engineKind: EngineKind | null = dev && dev.engine !== 'nocode' ? dev.engine : godotPrev ? godotPrev.engine : null
+  const godotMode = !!engineKind   // 엔진 프로젝트(Godot·Unity) — 이름은 처음 붙인 그대로
 
   // 크레딧 원자적 차감 — 실패 경로에서 이 ref로 환불 (관리자는 차감 없음)
   const spendRef = `gen:${projectId}:${crypto.randomUUID()}`
@@ -326,9 +328,9 @@ export async function POST(req: Request) {
   const routeTask = tmatch ? 'template_edit' : latest ? 'edit' : 'create'
   const routed = routeModel({ task: routeTask, promptChars: prompt.length, htmlChars: baseHtml?.length ?? 0 }, await loadPolicy())
   const chosenModel = images.length > 0 ? 'claude-sonnet-5' : routed.model  // 이미지 입력은 Sonnet 고정
-  const systemPrompt = godotMode ? buildGodotSystemPrompt() : buildSystemPrompt(await loadControls())
+  const systemPrompt = engineKind === 'unity' ? buildUnitySystemPrompt() : engineKind === 'godot' ? buildGodotSystemPrompt() : buildSystemPrompt(await loadControls())
   // 모델에는 에셋(base64)·플랫폼 shim 을 뺀 순수 게임 코드만 — 절반 이하 크기 (저장 시 다시 주입/하든)
-  const modelBase = godotMode ? (godotPrev ? godotFilesAsText(godotPrev.files) : null) : baseHtml ? stripShims(stripAssets(baseHtml)) : null
+  const modelBase = godotMode ? (godotPrev ? godotFilesAsText(godotPrev.engine === 'unity' ? godotPrev.files.filter(f => f.path.startsWith('Assets/Scripts/')) : godotPrev.files) : null) : baseHtml ? stripShims(stripAssets(baseHtml)) : null
   const genMessages = buildMessages({ prompt: effectivePrompt, currentHtml: modelBase, history, images })
   let stream: MsgStream | null = null
   // 관리자 + MAX_WORKER=1: 로컬 Claude Code(Max 구독) 워커로 생성 (이미지 입력은 API). 워커가 없으면 API 로 폴백.
@@ -477,7 +479,7 @@ export async function POST(req: Request) {
         } catch { /* usage 실패는 무시 — 생성 자체엔 영향 없음 */ }
         // Godot: <game> 안의 프로젝트 파일들 → 프로젝트 뷰어 HTML 로 바꿔 저장 (설명은 그대로)
         if (godotMode) {
-          const viewer = godotVersionHtml(full)
+          const viewer = engineVersionHtml(engineKind!, full, finishUnityProject)
           const gi = full.indexOf('<game>')
           full = viewer ? `${gi >= 0 ? full.slice(0, gi) : full}<game>${viewer}</game>` : (gi >= 0 ? full.slice(0, gi) : full)
         }

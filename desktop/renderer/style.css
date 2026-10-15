@@ -108,3 +108,9 @@ select { background: var(--panel2); color: var(--text); border: 1px solid var(--
 .godot { background: #478cbf; color: #fff; padding: 6px 12px; font-weight: 700; }
 .godot:hover { filter: brightness(1.1); }
 #godotStat { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.unity { background: #222c37; color: #fff; border: 1px solid #4c5a6b; padding: 6px 12px; font-weight: 700; }
+.unity:hover { border-color: #9aa8b8; }
+/* 상단 도구 막대: 버튼 글자가 줄바꿈되지 않게, 상태 글은 남는 공간만 */
+.tabs > button, .tabs > select { white-space: nowrap; flex-shrink: 0; }
+#godotStat { flex: 0 1 auto; min-width: 0; }
+.tabs .grow { min-width: 0; }

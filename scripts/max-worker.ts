@@ -8,7 +8,8 @@ import { parseGeneration, extractTitle } from '../lib/studio/parse'
 import { smokeGame } from './smoke-game.mjs'
 import { hardenHtml } from '../lib/studio/harden'
 import { extractPatches, applyPatches, validatePatchedHtml, type PatchBlock } from '../lib/studio/patch'
-import { ENGINE_JOB_MARK, godotVersionHtml } from '../lib/studio/godot'
+import { ENGINE_JOB_MARK, engineVersionHtml } from '../lib/studio/godot'
+import { finishUnityProject } from '../lib/studio/unity'
 
 for (const line of fs.existsSync('.env.local') ? fs.readFileSync('.env.local', 'utf8').split('\n') : []) { const m = line.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^"|"$/g, '') }
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
@@ -287,7 +288,7 @@ async function ensureSaved(job: { id: string; project_id?: string; system?: stri
     if ((already ?? []).length) { console.log('  [저장 안전장치] 서버가 이미 저장함 — 건너뜀'); return }
     const parsed = parseGeneration(result)
     const engineJob = !!job.system?.includes(ENGINE_JOB_MARK)
-    const finalHtml = engineJob ? godotVersionHtml(result) : (await materialize(job.id, result)).html
+    const finalHtml = engineJob ? engineVersionHtml(job.system?.includes('Unity 게임 개발자') ? 'unity' : 'godot', result, finishUnityProject) : (await materialize(job.id, result)).html
     const desc = (parsed.description || extractPatches(result).description || '').slice(0, 4000)
     if (!finalHtml) {
       // 만들지 못했어도 기록은 반드시 남긴다 — 화면에서 대화가 통째로 사라지지 않게
@@ -310,7 +311,7 @@ async function ensureSaved(job: { id: string; project_id?: string; system?: stri
     const lastUser = [...job.messages].reverse().find(m => m.role !== 'assistant')
     const prompt = typeof lastUser?.content === 'string' ? lastUser.content : (lastUser?.content ?? []).map(c => c.text ?? '').join('\n')
     await sb.from('studio_messages').insert([
-      { project_id: row.project_id, role: 'user', content: (prompt || '(요청)').slice(0, 4000) },
+      { project_id: row.project_id, role: 'user', content: (prompt.replace(/^\s*요청:\s*/, '').replace(/\n+\[개발 설정[\s\S]*$/, '').replace(/\n+현재 (게임 HTML|프로젝트)[\s\S]*$/, '').trim() || '(요청)').slice(0, 4000) },   // 모델용 지시문은 대화에 남기지 않는다
       { project_id: row.project_id, role: 'assistant', content: (desc || '수정했어요.') + (result.includes('[[VBX_TEST]]') ? `\n\n${result.split('[[VBX_TEST]]')[1]?.split('[[/VBX_TEST]]')[0] ?? ''}` : '') },
     ] as never)
     if (next === 1) { const t = extractTitle(finalHtml); if (t) await sb.from('studio_projects').update({ title: t } as never).eq('id', row.project_id) }

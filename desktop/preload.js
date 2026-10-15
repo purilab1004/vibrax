@@ -10,5 +10,6 @@ contextBridge.exposeInMainWorld('vb', {
   open: { folder: call('open:folder'), browser: call('open:browser'), external: call('open:external') },
   gen: { start: call('gen:start'), stop: call('gen:stop'), onChunk: (fn) => ipcRenderer.on('gen:chunk', (_e, id, t) => fn(id, t)) },
   godot: { status: call('godot:status'), install: call('godot:install'), run: call('godot:run'), onProgress: (fn) => ipcRenderer.on('godot:progress', (_e, p) => fn(p)) },
+  unity: { status: call('unity:status'), open: call('unity:open') },
   platform: process.platform,
 })

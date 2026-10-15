@@ -70,11 +70,12 @@ function writeProjectFiles(data) {
   // 개발 타입 Godot — 버전 HTML(프로젝트 뷰어) 안의 JSON 을 꺼내 godot/ 폴더에 진짜 프로젝트로 쓴다
   const gp = current && current.html ? extractGodot(current.html) : null
   if (gp) {
-    const gdir = path.join(dir, 'godot')
-    fs.rmSync(gdir, { recursive: true, force: true })
+    const gdir = path.join(dir, gp.engine)            // godot/ 또는 unity/
+    // Unity 는 편집기가 만든 Library·씬·meta 를 지우지 않는다 — 스크립트·패키지만 덮어쓴다
+    if (gp.engine === 'godot') fs.rmSync(gdir, { recursive: true, force: true })
     for (const f of gp.files) { const p = inside(gdir, f.path); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, f.content) }
   }
-  fs.writeFileSync(path.join(dir, 'game.json'), JSON.stringify({ id: project.id, title: project.title, engine: gp ? 'godot' : 'web', version: current ? current.version : 0, versions: versions.map((v) => v.version), studioUrl, api: API, savedAt: new Date().toISOString() }, null, 2))
+  fs.writeFileSync(path.join(dir, 'game.json'), JSON.stringify({ id: project.id, title: project.title, engine: gp ? gp.engine : 'web', version: current ? current.version : 0, versions: versions.map((v) => v.version), studioUrl, api: API, savedAt: new Date().toISOString() }, null, 2))
   const log = (messages || []).filter((m) => m.role === 'user').map((m, i) => `${i + 1}. ${m.content.split('\n')[0].slice(0, 300)}`).join('\n')
   fs.writeFileSync(path.join(dir, 'README.md'), `# ${project.title}\n\nVibrex Builder 로 만든 게임입니다.\n\n- 실행: index.html 을 브라우저로 열기\n- 웹 스튜디오에서 이어서 수정·게시: ${studioUrl}\n- 버전 기록: versions/\n\n## 프롬프트 기록\n\n${log || '(아직 없음)'}\n`)
   return dir
@@ -89,11 +90,32 @@ function listFiles(dir, base = dir, out = []) {
   return out
 }
 const inside = (dir, rel) => { const p = path.resolve(dir, rel); if (!p.startsWith(path.resolve(dir) + path.sep)) throw new Error('bad path'); return p }
-function extractGodot(html) {
-  const m = html.match(/<script type="application\/json" id="vibrex-godot">([\s\S]*?)<\/script>/)
+function extractGodot(html) {   // Godot·Unity 프로젝트 뷰어 안의 JSON
+  const m = html.match(/<script type="application\/json" id="vibrex-(godot|unity)">([\s\S]*?)<\/script>/)
   if (!m) return null
-  try { const p = JSON.parse(m[1]); return p && p.engine === 'godot' && Array.isArray(p.files) ? p : null } catch { return null }
+  try { const p = JSON.parse(m[2]); return p && (p.engine === 'godot' || p.engine === 'unity') && Array.isArray(p.files) ? p : null } catch { return null }
 }
+
+// ---------- Unity: 설치는 Unity Hub(계정 로그인·라이선스)가 해야 해서 자동 설치 대신 찾아서 열고, 없으면 안내 ----------
+const isMac = process.platform === 'darwin', isWin = process.platform === 'win32'
+const HUB = isMac ? '/Applications/Unity Hub.app' : isWin ? 'C:\\Program Files\\Unity Hub\\Unity Hub.exe' : path.join(process.env.HOME || '', 'Applications', 'Unity Hub.AppImage')
+function unityEditors() {
+  const roots = []
+  if (isMac) roots.push('/Applications/Unity/Hub/Editor'); else if (isWin) roots.push('C:\\Program Files\\Unity\\Hub\\Editor'); else roots.push(path.join(process.env.HOME || '', 'Unity', 'Hub', 'Editor'))
+  // Unity Hub 에서 설치 위치를 바꾼 경우
+  try { const sec = JSON.parse(fs.readFileSync(path.join(app.getPath('appData'), 'UnityHub', 'secondaryInstallPath.json'), 'utf8')); if (typeof sec === 'string' && sec) roots.push(sec) } catch { /* 기본 위치만 */ }
+  const out = []
+  for (const r of roots) {
+    if (!fs.existsSync(r)) continue
+    for (const v of fs.readdirSync(r)) {
+      const bin = isMac ? path.join(r, v, 'Unity.app', 'Contents', 'MacOS', 'Unity') : isWin ? path.join(r, v, 'Editor', 'Unity.exe') : path.join(r, v, 'Editor', 'Unity')
+      if (fs.existsSync(bin)) out.push({ version: v, path: bin })
+    }
+  }
+  const lts = (v) => (/^6000\.0\./.test(v) ? 3 : /^6000\./.test(v) ? 2 : /^2022\.3\./.test(v) ? 1 : 0)   // Unity 6 LTS 우선
+  return out.sort((a, b) => lts(b.version) - lts(a.version) || b.version.localeCompare(a.version, undefined, { numeric: true }))
+}
+const unityStatus = () => { const eds = unityEditors(); return { hub: fs.existsSync(HUB), editors: eds.map((e) => e.version), editor: eds[0] || null } }
 
 // ---------- Godot 자동 설치 · 실행 ----------
 // 설치 위치: <userData>/engines/godot-<버전>/ · GitHub 공식 릴리스(godotengine/godot)의 최신 안정판
@@ -179,7 +201,7 @@ ipcMain.handle('projects:open', async (_e, id, version) => {
   const data = await (await api(`/api/v1/build/projects/${id}${version ? '?version=' + version : ''}`)).json()
   const dir = writeProjectFiles(data)
   dirs.set(id, dir)
-  return { ...data, dir, files: listFiles(dir), godot: fs.existsSync(path.join(dir, 'godot', 'project.godot')) }
+  return { ...data, dir, files: listFiles(dir), godot: fs.existsSync(path.join(dir, 'godot', 'project.godot')), unity: fs.existsSync(path.join(dir, 'unity', 'Assets')) }
 })
 ipcMain.handle('files:list', (_e, id) => { const d = dirs.get(id); return d ? listFiles(d) : [] })
 ipcMain.handle('files:read', (_e, id, rel) => fs.readFileSync(inside(dirs.get(id), rel), 'utf8'))
@@ -201,6 +223,20 @@ ipcMain.handle('godot:run', async (e, id, editor) => {
   const child = spawn(g.path, editor ? ['-e', '--path', gdir] : ['--path', gdir], { detached: true, stdio: 'ignore' })
   child.unref()
   return { ok: true, version: g.version }
+})
+ipcMain.handle('unity:status', () => unityStatus())
+// Unity 로 열기 — 편집기가 있으면 -projectPath 로 바로 열고(처음 열면 패키지 가져오기에 몇 분), 없으면 Hub 나 다운로드 페이지로 안내
+ipcMain.handle('unity:open', (_e, id) => {
+  const dir = dirs.get(id), udir = dir && path.join(dir, 'unity')
+  if (!udir || !fs.existsSync(path.join(udir, 'Assets'))) return { ok: false, error: 'Unity 프로젝트가 아니에요' }
+  const st = unityStatus()
+  if (st.editor) {
+    const child = spawn(st.editor.path, ['-projectPath', udir], { detached: true, stdio: 'ignore' }); child.unref()
+    return { ok: true, action: 'editor', version: st.editor.version }
+  }
+  if (st.hub) { shell.openPath(HUB); return { ok: true, action: 'hub' } }
+  shell.openExternal('https://unity.com/download')
+  return { ok: true, action: 'download' }
 })
 ipcMain.handle('open:external', (_e, url) => { if (/^https:\/\/(vibrexcup\.com|www\.vibrexcup\.com)\//.test(url)) shell.openExternal(url) })
 
@@ -229,7 +265,7 @@ ipcMain.handle('gen:start', async (e, id, prompt) => {
       }
     }
     const dir = writeProjectFiles(data); dirs.set(id, dir)
-    return { ok: true, data: { ...data, dir, files: listFiles(dir), godot: fs.existsSync(path.join(dir, 'godot', 'project.godot')) } }
+    return { ok: true, data: { ...data, dir, files: listFiles(dir), godot: fs.existsSync(path.join(dir, 'godot', 'project.godot')), unity: fs.existsSync(path.join(dir, 'unity', 'Assets')) } }
   } catch (err) {
     if (ctl.signal.aborted) return { ok: false, error: '멈췄어요' }
     return { ok: false, status: err.status, error: err.status === 402 ? '프롬코인이 부족해요 — vibrexcup.com/credits 에서 충전해 주세요' : err.status === 503 ? '생성 엔진이 잠시 쉬는 중이에요. 잠시 후 다시 시도해 주세요' : err.message }
