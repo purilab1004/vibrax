@@ -7,6 +7,7 @@ import { useLang } from '@/lib/i18n/context'
 import EngineSelect from '@/components/studio/EngineSelect'
 import DevSpecPanel, { type DevPlanOption } from '@/components/studio/DevSpecPanel'
 import type { DevSpec } from '@/lib/studio/dev-spec'
+import AiModeToggle, { useAiMode } from '@/components/studio/AiModeToggle'
 
 // 생성 대기 중 돌아가며 보여 주는 문구 — 심심하지 않게, 동물 친구들이 일하는 느낌으로
 const THINKING_KO = ['생각 중...', '야옹이가 요청을 해석하는 중...', '강아지가 열심히 고민하는 중...', '픽셀을 한 알씩 고르는 중...', '토끼가 규칙을 정리하는 중...', '거북이가 코드를 차근차근 쓰는 중...', '햄스터가 쳇바퀴 돌리며 계산하는 중...', '고양이가 버그를 노려보는 중...', '펭귄이 아이디어를 굴리는 중...', '다람쥐가 점수 규칙을 모으는 중...', '여우가 조작법을 다듬는 중...', '거의 다 됐어요, 마지막 손질 중...']
@@ -21,7 +22,7 @@ export interface ChatMsg {
 }
 
 export default function StudioChat({
-  messages, streaming, usage, error, onSend, onStop, busy, draft, onDraftConsumed, ajAvatarUrl, ajName, generationCost = 10,
+  messages, streaming, usage, error, onSend, onStop, busy, draft, onDraftConsumed, ajAvatarUrl, ajName, generationCost = 10, devAutoTick = 0, takeDevAuto,
 }: {
   messages: ChatMsg[]
   streaming: { description: string; htmlBytes: number; codeTail: string } | null
@@ -37,6 +38,9 @@ export default function StudioChat({
   /* AJ 아바타 — 내 점토 캐릭터 프리뷰 (없으면 기본) */
   ajAvatarUrl?: string | null
   ajName?: string | null
+  /* 개발 AI 모드 첫 프롬프트 넘겨받기 — tick 이 바뀌면 takeDevAuto() 로 한 번만 꺼낸다 */
+  devAutoTick?: number
+  takeDevAuto?: () => string | null
 }) {
   const [input, setInput] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
@@ -152,9 +156,7 @@ export default function StudioChat({
     go(augmented, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined, opt?.variantSlug)
   }
   // ── 개발 AI 모드 — 첫 생성 전에 상세 설정(2D/3D·그래픽·플레이·스토리·조작·기기·난이도·목표)을 AI 가 채우고 사용자가 고친다 ──
-  const [devMode, setDevModeState] = useState(false)
-  useEffect(() => { try { if (localStorage.getItem('vx_studio_mode') === 'dev') setDevModeState(true) } catch { /* 저장소 없음 */ } }, [])   // eslint-disable-line react-hooks/set-state-in-effect
-  const setDevMode = (on: boolean) => { setDevModeState(on); try { localStorage.setItem('vx_studio_mode', on ? 'dev' : 'normal') } catch { /* 저장소 없음 */ } }
+  const devMode = useAiMode()
   const [devPlan, setDevPlan] = useState<{ genre: string; spec: DevSpec; options: DevPlanOption[]; pending: { prompt: string; imgs: typeof attachments; snds: typeof sounds } } | null>(null)
   const runDevPlan = async (prompt: string, imgs: typeof attachments, snds: typeof sounds) => {
     setPlanning(true)
@@ -173,6 +175,12 @@ export default function StudioChat({
     go(prompt, imgs.length > 0 ? imgs : undefined, snds.length > 0 ? snds : undefined, undefined, spec)
   }
   const cancelDev = () => { if (!devPlan) return; setInput(devPlan.pending.prompt); setDevPlan(null) }
+  useEffect(() => {
+    if (!devAutoTick || !takeDevAuto) return
+    const p = takeDevAuto()
+    if (p) setTimeout(() => void runDevPlan(p, [], []), 0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [devAutoTick])
 
   // 직접 정하기 → 카드 닫고 원래 설명을 입력창에 되살려 사용자가 이어서 조작을 적게 한다
   const editControls = () => {
@@ -435,12 +443,7 @@ export default function StudioChat({
           <div className="flex items-center justify-between px-3 pb-2.5">
             <div className="flex items-center gap-2">
               {/* 일반 AI / 개발 AI 모드 — 개발 AI 는 첫 생성 전에 상세 설정 단계를 거친다 */}
-              <div className="flex items-center rounded-full bg-[#f1ede4] p-0.5 border border-[#e6dfd0]" role="radiogroup" aria-label="AI 모드">
-                <button type="button" role="radio" aria-checked={!devMode} onClick={() => setDevMode(false)} title="프롬프트만으로 바로 만들기"
-                  className={`h-7 px-2.5 rounded-full text-[11.5px] font-bold transition-colors ${!devMode ? 'bg-white text-[#241f17] shadow-sm' : 'text-[#9d9280] hover:text-[#4a4337]'}`}>일반 AI</button>
-                <button type="button" role="radio" aria-checked={devMode} onClick={() => setDevMode(true)} title="2D/3D·그래픽·플레이·스토리·조작·난이도를 정하고 만들기 (새 게임의 첫 생성에서)"
-                  className={`h-7 px-2.5 rounded-full text-[11.5px] font-bold transition-colors ${devMode ? 'bg-gradient-to-r from-[#7c3aed] to-[#2563eb] text-white shadow-sm' : 'text-[#9d9280] hover:text-[#4a4337]'}`}>🛠 개발 AI</button>
-              </div>
+              <AiModeToggle />
               {/* 이미지 첨부 */}
               <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={e => { addFiles(e.target.files); e.target.value = '' }} />
               <button

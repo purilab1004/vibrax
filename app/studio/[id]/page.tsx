@@ -62,7 +62,11 @@ export default function StudioComposerPage() {
   const [showEdit, setShowEdit] = useState(false)
   const [study, setStudy] = useState<'code' | 'scenario' | null>(null) // 학습 노트 패널
   const [aj, setAj] = useState<{ url: string | null; name: string | null }>({ url: null, name: null }) // 채팅의 AJ = 내 점토 아바타
-  const [draftPrompt, setDraftPrompt] = useState<string | null>(() => searchParams.get('prompt')) // 학습 노트/AJ 제안 → 채팅 입력에 채우기
+  const [draftPrompt, setDraftPrompt] = useState<string | null>(() => searchParams.get('prompt'))
+  // 개발 AI 모드에서 홈/스튜디오 첫 화면의 프롬프트 → 채팅의 상세 설정 단계로 (데스크톱·모바일 채팅이 둘이라 한 번만 꺼내 가게)
+  const devAutoRef = useRef<string | null>(null)
+  const [devAutoTick, setDevAutoTick] = useState(0)
+  const takeDevAuto = () => { const p = devAutoRef.current; devAutoRef.current = null; return p } // 학습 노트/AJ 제안 → 채팅 입력에 채우기
   const [publishedGameId, setPublishedGameId] = useState<string | null>(null)
   const [liveVersionId, setLiveVersionId] = useState<string | null>(null)   // 실제 게시(서빙) 중인 버전
   // 보기 모드 — 채팅 전체 / 게임 전체 / 분할(데스크톱). 모바일은 채팅·게임 둘 중 하나만.
@@ -393,7 +397,11 @@ export default function StudioComposerPage() {
         if (initialPrompt) {
           autoSentRef.current = true
           sessionStorage.removeItem(INITIAL_PROMPT_KEY)
-          send(initialPrompt)
+          // 개발 AI 모드면 바로 만들지 않고 채팅의 상세 설정 단계로 넘긴다
+          let devMode = false
+          try { devMode = localStorage.getItem('vx_studio_mode') === 'dev' } catch { /* 저장소 없음 */ }
+          if (devMode) { devAutoRef.current = initialPrompt; setDevAutoTick((n) => n + 1) }
+          else send(initialPrompt)
         }
       }
     })
@@ -497,6 +505,8 @@ export default function StudioComposerPage() {
               onStop={stopGeneration}
               draft={draftPrompt}
               onDraftConsumed={() => setDraftPrompt(null)}
+              devAutoTick={devAutoTick}
+              takeDevAuto={takeDevAuto}
               ajAvatarUrl={aj.url}
               ajName={aj.name}
             />
@@ -516,6 +526,8 @@ export default function StudioComposerPage() {
                   onStop={stopGeneration}
                   draft={draftPrompt}
                   onDraftConsumed={() => setDraftPrompt(null)}
+                  devAutoTick={devAutoTick}
+                  takeDevAuto={takeDevAuto}
                   ajAvatarUrl={aj.url}
                   ajName={aj.name}
                 />

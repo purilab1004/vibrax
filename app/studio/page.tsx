@@ -3,6 +3,7 @@ import MascotLoader from '@/components/MascotLoader'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import AiModeToggle from '@/components/studio/AiModeToggle'
 import { PromptCreditBadge, PromptCreditIcon } from '@/components/CurrencyBadge'
 import EditInfoModal from '@/components/studio/EditInfoModal'
 import GameEditModal from '@/components/GameEditModal'
@@ -182,6 +183,7 @@ export default function StudioPage() {
             <span className="text-[11px] font-semibold tracking-[0.22em] text-[#857a68] whitespace-nowrap">{T.hero.tagline}</span>
             <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#cfc4ab]" />
           </div>
+          <div className="mb-3 flex flex-col items-center gap-1.5"><AiModeToggle size="md" /><p className="text-[11.5px] text-[#9d9280]">개발 AI 는 만들기 전에 2D·3D·그래픽·플레이·스토리·조작·난이도를 함께 정해요</p></div>
           <HeroPromptInput onSubmit={(p) => createProject(p)} />
           {createError && <p className="mt-3 text-red-500 text-xs">{s.createError}</p>}
           <p className="mt-5 text-[12px] text-[#857a68]">{T.hero.promptHint}</p>
