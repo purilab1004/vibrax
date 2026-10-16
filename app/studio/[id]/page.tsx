@@ -3,6 +3,7 @@ import MascotLoader from '@/components/MascotLoader'
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import AiModeToggle from '@/components/studio/AiModeToggle'
 import { PromptCreditBadge } from '@/components/CurrencyBadge'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -447,7 +448,8 @@ export default function StudioComposerPage() {
           <span className="text-[14px] font-semibold text-[#241f17] truncate max-w-[40vw]">{project.title}</span>
           <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-[#b3a78f] group-hover:text-[#2563eb] shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
         </button>
-        <div className="flex-1" />
+        <div className="flex-1 hidden md:flex justify-center min-w-0"><AiModeToggle /></div>
+        <div className="flex-1 md:hidden" />
         {(html || versions.length > 0) && (
           <div className="flex items-center rounded-lg border border-[#ddd3bf] bg-white p-0.5" role="tablist" aria-label="보기 모드">
             {([

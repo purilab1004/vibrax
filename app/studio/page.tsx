@@ -161,8 +161,8 @@ export default function StudioPage() {
       {/* 상단 바 — 유리 배경, 왼쪽 홈 · 가운데 STUDIO · 오른쪽 크레딧 코인 */}
       <div className="app-top-pad sticky top-0 z-30 flex items-center gap-4 border-b border-[#ebe4d6] bg-white/60 backdrop-blur-xl px-4 h-12 box-content">
         <Link href="/" className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest transition-colors shrink-0">← 홈</Link>
-        <span className="font-pixel text-[11px] text-[#2563eb] tracking-widest">{s.heading}</span>
-        <div className="flex-1" />
+        <span className="hidden sm:inline font-pixel text-[11px] text-[#2563eb] tracking-widest">{s.heading}</span>
+        <div className="flex-1 flex justify-center min-w-0"><AiModeToggle /></div>
         <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>
       </div>
 
@@ -183,7 +183,6 @@ export default function StudioPage() {
             <span className="text-[11px] font-semibold tracking-[0.22em] text-[#857a68] whitespace-nowrap">{T.hero.tagline}</span>
             <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#cfc4ab]" />
           </div>
-          <div className="mb-3 flex flex-col items-center gap-1.5"><AiModeToggle size="md" /><p className="text-[11.5px] text-[#9d9280]">개발 AI 는 엔진·2D/3D·조작까지 함께 정하고, 디자인 AI 는 이미지·3D·드라이브 작업 공간이에요</p></div>
           <HeroPromptInput onSubmit={(p) => createProject(p)} />
           {createError && <p className="mt-3 text-red-500 text-xs">{s.createError}</p>}
           <p className="mt-5 text-[12px] text-[#857a68]">{T.hero.promptHint}</p>

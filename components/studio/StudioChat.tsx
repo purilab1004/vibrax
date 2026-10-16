@@ -442,8 +442,8 @@ export default function StudioChat({
           )}
           <div className="flex items-center justify-between px-3 pb-2.5">
             <div className="flex items-center gap-2">
-              {/* 일반 AI / 개발 AI 모드 — 개발 AI 는 첫 생성 전에 상세 설정 단계를 거친다 */}
-              <AiModeToggle />
+              {/* AI 모드 — PC 는 상단 바, 모바일은 여기 */}
+              <div className="md:hidden"><AiModeToggle /></div>
               {/* 이미지 첨부 */}
               <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={e => { addFiles(e.target.files); e.target.value = '' }} />
               <button
