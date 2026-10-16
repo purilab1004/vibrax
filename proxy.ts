@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { ruleFor, hit } from '@/lib/ratelimit'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // LLM 학습·브라우징 봇 서버 차원 차단 — robots.txt를 무시해도 403으로 강제.
@@ -51,6 +52,15 @@ export async function proxy(request: NextRequest) {
   const ua = request.headers.get('user-agent') ?? ''
   if (AI_BLOCK_UA.test(ua)) {
     return new NextResponse('Forbidden', { status: 403 })
+  }
+
+  // API 요청 수 제한 (IP · 1분) — 대량 수집·생성 남용 방지
+  {
+    const rule = ruleFor(request.nextUrl.pathname, request.method)
+    if (rule && process.env.NODE_ENV !== 'development') {
+      const wait = hit(`${rule.name}:${clientIp(request)}`, rule.limit)
+      if (wait !== null) return NextResponse.json({ error: '요청이 너무 많아요. 잠시 후 다시 시도해 주세요.' }, { status: 429, headers: { 'Retry-After': String(wait) } })
+    }
   }
 
   // 점검 모드 — 허용 IP 외에는 전부 점검 페이지로 rewrite (URL은 유지)

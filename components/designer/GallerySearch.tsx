@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ui, type Source3D } from './shared'
 
-interface Asset { id: string; kind: string; name: string; title: string; url: string; width: number | null; height: number | null; designer_name: string | null; tags?: string[]; uses?: number | null }
+interface Asset { id: string; kind: string; name: string; title: string; url?: string; preview?: string | null; width: number | null; height: number | null; designer_name: string | null; tags?: string[]; uses?: number | null }
 const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일·맵'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트']]
 
 export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) => void }) {
@@ -37,7 +37,7 @@ export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) =>
             {(sort === 'popular' ? [...items].sort((a, b) => (b.uses ?? 0) - (a.uses ?? 0)) : items).map((a) => (
               <button key={a.id} onClick={() => setView(a)} className={`group block w-full break-inside-avoid rounded-xl overflow-hidden border border-[#ebe4d6] hover:border-[#cfc4ab] hover:shadow-lg transition-all ${ui.checker}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={a.url} alt={a.title} loading="lazy" className="w-full h-auto object-contain group-hover:scale-[1.03] transition-transform duration-500" style={a.width && a.height ? { aspectRatio: `${a.width}/${a.height}` } : undefined} />
+                <img src={a.preview ?? a.url ?? ''} alt={a.title} loading="lazy" className="w-full h-auto object-contain group-hover:scale-[1.03] transition-transform duration-500" style={a.width && a.height ? { aspectRatio: `${a.width}/${a.height}` } : undefined} />
               </button>
             ))}
           </div>
@@ -47,13 +47,13 @@ export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) =>
           <div className="w-full max-w-xl bg-white rounded-2xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className={`${ui.checker} flex items-center justify-center h-[50vh] max-h-[440px]`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={view.url} alt={view.title} className="max-w-full max-h-full object-contain" />
+              <img src={view.url ?? view.preview ?? ''} alt={view.title} className="max-w-full max-h-full object-contain" />
             </div>
             <div className="p-4">
               <p className="text-[15px] font-extrabold text-[#241f17]">{view.title}</p>
               <p className="text-[12px] text-[#9d9280]">{view.name}{view.width ? ` · ${view.width}×${view.height}` : ''}{view.designer_name ? ` · by ${view.designer_name}` : ''}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button onClick={() => { onMake3D({ kind: 'media', id: view.id, url: view.url, title: view.title }); setView(null) }} className={ui.primary}>🧊 3D로 만들기</button>
+                <button onClick={() => { onMake3D({ kind: 'media', id: view.id, url: view.url ?? view.preview ?? '', title: view.title }); setView(null) }} className={ui.primary}>🧊 3D로 만들기</button>
                 <button onClick={async () => { try { await navigator.clipboard.writeText(view.name); setCopied(true); setTimeout(() => setCopied(false), 1200) } catch { /* 무시 */ } }} className={ui.ghost}>{copied ? '복사됨 ✓' : '코드 키 복사'}</button>
                 <button onClick={() => setView(null)} className={ui.ghost}>닫기</button>
               </div>

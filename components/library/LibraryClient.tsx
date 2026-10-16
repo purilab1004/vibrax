@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-interface Asset { id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url: string; width: number | null; height: number | null; uses: number | null; created_at: string; designer_name: string | null }
+interface Asset { id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url?: string; preview: string | null; width: number | null; height: number | null; uses: number | null; created_at: string; designer_name: string | null }
 const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일·맵'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '효과음·음악']]
 const SUGGEST = ['드래곤', '우주', '숲', '픽셀', '귀여운', '바다', '던전', '네온']
 
@@ -16,12 +16,13 @@ export default function LibraryClient() {
   const [kind, setKind] = useState(params?.get('kind') ?? '')
   const [sort, setSort] = useState<'new' | 'popular'>('new')
   const [items, setItems] = useState<Asset[] | null>(null)
+  const [loggedIn, setLoggedIn] = useState(false)
   const [preview, setPreview] = useState<Asset | null>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const t = setTimeout(() => {
-      fetch(`/api/library?q=${encodeURIComponent(q.trim())}&kind=${kind}&limit=200`).then((r) => r.json()).then((j) => setItems(j.items ?? [])).catch(() => setItems([]))
+      fetch(`/api/library?q=${encodeURIComponent(q.trim())}&kind=${kind}&limit=200`).then((r) => r.json()).then((j) => { setItems(j.items ?? []); setLoggedIn(!!j.loggedIn) }).catch(() => setItems([]))
       const sp = new URLSearchParams(); if (q.trim()) sp.set('q', q.trim()); if (kind) sp.set('kind', kind)
       router.replace(`/gallery${sp.toString() ? '?' + sp : ''}`, { scroll: false })
     }, q ? 250 : 0)
@@ -31,7 +32,7 @@ export default function LibraryClient() {
   const shown = useMemo(() => {
     const list = (items ?? []).filter((a) => a.kind !== 'model3d' && (kind === 'audio' || a.kind !== 'audio'))  // 소리는 ‘효과음·음악’ 탭에서만
     return sort === 'popular' ? [...list].sort((a, b) => (b.uses ?? 0) - (a.uses ?? 0)) : list
-  }, [items, sort])
+  }, [items, sort, kind])
   // 결과에서 많이 쓰인 태그 → 연관 검색어
   const related = useMemo(() => {
     const c = new Map<string, number>()
@@ -99,7 +100,7 @@ export default function LibraryClient() {
                   <div className="aspect-[4/3] flex flex-col items-center justify-center bg-gradient-to-br from-[#eef4ff] to-[#fdf2f8]"><span className="text-[36px]">🎵</span><span className="mt-1 text-[12px] font-bold text-[#4a4337] px-2 truncate max-w-full">{a.title}</span></div>
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={a.url} alt={a.title} loading="lazy" className="w-full h-auto object-contain group-hover:scale-[1.03] transition-transform duration-500" style={a.width && a.height ? { aspectRatio: `${a.width}/${a.height}` } : { aspectRatio: '1/1' }} />
+                  <img src={a.preview ?? ''} alt={a.title} loading="lazy" className="w-full h-auto object-contain group-hover:scale-[1.03] transition-transform duration-500" style={a.width && a.height ? { aspectRatio: `${a.width}/${a.height}` } : { aspectRatio: '1/1' }} />
                 )}
                 <div className="absolute inset-x-0 bottom-0 px-2.5 py-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                   <p className="text-[12.5px] font-bold text-white truncate">{a.title}</p>
@@ -116,9 +117,9 @@ export default function LibraryClient() {
         <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => setPreview(null)}>
           <div className="w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl md:flex" onClick={(e) => e.stopPropagation()}>
             <div className="md:flex-1 bg-[repeating-conic-gradient(#f3f0e8_0_25%,#fff_0_50%)] bg-[length:18px_18px] flex items-center justify-center min-h-[260px] max-h-[60vh] md:max-h-[560px]">
-              {preview.kind === 'audio' ? <audio src={preview.url} controls className="my-10 w-[90%]" /> : (
+              {preview.kind === 'audio' ? (preview.url ? <audio src={preview.url} controls className="my-10 w-[90%]" /> : <p className="my-10 text-[13px] text-[#6b6152]">🔒 로그인하면 들어 볼 수 있어요</p>) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview.url} alt={preview.title} className="max-h-[60vh] md:max-h-[560px] w-auto object-contain" />
+                <img src={preview.url ?? preview.preview ?? ''} alt={preview.title} className="max-h-[60vh] md:max-h-[560px] w-auto object-contain" />
               )}
             </div>
             <div className="md:w-[300px] p-5 flex flex-col">
@@ -129,6 +130,8 @@ export default function LibraryClient() {
               <div className="mt-4 rounded-xl bg-[#f5f8ff] border border-[#d6e2fb] px-3 py-2.5 text-[12px] text-[#3b4a6b]" style={{ wordBreak: 'keep-all' }}>
                 코드 키 <code className="bg-white px-1.5 py-0.5 rounded font-bold text-[#1e3a8a]">{preview.name}</code><br />스튜디오 프롬프트에 이 이름을 적거나 미디어 선택기에서 고르면 게임에 들어가요.
               </div>
+              {!loggedIn && <p className="mt-3 text-[12px] text-[#9d9280]">🔒 워터마크 미리보기예요. <a href="/login?redirect=/gallery" className="text-[#2563eb] font-bold underline">로그인</a>하면 원본으로 보고 받을 수 있어요.</p>}
+              {preview.url && <a href={preview.url} download target="_blank" rel="noreferrer" className="mt-3 text-[12.5px] font-bold text-[#2563eb]">⬇ 원본 받기</a>}
               <div className="mt-auto pt-4 flex gap-2">
                 <Link href="/studio" className="flex-1 h-11 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-[13.5px] font-bold inline-flex items-center justify-center">스튜디오에서 쓰기</Link>
                 <button onClick={async () => { try { await navigator.clipboard.writeText(preview.name); setCopied(true); setTimeout(() => setCopied(false), 1200) } catch { /* 무시 */ } }} className="h-11 px-3.5 rounded-xl border border-[#ddd3bf] text-[13px] font-semibold text-[#4a4337]">{copied ? '복사됨 ✓' : '키 복사'}</button>
