@@ -1,4 +1,4 @@
-// /api/gallery/model3d — 3D 모델 생성 (스튜디오 › 디자이너 AI) · Modal GPU 서버리스 TRELLIS (scripts/modal/trellis3d.py)
+// /api/gallery/model3d — 3D 모델 생성 (스튜디오 › 디자인 AI) · Modal GPU 서버리스 TRELLIS (scripts/modal/trellis3d.py)
 // POST { mode:'image'|'text'|'media'|'drive', image?: dataURL, prompt?, assetId?, driveKey?, title? } → 프롬코인 차감 → Modal 제출 → { token }
 // GET ?token=  → 진행 상태. 완성되면 GLB·썸네일을 임시 보관(model3d/tmp/<rid>)하고 { status:'done', preview:{url,thumb} }
 // POST { action:'save', token, folder?, title? } → 디자이너 드라이브에 저장 / { action:'discard', token } → 임시 파일 삭제

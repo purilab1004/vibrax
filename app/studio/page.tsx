@@ -183,7 +183,7 @@ export default function StudioPage() {
             <span className="text-[11px] font-semibold tracking-[0.22em] text-[#857a68] whitespace-nowrap">{T.hero.tagline}</span>
             <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#cfc4ab]" />
           </div>
-          <div className="mb-3 flex flex-col items-center gap-1.5"><AiModeToggle size="md" /><p className="text-[11.5px] text-[#9d9280]">개발 AI 는 엔진·2D/3D·조작까지 함께 정하고, 디자이너 AI 는 이미지·3D·드라이브 작업 공간이에요</p></div>
+          <div className="mb-3 flex flex-col items-center gap-1.5"><AiModeToggle size="md" /><p className="text-[11.5px] text-[#9d9280]">개발 AI 는 엔진·2D/3D·조작까지 함께 정하고, 디자인 AI 는 이미지·3D·드라이브 작업 공간이에요</p></div>
           <HeroPromptInput onSubmit={(p) => createProject(p)} />
           {createError && <p className="mt-3 text-red-500 text-xs">{s.createError}</p>}
           <p className="mt-5 text-[12px] text-[#857a68]">{T.hero.promptHint}</p>

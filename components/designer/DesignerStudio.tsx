@@ -1,5 +1,5 @@
 'use client'
-// 스튜디오 › 🎨 디자이너 AI — 승인된 디자이너의 작업 공간.
+// 스튜디오 › 디자인 AI — 승인된 디자이너의 작업 공간.
 // 접수(→ 관리자 승인 → 직분 designer) 전에는 접수 화면, 승인되면 내 드라이브 · AI 이미지 · 3D 모델 · 갤러리 검색 · 공개 작품.
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -82,7 +82,7 @@ export default function DesignerStudio() {
         /* ── 접수 / 승인 대기 ── */
         <div className="max-w-3xl mx-auto px-4 py-10 md:py-16">
           <div className="text-center" style={{ wordBreak: 'keep-all' }}>
-            <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#ec4899]/10 to-[#f59e0b]/10 border border-[#f9c4d8] px-3.5 py-1.5 text-[11px] font-extrabold tracking-[0.2em] text-[#be185d]">DESIGNER AI</span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#ec4899]/10 to-[#f59e0b]/10 border border-[#f9c4d8] px-3.5 py-1.5 text-[11px] font-extrabold tracking-[0.2em] text-[#be185d]">DESIGN AI</span>
             <h1 className="mt-4 text-[28px] md:text-[38px] font-black text-[#241f17] leading-tight">디자이너를 위한 작업 공간</h1>
             <p className="mt-3 text-[14.5px] text-[#6b6152] leading-relaxed">AI 로 캐릭터·배경·아이템 이미지를 그리고, 3D 모델로 만들고, 내 드라이브에 모아 갤러리에 공개하세요.<br className="hidden md:block" />회원이 내 디자인으로 게임을 만들면 그 크레딧은 <b className="text-[#241f17]">100% 디자이너에게</b> 쌓여요.</p>
           </div>
@@ -99,7 +99,7 @@ export default function DesignerStudio() {
             ) : (
               <>
                 <h2 className="text-[18px] font-extrabold text-[#241f17]">디자이너 접수</h2>
-                <p className="text-[12.5px] text-[#6b6152] mt-1">{status === 'rejected' ? '지난 접수는 반려됐어요. 포트폴리오를 보강해 다시 접수할 수 있어요.' : '일반 회원 누구나 접수할 수 있어요. 관리자가 확인한 뒤 승인하면 디자이너 AI 가 열려요.'}</p>
+                <p className="text-[12.5px] text-[#6b6152] mt-1">{status === 'rejected' ? '지난 접수는 반려됐어요. 포트폴리오를 보강해 다시 접수할 수 있어요.' : '일반 회원 누구나 접수할 수 있어요. 관리자가 확인한 뒤 승인하면 디자인 AI 가 열려요.'}</p>
                 <div className="mt-4 grid sm:grid-cols-2 gap-2.5">
                   <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="이름 또는 활동명" className={ui.input} />
                   <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="연락받을 이메일" type="email" className={ui.input} />

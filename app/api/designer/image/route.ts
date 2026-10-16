@@ -1,4 +1,4 @@
-// /api/designer/image — 디자이너 AI 이미지 생성 (Modal FLUX.1-schnell)
+// /api/designer/image — 디자인 AI 이미지 생성 (Modal FLUX.1-schnell)
 // POST { prompt, preset, style, ratio, transparent } → 프롬코인 차감 → 한국어 프롬프트를 영어로 다듬어 Modal 에 제출 → { token }
 // GET ?token=          → { status:'running' } | { status:'done', images:[url…] } | { status:'failed' }(환불)
 // GET ?token=&i=0..3   → 생성된 이미지(webp) — 저장 전 미리보기용 (드라이브 저장은 /api/designer/drive save_image)

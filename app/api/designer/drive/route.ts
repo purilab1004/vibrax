@@ -1,4 +1,4 @@
-// /api/designer/drive — 디자이너 드라이브 (스튜디오 › 디자이너 AI)
+// /api/designer/drive — 디자이너 드라이브 (스튜디오 › 디자인 AI)
 // GET ?folder=        → { folders, files } (폴더는 한 단계)
 // POST { action, … }  → upload_url(직접 업로드용 서명 URL) · mkdir · rmdir · delete · rename · move · save_image(AI 생성 이미지 저장) · publish(갤러리 공개 신청)
 import { BUCKET, dec, root, folderPath, cleanName, extOf, mimeOf, DRIVE_EXT, requireDesigner, freeKey } from '@/lib/designer/drive'

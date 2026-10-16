@@ -1,6 +1,6 @@
 'use client'
 // 갤러리 — 승인된 디자인(미디어 라이브러리) 검색·둘러보기. 이미지 사이트처럼 검색창 + 분류 + 촘촘한 이미지 벽.
-// 디자이너 접수·작품 등록은 스튜디오 › 🎨 디자이너 AI(/studio/design) 에서. 3D 모델은 여기 노출하지 않는다.
+// 디자이너 접수·작품 등록은 스튜디오 › 디자인 AI(/studio/design) 에서. 3D 모델은 여기 노출하지 않는다.
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -75,7 +75,7 @@ export default function LibraryClient() {
         <Link href="/studio/design" className="group flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#fff1f6] via-[#fff7ec] to-[#f0f5ff] border border-[#f3dfe6] px-4 py-3 hover:shadow-md transition-shadow">
           <span className="text-[22px]">🎨</span>
           <p className="flex-1 min-w-0 text-[13px] text-[#4a4337]" style={{ wordBreak: 'keep-all' }}><b className="text-[#241f17]">게임 디자이너를 찾습니다</b><span className="hidden sm:inline"> — 내 디자인이 게임에 쓰일 때마다 크레딧이 <b className="text-[#be185d]">100%</b> 디자이너에게 쌓여요</span></p>
-          <span className="shrink-0 text-[12.5px] font-bold text-[#2563eb] group-hover:translate-x-0.5 transition-transform">디자이너 AI 시작 →</span>
+          <span className="shrink-0 text-[12.5px] font-bold text-[#2563eb] group-hover:translate-x-0.5 transition-transform">디자인 AI 시작 →</span>
         </Link>
 
         {/* 결과 줄 */}
