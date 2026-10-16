@@ -86,9 +86,10 @@ export default function Model3DGenerator({ loggedIn }: { loggedIn: boolean }) {
   const [err, setErr] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const cost = 10 + (pbr ? 5 : 0)
+  const [price, setPrice] = useState<{ cost: number; pbr: boolean }>({ cost: 3, pbr: false })
+  const cost = price.cost + (price.pbr && pbr ? 5 : 0)
 
-  useEffect(() => { if (loggedIn) fetch('/api/gallery/model3d?mine=1').then((r) => r.json()).then((j) => setMine(j.items ?? [])).catch(() => {}) }, [loggedIn])
+  useEffect(() => { if (loggedIn) fetch('/api/gallery/model3d?mine=1').then((r) => r.json()).then((j) => { setMine(j.items ?? []); if (typeof j.cost === 'number') setPrice({ cost: j.cost, pbr: !!j.pbr }) }).catch(() => {}) }, [loggedIn])
   useEffect(() => {
     if (mode !== 'media' || media) return
     fetch('/api/library?kind=character').then((r) => r.json()).then(async (a) => {
@@ -160,13 +161,13 @@ export default function Model3DGenerator({ loggedIn }: { loggedIn: boolean }) {
             </div>
           )}
           <input value={title} onChange={(e) => setTitle(e.target.value.slice(0, 60))} placeholder="모델 이름 (선택)" className="w-full h-11 rounded-xl bg-white/[0.06] border border-white/10 focus:border-[#a78bfa]/70 px-4 text-[13.5px] text-white outline-none placeholder:text-white/35" />
-          <label className="flex items-center gap-2 text-[13px] text-white/70 select-none cursor-pointer">
+          {price.pbr && <label className="flex items-center gap-2 text-[13px] text-white/70 select-none cursor-pointer">
             <input type="checkbox" checked={pbr} onChange={(e) => setPbr(e.target.checked)} className="accent-[#a78bfa] w-4 h-4" />
             고품질 재질(PBR — 금속·거칠기) <span className="text-white/40">+5 프롬코인</span>
-          </label>
+          </label>}
           <button type="button" onClick={start} disabled={busy || !ready}
             className="w-full h-12 rounded-2xl bg-gradient-to-r from-[#8b5cf6] to-[#ff2d6f] text-white font-black text-[15px] disabled:opacity-40">
-            {busy ? status : `3D 모델 만들기 · ${cost} 프롬코인`}
+            {busy ? status : cost > 0 ? `3D 모델 만들기 · ${cost} 프롬코인` : '3D 모델 만들기 · 무료'}
           </button>
           {err && <p className="text-[12.5px] text-[#f87171]">{err}{/프롬코인이 부족/.test(err) && <> · <a href="/credits" className="underline">충전</a></>}</p>}
           <p className="text-[11.5px] text-white/35">보통 1~2분 걸려요. 실패하면 프롬코인은 자동으로 돌려드려요.</p>
