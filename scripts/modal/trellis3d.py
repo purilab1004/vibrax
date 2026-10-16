@@ -49,6 +49,18 @@ flux_image = (
     .env({"HF_HOME": f"{CACHE}/hf", "U2NET_HOME": f"{CACHE}/u2net", "HF_HUB_ENABLE_HF_TRANSFER": "1"})
 )
 
+# 입체화 — 2D 그림을 '3D 로 렌더한 피규어' 이미지로 다시 그린다 (Qwen-Image-Edit-2509, Apache 2.0) → TRELLIS 가 둥근 입체를 만든다
+edit_image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .apt_install("git")
+    .pip_install("torch==2.6.0", "torchvision==0.21.0", index_url="https://download.pytorch.org/whl/cu124")
+    .pip_install("git+https://github.com/huggingface/diffusers", "transformers>=4.51", "accelerate", "sentencepiece", "protobuf", "huggingface_hub[hf_transfer]", "pillow")
+    .env({"HF_HOME": f"{CACHE}/hf", "HF_HUB_ENABLE_HF_TRANSFER": "1"})
+)
+VOLUMIZE = ("Turn this 2D drawing into a high-quality 3D rendered figurine of the same character: rounded volumetric body and head, "
+            "soft vinyl toy material, same design, colors, face and proportions, full body, front view, centered, "
+            "plain pure white background, soft studio lighting, no outlines, no text.")
+
 web_image = modal.Image.debian_slim(python_version="3.10").pip_install("fastapi[standard]")
 
 
@@ -83,7 +95,7 @@ class Trellis:
         if mode == "text":
             out = self._text_pipeline().run(prompt, **args)
         else:
-            im = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+            im = self._cutout(Image.open(io.BytesIO(image_bytes)))
             pre = self.img.preprocess_image(im)          # 배경 제거·가운데 정렬 → 썸네일로도 쓴다
             b = io.BytesIO(); pre.save(b, "PNG"); thumb = b.getvalue()
             out = self.img.run(pre, preprocess_image=False, **args)
@@ -92,6 +104,19 @@ class Trellis:
             thumb = self._render_thumb(out["gaussian"][0])
         buf = io.BytesIO(); glb.export(buf, file_type="glb")
         return {"glb": buf.getvalue(), "thumb": thumb}
+
+    def _cutout(self, im):
+        """배경 제거 — 이미 투명하면 그대로, 아니면 BiRefNet(MIT). TRELLIS 기본(u2net)은 검은·복잡한 배경을 자주 못 뗀다"""
+        im = im.convert("RGBA")
+        import numpy as np
+        a = np.array(im)[:, :, 3]
+        if (a < 250).mean() > 0.02:
+            return im
+        if getattr(self, "bg", None) is None:
+            from rembg import new_session
+            self.bg = new_session("birefnet-general")
+        from rembg import remove
+        return remove(im.convert("RGB"), session=self.bg)
 
     def _render_thumb(self, gaussian) -> bytes | None:
         try:
@@ -134,6 +159,36 @@ class Flux:
         return {"images": out, "seed": seed}
 
 
+@app.cls(image=edit_image, gpu="H100", volumes={CACHE: cache}, timeout=900, scaledown_window=120, max_containers=2)
+class Volumize:
+    @modal.enter()
+    def load(self):
+        import torch
+        from diffusers import QwenImageEditPlusPipeline
+        self.pipe = QwenImageEditPlusPipeline.from_pretrained("Qwen/Qwen-Image-Edit-2509", torch_dtype=torch.bfloat16).to("cuda")
+        cache.commit()
+
+    @modal.method()
+    def edit(self, image_bytes: bytes, hint: str = "") -> bytes:
+        import torch
+        from PIL import Image
+        im = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+        bg = Image.new("RGBA", im.size, (255, 255, 255, 255)); bg.alpha_composite(im); im = bg.convert("RGB")
+        prompt = VOLUMIZE + (f" The character is: {hint}." if hint else "")
+        out = self.pipe(image=[im], prompt=prompt, negative_prompt=" ", true_cfg_scale=4.0, num_inference_steps=28,
+                        guidance_scale=1.0, generator=torch.Generator("cuda").manual_seed(7)).images[0]
+        b = io.BytesIO(); out.save(b, "PNG"); return b.getvalue()
+
+
+@app.function(image=web_image, timeout=1500)
+def volumize_then_3d(image_bytes: bytes, hint: str = "", seed: int = 1) -> dict:
+    """2D → 입체 렌더 이미지 → TRELLIS. 결과에 입체 렌더 이미지(ref)도 담는다"""
+    ref = Volumize().edit.remote(image_bytes, hint)
+    r = Trellis().generate.remote("image", ref, "", seed)
+    r["ref"] = ref
+    return r
+
+
 @app.function(image=web_image, secrets=[modal.Secret.from_name("vibrex-3d")])
 @modal.asgi_app()
 def api():
@@ -171,7 +226,10 @@ def api():
         prompt = str(body.get("prompt") or "")[:300]
         if mode == "text" and not prompt:
             raise HTTPException(400, "prompt required")
-        call = Trellis().generate.spawn(mode, img, prompt, int(body.get("seed") or 1))
+        if mode == "image" and body.get("volumize"):
+            call = volumize_then_3d.spawn(img, str(body.get("hint") or "")[:200], int(body.get("seed") or 1))
+        else:
+            call = Trellis().generate.spawn(mode, img, prompt, int(body.get("seed") or 1))
         return {"id": call.object_id}
 
     def result(id: str):
@@ -191,7 +249,7 @@ def api():
             return {"status": "running"}
         if "images" in r:
             return {"status": "done", "images": len(r["images"]), "seed": r.get("seed")}
-        return {"status": "done", "glb_bytes": len(r["glb"]), "thumb": bool(r.get("thumb"))}
+        return {"status": "done", "glb_bytes": len(r["glb"]), "thumb": bool(r.get("thumb")), "ref": bool(r.get("ref"))}
 
     @web.get("/result/{id}/{part}")
     def file(id: str, part: str, authorization: str | None = Header(None)):
@@ -199,9 +257,9 @@ def api():
         r = result(id)
         if r is not None and part.startswith("img") and part[3:].isdigit() and int(part[3:]) < len(r.get("images", [])):
             return Response(r["images"][int(part[3:])], media_type="image/webp")
-        if r is None or part not in ("glb", "thumb") or not r.get(part):
+        if r is None or part not in ("glb", "thumb", "ref") or not r.get(part):
             raise HTTPException(404, "not ready")
-        return Response(r[part], media_type="model/gltf-binary" if part == "glb" else "image/png")
+        return Response(r[part], media_type="model/gltf-binary" if part == "glb" else "image/png")  # ref·thumb 는 PNG
 
     return web
 

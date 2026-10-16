@@ -59,11 +59,12 @@ export function GlbViewer({ url }: { url: string }) {
   )
 }
 
-// 업로드 이미지는 브라우저에서 1024px 이하 JPEG 로 줄여 보낸다
+// 업로드 이미지는 브라우저에서 1024px 이하로 줄여 보낸다 — 투명 배경은 살린다(WEBP, 안 되면 PNG)
 export async function shrink(file: File): Promise<string> {
   const img = await createImageBitmap(file)
   const k = Math.min(1, 1024 / Math.max(img.width, img.height))
   const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k)
-  const g = c.getContext('2d')!; g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height)
-  return c.toDataURL('image/jpeg', 0.9)
+  c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height)
+  const webp = c.toDataURL('image/webp', 0.92)
+  return webp.startsWith('data:image/webp') ? webp : c.toDataURL('image/png')
 }

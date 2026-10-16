@@ -5,7 +5,7 @@ import { GlbViewer, shrink } from './GlbViewer'
 import { ui, isImage, type DriveFile, type Source3D } from './shared'
 
 type Mode = 'image' | 'text' | 'drive'
-interface Preview { url: string; thumb: string | null; title: string }
+interface Preview { url: string; thumb: string | null; ref?: string | null; title: string }
 
 export default function Model3D({ source, onSaved }: { source: Source3D | null; onSaved: () => void }) {
   const [mode, setMode] = useState<Mode>('image')
@@ -15,13 +15,15 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   const [pick, setPick] = useState<Source3D | null>(null)
   const [driveImgs, setDriveImgs] = useState<DriveFile[] | null>(null)
   const [cost, setCost] = useState<number | null>(null)
-  const [job, setJob] = useState<{ status: string; elapsed?: number } | null>(null)
+  const [volExtra, setVolExtra] = useState(2)
+  const [volumize, setVolumize] = useState(true)
+  const [job, setJob] = useState<{ status: string; elapsed?: number; stage?: string } | null>(null)
   const [result, setResult] = useState<{ token: string; preview: Preview } | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { fetch('/api/gallery/model3d?info=1').then((r) => r.json()).then((j) => setCost(j.cost ?? null)).catch(() => {}) }, [])
+  useEffect(() => { fetch('/api/gallery/model3d?info=1').then((r) => r.json()).then((j) => { setCost(j.cost ?? null); if (typeof j.volumizeExtra === 'number') setVolExtra(j.volumizeExtra) }).catch(() => {}) }, [])
   // 다른 화면(드라이브·이미지 생성·갤러리)에서 넘어온 원본
   useEffect(() => { if (!source) return; const t = setTimeout(() => { setPick(source); setMode('drive'); setTitle(source.kind === 'drive' ? source.name.replace(/\.[a-z0-9]+$/i, '') : source.title) }, 0); return () => clearTimeout(t) }, [source])
   useEffect(() => {
@@ -40,8 +42,8 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
     if (result && !saved && !confirm('지금 모델을 저장하지 않았어요. 버리고 새로 만들까요?')) return
     if (result && !saved) discard(true)
     setErr(null); setResult(null); setSaved(null); setJob({ status: 'submitting' })
-    const body = mode === 'text' ? { mode: 'text', prompt, title } : mode === 'image' ? { mode: 'image', image, title }
-      : pick?.kind === 'drive' ? { mode: 'drive', driveKey: pick.key, title } : { mode: 'media', assetId: pick?.kind === 'media' ? pick.id : '', title }
+    const body = mode === 'text' ? { mode: 'text', prompt, title } : mode === 'image' ? { mode: 'image', image, title, volumize }
+      : pick?.kind === 'drive' ? { mode: 'drive', driveKey: pick.key, title, volumize } : { mode: 'media', assetId: pick?.kind === 'media' ? pick.id : '', title, volumize }
     const r = await fetch('/api/gallery/model3d', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     const j = await r.json().catch(() => ({}))
     if (!r.ok) { setJob(null); setErr(j.error ?? '요청 실패'); return }
@@ -51,7 +53,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
       if (!s) continue
       if (s.status === 'done') { setJob(null); setResult({ token: j.token, preview: s.preview }); setTitle((t) => t || s.preview.title); return }
       if (s.status === 'failed') { setJob(null); setErr(s.error); return }
-      setJob({ status: s.status, elapsed: s.elapsed })
+      setJob({ status: s.status, elapsed: s.elapsed, stage: s.stage })
     }
     setJob(null); setErr('시간이 오래 걸리고 있어요. 잠시 후 다시 시도해 주세요.')
   }
@@ -70,7 +72,8 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   }
 
   const tab = (m: Mode, label: string) => <button type="button" onClick={() => setMode(m)} className={ui.chip(mode === m)}>{label}</button>
-  const status = job ? (job.status === 'submitting' ? '요청 보내는 중…' : `3D 모델 만드는 중… ${job.elapsed ?? 0}초`) : ''
+  const status = job ? (job.status === 'submitting' ? '요청 보내는 중…' : job.stage === 'volumize' ? `입체 모습 그리는 중… ${job.elapsed ?? 0}초` : `3D 모델 만드는 중… ${job.elapsed ?? 0}초`) : ''
+  const total = (cost ?? 0) + (mode !== 'text' && volumize ? volExtra : 0)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-5">
@@ -107,18 +110,33 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
             </div>
           </div>
         )}
-        <input value={title} onChange={(e) => setTitle(e.target.value.slice(0, 60))} placeholder="모델 이름 (선택)" className={ui.input} />
+        <input value={title} onChange={(e) => setTitle(e.target.value.slice(0, 60))} placeholder="모델 이름 (선택) — 무엇인지 적으면 입체 모양을 더 잘 잡아요" className={ui.input} />
+        {mode !== 'text' && (
+          <label className="flex items-start gap-2 text-[13px] text-[#4a4337] cursor-pointer select-none">
+            <input type="checkbox" checked={volumize} onChange={(e) => setVolumize(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#2563eb]" />
+            <span><b>입체로 다시 그려서 만들기</b> <span className="text-[#9d9280]">+{volExtra} 프롬코인</span><br /><span className="text-[11.5px] text-[#9d9280]">2D 그림·캐릭터면 켜 두세요. AI 가 얼굴·몸의 둥근 모양을 상상해 피규어처럼 다시 그린 뒤 3D 로 만들어요. 사진·실물 이미지면 꺼도 돼요.</span></span>
+          </label>
+        )}
         <button type="button" onClick={start} disabled={busy || !ready} className={`${ui.primary} w-full h-12 text-[14px]`}>
-          {busy ? status : `3D 모델 만들기${cost ? ` · ${cost} 프롬코인` : cost === 0 ? ' · 무료' : ''}`}
+          {busy ? status : `3D 모델 만들기${total ? ` · ${total} 프롬코인` : cost === 0 ? ' · 무료' : ''}`}
         </button>
         {err && <p className="text-[12.5px] text-[#dc2626]">{err}{/부족/.test(err) && <> · <a href="/credits" className="underline">충전</a></>}</p>}
-        <p className="text-[11.5px] text-[#9d9280]">보통 1분 안팎(처음 한 번은 2~3분). 실패하면 프롬코인은 자동으로 돌려드려요.</p>
+        <p className="text-[11.5px] text-[#9d9280]">보통 1~2분(처음 한 번은 서버가 켜지느라 3~5분). 실패하면 프롬코인은 자동으로 돌려드려요.</p>
       </div>
 
       <div className="flex flex-col gap-3 min-h-[420px]">
         {result ? (
           <>
-            <div className="flex-1 min-h-[420px]"><GlbViewer url={result.preview.url} /></div>
+            <div className="relative flex-1 min-h-[420px]">
+              <GlbViewer url={result.preview.url} />
+              {result.preview.ref && (
+                <figure className="absolute left-3 top-3 w-28 rounded-xl overflow-hidden bg-white border border-[#ebe4d6] shadow-md">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={result.preview.ref} alt="" className="w-full aspect-square object-contain" />
+                  <figcaption className="px-1.5 py-1 text-[10px] text-[#6b6152] text-center">AI 가 그린 입체 모습</figcaption>
+                </figure>
+              )}
+            </div>
             <div className={`${ui.card} p-3 flex flex-wrap items-center gap-2`}>
               {saved ? (
                 <p className="text-[13.5px] font-bold text-[#15803d] mr-auto">✓ 드라이브 ‘3D 모델’ 폴더에 저장했어요 — {saved}</p>

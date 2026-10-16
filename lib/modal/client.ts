@@ -11,7 +11,7 @@ export async function modalSubmit(body: Record<string, unknown>): Promise<{ id?:
   const j = await r.json().catch(() => ({})) as { id?: string; detail?: unknown }
   return { ...j, ok: r.ok && !!j.id }
 }
-export async function modalStatus(id: string): Promise<{ status?: string; error?: string; images?: number; thumb?: boolean; seed?: number } | null> {
+export async function modalStatus(id: string): Promise<{ status?: string; error?: string; images?: number; thumb?: boolean; ref?: boolean; seed?: number } | null> {
   return fetch(`${modalUrl()}/result/${id}`, { headers: modalAuth() }).then((r) => r.json()).catch(() => null)
 }
 export async function modalFile(id: string, part: string): Promise<Buffer | null> {

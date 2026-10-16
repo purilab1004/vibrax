@@ -12,7 +12,8 @@ export const maxDuration = 60
 
 const SALT = 'vibrex-model3d'
 const DEFAULT_COST = 3                              // Modal 원가 한 개 약 $0.01~0.02
-interface Tok { u: string; rid: string; ref: string; cost: number; mode: string; title: string; prompt: string; at: number }
+const VOLUMIZE_EXTRA = 2                            // 2D 그림 → 입체 렌더로 다시 그리기(H100 약 1분) 추가분
+interface Tok { u: string; rid: string; ref: string; cost: number; mode: string; title: string; prompt: string; at: number; vol?: boolean }
 const tmpId = (rid: string) => rid.replace(/[^\w-]/g, '')
 const tmp = (rid: string) => `model3d/tmp/${tmpId(rid)}`
 
@@ -24,7 +25,7 @@ async function costOf() {
 
 export async function POST(req: Request) {
   const g = await requireDesigner(); if ('error' in g) return g.error
-  const body = await req.json().catch(() => null) as { action?: string; token?: string; folder?: string; mode?: string; image?: string; prompt?: string; assetId?: string; driveKey?: string; title?: string } | null
+  const body = await req.json().catch(() => null) as { action?: string; token?: string; folder?: string; mode?: string; image?: string; prompt?: string; assetId?: string; driveKey?: string; title?: string; volumize?: boolean; hint?: string } | null
   const store = g.admin.storage.from(BUCKET)
 
   // 저장 / 버리기
@@ -32,12 +33,13 @@ export async function POST(req: Request) {
     const t = verifyToken<Tok>(SALT, String(body.token ?? ''))
     if (!t || t.u !== g.user.id) return Response.json({ error: 'bad token' }, { status: 400 })
     const base = tmp(t.rid)
-    if (body.action === 'discard') { await store.remove([`${base}.glb`, `${base}.png`]); return Response.json({ ok: true }) }
+    if (body.action === 'discard') { await store.remove([`${base}.glb`, `${base}.png`, `${base}.ref.png`]); return Response.json({ ok: true }) }
     const title = cleanName(String(body.title ?? '') || t.title || '3D 모델', 60)
     const { key, name } = await freeKey(g.admin, folderPath(g.user.id, cleanName(String(body.folder ?? ''), 40) || '3D 모델'), title + '.glb')
     const { error } = await store.move(`${base}.glb`, key)
     if (error) return Response.json({ error: /not.?found/i.test(error.message) ? '이미 저장했거나 버린 모델이에요' : error.message }, { status: 400 })
     await store.move(`${base}.png`, key + '.t').catch(() => null)
+    await store.remove([`${base}.ref.png`]).catch(() => null)
     return Response.json({ ok: true, key, name, url: store.getPublicUrl(key).data.publicUrl })
   }
 
@@ -65,7 +67,10 @@ export async function POST(req: Request) {
     payload = { mode: 'image', image_b64: img.slice(img.indexOf(',') + 1) }; title ||= '3D 모델'
   }
 
-  const cost = await costOf()
+  // 2D 그림을 입체 렌더로 다시 그린 뒤 3D 로 (글 → 3D 에는 해당 없음)
+  const vol = mode !== 'text' && body?.volumize !== false
+  if (vol) payload = { ...payload, volumize: true, hint: cleanName(body?.hint ?? title ?? '', 120) }
+  const cost = (await costOf()) + (vol ? VOLUMIZE_EXTRA : 0)
   const ref = `m3d:${crypto.randomUUID()}`
   if (cost > 0) {
     const { error } = await g.supabase.rpc('spend_credits', { p_amount: cost, p_ref: ref } as never)
@@ -78,7 +83,7 @@ export async function POST(req: Request) {
   try {
     const r = await modalSubmit(payload)
     if (!r.ok || !r.id) { await refund(); return Response.json({ error: '3D 생성 요청 실패 — 프롬코인은 돌려드렸어요', detail: r.detail }, { status: 502 }) }
-    return Response.json({ token: signToken<Tok>(SALT, { u: g.user.id, rid: r.id, ref, cost, mode, title, prompt, at: Date.now() }), cost })
+    return Response.json({ token: signToken<Tok>(SALT, { u: g.user.id, rid: r.id, ref, cost, mode, title, prompt, at: Date.now(), vol }), cost })
   } catch (e) {
     await refund()
     return Response.json({ error: '3D 생성 요청 실패 — 프롬코인은 돌려드렸어요', detail: String((e as Error).message) }, { status: 502 })
@@ -87,17 +92,18 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   const u = new URL(req.url)
-  if (u.searchParams.get('info')) return Response.json({ cost: await costOf(), ready: modalReady() })
+  if (u.searchParams.get('info')) return Response.json({ cost: await costOf(), volumizeExtra: VOLUMIZE_EXTRA, ready: modalReady() })
   const g = await requireDesigner(); if ('error' in g) return g.error
   const t = verifyToken<Tok>(SALT, u.searchParams.get('token') ?? '')
   if (!t || t.u !== g.user.id) return Response.json({ error: 'bad token' }, { status: 400 })
   const store = g.admin.storage.from(BUCKET)
   const base = tmp(t.rid)
-  const preview = (thumb: boolean) => ({ url: store.getPublicUrl(`${base}.glb`).data.publicUrl, thumb: thumb ? store.getPublicUrl(`${base}.png`).data.publicUrl : null, title: t.title })
+  const preview = (thumb: boolean, refImg: boolean) => ({ url: store.getPublicUrl(`${base}.glb`).data.publicUrl, thumb: thumb ? store.getPublicUrl(`${base}.png`).data.publicUrl : null, ref: refImg ? store.getPublicUrl(`${base}.ref.png`).data.publicUrl : null, title: t.title })
 
   // 이미 받아 둔 경우 (새로고침·중복 호출)
   const { data: have } = await store.list('model3d/tmp', { search: tmpId(t.rid) })
-  if ((have ?? []).some((f) => f.name === `${tmpId(t.rid)}.glb`)) return Response.json({ status: 'done', preview: preview((have ?? []).some((f) => f.name === `${tmpId(t.rid)}.png`)) })
+  const has = (n: string) => (have ?? []).some((f) => f.name === `${tmpId(t.rid)}${n}`)
+  if (has('.glb')) return Response.json({ status: 'done', preview: preview(has('.png'), has('.ref.png')) })
 
   const elapsed = Math.round((Date.now() - t.at) / 1000)
   const s = await modalStatus(t.rid)
@@ -111,14 +117,16 @@ export async function GET(req: Request) {
   if (s?.status === 'failed') return refundOnce('3D 모델을 만들지 못했어요')
   if (s?.status !== 'done') {
     if (Date.now() - t.at > 20 * 60_000) return refundOnce('3D 생성이 너무 오래 걸려 취소했어요')
-    return Response.json({ status: 'running', elapsed })
+    return Response.json({ status: 'running', elapsed, stage: t.vol && elapsed < 90 ? 'volumize' : '3d' })
   }
   const glb = await modalFile(t.rid, 'glb')
   if (!glb) return Response.json({ status: 'running', elapsed })
   // 썸네일 먼저 — glb 가 있으면 '완료'로 보므로
   let thumb = false
   if (s.thumb) { const tb = await modalFile(t.rid, 'thumb'); if (tb) thumb = !(await store.upload(`${base}.png`, tb, { contentType: 'image/png', upsert: true })).error }
+  let refImg = false
+  if (s.ref) { const rb = await modalFile(t.rid, 'ref'); if (rb) refImg = !(await store.upload(`${base}.ref.png`, rb, { contentType: 'image/png', upsert: true })).error }
   const up = await store.upload(`${base}.glb`, glb, { contentType: 'model/gltf-binary', upsert: true })
   if (up.error) return Response.json({ status: 'running', elapsed, note: up.error.message })
-  return Response.json({ status: 'done', preview: preview(thumb) })
+  return Response.json({ status: 'done', preview: preview(thumb, refImg) })
 }
