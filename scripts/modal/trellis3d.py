@@ -102,6 +102,12 @@ class Trellis:
         glb = postprocessing_utils.to_glb(out["gaussian"][0], out["mesh"][0], simplify=0.95, texture_size=1024, verbose=False)
         if thumb is None:
             thumb = self._render_thumb(out["gaussian"][0])
+        # TRELLIS 는 metallicFactor 를 비워 둔다 → glTF 기본값 1(완전 금속)이라 게임·뷰어에서 색이 검게 죽는다 → 비금속으로
+        for geom in getattr(glb, "geometry", {glb: glb}).values():
+            mat = getattr(getattr(geom, "visual", None), "material", None)
+            if mat is not None and hasattr(mat, "metallicFactor"):
+                mat.metallicFactor = 0.0
+                mat.roughnessFactor = 0.85
         buf = io.BytesIO(); glb.export(buf, file_type="glb")
         return {"glb": buf.getvalue(), "thumb": thumb}
 

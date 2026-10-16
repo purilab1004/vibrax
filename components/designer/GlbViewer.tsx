@@ -29,6 +29,7 @@ export function GlbViewer({ url }: { url: string }) {
       const renderer = new T.WebGLRenderer({ antialias: true, alpha: true })
       renderer.setPixelRatio(Math.min(2, window.devicePixelRatio)); renderer.setSize(w, h)
       if ('outputColorSpace' in renderer) renderer.outputColorSpace = T.SRGBColorSpace
+      else renderer.outputEncoding = T.sRGBEncoding   // 플랫폼 three.js 는 r149 — 텍스처 색이 흐려지지 않게
       el.appendChild(renderer.domElement)
       const scene = new T.Scene(), cam = new T.PerspectiveCamera(40, w / h, 0.01, 100)
       scene.add(new T.HemisphereLight(0xffffff, 0x8890a0, 1.6))
@@ -36,6 +37,8 @@ export function GlbViewer({ url }: { url: string }) {
       const ctl = new T.OrbitControls(cam, renderer.domElement); ctl.enableDamping = true; ctl.autoRotate = true; ctl.autoRotateSpeed = 1.6
       new T.GLTFLoader().load(url, (g: any) => {
         if (stop) return
+        // 금속 맵 없이 metalness 1(glTF 기본값)인 AI 모델은 환경광이 없으면 검게 보인다 → 비금속으로
+        g.scene.traverse((n: any) => { const m = n.material; (Array.isArray(m) ? m : m ? [m] : []).forEach((q: any) => { if (q && q.metalness > 0.5 && !q.metalnessMap) { q.metalness = 0; q.roughness = Math.max(q.roughness || 0, 0.8); q.needsUpdate = true } }) })
         const obj = g.scene, b = new T.Box3().setFromObject(obj), size = b.getSize(new T.Vector3()), c = b.getCenter(new T.Vector3())
         obj.position.sub(c); scene.add(obj)
         const r = Math.max(size.x, size.y, size.z) || 1

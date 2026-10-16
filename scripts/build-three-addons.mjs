@@ -46,7 +46,11 @@ else {
         draco.setDecoderPath('https://vibrexcup.com/vendor/draco/')
         loader.setDRACOLoader(draco)
       } catch (e) { /* 드라코 없이도 동작 */ }
-      loader.load(src, (gltf) => resolve(gltf), undefined, reject)
+      loader.load(src, (gltf) => {
+        // 금속 맵 없이 metalness 1(glTF 기본값)인 재질은 환경광이 없으면 검게 보인다(AI 3D 모델) → 비금속으로
+        gltf.scene.traverse((n) => { const m = n.material; (Array.isArray(m) ? m : m ? [m] : []).forEach((q) => { if (q && q.metalness > 0.5 && !q.metalnessMap) { q.metalness = 0; q.roughness = Math.max(q.roughness || 0, 0.8); q.needsUpdate = true } }) })
+        resolve(gltf)
+      }, undefined, reject)
     })
   }
 }
