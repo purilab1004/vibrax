@@ -23,7 +23,7 @@ export default function AdminDesignersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="게임 디자이너" desc="접수를 확인해 승인하면 회원 직분이 '디자이너'로 바뀌고 내 정보에 라이브러리가 생깁니다. 디자이너가 올린 에셋은 승인해야 라이브러리와 게임 생성에 공개됩니다. 회원이 디자인을 쓰며 낸 크레딧은 100% 디자이너에게 쌓입니다." />
+      <PageHeader title="게임 디자이너" desc="접수를 확인해 승인하면 회원 직분이 '디자이너'로 바뀌고 스튜디오 › 디자이너 AI 작업 공간이 열립니다. 디자이너가 올린 에셋은 승인해야 라이브러리와 게임 생성에 공개됩니다. 회원이 디자인을 쓰며 낸 크레딧은 100% 디자이너에게 쌓입니다." />
       {missing && <Card className="p-4 border-[#f59e0b] bg-[#fffbeb]"><p className="text-[13px] text-[#92400e]">테이블이 아직 없어요. Supabase SQL 편집기에서 <code>db/migrations/2026-09-17-jackpot-library.sql</code> 을 실행해 주세요.</p></Card>}
       {msg && <p className="text-[13px] font-semibold text-[#2563eb]">{msg}</p>}
 

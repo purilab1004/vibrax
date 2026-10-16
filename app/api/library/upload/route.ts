@@ -18,14 +18,14 @@ async function me() {
 
 export async function GET() {
   const m = await me(); if (!m) return Response.json({ error: 'unauthorized' }, { status: 401 })
-  const { data, error } = await m.admin.from('media_assets').select('id,kind,name,title,description,tags,url,width,height,bytes,status,uses,credit_earned,created_at').eq('designer_id', m.user.id).order('created_at', { ascending: false })
+  const { data, error } = await m.admin.from('media_assets').select('id,kind,name,title,description,tags,url,width,height,bytes,status,uses,credit_earned,created_at,meta').eq('designer_id', m.user.id).order('created_at', { ascending: false })
   if (error) return Response.json({ items: [], role: m.role, error: error.message })
   return Response.json({ items: data ?? [], role: m.role })
 }
 
 export async function POST(req: Request) {
   const m = await me(); if (!m) return Response.json({ error: 'unauthorized' }, { status: 401 })
-  if (m.role !== 'designer' && m.role !== 'admin') return Response.json({ error: '디자이너로 승인된 회원만 올릴 수 있어요. 갤러리 페이지에서 접수해 주세요.' }, { status: 403 })
+  if (m.role !== 'designer' && m.role !== 'admin') return Response.json({ error: '디자이너로 승인된 회원만 올릴 수 있어요. 스튜디오 › 디자이너 AI 에서 접수해 주세요.' }, { status: 403 })
   const fd = await req.formData().catch(() => null)
   if (!fd) return Response.json({ error: 'multipart 필요' }, { status: 400 })
   const files = fd.getAll('files').filter((f): f is File => f instanceof File && f.size > 0)

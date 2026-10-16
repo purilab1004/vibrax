@@ -1,191 +1,138 @@
 'use client'
-// 라이브러리 — 미디어 라이브러리(승인된 에셋) 공개 목록·검색 + 게임 디자이너 모집.
-// 디자이너: 일반 회원 누구나 접수 → 관리자 확인 후 직분이 '디자이너'로 → 내 정보의 라이브러리에서 작품 등록 → 관리자 승인 후 모두에게 공개.
-// 회원이 디자이너의 에셋으로 게임을 만들면 크레딧을 쓰고, 그 크레딧은 100% 디자이너에게 쌓인다.
+// 갤러리 — 승인된 디자인(미디어 라이브러리) 검색·둘러보기. 이미지 사이트처럼 검색창 + 분류 + 촘촘한 이미지 벽.
+// 디자이너 접수·작품 등록은 스튜디오 › 🎨 디자이너 AI(/studio/design) 에서. 3D 모델은 여기 노출하지 않는다.
 import { useEffect, useMemo, useState } from 'react'
-import MiniClay from '@/components/MiniClay'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import Model3DGenerator, { GlbViewer } from '@/components/library/Model3DGenerator'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-interface Asset { id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url: string; width: number | null; height: number | null; uses: number | null; created_at: string; designer_name: string | null; meta?: { thumb?: string | null } | null }
-const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['tile', '타일·맵'], ['item', '아이템'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '오디오'], ['model3d', '3D 모델']]
+interface Asset { id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url: string; width: number | null; height: number | null; uses: number | null; created_at: string; designer_name: string | null }
+const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일·맵'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '효과음·음악']]
+const SUGGEST = ['드래곤', '우주', '숲', '픽셀', '귀여운', '바다', '던전', '네온']
 
 export default function LibraryClient() {
   const router = useRouter()
-  const [q, setQ] = useState(''); const [kind, setKind] = useState('')
+  const params = useSearchParams()
+  const [q, setQ] = useState(params?.get('q') ?? '')
+  const [kind, setKind] = useState(params?.get('kind') ?? '')
+  const [sort, setSort] = useState<'new' | 'popular'>('new')
   const [items, setItems] = useState<Asset[] | null>(null)
-  const [me, setMe] = useState<{ role: string | null; application: { status: string } | null; loggedIn: boolean } | null>(null)
-  const [apply, setApply] = useState(false)
-  const [form, setForm] = useState({ name: '', email: '', portfolio_url: '', message: '' })
-  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState<string | null>(null)
   const [preview, setPreview] = useState<Asset | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const t = setTimeout(() => {
-      fetch(`/api/library?q=${encodeURIComponent(q)}&kind=${kind}`).then((r) => r.json()).then((j) => setItems(j.items ?? [])).catch(() => setItems([]))
+      fetch(`/api/library?q=${encodeURIComponent(q.trim())}&kind=${kind}&limit=200`).then((r) => r.json()).then((j) => setItems(j.items ?? [])).catch(() => setItems([]))
+      const sp = new URLSearchParams(); if (q.trim()) sp.set('q', q.trim()); if (kind) sp.set('kind', kind)
+      router.replace(`/gallery${sp.toString() ? '?' + sp : ''}`, { scroll: false })
     }, q ? 250 : 0)
     return () => clearTimeout(t)
-  }, [q, kind])
-  useEffect(() => {
-    createClient().auth.getUser().then(({ data: { user } }) => {
-      if (!user) { setMe({ role: null, application: null, loggedIn: false }); return }
-      setForm((f) => ({ ...f, email: user.email ?? '', name: (user.user_metadata?.agent_name as string) ?? '' }))
-      fetch('/api/library/apply').then((r) => r.json()).then((j) => setMe({ role: j.role ?? 'user', application: j.application ?? null, loggedIn: true })).catch(() => setMe({ role: 'user', application: null, loggedIn: true }))
-    })
-  }, [])
+  }, [q, kind, router])
 
-  const submit = async () => {
-    setBusy(true); setMsg(null)
-    try {
-      const r = await fetch('/api/library/apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
-      const j = await r.json()
-      if (!r.ok) { setMsg(j.missing ? '접수 테이블이 아직 준비되지 않았어요 (관리자가 마이그레이션을 실행해야 해요)' : j.error ?? '접수 실패'); return }
-      setMsg('접수됐어요! 관리자가 확인한 뒤 메일로 안내드려요.'); setMe((m) => (m ? { ...m, application: { status: 'pending' } } : m))
-      setTimeout(() => setApply(false), 1500)
-    } catch { setMsg('네트워크 오류') } finally { setBusy(false) }
-  }
-  const isDesigner = me?.role === 'designer' || me?.role === 'admin'
-  const pending = me?.application?.status === 'pending'
-  const count = useMemo(() => items?.length ?? 0, [items])
+  const shown = useMemo(() => {
+    const list = (items ?? []).filter((a) => a.kind !== 'model3d' && (kind === 'audio' || a.kind !== 'audio'))  // 소리는 ‘효과음·음악’ 탭에서만
+    return sort === 'popular' ? [...list].sort((a, b) => (b.uses ?? 0) - (a.uses ?? 0)) : list
+  }, [items, sort])
+  // 결과에서 많이 쓰인 태그 → 연관 검색어
+  const related = useMemo(() => {
+    const c = new Map<string, number>()
+    for (const a of items ?? []) for (const t of a.tags ?? []) if (t && t !== q.trim()) c.set(t, (c.get(t) ?? 0) + 1)
+    const top = [...c.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t).slice(0, 10)
+    return top.length ? top : SUGGEST
+  }, [items, q])
 
-  const card = 'rounded-3xl bg-white/[0.05] border border-white/10'
-  const inputDark = 'w-full h-12 rounded-xl bg-white/[0.07] border border-white/10 focus:border-[#a78bfa]/70 focus:bg-white/[0.1] px-4 text-[14px] text-white outline-none placeholder:text-white/35 transition-colors'
   return (
-    <div className="relative min-h-screen bg-[#07060b] text-white overflow-hidden">
-      {/* 배경 오라 */}
-      <div aria-hidden className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-40 -left-32 w-[28rem] h-[28rem] rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.32),transparent)]" />
-        <div className="absolute top-60 -right-40 w-[30rem] h-[30rem] rounded-full bg-[radial-gradient(closest-side,rgba(255,45,110,0.22),transparent)]" />
-      </div>
-      <div className="relative max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12 space-y-5 md:space-y-8">
-      {/* 히어로 — 디자이너 모집 */}
-      <section className={`${card} relative overflow-hidden px-5 py-8 md:px-12 md:py-12`}>
-        <div aria-hidden className="absolute -top-24 -left-10 w-80 h-80 rounded-full bg-[radial-gradient(closest-side,rgba(139,61,255,0.35),transparent)]" />
-        <div className="relative z-10 md:flex md:items-center md:gap-10">
-          <div className="flex-1 min-w-0" style={{ wordBreak: 'keep-all' }}>
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#8b3dff]/15 border border-[#8b3dff]/40 px-3.5 py-1.5 text-[11px] font-extrabold tracking-[0.2em] text-[#c4b5fd]"><span className="w-2 h-2 rounded-full bg-[#a78bfa] animate-pulse" />VIBREXCUP GALLERY</span>
-            <h1 className="mt-4 text-[32px] md:text-[48px] font-black leading-[1.1] tracking-tight">게임 <span className="bg-gradient-to-r from-[#c4b5fd] via-[#ff8ac0] to-[#ff2d6f] bg-clip-text text-transparent">디자이너</span>를<br className="md:hidden" /> 찾습니다</h1>
-            <p className="mt-3 text-[14.5px] md:text-[16px] text-white/70 leading-relaxed max-w-[560px]">
-              캐릭터, 배경, 아이템, 효과음… 당신이 만든 디자인이 이곳의 게임 재료가 됩니다.
-              회원이 프롬프트로 게임을 만들 때 AI 가 갤러리의 디자인을 골라 쓰고, 그때마다 디자이너에게 보상이 쌓입니다.
-            </p>
-            <div className="mt-5 rounded-2xl p-[1.5px] bg-gradient-to-r from-[#ffd24d] via-[#ff5e9a] to-[#8b3dff]">
-              <div className="rounded-[15px] bg-[#0e0c14] px-4 py-3.5 text-[13.5px] leading-relaxed">
-                <p className="font-extrabold text-[#ffd24d] mb-1">💰 보상 구조 — 크레딧 100% 디자이너에게</p>
-                <p className="text-white/75">회원이 <b className="text-white">당신의 디자인을 활용해 게임을 만들면 크레딧을 사용</b>하고, 그 <b className="text-white">크레딧은 100% 디자이너에게 쌓입니다.</b> 플랫폼은 가져가지 않습니다. 쌓인 크레딧은 내 정보의 갤러리에서 확인할 수 있어요.</p>
-              </div>
-            </div>
-            <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">
-              {isDesigner ? (
-                <Link href="/profile#library" className="inline-flex items-center justify-center h-14 px-7 rounded-2xl bg-gradient-to-r from-[#ffd94f] to-[#ffb62e] text-[#3a2c00] text-[15px] font-extrabold shadow-[0_10px_28px_-10px_rgba(255,190,50,0.8)]">🎨 내 갤러리에 작품 올리기</Link>
-              ) : pending ? (
-                <span className="inline-flex items-center justify-center h-14 px-6 rounded-2xl bg-white/[0.07] border border-white/15 text-[14px] font-bold">⏳ 접수 확인 중 — 승인되면 메일로 알려드려요</span>
-              ) : (
-                <button onClick={() => (me?.loggedIn ? setApply(true) : router.push('/login?redirect=/gallery'))} className="inline-flex items-center justify-center h-14 px-8 rounded-2xl bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-[15px] font-extrabold shadow-[0_10px_28px_-10px_rgba(255,45,111,0.8)]">✍️ 디자이너 접수하기</button>
-              )}
-              <span className="text-[12.5px] text-white/45">일반 회원 누구나 접수할 수 있어요 · 관리자 확인 후 디자이너로 전환</span>
-            </div>
+    <div className="min-h-screen bg-[#fcfaf5]">
+      {/* 검색 */}
+      <section className="bg-white border-b border-[#ebe4d6]">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 pb-5 md:pt-12 md:pb-6">
+          <h1 className="text-[24px] md:text-[32px] font-black tracking-tight text-[#241f17]">게임 디자인 <span className="text-[#2563eb]">갤러리</span></h1>
+          <p className="mt-1 text-[13px] md:text-[14px] text-[#6b6152]">디자이너들이 올린 캐릭터·배경·아이템·효과음 — 골라서 바로 게임에 넣어 보세요</p>
+          <form onSubmit={(e) => e.preventDefault()} className="mt-5 flex items-stretch rounded-2xl border-2 border-[#2563eb] bg-white overflow-hidden shadow-[0_8px_24px_-16px_rgba(37,99,235,0.6)] max-w-3xl">
+            <select value={kind} onChange={(e) => setKind(e.target.value)} aria-label="분류" className="hidden sm:block shrink-0 px-4 text-[13.5px] font-bold text-[#241f17] bg-[#f5f8ff] border-r border-[#d6e2fb] outline-none">
+              {KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="찾고 싶은 디자인을 검색해 보세요 — 드래곤, 우주, 픽셀…" className="flex-1 min-w-0 h-14 px-4 text-[15px] text-[#241f17] outline-none placeholder:text-[#b3a993]" />
+            {q && <button type="button" onClick={() => setQ('')} className="px-3 text-[#b3a993] hover:text-[#241f17]" aria-label="지우기">✕</button>}
+            <span className="shrink-0 w-14 flex items-center justify-center bg-[#2563eb] text-white">
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.6}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            </span>
+          </form>
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            <span className="shrink-0 text-[12px] font-bold text-[#9d9280]">{q ? '연관' : '추천'}</span>
+            {related.map((t) => <button key={t} onClick={() => setQ(t)} className="shrink-0 h-7 px-3 rounded-full bg-[#f1ede4] hover:bg-[#e6dfd0] text-[12.5px] text-[#4a4337]">#{t}</button>)}
           </div>
-          {/* 점토 캐릭터들 */}
-          <div className="hidden md:grid grid-cols-3 gap-4 w-[300px] shrink-0 mt-8 md:mt-0">
-            {(['#5AB0F2', '#F2A65A', '#8BD17C', '#F27EA9', '#C9A0FF', '#FFD166'] as const).map((c, i) => (
-              <div key={c} className="critter-bob w-full" style={{ animationDelay: `${i * 0.35}s` }}><MiniClay color={c} /></div>
+        </div>
+        {/* 분류 탭 */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 flex gap-1 overflow-x-auto scrollbar-hide">
+          {KINDS.map(([v, l]) => (
+            <button key={v} onClick={() => setKind(v)} className={`shrink-0 h-11 px-3.5 text-[13.5px] font-bold border-b-[3px] transition-colors ${kind === v ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-[#6b6152] hover:text-[#241f17]'}`}>{l}</button>
+          ))}
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-4">
+        {/* 디자이너 모집 (작게) */}
+        <Link href="/studio/design" className="group flex items-center gap-3 rounded-2xl bg-gradient-to-r from-[#fff1f6] via-[#fff7ec] to-[#f0f5ff] border border-[#f3dfe6] px-4 py-3 hover:shadow-md transition-shadow">
+          <span className="text-[22px]">🎨</span>
+          <p className="flex-1 min-w-0 text-[13px] text-[#4a4337]" style={{ wordBreak: 'keep-all' }}><b className="text-[#241f17]">게임 디자이너를 찾습니다</b><span className="hidden sm:inline"> — 내 디자인이 게임에 쓰일 때마다 크레딧이 <b className="text-[#be185d]">100%</b> 디자이너에게 쌓여요</span></p>
+          <span className="shrink-0 text-[12.5px] font-bold text-[#2563eb] group-hover:translate-x-0.5 transition-transform">디자이너 AI 시작 →</span>
+        </Link>
+
+        {/* 결과 줄 */}
+        <div className="flex items-center gap-2">
+          <p className="text-[14px] text-[#241f17]"><b>{q.trim() ? `‘${q.trim()}’` : KINDS.find((k) => k[0] === kind)?.[1]}</b> <span className="text-[#9d9280]">{items === null ? '' : `${shown.length.toLocaleString()}개`}</span></p>
+          <div className="ml-auto inline-flex rounded-lg border border-[#e6dfd0] bg-white p-0.5">
+            {([['new', '최신순'], ['popular', '인기순']] as const).map(([v, l]) => <button key={v} onClick={() => setSort(v)} className={`h-8 px-3 rounded-md text-[12.5px] font-bold ${sort === v ? 'bg-[#241f17] text-white' : 'text-[#6b6152]'}`}>{l}</button>)}
+          </div>
+        </div>
+
+        {/* 이미지 벽 */}
+        {items === null ? (
+          <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 [&>*]:mb-3">{Array.from({ length: 15 }, (_, i) => <div key={i} className="rounded-xl bg-[#f1ede4] animate-pulse" style={{ height: 140 + ((i * 53) % 120) }} />)}</div>
+        ) : shown.length === 0 ? (
+          <div className="py-24 text-center"><p className="text-[40px]">🔍</p><p className="mt-2 text-[15px] font-bold text-[#241f17]">{q ? '검색 결과가 없어요' : '아직 등록된 디자인이 없어요'}</p><p className="mt-1 text-[13px] text-[#9d9280]">다른 검색어나 분류를 골라 보세요</p></div>
+        ) : (
+          <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 [&>*]:mb-3">
+            {shown.map((a) => (
+              <button key={a.id} onClick={() => setPreview(a)} className="group relative block w-full break-inside-avoid rounded-xl overflow-hidden bg-[repeating-conic-gradient(#f3f0e8_0_25%,#fff_0_50%)] bg-[length:14px_14px] border border-[#ebe4d6] hover:shadow-[0_14px_30px_-14px_rgba(36,31,23,0.45)] transition-shadow text-left">
+                {a.kind === 'audio' ? (
+                  <div className="aspect-[4/3] flex flex-col items-center justify-center bg-gradient-to-br from-[#eef4ff] to-[#fdf2f8]"><span className="text-[36px]">🎵</span><span className="mt-1 text-[12px] font-bold text-[#4a4337] px-2 truncate max-w-full">{a.title}</span></div>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={a.url} alt={a.title} loading="lazy" className="w-full h-auto object-contain group-hover:scale-[1.03] transition-transform duration-500" style={a.width && a.height ? { aspectRatio: `${a.width}/${a.height}` } : { aspectRatio: '1/1' }} />
+                )}
+                <div className="absolute inset-x-0 bottom-0 px-2.5 py-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p className="text-[12.5px] font-bold text-white truncate">{a.title}</p>
+                  {a.designer_name && <p className="text-[10.5px] text-white/75 truncate">by {a.designer_name}</p>}
+                </div>
+              </button>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* AI 3D 생성기 */}
-      <Model3DGenerator loggedIn={!!me?.loggedIn} />
-
-      {/* 과정 */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {[['1', '접수', '이름·이메일·포트폴리오 링크를 남기면 관리자가 확인해요.'], ['2', '승인 → 디자이너', '승인되면 회원 직분이 디자이너로 바뀌고, 내 정보에 갤러리 메뉴가 생겨요.'], ['3', '등록 → 공개 → 보상', '작품을 올리면 관리자 확인 후 모두에게 공개되고, 게임에 쓰일 때마다 크레딧이 100% 쌓여요.']].map(([n, t, d]) => (
-          <div key={n} className={`${card} p-4 md:p-5`} style={{ wordBreak: 'keep-all' }}>
-            <p className="text-[10px] font-extrabold tracking-[0.2em] text-[#c4b5fd]">STEP {n}</p>
-            <p className="mt-1 text-[15px] font-extrabold">{t}</p>
-            <p className="mt-1 text-[12.5px] text-white/55 leading-relaxed">{d}</p>
-          </div>
-        ))}
-      </section>
-
-      {/* 검색 + 목록 */}
-      <section className={`${card} p-4 md:p-6`}>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-          <h2 className="text-[20px] font-extrabold">갤러리 <span className="bg-gradient-to-r from-[#c4b5fd] to-[#ff8ac0] bg-clip-text text-transparent">{count}</span></h2>
-          <div className="relative sm:ml-auto w-full sm:w-[320px]">
-            <svg viewBox="0 0 24 24" className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" fill="none" stroke="currentColor" strokeWidth={2.2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="캐릭터, 우주, 숲, 픽셀…" className={`${inputDark} pl-10 rounded-full h-11`} />
-          </div>
-        </div>
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 mb-4">
-          {KINDS.map(([v, l]) => <button key={v} onClick={() => setKind(v)} className={`shrink-0 h-9 px-4 rounded-full text-[13px] font-bold transition-all ${kind === v ? 'bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-white shadow-[0_6px_16px_-6px_rgba(255,45,111,0.7)]' : 'bg-white/[0.06] border border-white/10 text-white/60'}`}>{l}</button>)}
-        </div>
-        {items === null ? <p className="py-16 text-center text-white/45 text-[14px]">불러오는 중…</p>
-          : items.length === 0 ? <p className="py-16 text-center text-white/45 text-[14px]">{q ? '검색에 없습니다.' : '아직 등록된 디자인이 없어요.'}</p>
-          : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {items.map((a) => (
-                <button key={a.id} onClick={() => setPreview(a)} className="group text-left rounded-2xl overflow-hidden bg-white/[0.04] border border-white/10 hover:border-[#a78bfa]/70 hover:shadow-[0_14px_30px_-14px_rgba(139,61,255,.6)] transition-all">
-                  <div className="aspect-square bg-[repeating-conic-gradient(#1b1924_0_25%,#131119_0_50%)] bg-[length:16px_16px] flex items-center justify-center overflow-hidden">
-                    {a.kind === 'audio' ? <span className="text-4xl">🎵</span> : a.kind === 'model3d' ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      a.meta?.thumb ? <img src={a.meta.thumb} alt={a.title} loading="lazy" className="w-full h-full object-contain group-hover:scale-[1.04] transition-transform duration-500" /> : <span className="text-4xl">🧊</span>
-                    ) : (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.url} alt={a.title} loading="lazy" className="w-full h-full object-contain group-hover:scale-[1.04] transition-transform duration-500" />
-                    )}
-                  </div>
-                  <div className="px-3 py-2.5">
-                    <p className="text-[13px] font-bold truncate">{a.title}</p>
-                    <p className="text-[11px] text-white/45 truncate">{KINDS.find((k) => k[0] === a.kind)?.[1] ?? a.kind}{a.width ? ` · ${a.width}×${a.height}` : ''}{a.designer_name ? ` · by ${a.designer_name}` : ''}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-      </section>
+        )}
       </div>
 
       {/* 미리보기 */}
       {preview && (
-        <div className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => setPreview(null)}>
-          <div className="w-full max-w-lg bg-[#121019] border border-white/10 rounded-3xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-[repeating-conic-gradient(#1b1924_0_25%,#131119_0_50%)] bg-[length:20px_20px] flex items-center justify-center max-h-[60vh]">
-              {preview.kind === 'audio' ? <audio src={preview.url} controls className="my-10 w-[90%]" /> : preview.kind === 'model3d' ? <div className="w-full h-[60vh] max-h-[460px]"><GlbViewer url={preview.url} /></div> : (
+        <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => setPreview(null)}>
+          <div className="w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl md:flex" onClick={(e) => e.stopPropagation()}>
+            <div className="md:flex-1 bg-[repeating-conic-gradient(#f3f0e8_0_25%,#fff_0_50%)] bg-[length:18px_18px] flex items-center justify-center min-h-[260px] max-h-[60vh] md:max-h-[560px]">
+              {preview.kind === 'audio' ? <audio src={preview.url} controls className="my-10 w-[90%]" /> : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview.url} alt={preview.title} className="max-h-[60vh] w-auto object-contain" />
+                <img src={preview.url} alt={preview.title} className="max-h-[60vh] md:max-h-[560px] w-auto object-contain" />
               )}
             </div>
-            <div className="p-5">
-              <p className="text-[17px] font-extrabold">{preview.title}</p>
-              <p className="text-[12px] text-white/45 mt-0.5">코드 키 <code className="bg-white/10 px-1.5 py-0.5 rounded text-white/80">{preview.name}</code>{preview.width ? ` · ${preview.width}×${preview.height}` : ''}{preview.designer_name ? ` · 디자이너 ${preview.designer_name}` : ''}</p>
-              {preview.description && <p className="text-[13px] text-white/70 mt-2 leading-relaxed">{preview.description}</p>}
-              <p className="text-[12px] text-white/55 mt-3 bg-white/[0.05] border border-white/10 rounded-xl px-3 py-2">스튜디오에서 프롬프트에 이 디자인 이름을 적거나 미디어 선택기에서 고르면 게임에 들어가요. 사용한 크레딧은 100% 디자이너에게 쌓입니다.</p>
-              <div className="mt-4 flex gap-2"><Link href="/studio" className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-[14px] font-extrabold inline-flex items-center justify-center">스튜디오에서 쓰기</Link><button onClick={() => setPreview(null)} className="h-12 px-5 rounded-2xl bg-white/[0.07] border border-white/10 text-[14px] font-bold">닫기</button></div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 접수 모달 */}
-      {apply && (
-        <div className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => setApply(false)}>
-          <div className="w-full max-w-md bg-[#121019] border border-white/10 rounded-3xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-[21px] font-extrabold">디자이너 접수</h3>
-            <p className="text-[13px] text-white/55 mt-1 leading-relaxed" style={{ wordBreak: 'keep-all' }}>관리자가 확인한 뒤 이메일로 안내드려요. 승인되면 내 정보에 갤러리가 생기고 작품을 올릴 수 있어요. 회원이 작품을 활용해 쓴 크레딧은 100% 당신에게 쌓입니다.</p>
-            <div className="mt-4 space-y-2.5">
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="이름 또는 활동명" className={inputDark} />
-              <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="연락받을 이메일" type="email" className={inputDark} />
-              <input value={form.portfolio_url} onChange={(e) => setForm({ ...form, portfolio_url: e.target.value })} placeholder="포트폴리오 링크 (선택)" className={inputDark} />
-              <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="어떤 디자인을 만드시나요? (선택)" rows={3} className={`${inputDark} h-auto py-3`} />
-            </div>
-            {msg && <p className="mt-3 text-[13px] font-semibold text-[#c4b5fd]">{msg}</p>}
-            <div className="mt-4 flex gap-2">
-              <button onClick={submit} disabled={busy || !form.name.trim() || !form.email.trim()} className="flex-1 h-14 rounded-2xl bg-gradient-to-r from-[#ff2d6f] to-[#8b3dff] text-[15px] font-extrabold disabled:opacity-40">{busy ? '접수 중…' : '접수하기'}</button>
-              <button onClick={() => setApply(false)} className="h-14 px-5 rounded-2xl bg-white/[0.07] border border-white/10 text-[14px] font-bold">닫기</button>
+            <div className="md:w-[300px] p-5 flex flex-col">
+              <p className="text-[18px] font-extrabold text-[#241f17]">{preview.title}</p>
+              <p className="text-[12px] text-[#9d9280] mt-0.5">{KINDS.find((k) => k[0] === preview.kind)?.[1] ?? preview.kind}{preview.width ? ` · ${preview.width}×${preview.height}` : ''}{preview.designer_name ? ` · by ${preview.designer_name}` : ''}</p>
+              {preview.description && <p className="text-[13px] text-[#4a4337] mt-3 leading-relaxed">{preview.description}</p>}
+              {(preview.tags ?? []).length > 0 && <div className="mt-3 flex flex-wrap gap-1">{preview.tags.slice(0, 8).map((t) => <button key={t} onClick={() => { setQ(t); setPreview(null) }} className="h-6 px-2 rounded-full bg-[#f1ede4] text-[11.5px] text-[#4a4337]">#{t}</button>)}</div>}
+              <div className="mt-4 rounded-xl bg-[#f5f8ff] border border-[#d6e2fb] px-3 py-2.5 text-[12px] text-[#3b4a6b]" style={{ wordBreak: 'keep-all' }}>
+                코드 키 <code className="bg-white px-1.5 py-0.5 rounded font-bold text-[#1e3a8a]">{preview.name}</code><br />스튜디오 프롬프트에 이 이름을 적거나 미디어 선택기에서 고르면 게임에 들어가요.
+              </div>
+              <div className="mt-auto pt-4 flex gap-2">
+                <Link href="/studio" className="flex-1 h-11 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-[13.5px] font-bold inline-flex items-center justify-center">스튜디오에서 쓰기</Link>
+                <button onClick={async () => { try { await navigator.clipboard.writeText(preview.name); setCopied(true); setTimeout(() => setCopied(false), 1200) } catch { /* 무시 */ } }} className="h-11 px-3.5 rounded-xl border border-[#ddd3bf] text-[13px] font-semibold text-[#4a4337]">{copied ? '복사됨 ✓' : '키 복사'}</button>
+              </div>
             </div>
           </div>
         </div>

@@ -10,9 +10,10 @@ export async function GET(req: Request) {
   const limit = Math.min(200, Math.max(1, Number(u.searchParams.get('limit') ?? 120)))
   try {
     const admin = createAdminClient()
+    // 3D 모델은 갤러리 '전체' 목록에 안 보인다 (디자이너 드라이브 · 미디어 선택기에서 쓴다)
     const build = (withDesigner: boolean, withVis = withDesigner) => {
       const sel: string = `id,kind,name,title,description,genres,tags,url,width,height,bytes,uses,created_at,meta${withDesigner ? ',designer_id' : ''}`
-      let query = admin.from('media_assets').select(sel).eq('status', 'active').in('kind', [...INJECTABLE]).order('created_at', { ascending: false }).limit(limit)
+      let query = admin.from('media_assets').select(sel).eq('status', 'active').in('kind', kind ? [...INJECTABLE] : [...INJECTABLE].filter((k) => k !== 'model3d')).order('created_at', { ascending: false }).limit(limit)
       if (withVis) query = query.eq('visibility', 'public') // 관리자 전용 에셋은 갤러리에 안 보인다
       if (kind) query = query.eq('kind', kind)
       if (q) query = query.or(`title.ilike.%${q}%,name.ilike.%${q}%,tags.cs.{${q}}`)

@@ -41,6 +41,14 @@ image = (
     })
 )
 
+# 이미지 생성 — FLUX.1-schnell (Apache 2.0) · 4스텝 · L40S(48GB). 투명 배경이 필요하면 rembg 로 배경을 지운다
+flux_image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .pip_install("torch==2.5.1", index_url="https://download.pytorch.org/whl/cu124")
+    .pip_install("diffusers==0.32.2", "transformers==4.48.3", "accelerate", "sentencepiece", "protobuf", "huggingface_hub[hf_transfer]", "pillow", "rembg[gpu]", "onnxruntime-gpu")
+    .env({"HF_HOME": f"{CACHE}/hf", "U2NET_HOME": f"{CACHE}/u2net", "HF_HUB_ENABLE_HF_TRANSFER": "1"})
+)
+
 web_image = modal.Image.debian_slim(python_version="3.10").pip_install("fastapi[standard]")
 
 
@@ -95,6 +103,37 @@ class Trellis:
             return None
 
 
+# FLUX.1-schnell 은 HF 에서 약관 동의(gated)가 필요 — modal secret create vibrex-hf HF_TOKEN=hf_…
+@app.cls(image=flux_image, gpu="L40S", volumes={CACHE: cache}, secrets=[modal.Secret.from_name("vibrex-hf")], timeout=600, scaledown_window=120, max_containers=2)
+class Flux:
+    @modal.enter()
+    def load(self):
+        import torch
+        from diffusers import FluxPipeline
+        self.pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell", torch_dtype=torch.bfloat16).to("cuda")
+        self.rembg = None
+        cache.commit()
+
+    @modal.method()
+    def generate(self, prompt: str, n: int = 4, width: int = 1024, height: int = 1024, transparent: bool = False, seed: int | None = None) -> dict:
+        import random
+
+        import torch
+        seed = seed if seed is not None else random.randint(0, 2**31 - 1)
+        imgs = self.pipe(prompt, num_images_per_prompt=max(1, min(n, 4)), width=width, height=height, num_inference_steps=4,
+                         guidance_scale=0.0, max_sequence_length=256, generator=torch.Generator("cuda").manual_seed(seed)).images
+        out = []
+        for im in imgs:
+            if transparent:
+                if self.rembg is None:
+                    from rembg import new_session
+                    self.rembg = new_session("isnet-general-use")
+                from rembg import remove
+                im = remove(im, session=self.rembg)
+            b = io.BytesIO(); im.save(b, "WEBP", quality=90); out.append(b.getvalue())
+        return {"images": out, "seed": seed}
+
+
 @app.function(image=web_image, secrets=[modal.Secret.from_name("vibrex-3d")])
 @modal.asgi_app()
 def api():
@@ -112,6 +151,14 @@ def api():
     @web.post("/submit")
     def submit(body: dict, authorization: str | None = Header(None)):
         auth(authorization)
+        if body.get("mode") == "img":  # 이미지 생성
+            prompt = str(body.get("prompt") or "")[:1000]
+            if not prompt:
+                raise HTTPException(400, "prompt required")
+            w, h = int(body.get("width") or 1024), int(body.get("height") or 1024)
+            w, h = max(256, min(1440, w // 16 * 16)), max(256, min(1440, h // 16 * 16))
+            call = Flux().generate.spawn(prompt, int(body.get("n") or 4), w, h, bool(body.get("transparent")), body.get("seed"))
+            return {"id": call.object_id}
         mode = "text" if body.get("mode") == "text" else "image"
         img = None
         if mode == "image":
@@ -142,12 +189,16 @@ def api():
             return {"status": "failed", "error": str(e)[:300]}
         if r is None:
             return {"status": "running"}
+        if "images" in r:
+            return {"status": "done", "images": len(r["images"]), "seed": r.get("seed")}
         return {"status": "done", "glb_bytes": len(r["glb"]), "thumb": bool(r.get("thumb"))}
 
     @web.get("/result/{id}/{part}")
     def file(id: str, part: str, authorization: str | None = Header(None)):
         auth(authorization)
         r = result(id)
+        if r is not None and part.startswith("img") and part[3:].isdigit() and int(part[3:]) < len(r.get("images", [])):
+            return Response(r["images"][int(part[3:])], media_type="image/webp")
         if r is None or part not in ("glb", "thumb") or not r.get(part):
             raise HTTPException(404, "not ready")
         return Response(r[part], media_type="model/gltf-binary" if part == "glb" else "image/png")
