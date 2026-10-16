@@ -17,7 +17,7 @@ CACHE = "/cache"
 ARCH = "8.6;8.9"  # A10G · L4
 image = (
     modal.Image.from_registry("nvidia/cuda:12.1.1-devel-ubuntu22.04", add_python="3.10")
-    .apt_install("git", "libgl1", "libglib2.0-0", "libxrender1", "libsm6", "libxext6", "libgomp1", "build-essential", "ninja-build")
+    .apt_install("git", "libgl1", "libglib2.0-0", "libxrender1", "libsm6", "libxext6", "libgomp1", "libegl1", "libopengl0", "libglvnd0", "libglx0", "libx11-6", "libusb-1.0-0", "libgomp1", "build-essential", "ninja-build")
     .pip_install("torch==2.4.0", "torchvision==0.19.0", index_url="https://download.pytorch.org/whl/cu121")
     .pip_install("xformers==0.0.27.post2", index_url="https://download.pytorch.org/whl/cu121")
     .pip_install(
@@ -34,6 +34,7 @@ image = (
         "git clone --recursive https://github.com/autonomousvision/mip-splatting /tmp/mip && pip install --no-build-isolation /tmp/mip/submodules/diff-gaussian-rasterization/",
         "git clone --depth 1 https://github.com/microsoft/TRELLIS /trellis",
     )
+    .run_commands("cd /trellis && git submodule update --init --recursive --depth 1")  # flexicubes
     .env({
         "PYTHONPATH": "/trellis", "ATTN_BACKEND": "xformers", "SPCONV_ALGO": "native",
         "HF_HOME": f"{CACHE}/hf", "TORCH_HOME": f"{CACHE}/torch", "U2NET_HOME": f"{CACHE}/u2net",
@@ -152,3 +153,11 @@ def api():
         return Response(r[part], media_type="model/gltf-binary" if part == "glb" else "image/png")
 
     return web
+
+
+@app.function(image=image, timeout=600)
+def smoke():
+    """GPU 없이 import 만 확인 — python3 -m modal run scripts/modal/trellis3d.py::smoke"""
+    from trellis.pipelines import TrellisImageTo3DPipeline, TrellisTextTo3DPipeline  # noqa: F401
+    from trellis.utils import postprocessing_utils, render_utils  # noqa: F401
+    print("imports ok")
