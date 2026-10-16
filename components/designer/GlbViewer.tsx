@@ -6,7 +6,7 @@ declare global { interface Window { THREE?: Record<string, unknown> & { [k: stri
 
 // three.js(플랫폼 호스팅) + 애드온(GLTFLoader·OrbitControls) 를 한 번만 불러온다
 let threeReady: Promise<void> | null = null
-function loadThree(): Promise<void> {
+export function loadThree(): Promise<void> {
   if (threeReady) return threeReady
   const add = (src: string) => new Promise<void>((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = () => ok(); s.onerror = () => no(new Error(src)); document.head.appendChild(s) })
   threeReady = (window.THREE ? Promise.resolve() : add('/vendor/three.min.js')).then(() => (window.THREE?.GLTFLoader ? undefined : add('/vendor/three-addons.js')))

@@ -2,6 +2,7 @@
 // 3D 모델 생성 — 이미지 업로드 · 글 · 내 드라이브 이미지 · 갤러리 이미지 → GLB. 완성되면 돌려 보고 ‘드라이브에 저장’ 또는 ‘버리기’를 고른다.
 import { useEffect, useRef, useState } from 'react'
 import { GlbViewer, shrink } from './GlbViewer'
+import SandForm from './SandForm'
 import { ui, isImage, type DriveFile, type Source3D } from './shared'
 
 type Mode = 'image' | 'text' | 'drive'
@@ -21,6 +22,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   const [result, setResult] = useState<{ token: string; preview: Preview } | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const [anim, setAnim] = useState<{ src: string | null; expected: number } | null>(null)   // 모래 효과: 원본 이미지 · 예상 시간
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { fetch('/api/gallery/model3d?info=1').then((r) => r.json()).then((j) => { setCost(j.cost ?? null); if (typeof j.volumizeExtra === 'number') setVolExtra(j.volumizeExtra) }).catch(() => {}) }, [])
@@ -42,6 +44,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
     if (result && !saved && !confirm('지금 모델을 저장하지 않았어요. 버리고 새로 만들까요?')) return
     if (result && !saved) discard(true)
     setErr(null); setResult(null); setSaved(null); setJob({ status: 'submitting' })
+    setAnim({ src: mode === 'image' ? image : mode === 'drive' ? pick?.url ?? null : null, expected: mode === 'text' || volumize ? 120 : 60 })
     const body = mode === 'text' ? { mode: 'text', prompt, title } : mode === 'image' ? { mode: 'image', image, title, volumize }
       : pick?.kind === 'drive' ? { mode: 'drive', driveKey: pick.key, title, volumize } : { mode: 'media', assetId: pick?.kind === 'media' ? pick.id : '', title, volumize }
     const r = await fetch('/api/gallery/model3d', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -149,8 +152,16 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
             </div>
           </>
         ) : (
-          <div className={`flex-1 ${ui.card} flex flex-col items-center justify-center text-center p-6 bg-[radial-gradient(circle_at_50%_40%,#ffffff,#eef1f6)]`}>
-            {busy ? (<><div className="w-10 h-10 rounded-full border-[3px] border-[#e6dfd0] border-t-[#2563eb] animate-spin" /><p className="mt-4 text-[14px] font-bold text-[#241f17]">{status}</p><p className="mt-1 text-[12px] text-[#9d9280]">AI 가 앞·옆·뒤 모양을 추측해 입체로 만드는 중이에요</p></>)
+          <div className={`relative flex-1 min-h-[420px] ${ui.card} flex flex-col items-center justify-center text-center p-6 bg-[radial-gradient(circle_at_50%_40%,#ffffff,#eef1f6)]`}>
+            {busy ? (
+              <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                <SandForm image={anim?.src} expected={anim?.expected ?? 90} />
+                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-white/95 via-white/70 to-transparent">
+                  <p className="text-[14px] font-bold text-[#241f17]">{status}</p>
+                  <p className="mt-0.5 text-[12px] text-[#9d9280]">모래알이 하나씩 모여 모양을 만들고 있어요 — AI 가 앞·옆·뒤 모양을 추측하는 중</p>
+                </div>
+              </div>
+            )
               : (<><p className="text-[44px]">🧊</p><p className="mt-2 text-[14px] text-[#6b6152]">완성된 3D 모델이 여기 나타나요 — 드래그로 돌려 보고 저장할지 정하세요</p></>)}
           </div>
         )}
