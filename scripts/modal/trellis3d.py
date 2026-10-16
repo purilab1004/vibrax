@@ -41,21 +41,13 @@ image = (
     })
 )
 
-# 이미지 생성 — FLUX.1-schnell (Apache 2.0) · 4스텝 · L40S(48GB). 투명 배경이 필요하면 rembg 로 배경을 지운다
-flux_image = (
-    modal.Image.debian_slim(python_version="3.11")
-    .pip_install("torch==2.5.1", index_url="https://download.pytorch.org/whl/cu124")
-    .pip_install("diffusers==0.32.2", "transformers==4.48.3", "accelerate", "sentencepiece", "protobuf", "huggingface_hub[hf_transfer]", "pillow", "rembg[gpu]", "onnxruntime-gpu")
-    .env({"HF_HOME": f"{CACHE}/hf", "U2NET_HOME": f"{CACHE}/u2net", "HF_HUB_ENABLE_HF_TRANSFER": "1"})
-)
-
 # 입체화 — 2D 그림을 '3D 로 렌더한 피규어' 이미지로 다시 그린다 (Qwen-Image-Edit-2509, Apache 2.0) → TRELLIS 가 둥근 입체를 만든다
 edit_image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git")
     .pip_install("torch==2.6.0", "torchvision==0.21.0", index_url="https://download.pytorch.org/whl/cu124")
-    .pip_install("git+https://github.com/huggingface/diffusers", "transformers>=4.51", "accelerate", "sentencepiece", "protobuf", "huggingface_hub[hf_transfer]", "pillow")
-    .env({"HF_HOME": f"{CACHE}/hf", "HF_HUB_ENABLE_HF_TRANSFER": "1"})
+    .pip_install("git+https://github.com/huggingface/diffusers", "transformers>=4.51", "accelerate", "sentencepiece", "protobuf", "huggingface_hub[hf_transfer]", "pillow", "rembg", "onnxruntime")
+    .env({"HF_HOME": f"{CACHE}/hf", "HF_HUB_ENABLE_HF_TRANSFER": "1", "U2NET_HOME": f"{CACHE}/u2net"})
 )
 VOLUMIZE = ("Turn this 2D drawing into a high-quality 3D rendered figurine of the same character: rounded volumetric body and head, "
             "soft vinyl toy material, same design, colors, face and proportions, full body, front view, centered, "
@@ -134,37 +126,6 @@ class Trellis:
             return None
 
 
-# FLUX.1-schnell 은 HF 에서 약관 동의(gated)가 필요 — modal secret create vibrex-hf HF_TOKEN=hf_…
-@app.cls(image=flux_image, gpu="L40S", volumes={CACHE: cache}, secrets=[modal.Secret.from_name("vibrex-hf")], timeout=600, scaledown_window=120, max_containers=2)
-class Flux:
-    @modal.enter()
-    def load(self):
-        import torch
-        from diffusers import FluxPipeline
-        self.pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell", torch_dtype=torch.bfloat16).to("cuda")
-        self.rembg = None
-        cache.commit()
-
-    @modal.method()
-    def generate(self, prompt: str, n: int = 4, width: int = 1024, height: int = 1024, transparent: bool = False, seed: int | None = None) -> dict:
-        import random
-
-        import torch
-        seed = seed if seed is not None else random.randint(0, 2**31 - 1)
-        imgs = self.pipe(prompt, num_images_per_prompt=max(1, min(n, 4)), width=width, height=height, num_inference_steps=4,
-                         guidance_scale=0.0, max_sequence_length=256, generator=torch.Generator("cuda").manual_seed(seed)).images
-        out = []
-        for im in imgs:
-            if transparent:
-                if self.rembg is None:
-                    from rembg import new_session
-                    self.rembg = new_session("isnet-general-use")
-                from rembg import remove
-                im = remove(im, session=self.rembg)
-            b = io.BytesIO(); im.save(b, "WEBP", quality=90); out.append(b.getvalue())
-        return {"images": out, "seed": seed}
-
-
 @app.cls(image=edit_image, gpu="H100", volumes={CACHE: cache}, timeout=900, scaledown_window=120, max_containers=2)
 class Volumize:
     @modal.enter()
@@ -184,6 +145,50 @@ class Volumize:
         out = self.pipe(image=[im], prompt=prompt, negative_prompt=" ", true_cfg_scale=4.0, num_inference_steps=28,
                         guidance_scale=1.0, generator=torch.Generator("cuda").manual_seed(7)).images[0]
         b = io.BytesIO(); out.save(b, "PNG"); return b.getvalue()
+
+
+# 이미지 생성 — Qwen-Image (Apache 2.0, gated 아님, 한국어·영어 프롬프트 이해). AI 이미지와 글 → 3D 의 첫 단계에 쓴다
+FIGURE = ("A high-quality 3D rendered figurine of {p}. Full body, single character, front view, standing, centered, "
+          "rounded volumetric shapes, soft vinyl toy material, plain pure white background, soft studio lighting, no text.")
+
+
+@app.cls(image=edit_image, gpu="H100", volumes={CACHE: cache}, timeout=900, scaledown_window=120, max_containers=2)
+class QwenImage:
+    @modal.enter()
+    def load(self):
+        import torch
+        from diffusers import DiffusionPipeline
+        self.pipe = DiffusionPipeline.from_pretrained("Qwen/Qwen-Image", torch_dtype=torch.bfloat16).to("cuda")
+        self.bg = None
+        cache.commit()
+
+    @modal.method()
+    def generate(self, prompt: str, n: int = 4, width: int = 1024, height: int = 1024, transparent: bool = False, seed: int | None = None, fmt: str = "WEBP") -> dict:
+        import random
+
+        import torch
+        seed = seed if seed is not None else random.randint(0, 2**31 - 1)
+        out = []
+        for i in range(max(1, min(n, 4))):
+            im = self.pipe(prompt=prompt, negative_prompt=" ", width=width, height=height, num_inference_steps=30, true_cfg_scale=4.0,
+                           generator=torch.Generator("cuda").manual_seed(seed + i)).images[0]
+            if transparent:
+                if self.bg is None:
+                    from rembg import new_session
+                    self.bg = new_session("isnet-general-use")
+                from rembg import remove
+                im = remove(im, session=self.bg)
+            b = io.BytesIO(); im.save(b, fmt, **({"quality": 90} if fmt == "WEBP" else {})); out.append(b.getvalue())
+        return {"images": out, "seed": seed}
+
+
+@app.function(image=web_image, timeout=1500)
+def text_then_3d(prompt: str, seed: int = 1) -> dict:
+    """글 → 피규어 렌더 이미지(Qwen-Image) → TRELLIS. TRELLIS 자체 글→3D 는 짧은 영어만 알아들어 설명과 다른 모양이 나온다"""
+    ref = QwenImage().generate.remote(FIGURE.format(p=prompt), 1, 1024, 1024, False, seed, "PNG")["images"][0]
+    r = Trellis().generate.remote("image", ref, "", seed)
+    r["ref"] = ref
+    return r
 
 
 @app.function(image=web_image, timeout=1500)
@@ -218,7 +223,7 @@ def api():
                 raise HTTPException(400, "prompt required")
             w, h = int(body.get("width") or 1024), int(body.get("height") or 1024)
             w, h = max(256, min(1440, w // 16 * 16)), max(256, min(1440, h // 16 * 16))
-            call = Flux().generate.spawn(prompt, int(body.get("n") or 4), w, h, bool(body.get("transparent")), body.get("seed"))
+            call = QwenImage().generate.spawn(prompt, int(body.get("n") or 4), w, h, bool(body.get("transparent")), body.get("seed"))
             return {"id": call.object_id}
         mode = "text" if body.get("mode") == "text" else "image"
         img = None
@@ -232,7 +237,9 @@ def api():
         prompt = str(body.get("prompt") or "")[:300]
         if mode == "text" and not prompt:
             raise HTTPException(400, "prompt required")
-        if mode == "image" and body.get("volumize"):
+        if mode == "text":
+            call = text_then_3d.spawn(prompt, int(body.get("seed") or 1))
+        elif mode == "image" and body.get("volumize"):
             call = volumize_then_3d.spawn(img, str(body.get("hint") or "")[:200], int(body.get("seed") or 1))
         else:
             call = Trellis().generate.spawn(mode, img, prompt, int(body.get("seed") or 1))

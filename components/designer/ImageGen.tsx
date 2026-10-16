@@ -69,10 +69,10 @@ export default function ImageGen({ onSaved, onMake3D }: { onSaved: () => void; o
           배경 지우기 <span className="text-[11.5px] text-[#9d9280]">(캐릭터·아이템 스프라이트용 투명 PNG)</span>
         </label>
         <button onClick={start} disabled={!!job || !ready || prompt.trim().length < 2} className={`${ui.primary} w-full h-12 text-[14px]`}>
-          {!ready ? '이미지 생성 준비 중이에요 (곧 열려요)' : job ? `그리는 중… ${job.elapsed}초` : `이미지 4장 만들기${cost ? ` · ${cost} 프롬코인` : cost === 0 ? ' · 무료' : ''}`}
+          {!ready ? '이미지 생성 준비 중이에요' : job ? `그리는 중… ${job.elapsed}초` : `이미지 4장 만들기${cost ? ` · ${cost} 프롬코인` : cost === 0 ? ' · 무료' : ''}`}
         </button>
         {err && <p className="text-[12.5px] text-[#dc2626]">{err}{/부족/.test(err) && <> · <a href="/credits" className="underline">충전</a></>}</p>}
-        <p className="text-[11.5px] text-[#9d9280]">한국어로 써도 돼요. 처음 한 번은 서버가 켜지느라 1~2분, 그다음부터는 10초 안팎이에요. 결과는 저장해야 드라이브에 남아요.</p>
+        <p className="text-[11.5px] text-[#9d9280]">한국어로 써도 돼요. 4장에 1~2분(처음 한 번은 서버가 켜지느라 3~4분 더) 걸려요. 결과는 저장해야 드라이브에 남아요.</p>
       </div>
 
       {/* 결과 */}

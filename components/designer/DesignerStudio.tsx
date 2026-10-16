@@ -17,9 +17,9 @@ import { ui, type Section, type Source3D } from './shared'
 
 const NAV: [Section, string, string, string][] = [
   ['drive', '🗂', '내 드라이브', '내가 저장한 이미지·3D·오디오'],
+  ['search', '🖼', '전체 갤러리', '공개된 모든 디자인 보기·검색'],
   ['image', '🎨', 'AI 이미지', '프롬프트로 캐릭터·배경·아이템'],
   ['model3d', '🧊', '3D 모델', '이미지·글 → 3D(GLB)'],
-  ['search', '🔎', '갤러리 검색', '공개된 디자인 찾기'],
   ['works', '🌐', '공개 작품', '승인 상태 · 크레딧'],
 ]
 

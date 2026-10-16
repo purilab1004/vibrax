@@ -72,8 +72,8 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   }
 
   const tab = (m: Mode, label: string) => <button type="button" onClick={() => setMode(m)} className={ui.chip(mode === m)}>{label}</button>
-  const status = job ? (job.status === 'submitting' ? '요청 보내는 중…' : job.stage === 'volumize' ? `입체 모습 그리는 중… ${job.elapsed ?? 0}초` : `3D 모델 만드는 중… ${job.elapsed ?? 0}초`) : ''
-  const total = (cost ?? 0) + (mode !== 'text' && volumize ? volExtra : 0)
+  const status = job ? (job.status === 'submitting' ? '요청 보내는 중…' : job.stage === 'volumize' ? `${mode === 'text' ? '설명대로 그리는 중' : '입체 모습 그리는 중'}… ${job.elapsed ?? 0}초` : `3D 모델 만드는 중… ${job.elapsed ?? 0}초`) : ''
+  const total = (cost ?? 0) + (mode === 'text' || volumize ? volExtra : 0)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-5">
@@ -87,7 +87,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
           </button>
         )}
         <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setImage(await shrink(f)); e.target.value = '' }} />
-        {mode === 'text' && <textarea value={prompt} onChange={(e) => setPrompt(e.target.value.slice(0, 200))} rows={5} placeholder="예) cute green slime monster with big eyes (영어가 더 잘 돼요)" className={`${ui.input} h-auto py-3 resize-none`} />}
+        {mode === 'text' && <textarea value={prompt} onChange={(e) => setPrompt(e.target.value.slice(0, 200))} rows={5} placeholder="예) 빨간 망토를 두른 귀여운 꼬마 마법사, 큰 눈, 별 모양 지팡이" className={`${ui.input} h-auto py-3 resize-none`} />}
         {mode === 'drive' && (
           <div>
             {pick && (
@@ -133,7 +133,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
                 <figure className="absolute left-3 top-3 w-28 rounded-xl overflow-hidden bg-white border border-[#ebe4d6] shadow-md">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={result.preview.ref} alt="" className="w-full aspect-square object-contain" />
-                  <figcaption className="px-1.5 py-1 text-[10px] text-[#6b6152] text-center">AI 가 그린 입체 모습</figcaption>
+                  <figcaption className="px-1.5 py-1 text-[10px] text-[#6b6152] text-center">AI 가 먼저 그린 모습</figcaption>
                 </figure>
               )}
             </div>

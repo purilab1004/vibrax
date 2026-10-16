@@ -5,6 +5,7 @@
 // 실패·시간 초과면 차감한 프롬코인을 돌려준다.
 import { createAdminClient } from '@/lib/supabase/admin'
 import { BUCKET, root, dec, folderPath, cleanName, requireDesigner, freeKey } from '@/lib/designer/drive'
+import { toEnglish } from '@/lib/designer/translate'
 import { modalReady, modalSubmit, modalStatus, modalFile, signToken, verifyToken } from '@/lib/modal/client'
 
 export const runtime = 'nodejs'
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
   let payload: Record<string, unknown>
   if (mode === 'text') {
     if (!prompt) return Response.json({ error: '만들 3D 모델을 글로 설명해 주세요' }, { status: 400 })
-    payload = { mode: 'text', prompt }; title ||= prompt.slice(0, 40)
+    payload = { mode: 'text', prompt: await toEnglish(prompt) }; title ||= prompt.slice(0, 40)
   } else if (mode === 'media') {
     const { data: a } = await g.admin.from('media_assets').select('url,title,kind').eq('id', String(body?.assetId ?? '')).eq('status', 'active').maybeSingle()
     const row = a as { url: string; title: string; kind: string } | null
@@ -67,9 +68,9 @@ export async function POST(req: Request) {
     payload = { mode: 'image', image_b64: img.slice(img.indexOf(',') + 1) }; title ||= '3D 모델'
   }
 
-  // 2D 그림을 입체 렌더로 다시 그린 뒤 3D 로 (글 → 3D 에는 해당 없음)
-  const vol = mode !== 'text' && body?.volumize !== false
-  if (vol) payload = { ...payload, volumize: true, hint: cleanName(body?.hint ?? title ?? '', 120) }
+  // 2D 그림을 입체 렌더로 다시 그린 뒤 3D 로 · 글 → 3D 는 항상 '그림 먼저 그리고' 3D 로
+  const vol = mode === 'text' || body?.volumize !== false
+  if (vol && mode !== 'text') payload = { ...payload, volumize: true, hint: await toEnglish(cleanName(body?.hint || title || '', 120)) }
   const cost = (await costOf()) + (vol ? VOLUMIZE_EXTRA : 0)
   const ref = `m3d:${crypto.randomUUID()}`
   if (cost > 0) {

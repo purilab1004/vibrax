@@ -1,18 +1,17 @@
-// /api/designer/image — 디자인 AI 이미지 생성 (Modal FLUX.1-schnell)
+// /api/designer/image — 디자인 AI 이미지 생성 (Modal Qwen-Image · Apache 2.0)
 // POST { prompt, preset, style, ratio, transparent } → 프롬코인 차감 → 한국어 프롬프트를 영어로 다듬어 Modal 에 제출 → { token }
 // GET ?token=          → { status:'running' } | { status:'done', images:[url…] } | { status:'failed' }(환불)
 // GET ?token=&i=0..3   → 생성된 이미지(webp) — 저장 전 미리보기용 (드라이브 저장은 /api/designer/drive save_image)
-import Anthropic from '@anthropic-ai/sdk'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireDesigner } from '@/lib/designer/drive'
+import { toEnglish } from '@/lib/designer/translate'
 import { modalReady as modalUp, modalSubmit, modalStatus, modalFile, signToken, verifyToken, type ImageTok } from '@/lib/modal/client'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 const SALT = 'vibrex-image'
-// 이미지 모델(FLUX)은 HF 토큰을 넣은 뒤 IMAGE_GEN=1 로 켠다
-const modalReady = () => modalUp() && process.env.IMAGE_GEN === '1'
-const DEFAULT_COST = 2   // 4장 한 번에 (Modal 원가 1회 약 $0.005~0.05)
+const modalReady = modalUp
+const DEFAULT_COST = 4   // 4장 한 번에 (Modal H100 약 1~2분 ≈ $0.1)
 
 const PRESETS: Record<string, string> = {
   free: '',
@@ -33,20 +32,6 @@ async function costOf() {
   const { data } = await createAdminClient().from('site_settings').select('value').eq('key', 'image_gen_cost').maybeSingle()
   const c = Number((data as { value?: unknown } | null)?.value)
   return Number.isFinite(c) && c >= 0 ? c : DEFAULT_COST
-}
-
-// 한국어 → 이미지 모델용 영어 한 줄 (실패하면 원문 그대로)
-async function toEnglish(prompt: string): Promise<string> {
-  if (!/[가-힣]/.test(prompt) || !process.env.ANTHROPIC_API_KEY) return prompt
-  try {
-    const r = await new Anthropic().messages.create({
-      model: 'claude-haiku-4-5-20251001', max_tokens: 300,
-      system: 'Translate the user\'s image description into one concise English prompt for a text-to-image model. Keep every visual detail. Output only the prompt.',
-      messages: [{ role: 'user', content: prompt }],
-    })
-    const t = r.content.map((c) => (c.type === 'text' ? c.text : '')).join('').trim()
-    return t || prompt
-  } catch { return prompt }
 }
 
 export async function POST(req: Request) {
