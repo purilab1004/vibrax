@@ -3,6 +3,7 @@ import { Press_Start_2P } from 'next/font/google'
 import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
 import './globals.css'
 import NavBar from '@/components/NavBar'
+import PageTitleBar from '@/components/PageTitleBar'
 import HomeBanner from '@/components/HomeBanner'
 import MobileNav from '@/components/MobileNav'
 import NativeBridge from '@/components/NativeBridge'
@@ -271,6 +272,7 @@ export default async function RootLayout({
         <LangProvider initialLang={lang}>
           <HomeBanner />
           <NavBar />
+          <PageTitleBar />
           <CamLiveDock />
           <Suspense fallback={null}>
             <Sidebar newGenres={newGenres} channels={channels} tournament={tournament} />

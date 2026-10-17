@@ -44,34 +44,33 @@ export default function LibraryClient() {
   }, [items, q])
 
   return (
-    <div className="min-h-screen bg-[#fcfaf5]">
-      {/* 검색 */}
-      <section className="bg-white border-b border-[#ebe4d6]">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 pb-5 md:pt-12 md:pb-6">
-          <h1 className="text-[24px] md:text-[32px] font-black tracking-tight text-[#241f17]">게임 디자인 <span className="text-[#2563eb]">갤러리</span></h1>
-          <p className="mt-1 text-[13px] md:text-[14px] text-[#6b6152]">디자이너들이 올린 캐릭터·배경·아이템·효과음 — 골라서 바로 게임에 넣어 보세요</p>
-          <form onSubmit={(e) => e.preventDefault()} className="mt-5 flex items-stretch rounded-2xl border-2 border-[#2563eb] bg-white overflow-hidden shadow-[0_8px_24px_-16px_rgba(37,99,235,0.6)] max-w-3xl">
-            <select value={kind} onChange={(e) => setKind(e.target.value)} aria-label="분류" className="hidden sm:block shrink-0 px-4 text-[13.5px] font-bold text-[#241f17] bg-[#f5f8ff] border-r border-[#d6e2fb] outline-none">
-              {KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="찾고 싶은 디자인을 검색해 보세요 — 드래곤, 우주, 픽셀…" className="flex-1 min-w-0 h-14 px-4 text-[15px] text-[#241f17] outline-none placeholder:text-[#b3a993]" />
-            {q && <button type="button" onClick={() => setQ('')} className="px-3 text-[#b3a993] hover:text-[#241f17]" aria-label="지우기">✕</button>}
-            <span className="shrink-0 w-14 flex items-center justify-center bg-[#2563eb] text-white">
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.6}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            </span>
+    <div className="min-h-screen bg-white">
+      {/* 제목 줄 — STORY 와 같은 모양: 제목 · 분류 탭 · 검색 / 아래 줄: 추천 태그 */}
+      <section className="bg-white border-b border-[#e8eaef]">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-12 md:h-14 flex items-center gap-4 md:gap-6">
+          <span className="text-[20px] md:text-[22px] font-black tracking-[-0.04em] shrink-0 text-[#1a1d24]">GALLERY</span>
+          <nav className="flex items-center gap-3 md:gap-5 text-[14px] md:text-[15px] font-bold overflow-x-auto no-scrollbar min-w-0" aria-label="분류">
+            {KINDS.map(([v, l]) => (
+              <button key={v} onClick={() => setKind(v)} className={`shrink-0 whitespace-nowrap ${kind === v ? 'text-[#1a1d24]' : 'text-[#a3a9b4] hover:text-[#1a1d24]'}`}>{l}</button>
+            ))}
+          </nav>
+          <form onSubmit={(e) => e.preventDefault()} className="ml-auto hidden md:flex items-center gap-2 h-10 w-72 shrink-0 rounded-[4px] border border-[#dfe3ea] px-3 focus-within:border-[#1a1d24]">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="디자인을 검색해 보세요" aria-label="갤러리 검색" className="flex-1 min-w-0 bg-transparent outline-none text-[14px] placeholder:text-[#a3a9b4]" />
+            {q ? <button type="button" onClick={() => setQ('')} className="text-[#a3a9b4] hover:text-[#1a1d24]" aria-label="지우기">✕</button>
+              : <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#1a1d24] shrink-0" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" strokeLinecap="round" /></svg>}
           </form>
-          <div className="mt-3 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-            <span className="shrink-0 text-[12px] font-bold text-[#9d9280]">{q ? '연관' : '추천'}</span>
-            {related.map((t) => <button key={t} onClick={() => setQ(t)} className="shrink-0 h-7 px-3 rounded-full bg-[#f1ede4] hover:bg-[#e6dfd0] text-[12.5px] text-[#4a4337]">#{t}</button>)}
+        </div>
+        <div className="border-t border-[#e8eaef]">
+          <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <span className="shrink-0 text-[13px] font-bold text-[#1a1d24] mr-1">{q ? '연관' : '추천'}</span>
+            {related.map((t) => <button key={t} onClick={() => setQ(t)} className="shrink-0 h-7 px-3 rounded-[4px] border border-[#e8eaef] hover:border-[#1a1d24] text-[13px] text-[#4b5563]">#{t}</button>)}
           </div>
         </div>
-        {/* 분류 탭 */}
-        <div className="max-w-7xl mx-auto px-4 md:px-6 flex gap-1 overflow-x-auto scrollbar-hide">
-          {KINDS.map(([v, l]) => (
-            <button key={v} onClick={() => setKind(v)} className={`shrink-0 h-11 px-3.5 text-[13.5px] font-bold border-b-[3px] transition-colors ${kind === v ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-[#6b6152] hover:text-[#241f17]'}`}>{l}</button>
-          ))}
-        </div>
       </section>
+      {/* 모바일 검색 */}
+      <form onSubmit={(e) => e.preventDefault()} className="md:hidden mx-4 mt-4 flex items-center gap-2 h-11 rounded-[4px] border border-[#dfe3ea] bg-white px-3">
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="디자인 검색" aria-label="갤러리 검색" className="flex-1 min-w-0 bg-transparent outline-none text-[15px] placeholder:text-[#a3a9b4]" />
+      </form>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-4">
         {/* 디자이너 모집 (작게) */}

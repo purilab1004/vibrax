@@ -60,7 +60,7 @@ export default async function StoryPage({ searchParams }: { searchParams: Promis
     <div className="min-h-screen bg-white text-[#1a1d24]">
       {/* ── 1단: 로고 · 종류 · 검색 ── */}
       <header className="border-b border-[#e8eaef]">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center gap-4 md:gap-6">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-12 md:h-14 flex items-center gap-4 md:gap-6">
           <Link href="/story" className="text-[20px] md:text-[22px] font-black tracking-[-0.04em] shrink-0">STORY</Link>
           <nav className="flex items-center gap-3 md:gap-5 text-[14px] md:text-[16px] font-bold" aria-label="종류">
             {(['toon', 'novel', 'shorts'] as const).map((k) => (
