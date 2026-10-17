@@ -16,6 +16,14 @@ import MyWorks from './MyWorks'
 import ParticleField, { fieldSay } from './ParticleField'
 import Decode from './Decode'
 
+// 레일 아이콘 — 얇은 선의 기하 도형 (각진 형태)
+const ICON: Record<string, React.ReactNode> = {
+  drive: <><rect x="4" y="6" width="16" height="12" /><path d="M4 10h16" /></>,
+  search: <><rect x="4" y="4" width="7" height="7" /><rect x="13" y="4" width="7" height="7" /><rect x="4" y="13" width="7" height="7" /><rect x="13" y="13" width="7" height="7" /></>,
+  image: <><rect x="4" y="4" width="16" height="16" /><path d="M4 16l5-5 4 4 2-2 5 5" /><rect x="14" y="7" width="3" height="3" /></>,
+  model3d: <><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" /><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" /></>,
+  works: <><rect x="5" y="5" width="14" height="14" /><path d="M9 12l2 2 4-4" /></>,
+}
 const WORD: Record<string, string> = { drive: 'DRIVE', search: 'GALLERY', image: 'IMAGINE', model3d: 'FORM', works: 'SIGNAL' }
 import { ui, type Section, type Source3D } from './shared'
 
@@ -127,14 +135,13 @@ export default function DesignerStudio() {
         /* ── 작업 공간 ── */
         <div className="relative z-10 flex flex-col md:flex-row">
           {/* 얇은 레일 — 외계 기호 타일 (무대를 넓게) */}
-          <aside className="md:w-[76px] shrink-0 md:min-h-[calc(100svh-2.75rem)] md:border-r border-white/70 bg-white/30 backdrop-blur-2xl md:sticky md:top-11 md:self-start">
-            <p className="hidden md:block pt-4 pb-2 text-center vx-glyph text-[9px] font-extrabold bg-gradient-to-b from-[#a8783f] to-[#d6b47a] bg-clip-text text-transparent">VX</p>
-            <nav className="flex md:flex-col items-center gap-1.5 p-2 overflow-x-auto scrollbar-hide">
-              {NAV.map(([k, g, t, d]) => (
+          <aside className="md:w-[60px] shrink-0 md:min-h-[calc(100svh-2.75rem)] md:border-r border-white/70 bg-white/30 backdrop-blur-2xl md:sticky md:top-11 md:self-start">
+            <nav className="flex md:flex-col items-center gap-1 p-1.5 md:pt-3 overflow-x-auto scrollbar-hide">
+              {NAV.map(([k, , t, d]) => (
                 <button key={k} onClick={() => go(k)} title={`${t} — ${d}`}
-                  className={`group shrink-0 flex md:flex-col items-center justify-center gap-1.5 md:gap-1 rounded-[4px] px-3 md:px-0 h-10 md:h-[62px] md:w-[62px] transition-all ${section === k ? 'bg-gradient-to-br from-[#a8783f] to-[#d6b47a] text-white shadow-[0_8px_24px_-8px_rgba(168,120,63,0.75)]' : 'text-[#4a3f30] hover:bg-white/70 border border-transparent hover:border-[#e6dac4]'}`}>
-                  <Decode text={g} className="vx-glyph text-[18px] leading-none !tracking-normal" ms={380} />
-                  <span className={`text-[10px] font-bold whitespace-nowrap ${section === k ? 'text-white/90' : 'text-[#7c6d55]'}`}>{t.replace('내 ', '').replace('전체 ', '').replace(' 작품', '')}</span>
+                  className={`group shrink-0 flex md:flex-col items-center justify-center gap-1.5 md:gap-1 rounded-[4px] px-3 md:px-0 h-10 md:h-[50px] md:w-[50px] transition-all ${section === k ? 'bg-gradient-to-br from-[#a8783f] to-[#d6b47a] text-white shadow-[0_8px_24px_-8px_rgba(168,120,63,0.75)]' : 'text-[#4a3f30] hover:bg-white/70 border border-transparent hover:border-[#e6dac4]'}`}>
+                  <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="miter" aria-hidden>{ICON[k]}</svg>
+                  <span className={`text-[9.5px] font-bold whitespace-nowrap md:tracking-tight ${section === k ? 'text-white/90' : 'text-[#7c6d55]'}`}>{t.replace('내 ', '').replace('전체 ', '').replace(' 작품', '')}</span>
                 </button>
               ))}
             </nav>
