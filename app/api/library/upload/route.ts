@@ -55,3 +55,32 @@ export async function POST(req: Request) {
   }
   return Response.json({ items, errors })
 }
+
+// 내 공개 작품 관리 — { id, action: 'unpublish' | 'republish' | 'delete' }
+//  · unpublish: 갤러리에서 내림(보관). 이미 이 디자인을 쓴 게임이 깨지지 않게 파일은 남긴다
+//  · republish: 보관한 작품을 다시 승인 대기로 (관리자는 바로 공개)
+//  · delete: 승인 대기·반려·보관 중이고 게임에 쓰인 적 없는 작품만 파일까지 완전히 삭제
+export async function PATCH(req: Request) {
+  const m = await me(); if (!m) return Response.json({ error: 'unauthorized' }, { status: 401 })
+  const body = await req.json().catch(() => null) as { id?: string; action?: string } | null
+  if (!body?.id || !['unpublish', 'republish', 'delete'].includes(body.action ?? '')) return Response.json({ error: 'bad request' }, { status: 400 })
+  const { data } = await m.admin.from('media_assets').select('id,status,designer_id,path,uses,meta').eq('id', body.id).maybeSingle()
+  const a = data as { id: string; status: string; designer_id: string | null; path: string | null; uses: number | null; meta: { thumb?: string } | null } | null
+  if (!a || (a.designer_id !== m.user.id && m.role !== 'admin')) return Response.json({ error: '내 작품만 관리할 수 있어요' }, { status: 403 })
+  if (body.action === 'unpublish') {
+    const { error } = await m.admin.from('media_assets').update({ status: 'archived' }).eq('id', a.id)
+    return error ? Response.json({ error: error.message }, { status: 500 }) : Response.json({ ok: true, status: 'archived' })
+  }
+  if (body.action === 'republish') {
+    const status = m.role === 'admin' ? 'active' : 'pending'
+    const { error } = await m.admin.from('media_assets').update({ status }).eq('id', a.id)
+    return error ? Response.json({ error: error.message }, { status: 500 }) : Response.json({ ok: true, status })
+  }
+  if (a.status === 'active') return Response.json({ error: '공개 중인 작품은 먼저 ‘공개 중단’ 해 주세요' }, { status: 400 })
+  if ((a.uses ?? 0) > 0) return Response.json({ error: '게임에 쓰인 작품은 지울 수 없어요(그 게임이 깨져요). 공개 중단 상태로 두세요.' }, { status: 400 })
+  const files = [a.path, a.meta?.thumb ? a.meta.thumb.split(`/${BUCKET}/`)[1] : null].filter((x): x is string => !!x)
+  const { error } = await m.admin.from('media_assets').delete().eq('id', a.id)
+  if (error) return Response.json({ error: error.message }, { status: 500 })
+  if (files.length) await m.admin.storage.from(BUCKET).remove(files)
+  return Response.json({ ok: true, deleted: true })
+}
