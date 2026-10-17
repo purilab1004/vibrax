@@ -1,72 +1,60 @@
 'use client'
-// 루빅스 큐브 로딩 — 기울어진 3×3 큐브가 천천히 돌고, 앞면의 줄·칸이 섞였다가 거꾸로 돌아 맞춰진다(반복).
-// 3D 라이브러리 없이 CSS 3D 로 가볍게.
-import { useEffect, useRef, useState } from 'react'
+// Vibrex 로딩 — 빛 알갱이들이 소용돌이치다 V 자로 모이고, 잠깐 빛난 뒤 다시 흩어진다(반복). beat 를 켜면 심장처럼 두 번씩 뛴다.
+// (이름은 예전 큐브 로딩 자리를 그대로 쓰려고 CubeLoader 로 둔다)
+import { useEffect, useRef } from 'react'
 
-const COLORS = ['#2563eb', '#38bdf8', '#7c5cf6', '#e0e7ff', '#60a5fa', '#a5b4fc']
-type Move = { row: boolean; i: number; dir: 1 | -1 }
-
-// 한 줄(가로) 또는 한 칸(세로)을 한 칸씩 밀기
-function apply(g: number[], m: Move): number[] {
-  const n = g.slice(), at = (r: number, c: number) => r * 3 + c
-  for (let k = 0; k < 3; k++) {
-    const from = m.row ? at(m.i, (k - m.dir + 3) % 3) : at((k - m.dir + 3) % 3, m.i)
-    const to = m.row ? at(m.i, k) : at(k, m.i)
-    n[to] = g[from]
+function vPoints(n: number): [number, number][] {
+  // V: 왼쪽 획(위-왼 → 아래-가운데) + 오른쪽 획(아래-가운데 → 위-오른), 두께가 조금 있는 획
+  const out: [number, number][] = []
+  for (let i = 0; i < n; i++) {
+    const left = i % 2 === 0, t = Math.random(), w = (Math.random() - 0.5) * 0.16
+    const x0 = left ? -0.62 : 0.62, y0 = -0.55, x1 = 0, y1 = 0.6
+    const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t
+    const nx = left ? 0.88 : -0.88, ny = 0.48
+    out.push([x + nx * w, y + ny * w])
   }
-  return n
+  return out
 }
 
-export default function CubeLoader({ label, size = 72 }: { label?: string; size?: number }) {
-  // 맞춰진 앞면 = 같은 색 9칸, 옆·윗면은 다른 색
-  const solved = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-  const [face, setFace] = useState(() => [0, 1, 2, 3, 4, 5, 1, 2, 3])
-  const [hint, setHint] = useState<Move | null>(null)
-  const hist = useRef<Move[]>([])
-  const phase = useRef<'mix' | 'solve' | 'hold'>('mix')
+export default function CubeLoader({ label, size = 72, beat = false }: { label?: string; size?: number; beat?: boolean }) {
+  const ref = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-    let g = solved.slice(), hold = 0
-    const t = setInterval(() => {
-      if (phase.current === 'mix') {
-        const m: Move = { row: Math.random() < 0.5, i: (Math.random() * 3) | 0, dir: Math.random() < 0.5 ? 1 : -1 }
-        g = apply(g.map((c, i) => (hist.current.length === 0 ? [0, 1, 2, 1, 4, 5, 2, 5, 3][i] : c)), m); hist.current.push(m); setHint(m)
-        if (hist.current.length >= 7) phase.current = 'solve'
-      } else if (phase.current === 'solve') {
-        const m = hist.current.pop()
-        if (!m) { phase.current = 'hold'; hold = 0; g = solved.slice(); setHint(null) }
-        else { const back: Move = { ...m, dir: (m.dir === 1 ? -1 : 1) as 1 | -1 }; g = apply(g, back); setHint(back); if (!hist.current.length) g = solved.slice() }
-      } else { hold++; setHint(null); if (hold > 3) phase.current = 'mix' }
-      setFace(g.slice())
-    }, 360)
-    return () => clearInterval(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-  const s = size, cell = s / 3
-  const sideFace = (rot: string, color: string) => (
-    <div className="absolute inset-0 grid grid-cols-3 gap-[2px] p-[2px] bg-[#1f2937]/10" style={{ transform: `${rot} translateZ(${s / 2}px)`, backfaceVisibility: 'hidden' }}>
-      {Array.from({ length: 9 }, (_, i) => <span key={i} className="rounded-[2px]" style={{ background: color, opacity: 0.92 }} />)}
-    </div>
-  )
+    const c = ref.current; if (!c) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    c.width = size * dpr; c.height = size * dpr
+    const g = c.getContext('2d')!
+    const N = Math.max(40, Math.round(size * 1.1))
+    const target = vPoints(N)
+    const P = target.map(([tx, ty], i) => ({ tx, ty, a: Math.random() * Math.PI * 2, r: 0.55 + Math.random() * 0.45, sp: 0.8 + Math.random() * 1.4, hue: 205 + (i / N) * 55, d: Math.random() * 0.35 }))
+    let raf = 0; const t0 = performance.now()
+    const CYCLE = 2.8
+    const loop = () => {
+      raf = requestAnimationFrame(loop)
+      const t = (performance.now() - t0) / 1000
+      const ph = reduce ? 0.5 : (t % CYCLE) / CYCLE
+      // 0~0.15 흩어짐 · 0.15~0.5 모임 · 0.5~0.8 V 로 머묾 · 0.8~1 다시 흩어짐
+      const gather = ph < 0.15 ? 0 : ph < 0.5 ? (ph - 0.15) / 0.35 : ph < 0.8 ? 1 : 1 - (ph - 0.8) / 0.2
+      const hb = beat ? (() => { const q = (t % 1.1) / 1.1; return Math.exp(-Math.pow((q - 0.08) / 0.05, 2)) + 0.6 * Math.exp(-Math.pow((q - 0.28) / 0.05, 2)) })() : 0
+      const S = size * dpr * 0.42 * (1 + 0.1 * hb)
+      g.clearRect(0, 0, c.width, c.height)
+      const glow = Math.max(0, gather - 0.85) / 0.15
+      for (const p of P) {
+        const k0 = Math.max(0, Math.min(1, (gather - p.d) / (1 - p.d)))
+        const k = k0 * k0 * (3 - 2 * k0)
+        const a = p.a + t * p.sp
+        const ox = Math.cos(a) * p.r, oy = Math.sin(a) * p.r
+        const x = ox + (p.tx - ox) * k, y = oy + (p.ty - oy) * k
+        g.fillStyle = `hsla(${p.hue},90%,${58 + glow * 12}%,${0.45 + 0.5 * k})`
+        g.beginPath(); g.arc(c.width / 2 + x * S, c.height / 2 + y * S, (1.1 + 0.9 * k + glow * 0.6) * dpr * (size / 72), 0, Math.PI * 2); g.fill()
+      }
+    }
+    loop()
+    return () => cancelAnimationFrame(raf)
+  }, [size, beat])
   return (
-    <div className="inline-flex flex-col items-center gap-3" role="status" aria-label={label ?? '불러오는 중'}>
-      <div style={{ width: s, height: s, perspective: s * 5 }}>
-        <div className="relative w-full h-full vx-cube-spin" style={{ transformStyle: 'preserve-3d' }}>
-          {/* 앞면 — 섞였다 맞춰지는 면 */}
-          <div className="absolute inset-0 grid grid-cols-3 gap-[2px] p-[2px] bg-[#1f2937]/10" style={{ transform: `translateZ(${s / 2}px)` }}>
-            {face.map((c, i) => {
-              const r = (i / 3) | 0, col = i % 3
-              const moving = hint && (hint.row ? r === hint.i : col === hint.i)
-              return <span key={i} className="rounded-[2px] transition-[background-color,transform] duration-300" style={{ background: COLORS[c % COLORS.length], transform: moving ? `translate${hint!.row ? 'X' : 'Y'}(${hint!.dir * cell * 0.12}px)` : 'none' }} />
-            })}
-          </div>
-          {sideFace('rotateY(90deg)', COLORS[1])}
-          {sideFace('rotateX(90deg)', COLORS[2])}
-          {sideFace('rotateY(-90deg)', COLORS[4])}
-          {sideFace('rotateX(-90deg)', COLORS[5])}
-          {sideFace('rotateY(180deg)', COLORS[3])}
-        </div>
-      </div>
+    <div className="inline-flex flex-col items-center gap-2" role="status" aria-label={label ?? '불러오는 중'}>
+      <canvas ref={ref} style={{ width: size, height: size }} aria-hidden />
       {label && <p className="text-[12.5px] text-[#8a93a6]">{label}</p>}
     </div>
   )

@@ -205,7 +205,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
               {!saved && <button onClick={() => discard()} className={ui.ghost}>버리기</button>}
               {saved && savedKey && !riggedUrl && !result.preview.rigged && <RigButton driveKey={savedKey} onDone={(f) => { setRiggedUrl(f.url); setSavedKey(f.key); setSaved(f.name); setMotion('all'); onSaved() }} />}
               {saved && !published && <button onClick={publish} className={ui.ghost}>갤러리에 공개 신청</button>}
-              <div className="w-full flex items-center gap-2"><span className="text-[12px] font-bold text-[#4b5563]">움직임 미리보기</span><MotionChips value={motion} onChange={setMotion} body={viewBody} /></div>
+              {(riggedUrl || result.preview.rigged) && <section className="w-full rounded-[4px] border border-[#e5e9f2] bg-[#f7f9fd] p-3"><p className="mb-2 text-[11.5px] font-extrabold text-[#4b5563]">움직임 미리보기</p><MotionChips value={motion} onChange={setMotion} body={viewBody} /></section>}
               {saved && <a href={result.preview.url} download className={ui.ghost}>GLB</a>}
               {published && <p className="w-full text-[12.5px] font-bold text-[#2563eb]">{published}</p>}
             </div>

@@ -87,8 +87,8 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
           {/* 검색은 항상 한 줄을 통째로 — 좁은 화면에서 밀려 잘리지 않게 */}
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="검색 — 기사, 우주, 숲, 픽셀…" className="mt-2 w-full h-10 rounded-xl border border-[#ddd3bf] px-3.5 text-[15px] outline-none focus:border-[#2563eb]" />
         </div>
-        <div className="flex items-center gap-1.5 px-4 py-2 overflow-x-auto overflow-y-hidden border-b border-[#f1ede4] shrink-0 no-scrollbar">
-          {KINDS.map(([v, l]) => <button key={v} onClick={() => setKind(v)} className={`shrink-0 h-9 px-3.5 rounded-full text-[13px] whitespace-nowrap leading-none border transition-colors ${kind === v ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white text-[#6b6152] border-[#ddd3bf] hover:border-[#241f17]'}`}>{l}</button>)}
+        <div className="flex flex-wrap items-center gap-1.5 px-4 py-2 border-b border-[#f1ede4] shrink-0">
+          {KINDS.map(([v, l]) => <button key={v} onClick={() => setKind(v)} className={`h-8 sm:h-9 px-3 sm:px-3.5 rounded-full text-[12.5px] sm:text-[13px] whitespace-nowrap leading-none border transition-colors ${kind === v ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white text-[#6b6152] border-[#ddd3bf] hover:border-[#241f17]'}`}>{l}</button>)}
           {kind === 'model3d' && <button onClick={() => glbRef.current?.click()} disabled={!!up} className="shrink-0 h-9 px-3.5 rounded-full text-[13px] font-bold whitespace-nowrap leading-none bg-[#2563eb] text-white disabled:opacity-50" title="내 컴퓨터의 GLB 3D 모델을 올려 내 게임에 써요 (나만 보여요 · 30MB 이하)">{up ?? '⬆ 내 GLB 올리기'}</button>}
           <input ref={glbRef} type="file" accept=".glb,model/gltf-binary" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) uploadGlb(f); e.target.value = '' }} />
         </div>

@@ -192,8 +192,8 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
       {/* 미리보기 */}
       {view && (
         <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" onClick={() => setView(null)}>
-          <div className="w-full max-w-2xl bg-white rounded-[4px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className={`${ui.checker} flex items-center justify-center h-[52vh] max-h-[460px]`}>
+          <div className="w-full max-w-2xl max-h-[92svh] overflow-y-auto bg-white rounded-[4px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className={`${ui.checker} flex items-center justify-center h-[42svh] sm:h-[52vh] max-h-[460px]`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {isImage(view.name) ? <img src={view.url} alt={view.name} className="max-w-full max-h-full object-contain" />
                 : isGlb(view.name) ? <div className="w-full h-full"><GlbViewer key={view.url} url={view.url} motion={motion} onRigged={setRigged} onBody={setBody} /></div>
@@ -202,16 +202,26 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
             <div className="p-4">
               <p className="text-[15px] font-extrabold text-[#1f2937] truncate">{view.name}</p>
               <p className="text-[12px] text-[#8a93a6]">{fmtSize(view.size)} · {view.mime}{isGlb(view.name) ? (rigged ? ' · 뼈대 있음 (팔다리까지 움직여요)' : ' · 뼈대 없음 (몸 전체만 움직여요)') : ''}</p>
-              {isGlb(view.name) && <div className="mt-2"><MotionChips value={motion} onChange={setMotion} body={body} /></div>}
+              {isGlb(view.name) && rigged && (
+                <section className="mt-3 rounded-[4px] border border-[#e5e9f2] bg-[#f7f9fd] p-3">
+                  <p className="mb-2 text-[11.5px] font-extrabold text-[#4b5563]">움직임 미리보기</p>
+                  <MotionChips value={motion} onChange={setMotion} body={body} />
+                </section>
+              )}
+              {/* 만들기 — 강조 버튼 */}
               <div className="mt-3 flex flex-wrap gap-2">
                 {isGlb(view.name) && rigged && !hasFace && <RigButton face driveKey={view.key} onDone={(f) => { load(); setHasFace(true); setMotion('talk'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
                 {isGlb(view.name) && !rigged && <RigButton driveKey={view.key} onDone={(f) => { load(); setRigged(true); setHasFace(true); setMotion('all'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
                 {isImage(view.name) && <button onClick={() => { onMake3D({ kind: 'drive', key: view.key, url: view.url, name: view.name }); setView(null) }} className={ui.primary}>3D로 만들기</button>}
                 {!isAudio(view.name) && <button onClick={() => { setPub({ kind: 'character', title: view.name.replace(/\.[a-z0-9]+$/i, ''), tags: '', description: '' }); setPublish(view); setView(null) }} className={ui.ghost}>갤러리에 공개 신청</button>}
-                <a href={view.url} download={view.name} className={ui.ghost}>다운로드</a>
-                <button onClick={() => rename(view)} className={ui.ghost}>이름 바꾸기</button>
-                <button onClick={() => { move([view.key]); setView(null) }} className={ui.ghost}>옮기기</button>
-                <button onClick={() => del([view.key])} className={`${ui.ghost} !text-[#b91c1c]`}>삭제</button>
+              </div>
+              {/* 파일 관리 — 작은 글자 버튼, 삭제는 오른쪽 끝에 따로 */}
+              <div className="mt-3 pt-3 border-t border-[#eef1f6] flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] font-semibold text-[#4b5563]">
+                <a href={view.url} download={view.name} className="hover:text-[#2563eb]">다운로드</a>
+                <button onClick={() => rename(view)} className="hover:text-[#2563eb]">이름 바꾸기</button>
+                <button onClick={() => { move([view.key]); setView(null) }} className="hover:text-[#2563eb]">폴더로 옮기기</button>
+                <button onClick={() => setView(null)} className="hover:text-[#2563eb]">닫기</button>
+                <button onClick={() => del([view.key])} className="ml-auto h-8 px-3 rounded-[4px] border border-[#fecaca] text-[#b91c1c] hover:bg-[#fef2f2]">삭제</button>
               </div>
             </div>
           </div>

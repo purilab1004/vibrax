@@ -8,13 +8,37 @@ export const MOTIONS: [string, string][] = [['all', '전체 동작 보기'], ['t
 export const WEAPON_MOTIONS: [string, string][] = [['sword', '칼 들기'], ['slash', '칼 연속 베기'], ['block', '칼·방패 막기'], ['greatsword', '양손검 휘두르기'], ['aim', '총 겨누기'], ['shoot', '총 쏘기'], ['kneel_shoot', '무릎 쏴']]
 export const QUAD_MOTIONS: [string, string][] = [['all', '전체 동작 보기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['attack', '물기 공격'], ['happy', '기쁨(꼬리)'], ['hit', '맞기'], ['talk', '짖기·말하기'], ['die', '쓰러지기']]
 
+// 카테고리로 나눈 동작 — 전체 보기는 따로 큰 버튼
+const GROUPS_BIPED: [string, [string, string][]][] = [
+  ['기본', [['idle', '가만히'], ['talk', '말하기'], ['sit', '앉기']]],
+  ['이동', [['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['strafe_left', '왼쪽 옆걸음'], ['strafe_right', '오른쪽 옆걸음']]],
+  ['반응', [['attack', '공격'], ['happy', '기쁨'], ['hit', '맞기'], ['die', '쓰러지기']]],
+  ['칼', [['sword', '칼 들기'], ['slash', '연속 베기'], ['block', '칼·방패 막기'], ['greatsword', '양손검']]],
+  ['총', [['aim', '겨누기'], ['shoot', '쏘기'], ['kneel_shoot', '무릎 쏴']]],
+]
+const GROUPS_QUAD: [string, [string, string][]][] = [
+  ['기본', [['idle', '가만히'], ['talk', '짖기']]],
+  ['이동', [['walk', '걷기'], ['run', '달리기'], ['jump', '점프']]],
+  ['반응', [['attack', '물기'], ['happy', '꼬리 흔들기'], ['hit', '맞기'], ['die', '쓰러지기']]],
+]
 export function MotionChips({ value, onChange, body = 'biped' }: { value: string; onChange: (m: string) => void; body?: string }) {
-  const chip = ([v, l]: [string, string]) => <button key={v} type="button" onClick={() => onChange(v)} className={ui.chip(value === v)}>{l}</button>
-  if (body === 'quad') return <div className="flex flex-wrap gap-1.5">{QUAD_MOTIONS.map(chip)}</div>
+  const groups = body === 'quad' ? GROUPS_QUAD : GROUPS_BIPED
+  const chip = ([v, l]: [string, string]) => (
+    <button key={v} type="button" onClick={() => onChange(v)}
+      className={`h-7 px-2.5 rounded-[4px] text-[12px] font-semibold border transition-colors ${value === v ? 'bg-[#1f2937] border-[#1f2937] text-white' : 'bg-white border-[#dde3ee] text-[#374151] hover:border-[#93c5fd]'}`}>{l}</button>
+  )
   return (
-    <div className="space-y-1.5">
-      <div className="flex flex-wrap gap-1.5">{MOTIONS.map(chip)}</div>
-      <div className="flex flex-wrap gap-1.5 items-center"><span className="text-[11px] font-bold text-[#8a93a6] mr-0.5">무기</span>{WEAPON_MOTIONS.map(chip)}</div>
+    <div className="space-y-2">
+      <button type="button" onClick={() => onChange('all')}
+        className={`w-full sm:w-auto h-9 px-4 rounded-[4px] text-[13px] font-bold transition-all ${value === 'all' ? 'bg-gradient-to-r from-[#2563eb] to-[#38bdf8] text-white shadow-[0_8px_22px_-10px_rgba(37,99,235,0.8)]' : 'bg-[#eef4ff] text-[#2563eb] border border-[#bfdbfe] hover:bg-[#e0ebff]'}`}>▶ 전체 동작 차례로 보기</button>
+      <div className="grid grid-cols-1 sm:grid-cols-[52px_1fr] gap-x-3 gap-y-1.5 items-start">
+        {groups.map(([name, items]) => (
+          <div key={name} className="contents">
+            <span className="pt-1.5 text-[11px] font-bold text-[#8a93a6]">{name}</span>
+            <div className="flex flex-wrap gap-1.5">{items.map(chip)}</div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

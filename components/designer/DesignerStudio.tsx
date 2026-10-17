@@ -90,8 +90,8 @@ export default function DesignerStudio() {
       {/* 상단 바 */}
       <div className="app-top-pad sticky top-0 z-30 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(37,99,235,0.08),0_8px_30px_-18px_rgba(37,99,235,0.35)] px-4 h-11 box-content">
         <nav className="flex items-center gap-1.5 min-w-0 text-[12px]">
-          <Link href="/studio" className="font-pixel text-[11px] text-[#4b5563] hover:text-[#2563eb] tracking-widest transition-colors">‹ STUDIO</Link>
-          {isDesigner && <><span className="text-[#cbd2de]">/</span><span className="font-bold text-[#1f2937] truncate">{NAV.find(([k]) => k === section)?.[2] ?? ''}</span></>}
+          <Link href="/studio" className="font-pixel text-[11px] text-[#4b5563] hover:text-[#2563eb] tracking-widest transition-colors whitespace-nowrap" aria-label="스튜디오로">‹<span className="hidden sm:inline"> STUDIO</span></Link>
+          {isDesigner && <><span className="hidden sm:inline text-[#cbd2de]">/</span><span className="hidden sm:inline font-bold text-[#1f2937] truncate">{NAV.find(([k]) => k === section)?.[2] ?? ''}</span></>}
         </nav>
         <div className="flex justify-center min-w-0"><AiModeToggle /></div>
         <Link href="/credits" className="justify-self-end hover:opacity-80 transition-opacity shrink-0" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>

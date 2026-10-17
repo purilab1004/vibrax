@@ -54,7 +54,7 @@ FIGURE_QUAD = ("A high-quality 3D rendered figurine of {p}. A single four-legged
 VOLUMIZE_QUAD = ("Turn this 2D drawing into a high-quality 3D rendered figurine of the same four-legged animal: rounded volumetric body, soft vinyl toy material, "
                  "same design, colors and face, standing on all four legs with the legs clearly separated, three-quarter front view, full body, centered, plain pure white background, soft studio lighting, no outlines, no text.")
 VOLUMIZE = ("Turn this 2D drawing into a high-quality 3D rendered figurine of the same character: rounded volumetric body and head, "
-            "soft vinyl toy material, same design, colors, face and proportions, full body, front view, standing in a relaxed A-pose with arms held slightly away from the body and legs slightly apart, centered, "
+            "soft vinyl toy material, same design, colors, face and proportions, full body, front view, standing in an A-pose: both arms stretched out diagonally downward at about 45 degrees with a wide clear gap of empty space between each arm and the torso, legs apart, centered, "
             "plain pure white background, soft studio lighting, no outlines, no text.")
 
 # 자동 리깅 — VAST UniRig(MIT): GLB → 뼈대 예측 → 스킨 가중치 → 원본에 합쳐 리깅된 GLB (bpy 4.2 로 입출력)
@@ -437,6 +437,8 @@ def clean_weights():
         torso = [b for b in path(top) if b not in HEAD] if top else []
         # 팔: 몸통에 가까울수록 팔 가중치를 점점 줄여 가슴으로 (딱 끊지 않고 어깨에서 부드럽게 넘김)
         def soften(chain, target, side):
+            # 팔 캡슐: 팔 뼈 둘레의 '팔 두께' 안쪽 살만 팔을 따라가고, 밖(몸통·망토·옷자락)은 몸통으로.
+            # 두께는 자동 리깅이 팔에 강하게 묶은 살들의 거리 분포로 추정한다.
             names = set()
             def walk(b):
                 names.add(b.name)
@@ -444,23 +446,33 @@ def clean_weights():
             walk(chain[0])
             ids = {vg[n].index for n in names if n in vg}
             tgt = vg[target.name]
-            sx = (M @ chain[0].head_local).x
-            hand_z = min((M @ b.tail_local).z for b in chain)
+            strong = []
+            for v in ob.data.vertices:
+                wsum = sum(g.weight for g in v.groups if g.group in ids)
+                if wsum > 0.6: strong.append(seg_d(mw @ v.co, chain))
+            strong.sort()
+            R = strong[int(len(strong) * 0.6)] if strong else h * 0.06
+            R = max(h * 0.045, min(h * 0.085, R))
+            chain_ids = [vg[b.name].index if b.name in vg else None for b in chain]
             for v in ob.data.vertices:
                 p = mw @ v.co
-                da, dt_ = seg_d(p, chain), seg_d(p, torso)
-                r = dt_ / max(1e-6, da)               # 1 보다 작으면 몸통 쪽
-                k1 = max(0.0, min(1.0, (r - 0.8) / 0.7))
-                # 어깨 관절보다 몸 안쪽(가로)이면서 손보다 위에 있는 살은 몸통 — 넓은 몸통의 옆구리가 팔에 끌려가지 않게
-                out = (p.x - sx) * side
-                k2 = max(0.0, min(1.0, (out + w * 0.03) / (w * 0.09)))
-                if p.z < hand_z: k2 = 1.0
-                keep = min(k1, k2); keep = keep * keep * (3 - 2 * keep)
-                if keep >= 0.999: continue
-                moved = 0.0
-                for g in v.groups:
-                    if g.group in ids and g.weight > 0: nw = g.weight * keep; moved += g.weight - nw; g.weight = nw
-                if moved > 0: tgt.add([v.index], moved, 'ADD')
+                # 가장 가까운 팔 뼈와 거리
+                best, bi = 1e9, 0
+                for k, b in enumerate(chain):
+                    a_, b_ = M @ b.head_local, M @ b.tail_local; ab = b_ - a_
+                    t_ = max(0.0, min(1.0, (p - a_).dot(ab) / max(1e-9, ab.length_squared))); d_ = (p - (a_ + ab * t_)).length
+                    if d_ < best: best, bi = d_, k
+                da, dt_ = best, seg_d(p, torso)
+                inside = 1.0 - max(0.0, min(1.0, (da - R * 0.8) / (R * 0.5)))   # 캡슐 안 = 팔
+                if dt_ < da * 0.75: inside = 0.0                                 # 몸통 뼈가 더 가까우면 몸통
+                inside = inside * inside * (3 - 2 * inside)
+                cur = sum(g.weight for g in v.groups if g.group in ids)
+                if inside < cur - 1e-3:
+                    moved = 0.0; keep = inside / max(1e-6, cur)
+                    for g in v.groups:
+                        if g.group in ids and g.weight > 0: nw = g.weight * keep; moved += g.weight - nw; g.weight = nw
+                    if moved > 0: tgt.add([v.index], moved, 'ADD')
+            print('arm capsule R/h', round(R / h, 3))
         for ch in (AL, AR):
             if ch and torso:
                 soften(ch, chest, 1 if (M @ ch[0].head_local).x > cx else -1)
@@ -859,7 +871,7 @@ class Volumize:
 
 
 # 이미지 생성 — Qwen-Image (Apache 2.0, gated 아님, 한국어·영어 프롬프트 이해). AI 이미지와 글 → 3D 의 첫 단계에 쓴다
-FIGURE = ("A high-quality 3D rendered figurine of {p}. Full body, single character, front view, standing in a relaxed A-pose with arms held slightly away from the body and legs slightly apart, hands not touching the body, centered, "
+FIGURE = ("A high-quality 3D rendered figurine of {p}. Full body, single character, front view, standing in an A-pose: both arms stretched out diagonally downward at about 45 degrees from the body with a wide clear gap of empty space between each arm and the torso, hands far from the hips, legs apart, centered, "
           "rounded volumetric shapes, soft vinyl toy material, plain pure white background, soft studio lighting, no text.")
 
 
