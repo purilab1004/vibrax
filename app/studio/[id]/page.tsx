@@ -4,6 +4,7 @@ import MascotLoader from '@/components/MascotLoader'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import AiModeToggle from '@/components/studio/AiModeToggle'
+import ParticleField from '@/components/designer/ParticleField'
 import { PromptCreditBadge } from '@/components/CurrencyBadge'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -427,10 +428,11 @@ export default function StudioComposerPage() {
 
 
   return (
-    <div className="flex flex-col" style={{ height: '100svh' }}>
+    <div className="relative flex flex-col bg-white" style={{ height: '100svh' }}>
+      <ParticleField />
       {/* 상단 바 — 뒤로 · 프로젝트 제목(편집) · 우측: 채팅 토글 / 크레딧 코인 */}
       {/* 채팅과 같은 배경·구분선 없음 — 헤더가 따로 떠 보이지 않게 */}
-      <div className="app-top-pad flex items-center gap-3 h-12 px-3 bg-[#f3f1ec] shrink-0 box-content">
+      <div className="app-top-pad flex items-center gap-3 h-11 px-3 bg-white/70 backdrop-blur-2xl border-b border-[#e5e9f2] shadow-[0_8px_30px_-22px_rgba(37,99,235,0.45)] shrink-0 box-content relative z-10">
         <Link
           href="/studio"
           aria-label={s.backToStudio}
@@ -470,7 +472,7 @@ export default function StudioComposerPage() {
         {/* 좌측 — 최근 프로젝트 사이드바 (클로드 스타일, 데스크톱) */}
         {!chatCollapsed && !sideOpen && (
           /* 접힌 사이드바 — 얇은 레일: 펼치기 + 새 프롬프트 추가 */
-          <aside className="hidden lg:flex w-11 shrink-0 flex-col items-center gap-2 border-r border-[#ebe4d6] bg-[#fcfaf5] min-h-0 pt-3">
+          <aside className="hidden lg:flex w-11 shrink-0 flex-col items-center gap-2 border-r border-[#e5e9f2] bg-white/80 min-h-0 pt-3">
             <button onClick={() => setSideOpen(true)} aria-label="사이드 메뉴 펼치기" title="최근 항목 펼치기" className="w-8 h-8 rounded-lg text-[#6b6152] hover:text-[#2563eb] hover:bg-[#241f17]/5 flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
             </button>
@@ -478,7 +480,7 @@ export default function StudioComposerPage() {
           </aside>
         )}
         {!chatCollapsed && sideOpen && (
-          <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-[#ebe4d6] bg-[#fcfaf5] min-h-0">
+          <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-[#e5e9f2] bg-white/80 min-h-0">
             <div className="mx-3 mt-3 flex items-center gap-1">
               <button
                 onClick={createNewProject}

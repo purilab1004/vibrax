@@ -7,7 +7,7 @@ import { fieldSay } from './ParticleField'
 const PRESETS: [string, string, boolean][] = [['character', '캐릭터', true], ['item', '아이템', true], ['background', '배경', false], ['tile', '타일', false], ['ui', 'UI', true], ['effect', '이펙트', false], ['free', '자유', false]]
 const STYLES: [string, string][] = [['auto', '알아서'], ['cartoon', '카툰'], ['pixel', '픽셀'], ['anime', '애니'], ['3d', '3D 렌더'], ['realistic', '사실적'], ['watercolor', '수채화']]
 const RATIOS = ['1:1', '3:4', '4:3', '9:16', '16:9']
-interface Batch { token: string; prompt: string; images: string[]; saved: Record<number, string> }
+interface Batch { token: string; prompt: string; images: string[]; saved: Record<number, string>; preset?: string }
 
 export default function ImageGen({ onSaved, onMake3D }: { onSaved: () => void; onMake3D: (s: Source3D) => void }) {
   const [prompt, setPrompt] = useState('')
@@ -34,7 +34,7 @@ export default function ImageGen({ onSaved, onMake3D }: { onSaved: () => void; o
       await new Promise((ok) => setTimeout(ok, 3000))
       const s = await fetch('/api/designer/image?token=' + encodeURIComponent(j.token)).then((x) => x.json()).catch(() => null)
       if (!s) continue
-      if (s.status === 'done') { fieldSay({ busy: false }); setJob(null); setBatches((b) => [{ token: j.token, prompt, images: s.images, saved: {} }, ...b].slice(0, 10)); return }
+      if (s.status === 'done') { fieldSay({ busy: false }); setJob(null); setBatches((b) => [{ token: j.token, prompt, images: s.images, saved: {}, preset }, ...b].slice(0, 10)); return }
       if (s.status === 'failed') { fieldSay({ busy: false }); setJob(null); setErr(s.error); return }
       setJob({ elapsed: s.elapsed ?? 0 })
     }
@@ -49,8 +49,8 @@ export default function ImageGen({ onSaved, onMake3D }: { onSaved: () => void; o
       key = j.key
       setBatches((all) => all.map((x) => (x.token === b.token ? { ...x, saved: { ...x.saved, [i]: key } } : x)))
       onSaved()
-      if (then3d) onMake3D({ kind: 'drive', key, url: j.url, name: j.name })
-    } else if (then3d) onMake3D({ kind: 'drive', key, url: b.images[i], name: b.prompt.slice(0, 30) })
+      if (then3d) onMake3D({ kind: 'drive', key, url: j.url, name: j.name, body: b.preset && b.preset !== 'character' ? 'prop' : undefined })
+    } else if (then3d) onMake3D({ kind: 'drive', key, url: b.images[i], name: b.prompt.slice(0, 30), body: b.preset && b.preset !== 'character' ? 'prop' : undefined })
   }
 
   return (

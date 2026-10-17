@@ -58,7 +58,8 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
         obj.position.sub(c); scene.add(obj)
         let bones = 0; obj.traverse((n: any) => { if (n.isBone) bones++ })
         riggedCb.current?.(bones >= 4)
-        if (motionRef.current !== undefined && T.makeAlive) { alive = T.makeAlive(g); bodyCb.current?.(alive.body) }   // gltf 통째로 — 파일에 든 움직임 클립을 쓴다
+        if (motionRef.current !== undefined && T.makeAlive && bones >= 4) { alive = T.makeAlive(g); bodyCb.current?.(alive.body) }   // 뼈대 없는 아이템·소품은 움직이지 않는다
+        if (!alive) ctl.autoRotate = true   // gltf 통째로 — 파일에 든 움직임 클립을 쓴다
         const r = Math.max(size.x, size.y, size.z) || 1
         if (motionRef.current !== undefined) cam.position.set(r * 0.9, r * 0.45, r * 1.9)   // 팔다리가 잘 보이게 앞쪽 비스듬히
         else cam.position.set(r * 1.1, r * 0.7, r * 1.6)

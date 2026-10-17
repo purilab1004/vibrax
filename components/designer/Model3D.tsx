@@ -34,20 +34,19 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   const [err, setErr] = useState<string | null>(null)
   const [myModels, setMyModels] = useState<DriveFile[] | null>(null)
   const [asset, setAsset] = useState<DriveFile | null>(null)
-  useEffect(() => { fetch('/api/designer/drive?folder=' + encodeURIComponent('3D 모델')).then((r) => r.json()).then((j) => setMyModels((j.files ?? []).filter((f: DriveFile) => /\.glb$/i.test(f.name)))).catch(() => setMyModels([])) }, [saved, riggedUrl])
+  useEffect(() => { fetch('/api/designer/drive?limit=100&folder=' + encodeURIComponent('3D 모델')).then((r) => r.json()).then((j) => setMyModels((j.files ?? []).filter((f: DriveFile) => /\.glb$/i.test(f.name)))).catch(() => setMyModels([])) }, [saved, riggedUrl])
   const [anim, setAnim] = useState<{ src: string | null; expected: number } | null>(null)   // 모래 효과: 원본 이미지 · 예상 시간
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { fetch('/api/gallery/model3d?info=1').then((r) => r.json()).then((j) => { setCost(j.cost ?? null); if (typeof j.volumizeExtra === 'number') setVolExtra(j.volumizeExtra); if (typeof j.rigExtra === 'number') setRigExtra(j.rigExtra) }).catch(() => {}) }, [])
   // 다른 화면(드라이브·이미지 생성·갤러리)에서 넘어온 원본
-  useEffect(() => { if (!source) return; const t = setTimeout(() => { setPick(source); setMode('drive'); setTitle(source.kind === 'drive' ? source.name.replace(/\.[a-z0-9]+$/i, '') : source.title) }, 0); return () => clearTimeout(t) }, [source])
+  useEffect(() => { if (!source) return; const t = setTimeout(() => { setPick(source); setMode('drive'); setTitle(source.kind === 'drive' ? source.name.replace(/\.[a-z0-9]+$/i, '') : source.title); if (source.body) { setBodyType(source.body); setRig(source.body !== 'prop') } }, 0); return () => clearTimeout(t) }, [source])
   useEffect(() => {
     if (mode !== 'drive' || driveImgs) return
     // 드라이브의 이미지 — 맨 위 + 각 폴더
     ;(async () => {
-      const top = await fetch('/api/designer/drive').then((r) => r.json()).catch(() => ({ files: [], folders: [] }))
-      const sub = await Promise.all((top.folders ?? []).slice(0, 12).map((f: { name: string }) => fetch('/api/designer/drive?folder=' + encodeURIComponent(f.name)).then((r) => r.json()).then((j) => j.files ?? []).catch(() => [])))
-      setDriveImgs([...(top.files ?? []), ...sub.flat()].filter((f: DriveFile) => isImage(f.name)).slice(0, 120))
+      const top = await fetch('/api/designer/drive?limit=100').then((r) => r.json()).catch(() => ({ files: [] }))   // 맨 위는 모든 폴더 파일
+      setDriveImgs([...(top.files ?? [])].filter((f: DriveFile) => isImage(f.name)).slice(0, 120))
     })()
   }, [mode, driveImgs])
 

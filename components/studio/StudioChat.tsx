@@ -205,7 +205,7 @@ export default function StudioChat({
   }
 
   return (
-    <div className="flex flex-col h-full border-r border-[#ebe4d6] bg-[#f3f1ec]">{/* 눈이 편한 따뜻한 회색 — 흰 말풍선·입력 카드가 또렷하게 */}
+    <div className="flex flex-col h-full border-r border-[#e5e9f2] bg-[#f5f7fb]/90 backdrop-blur-xl">{/* 눈이 편한 따뜻한 회색 — 흰 말풍선·입력 카드가 또렷하게 */}
       <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-4">
         <div className="max-w-[840px] mx-auto space-y-3">
         {/* 조작안 제안 중 */}

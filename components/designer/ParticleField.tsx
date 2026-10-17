@@ -108,8 +108,16 @@ export default function ParticleField() {
       const mat = new T.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uni, transparent: true, depthWrite: false })
       const pts = new T.Points(geo, mat); scene.add(pts)
       // 오른쪽에 두어 왼쪽 메뉴·글과 겹치지 않게
-      const place = () => { const wide = el.clientWidth > 900; pts.position.set(wide ? 0.9 : 0, wide ? 0 : 0.4, 0); pts.scale.setScalar(wide ? 1.45 : 1.1) }
+      // 평소 자리 / 만드는 중엔 오른쪽 위 작은 심장
+      const home = { x: 0, y: 0, s: 1 }, heart = { x: 0, y: 0, s: 0.3 }
+      const place = () => {
+        const wide = el.clientWidth > 900
+        home.x = wide ? 0.9 : 0; home.y = wide ? 0 : 0.4; home.s = wide ? 1.45 : 1.1
+        const vh = 2 * Math.tan((cam.fov * Math.PI) / 360) * cam.position.z, vw = vh * cam.aspect
+        heart.x = vw / 2 - 0.38; heart.y = vh / 2 - 0.42 - cam.position.y; heart.s = wide ? 0.2 : 0.16
+      }
       place()
+      pts.position.set(home.x, home.y, 0); pts.scale.setScalar(home.s)
       const onMove = (e: PointerEvent) => { uni.uMouse.value.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1) }
       const onResize = () => { renderer.setSize(el.clientWidth, el.clientHeight); cam.aspect = el.clientWidth / el.clientHeight; cam.updateProjectionMatrix(); place() }
       window.addEventListener('pointermove', onMove); window.addEventListener('resize', onResize)
@@ -125,8 +133,8 @@ export default function ParticleField() {
       }
       const onField = (e: Event) => {
         const d = (e as CustomEvent).detail ?? {}
-        if (d.busy === true) { busy = true; goTo(coreShape(N), 1e9, true); uni.uPulse.value = 1 }
-        else if (d.busy === false) { busy = false; uni.uPulse.value = 0; uni.uBurst.value = 1; next = (cur + 1) % S.length; goTo(S[next], HOLD, false) }
+        if (d.busy === true) { el.style.zIndex = '40'; busy = true; goTo(coreShape(N), 1e9, true); uni.uPulse.value = 0 }
+        else if (d.busy === false) { setTimeout(() => { el.style.zIndex = '' }, 1600); busy = false; uni.uPulse.value = 0; uni.uBurst.value = 1; next = (cur + 1) % S.length; goTo(S[next], HOLD, false) }
         if (d.burst) uni.uBurst.value = 1
         if (d.word && !busy) goTo(textShape(String(d.word).slice(0, 10).toUpperCase(), N), 4.2, true)
       }
@@ -139,12 +147,20 @@ export default function ParticleField() {
         const now = performance.now(), dt = Math.min(0.05, (now - last) / 1000); last = now
         uni.uTime.value += dt
         // 글자·핵일 땐 정면을 보고 고요하게, 평소엔 천천히 돈다
+        // 자리·크기: 만드는 중이면 오른쪽 위로 작게, 심장처럼 두 번씩 뛴다(쿵-쿵 … 쉼)
+        {
+          const tgt = busy ? heart : home, k = Math.min(1, dt * 2.2)
+          pts.position.x += (tgt.x - pts.position.x) * k; pts.position.y += (tgt.y - pts.position.y) * k
+          let sc = tgt.s
+          if (busy) { const ph = (uni.uTime.value % 1.1) / 1.1; const beat = Math.exp(-Math.pow((ph - 0.08) / 0.05, 2)) + 0.6 * Math.exp(-Math.pow((ph - 0.28) / 0.05, 2)); sc *= 1 + 0.22 * beat }
+          const cs = pts.scale.x; pts.scale.setScalar(cs + (sc - cs) * (busy ? Math.min(1, dt * 12) : k))
+        }
         if (special) { const ry = ((pts.rotation.y + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; pts.rotation.y = ry * (1 - Math.min(1, dt * 2.5)); pts.rotation.x *= 1 - Math.min(1, dt * 2.5); uni.uCalm.value = Math.min(1, uni.uCalm.value + dt * 1.5) }
         else { pts.rotation.y += dt * 0.08; pts.rotation.x = Math.sin(uni.uTime.value * 0.15) * 0.18; uni.uCalm.value = Math.max(0, uni.uCalm.value - dt) }
         uni.uBurst.value = Math.max(0, uni.uBurst.value - dt * 1.4)
         if (!morph) { hold += dt; if (hold > holdFor && !busy) { special = false; next = (cur + 1) % S.length; goTo(S[next], HOLD, false) } }
         else {
-          uni.uMix.value = Math.min(1, uni.uMix.value + dt / MORPH)
+          uni.uMix.value = Math.min(1, uni.uMix.value + dt / (busy ? 1.1 : MORPH))
           if (uni.uMix.value >= 1) {   // 도착: 지금 모양 = 도착한 모양
             const A = geo.attributes.position.array as Float32Array; A.set(geo.attributes.posB.array as Float32Array); geo.attributes.position.needsUpdate = true
             if (!special) cur = next

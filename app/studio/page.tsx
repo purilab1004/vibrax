@@ -16,6 +16,8 @@ import { INITIAL_PROMPT_KEY } from '@/lib/studio/constants'
 import { auroraOf } from '@/components/GameCard'
 import { titleFont } from '@/lib/fonts'
 import HeroPromptInput from '@/components/HeroPromptInput'
+import ParticleField from '@/components/designer/ParticleField'
+import Decode from '@/components/designer/Decode'
 
 export default function StudioPage() {
   const [projects, setProjects] = useState<StudioProject[] | null>(null)
@@ -157,26 +159,27 @@ export default function StudioPage() {
   const publishedCount = Object.keys(published).length
 
   return (
-    <div className="min-h-[100svh]">
-      {/* 상단 바 — 유리 배경, 왼쪽 홈 · 가운데 STUDIO · 오른쪽 크레딧 코인 */}
-      <div className="app-top-pad sticky top-0 z-30 flex items-center gap-4 border-b border-[#ebe4d6] bg-white/60 backdrop-blur-xl px-4 h-12 box-content">
-        <Link href="/" className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest transition-colors shrink-0">← 홈</Link>
-        <span className="hidden sm:inline font-pixel text-[11px] text-[#2563eb] tracking-widest">{s.heading}</span>
-        <div className="flex-1 flex justify-center min-w-0"><AiModeToggle /></div>
-        <Link href="/credits" className="hover:opacity-80 transition-opacity" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>
+    <div className="relative min-h-[100svh] bg-white">
+      {/* 빛의 입자 — 디자인 AI 와 같은 세계 */}
+      <ParticleField />
+      {/* 상단 바 — 얇은 유리, 왼쪽 홈 / STUDIO · 가운데 모드 · 오른쪽 크레딧 */}
+      <div className="app-top-pad sticky top-0 z-30 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(37,99,235,0.08),0_8px_30px_-18px_rgba(37,99,235,0.35)] px-4 h-11 box-content">
+        <nav className="flex items-center gap-1.5 min-w-0 text-[12px]">
+          <Link href="/" className="font-pixel text-[11px] text-[#4b5563] hover:text-[#2563eb] tracking-widest transition-colors">‹ HOME</Link>
+          <span className="text-[#cbd2de]">/</span><span className="font-pixel text-[11px] text-[#2563eb] tracking-widest">{s.heading}</span>
+        </nav>
+        <div className="flex justify-center min-w-0"><AiModeToggle /></div>
+        <Link href="/credits" className="justify-self-end hover:opacity-80 transition-opacity" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>
       </div>
 
       {/* 히어로 — 홈 첫 화면과 같은 느낌 (배경 영상 + 헤드라인 + 프롬프트 카드) */}
-      <section className="relative overflow-hidden min-h-[78svh] flex flex-col bg-white">
-        {/* 배경 — 영상·움직이는 글로우 대신 가벼운 정적 그라데이션 (스튜디오는 가볍게) */}
-        <div className="absolute inset-0" aria-hidden style={{ background: 'radial-gradient(60% 50% at 20% 20%, rgba(37,99,235,0.12), transparent 70%), radial-gradient(55% 45% at 85% 30%, rgba(6,182,212,0.12), transparent 70%), linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%)' }} />
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#fcfaf5]" aria-hidden />
+      <section className="relative z-10 overflow-hidden min-h-[78svh] flex flex-col">
 
         <div className="relative flex-1 w-full max-w-7xl mx-auto px-6 flex flex-col items-center justify-center text-center py-12">
           <h1 className="hero-chat-in text-3xl md:text-5xl leading-[1.15] tracking-tight font-extrabold text-[#241f17] mb-5">
-            {T.hero.promptHeading.split('\n')[0]}
+            <Decode text={T.hero.promptHeading.split('\n')[0]} ms={700} />
             <br />
-            <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">{T.hero.promptHeading.split('\n')[1]}</span>
+            <Decode text={T.hero.promptHeading.split('\n')[1]} ms={900} className="bg-gradient-to-r from-[#2563eb] via-[#38bdf8] to-[#7c5cf6] bg-clip-text text-transparent" />
           </h1>
           <div className="flex items-center gap-3 mb-9 w-full max-w-md">
             <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#cfc4ab]" />
@@ -198,7 +201,7 @@ export default function StudioPage() {
       </section>
 
       {/* 내 프로젝트 */}
-      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-20">
         {/* 배경 오라 — 스튜디오 파랑 톤 (필터 없이 그라데이션만) */}
         <div aria-hidden className="absolute inset-x-0 -top-10 h-[30rem] -z-10 pointer-events-none overflow-hidden">
           <div className="absolute -left-24 top-0 w-[28rem] h-[28rem] rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.12),transparent)]" />
