@@ -435,13 +435,55 @@ def clean_weights():
                 best = min(best, (p - (a_ + ab * t)).length)
             return best
         torso = [b for b in path(top) if b not in HEAD] if top else []
+        # 팔: 몸통에 가까울수록 팔 가중치를 점점 줄여 가슴으로 (딱 끊지 않고 어깨에서 부드럽게 넘김)
+        def soften(chain, target, side):
+            names = set()
+            def walk(b):
+                names.add(b.name)
+                for c in b.children: walk(c)
+            walk(chain[0])
+            ids = {vg[n].index for n in names if n in vg}
+            tgt = vg[target.name]
+            sx = (M @ chain[0].head_local).x
+            hand_z = min((M @ b.tail_local).z for b in chain)
+            for v in ob.data.vertices:
+                p = mw @ v.co
+                da, dt_ = seg_d(p, chain), seg_d(p, torso)
+                r = dt_ / max(1e-6, da)               # 1 보다 작으면 몸통 쪽
+                k1 = max(0.0, min(1.0, (r - 0.8) / 0.7))
+                # 어깨 관절보다 몸 안쪽(가로)이면서 손보다 위에 있는 살은 몸통 — 넓은 몸통의 옆구리가 팔에 끌려가지 않게
+                out = (p.x - sx) * side
+                k2 = max(0.0, min(1.0, (out + w * 0.03) / (w * 0.09)))
+                if p.z < hand_z: k2 = 1.0
+                keep = min(k1, k2); keep = keep * keep * (3 - 2 * keep)
+                if keep >= 0.999: continue
+                moved = 0.0
+                for g in v.groups:
+                    if g.group in ids and g.weight > 0: nw = g.weight * keep; moved += g.weight - nw; g.weight = nw
+                if moved > 0: tgt.add([v.index], moved, 'ADD')
         for ch in (AL, AR):
             if ch and torso:
-                fix(ch, lambda p, ch=ch: seg_d(p, torso) < seg_d(p, ch) * 0.95, chest)
+                soften(ch, chest, 1 if (M @ ch[0].head_local).x > cx else -1)
         for ch in ((LL, LR) if not QUAD else tuple(LEGS4)):
             if ch and torso:
                 hz = (M @ ch[0].head_local).z
                 fix(ch, lambda p, ch=ch, hz=hz: p.z > hz + h * 0.03 and seg_d(p, torso) < seg_d(p, ch) * 0.8, root)
+# 팔이 몸통에 얼마나 붙어 있나 — 어깨~팔꿈치 중간 지점이 몸통 뼈에 가까울수록 흔들기를 줄인다
+try:
+    if AL and AR and top:
+        trunk = [b for b in path(top) if b not in HEAD]
+        def mid_gap(ch):
+            m = (M @ ch[0].head_local + M @ ch[0].tail_local) / 2
+            best = 1e9
+            for b in trunk:
+                a_, b_ = M @ b.head_local, M @ b.tail_local; ab = b_ - a_
+                t_ = max(0.0, min(1.0, (m - a_).dot(ab) / max(1e-9, ab.length_squared))); best = min(best, (m - (a_ + ab * t_)).length)
+            return best
+        gap = min(mid_gap(AL), mid_gap(AR)) / w
+        ARM_K = max(0.45, min(1.0, (gap - 0.12) / 0.18 + 0.45))
+        print('arm gap', round(gap, 3), 'ARM_K', round(ARM_K, 2))
+except Exception as e:
+    print('gap failed', e)
 try:
     clean_weights(); print('weights cleaned')
 except Exception as e:
@@ -472,8 +514,11 @@ def clip(name, seconds, fn):
         rp.keyframe_insert('location', frame=f + 1)
     tr = arm.animation_data.nla_tracks.new(); tr.name = name; tr.strips.new(name, 1, act)
     arm.animation_data.action = None
+ARM_K = 1.0
 def put(d, bones, axis, ang, idx=0):
-    if len(bones) > idx: d.setdefault(bones[idx].name, []).append((bones[idx], axis, ang))
+    if len(bones) > idx:
+        if (bones is AL or bones is AR) and idx == 0: ang *= ARM_K
+        d.setdefault(bones[idx].name, []).append((bones[idx], axis, ang))
 X, Y, Z = (1, 0, 0), (0, 1, 0), (0, 0, 1)
 def legs_cycle(d, ph, thigh, knee_lo, knee_hi, foot, fwd=0.0):
     # 한 다리 주기: ph=0 에서 앞으로 나가는 중(스윙 한가운데) — 스윙 때 무릎을 크게 굽히고 발끝을 든다
@@ -592,27 +637,68 @@ if not QUAD:
         put(d, AR, X, ax); put(d, AR, Y, ay); put(d, AR, X, -0.4, 1); put(d, AL, X, -0.2)
         for sp in SPINE[1:2]: put(d, [sp], Z, tw)
         return d
+    def sword_slash_side(t):
+        # 팔을 어깨 높이로 들어 오른쪽에서 왼쪽으로 가로 베기 + 몸통 비틀기
+        d = {}
+        if t < 0.3: e = sm(t / 0.3); yaw, tw = 1.0 * e, 0.35 * e
+        else: u = sm((t - 0.3) / 0.7); yaw, tw = 1.0 - 2.2 * u, 0.35 - 0.8 * u
+        put(d, AR, X, -1.45); put(d, AR, Z, yaw); put(d, AR, X, -0.25, 1); put(d, AL, X, -0.3)
+        for sp in SPINE[1:2]: put(d, [sp], Z, tw)
+        return d
+    def sword_thrust(t):
+        # 뒤로 당겼다가 앞으로 찌르기 + 앞으로 기울기
+        d = {}
+        if t < 0.35: e = sm(t / 0.35); ax, el, lean = -0.6 + 0.5 * e, -1.4 * e, -0.05 * e
+        else: u = sm((t - 0.35) / 0.3) if t < 0.65 else 1 - sm((t - 0.65) / 0.35) * 0.6; ax, el, lean = -0.1 - 1.45 * u, -1.4 + 1.4 * u, 0.25 * u
+        put(d, AR, X, ax); put(d, AR, X, el, 1); put(d, AL, X, 0.25)
+        for sp in SPINE[1:2]: put(d, [sp], X, lean); put(d, [sp], Z, -0.2)
+        put(d, LL, X, -0.35 * max(0.0, lean / 0.25)); put(d, LL, X, 0.4 * max(0.0, lean / 0.25), 1)
+        return d
     def shield_block(t):
         d = {}; p_ = 1 + 0.03 * math.sin(t * 2 * math.pi)
         put(d, AL, X, -1.3 * p_); put(d, AL, Y, 0.5); put(d, AL, X, -0.5, 1); put(d, AR, X, -0.45); put(d, AR, X, -0.7, 1)
         for sp in SPINE[1:2]: put(d, [sp], X, 0.1)
         return d
+    def two_hands(d, ax, yaw=0.0):
+        # 두 팔을 몸 앞 가운데로 모아 한 자루를 함께 쥔다 (왼손은 오른손 위)
+        put(d, AR, X, ax); put(d, AR, Z, -0.5 + yaw); put(d, AR, X, -0.75, 1)
+        put(d, AL, X, ax - 0.15); put(d, AL, Z, -0.7 + yaw); put(d, AL, X, -0.6, 1)
     def greatsword_idle(t):
-        d = {}; put(d, AR, X, -0.75); put(d, AL, X, -0.75); put(d, AR, Y, -0.4); put(d, AL, Y, 0.4); put(d, AR, X, -0.5, 1); put(d, AL, X, -0.5, 1); breathe(d, t); return d
+        d = {}; two_hands(d, -0.7); breathe(d, t); return d
+    def greatsword_side(t):
+        d = {}
+        if t < 0.35: e = sm(t / 0.35); yaw, tw = 0.9 * e, 0.45 * e
+        else: u = sm((t - 0.35) / 0.65); yaw, tw = 0.9 - 2.0 * u, 0.45 - 0.95 * u
+        two_hands(d, -1.25, yaw)
+        for sp in SPINE[1:2]: put(d, [sp], Z, tw)
+        put(d, LL, X, -0.2); put(d, LR, X, 0.15)
+        return d
     def greatsword_slash(t):
         d = {}
         if t < 0.45: e = sm(t / 0.45); ax, bend = -0.75 - 2.0 * e, -0.05 * e
         else: u = sm((t - 0.45) / 0.55); ax, bend = -2.75 + 2.2 * u, -0.05 + 0.4 * u
-        for ch, sg in ((AR, -1), (AL, 1)): put(d, ch, X, ax); put(d, ch, Y, 0.4 * sg); put(d, ch, X, -0.4, 1)
+        two_hands(d, ax)
         for sp in SPINE[1:2]: put(d, [sp], X, bend)
         return d
     def gun_pose(d, kick=0.0):
-        put(d, AR, X, -1.45 - kick); put(d, AR, X, -0.1, 1); put(d, AL, X, -1.35 - kick); put(d, AL, Y, 0.55); put(d, AL, X, -0.35, 1)
-        for sp in SPINE[1:2]: put(d, [sp], X, -0.1 * kick / 0.25)
+        # 오른팔: 앞으로 들고 팔꿈치를 접어 손이 어깨 앞(개머리판) / 왼팔: 앞으로 쭉, 안쪽으로 모아 총열 받침
+        put(d, AR, X, -1.15 + kick * 0.6); put(d, AR, Z, -0.35); put(d, AR, X, -1.25, 1)
+        put(d, AL, X, -1.5 + kick * 0.4); put(d, AL, Z, -0.55); put(d, AL, X, -0.25, 1)
+        for sp in SPINE[1:2]: put(d, [sp], Z, -0.18); put(d, [sp], X, 0.06 - kick * 0.3)
+        put(d, HEAD, Z, 0.12); put(d, HEAD, X, 0.08)
     def gun_idle(t):
         d = {}; gun_pose(d); put(d, HEAD, Z, 0.04 * math.sin(t * 2 * math.pi)); return d
     def gun_shoot(t):
-        d = {}; gun_pose(d, 0.25 * max(0.0, 1 - t * 3.5)); return d
+        d = {}; gun_pose(d, 0.3 * math.exp(-t * 9.0)); return d
+    def kneel(d):
+        # 왼무릎 세우고 오른무릎은 땅에
+        put(d, LL, X, -1.45); put(d, LL, X, 1.55, 1)
+        put(d, LR, X, 0.35); put(d, LR, X, 1.9, 1); put(d, LR, X, 0.6, 2)
+        d['__hip'] = -0.24
+    def gun_aim_kneel(t):
+        d = {}; gun_pose(d); kneel(d); put(d, HEAD, Z, 0.12 + 0.02 * math.sin(t * 2 * math.pi)); return d
+    def gun_shoot_kneel(t):
+        d = {}; gun_pose(d, 0.3 * math.exp(-t * 9.0)); kneel(d); return d
     def die(t):
         e = sm(t / 0.75); d = {}
         for sp in SPINE[:1]: put(d, [sp], X, -1.45 * e)
@@ -621,6 +707,8 @@ if not QUAD:
     clip('sword_idle', 2.4, sword_idle); clip('sword_slash', 0.5, sword_slash); clip('shield_block', 0.8, shield_block)
     clip('greatsword_idle', 2.4, greatsword_idle); clip('greatsword_slash', 0.9, greatsword_slash)
     clip('gun_idle', 2.4, gun_idle); clip('gun_shoot', 0.35, gun_shoot); clip('die', 1.2, die)
+    clip('sword_slash_side', 0.55, sword_slash_side); clip('sword_thrust', 0.55, sword_thrust); clip('greatsword_side', 0.9, greatsword_side)
+    clip('gun_aim_kneel', 2.4, gun_aim_kneel); clip('gun_shoot_kneel', 0.35, gun_shoot_kneel)
 else:
     FLc, FRc, BLc, BRc = LEGS4
     def wag(d, t, sp=2.0, a=0.35):

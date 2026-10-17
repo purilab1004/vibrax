@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AiModeToggle from '@/components/studio/AiModeToggle'
 import { PromptCreditBadge } from '@/components/CurrencyBadge'
-import MascotLoader from '@/components/MascotLoader'
+import CubeLoader from './CubeLoader'
 import Drive from './Drive'
 import ImageGen from './ImageGen'
 import Model3D from './Model3D'
@@ -79,7 +79,7 @@ export default function DesignerStudio() {
     } catch { setMsg('네트워크 오류') } finally { setBusy(false) }
   }
 
-  if (!me) return <MascotLoader />
+  if (!me) return <div className="min-h-[100svh] flex items-center justify-center bg-white"><CubeLoader size={84} label="디자인 AI 여는 중" /></div>
   const isDesigner = me.role === 'designer' || me.role === 'admin'
   const status = me.application?.status
 

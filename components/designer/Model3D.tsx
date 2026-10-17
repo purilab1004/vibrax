@@ -1,5 +1,6 @@
 'use client'
 // 3D 모델 생성 — 이미지 업로드 · 글 · 내 드라이브 이미지 · 갤러리 이미지 GLB. 완성되면 돌려 보고 ‘드라이브에 저장’ 또는 ‘버리기’를 고른다.
+import CubeLoader from './CubeLoader'
 import { useEffect, useRef, useState } from 'react'
 import { GlbViewer, shrink } from './GlbViewer'
 import SandForm from './SandForm'
@@ -34,7 +35,21 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   const [err, setErr] = useState<string | null>(null)
   const [myModels, setMyModels] = useState<DriveFile[] | null>(null)
   const [asset, setAsset] = useState<DriveFile | null>(null)
-  useEffect(() => { fetch('/api/designer/drive?limit=100&folder=' + encodeURIComponent('3D 모델')).then((r) => r.json()).then((j) => setMyModels((j.files ?? []).filter((f: DriveFile) => /\.glb$/i.test(f.name)))).catch(() => setMyModels([])) }, [saved, riggedUrl])
+  // 내 3D 에셋 — 드라이브 전체의 GLB, 이름 검색, 30개씩 더 불러오기
+  const [aq, setAq] = useState('')
+  const [aMore, setAMore] = useState(false)
+  const aBusy = useRef(false)
+  const aUrl = (off: number) => `/api/designer/drive?ext=glb&limit=30&offset=${off}&q=${encodeURIComponent(aq.trim())}`
+  useEffect(() => {
+    const t = setTimeout(() => { fetch(aUrl(0)).then((r) => r.json()).then((j) => { setMyModels(j.files ?? []); setAMore(!!j.hasMore) }).catch(() => setMyModels([])) }, aq ? 250 : 0)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saved, riggedUrl, aq])
+  const loadMoreAssets = () => {
+    if (aBusy.current || !aMore || !myModels) return
+    aBusy.current = true
+    fetch(aUrl(myModels.length)).then((r) => r.json()).then((j) => { setMyModels((c) => [...(c ?? []), ...((j.files ?? []) as DriveFile[]).filter((x) => !(c ?? []).some((y) => y.key === x.key))]); setAMore(!!j.hasMore) }).catch(() => {}).finally(() => { aBusy.current = false })
+  }
   const [anim, setAnim] = useState<{ src: string | null; expected: number } | null>(null)   // 모래 효과: 원본 이미지 · 예상 시간
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -55,7 +70,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   const start = async () => {
     if (result && !saved && !confirm('지금 모델을 저장하지 않았어요. 버리고 새로 만들까요?')) return
     if (result && !saved) discard(true)
-    setErr(null); setResult(null); setSaved(null); setSavedKey(null); setPublished(null); setRiggedUrl(null); setMotion('idle'); setJob({ status: 'submitting' }); fieldSay({ busy: true })
+    setAsset(null); setErr(null); setResult(null); setSaved(null); setSavedKey(null); setPublished(null); setRiggedUrl(null); setMotion('idle'); setJob({ status: 'submitting' }); fieldSay({ busy: true })
     setAnim({ src: mode === 'image' ? image : mode === 'drive' ? pick?.url ?? null : null, expected: (mode === 'text' || volumize ? 120 : 60) + (rig ? 110 : 0) })
     const body = mode === 'text' ? { mode: 'text', prompt, title, rig, body: bodyType } : mode === 'image' ? { mode: 'image', image, title, volumize, rig, body: bodyType }
       : pick?.kind === 'drive' ? { mode: 'drive', driveKey: pick.key, title, volumize, rig, body: bodyType } : { mode: 'media', assetId: pick?.kind === 'media' ? pick.id : '', title, volumize, rig, body: bodyType }
@@ -120,7 +135,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
               </div>
             )}
             <div className="h-[230px] overflow-y-auto rounded-[4px] bg-[#f7f9fd] border border-[#e5e9f2] p-2 grid grid-cols-4 gap-1.5 content-start">
-              {driveImgs === null ? <p className="col-span-full text-center text-[#8a93a6] text-[12.5px] py-10">불러오는 중…</p>
+              {driveImgs === null ? <div className="col-span-full flex justify-center py-8"><CubeLoader size={48} /></div>
                 : driveImgs.length === 0 ? <p className="col-span-full text-center text-[#8a93a6] text-[12.5px] py-10">드라이브에 이미지가 없어요.<br />갤러리 검색에서 ‘3D로’ 를 눌러도 돼요.</p>
                 : driveImgs.map((f) => (
                   <button key={f.key} type="button" onClick={() => { setPick({ kind: 'drive', key: f.key, url: f.url, name: f.name }); setTitle(f.name.replace(/\.[a-z0-9]+$/i, '')) }} title={f.name}
@@ -157,7 +172,17 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
 
       {/* 가운데 무대 — 빛 입자가 비치는 투명한 공간 */}
       <div className="flex flex-col gap-3 min-h-[420px] lg:min-h-[calc(100svh-10rem)]">
-        {result ? (
+        {asset && !busy ? (
+          <div className="relative flex-1 min-h-[420px] flex flex-col rounded-[4px] border border-[#e5e9f2] bg-white/40">
+            <div className="relative flex-1 min-h-[360px]"><GlbViewer key={asset.url} url={asset.url} motion={motion} onBody={setViewBody} /></div>
+            <div className={`${ui.card} m-2 p-2.5 flex flex-wrap items-center gap-2`}>
+              <p className="text-[13px] font-bold text-[#1f2937] mr-auto truncate">{asset.name}</p>
+              <a href={asset.url} download={asset.name} className={ui.ghost}>GLB</a>
+              <button onClick={() => setAsset(null)} className={ui.ghost}>{result ? '방금 만든 모델로' : '닫기'}</button>
+              <div className="w-full"><MotionChips value={motion} onChange={setMotion} body={viewBody} /></div>
+            </div>
+          </div>
+        ) : result ? (
           <>
             <div className="relative flex-1 min-h-[420px]">
               <GlbViewer key={riggedUrl ?? result.preview.url} url={riggedUrl ?? result.preview.url} motion={motion} onBody={setViewBody} />
@@ -211,19 +236,21 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
       </div>
 
       {/* 오른쪽 — 내 3D 모델 (눌러서 무대에 올리기) */}
-      <aside className="hidden xl:flex flex-col gap-2 self-start sticky top-20">
+      <aside className="hidden xl:flex flex-col gap-2 self-start sticky top-14 max-h-[calc(100svh-4.5rem)]">
         <p className="vx-glyph text-[10px] font-bold text-[#2563eb]">{'// MY ASSETS'}</p>
-        <div className="grid grid-cols-2 gap-2">
+        <input value={aq} onChange={(e) => setAq(e.target.value)} placeholder="내 3D 검색" className={`${ui.input} h-9 text-[12.5px]`} />
+        <div className="grid grid-cols-2 gap-2 overflow-y-auto pr-0.5 content-start" onScroll={(e) => { const el = e.currentTarget; if (el.scrollTop + el.clientHeight > el.scrollHeight - 200) loadMoreAssets() }}>
           {(myModels ?? []).map((f) => (
-            <button key={f.key} onClick={() => { setAsset(f); setMotion(f.rig === 'anim' || f.rig === 'face' ? 'all' : 'idle') }} title={f.name}
+            <button key={f.key} onClick={() => { setAsset(f); setMotion(f.rig === 'anim' || f.rig === 'face' ? 'all' : 'idle'); window.scrollTo({ top: 0, behavior: 'smooth' }) }} title={f.name}
               className={`relative aspect-square rounded-[4px] overflow-hidden border bg-[linear-gradient(160deg,#fbfcff,#e3ebf8)] ${asset?.key === f.key ? 'border-[#2563eb] ring-2 ring-[#2563eb]/30' : 'border-[#e5e9f2] hover:border-[#93c5fd]'}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {f.thumb ? <img src={f.thumb} alt={f.name} className="w-full h-full object-contain" /> : <span className="vx-glyph text-[18px] text-[#2563eb]">⧖</span>}
               {(f.rig === 'anim' || f.rig === 'face') && <span className="absolute bottom-1 left-1 text-[9px] font-extrabold bg-[#2563eb] text-white px-1 rounded-[2px]">움직임</span>}
             </button>
           ))}
+          {aMore && <button onClick={loadMoreAssets} className={`${ui.ghost} col-span-2 h-8 text-[12px]`}>더 보기</button>}
         </div>
-        {myModels !== null && myModels.length === 0 && <p className="text-[11.5px] text-[#8a93a6]">아직 저장한 3D 모델이 없어요</p>}
+        {myModels !== null && myModels.length === 0 && <p className="text-[11.5px] text-[#8a93a6]">{aq ? '찾는 3D 모델이 없어요' : '아직 저장한 3D 모델이 없어요'}</p>}
       </aside>
     </div>
   )

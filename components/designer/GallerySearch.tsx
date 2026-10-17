@@ -1,5 +1,6 @@
 'use client'
 // 전체 갤러리 — 공개된 모든 디자인을 둘러보고·검색해 참고하거나 3D 로 만든다
+import CubeLoader from './CubeLoader'
 import { useEffect, useState } from 'react'
 import { ui, rigBadge, type Source3D } from './shared'
 import { GlbViewer } from './GlbViewer'
@@ -31,7 +32,7 @@ export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) =>
           {([['new', '최신순'], ['popular', '인기순']] as const).map(([v, l]) => <button key={v} onClick={() => setSort(v)} className={`h-8 px-3 rounded-[4px] text-[12.5px] font-bold ${sort === v ? 'bg-[#1f2937] text-white' : 'text-[#4b5563]'}`}>{l}</button>)}
         </div>
       </div>
-      {items === null ? <p className="py-20 text-center text-[13px] text-[#8a93a6]">불러오는 중…</p>
+      {items === null ? <div className="py-20 flex justify-center"><CubeLoader label="갤러리 불러오는 중" /></div>
         : items.length === 0 ? <p className="py-20 text-center text-[13px] text-[#8a93a6]">찾는 디자인이 없어요</p>
         : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3">

@@ -1,6 +1,7 @@
 'use client'
 // 3D 미리보기(three.js GLTFLoader·OrbitControls) · 업로드 이미지 축소 — 디자이너 작업 공간 공용
 import { useEffect, useRef, useState } from 'react'
+import CubeLoader from './CubeLoader'
 
 declare global { interface Window { THREE?: Record<string, unknown> & { [k: string]: unknown } } }
 
@@ -74,20 +75,20 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
         if (alive) {
           let m = motionRef.current ?? 'idle'
           if (m === 'all') {   // 전체 동작 차례로 (각 2.6초)
-            const seq = alive.body === 'quad' ? ['idle', 'walk', 'run', 'jump', 'attack', 'happy', 'hit', 'talk'] : ['idle', 'talk', 'walk', 'run', 'jump', 'sit', 'strafe_left', 'attack', 'happy', 'slash', 'block', 'greatsword', 'aim', 'shoot', 'die']
+            const seq = alive.body === 'quad' ? ['idle', 'walk', 'run', 'jump', 'attack', 'happy', 'hit', 'talk'] : ['idle', 'talk', 'walk', 'run', 'jump', 'sit', 'strafe_left', 'attack', 'happy', 'slash', 'block', 'greatsword', 'aim', 'shoot', 'kneel_shoot', 'die']
             const k = Math.floor(now / 2600) % seq.length
             m = seq[k]
-            const nm = ({ idle: '가만히', talk: '말하기', walk: '걷기', run: '달리기', jump: '점프', sit: '앉기', strafe_left: '옆걸음', attack: '공격', happy: '기쁨', hit: '맞기', slash: '칼 베기', block: '방패 막기', greatsword: '양손검', aim: '총 겨누기', shoot: '총 쏘기', die: '쓰러지기' } as Record<string, string>)[m]
+            const nm = ({ idle: '가만히', talk: '말하기', walk: '걷기', run: '달리기', jump: '점프', sit: '앉기', strafe_left: '옆걸음', attack: '공격', happy: '기쁨', hit: '맞기', slash: '칼 연속 베기', block: '방패 막기', greatsword: '양손검', aim: '총 겨누기', shoot: '총 쏘기', kneel_shoot: '무릎 쏴', die: '쓰러지기' } as Record<string, string>)[m]
             if (nm !== labelRef.current) { labelRef.current = nm; setLabel(nm) }
           } else if (labelRef.current) { labelRef.current = null; setLabel(null) }
           // 무기 동작이면 알맞은 무기를 쥐어 준다
-          const want = ({ sword: 'sword', slash: 'sword', block: 'sword_shield', greatsword: 'greatsword', aim: 'gun', shoot: 'gun' } as Record<string, string>)[m] ?? 'none'
+          const want = ({ sword: 'sword', slash: 'sword', block: 'sword_shield', greatsword: 'greatsword', aim: 'gun', shoot: 'gun', kneel_shoot: 'gun' } as Record<string, string>)[m] ?? 'none'
           if (alive.body !== 'quad' && alive.weapon() !== want) alive.equip(want)
           if (m !== 'die' && alive.isDead()) alive.revive()
-          const every = ({ attack: 1100, hit: 1100, happy: 1100, slash: 1000, block: 1100, greatsword: 1500, shoot: 500, die: 2600 } as Record<string, number>)[m]
+          const every = ({ attack: 1100, hit: 1100, happy: 1100, slash: 800, block: 1100, greatsword: 1200, shoot: 450, kneel_shoot: 450, die: 2600 } as Record<string, number>)[m]
           if (every) {
-            if (now - lastTrig > every) { if (m === 'die' && alive.isDead()) alive.revive(); alive.trigger(({ slash: 'attack', greatsword: 'attack', block: 'block', shoot: 'shoot' } as Record<string, string>)[m] ?? m); lastTrig = now }
-            alive.update(dt, m === 'shoot' ? 'aim' : 'idle')
+            if (now - lastTrig > every) { if (m === 'die' && alive.isDead()) alive.revive(); alive.trigger(({ slash: 'attack', greatsword: 'attack', block: 'block', shoot: 'shoot', kneel_shoot: 'shoot' } as Record<string, string>)[m] ?? m); lastTrig = now }
+            alive.update(dt, m === 'shoot' ? 'aim' : m === 'kneel_shoot' ? 'kneel' : 'idle')
           } else if (m === 'jump') alive.update(dt, Math.floor(now / 900) % 2 ? 'jump' : 'idle')
           else alive.update(dt, m === 'sword' ? 'idle' : m)
         }
@@ -107,7 +108,7 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
         <input type="range" min={0.15} max={1.4} step={0.05} value={light} onChange={(e) => setLight(Number(e.target.value))} className="w-24 accent-[#2563eb]" aria-label="밝기" />
       </label>
       {label && <span className="absolute left-3 top-3 z-10 text-[12.5px] font-extrabold bg-[#1f2937]/85 text-white rounded-[4px] px-3 py-1">{label}</span>}
-      {loading && !err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#8a93a6]">모델 불러오는 중…</p>}
+      {loading && !err && <div className="absolute inset-0 flex items-center justify-center"><CubeLoader size={56} label="모델 불러오는 중" /></div>}
       {err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#f87171]">{err}</p>}
     </div>
   )

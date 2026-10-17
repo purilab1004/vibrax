@@ -5,7 +5,7 @@ import { ui } from './shared'
 
 // 미리보기 동작 — 기본·무기(두 발)·네 발
 export const MOTIONS: [string, string][] = [['all', '전체 동작 보기'], ['talk', '말하기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['sit', '앉기'], ['strafe_left', '왼쪽 옆걸음'], ['strafe_right', '오른쪽 옆걸음'], ['attack', '공격'], ['happy', '기쁨'], ['hit', '맞기'], ['die', '쓰러지기']]
-export const WEAPON_MOTIONS: [string, string][] = [['sword', '칼 들기'], ['slash', '칼 베기'], ['block', '칼·방패 막기'], ['greatsword', '양손검 내려치기'], ['aim', '총 겨누기'], ['shoot', '총 쏘기']]
+export const WEAPON_MOTIONS: [string, string][] = [['sword', '칼 들기'], ['slash', '칼 연속 베기'], ['block', '칼·방패 막기'], ['greatsword', '양손검 휘두르기'], ['aim', '총 겨누기'], ['shoot', '총 쏘기'], ['kneel_shoot', '무릎 쏴']]
 export const QUAD_MOTIONS: [string, string][] = [['all', '전체 동작 보기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['attack', '물기 공격'], ['happy', '기쁨(꼬리)'], ['hit', '맞기'], ['talk', '짖기·말하기'], ['die', '쓰러지기']]
 
 export function MotionChips({ value, onChange, body = 'biped' }: { value: string; onChange: (m: string) => void; body?: string }) {

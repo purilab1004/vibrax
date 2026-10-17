@@ -1,5 +1,6 @@
 'use client'
 // 공개 작품 — 갤러리에 신청·공개한 작품의 상태, 게임에 쓰인 횟수, 쌓인 크레딧
+import CubeLoader from './CubeLoader'
 import { useEffect, useState } from 'react'
 import { ui } from './shared'
 
@@ -33,7 +34,7 @@ export default function MyWorks({ refresh }: { refresh: number }) {
       </div>
       <p className="text-[12.5px] text-[#4b5563]" style={{ wordBreak: 'keep-all' }}>드라이브에서 파일을 열고 <b>‘갤러리에 공개 신청’</b> 을 누르면 여기 올라와요. 관리자가 승인하면 갤러리에 공개되고, 회원이 게임에 쓸 때마다 크레딧이 100% 쌓여요.</p>
       {msg && <p className="text-[12.5px] font-bold text-[#2563eb]">{msg}</p>}
-      {items === null ? <p className="py-16 text-center text-[13px] text-[#8a93a6]">불러오는 중…</p> : items.length === 0 ? <p className={`${ui.card} py-16 text-center text-[13px] text-[#8a93a6]`}>아직 공개 신청한 작품이 없어요</p> : (
+      {items === null ? <div className="py-16 flex justify-center"><CubeLoader /></div> : items.length === 0 ? <p className={`${ui.card} py-16 text-center text-[13px] text-[#8a93a6]`}>아직 공개 신청한 작품이 없어요</p> : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
           {items.map((a) => (
             <div key={a.id} className="rounded-[4px] overflow-hidden border border-[#e5e9f2] bg-white">

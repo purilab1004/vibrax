@@ -1074,3 +1074,7 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 @keyframes vx-core { 0%, 100% { filter: brightness(1); transform: scale(0.96); } 50% { filter: brightness(1.25); transform: scale(1.04); } }
 .vx-glyph { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.18em; }
 @media (prefers-reduced-motion: reduce) { .vx-orb, .vx-orb::before, .vx-orb::after { animation: none; } }
+/* 루빅스 큐브 로딩 — 비스듬히 기울어 천천히 돈다 */
+.vx-cube-spin { animation: vx-cube 6s cubic-bezier(.6,0,.4,1) infinite; transform: rotateX(-24deg) rotateY(-34deg); }
+@keyframes vx-cube { 0% { transform: rotateX(-24deg) rotateY(-34deg); } 25% { transform: rotateX(-24deg) rotateY(-34deg); } 50% { transform: rotateX(-30deg) rotateY(56deg); } 75% { transform: rotateX(-24deg) rotateY(56deg); } 100% { transform: rotateX(-24deg) rotateY(326deg); } }
+@media (prefers-reduced-motion: reduce) { .vx-cube-spin { animation: none; } }

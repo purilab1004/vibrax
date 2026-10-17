@@ -1,6 +1,7 @@
 'use client'
 // 내 드라이브 — 구글 드라이브처럼 폴더·파일(이미지·3D·오디오)을 보관. 끌어 놓기 업로드, 이름 바꾸기·이동·삭제,
 // 이미지 3D 만들기, 갤러리 공개 신청(관리자 승인 후 공개)
+import CubeLoader from './CubeLoader'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { GlbViewer } from './GlbViewer'
@@ -154,7 +155,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
       {/* 파일 */}
       <div className={`relative rounded-[4px] min-h-[360px] transition-colors ${drag ? 'bg-[#eef4ff] ring-2 ring-dashed ring-[#2563eb]' : ''}`}>
         {drag && <p className="absolute inset-0 z-10 flex items-center justify-center text-[15px] font-extrabold text-[#2563eb]">여기에 놓으면 {folder ? `‘${folder}’ 에` : '내 드라이브에'} 올라가요</p>}
-        {files === null ? <p className="py-20 text-center text-[13px] text-[#8a93a6]">불러오는 중…</p>
+        {files === null ? <div className="py-20 flex justify-center"><CubeLoader label="드라이브 여는 중" /></div>
           : shown.length === 0 ? (
             <div className="py-16 flex flex-col items-center text-center rounded-[4px] border-2 border-dashed border-[#bfdbfe] bg-white/35 backdrop-blur-sm">
               <span className="vx-orb" aria-hidden />

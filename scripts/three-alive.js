@@ -1,7 +1,8 @@
 // THREE.makeAlive(model) — 뼈대(리깅) 없는 AI 3D 모델에 생기를 넣는 절차적 움직임.
 // 모델의 자식들을 발밑 기준 '안쪽 그룹'으로 옮겨 그 그룹만 흔든다 → 게임 코드는 model 의 위치·회전을 마음대로 바꿔도 된다.
 //   const alive = THREE.makeAlive(gltf)   (gltf.scene 만 줘도 된다 — gltf 를 주면 파일에 든 움직임 클립을 쓴다)
-//   매 프레임: alive.update(dt, 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'sit' | 'strafe_left' | 'strafe_right' | 'aim')   (dt 초)
+//   매 프레임: alive.update(dt, 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'sit' | 'kneel' | 'strafe_left' | 'strafe_right' | 'aim')   (dt 초)
+//   총: trigger('shoot') 하면 총구 불꽃과 총알이 나간다. 'kneel' 상태 + 총이면 무릎 쏴 자세. 칼·양손검 공격은 연속으로 부를 때마다 다른 베기
 //   점프: 땅 → 'jump' 로 바뀌면 웅크렸다 박차는 동작, 다시 땅으로 오면 착지 동작이 자동으로 나온다
 //   순간 동작: alive.trigger('attack' | 'hit' | 'land' | 'spin' | 'happy' | 'talk')   말하기: alive.update(dt, 'talk') 또는 alive.say(초)
 //   얼굴(파일에 __face_blink·__face_mouth·__face_both 판이 있으면): 몇 초마다 눈 깜박, 말하기·공격·기쁨·맞기 때 입을 연다
@@ -110,7 +111,22 @@
     var boneBy = function (nm) { var f = null; if (nm) model.traverse(function (n) { if (!f && n.isBone && (n.name === nm || n.name === nm.replace(/[^\w-]/g, '_'))) f = n }); return f }
     var handR = boneBy(info.handR) || (limbs && limbs.armR ? limbs.armR[limbs.armR.length - 1] : null)
     var handL = boneBy(info.handL) || (limbs && limbs.armL ? limbs.armL[limbs.armL.length - 1] : null)
-    var stance = 'none', weapons = [], dead = false
+    var stance = 'none', weapons = [], dead = false, combo = 0, bullets = []
+    function fire() {
+      var gun = weapons[0]; if (!gun) return
+      var mz = gun.getObjectByName('muzzle'); if (!mz) return
+      var root = model.parent || model
+      var pos = mz.getWorldPosition(new T.Vector3()), q = mz.getWorldQuaternion(new T.Quaternion())
+      var dir = new T.Vector3(0, 0, 1).applyQuaternion(q).normalize()
+      var inv = new T.Matrix4().copy(root.matrixWorld).invert()
+      // 총구 불꽃
+      var flash = new T.Mesh(new T.SphereGeometry(0.05 * h, 10, 8), new T.MeshBasicMaterial({ color: 0xffd36b, transparent: true, opacity: 1, depthWrite: false }))
+      flash.position.copy(pos).applyMatrix4(inv); root.add(flash)
+      // 총알(빛 줄기)
+      var b = new T.Mesh(new T.CylinderGeometry(0.008 * h, 0.008 * h, 0.12 * h, 6), new T.MeshBasicMaterial({ color: 0xfff1b0 }))
+      b.position.copy(pos).applyMatrix4(inv); b.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), dir); root.add(b)
+      bullets.push({ m: b, v: dir.multiplyScalar(h * 9), life: 0.7 }, { m: flash, v: null, life: 0.07, flash: true })
+    }
     var STANCE_IDLE = { sword: 'sword_idle', sword_shield: 'sword_idle', greatsword: 'greatsword_idle', gun: 'gun_idle' }
     var STANCE_ATTACK = { sword: 'sword_slash', sword_shield: 'sword_slash', greatsword: 'greatsword_slash', gun: 'gun_shoot' }
     var mat = function (c, m) { return new T.MeshStandardMaterial({ color: c, metalness: m || 0.2, roughness: 0.5 }) }
@@ -128,10 +144,14 @@
         var boss = new T.Mesh(new T.SphereGeometry(0.05 * h, 12, 8), mat(0xc8a03c, 0.6)); boss.position.z = 0.02 * h
         g.add(disc, boss)
       } else if (kind === 'gun') {
-        var body = new T.Mesh(new T.BoxGeometry(0.05 * h, 0.07 * h, 0.26 * h), mat(0x2b2f36, 0.5)); body.position.z = 0.08 * h
-        var barrel = new T.Mesh(new T.CylinderGeometry(0.014 * h, 0.014 * h, 0.2 * h, 10), mat(0x15171b, 0.7)); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.015 * h, 0.3 * h)
-        var handle = new T.Mesh(new T.BoxGeometry(0.04 * h, 0.1 * h, 0.05 * h), mat(0x3b2a1e)); handle.position.set(0, -0.06 * h, 0.02 * h); handle.rotation.x = 0.3
-        g.add(body, barrel, handle)
+        // 소총: 개머리판(뒤) — 몸통 — 긴 총열(앞, +Z). 오른손이 방아쇠 자리
+        var stock = new T.Mesh(new T.BoxGeometry(0.045 * h, 0.08 * h, 0.18 * h), mat(0x6b4426)); stock.position.set(0, -0.015 * h, -0.12 * h)
+        var body = new T.Mesh(new T.BoxGeometry(0.05 * h, 0.06 * h, 0.26 * h), mat(0x2b2f36, 0.5)); body.position.z = 0.1 * h
+        var fore = new T.Mesh(new T.BoxGeometry(0.045 * h, 0.045 * h, 0.2 * h), mat(0x6b4426)); fore.position.set(0, -0.012 * h, 0.3 * h)
+        var barrel = new T.Mesh(new T.CylinderGeometry(0.011 * h, 0.011 * h, 0.36 * h, 10), mat(0x15171b, 0.7)); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.018 * h, 0.42 * h)
+        var grip = new T.Mesh(new T.BoxGeometry(0.035 * h, 0.08 * h, 0.04 * h), mat(0x3b2a1e)); grip.position.set(0, -0.06 * h, 0.0); grip.rotation.x = 0.35
+        var muzzle = new T.Object3D(); muzzle.name = 'muzzle'; muzzle.position.set(0, 0.018 * h, 0.61 * h)
+        g.add(stock, body, fore, barrel, grip, muzzle)
       }
       return g
     }
@@ -190,8 +210,12 @@
       trigger: function (name) {
         if (name === 'talk') { api.say(1.6); return }
         if (dead) return
-        if (name === 'attack' && STANCE_ATTACK[stance] && acts[STANCE_ATTACK[stance]]) name = STANCE_ATTACK[stance]
-        if (name === 'shoot') name = acts.gun_shoot ? 'gun_shoot' : 'attack'
+        if (name === 'attack' && stance === 'gun' && acts.gun_shoot) { fire(); name = state === 'kneel' && acts.gun_shoot_kneel ? 'gun_shoot_kneel' : 'gun_shoot' }
+        if (name === 'shoot') { name = acts.gun_shoot ? (state === 'kneel' && acts.gun_shoot_kneel ? 'gun_shoot_kneel' : 'gun_shoot') : 'attack'; fire() }
+        else if (name === 'attack' && stance === 'gun') fire()
+        // 칼은 연속 공격마다 다른 베기 (내려베기 → 가로베기 → 찌르기), 양손검은 내려치기 ↔ 가로 휘두르기
+        if (name === 'attack' && (stance === 'sword' || stance === 'sword_shield')) { var sc = ['sword_slash', 'sword_slash_side', 'sword_thrust'].filter(function (n) { return acts[n] }); if (sc.length) { name = sc[combo % sc.length]; combo++ } }
+        if (name === 'attack' && stance === 'greatsword') { var gc = ['greatsword_slash', 'greatsword_side'].filter(function (n) { return acts[n] }); if (gc.length) { name = gc[combo % gc.length]; combo++ } }
         if (name === 'block') name = acts.shield_block ? 'shield_block' : 'hit'
         if (name === 'die') {
           dead = true; one = 'die'; oneT = 0
@@ -259,10 +283,18 @@
           var tx = eyesShut && mouthOpen ? (face.alt.both || face.alt.blink) : eyesShut ? face.alt.blink : mouthOpen ? face.alt.mouth : face.base
           if (tx !== face.cur) { face.mesh.material.map = tx; face.mesh.material.needsUpdate = true; face.cur = tx }
         }
+        // 총알·불꽃
+        for (var bi = bullets.length - 1; bi >= 0; bi--) {
+          var bu = bullets[bi]; bu.life -= dt
+          if (bu.v) bu.m.position.addScaledVector(bu.v, dt)
+          else if (bu.m.material) { bu.m.material.opacity = Math.max(0, bu.life / 0.07); bu.m.scale.setScalar(1 + (0.07 - bu.life) * 12) }
+          if (bu.life <= 0) { if (bu.m.parent) bu.m.parent.remove(bu.m); bu.m.geometry.dispose(); bu.m.material.dispose(); bullets.splice(bi, 1) }
+        }
         if (mixer) {
           if (!dead) {
             var base = state
             if ((state === 'idle' || state === 'aim') && STANCE_IDLE[stance] && acts[STANCE_IDLE[stance]]) base = STANCE_IDLE[stance]
+            if (state === 'kneel') base = stance === 'gun' && acts.gun_aim_kneel ? 'gun_aim_kneel' : acts.sit ? 'sit' : 'idle'
             if (oneAct && !oneAct.isRunning()) { oneAct.fadeOut(0.15); oneAct = null }
             if (!oneAct) play(talking && acts.talk && stance === 'none' ? 'talk' : base)   // 한 번 동작 중엔 기본 동작을 잠시 끈다
           }

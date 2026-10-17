@@ -16,6 +16,8 @@ export async function GET(req: Request) {
   const folder = cleanName(u.searchParams.get('folder') ?? '')
   const offset = Math.max(0, Number(u.searchParams.get('offset') ?? 0) | 0)
   const limit = Math.min(100, Math.max(1, Number(u.searchParams.get('limit') ?? 30) | 0))
+  const q = (u.searchParams.get('q') ?? '').trim().toLowerCase()
+  const ext = (u.searchParams.get('ext') ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
   const store = g.admin.storage.from(BUCKET)
   const pub = (k: string) => store.getPublicUrl(k).data.publicUrl
   type Raw = { name: string; id: string | null; created_at?: string | null; metadata?: unknown }
@@ -44,6 +46,8 @@ export async function GET(req: Request) {
       all = all.concat(...subs)
       all.sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))
     }
+    if (q) all = all.filter((f) => f.name.toLowerCase().includes(q))
+    if (ext) all = all.filter((f) => f.name.toLowerCase().endsWith('.' + ext))
     const page = all.slice(offset, offset + limit)
     // 3D 모델: 뼈대·움직임 여부 (표식이 없으면 GLB 앞부분을 읽어 확인하고 표식을 남긴다) — 이번 페이지만
     await Promise.all(page.filter((f) => /\.glb$/i.test(f.name)).map(async (f) => {
