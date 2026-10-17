@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { INJECTABLE } from '@/lib/media/assets'
+import { glbRig } from '@/lib/designer/drive'
 
 export async function GET(req: Request) {
   const u = new URL(req.url)
@@ -31,6 +32,11 @@ export async function GET(req: Request) {
     const ids = [...new Set((data ?? []).map((a) => (a as { designer_id: string | null }).designer_id).filter((x): x is string => !!x))]
     const names: Record<string, string> = {}
     if (ids.length) { const { data: profs } = await admin.from('profiles').select('id,username,agent_name').in('id', ids); for (const p of (profs ?? []) as { id: string; username: string | null; agent_name: string | null }[]) names[p.id] = p.agent_name ?? p.username ?? '디자이너' }
+    // 3D 모델: 뼈대·움직임 여부를 아직 모르면 GLB 앞부분을 읽어 확인하고 meta.rig 로 남긴다(한 번만)
+    await Promise.all((data as unknown as { id: string; kind: string; url: string; meta: Record<string, unknown> | null }[]).filter((a) => a.kind === 'model3d' && !(a.meta ?? {}).rig).slice(0, 12).map(async (a) => {
+      const rig = await glbRig(a.url)
+      if (rig) { a.meta = { ...(a.meta ?? {}), rig }; await admin.from('media_assets').update({ meta: a.meta } as never).eq('id', a.id) }
+    }))
     const items = (data ?? []).map((a) => {
       const { url, ...rest } = a as unknown as { url: string; id: string; kind: string; designer_id: string | null }
       const preview = rest.kind === 'audio' || (rest.kind === 'model3d' && !(rest as { meta?: { thumb?: string } }).meta?.thumb) ? null : `/api/library/preview/${rest.id}`

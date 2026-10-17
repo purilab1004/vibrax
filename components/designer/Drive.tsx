@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { GlbViewer } from './GlbViewer'
 import { MotionChips, RigButton } from './RigControls'
-import { ui, isImage, isGlb, isAudio, fmtSize, type DriveFile, type Source3D } from './shared'
+import { ui, isImage, isGlb, isAudio, fmtSize, rigBadge, type DriveFile, type Source3D } from './shared'
 
 const KINDS: [string, string][] = [['character', '캐릭터'], ['background', '배경'], ['tile', '타일·맵'], ['item', '아이템'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트']]
 const post = (body: object) => fetch('/api/designer/drive', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) }))
@@ -154,7 +154,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
                   </button>
                   <input type="checkbox" checked={sel.has(f.key)} onChange={() => toggle(f.key)} aria-label="선택"
                     className={`absolute top-2 left-2 w-4.5 h-4.5 accent-[#2563eb] ${sel.size ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} />
-                  {isGlb(f.name) && <span className="absolute top-2 right-2 text-[10px] font-extrabold bg-[#241f17] text-white rounded px-1.5 py-0.5">3D</span>}
+                  {isGlb(f.name) && <span className="absolute top-2 right-2 flex gap-1">{rigBadge(f.rig) && <span className="text-[10px] font-extrabold bg-[#16a34a] text-white rounded px-1.5 py-0.5">{rigBadge(f.rig)}</span>}<span className="text-[10px] font-extrabold bg-[#241f17] text-white rounded px-1.5 py-0.5">3D</span></span>}
                   <div className="px-2.5 py-2">
                     <p className="text-[12.5px] font-bold text-[#241f17] truncate" title={f.name}>{f.name}</p>
                     <p className="text-[10.5px] text-[#9d9280]">{fmtSize(f.size)}{f.created_at ? ` · ${new Date(f.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}` : ''}</p>

@@ -40,3 +40,19 @@ export async function freeKey(admin: ReturnType<typeof createAdminClient>, dir: 
   const n = `${m[1]} ${Date.now()}${m[2] ?? ''}`
   return { key: `${dir}/${enc(n)}`, name: n }
 }
+
+/** GLB 앞부분(JSON 청크)만 읽어 뼈대(skins)·움직임 클립(animations)이 있는지 본다 */
+export async function glbRig(url: string): Promise<'anim' | 'bones' | 'none' | null> {
+  try {
+    const r = await fetch(url, { headers: { Range: 'bytes=0-400000' } })
+    if (!r.ok) return null
+    const b = Buffer.from(await r.arrayBuffer())
+    if (b.length < 20 || b.toString('ascii', 0, 4) !== 'glTF') return null
+    const len = b.readUInt32LE(12)
+    if (b.length < 20 + len) return null
+    const j = JSON.parse(b.toString('utf8', 20, 20 + len)) as { skins?: unknown[]; animations?: unknown[] }
+    return (j.animations ?? []).length ? 'anim' : (j.skins ?? []).length ? 'bones' : 'none'
+  } catch { return null }
+}
+/** 뼈대 표식 파일(같은 키 + '.r' 내용 anim|bones|none) — 한 번 확인하면 다시 읽지 않는다 */
+export const RIG_MARK = '.r'

@@ -1,10 +1,10 @@
 'use client'
 // 전체 갤러리 — 공개된 모든 디자인을 둘러보고·검색해 참고하거나 3D 로 만든다
 import { useEffect, useState } from 'react'
-import { ui, type Source3D } from './shared'
+import { ui, rigBadge, type Source3D } from './shared'
 import { GlbViewer } from './GlbViewer'
 
-interface Asset { id: string; kind: string; name: string; title: string; url?: string; preview?: string | null; width: number | null; height: number | null; designer_name: string | null; tags?: string[]; uses?: number | null }
+interface Asset { meta?: { rig?: string } | null; id: string; kind: string; name: string; title: string; url?: string; preview?: string | null; width: number | null; height: number | null; designer_name: string | null; tags?: string[]; uses?: number | null }
 const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일·맵'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['model3d', '3D 모델']]
 
 export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) => void }) {
@@ -36,7 +36,8 @@ export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) =>
         : (
           <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-3 [&>*]:mb-3">
             {(sort === 'popular' ? [...items].sort((a, b) => (b.uses ?? 0) - (a.uses ?? 0)) : items).map((a) => (
-              <button key={a.id} onClick={() => setView(a)} className={`group block w-full break-inside-avoid rounded-xl overflow-hidden border border-[#ebe4d6] hover:border-[#cfc4ab] hover:shadow-lg transition-all ${ui.checker}`}>
+              <button key={a.id} onClick={() => setView(a)} className={`group relative block w-full break-inside-avoid rounded-xl overflow-hidden border border-[#ebe4d6] hover:border-[#cfc4ab] hover:shadow-lg transition-all ${ui.checker}`}>
+                {a.kind === 'model3d' && <span className="absolute top-2 left-2 z-10 flex gap-1"><span className="text-[10px] font-extrabold bg-[#241f17] text-white rounded px-1.5 py-0.5">3D</span>{rigBadge(a.meta?.rig) && <span className="text-[10px] font-extrabold bg-[#16a34a] text-white rounded px-1.5 py-0.5">{rigBadge(a.meta?.rig)}</span>}</span>}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={a.preview ?? a.url ?? ''} alt={a.title} loading="lazy" className="w-full h-auto object-contain group-hover:scale-[1.03] transition-transform duration-500" style={a.width && a.height ? { aspectRatio: `${a.width}/${a.height}` } : undefined} />
               </button>

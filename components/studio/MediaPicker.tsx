@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 export interface PickedAsset { id: string; kind: string; name: string; title: string; url: string; thumb?: string | null }
-interface Item extends PickedAsset { credit_cost?: number; description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string; thumb?: string | null } }
+interface Item extends PickedAsset { credit_cost?: number; description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string; thumb?: string | null; rig?: string } }
 const ROLE: Record<string, string> = { bgm: '배경음', jump: '점프', hit: '타격', coin: '획득', shoot: '발사', explosion: '폭발', powerup: '파워업', gameover: '게임오버', clear: '클리어', click: 'UI', ambient: '환경음', other: '기타' }
 
 const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '오디오'], ['model3d', '3D 모델']]
@@ -101,7 +101,10 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
                         )}
                       </span>
                     ) : it.kind === 'model3d' ? (
-                      it.meta?.thumb ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={it.meta.thumb} alt={it.title} loading="lazy" className="max-w-full max-h-full object-contain" /> : <span className="text-[34px]" aria-hidden>🧊</span>
+                      <span className="relative w-full h-full flex items-center justify-center">
+                        {it.meta?.thumb ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={it.meta.thumb} alt={it.title} loading="lazy" className="max-w-full max-h-full object-contain" /> : <span className="text-[34px]" aria-hidden>🧊</span>}
+                        <span className="absolute top-1 left-1 flex gap-0.5"><span className="text-[9.5px] font-extrabold bg-[#241f17] text-white rounded px-1">3D</span>{it.meta?.rig === 'anim' || it.meta?.rig === 'bones' ? <span className="text-[9.5px] font-extrabold bg-[#16a34a] text-white rounded px-1">{it.meta.rig === 'anim' ? '🦴 움직임' : '🦴 뼈대'}</span> : null}</span>
+                      </span>
                     ) : /* eslint-disable-next-line @next/next/no-img-element */ <img src={it.url} alt={it.title} loading="lazy" className="max-w-full max-h-full object-contain" style={{ imageRendering: (it.width ?? 999) <= 128 ? 'pixelated' : 'auto' }} />}
                   </div>
                   <div className="px-2 py-1.5">

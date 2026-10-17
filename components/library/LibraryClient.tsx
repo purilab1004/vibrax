@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic'
 const GlbViewer = dynamic(() => import('@/components/designer/GlbViewer').then((m) => m.GlbViewer), { ssr: false })
 import { useRouter, useSearchParams } from 'next/navigation'
 
-interface Asset { id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url?: string; preview: string | null; width: number | null; height: number | null; uses: number | null; created_at: string; designer_name: string | null }
+interface Asset { meta?: { rig?: string } | null; id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url?: string; preview: string | null; width: number | null; height: number | null; uses: number | null; created_at: string; designer_name: string | null }
 const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일·맵'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['model3d', '3D 모델'], ['audio', '효과음·음악']]
 const SUGGEST = ['드래곤', '우주', '숲', '픽셀', '귀여운', '바다', '던전', '네온']
 
@@ -98,7 +98,7 @@ export default function LibraryClient() {
           <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 [&>*]:mb-3">
             {shown.map((a) => (
               <button key={a.id} onClick={() => setPreview(a)} className="group relative block w-full break-inside-avoid rounded-xl overflow-hidden bg-[repeating-conic-gradient(#f3f0e8_0_25%,#fff_0_50%)] bg-[length:14px_14px] border border-[#ebe4d6] hover:shadow-[0_14px_30px_-14px_rgba(36,31,23,0.45)] transition-shadow text-left">
-                {a.kind === 'model3d' && <span className="absolute top-2 left-2 z-10 text-[10px] font-extrabold bg-[#241f17] text-white rounded px-1.5 py-0.5">3D</span>}
+                {a.kind === 'model3d' && <span className="absolute top-2 left-2 z-10 flex gap-1"><span className="text-[10px] font-extrabold bg-[#241f17] text-white rounded px-1.5 py-0.5">3D</span>{a.meta?.rig === 'anim' ? <span className="text-[10px] font-extrabold bg-[#16a34a] text-white rounded px-1.5 py-0.5">🦴 움직임</span> : a.meta?.rig === 'bones' ? <span className="text-[10px] font-extrabold bg-[#16a34a] text-white rounded px-1.5 py-0.5">🦴 뼈대</span> : null}</span>}
                 {a.kind === 'audio' ? (
                   <div className="aspect-[4/3] flex flex-col items-center justify-center bg-gradient-to-br from-[#eef4ff] to-[#fdf2f8]"><span className="text-[36px]">🎵</span><span className="mt-1 text-[12px] font-bold text-[#4a4337] px-2 truncate max-w-full">{a.title}</span></div>
                 ) : (

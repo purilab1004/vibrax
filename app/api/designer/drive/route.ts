@@ -1,14 +1,14 @@
 // /api/designer/drive — 디자이너 드라이브 (스튜디오 › 디자인 AI)
 // GET ?folder=        → { folders, files } (폴더는 한 단계)
 // POST { action, … }  → upload_url(직접 업로드용 서명 URL) · mkdir · rmdir · delete · rename · move · save_image(AI 생성 이미지 저장) · publish(갤러리 공개 신청)
-import { BUCKET, dec, root, folderPath, cleanName, extOf, mimeOf, DRIVE_EXT, requireDesigner, freeKey } from '@/lib/designer/drive'
+import { glbRig, RIG_MARK, BUCKET, dec, root, folderPath, cleanName, extOf, mimeOf, DRIVE_EXT, requireDesigner, freeKey } from '@/lib/designer/drive'
 import { modalFile, verifyToken, type ImageTok } from '@/lib/modal/client'
 import { MEDIA_KINDS, toAssetName, type MediaKind } from '@/lib/media/assets'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-interface FileOut { key: string; name: string; url: string; thumb: string | null; size: number; mime: string; created_at: string | null }
+interface FileOut { key: string; name: string; url: string; thumb: string | null; size: number; mime: string; created_at: string | null; rig?: 'anim' | 'bones' | 'none' | null }
 
 export async function GET(req: Request) {
   const g = await requireDesigner(); if ('error' in g) return g.error
@@ -23,10 +23,18 @@ export async function GET(req: Request) {
   const files: FileOut[] = []
   for (const f of data ?? []) {
     if (!f.id) { if (!folder) folders.push({ name: dec(f.name) }); continue }  // 폴더
-    if (f.name === '.keep' || f.name.endsWith('.t')) continue
+    if (f.name === '.keep' || f.name.endsWith('.t') || f.name.endsWith(RIG_MARK)) continue
     const key = `${dir}/${f.name}`
     files.push({ key, name: dec(f.name), url: pub(key), thumb: names.has(f.name + '.t') ? pub(key + '.t') : null, size: Number((f.metadata as { size?: number } | null)?.size ?? 0), mime: String((f.metadata as { mimetype?: string } | null)?.mimetype ?? mimeOf(dec(f.name))), created_at: f.created_at ?? null })
   }
+  // 3D 모델: 뼈대·움직임 여부 (표식이 없으면 GLB 앞부분을 읽어 확인하고 표식을 남긴다)
+  await Promise.all(files.filter((f) => /\.glb$/i.test(f.name)).map(async (f) => {
+    const base = f.key.split('/').pop()!
+    const mark = (data ?? []).find((x) => x.name === base + RIG_MARK)
+    if (mark) { const r = await store.download(f.key + RIG_MARK).then((x) => x.data?.text()).catch(() => null); f.rig = (r as FileOut['rig']) ?? null; return }
+    f.rig = await glbRig(f.url)
+    if (f.rig) await store.upload(f.key + RIG_MARK, Buffer.from(f.rig), { contentType: 'text/plain', upsert: true })
+  }))
   folders.sort((a, b) => a.name.localeCompare(b.name, 'ko'))
   return Response.json({ folder, folders, files })
 }
@@ -64,7 +72,7 @@ export async function POST(req: Request) {
     case 'delete': {
       const keys = (Array.isArray(body.keys) ? body.keys : []).filter(mine).slice(0, 200)
       if (!keys.length) return Response.json({ error: '지울 파일이 없어요' }, { status: 400 })
-      const { error } = await store.remove([...keys, ...keys.map((k) => k + '.t')])
+      const { error } = await store.remove([...keys, ...keys.map((k) => k + '.t'), ...keys.map((k) => k + RIG_MARK)])
       return error ? Response.json({ error: error.message }, { status: 500 }) : Response.json({ ok: true })
     }
     case 'rename':
@@ -85,6 +93,7 @@ export async function POST(req: Request) {
         const { error } = await store.move(k, to)
         if (error) return Response.json({ error: error.message }, { status: 500 })
         await store.move(k + '.t', to + '.t').catch(() => null)   // 썸네일(있으면)
+        await store.move(k + RIG_MARK, to + RIG_MARK).catch(() => null)
         out.push(to)
       }
       return Response.json({ ok: true, keys: out })
@@ -118,10 +127,11 @@ export async function POST(req: Request) {
       let name = toAssetName(title)
       for (let i = 0; i < 20; i++) { const { data: dup } = await g.admin.from('media_assets').select('id').eq('name', name).maybeSingle(); if (!dup) break; name = `${name.slice(0, 34)}_${Math.random().toString(36).slice(2, 6)}` }
       const { data: info } = await store.info(path).catch(() => ({ data: null }))
+      const rig = is3d ? await glbRig(store.getPublicUrl(k).data.publicUrl) : null
       const row = {
         kind, name, title, description: String(body.description ?? '').trim().slice(0, 500) || null, genres: [] as string[],
         tags: String(body.tags ?? '').split(',').map((s) => s.trim()).filter(Boolean).slice(0, 20), path, url: store.getPublicUrl(path).data.publicUrl,
-        mime, bytes: Number((info as { size?: number } | null)?.size ?? 0), width: null, height: null, meta: { drive_key: k, ...(thumb ? { thumb } : {}) },
+        mime, bytes: Number((info as { size?: number } | null)?.size ?? 0), width: null, height: null, meta: { drive_key: k, ...(thumb ? { thumb } : {}), ...(rig ? { rig } : {}) },
         auto_use: !is3d, status: g.role === 'admin' ? 'active' : 'pending', created_by: uid, designer_id: uid,
       }
       const { data, error } = await g.admin.from('media_assets').insert([row] as never).select('id,name,title,status').maybeSingle()
