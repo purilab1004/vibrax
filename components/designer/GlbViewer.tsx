@@ -20,6 +20,10 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
   const box = useRef<HTMLDivElement>(null)
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  // 밝기 (기억해 둔다)
+  const [light, setLight] = useState(() => { try { return Number(localStorage.getItem('vx_glb_light') ?? 0.7) } catch { return 0.7 } })
+  const lightRef = useRef(light)
+  useEffect(() => { lightRef.current = light; try { localStorage.setItem('vx_glb_light', String(light)) } catch { /* 무시 */ } }, [light])
   const [label, setLabel] = useState<string | null>(null)
   const motionRef = useRef(motion)
   useEffect(() => { motionRef.current = motion }, [motion])
@@ -41,7 +45,7 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
       else renderer.outputEncoding = T.sRGBEncoding   // 플랫폼 three.js 는 r149 — 텍스처 색이 흐려지지 않게
       el.appendChild(renderer.domElement)
       const scene = new T.Scene(), cam = new T.PerspectiveCamera(40, w / h, 0.01, 100)
-      scene.add(new T.HemisphereLight(0xffffff, 0x8890a0, 1.6))
+      const hemi = new T.HemisphereLight(0xffffff, 0x8890a0, 1.6); scene.add(hemi)
       const sun = new T.DirectionalLight(0xffffff, 2.2); sun.position.set(3, 5, 4); scene.add(sun)
       const ctl = new T.OrbitControls(cam, renderer.domElement); ctl.enableDamping = true; ctl.autoRotate = !motionRef.current; ctl.autoRotateSpeed = 1.6
       let alive: any = null, last = performance.now(), lastTrig = 0
@@ -86,6 +90,7 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
           } else if (m === 'jump') alive.update(dt, Math.floor(now / 900) % 2 ? 'jump' : 'idle')
           else alive.update(dt, m === 'sword' ? 'idle' : m)
         }
+        hemi.intensity = 2.3 * lightRef.current; sun.intensity = 3.1 * lightRef.current
         ctl.update(); renderer.render(scene, cam)
       }
       loop()
@@ -96,6 +101,10 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
   }, [url])
   return (
     <div ref={box} className="relative w-full h-full min-h-[280px] rounded-[4px] bg-[radial-gradient(circle_at_50%_40%,#ffffff,#e4e8f0)] overflow-hidden cursor-grab active:cursor-grabbing">
+      <label className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-[4px] bg-white/85 backdrop-blur px-2.5 py-1.5 text-[11px] font-bold text-[#5f523f] shadow-sm" onPointerDown={(e) => e.stopPropagation()}>
+        밝기
+        <input type="range" min={0.15} max={1.4} step={0.05} value={light} onChange={(e) => setLight(Number(e.target.value))} className="w-24 accent-[#a8783f]" aria-label="밝기" />
+      </label>
       {label && <span className="absolute left-3 top-3 z-10 text-[12.5px] font-extrabold bg-[#2b2419]/85 text-white rounded-[4px] px-3 py-1">{label}</span>}
       {loading && !err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#9a8b72]">모델 불러오는 중…</p>}
       {err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#f87171]">{err}</p>}

@@ -81,7 +81,10 @@ export default function DesignerStudio() {
       <ParticleField />
       {/* 상단 바 */}
       <div className="app-top-pad sticky top-0 z-30 flex items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(168,120,63,0.08),0_8px_30px_-18px_rgba(168,120,63,0.35)] px-4 h-11 box-content">
-        <Link href="/studio" className="font-pixel text-[11px] text-[#5f523f] hover:text-[#a8783f] tracking-widest transition-colors shrink-0">‹ STUDIO</Link>
+        <nav className="flex items-center gap-1.5 shrink-0 min-w-0 text-[12px]">
+          <Link href="/studio" className="font-pixel text-[11px] text-[#5f523f] hover:text-[#a8783f] tracking-widest transition-colors">‹ STUDIO</Link>
+          {isDesigner && <><span className="text-[#c9b99c]">/</span><Decode key={section} text={NAV.find(([k]) => k === section)?.[2] ?? ''} className="font-bold text-[#2b2419] truncate" /></>}
+        </nav>
         <div className="flex-1 flex justify-center min-w-0 overflow-x-auto scrollbar-hide"><AiModeToggle /></div>
         <Link href="/credits" className="hover:opacity-80 transition-opacity shrink-0" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>
       </div>
@@ -137,10 +140,6 @@ export default function DesignerStudio() {
             </nav>
           </aside>
           <main className="flex-1 min-w-0 p-4 md:p-6">
-            <header className="mb-4 flex items-end gap-3">
-              <h1 className="text-[22px] md:text-[26px] font-black tracking-tight text-[#2b2419]"><Decode key={section} text={NAV.find(([k]) => k === section)?.[2] ?? ''} replayOnHover /></h1>
-              <span className="vx-glyph mb-1.5 text-[10px] font-bold bg-gradient-to-r from-[#a8783f] to-[#d6b47a] bg-clip-text text-transparent">{'// ' + WORD[section]}</span>
-            </header>
             {section === 'drive' && <Drive refresh={refresh} onMake3D={make3D} />}
             {section === 'image' && <ImageGen onSaved={saved} onMake3D={make3D} />}
             {section === 'model3d' && <Model3D source={source3d} onSaved={saved} />}
