@@ -61,7 +61,7 @@ export default async function StoryPage({ searchParams }: { searchParams: Promis
       {/* ── 1단: 로고 · 종류 · 검색 ── */}
       <header className="border-b border-[#e8eaef]">
         <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-12 md:h-14 flex items-center gap-4 md:gap-6">
-          <Link href="/story" className="text-[20px] md:text-[22px] font-black tracking-[-0.04em] shrink-0">STORY</Link>
+          <Link href="/story" className="hidden md:inline text-[22px] font-black tracking-[-0.04em] shrink-0">STORY</Link>
           <nav className="flex items-center gap-3 md:gap-5 text-[14px] md:text-[16px] font-bold" aria-label="종류">
             {(['toon', 'novel', 'shorts'] as const).map((k) => (
               <Link key={k} href={k === 'toon' ? '/story' : `/story?type=${k}`} className={`whitespace-nowrap ${kind === k ? 'text-[#1a1d24]' : 'text-[#a3a9b4] hover:text-[#1a1d24]'}`}>

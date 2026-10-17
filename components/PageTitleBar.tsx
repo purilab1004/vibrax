@@ -23,7 +23,7 @@ export default function PageTitleBar() {
   return (
     <div className="bg-white border-b border-[#e8eaef] md:pl-[var(--rail-w,0rem)]">
       <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-12 md:h-14 flex items-center gap-4 md:gap-6 min-w-0">
-        <span className="text-[20px] md:text-[22px] font-black tracking-[-0.04em] shrink-0 text-[#1a1d24]">{p.title}</span>
+        <span className="hidden md:inline text-[22px] font-black tracking-[-0.04em] shrink-0 text-[#1a1d24]">{p.title}</span>
         <span className="text-[13px] md:text-[14px] text-[#6b7280] truncate">{lang === 'en' ? p.en : p.ko}</span>
       </div>
     </div>

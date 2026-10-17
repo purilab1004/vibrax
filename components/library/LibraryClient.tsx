@@ -48,7 +48,7 @@ export default function LibraryClient() {
       {/* 제목 줄 — STORY 와 같은 모양: 제목 · 분류 탭 · 검색 / 아래 줄: 추천 태그 */}
       <section className="bg-white border-b border-[#e8eaef]">
         <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-12 md:h-14 flex items-center gap-4 md:gap-6">
-          <span className="text-[20px] md:text-[22px] font-black tracking-[-0.04em] shrink-0 text-[#1a1d24]">GALLERY</span>
+          <span className="hidden md:inline text-[22px] font-black tracking-[-0.04em] shrink-0 text-[#1a1d24]">GALLERY</span>
           <nav className="flex items-center gap-3 md:gap-5 text-[14px] md:text-[15px] font-bold overflow-x-auto no-scrollbar min-w-0" aria-label="분류">
             {KINDS.map(([v, l]) => (
               <button key={v} onClick={() => setKind(v)} className={`shrink-0 whitespace-nowrap ${kind === v ? 'text-[#1a1d24]' : 'text-[#a3a9b4] hover:text-[#1a1d24]'}`}>{l}</button>

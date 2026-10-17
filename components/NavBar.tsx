@@ -1,5 +1,6 @@
 'use client'
 
+import { pageNameOf } from '@/lib/page-names'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useSoundPref, setSoundPref } from '@/lib/live/soundPref'
@@ -181,12 +182,14 @@ export default function NavBar() {
             className="md:hidden group flex items-center gap-2 text-[#241f17] text-xl font-extrabold tracking-tight hover:opacity-80 transition-opacity shrink-0"
           >
             <LogoMark />
+            {pageNameOf(pathname) ? <span className="font-black tracking-[-0.04em]">{pageNameOf(pathname)}</span> : (
             <span>
               vibrex<span className="text-[#2563eb]">cup</span>
               <span className="ml-1 align-top text-[8px] font-semibold px-1 py-px border border-red-500/70 text-red-500 rounded">
                 BETA
               </span>
             </span>
+            )}
           </Link>
 
           {/* ── Desktop: 3분할 그리드 — 메뉴는 중앙, 로그인/언어는 우측 ── */}
