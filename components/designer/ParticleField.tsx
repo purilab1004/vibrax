@@ -68,7 +68,7 @@ void main() {
   clip.xy += normalize(d + 1e-4) * m * 0.09 * clip.w;
   gl_Position = clip;
   gl_PointSize = uSize * (0.55 + seed) / -mv.z;
-  vSeed = seed; vAlpha = 0.35 + 0.55 * seed;
+  vSeed = seed; vAlpha = 0.12 + 0.26 * seed;   // 연하게 — 글씨가 잘 보이도록
 }`
 const FRAG = `
 varying float vSeed; varying float vAlpha;
@@ -104,11 +104,11 @@ export default function ParticleField() {
       geo.setAttribute('posB', new T.BufferAttribute(S[next].slice(), 3))
       const seed = new Float32Array(N); for (let i = 0; i < N; i++) seed[i] = Math.random()
       geo.setAttribute('seed', new T.BufferAttribute(seed, 1))
-      const uni = { uMix: { value: 0 }, uTime: { value: 0 }, uMouse: { value: new T.Vector2(9, 9) }, uSize: { value: 15 * Math.min(1.75, window.devicePixelRatio) }, uBurst: { value: 0 }, uPulse: { value: 0 }, uCalm: { value: 0 } }
+      const uni = { uMix: { value: 0 }, uTime: { value: 0 }, uMouse: { value: new T.Vector2(9, 9) }, uSize: { value: 19 * Math.min(1.75, window.devicePixelRatio) }, uBurst: { value: 0 }, uPulse: { value: 0 }, uCalm: { value: 0 } }
       const mat = new T.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uni, transparent: true, depthWrite: false })
       const pts = new T.Points(geo, mat); scene.add(pts)
       // 오른쪽에 두어 왼쪽 메뉴·글과 겹치지 않게
-      const place = () => { const wide = el.clientWidth > 900; pts.position.set(wide ? 1.15 : 0, wide ? 0 : 0.6, 0); pts.scale.setScalar(wide ? 1 : 0.8) }
+      const place = () => { const wide = el.clientWidth > 900; pts.position.set(wide ? 0.9 : 0, wide ? 0 : 0.4, 0); pts.scale.setScalar(wide ? 1.45 : 1.1) }
       place()
       const onMove = (e: PointerEvent) => { uni.uMouse.value.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1) }
       const onResize = () => { renderer.setSize(el.clientWidth, el.clientHeight); cam.aspect = el.clientWidth / el.clientHeight; cam.updateProjectionMatrix(); place() }
@@ -182,7 +182,7 @@ export default function ParticleField() {
         p.x += p.vx * devicePixelRatio; p.y += p.vy * devicePixelRatio; p.l -= 0.022
         if (p.l <= 0) continue
         const r = (1.2 + 2.2 * p.l) * devicePixelRatio
-        g.fillStyle = `hsla(${Math.round(200 + p.h * 60)},85%,60%,${(p.l * 0.6).toFixed(3)})`
+        g.fillStyle = `hsla(${Math.round(200 + p.h * 60)},85%,60%,${(p.l * 0.4).toFixed(3)})`
         g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2); g.fill()
       }
       for (let i = P.length - 1; i >= 0; i--) if (P[i].l <= 0) P.splice(i, 1)

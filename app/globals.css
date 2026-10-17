@@ -1062,12 +1062,15 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 .thumb-kb { animation: thumb-kb 32s cubic-bezier(.25,.6,.3,1) forwards; transform-origin: 50% 45%; }
 @media (prefers-reduced-motion: reduce) { .thumb-kb { animation: none; } }
 
-/* ── 디자인 AI: 모래빛 큐브(빈 화면 표시) ── */
-.vx-orb { display: inline-block; width: 40px; height: 40px; position: relative; transform: rotate(45deg);
-  background: linear-gradient(135deg, #ffffff 0%, #bfdbfe 45%, #2563eb 100%);
-  box-shadow: 0 0 22px 4px rgba(37, 99, 235, 0.28); animation: vx-orb 3.4s ease-in-out infinite; }
-.vx-orb::after { content: ''; position: absolute; inset: -9px; border: 1px solid rgba(37, 99, 235, 0.45); animation: vx-ring 3.4s ease-out infinite; }
-@keyframes vx-orb { 0%, 100% { transform: rotate(45deg) scale(0.92); } 50% { transform: rotate(135deg) scale(1.04); } }
-@keyframes vx-ring { 0% { transform: scale(0.7); opacity: 0.9; } 100% { transform: scale(1.7); opacity: 0; } }
+/* ── 디자인 AI: 빈 화면 표시 — 빛 궤도(세 개의 고리가 다른 축으로 돌고 가운데 빛점이 숨쉰다) ── */
+.vx-orb { display: inline-block; width: 56px; height: 56px; position: relative; perspective: 220px; }
+.vx-orb::before, .vx-orb::after, .vx-orb { --c: rgba(37, 99, 235, 0.55); }
+.vx-orb::before, .vx-orb::after { content: ''; position: absolute; inset: 0; border-radius: 9999px; border: 1px solid var(--c); }
+.vx-orb::before { animation: vx-o1 6s linear infinite; border-color: rgba(56, 189, 248, 0.7); }
+.vx-orb::after { animation: vx-o2 7.5s linear infinite; border-color: rgba(124, 92, 246, 0.55); }
+.vx-orb { background: radial-gradient(circle, #ffffff 0 3px, rgba(37, 99, 235, 0.9) 4px, rgba(56, 189, 248, 0.35) 9px, transparent 14px); animation: vx-core 2.6s ease-in-out infinite; border-radius: 9999px; box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.25); }
+@keyframes vx-o1 { from { transform: rotateX(68deg) rotateZ(0deg); } to { transform: rotateX(68deg) rotateZ(360deg); } }
+@keyframes vx-o2 { from { transform: rotateY(70deg) rotateZ(0deg); } to { transform: rotateY(70deg) rotateZ(-360deg); } }
+@keyframes vx-core { 0%, 100% { filter: brightness(1); transform: scale(0.96); } 50% { filter: brightness(1.25); transform: scale(1.04); } }
 .vx-glyph { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.18em; }
-@media (prefers-reduced-motion: reduce) { .vx-orb, .vx-orb::after { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .vx-orb, .vx-orb::before, .vx-orb::after { animation: none; } }
