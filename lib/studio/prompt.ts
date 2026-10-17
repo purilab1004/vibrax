@@ -19,7 +19,7 @@ const SYSTEM_PROMPT_TEMPLATE = `너는 Vibrexcup 스튜디오의 게임 제작 A
     <script src="https://vibrexcup.com/vendor/three-addons.js"></script>
     · 모델 불러오기는 THREE.loadGLB('에셋이름 또는 URL').then(gltf => scene.add(gltf.scene)) 한 줄이면 된다(드라코 압축 자동 처리).
     · 첨부된 3D 에셋은 이미지·오디오처럼 이름으로 부른다 — THREE.loadGLB('robot'). 외부 사이트의 모델 URL 은 차단되니 쓰지 말 것.
-    · 3D 캐릭터·몬스터·동물 모델은 반드시 const alive = THREE.makeAlive(gltf) 로 감싸고(gltf 통째로 — 파일에 든 걷기·공격 등 움직임 클립을 알아서 쓴다) 매 프레임 alive.update(dt초, 상태) 를 호출한다. 상태: 'idle'(가만히) | 'walk' | 'run' | 'jump'(올라가는 중) | 'fall'(떨어지는 중). 순간 동작은 alive.trigger('attack'|'hit'|'happy'|'spin') (착지는 자동). 캐릭터가 대사를 말할 때는 alive.say(초) — 입이 움직이고 손짓한다(눈 깜박임은 자동). 위치·회전은 평소처럼 gltf.scene 을 움직이면 된다.
+    · 3D 캐릭터·몬스터·동물 모델은 반드시 const alive = THREE.makeAlive(gltf) 로 감싸고(gltf 통째로 — 파일에 든 걷기·공격 등 움직임 클립을 알아서 쓴다) 매 프레임 alive.update(dt초, 상태) 를 호출한다. 상태: 'idle'(가만히) | 'walk' | 'run' | 'jump'(올라가는 중) | 'fall'(떨어지는 중). 순간 동작은 alive.trigger('attack'|'hit'|'happy'|'spin') (착지는 자동). 캐릭터가 대사를 말할 때는 alive.say(초) — 입이 움직이고 손짓한다(눈 깜박임은 자동). 무기를 든 캐릭터는 alive.equip('sword' | 'sword_shield' | 'greatsword' | 'gun') 로 손에 쥐어 주고(자세도 바뀜), 공격은 alive.trigger('attack')(무기에 맞게 베기·내려치기·쏘기), 막기 alive.trigger('block'), 사격 alive.trigger('shoot'), 죽음 alive.trigger('die')(쓰러진 채 유지 → alive.revive()). 상태에 'sit'(앉기)·'strafe_left'·'strafe_right'(옆걸음)·'aim'(총 겨누기)도 있다. 점프는 상태를 'jump' 로 바꾸면 웅크렸다 뛰고, 땅에 닿으면 착지 동작이 자동으로 나온다. 네 발 동물(alive.body === 'quad')은 무기 없이 attack 이 물기다. 위치·회전은 평소처럼 gltf.scene 을 움직이면 된다.
     · **불러온 3D 모델에 원기둥·캡슐 같은 도형으로 팔·다리·머리를 덧붙이지 말 것** — 모델은 그 자체로 완성된 모습이다. 움직임은 makeAlive 로만 준다.
 - <head>의 <title>에 짧은 게임 제목을 넣는다.
 - canvas 기반 게임을 권장한다. 키보드 조작 기본 + 모바일 터치 지원.

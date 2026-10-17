@@ -49,6 +49,10 @@ edit_image = (
     .pip_install("git+https://github.com/huggingface/diffusers", "transformers>=4.51", "accelerate", "sentencepiece", "protobuf", "huggingface_hub[hf_transfer]", "pillow", "rembg", "onnxruntime")
     .env({"HF_HOME": f"{CACHE}/hf", "HF_HUB_ENABLE_HF_TRANSFER": "1", "U2NET_HOME": f"{CACHE}/u2net"})
 )
+FIGURE_QUAD = ("A high-quality 3D rendered figurine of {p}. A single four-legged animal standing on all four legs, three-quarter front view, full body, "
+               "all four legs clearly visible and separated, tail visible, rounded volumetric shapes, soft vinyl toy material, plain pure white background, soft studio lighting, no text.")
+VOLUMIZE_QUAD = ("Turn this 2D drawing into a high-quality 3D rendered figurine of the same four-legged animal: rounded volumetric body, soft vinyl toy material, "
+                 "same design, colors and face, standing on all four legs with the legs clearly separated, three-quarter front view, full body, centered, plain pure white background, soft studio lighting, no outlines, no text.")
 VOLUMIZE = ("Turn this 2D drawing into a high-quality 3D rendered figurine of the same character: rounded volumetric body and head, "
             "soft vinyl toy material, same design, colors, face and proportions, full body, front view, standing in a relaxed A-pose with arms held slightly away from the body and legs slightly apart, centered, "
             "plain pure white background, soft studio lighting, no outlines, no text.")
@@ -78,7 +82,7 @@ def _run(cmd: list[str]):
     return r
 
 
-def rig_glb(glb: bytes) -> bytes:
+def rig_glb(glb: bytes, body: str = 'biped') -> bytes:
     with tempfile.TemporaryDirectory() as d:
         src, skel, skin, out = (os.path.join(d, n) for n in ("in.glb", "skeleton.fbx", "skin.fbx", "rigged.glb"))
         open(src, "wb").write(glb)
@@ -92,7 +96,7 @@ def rig_glb(glb: bytes) -> bytes:
         open(os.path.join(d, "bake.py"), "w").write(BAKE)
         open(os.path.join(d, "face.py"), "w").write(FACE)
         # Blender 는 드라코 라이브러리 경고 등을 stderr 로 내므로 결과 파일로만 성공을 판단한다
-        r = subprocess.run(["python", os.path.join(d, "bake.py"), out, anim, os.path.join(d, "face.py")], cwd=UNIRIG, capture_output=True, text=True)
+        r = subprocess.run(["python", os.path.join(d, "bake.py"), out, anim, os.path.join(d, "face.py"), body if body in ("biped", "quad") else "auto"], cwd=UNIRIG, capture_output=True, text=True)
         print("bake:", (r.stdout or "")[-400:])
         if os.path.exists(anim) and os.path.getsize(anim) > 1000:
             return open(anim, "rb").read()
@@ -336,6 +340,8 @@ import sys, math, bpy
 from mathutils import Vector, Quaternion
 src, dst = sys.argv[1], sys.argv[2]
 FACE_SRC = open(sys.argv[3]).read() if len(sys.argv) > 3 else ''
+BODY = sys.argv[4] if len(sys.argv) > 4 else 'biped'   # biped(두 발) | quad(네 발) | auto
+import json
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=src)
 arm = next(o for o in bpy.data.objects if o.type == 'ARMATURE')
@@ -364,6 +370,17 @@ def path(b):
     p = []
     while b: p.insert(0, b); b = b.parent
     return p
+# 네 발 동물: 가장 낮은 끝 네 개 = 발, 앞(-Y)·뒤로 나눈다
+QUAD = False
+low4 = sorted(low, key=lambda b: pos[b.name].z)[:4]
+if BODY in ('quad', 'auto') and len(low4) == 4:
+    ys_ = sorted(low4, key=lambda b: pos[b.name].y)
+    front, back = ys_[:2], ys_[2:]
+    sep = pos[back[0].name].y - pos[front[1].name].y
+    if BODY == 'quad' or sep > h * 0.15:
+        QUAD = True
+        FL, FR = max(front, key=lambda b: pos[b.name].x), min(front, key=lambda b: pos[b.name].x)
+        BL_, BR = max(back, key=lambda b: pos[b.name].x), min(back, key=lambda b: pos[b.name].x)
 def after(a, b):
     pa, pb = path(a), path(b) if b else []
     i = 0
@@ -377,6 +394,15 @@ LL, LR = chain(legL, legR), chain(legR, legL)
 AL, AR = chain(armL, armR or top, True), chain(armR, armL or top, True)
 HEAD = [top.parent or top] if top else []
 SPINE = [b for b in path(top)[:3]] if top else []
+LEGS4, TAIL = [], []
+if QUAD:
+    LEGS4 = [chain(FL, FR), chain(FR, FL), chain(BL_, BR), chain(BR, BL_)]
+    LL, LR, AL, AR = [], [], [], []
+    others = [b for b in leaves if b not in (FL, FR, BL_, BR, top)]
+    if others:
+        tail = max(others, key=lambda b: pos[b.name].y)
+        if pos[tail.name].y > (M @ root.head_local).y: TAIL = chain(tail, top)
+print('BODY', 'quad' if QUAD else 'biped', 'legs', [len(c) for c in LEGS4] if QUAD else [len(LL), len(LR)], 'arms', [len(AL), len(AR)], 'tail', len(TAIL))
 # 스킨 정리 — 자동 리깅은 몸통 살을 팔·다리 뼈에도 묶어, 팔을 들면 옆구리가 날개처럼 딸려 올라간다.
 #   어깨 관절보다 몸 안쪽에 있는 살의 팔 가중치 → 가슴(척추) 뼈로, 엉덩이 관절보다 위에 있는 살의 다리 가중치 → 골반(뿌리) 뼈로 옮긴다
 def clean_weights():
@@ -412,7 +438,7 @@ def clean_weights():
         for ch in (AL, AR):
             if ch and torso:
                 fix(ch, lambda p, ch=ch: seg_d(p, torso) < seg_d(p, ch) * 0.95, chest)
-        for ch in (LL, LR):
+        for ch in ((LL, LR) if not QUAD else tuple(LEGS4)):
             if ch and torso:
                 hz = (M @ ch[0].head_local).z
                 fix(ch, lambda p, ch=ch, hz=hz: p.z > hz + h * 0.03 and seg_d(p, torso) < seg_d(p, ch) * 0.8, root)
@@ -439,30 +465,93 @@ def clip(name, seconds, fn):
             for (bone, axis, ang) in poses.get(b.name, []): r = q(bone, axis, ang) @ r
             pb.rotation_quaternion = r
             pb.keyframe_insert('rotation_quaternion', frame=f + 1)
+        # 골반(뿌리 뼈) 높이 — 무릎을 굽히면 몸이 내려가야 발이 땅에 붙어 있다
+        rp = PB[root.name]
+        dz = poses.get('__hip', 0.0) * h
+        rp.location = (M.to_3x3() @ root.matrix_local.to_3x3()).inverted() @ Vector((0, 0, dz))
+        rp.keyframe_insert('location', frame=f + 1)
     tr = arm.animation_data.nla_tracks.new(); tr.name = name; tr.strips.new(name, 1, act)
     arm.animation_data.action = None
 def put(d, bones, axis, ang, idx=0):
     if len(bones) > idx: d.setdefault(bones[idx].name, []).append((bones[idx], axis, ang))
 X, Y, Z = (1, 0, 0), (0, 1, 0), (0, 0, 1)
-def gait(sw, knee):
+def legs_cycle(d, ph, thigh, knee_lo, knee_hi, foot, fwd=0.0):
+    # 한 다리 주기: ph=0 에서 앞으로 나가는 중(스윙 한가운데) — 스윙 때 무릎을 크게 굽히고 발끝을 든다
+    for ch, p_ in ((LL, ph), (LR, ph + math.pi)):
+        put(d, ch, X, -thigh * math.sin(p_) - fwd)
+        sw = max(0.0, math.cos(p_))
+        put(d, ch, X, knee_lo + knee_hi * sw ** 1.5, 1)
+        put(d, ch, X, -foot * sw, 2)
+def gait(thigh, knee_hi, arm, elbow, lean, bob, freq_bob=2):
     def fn(t):
-        s = math.sin(t * 2 * math.pi); d = {}
-        put(d, LL, X, -s * sw); put(d, LR, X, s * sw)
-        put(d, LL, X, max(0, s) * knee, 1); put(d, LR, X, max(0, -s) * knee, 1)
-        put(d, AL, X, s * sw * 0.8); put(d, AR, X, -s * sw * 0.8)
-        for sp in SPINE[1:2]: put(d, [sp], Z, s * 0.06)
+        ph = t * 2 * math.pi; d = {}
+        legs_cycle(d, ph, thigh, 0.08 + lean * 0.4, knee_hi, 0.25 + lean * 0.5, fwd=lean * 0.35)
+        # 팔은 다리와 반대로, 팔꿈치는 굽힌 채로
+        put(d, AL, X, arm * math.sin(ph)); put(d, AR, X, -arm * math.sin(ph))
+        put(d, AL, X, -elbow - 0.15 * max(0.0, math.sin(ph)), 1); put(d, AR, X, -elbow - 0.15 * max(0.0, -math.sin(ph)), 1)
+        # 골반은 살짝 비틀고 가슴은 반대로, 상체 숙임, 머리는 앞을 본다
+        if SPINE: put(d, SPINE[:1], Z, 0.09 * math.sin(ph)); put(d, SPINE[:1], Y, 0.03 * math.sin(ph))
+        for sp in SPINE[1:2]: put(d, [sp], Z, -0.1 * math.sin(ph)); put(d, [sp], X, lean)
+        put(d, HEAD, X, -lean * 0.6)
+        d['__hip'] = -bob * (0.5 + 0.5 * math.cos(2 * ph)) if freq_bob == 2 else bob * abs(math.sin(ph)) - bob * 0.5
         return d
     return fn
 def idle(t):
     s = math.sin(t * 2 * math.pi); d = {}
     put(d, HEAD, Z, s * 0.15); put(d, AL, X, s * 0.05); put(d, AR, X, -s * 0.05)
+    put(d, AL, X, -0.12, 1); put(d, AR, X, -0.12, 1)
     for sp in SPINE[1:2]: put(d, [sp], X, s * 0.03)
+    d['__hip'] = -0.004 * (1 + s)
+    return d
+def crouch(d, e, arms_back=0.0):
+    # 무릎·엉덩이를 굽혀 웅크림 (골반이 내려간다)
+    put(d, LL, X, -0.75 * e); put(d, LR, X, -0.75 * e); put(d, LL, X, 1.35 * e, 1); put(d, LR, X, 1.35 * e, 1)
+    put(d, LL, X, -0.55 * e, 2); put(d, LR, X, -0.55 * e, 2)
+    for sp in SPINE[1:2]: put(d, [sp], X, 0.35 * e)
+    put(d, AL, X, arms_back * e); put(d, AR, X, arms_back * e)
+    d['__hip'] = -0.11 * e
+def jump_start(t):
+    # 0~0.55 웅크림(팔은 뒤로) → 0.55~1 박차고 오름(다리 쭉, 팔 위로)
+    d = {}
+    if t < 0.55: crouch(d, sm(t / 0.55), 0.7)
+    else:
+        u = sm((t - 0.55) / 0.45)
+        crouch(d, 1 - u, 0.7 * (1 - u))
+        put(d, AL, X, -2.3 * u); put(d, AR, X, -2.3 * u); put(d, AL, Y, -0.3 * u); put(d, AR, Y, 0.3 * u)
+        d['__hip'] = d.get('__hip', 0) + 0.03 * u
     return d
 def jump(t):
-    e = math.sin(t * math.pi); d = {}
-    put(d, LL, X, -0.5 * e); put(d, LR, X, -0.5 * e); put(d, LL, X, 0.9 * e, 1); put(d, LR, X, 0.9 * e, 1)
-    put(d, AL, X, -1.0 * e); put(d, AR, X, -1.0 * e); put(d, AL, Y, -0.35 * e); put(d, AR, Y, 0.35 * e)
+    # 공중: 무릎을 당기고 팔은 위로, 살짝 출렁
+    w_ = 0.06 * math.sin(t * 2 * math.pi); d = {}
+    put(d, LL, X, -0.55 - w_); put(d, LR, X, -0.35 + w_); put(d, LL, X, 1.0, 1); put(d, LR, X, 0.8, 1)
+    put(d, AL, X, -2.0 + w_); put(d, AR, X, -2.0 - w_); put(d, AL, Y, -0.35); put(d, AR, Y, 0.35)
+    for sp in SPINE[1:2]: put(d, [sp], X, 0.1)
     return d
+def land(t):
+    e = math.sin(t * math.pi) * (1 - 0.3 * t); d = {}
+    crouch(d, e * 0.9); put(d, AL, X, -0.5 * e); put(d, AR, X, -0.5 * e); put(d, AL, Y, -0.3 * e); put(d, AR, Y, 0.3 * e)
+    return d
+def sit(t):
+    s = math.sin(t * 2 * math.pi); d = {}
+    put(d, LL, X, -1.45); put(d, LR, X, -1.45); put(d, LL, X, 1.5, 1); put(d, LR, X, 1.5, 1)
+    put(d, AL, X, -0.65); put(d, AR, X, -0.65); put(d, AL, X, -0.5, 1); put(d, AR, X, -0.5, 1)
+    for sp in SPINE[1:2]: put(d, [sp], X, 0.08 + 0.02 * s)
+    put(d, HEAD, Z, 0.08 * s)
+    d['__hip'] = -0.27
+    return d
+def strafe(side):
+    # 옆걸음: side=+1 왼쪽(캐릭터 기준 +X), -1 오른쪽. 나가는 다리를 옆으로 벌리고 다른 다리가 따라온다
+    def fn(t):
+        ph = t * 2 * math.pi; s_ = math.sin(ph); d = {}
+        lead, trail = (LL, LR) if side > 0 else (LR, LL)
+        put(d, lead, Y, -side * 0.32 * max(0.0, s_)); put(d, trail, Y, -side * 0.18 * max(0.0, -s_))
+        put(d, lead, X, 0.35 * max(0.0, s_), 1); put(d, trail, X, 0.3 * max(0.0, -s_), 1)
+        put(d, AL, Y, -0.12); put(d, AR, Y, 0.12); put(d, AL, X, -0.2, 1); put(d, AR, X, -0.2, 1)
+        if SPINE: put(d, SPINE[:1], Y, side * 0.05 * s_)
+        put(d, HEAD, Z, side * 0.05)
+        d['__hip'] = -0.012 * (0.5 + 0.5 * math.cos(2 * ph))
+        return d
+    return fn
 def attack(t):
     e = math.sin(min(1, t * 1.6) * math.pi); d = {}
     put(d, AR, X, -1.9 * e); put(d, AL, X, 0.3 * e)
@@ -477,19 +566,112 @@ def hit(t):
     put(d, HEAD, X, 0.4 * e); put(d, AL, Y, -0.6 * e); put(d, AR, Y, 0.6 * e)
     for sp in SPINE[1:2]: put(d, [sp], X, 0.25 * e)
     return d
-clip('idle', 2.4, idle); clip('walk', 0.9, gait(0.5, 0.7)); clip('run', 0.55, gait(0.85, 1.1))
 def talk(t):
     s2 = math.sin(t * 4 * math.pi); d = {}
     put(d, HEAD, X, -0.08 * s2); put(d, HEAD, Z, 0.06 * math.sin(t * 2 * math.pi))
     put(d, AR, X, -0.35 - 0.25 * math.sin(t * 2 * math.pi)); put(d, AR, Y, 0.25)
     for sp in SPINE[1:2]: put(d, [sp], Z, 0.05 * math.sin(t * 2 * math.pi))
     return d
-clip('jump', 0.8, jump); clip('attack', 0.5, attack); clip('happy', 0.9, happy); clip('hit', 0.45, hit); clip('talk', 1.6, talk)
+def sm(x): x = max(0.0, min(1.0, x)); return x * x * (3 - 2 * x)
+if not QUAD:
+    clip('idle', 2.4, idle)
+    clip('walk', 1.0, gait(0.42, 0.65, 0.38, 0.25, 0.04, 0.018))          # 자연스럽게: 보폭 보통, 팔 가볍게
+    clip('run', 0.62, gait(0.8, 1.35, 0.75, 1.25, 0.32, 0.035, 1))       # 상체를 숙이고 무릎 높이, 팔꿈치 굽혀 힘차게
+    clip('jump_start', 0.45, jump_start); clip('land', 0.35, land); clip('sit', 2.4, sit)
+    clip('strafe_left', 0.8, strafe(1)); clip('strafe_right', 0.8, strafe(-1))
+    clip('jump', 0.8, jump); clip('attack', 0.5, attack); clip('happy', 0.9, happy); clip('hit', 0.45, hit); clip('talk', 1.6, talk)
+    # ── 무기 동작 (오른손 = 캐릭터 오른쪽 = -X) ──
+    def breathe(d, t):
+        for sp in SPINE[1:2]: put(d, [sp], X, 0.03 * math.sin(t * 2 * math.pi))
+    def sword_idle(t):
+        d = {}; put(d, AR, X, -0.55); put(d, AR, X, -0.7, 1); put(d, AL, X, -0.12); breathe(d, t); return d
+    def sword_slash(t):
+        d = {}
+        if t < 0.35: e = sm(t / 0.35); ax, ay, tw = -0.55 - 1.8 * e, -0.3 * e, 0.25 * e
+        else: u = sm((t - 0.35) / 0.65); ax, ay, tw = -2.35 + 1.95 * u, -0.3 - 0.4 * u, 0.25 - 0.6 * u
+        put(d, AR, X, ax); put(d, AR, Y, ay); put(d, AR, X, -0.4, 1); put(d, AL, X, -0.2)
+        for sp in SPINE[1:2]: put(d, [sp], Z, tw)
+        return d
+    def shield_block(t):
+        d = {}; p_ = 1 + 0.03 * math.sin(t * 2 * math.pi)
+        put(d, AL, X, -1.3 * p_); put(d, AL, Y, 0.5); put(d, AL, X, -0.5, 1); put(d, AR, X, -0.45); put(d, AR, X, -0.7, 1)
+        for sp in SPINE[1:2]: put(d, [sp], X, 0.1)
+        return d
+    def greatsword_idle(t):
+        d = {}; put(d, AR, X, -0.75); put(d, AL, X, -0.75); put(d, AR, Y, -0.4); put(d, AL, Y, 0.4); put(d, AR, X, -0.5, 1); put(d, AL, X, -0.5, 1); breathe(d, t); return d
+    def greatsword_slash(t):
+        d = {}
+        if t < 0.45: e = sm(t / 0.45); ax, bend = -0.75 - 2.0 * e, -0.05 * e
+        else: u = sm((t - 0.45) / 0.55); ax, bend = -2.75 + 2.2 * u, -0.05 + 0.4 * u
+        for ch, sg in ((AR, -1), (AL, 1)): put(d, ch, X, ax); put(d, ch, Y, 0.4 * sg); put(d, ch, X, -0.4, 1)
+        for sp in SPINE[1:2]: put(d, [sp], X, bend)
+        return d
+    def gun_pose(d, kick=0.0):
+        put(d, AR, X, -1.45 - kick); put(d, AR, X, -0.1, 1); put(d, AL, X, -1.35 - kick); put(d, AL, Y, 0.55); put(d, AL, X, -0.35, 1)
+        for sp in SPINE[1:2]: put(d, [sp], X, -0.1 * kick / 0.25)
+    def gun_idle(t):
+        d = {}; gun_pose(d); put(d, HEAD, Z, 0.04 * math.sin(t * 2 * math.pi)); return d
+    def gun_shoot(t):
+        d = {}; gun_pose(d, 0.25 * max(0.0, 1 - t * 3.5)); return d
+    def die(t):
+        e = sm(t / 0.75); d = {}
+        for sp in SPINE[:1]: put(d, [sp], X, -1.45 * e)
+        put(d, AL, Y, -0.9 * e); put(d, AR, Y, 0.9 * e); put(d, LL, X, -0.35 * e); put(d, LR, X, -0.15 * e); put(d, HEAD, X, 0.3 * e)
+        return d
+    clip('sword_idle', 2.4, sword_idle); clip('sword_slash', 0.5, sword_slash); clip('shield_block', 0.8, shield_block)
+    clip('greatsword_idle', 2.4, greatsword_idle); clip('greatsword_slash', 0.9, greatsword_slash)
+    clip('gun_idle', 2.4, gun_idle); clip('gun_shoot', 0.35, gun_shoot); clip('die', 1.2, die)
+else:
+    FLc, FRc, BLc, BRc = LEGS4
+    def wag(d, t, sp=2.0, a=0.35):
+        if TAIL: put(d, TAIL, Z, a * math.sin(t * sp * 2 * math.pi))
+    def q_idle(t):
+        d = {}; put(d, HEAD, X, 0.05 * math.sin(t * 2 * math.pi)); wag(d, t, 1.0, 0.25); return d
+    def q_gait(sw, gallop):
+        def fn(t):
+            s_ = math.sin(t * 2 * math.pi); d = {}
+            if gallop: pairs = ((FLc, s_), (FRc, s_), (BLc, -s_), (BRc, -s_))
+            else: pairs = ((FLc, s_), (BRc, s_), (FRc, -s_), (BLc, -s_))
+            for ch, v in pairs: put(d, ch, X, -v * sw); put(d, ch, X, max(0.0, v) * sw * 1.2, 1)
+            for sp in SPINE[1:2]: put(d, [sp], X, (0.08 if gallop else 0.03) * s_)
+            put(d, HEAD, X, 0.06 * math.sin(t * 4 * math.pi)); wag(d, t, 2.0, 0.3)
+            return d
+        return fn
+    def q_jump(t):
+        e = math.sin(t * math.pi); d = {}
+        for ch in (FLc, FRc): put(d, ch, X, -0.6 * e); put(d, ch, X, 0.6 * e, 1)
+        for ch in (BLc, BRc): put(d, ch, X, 0.6 * e); put(d, ch, X, 0.4 * e, 1)
+        put(d, HEAD, X, -0.2 * e); return d
+    def q_attack(t):
+        e = math.sin(min(1, t * 1.5) * math.pi); d = {}
+        put(d, HEAD, X, 0.5 * e)
+        for sp in SPINE[1:2]: put(d, [sp], X, 0.2 * e)
+        for ch in (FLc, FRc): put(d, ch, X, -0.35 * e)
+        return d
+    def q_hit(t):
+        e = math.sin(t * math.pi) * (1 - t * 0.5); d = {}; put(d, HEAD, X, -0.4 * e)
+        for sp in SPINE[1:2]: put(d, [sp], X, -0.2 * e)
+        return d
+    def q_happy(t):
+        e = abs(math.sin(t * 2 * math.pi)); d = {}; wag(d, t, 4.0, 0.6)
+        for ch in (FLc, FRc): put(d, ch, X, -0.3 * e)
+        put(d, HEAD, X, -0.2 * e); return d
+    def q_talk(t):
+        d = {}; put(d, HEAD, X, 0.12 * math.sin(t * 4 * math.pi)); wag(d, t, 1.5, 0.2); return d
+    def q_die(t):
+        e = sm(t / 0.75); d = {}
+        for sp in SPINE[:1]: put(d, [sp], Y, 1.45 * e)
+        for ch in LEGS4: put(d, ch, X, -0.2 * e)
+        put(d, HEAD, X, 0.3 * e); return d
+    clip('idle', 2.4, q_idle); clip('walk', 0.9, q_gait(0.45, False)); clip('run', 0.5, q_gait(0.75, True))
+    clip('jump', 0.8, q_jump); clip('attack', 0.5, q_attack); clip('happy', 0.9, q_happy); clip('hit', 0.45, q_hit); clip('talk', 1.6, q_talk); clip('die', 1.2, q_die)
+# 게임에서 쓸 뼈대 정보 (손·머리 뼈 이름, 체형) — glTF extras 로 나간다
+arm['vibrex'] = json.dumps({'body': 'quad' if QUAD else 'biped', 'handR': AR[-1].name if AR else None, 'handL': AL[-1].name if AL else None, 'head': HEAD[0].name if HEAD else None})
 try:
     exec(FACE_SRC); add_face(); print('face', FACE_INFO)
 except Exception as e:
     print('face failed', e)
-bpy.ops.export_scene.gltf(filepath=dst, export_format='GLB', export_animations=True, export_animation_mode='NLA_TRACKS', export_force_sampling=True, export_image_format='JPEG', export_jpeg_quality=88)
+bpy.ops.export_scene.gltf(filepath=dst, export_format='GLB', export_animations=True, export_animation_mode='NLA_TRACKS', export_force_sampling=True, export_image_format='JPEG', export_jpeg_quality=88, export_extras=True)
 print('baked', [a.name for a in bpy.data.actions])
 """
 
@@ -577,12 +759,12 @@ class Volumize:
         cache.commit()
 
     @modal.method()
-    def edit(self, image_bytes: bytes, hint: str = "") -> bytes:
+    def edit(self, image_bytes: bytes, hint: str = "", body: str = "biped") -> bytes:
         import torch
         from PIL import Image
         im = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
         bg = Image.new("RGBA", im.size, (255, 255, 255, 255)); bg.alpha_composite(im); im = bg.convert("RGB")
-        prompt = VOLUMIZE + (f" The character is: {hint}." if hint else "")
+        prompt = (VOLUMIZE_QUAD if body == "quad" else VOLUMIZE) + (f" The character is: {hint}." if hint else "")
         out = self.pipe(image=[im], prompt=prompt, negative_prompt=" ", true_cfg_scale=4.0, num_inference_steps=28,
                         guidance_scale=1.0, generator=torch.Generator("cuda").manual_seed(7)).images[0]
         b = io.BytesIO(); out.save(b, "PNG"); return b.getvalue()
@@ -630,27 +812,27 @@ class Rigger:
         return {"glb": face_glb(glb)}
 
     @modal.method()
-    def rig(self, glb: bytes) -> dict:
-        out = rig_glb(glb)
+    def rig(self, glb: bytes, body: str = "biped") -> dict:
+        out = rig_glb(glb, body)
         cache.commit()
         return {"glb": out}
 
 
 @app.function(image=web_image, timeout=1500)
-def text_then_3d(prompt: str, seed: int = 1, rig: bool = False) -> dict:
+def text_then_3d(prompt: str, seed: int = 1, rig: bool = False, body: str = "biped") -> dict:
     """글 → 피규어 렌더 이미지(Qwen-Image) → TRELLIS (→ 자동 리깅). TRELLIS 자체 글→3D 는 짧은 영어만 알아들어 설명과 다른 모양이 나온다"""
-    ref = QwenImage().generate.remote(FIGURE.format(p=prompt), 1, 1024, 1024, False, seed, "PNG")["images"][0]
+    ref = QwenImage().generate.remote((FIGURE_QUAD if body == "quad" else FIGURE).format(p=prompt), 1, 1024, 1024, False, seed, "PNG")["images"][0]
     r = Trellis().generate.remote("image", ref, "", seed)
     r["ref"] = ref
-    return _maybe_rig(r, rig)
+    return _maybe_rig(r, rig, body)
 
 
-def _maybe_rig(r: dict, rig: bool) -> dict:
+def _maybe_rig(r: dict, rig: bool, body: str = "biped") -> dict:
     """뼈대·움직임 클립까지 — 실패하면(사람·동물 모양이 아닌 경우 등) 움직임 없는 모델을 그대로 돌려준다"""
     if not rig:
         return r
     try:
-        r["glb"] = Rigger().rig.remote(r["glb"])["glb"]
+        r["glb"] = Rigger().rig.remote(r["glb"], body)["glb"]
         r["rigged"] = True
     except Exception as e:  # noqa: BLE001
         print("rig failed:", str(e)[:500])
@@ -659,17 +841,17 @@ def _maybe_rig(r: dict, rig: bool) -> dict:
 
 
 @app.function(image=web_image, timeout=1500)
-def image_then_3d(image_bytes: bytes, seed: int = 1, rig: bool = False) -> dict:
-    return _maybe_rig(Trellis().generate.remote("image", image_bytes, "", seed), rig)
+def image_then_3d(image_bytes: bytes, seed: int = 1, rig: bool = False, body: str = "biped") -> dict:
+    return _maybe_rig(Trellis().generate.remote("image", image_bytes, "", seed), rig, body)
 
 
 @app.function(image=web_image, timeout=1500)
-def volumize_then_3d(image_bytes: bytes, hint: str = "", seed: int = 1, rig: bool = False) -> dict:
+def volumize_then_3d(image_bytes: bytes, hint: str = "", seed: int = 1, rig: bool = False, body: str = "biped") -> dict:
     """2D → 입체 렌더 이미지 → TRELLIS. 결과에 입체 렌더 이미지(ref)도 담는다"""
-    ref = Volumize().edit.remote(image_bytes, hint)
+    ref = Volumize().edit.remote(image_bytes, hint, body)
     r = Trellis().generate.remote("image", ref, "", seed)
     r["ref"] = ref
-    return _maybe_rig(r, rig)
+    return _maybe_rig(r, rig, body)
 
 
 @app.function(image=web_image, secrets=[modal.Secret.from_name("vibrex-3d")])
@@ -693,7 +875,7 @@ def api():
             glb = base64.b64decode(body["glb_b64"]) if body.get("glb_b64") else urllib.request.urlopen(str(body.get("glb_url")), timeout=60).read()
             if not glb or len(glb) > 40_000_000:
                 raise HTTPException(400, "glb required")
-            call = (Rigger().face if body.get("face_only") else Rigger().rig).spawn(glb)
+            call = Rigger().face.spawn(glb) if body.get("face_only") else Rigger().rig.spawn(glb, body.get("body") if body.get("body") in ("biped", "quad") else "auto")
             return {"id": call.object_id}
         if body.get("mode") == "img":  # 이미지 생성
             prompt = str(body.get("prompt") or "")[:1000]
@@ -716,11 +898,12 @@ def api():
         if mode == "text" and not prompt:
             raise HTTPException(400, "prompt required")
         if mode == "text":
-            call = text_then_3d.spawn(prompt, int(body.get("seed") or 1), bool(body.get("rig")))
+            bt = "quad" if body.get("body") == "quad" else "biped"
+            call = text_then_3d.spawn(prompt, int(body.get("seed") or 1), bool(body.get("rig")), bt)
         elif mode == "image" and body.get("volumize"):
-            call = volumize_then_3d.spawn(img, str(body.get("hint") or "")[:200], int(body.get("seed") or 1), bool(body.get("rig")))
+            call = volumize_then_3d.spawn(img, str(body.get("hint") or "")[:200], int(body.get("seed") or 1), bool(body.get("rig")), "quad" if body.get("body") == "quad" else "biped")
         else:
-            call = image_then_3d.spawn(img, int(body.get("seed") or 1), bool(body.get("rig")))
+            call = image_then_3d.spawn(img, int(body.get("seed") or 1), bool(body.get("rig")), "quad" if body.get("body") == "quad" else "biped")
         return {"id": call.object_id}
 
     def result(id: str):

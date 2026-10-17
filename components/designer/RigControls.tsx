@@ -3,10 +3,20 @@
 import { useEffect, useState } from 'react'
 import { ui } from './shared'
 
-export const MOTIONS: [string, string][] = [['all', '▶ 전체 동작 보기'], ['talk', '말하기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['attack', '공격'], ['happy', '기쁨'], ['hit', '맞기']]
+// 미리보기 동작 — 기본·무기(두 발)·네 발
+export const MOTIONS: [string, string][] = [['all', '▶ 전체 동작 보기'], ['talk', '말하기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['sit', '앉기'], ['strafe_left', '왼쪽 옆걸음'], ['strafe_right', '오른쪽 옆걸음'], ['attack', '공격'], ['happy', '기쁨'], ['hit', '맞기'], ['die', '쓰러지기']]
+export const WEAPON_MOTIONS: [string, string][] = [['sword', '🗡 칼 들기'], ['slash', '🗡 칼 베기'], ['block', '🛡 칼·방패 막기'], ['greatsword', '⚔ 양손검 내려치기'], ['aim', '🔫 총 겨누기'], ['shoot', '🔫 총 쏘기']]
+export const QUAD_MOTIONS: [string, string][] = [['all', '▶ 전체 동작 보기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['attack', '물기 공격'], ['happy', '기쁨(꼬리)'], ['hit', '맞기'], ['talk', '짖기·말하기'], ['die', '쓰러지기']]
 
-export function MotionChips({ value, onChange }: { value: string; onChange: (m: string) => void }) {
-  return <div className="flex flex-wrap gap-1.5">{MOTIONS.map(([v, l]) => <button key={v} type="button" onClick={() => onChange(v)} className={ui.chip(value === v)}>{l}</button>)}</div>
+export function MotionChips({ value, onChange, body = 'biped' }: { value: string; onChange: (m: string) => void; body?: string }) {
+  const chip = ([v, l]: [string, string]) => <button key={v} type="button" onClick={() => onChange(v)} className={ui.chip(value === v)}>{l}</button>
+  if (body === 'quad') return <div className="flex flex-wrap gap-1.5">{QUAD_MOTIONS.map(chip)}</div>
+  return (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1.5">{MOTIONS.map(chip)}</div>
+      <div className="flex flex-wrap gap-1.5 items-center"><span className="text-[11px] font-bold text-[#9d9280] mr-0.5">무기</span>{WEAPON_MOTIONS.map(chip)}</div>
+    </div>
+  )
 }
 
 /** 드라이브의 GLB 에 뼈대를 넣어 '<이름> (움직임).glb' 로 저장 */

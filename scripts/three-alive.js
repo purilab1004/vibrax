@@ -1,9 +1,12 @@
 // THREE.makeAlive(model) — 뼈대(리깅) 없는 AI 3D 모델에 생기를 넣는 절차적 움직임.
 // 모델의 자식들을 발밑 기준 '안쪽 그룹'으로 옮겨 그 그룹만 흔든다 → 게임 코드는 model 의 위치·회전을 마음대로 바꿔도 된다.
 //   const alive = THREE.makeAlive(gltf)   (gltf.scene 만 줘도 된다 — gltf 를 주면 파일에 든 움직임 클립을 쓴다)
-//   매 프레임: alive.update(dt, 'idle' | 'walk' | 'run' | 'jump' | 'fall')   (dt 초)
+//   매 프레임: alive.update(dt, 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'sit' | 'strafe_left' | 'strafe_right' | 'aim')   (dt 초)
+//   점프: 땅 → 'jump' 로 바뀌면 웅크렸다 박차는 동작, 다시 땅으로 오면 착지 동작이 자동으로 나온다
 //   순간 동작: alive.trigger('attack' | 'hit' | 'land' | 'spin' | 'happy' | 'talk')   말하기: alive.update(dt, 'talk') 또는 alive.say(초)
 //   얼굴(파일에 __face_blink·__face_mouth·__face_both 판이 있으면): 몇 초마다 눈 깜박, 말하기·공격·기쁨·맞기 때 입을 연다
+//   무기: alive.equip('sword' | 'sword_shield' | 'greatsword' | 'gun' | 'none' | 무기 Object3D) — 손 뼈에 붙고 자세가 바뀐다.
+//         그 뒤 trigger('attack') = 무기에 맞는 베기·내려치기·쏘기, trigger('shoot'), trigger('block'), trigger('die') (쓰러져 있음 → alive.revive())
 // 리깅된 모델(뼈대가 있으면, 예: 디자인 AI '움직이게 만들기')은 뼈대 모양으로 다리·팔·머리를 찾아 걷기·달리기·공격 때 팔다리를 흔든다.
 // three-addons.js 끝에 붙는다 (scripts/build-three-addons.mjs).
 ;(function () {
@@ -78,7 +81,7 @@
     var acts = {}, cur = null, oneAct = null
     if (mixer) for (var cn in named) { acts[cn] = mixer.clipAction(named[cn]) }
     var play = function (name) {
-      var a = acts[name] || (name === 'run' ? acts.walk : name === 'fall' ? acts.jump : null) || acts.idle
+      var a = acts[name] || (name === 'run' || /^strafe/.test(name) ? acts.walk : name === 'fall' ? acts.jump : null) || acts.idle
       if (!a || a === cur) return
       a.reset().setLoop(T.LoopRepeat, Infinity).fadeIn(0.18).play()
       if (cur) cur.fadeOut(0.18)
@@ -101,6 +104,56 @@
       }
     })()
     var talkLeft = 0
+    // 뼈대 정보(디자인 AI 리깅이 넣는 extras: 체형·손·머리 뼈 이름)
+    var info = {}
+    model.traverse(function (n) { if (n.userData && n.userData.vibrex) { try { info = typeof n.userData.vibrex === 'string' ? JSON.parse(n.userData.vibrex) : n.userData.vibrex } catch (e) {} } })
+    var boneBy = function (nm) { var f = null; if (nm) model.traverse(function (n) { if (!f && n.isBone && (n.name === nm || n.name === nm.replace(/[^\w-]/g, '_'))) f = n }); return f }
+    var handR = boneBy(info.handR) || (limbs && limbs.armR ? limbs.armR[limbs.armR.length - 1] : null)
+    var handL = boneBy(info.handL) || (limbs && limbs.armL ? limbs.armL[limbs.armL.length - 1] : null)
+    var stance = 'none', weapons = [], dead = false
+    var STANCE_IDLE = { sword: 'sword_idle', sword_shield: 'sword_idle', greatsword: 'greatsword_idle', gun: 'gun_idle' }
+    var STANCE_ATTACK = { sword: 'sword_slash', sword_shield: 'sword_slash', greatsword: 'greatsword_slash', gun: 'gun_shoot' }
+    var mat = function (c, m) { return new T.MeshStandardMaterial({ color: c, metalness: m || 0.2, roughness: 0.5 }) }
+    // 간단한 무기 모양 (모델 키 h 기준). 그룹의 +Y = 칼날 방향, 총은 +Z = 총구 방향
+    function makeWeapon(kind) {
+      var g = new T.Group(); g.name = 'weapon_' + kind
+      if (kind === 'sword' || kind === 'greatsword') {
+        var L = kind === 'greatsword' ? 0.8 : 0.5, W = kind === 'greatsword' ? 0.07 : 0.04
+        var blade = new T.Mesh(new T.BoxGeometry(W * h, L * h, 0.012 * h), mat(0xdfe6ee, 0.6)); blade.position.y = (L / 2 + 0.04) * h
+        var guard = new T.Mesh(new T.BoxGeometry(W * 3.4 * h, 0.025 * h, 0.035 * h), mat(0xc8a03c, 0.5)); guard.position.y = 0.035 * h
+        var grip = new T.Mesh(new T.CylinderGeometry(0.016 * h, 0.016 * h, (kind === 'greatsword' ? 0.2 : 0.11) * h, 8), mat(0x5a3a22)); grip.position.y = -0.03 * h
+        g.add(blade, guard, grip)
+      } else if (kind === 'shield') {
+        var disc = new T.Mesh(new T.CylinderGeometry(0.2 * h, 0.2 * h, 0.025 * h, 24), mat(0x7a4a24)); disc.rotation.x = Math.PI / 2
+        var boss = new T.Mesh(new T.SphereGeometry(0.05 * h, 12, 8), mat(0xc8a03c, 0.6)); boss.position.z = 0.02 * h
+        g.add(disc, boss)
+      } else if (kind === 'gun') {
+        var body = new T.Mesh(new T.BoxGeometry(0.05 * h, 0.07 * h, 0.26 * h), mat(0x2b2f36, 0.5)); body.position.z = 0.08 * h
+        var barrel = new T.Mesh(new T.CylinderGeometry(0.014 * h, 0.014 * h, 0.2 * h, 10), mat(0x15171b, 0.7)); barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.015 * h, 0.3 * h)
+        var handle = new T.Mesh(new T.BoxGeometry(0.04 * h, 0.1 * h, 0.05 * h), mat(0x3b2a1e)); handle.position.set(0, -0.06 * h, 0.02 * h); handle.rotation.x = 0.3
+        g.add(body, barrel, handle)
+      }
+      return g
+    }
+    // 손 뼈에 붙이기 — 기본 자세에서 모델 기준 방향으로 놓고 뼈에 붙여(attach) 손을 따라 움직이게
+    function attachTo(bone, obj, dir, offset, poseClip) {
+      if (!bone) { model.add(obj); return }
+      if (mixer) mixer.stopAllAction()
+      model.traverse(function (n) { if (n.isSkinnedMesh && n.skeleton) n.skeleton.pose() })
+      // 그 무기를 쓰는 자세(겨누기·막기 등)에서 방향을 맞춰 붙인다 — 기본 자세에서 붙이면 자세가 바뀔 때 엉뚱한 쪽을 본다
+      if (mixer && poseClip && acts[poseClip]) { var pa = acts[poseClip]; pa.reset().play(); mixer.setTime(0.12); pa.stop() ; pa.reset().play(); mixer.update(0.12) }
+      model.updateMatrixWorld(true)
+      var p = bone.getWorldPosition(new T.Vector3())
+      if (offset) p.add(offset.clone().applyQuaternion(model.getWorldQuaternion(new T.Quaternion())))
+      var mq = model.getWorldQuaternion(new T.Quaternion())
+      obj.position.copy(p)
+      obj.quaternion.copy(mq).multiply(dir)
+      model.parent ? model.parent.add(obj) : model.add(obj)
+      obj.updateMatrixWorld(true)
+      bone.attach(obj)
+      if (mixer) mixer.stopAllAction()
+      cur = null; oneAct = null
+    }
     var mats = []
     model.traverse(function (n) { var m = n.material; (Array.isArray(m) ? m : m ? [m] : []).forEach(function (q) { if (q && q.emissive && mats.indexOf(q) < 0) mats.push(q) }) })
     var t = Math.random() * 10, state = 'idle', blend = 0, one = null, oneT = 0, prevAir = false
@@ -113,18 +166,49 @@
       animated: !!mixer,
       mixer: mixer,
       face: !!face,
+      body: info.body || 'biped',
+      weapon: function () { return stance },
+      equip: function (kind, opts) {
+        weapons.forEach(function (o) { if (o.parent) o.parent.remove(o) }); weapons = []
+        stance = 'none'
+        if (!kind || kind === 'none') { cur = null; return api }
+        var Y = new T.Vector3(0, 1, 0), Z = new T.Vector3(0, 0, 1)
+        var up = function (x, y, z) { return new T.Quaternion().setFromUnitVectors(Y, new T.Vector3(x, y, z).normalize()) }
+        if (typeof kind === 'object' && kind.isObject3D) {   // 직접 만든 무기(GLB 등) — 오른손에, 무기의 +Y 가 앞위로
+          attachTo(handR, kind, up(0, 0.7, 0.7)); weapons.push(kind); stance = (opts && opts.stance) || 'sword'; return api
+        }
+        if (kind === 'sword' || kind === 'sword_shield') { var sw = makeWeapon('sword'); attachTo(handR, sw, up(0, 0.75, 0.65), null, 'sword_idle'); weapons.push(sw) }
+        if (kind === 'sword_shield') { var sh = makeWeapon('shield'); attachTo(handL, sh, new T.Quaternion(), new T.Vector3(0, 0, 0.05 * h), 'shield_block'); weapons.push(sh) }   // 막을 때 방패 면이 앞을 본다
+        if (kind === 'greatsword') { var gs = makeWeapon('greatsword'); attachTo(handR, gs, up(0, 0.85, 0.5), null, 'greatsword_idle'); weapons.push(gs) }
+        if (kind === 'gun') { var gn = makeWeapon('gun'); attachTo(handR, gn, new T.Quaternion(), null, 'gun_idle'); weapons.push(gn) }   // 겨눌 때 총구가 앞을 본다
+        stance = kind
+        return api
+      },
+      revive: function () { dead = false; if (oneAct) { oneAct.stop(); oneAct = null } cur = null },
+      isDead: function () { return dead },
       say: function (sec) { talkLeft = Math.max(talkLeft, sec == null ? 1.6 : sec) },
       trigger: function (name) {
         if (name === 'talk') { api.say(1.6); return }
+        if (dead) return
+        if (name === 'attack' && STANCE_ATTACK[stance] && acts[STANCE_ATTACK[stance]]) name = STANCE_ATTACK[stance]
+        if (name === 'shoot') name = acts.gun_shoot ? 'gun_shoot' : 'attack'
+        if (name === 'block') name = acts.shield_block ? 'shield_block' : 'hit'
+        if (name === 'die') {
+          dead = true; one = 'die'; oneT = 0
+          var da = acts.die
+          if (da) { if (oneAct) oneAct.stop(); da.reset().setLoop(T.LoopOnce, 1); da.clampWhenFinished = true; da.fadeIn(0.08).play(); if (cur) cur.fadeOut(0.1); cur = null; oneAct = da }
+          return
+        }
         one = name; oneT = 0
         var a = acts[name]
-        if (a) { if (oneAct) oneAct.stop(); a.reset().setLoop(T.LoopOnce, 1); a.clampWhenFinished = false; a.setEffectiveWeight(1).fadeIn(0.06).play(); oneAct = a }
+        if (a) { if (oneAct) oneAct.stop(); a.reset().setLoop(T.LoopOnce, 1); a.clampWhenFinished = false; a.setEffectiveWeight(1).fadeIn(0.06).play(); oneAct = a; if (cur) { cur.fadeOut(0.08); cur = null } }
       },
       update: function (dt, st) {
         dt = Math.min(0.1, dt || 0.016); t += dt
         if (st) state = st
         var air = state === 'jump' || state === 'fall'
         if (prevAir && !air) api.trigger('land')
+        if (!prevAir && state === 'jump' && acts.jump_start) api.trigger('jump_start')
         prevAir = air
         var tg = { y: 0, sx: 1, sy: 1, rx: 0, rz: 0, ry: 0, z: 0 }
         if (state === 'walk' || state === 'run') {
@@ -158,6 +242,7 @@
         }
         var r = 1 - Math.pow(0.0005, dt) // 프레임과 무관한 부드러운 보간
         for (var key in s) s[key] = lerp(s[key], tg[key], key === 'ry' && one === 'spin' ? 1 : r)
+        if (dead) { for (var dk in s) s[dk] = lerp(s[dk], dk === 'sx' || dk === 'sy' ? 1 : 0, r) }
         inner.position.set(0, baseY + s.y * amp, s.z * amp)
         inner.rotation.set(s.rx * amp, s.ry, s.rz * amp)
         inner.scale.set(lerp(1, s.sx, amp), lerp(1, s.sy, amp), lerp(1, s.sx, amp))
@@ -175,8 +260,12 @@
           if (tx !== face.cur) { face.mesh.material.map = tx; face.mesh.material.needsUpdate = true; face.cur = tx }
         }
         if (mixer) {
-          play(talking && acts.talk ? 'talk' : state)
-          if (oneAct && !oneAct.isRunning()) { oneAct.fadeOut(0.15); oneAct = null }
+          if (!dead) {
+            var base = state
+            if ((state === 'idle' || state === 'aim') && STANCE_IDLE[stance] && acts[STANCE_IDLE[stance]]) base = STANCE_IDLE[stance]
+            if (oneAct && !oneAct.isRunning()) { oneAct.fadeOut(0.15); oneAct = null }
+            if (!oneAct) play(talking && acts.talk && stance === 'none' ? 'talk' : base)   // 한 번 동작 중엔 기본 동작을 잠시 끈다
+          }
           mixer.update(dt)
         }
         if (limbs) {

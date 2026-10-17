@@ -27,6 +27,8 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   const [savedKey, setSavedKey] = useState<string | null>(null)
   const [published, setPublished] = useState<string | null>(null)
   const [motion, setMotion] = useState('idle')
+  const [bodyType, setBodyType] = useState<'biped' | 'quad' | 'prop'>('biped')
+  const [viewBody, setViewBody] = useState('biped')
   const [riggedUrl, setRiggedUrl] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [anim, setAnim] = useState<{ src: string | null; expected: number } | null>(null)   // 모래 효과: 원본 이미지 · 예상 시간
@@ -52,8 +54,8 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
     if (result && !saved) discard(true)
     setErr(null); setResult(null); setSaved(null); setSavedKey(null); setPublished(null); setRiggedUrl(null); setMotion('idle'); setJob({ status: 'submitting' })
     setAnim({ src: mode === 'image' ? image : mode === 'drive' ? pick?.url ?? null : null, expected: (mode === 'text' || volumize ? 120 : 60) + (rig ? 110 : 0) })
-    const body = mode === 'text' ? { mode: 'text', prompt, title, rig } : mode === 'image' ? { mode: 'image', image, title, volumize, rig }
-      : pick?.kind === 'drive' ? { mode: 'drive', driveKey: pick.key, title, volumize, rig } : { mode: 'media', assetId: pick?.kind === 'media' ? pick.id : '', title, volumize, rig }
+    const body = mode === 'text' ? { mode: 'text', prompt, title, rig, body: bodyType } : mode === 'image' ? { mode: 'image', image, title, volumize, rig, body: bodyType }
+      : pick?.kind === 'drive' ? { mode: 'drive', driveKey: pick.key, title, volumize, rig, body: bodyType } : { mode: 'media', assetId: pick?.kind === 'media' ? pick.id : '', title, volumize, rig, body: bodyType }
     const r = await fetch('/api/gallery/model3d', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     const j = await r.json().catch(() => ({}))
     if (!r.ok) { setJob(null); setErr(j.error ?? '요청 실패'); return }
@@ -128,10 +130,15 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
           </div>
         )}
         <input value={title} onChange={(e) => setTitle(e.target.value.slice(0, 60))} placeholder="모델 이름 (선택) — 무엇인지 적으면 입체 모양을 더 잘 잡아요" className={ui.input} />
-        <label className="flex items-start gap-2 text-[13px] text-[#4a4337] cursor-pointer select-none">
-          <input type="checkbox" checked={rig} onChange={(e) => setRig(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#2563eb]" />
-          <span><b>🦴 움직이는 캐릭터로 (자동 리깅)</b> <span className="text-[#9d9280]">+{rigExtra} 프롬코인</span><br /><span className="text-[11.5px] text-[#9d9280]">뼈대와 걷기·달리기·점프·공격·기쁨·맞기 움직임을 GLB 안에 넣어요. 게임·유니티·블렌더에서 바로 움직여요. 소품·건물이면 꺼도 돼요.</span></span>
-        </label>
+        <div>
+          <p className="text-[12px] font-extrabold text-[#6b6152] mb-1.5">체형 <span className="font-normal text-[#9d9280]">— 움직이는 캐릭터면 뼈대·움직임·표정까지 넣어요 (+{rigExtra} 프롬코인)</span></p>
+          <div className="flex flex-wrap gap-1.5">
+            {([['biped', '🧍 두 발 (사람형)'], ['quad', '🐕 네 발 (동물)'], ['prop', '📦 소품 (움직임 없음)']] as const).map(([v, l]) => (
+              <button key={v} type="button" onClick={() => { setBodyType(v); setRig(v !== 'prop') }} className={ui.chip(bodyType === v)}>{l}</button>
+            ))}
+          </div>
+          <p className="mt-1 text-[11.5px] text-[#9d9280]">{bodyType === 'biped' ? '걷기·달리기·점프·앉기·옆걸음·말하기 + 칼·방패·양손검·총 동작, 쓰러지기까지 들어가요.' : bodyType === 'quad' ? '네 발 걷기·달리기, 물기 공격, 점프, 꼬리 흔들기, 쓰러지기가 들어가요. 네 다리가 잘 보이게 비스듬한 앞모습으로 만들어요.' : '칼·나무·집 같은 물건 — 뼈대 없이 모양만 만들어요.'}</p>
+        </div>
         {mode !== 'text' && (
           <label className="flex items-start gap-2 text-[13px] text-[#4a4337] cursor-pointer select-none">
             <input type="checkbox" checked={volumize} onChange={(e) => setVolumize(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#2563eb]" />
@@ -149,7 +156,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
         {result ? (
           <>
             <div className="relative flex-1 min-h-[420px]">
-              <GlbViewer key={riggedUrl ?? result.preview.url} url={riggedUrl ?? result.preview.url} motion={motion} />
+              <GlbViewer key={riggedUrl ?? result.preview.url} url={riggedUrl ?? result.preview.url} motion={motion} onBody={setViewBody} />
               {result.preview.ref && (
                 <figure className="absolute left-3 top-3 w-28 rounded-xl overflow-hidden bg-white border border-[#ebe4d6] shadow-md">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -168,7 +175,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
               {!saved && <button onClick={() => discard()} className={ui.ghost}>🗑 버리기</button>}
               {saved && savedKey && !riggedUrl && !result.preview.rigged && <RigButton driveKey={savedKey} onDone={(f) => { setRiggedUrl(f.url); setSavedKey(f.key); setSaved(f.name); setMotion('all'); onSaved() }} />}
               {saved && !published && <button onClick={publish} className={ui.ghost}>🌐 갤러리에 공개 신청</button>}
-              <div className="w-full flex items-center gap-2"><span className="text-[12px] font-bold text-[#6b6152]">움직임 미리보기{riggedUrl || result.preview.rigged ? ' 🦴' : ''}</span><MotionChips value={motion} onChange={setMotion} /></div>
+              <div className="w-full flex items-center gap-2"><span className="text-[12px] font-bold text-[#6b6152]">움직임 미리보기{riggedUrl || result.preview.rigged ? ' 🦴' : ''}</span><MotionChips value={motion} onChange={setMotion} body={viewBody} /></div>
               {saved && <a href={result.preview.url} download className={ui.ghost}>⬇ GLB</a>}
               {published && <p className="w-full text-[12.5px] font-bold text-[#2563eb]">{published}</p>}
             </div>

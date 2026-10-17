@@ -27,7 +27,7 @@ async function costOf() {
 
 export async function POST(req: Request) {
   const g = await requireDesigner(); if ('error' in g) return g.error
-  const body = await req.json().catch(() => null) as { action?: string; token?: string; folder?: string; mode?: string; image?: string; prompt?: string; assetId?: string; driveKey?: string; title?: string; volumize?: boolean; hint?: string; rig?: boolean } | null
+  const body = await req.json().catch(() => null) as { action?: string; token?: string; folder?: string; mode?: string; image?: string; prompt?: string; assetId?: string; driveKey?: string; title?: string; volumize?: boolean; hint?: string; rig?: boolean; body?: string } | null
   const store = g.admin.storage.from(BUCKET)
 
   // 저장 / 버리기
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   if (vol && mode !== 'text') payload = { ...payload, volumize: true, hint: await toEnglish(cleanName(body?.hint || title || '', 120)) }
   // 움직이는 캐릭터로 — 3D 를 만든 뒤 자동 리깅(뼈대 + idle·walk·run·jump·attack·happy·hit 클립)까지
   const rig = body?.rig !== false
-  payload = { ...payload, rig }
+  payload = { ...payload, rig, body: body?.body === 'quad' ? 'quad' : 'biped' }
   const cost = (await costOf()) + (vol ? VOLUMIZE_EXTRA : 0) + (rig ? RIG_EXTRA : 0)
   const ref = `m3d:${crypto.randomUUID()}`
   if (cost > 0) {

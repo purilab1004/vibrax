@@ -16,7 +16,7 @@ export function loadThree(): Promise<void> {
 /** GLB 를 돌려 볼 수 있는 미리보기 (마우스 드래그 회전·휠 확대, 자동 회전) */
 /** motion 을 주면 THREE.makeAlive 로 움직임을 미리 본다 (뼈대가 있으면 팔다리까지). onRigged: 뼈대가 있는지 알려 준다 */
 /** motion='all' 이면 동작을 차례로 돌려 보여 준다 */
-export function GlbViewer({ url, motion, onRigged }: { url: string; motion?: string; onRigged?: (rigged: boolean) => void }) {
+export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; motion?: string; onRigged?: (rigged: boolean) => void; onBody?: (body: string) => void }) {
   const box = useRef<HTMLDivElement>(null)
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -25,6 +25,8 @@ export function GlbViewer({ url, motion, onRigged }: { url: string; motion?: str
   useEffect(() => { motionRef.current = motion }, [motion])
   const riggedCb = useRef(onRigged)
   useEffect(() => { riggedCb.current = onRigged }, [onRigged])
+  const bodyCb = useRef(onBody)
+  useEffect(() => { bodyCb.current = onBody }, [onBody])
   useEffect(() => {
     let stop = false, raf = 0
     let cleanup = () => {}
@@ -52,7 +54,7 @@ export function GlbViewer({ url, motion, onRigged }: { url: string; motion?: str
         obj.position.sub(c); scene.add(obj)
         let bones = 0; obj.traverse((n: any) => { if (n.isBone) bones++ })
         riggedCb.current?.(bones >= 4)
-        if (motionRef.current !== undefined && T.makeAlive) alive = T.makeAlive(g)   // gltf 통째로 — 파일에 든 움직임 클립을 쓴다
+        if (motionRef.current !== undefined && T.makeAlive) { alive = T.makeAlive(g); bodyCb.current?.(alive.body) }   // gltf 통째로 — 파일에 든 움직임 클립을 쓴다
         const r = Math.max(size.x, size.y, size.z) || 1
         if (motionRef.current !== undefined) cam.position.set(r * 0.9, r * 0.45, r * 1.9)   // 팔다리가 잘 보이게 앞쪽 비스듬히
         else cam.position.set(r * 1.1, r * 0.7, r * 1.6)
@@ -66,14 +68,23 @@ export function GlbViewer({ url, motion, onRigged }: { url: string; motion?: str
         const now = performance.now(), dt = (now - last) / 1000; last = now
         if (alive) {
           let m = motionRef.current ?? 'idle'
-          if (m === 'all') {   // 전체 동작 차례로 (각 2.4초)
-            const seq = ['idle', 'talk', 'walk', 'run', 'jump', 'attack', 'happy', 'hit'], k = Math.floor(now / 2400) % seq.length
+          if (m === 'all') {   // 전체 동작 차례로 (각 2.6초)
+            const seq = alive.body === 'quad' ? ['idle', 'walk', 'run', 'jump', 'attack', 'happy', 'hit', 'talk'] : ['idle', 'talk', 'walk', 'run', 'jump', 'sit', 'strafe_left', 'attack', 'happy', 'slash', 'block', 'greatsword', 'aim', 'shoot', 'die']
+            const k = Math.floor(now / 2600) % seq.length
             m = seq[k]
-            const nm = ({ idle: '가만히', talk: '말하기', walk: '걷기', run: '달리기', jump: '점프', attack: '공격', happy: '기쁨', hit: '맞기' } as Record<string, string>)[m]
+            const nm = ({ idle: '가만히', talk: '말하기', walk: '걷기', run: '달리기', jump: '점프', sit: '앉기', strafe_left: '옆걸음', attack: '공격', happy: '기쁨', hit: '맞기', slash: '칼 베기', block: '방패 막기', greatsword: '양손검', aim: '총 겨누기', shoot: '총 쏘기', die: '쓰러지기' } as Record<string, string>)[m]
             if (nm !== labelRef.current) { labelRef.current = nm; setLabel(nm) }
           } else if (labelRef.current) { labelRef.current = null; setLabel(null) }
-          if (['attack', 'hit', 'happy', 'spin'].includes(m)) { if (now - lastTrig > 1100) { alive.trigger(m); lastTrig = now } alive.update(dt, 'idle') }
-          else alive.update(dt, m === 'jump' ? (Math.floor(now / 700) % 2 ? 'jump' : 'idle') : m)
+          // 무기 동작이면 알맞은 무기를 쥐어 준다
+          const want = ({ sword: 'sword', slash: 'sword', block: 'sword_shield', greatsword: 'greatsword', aim: 'gun', shoot: 'gun' } as Record<string, string>)[m] ?? 'none'
+          if (alive.body !== 'quad' && alive.weapon() !== want) alive.equip(want)
+          if (m !== 'die' && alive.isDead()) alive.revive()
+          const every = ({ attack: 1100, hit: 1100, happy: 1100, slash: 1000, block: 1100, greatsword: 1500, shoot: 500, die: 2600 } as Record<string, number>)[m]
+          if (every) {
+            if (now - lastTrig > every) { if (m === 'die' && alive.isDead()) alive.revive(); alive.trigger(({ slash: 'attack', greatsword: 'attack', block: 'block', shoot: 'shoot' } as Record<string, string>)[m] ?? m); lastTrig = now }
+            alive.update(dt, m === 'shoot' ? 'aim' : 'idle')
+          } else if (m === 'jump') alive.update(dt, Math.floor(now / 900) % 2 ? 'jump' : 'idle')
+          else alive.update(dt, m === 'sword' ? 'idle' : m)
         }
         ctl.update(); renderer.render(scene, cam)
       }

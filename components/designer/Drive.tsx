@@ -23,6 +23,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
   const [motion, setMotion] = useState('idle')
   const [rigged, setRigged] = useState(false)
   const [hasFace, setHasFace] = useState(false)
+  const [body, setBody] = useState('biped')
   const [publish, setPublish] = useState<DriveFile | null>(null)
   const [pub, setPub] = useState({ kind: 'character', title: '', tags: '', description: '' })
   const fileRef = useRef<HTMLInputElement>(null)
@@ -174,13 +175,13 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
             <div className={`${ui.checker} flex items-center justify-center h-[52vh] max-h-[460px]`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {isImage(view.name) ? <img src={view.url} alt={view.name} className="max-w-full max-h-full object-contain" />
-                : isGlb(view.name) ? <div className="w-full h-full"><GlbViewer key={view.url} url={view.url} motion={motion} onRigged={setRigged} /></div>
+                : isGlb(view.name) ? <div className="w-full h-full"><GlbViewer key={view.url} url={view.url} motion={motion} onRigged={setRigged} onBody={setBody} /></div>
                 : isAudio(view.name) ? <audio src={view.url} controls className="w-[90%]" /> : <span className="text-[48px]">📄</span>}
             </div>
             <div className="p-4">
               <p className="text-[15px] font-extrabold text-[#241f17] truncate">{view.name}</p>
               <p className="text-[12px] text-[#9d9280]">{fmtSize(view.size)} · {view.mime}{isGlb(view.name) ? (rigged ? ' · 🦴 뼈대 있음 (팔다리까지 움직여요)' : ' · 뼈대 없음 (몸 전체만 움직여요)') : ''}</p>
-              {isGlb(view.name) && <div className="mt-2"><MotionChips value={motion} onChange={setMotion} /></div>}
+              {isGlb(view.name) && <div className="mt-2"><MotionChips value={motion} onChange={setMotion} body={body} /></div>}
               <div className="mt-3 flex flex-wrap gap-2">
                 {isGlb(view.name) && rigged && !hasFace && <RigButton face driveKey={view.key} onDone={(f) => { load(); setHasFace(true); setMotion('talk'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
                 {isGlb(view.name) && !rigged && <RigButton driveKey={view.key} onDone={(f) => { load(); setRigged(true); setHasFace(true); setMotion('all'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
