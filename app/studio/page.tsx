@@ -165,7 +165,7 @@ export default function StudioPage() {
       {/* 상단 바 — 얇은 유리, 왼쪽 홈 / STUDIO · 가운데 모드 · 오른쪽 크레딧 */}
       <div className="app-top-pad sticky top-0 z-30 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(37,99,235,0.08),0_8px_30px_-18px_rgba(37,99,235,0.35)] px-4 h-11 box-content">
         <nav className="flex items-center gap-1.5 min-w-0 text-[12px]">
-          <Link href="/" className="font-pixel text-[11px] text-[#4b5563] hover:text-[#2563eb] tracking-widest transition-colors whitespace-nowrap" aria-label="홈으로">‹<span className="hidden sm:inline"> HOME</span></Link>
+          <Link href="/" className="font-pixel text-[11px] text-[#4b5563] hover:text-[#2563eb] tracking-widest transition-colors whitespace-nowrap" aria-label="홈으로"><svg viewBox="0 0 24 24" className="w-[18px] h-[18px] sm:hidden" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinejoin="round" aria-hidden><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" /></svg><span className="hidden sm:inline">‹ HOME</span></Link>
           <span className="hidden sm:inline text-[#cbd2de]">/</span><span className="hidden sm:inline font-pixel text-[11px] text-[#2563eb] tracking-widest">{s.heading}</span>
         </nav>
         <div className="flex justify-center min-w-0"><AiModeToggle /></div>
