@@ -161,7 +161,7 @@ export default function StudioPage() {
   return (
     <div className="relative min-h-[100svh] bg-white">
       {/* 빛의 입자 — 디자인 AI 와 같은 세계 */}
-      <ParticleField />
+      <ParticleField fade={0.4} />
       {/* 상단 바 — 얇은 유리, 왼쪽 홈 / STUDIO · 가운데 모드 · 오른쪽 크레딧 */}
       <div className="app-top-pad sticky top-0 z-30 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(37,99,235,0.08),0_8px_30px_-18px_rgba(37,99,235,0.35)] px-4 h-11 box-content">
         <nav className="flex items-center gap-1.5 min-w-0 text-[12px]">

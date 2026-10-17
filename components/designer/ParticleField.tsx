@@ -51,7 +51,7 @@ function shapes(n: number): Float32Array[] {
 
 const VERT = `
 attribute vec3 posB; attribute float seed;
-uniform float uMix; uniform float uTime; uniform vec2 uMouse; uniform float uSize; uniform float uBurst; uniform float uPulse; uniform float uCalm;
+uniform float uMix; uniform float uTime; uniform vec2 uMouse; uniform float uSize; uniform float uBurst; uniform float uPulse; uniform float uCalm; uniform float uFade;
 varying float vSeed; varying float vAlpha;
 void main() {
   float k = smoothstep(0.0, 1.0, clamp(uMix * 1.35 - seed * 0.35, 0.0, 1.0));
@@ -68,7 +68,7 @@ void main() {
   clip.xy += normalize(d + 1e-4) * m * 0.09 * clip.w;
   gl_Position = clip;
   gl_PointSize = uSize * (0.55 + seed) / -mv.z;
-  vSeed = seed; vAlpha = 0.12 + 0.26 * seed;   // 연하게 — 글씨가 잘 보이도록
+  vSeed = seed; vAlpha = (0.12 + 0.26 * seed) * uFade;   // 연하게 — 글씨가 잘 보이도록
 }`
 const FRAG = `
 varying float vSeed; varying float vAlpha;
@@ -82,7 +82,8 @@ void main() {
   gl_FragColor = vec4(col, vAlpha * smoothstep(0.5, 0.15, r));
 }`
 
-export default function ParticleField() {
+/** fade: 입자 진하기(1 = 기본). 글이 많은 화면은 낮춘다 */
+export default function ParticleField({ fade = 1 }: { fade?: number }) {
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
@@ -104,7 +105,7 @@ export default function ParticleField() {
       geo.setAttribute('posB', new T.BufferAttribute(S[next].slice(), 3))
       const seed = new Float32Array(N); for (let i = 0; i < N; i++) seed[i] = Math.random()
       geo.setAttribute('seed', new T.BufferAttribute(seed, 1))
-      const uni = { uMix: { value: 0 }, uTime: { value: 0 }, uMouse: { value: new T.Vector2(9, 9) }, uSize: { value: 19 * Math.min(1.75, window.devicePixelRatio) }, uBurst: { value: 0 }, uPulse: { value: 0 }, uCalm: { value: 0 } }
+      const uni = { uMix: { value: 0 }, uTime: { value: 0 }, uMouse: { value: new T.Vector2(9, 9) }, uSize: { value: 19 * Math.min(1.75, window.devicePixelRatio) }, uBurst: { value: 0 }, uPulse: { value: 0 }, uCalm: { value: 0 }, uFade: { value: fade } }
       const mat = new T.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uni, transparent: true, depthWrite: false })
       const pts = new T.Points(geo, mat); scene.add(pts)
       // 오른쪽에 두어 왼쪽 메뉴·글과 겹치지 않게
@@ -173,7 +174,7 @@ export default function ParticleField() {
       /* eslint-enable @typescript-eslint/no-explicit-any */
     }).catch(() => {})
     return () => { stop = true; cleanup() }
-  }, [])
+  }, [fade])
   // 마우스를 따라 흩날리는 빛 꼬리 (2D 캔버스 — 가볍게)
   const trail = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
@@ -197,7 +198,7 @@ export default function ParticleField() {
         p.x += p.vx * devicePixelRatio; p.y += p.vy * devicePixelRatio; p.l -= 0.022
         if (p.l <= 0) continue
         const r = (1.2 + 2.2 * p.l) * devicePixelRatio
-        g.fillStyle = `hsla(${Math.round(200 + p.h * 60)},85%,60%,${(p.l * 0.4).toFixed(3)})`
+        g.fillStyle = `hsla(${Math.round(200 + p.h * 60)},85%,60%,${(p.l * 0.4 * fade).toFixed(3)})`
         g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2); g.fill()
       }
       for (let i = P.length - 1; i >= 0; i--) if (P[i].l <= 0) P.splice(i, 1)
@@ -205,7 +206,7 @@ export default function ParticleField() {
     loop()
     window.addEventListener('pointermove', mv); window.addEventListener('resize', size)
     return () => { cancelAnimationFrame(raf); window.removeEventListener('pointermove', mv); window.removeEventListener('resize', size) }
-  }, [])
+  }, [fade])
   return (
     <>
       <div ref={box} className="fixed inset-0 z-0 pointer-events-none" aria-hidden />

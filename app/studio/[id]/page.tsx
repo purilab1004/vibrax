@@ -429,7 +429,7 @@ export default function StudioComposerPage() {
 
   return (
     <div className="relative flex flex-col bg-white" style={{ height: '100svh' }}>
-      <ParticleField />
+      <ParticleField fade={0.4} />
       {/* 상단 바 — 뒤로 · 프로젝트 제목(편집) · 우측: 채팅 토글 / 크레딧 코인 */}
       {/* 채팅과 같은 배경·구분선 없음 — 헤더가 따로 떠 보이지 않게 */}
       <div className="app-top-pad flex items-center gap-3 h-11 px-3 bg-white/70 backdrop-blur-2xl border-b border-[#e5e9f2] shadow-[0_8px_30px_-22px_rgba(37,99,235,0.45)] shrink-0 box-content relative z-10">
