@@ -1,9 +1,10 @@
 'use client'
 // 스튜디오 미디어 선택기 — 관리자가 모아둔 라이브러리에서 캐릭터·배경·아이템·오디오를 골라 생성 요청에 붙인다.
 import { useEffect, useRef, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export interface PickedAsset { id: string; kind: string; name: string; title: string; url: string; thumb?: string | null }
-interface Item extends PickedAsset { credit_cost?: number; description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string; thumb?: string | null; rig?: string } }
+interface Item extends PickedAsset { credit_cost?: number; description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string; thumb?: string | null; rig?: string; uploaded?: boolean } }
 const ROLE: Record<string, string> = { bgm: '배경음', jump: '점프', hit: '타격', coin: '획득', shoot: '발사', explosion: '폭발', powerup: '파워업', gameover: '게임오버', clear: '클리어', click: 'UI', ambient: '환경음', other: '기타' }
 
 const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '오디오'], ['model3d', '3D 모델']]
@@ -13,6 +14,26 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
   const [items, setItems] = useState<Item[] | null>(null)
   const [loading, setLoading] = useState(false)   // 카테고리·검색이 바뀌면 바로 스켈레톤 — 결과가 훅 튀어나오지 않게
   const [err, setErr] = useState<string | null>(null)
+  const [up, setUp] = useState<string | null>(null)
+  const glbRef = useRef<HTMLInputElement>(null)
+  const [reload, setReload] = useState(0)
+  // 내 3D 모델(GLB) 올리기 — 스토리지에 바로 올리고 등록하면 곧바로 선택된다(나만 보임)
+  const uploadGlb = async (f: File) => {
+    setErr(null); setUp('올리는 중…')
+    try {
+      const post = (b: object) => fetch('/api/media/upload-glb', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) }))
+      const u = await post({ action: 'url', name: f.name, size: f.size })
+      if (!u.ok) { setErr(u.error ?? '업로드 실패'); return }
+      const { error } = await createClient().storage.from('media').uploadToSignedUrl(u.path, u.token, f, { contentType: 'model/gltf-binary' })
+      if (error) { setErr(error.message); return }
+      setUp('확인하는 중…')
+      const d = await post({ action: 'done', path: u.path, title: f.name.replace(/\.glb$/i, '') })
+      if (!d.ok) { setErr(d.error ?? '등록 실패'); return }
+      const a = d.asset
+      if (picked.length < 10) onChange([...picked, { id: a.id, kind: a.kind, name: a.name, title: a.title, url: a.url, thumb: null }])
+      setKind('model3d'); setReload((n) => n + 1)
+    } catch { setErr('업로드 실패') } finally { setUp(null) }
+  }
   // 오디오 미리듣기 — 한 번에 하나만, 닫으면 정지
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [playingId, setPlayingId] = useState<string | null>(null)
@@ -43,7 +64,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
       finally { if (alive) setLoading(false) }
     }, q ? 250 : 0)
     return () => { alive = false; clearTimeout(t0); clearTimeout(t) }
-  }, [open, q, kind])
+  }, [open, q, kind, reload])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { audioRef.current?.pause(); onClose() } }
@@ -68,6 +89,8 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
         </div>
         <div className="flex items-center gap-1.5 px-4 py-2 overflow-x-auto overflow-y-hidden border-b border-[#f1ede4] shrink-0 no-scrollbar">
           {KINDS.map(([v, l]) => <button key={v} onClick={() => setKind(v)} className={`shrink-0 h-9 px-3.5 rounded-full text-[13px] whitespace-nowrap leading-none border transition-colors ${kind === v ? 'bg-[#241f17] text-white border-[#241f17]' : 'bg-white text-[#6b6152] border-[#ddd3bf] hover:border-[#241f17]'}`}>{l}</button>)}
+          {kind === 'model3d' && <button onClick={() => glbRef.current?.click()} disabled={!!up} className="shrink-0 h-9 px-3.5 rounded-full text-[13px] font-bold whitespace-nowrap leading-none bg-[#2563eb] text-white disabled:opacity-50" title="내 컴퓨터의 GLB 3D 모델을 올려 내 게임에 써요 (나만 보여요 · 30MB 이하)">{up ?? '⬆ 내 GLB 올리기'}</button>}
+          <input ref={glbRef} type="file" accept=".glb,model/gltf-binary" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) uploadGlb(f); e.target.value = '' }} />
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto p-4">
           {err && <p className="text-[12.5px] text-red-600 mb-2">{err}</p>}
@@ -103,7 +126,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
                     ) : it.kind === 'model3d' ? (
                       <span className="relative w-full h-full flex items-center justify-center">
                         {it.meta?.thumb ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={it.meta.thumb} alt={it.title} loading="lazy" className="max-w-full max-h-full object-contain" /> : <span className="text-[34px]" aria-hidden>🧊</span>}
-                        <span className="absolute top-1 left-1 flex gap-0.5"><span className="text-[9.5px] font-extrabold bg-[#241f17] text-white rounded px-1">3D</span>{it.meta?.rig === 'anim' || it.meta?.rig === 'bones' ? <span className="text-[9.5px] font-extrabold bg-[#16a34a] text-white rounded px-1">{it.meta.rig === 'anim' ? '🦴 움직임' : '🦴 뼈대'}</span> : null}</span>
+                        <span className="absolute top-1 left-1 flex gap-0.5"><span className="text-[9.5px] font-extrabold bg-[#241f17] text-white rounded px-1">3D</span>{it.meta?.rig === 'anim' || it.meta?.rig === 'bones' ? <span className="text-[9.5px] font-extrabold bg-[#16a34a] text-white rounded px-1">{it.meta.rig === 'anim' ? '🦴 움직임' : '🦴 뼈대'}</span> : null}{it.meta?.uploaded ? <span className="text-[9.5px] font-extrabold bg-[#2563eb] text-white rounded px-1">내 파일</span> : null}</span>
                       </span>
                     ) : /* eslint-disable-next-line @next/next/no-img-element */ <img src={it.url} alt={it.title} loading="lazy" className="max-w-full max-h-full object-contain" style={{ imageRendering: (it.width ?? 999) <= 128 ? 'pixelated' : 'auto' }} />}
                   </div>

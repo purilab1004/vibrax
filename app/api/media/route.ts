@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   const isAdmin = (prof as { role?: string } | null)?.role === 'admin'
   const run = async (withVis: boolean) => {
     let q2 = admin.from('media_assets').select('id,kind,name,title,description,genres,tags,url,mime,bytes,width,height,meta,uses,credit_cost').eq('status', 'active').in('kind', [...INJECTABLE]).order('uses', { ascending: false }).order('created_at', { ascending: false }).limit(limit)
-    if (withVis) q2 = q2.eq('visibility', 'public')
+    if (withVis) q2 = q2.or(`visibility.eq.public,designer_id.eq.${user.id}`)   // 공개 에셋 + 내가 올린 것(나만 보임)
     if (kind) q2 = q2.eq('kind', kind)
     if (genre) q2 = q2.contains('genres', [genre])
     if (q) q2 = q2.or(`title.ilike.%${q}%,name.ilike.%${q}%,tags.cs.{${q}}`)
