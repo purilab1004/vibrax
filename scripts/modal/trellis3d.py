@@ -340,6 +340,10 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=src)
 arm = next(o for o in bpy.data.objects if o.type == 'ARMATURE')
 for a in list(bpy.data.actions): bpy.data.actions.remove(a)
+for o in bpy.data.objects:   # 이미 움직임이 든 GLB 를 다시 구울 때 — 남은 애니메이션·자세를 비운다
+    if o.animation_data: o.animation_data_clear()
+    if o.type == 'ARMATURE':
+        for pb in o.pose.bones: pb.rotation_mode = 'QUATERNION'; pb.rotation_quaternion = (1, 0, 0, 0); pb.location = (0, 0, 0); pb.scale = (1, 1, 1)
 M = arm.matrix_world
 B = arm.data.bones
 pos = {b.name: M @ b.tail_local for b in B}
@@ -373,6 +377,49 @@ LL, LR = chain(legL, legR), chain(legR, legL)
 AL, AR = chain(armL, armR or top, True), chain(armR, armL or top, True)
 HEAD = [top.parent or top] if top else []
 SPINE = [b for b in path(top)[:3]] if top else []
+# 스킨 정리 — 자동 리깅은 몸통 살을 팔·다리 뼈에도 묶어, 팔을 들면 옆구리가 날개처럼 딸려 올라간다.
+#   어깨 관절보다 몸 안쪽에 있는 살의 팔 가중치 → 가슴(척추) 뼈로, 엉덩이 관절보다 위에 있는 살의 다리 가중치 → 골반(뿌리) 뼈로 옮긴다
+def clean_weights():
+    chest = SPINE[-1] if SPINE else root
+    for ob in [o for o in bpy.data.objects if o.type == 'MESH']:
+        vg = ob.vertex_groups
+        if chest.name not in vg or root.name not in vg: continue
+        mw = ob.matrix_world
+        def fix(chain, test, target):
+            if not chain: return
+            names = set()
+            def walk(b):
+                names.add(b.name)
+                for c in b.children: walk(c)
+            walk(chain[0])
+            ids = {vg[n].index for n in names if n in vg}
+            tgt = vg[target.name]
+            for v in ob.data.vertices:
+                p = mw @ v.co
+                if not test(p): continue
+                moved = 0.0
+                for g in v.groups:
+                    if g.group in ids and g.weight > 0: moved += g.weight; g.weight = 0.0
+                if moved > 0: tgt.add([v.index], moved, 'ADD')
+        def seg_d(p, chain):   # 점 p 와 뼈 사슬(머리→꼬리 선분들) 사이 최단 거리
+            best = 1e9
+            for b in chain:
+                a_, b_ = M @ b.head_local, M @ b.tail_local
+                ab = b_ - a_; t = max(0.0, min(1.0, (p - a_).dot(ab) / max(1e-9, ab.length_squared)))
+                best = min(best, (p - (a_ + ab * t)).length)
+            return best
+        torso = [b for b in path(top) if b not in HEAD] if top else []
+        for ch in (AL, AR):
+            if ch and torso:
+                fix(ch, lambda p, ch=ch: seg_d(p, torso) < seg_d(p, ch) * 0.95, chest)
+        for ch in (LL, LR):
+            if ch and torso:
+                hz = (M @ ch[0].head_local).z
+                fix(ch, lambda p, ch=ch, hz=hz: p.z > hz + h * 0.03 and seg_d(p, torso) < seg_d(p, ch) * 0.8, root)
+try:
+    clean_weights(); print('weights cleaned')
+except Exception as e:
+    print('clean failed', e)
 PB = arm.pose.bones
 def q(bone, axis, ang):
     loc = (M.to_3x3() @ bone.matrix_local.to_3x3()).inverted() @ Vector(axis)
@@ -414,7 +461,7 @@ def idle(t):
 def jump(t):
     e = math.sin(t * math.pi); d = {}
     put(d, LL, X, -0.5 * e); put(d, LR, X, -0.5 * e); put(d, LL, X, 0.9 * e, 1); put(d, LR, X, 0.9 * e, 1)
-    put(d, AL, Y, -1.4 * e); put(d, AR, Y, 1.4 * e)
+    put(d, AL, X, -1.0 * e); put(d, AR, X, -1.0 * e); put(d, AL, Y, -0.35 * e); put(d, AR, Y, 0.35 * e)
     return d
 def attack(t):
     e = math.sin(min(1, t * 1.6) * math.pi); d = {}
@@ -423,7 +470,7 @@ def attack(t):
     return d
 def happy(t):
     e = abs(math.sin(t * 2 * math.pi)); d = {}
-    put(d, AL, Y, -2.2 * e); put(d, AR, Y, 2.2 * e); put(d, HEAD, X, -0.15 * e)
+    put(d, AL, X, -1.5 * e); put(d, AR, X, -1.5 * e); put(d, AL, Y, -0.6 * e); put(d, AR, Y, 0.6 * e); put(d, HEAD, X, -0.15 * e)   # 앞위로 만세(옆으로 크게 들면 몸통이 날개처럼 늘어난다)
     return d
 def hit(t):
     e = math.sin(t * math.pi) * (1 - t * 0.5); d = {}
