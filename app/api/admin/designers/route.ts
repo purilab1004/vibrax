@@ -5,7 +5,7 @@ export async function GET() {
   const g = await requireAdmin(); if ('error' in g) return g.error
   const [{ data: apps, error: e1 }, { data: pending, error: e2 }, { data: designers }] = await Promise.all([
     g.admin.from('designer_applications').select('*').order('created_at', { ascending: false }).limit(200),
-    g.admin.from('media_assets').select('id,kind,name,title,description,tags,url,width,height,bytes,status,created_at,designer_id').in('status', ['pending', 'rejected']).order('created_at', { ascending: false }).limit(200),
+    g.admin.from('media_assets').select('id,kind,name,title,description,tags,url,width,height,bytes,status,created_at,designer_id,meta').in('status', ['pending', 'rejected']).order('created_at', { ascending: false }).limit(200),
     g.admin.from('profiles').select('id,username,agent_name,email,created_at').eq('role', 'designer').order('created_at', { ascending: false }).limit(200),
   ])
   const err = e1 ?? e2

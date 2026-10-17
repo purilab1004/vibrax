@@ -21,6 +21,8 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   const [job, setJob] = useState<{ status: string; elapsed?: number; stage?: string } | null>(null)
   const [result, setResult] = useState<{ token: string; preview: Preview } | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
+  const [savedKey, setSavedKey] = useState<string | null>(null)
+  const [published, setPublished] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [anim, setAnim] = useState<{ src: string | null; expected: number } | null>(null)   // 모래 효과: 원본 이미지 · 예상 시간
   const fileRef = useRef<HTMLInputElement>(null)
@@ -43,7 +45,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   const start = async () => {
     if (result && !saved && !confirm('지금 모델을 저장하지 않았어요. 버리고 새로 만들까요?')) return
     if (result && !saved) discard(true)
-    setErr(null); setResult(null); setSaved(null); setJob({ status: 'submitting' })
+    setErr(null); setResult(null); setSaved(null); setSavedKey(null); setPublished(null); setJob({ status: 'submitting' })
     setAnim({ src: mode === 'image' ? image : mode === 'drive' ? pick?.url ?? null : null, expected: mode === 'text' || volumize ? 120 : 60 })
     const body = mode === 'text' ? { mode: 'text', prompt, title } : mode === 'image' ? { mode: 'image', image, title, volumize }
       : pick?.kind === 'drive' ? { mode: 'drive', driveKey: pick.key, title, volumize } : { mode: 'media', assetId: pick?.kind === 'media' ? pick.id : '', title, volumize }
@@ -65,7 +67,14 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
     const r = await fetch('/api/gallery/model3d', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'save', token: result.token, title }) })
     const j = await r.json().catch(() => ({}))
     if (!r.ok) { setErr(j.error ?? '저장 실패'); return }
-    setSaved(j.name); onSaved()
+    setSaved(j.name); setSavedKey(j.key); onSaved()
+  }
+  const publish = async () => {
+    if (!savedKey) return
+    const r = await fetch('/api/designer/drive', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'publish', key: savedKey, title: title || saved?.replace(/\.glb$/i, ''), tags: '3D', description: mode === 'text' ? prompt : '' }) })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) { setErr(j.error ?? '공개 신청 실패'); return }
+    setPublished(j.asset?.status === 'active' ? '전체 갤러리 ‘3D 모델’ 에 공개했어요' : '공개 신청했어요 — 관리자 승인 후 전체 갤러리 ‘3D 모델’ 에 보여요')
   }
   const discard = async (silent = false) => {
     if (!result) return
@@ -148,7 +157,9 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
               )}
               {!saved && <button onClick={save} className={ui.primary}>💾 드라이브에 저장</button>}
               {!saved && <button onClick={() => discard()} className={ui.ghost}>🗑 버리기</button>}
+              {saved && !published && <button onClick={publish} className={ui.primary}>🌐 갤러리에 공개 신청</button>}
               {saved && <a href={result.preview.url} download className={ui.ghost}>⬇ GLB</a>}
+              {published && <p className="w-full text-[12.5px] font-bold text-[#2563eb]">{published}</p>}
             </div>
           </>
         ) : (

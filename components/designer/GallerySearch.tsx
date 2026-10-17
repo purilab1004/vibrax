@@ -2,9 +2,10 @@
 // 전체 갤러리 — 공개된 모든 디자인을 둘러보고·검색해 참고하거나 3D 로 만든다
 import { useEffect, useState } from 'react'
 import { ui, type Source3D } from './shared'
+import { GlbViewer } from './GlbViewer'
 
 interface Asset { id: string; kind: string; name: string; title: string; url?: string; preview?: string | null; width: number | null; height: number | null; designer_name: string | null; tags?: string[]; uses?: number | null }
-const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일·맵'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트']]
+const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일·맵'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['model3d', '3D 모델']]
 
 export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) => void }) {
   const [q, setQ] = useState(''); const [kind, setKind] = useState('')
@@ -13,7 +14,7 @@ export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) =>
   const [view, setView] = useState<Asset | null>(null)
   const [copied, setCopied] = useState(false)
   useEffect(() => {
-    const t = setTimeout(() => { fetch(`/api/library?q=${encodeURIComponent(q)}&kind=${kind}&limit=200`).then((r) => r.json()).then((j) => setItems((j.items ?? []).filter((a: Asset) => a.kind !== 'audio'))).catch(() => setItems([])) }, q ? 250 : 0)
+    const t = setTimeout(() => { fetch(`/api/library?q=${encodeURIComponent(q)}&kind=${kind}&limit=200`).then((r) => r.json()).then((j) => setItems((j.items ?? []).filter((a: Asset) => a.kind !== 'audio' && (kind === 'model3d' || a.kind !== 'model3d')))).catch(() => setItems([])) }, q ? 250 : 0)
     return () => clearTimeout(t)
   }, [q, kind])
 
@@ -46,14 +47,17 @@ export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) =>
         <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" onClick={() => setView(null)}>
           <div className="w-full max-w-xl bg-white rounded-2xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className={`${ui.checker} flex items-center justify-center h-[50vh] max-h-[440px]`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={view.url ?? view.preview ?? ''} alt={view.title} className="max-w-full max-h-full object-contain" />
+              {view.kind === 'model3d' && view.url ? <div className="w-full h-full"><GlbViewer url={view.url} /></div> : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={view.url ?? view.preview ?? ''} alt={view.title} className="max-w-full max-h-full object-contain" />
+              )}
             </div>
             <div className="p-4">
               <p className="text-[15px] font-extrabold text-[#241f17]">{view.title}</p>
               <p className="text-[12px] text-[#9d9280]">{view.name}{view.width ? ` · ${view.width}×${view.height}` : ''}{view.designer_name ? ` · by ${view.designer_name}` : ''}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button onClick={() => { onMake3D({ kind: 'media', id: view.id, url: view.url ?? view.preview ?? '', title: view.title }); setView(null) }} className={ui.primary}>🧊 3D로 만들기</button>
+                {view.kind !== 'model3d' && <button onClick={() => { onMake3D({ kind: 'media', id: view.id, url: view.url ?? view.preview ?? '', title: view.title }); setView(null) }} className={ui.primary}>🧊 3D로 만들기</button>}
+                {view.kind === 'model3d' && view.url && <a href={view.url} download className={ui.primary}>⬇ GLB 받기</a>}
                 <button onClick={async () => { try { await navigator.clipboard.writeText(view.name); setCopied(true); setTimeout(() => setCopied(false), 1200) } catch { /* 무시 */ } }} className={ui.ghost}>{copied ? '복사됨 ✓' : '코드 키 복사'}</button>
                 <button onClick={() => setView(null)} className={ui.ghost}>닫기</button>
               </div>

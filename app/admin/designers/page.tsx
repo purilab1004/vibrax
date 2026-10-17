@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { PageHeader, Card, Badge, EmptyState, btn, th, td, trHover, Segmented } from '@/components/admin/ui'
 
 interface App { id: string; user_id: string; name: string; email: string; portfolio_url: string | null; message: string | null; status: string; created_at: string }
-interface Pending { id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url: string; width: number | null; height: number | null; bytes: number; status: string; created_at: string; designer_name: string | null }
+interface Pending { meta?: { thumb?: string } | null; id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url: string; width: number | null; height: number | null; bytes: number; status: string; created_at: string; designer_name: string | null }
 interface Designer { id: string; username: string | null; agent_name: string | null; email: string | null; created_at: string }
 
 export default function AdminDesignersPage() {
@@ -55,7 +55,10 @@ export default function AdminDesignersPage() {
               {pending.map((p) => (
                 <div key={p.id} className="rounded-xl border border-[#e3e6ec] overflow-hidden bg-white">
                   <div className="aspect-square bg-[repeating-conic-gradient(#f3f5f8_0_25%,#fff_0_50%)] bg-[length:14px_14px] flex items-center justify-center">
-                    {p.kind === 'audio' ? <audio src={p.url} controls className="w-[90%]" /> : (
+                    {p.kind === 'audio' ? <audio src={p.url} controls className="w-[90%]" /> : p.kind === 'model3d' ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <a href={p.url} target="_blank" rel="noreferrer" className="relative w-full h-full flex items-center justify-center">{p.meta?.thumb ? <img src={p.meta.thumb} alt={p.title} className="w-full h-full object-contain" /> : <span className="text-3xl">🧊</span>}<span className="absolute top-1.5 left-1.5 text-[10px] font-bold bg-[#111827] text-white rounded px-1.5">3D · GLB</span></a>
+                    ) : (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.url} alt={p.title} className="w-full h-full object-contain" />
                     )}

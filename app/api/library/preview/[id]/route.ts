@@ -11,10 +11,13 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const { id } = await ctx.params
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new Response('bad id', { status: 400 })
   const admin = createAdminClient()
-  const { data } = await admin.from('media_assets').select('url,kind,mime,status,visibility').eq('id', id).maybeSingle()
-  const a = data as { url: string; kind: string; mime: string | null; status: string; visibility?: string } | null
-  if (!a || a.status !== 'active' || a.visibility === 'admin' || a.kind === 'audio' || a.kind === 'model3d' || !(a.mime ?? 'image/').startsWith('image/')) return new Response('not found', { status: 404 })
-  const src = await fetch(a.url).catch(() => null)
+  const { data } = await admin.from('media_assets').select('url,kind,mime,status,visibility,meta').eq('id', id).maybeSingle()
+  const a = data as { url: string; kind: string; mime: string | null; status: string; visibility?: string; meta?: { thumb?: string } | null } | null
+  if (!a || a.status !== 'active' || a.visibility === 'admin' || a.kind === 'audio') return new Response('not found', { status: 404 })
+  // 3D 모델은 썸네일 그림으로
+  const srcUrl = a.kind === 'model3d' ? a.meta?.thumb : (a.mime ?? 'image/').startsWith('image/') ? a.url : null
+  if (!srcUrl) return new Response('not found', { status: 404 })
+  const src = await fetch(srcUrl).catch(() => null)
   if (!src?.ok) return new Response('not found', { status: 404 })
   try {
     const base = sharp(Buffer.from(await src.arrayBuffer()), { animated: false }).resize(EDGE, EDGE, { fit: 'inside', withoutEnlargement: true })

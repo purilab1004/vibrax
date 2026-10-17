@@ -3,10 +3,12 @@
 // 디자이너 접수·작품 등록은 스튜디오 › 디자인 AI(/studio/design) 에서. 3D 모델은 여기 노출하지 않는다.
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+const GlbViewer = dynamic(() => import('@/components/designer/GlbViewer').then((m) => m.GlbViewer), { ssr: false })
 import { useRouter, useSearchParams } from 'next/navigation'
 
 interface Asset { id: string; kind: string; name: string; title: string; description: string | null; tags: string[]; url?: string; preview: string | null; width: number | null; height: number | null; uses: number | null; created_at: string; designer_name: string | null }
-const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일·맵'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['audio', '효과음·음악']]
+const KINDS: [string, string][] = [['', '전체'], ['character', '캐릭터'], ['background', '배경'], ['item', '아이템'], ['tile', '타일·맵'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트'], ['model3d', '3D 모델'], ['audio', '효과음·음악']]
 const SUGGEST = ['드래곤', '우주', '숲', '픽셀', '귀여운', '바다', '던전', '네온']
 
 export default function LibraryClient() {
@@ -30,7 +32,7 @@ export default function LibraryClient() {
   }, [q, kind, router])
 
   const shown = useMemo(() => {
-    const list = (items ?? []).filter((a) => a.kind !== 'model3d' && (kind === 'audio' || a.kind !== 'audio'))  // 소리는 ‘효과음·음악’ 탭에서만
+    const list = (items ?? []).filter((a) => (kind === 'model3d' || a.kind !== 'model3d') && (kind === 'audio' || a.kind !== 'audio'))  // 소리·3D 는 각자 탭에서만
     return sort === 'popular' ? [...list].sort((a, b) => (b.uses ?? 0) - (a.uses ?? 0)) : list
   }, [items, sort, kind])
   // 결과에서 많이 쓰인 태그 → 연관 검색어
@@ -96,6 +98,7 @@ export default function LibraryClient() {
           <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 [&>*]:mb-3">
             {shown.map((a) => (
               <button key={a.id} onClick={() => setPreview(a)} className="group relative block w-full break-inside-avoid rounded-xl overflow-hidden bg-[repeating-conic-gradient(#f3f0e8_0_25%,#fff_0_50%)] bg-[length:14px_14px] border border-[#ebe4d6] hover:shadow-[0_14px_30px_-14px_rgba(36,31,23,0.45)] transition-shadow text-left">
+                {a.kind === 'model3d' && <span className="absolute top-2 left-2 z-10 text-[10px] font-extrabold bg-[#241f17] text-white rounded px-1.5 py-0.5">3D</span>}
                 {a.kind === 'audio' ? (
                   <div className="aspect-[4/3] flex flex-col items-center justify-center bg-gradient-to-br from-[#eef4ff] to-[#fdf2f8]"><span className="text-[36px]">🎵</span><span className="mt-1 text-[12px] font-bold text-[#4a4337] px-2 truncate max-w-full">{a.title}</span></div>
                 ) : (
@@ -117,7 +120,10 @@ export default function LibraryClient() {
         <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => setPreview(null)}>
           <div className="w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl md:flex" onClick={(e) => e.stopPropagation()}>
             <div className="md:flex-1 bg-[repeating-conic-gradient(#f3f0e8_0_25%,#fff_0_50%)] bg-[length:18px_18px] flex items-center justify-center min-h-[260px] max-h-[60vh] md:max-h-[560px]">
-              {preview.kind === 'audio' ? (preview.url ? <audio src={preview.url} controls className="my-10 w-[90%]" /> : <p className="my-10 text-[13px] text-[#6b6152]">🔒 로그인하면 들어 볼 수 있어요</p>) : (
+              {preview.kind === 'model3d' ? (preview.url ? <div className="w-full h-[60vh] md:h-[520px]"><GlbViewer url={preview.url} /></div> : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={preview.preview ?? ''} alt={preview.title} className="max-h-[60vh] md:max-h-[560px] w-auto object-contain" />
+              )) : preview.kind === 'audio' ? (preview.url ? <audio src={preview.url} controls className="my-10 w-[90%]" /> : <p className="my-10 text-[13px] text-[#6b6152]">🔒 로그인하면 들어 볼 수 있어요</p>) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={preview.url ?? preview.preview ?? ''} alt={preview.title} className="max-h-[60vh] md:max-h-[560px] w-auto object-contain" />
               )}
@@ -130,7 +136,7 @@ export default function LibraryClient() {
               <div className="mt-4 rounded-xl bg-[#f5f8ff] border border-[#d6e2fb] px-3 py-2.5 text-[12px] text-[#3b4a6b]" style={{ wordBreak: 'keep-all' }}>
                 코드 키 <code className="bg-white px-1.5 py-0.5 rounded font-bold text-[#1e3a8a]">{preview.name}</code><br />스튜디오 프롬프트에 이 이름을 적거나 미디어 선택기에서 고르면 게임에 들어가요.
               </div>
-              {!loggedIn && <p className="mt-3 text-[12px] text-[#9d9280]">🔒 워터마크 미리보기예요. <a href="/login?redirect=/gallery" className="text-[#2563eb] font-bold underline">로그인</a>하면 원본으로 보고 받을 수 있어요.</p>}
+              {!loggedIn && <p className="mt-3 text-[12px] text-[#9d9280]">🔒 워터마크 미리보기예요. <a href="/login?redirect=/gallery" className="text-[#2563eb] font-bold underline">로그인</a>하면 원본으로 보고{preview.kind === 'model3d' ? ' 3D 로 돌려 볼 수 있어요.' : ' 받을 수 있어요.'}</p>}
               {preview.url && <a href={preview.url} download target="_blank" rel="noreferrer" className="mt-3 text-[12.5px] font-bold text-[#2563eb]">⬇ 원본 받기</a>}
               <div className="mt-auto pt-4 flex gap-2">
                 <Link href="/studio" className="flex-1 h-11 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-[13.5px] font-bold inline-flex items-center justify-center">스튜디오에서 쓰기</Link>

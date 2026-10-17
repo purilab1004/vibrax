@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     if (ids.length) { const { data: profs } = await admin.from('profiles').select('id,username,agent_name').in('id', ids); for (const p of (profs ?? []) as { id: string; username: string | null; agent_name: string | null }[]) names[p.id] = p.agent_name ?? p.username ?? '디자이너' }
     const items = (data ?? []).map((a) => {
       const { url, ...rest } = a as unknown as { url: string; id: string; kind: string; designer_id: string | null }
-      const preview = rest.kind === 'audio' ? null : `/api/library/preview/${rest.id}`
+      const preview = rest.kind === 'audio' || (rest.kind === 'model3d' && !(rest as { meta?: { thumb?: string } }).meta?.thumb) ? null : `/api/library/preview/${rest.id}`
       return { ...rest, ...(user ? { url } : {}), preview, designer_name: names[rest.designer_id ?? ''] ?? null }
     })
     return Response.json({ items, loggedIn: !!user }, { headers: { 'Cache-Control': 'private, max-age=15' } })
