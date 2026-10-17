@@ -76,11 +76,11 @@ export default function DesignerStudio() {
   const status = me.application?.status
 
   return (
-    <div className="relative min-h-[100svh] bg-[radial-gradient(1200px_700px_at_80%_10%,#f6ead6_0%,transparent_60%),radial-gradient(900px_600px_at_10%_90%,#f3e7d3_0%,transparent_60%),radial-gradient(700px_500px_at_95%_95%,#fbf3e4_0%,transparent_60%),linear-gradient(180deg,#fffdf9,#faf5ec)]">
+    <div className="relative min-h-[100svh] bg-white">
       {/* 빛의 입자 — 작은 빛이 모여 모양을 이루고 흩어진다 */}
       <ParticleField />
       {/* 상단 바 */}
-      <div className="app-top-pad sticky top-0 z-30 flex items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(168,120,63,0.08),0_8px_30px_-18px_rgba(168,120,63,0.35)] px-4 h-14 box-content">
+      <div className="app-top-pad sticky top-0 z-30 flex items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(168,120,63,0.08),0_8px_30px_-18px_rgba(168,120,63,0.35)] px-4 h-11 box-content">
         <Link href="/studio" className="font-pixel text-[11px] text-[#5f523f] hover:text-[#a8783f] tracking-widest transition-colors shrink-0">‹ STUDIO</Link>
         <div className="flex-1 flex justify-center min-w-0 overflow-x-auto scrollbar-hide"><AiModeToggle /></div>
         <Link href="/credits" className="hover:opacity-80 transition-opacity shrink-0" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>
@@ -124,7 +124,7 @@ export default function DesignerStudio() {
         /* ── 작업 공간 ── */
         <div className="relative z-10 flex flex-col md:flex-row">
           {/* 얇은 레일 — 외계 기호 타일 (무대를 넓게) */}
-          <aside className="md:w-[76px] shrink-0 md:min-h-[calc(100svh-3.5rem)] md:border-r border-white/70 bg-white/30 backdrop-blur-2xl md:sticky md:top-14 md:self-start">
+          <aside className="md:w-[76px] shrink-0 md:min-h-[calc(100svh-2.75rem)] md:border-r border-white/70 bg-white/30 backdrop-blur-2xl md:sticky md:top-11 md:self-start">
             <p className="hidden md:block pt-4 pb-2 text-center vx-glyph text-[9px] font-extrabold bg-gradient-to-b from-[#a8783f] to-[#d6b47a] bg-clip-text text-transparent">VX</p>
             <nav className="flex md:flex-col items-center gap-1.5 p-2 overflow-x-auto scrollbar-hide">
               {NAV.map(([k, g, t, d]) => (
