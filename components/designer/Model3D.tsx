@@ -232,21 +232,21 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
                   </div>
                 </div>
               )
-              : (<><CubeLoader size={52} /><p className="mt-5 vx-glyph text-[11px] text-[#2563eb]">{'// STAGE'}</p><p className="mt-1 text-[14px] text-[#4b5563]">완성된 3D 모델이 이 무대에 나타나요</p><p className="text-[12px] text-[#8a93a6]">오른쪽 내 3D 모델을 누르면 여기서 움직여 볼 수 있어요</p></>)}
+              : (<><CubeLoader size={52} /><p className="mt-4 text-[14px] text-[#4b5563]">완성된 3D 모델이 이 무대에 나타나요</p><p className="text-[12px] text-[#8a93a6]">오른쪽 내 3D 모델을 누르면 여기서 움직여 볼 수 있어요</p></>)}
           </div>
         )}
       </div>
 
       {/* 오른쪽 — 내 3D 모델 (눌러서 무대에 올리기) */}
       <aside className="hidden xl:flex flex-col gap-2 self-start sticky top-14 max-h-[calc(100svh-4.5rem)]">
-        <p className="vx-glyph text-[10px] font-bold text-[#2563eb]">{'// MY ASSETS'}</p>
+        <p className="text-[12px] font-bold text-[#1f2937]">내 3D 에셋</p>
         <input value={aq} onChange={(e) => setAq(e.target.value)} placeholder="내 3D 검색" className={`${ui.input} h-9 text-[12.5px]`} />
         <div className="grid grid-cols-2 gap-2 overflow-y-auto pr-0.5 content-start" onScroll={(e) => { const el = e.currentTarget; if (el.scrollTop + el.clientHeight > el.scrollHeight - 200) loadMoreAssets() }}>
           {(myModels ?? []).map((f) => (
             <button key={f.key} onClick={() => { setAsset(f); setMotion(f.rig === 'anim' || f.rig === 'face' ? 'all' : 'idle'); window.scrollTo({ top: 0, behavior: 'smooth' }) }} title={f.name}
               className={`relative aspect-square rounded-[4px] overflow-hidden border bg-[linear-gradient(160deg,#fbfcff,#e3ebf8)] ${asset?.key === f.key ? 'border-[#2563eb] ring-2 ring-[#2563eb]/30' : 'border-[#e5e9f2] hover:border-[#93c5fd]'}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {f.thumb ? <img src={f.thumb} alt={f.name} className="w-full h-full object-contain" /> : <span className="vx-glyph text-[18px] text-[#2563eb]">⧖</span>}
+              {f.thumb ? <img src={f.thumb} alt={f.name} className="w-full h-full object-contain" /> : <span className="text-[11px] font-bold text-[#2563eb]">3D</span>}
               {(f.rig === 'anim' || f.rig === 'face') && <span className="absolute bottom-1 left-1 text-[9px] font-extrabold bg-[#2563eb] text-white px-1 rounded-[2px]">움직임</span>}
             </button>
           ))}
