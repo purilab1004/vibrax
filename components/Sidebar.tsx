@@ -70,8 +70,8 @@ export default function Sidebar({ newGenres = [], channels = [], tournament = []
   useEffect(() => {
     if (inAdmin) return  // 관리자는 AdminRail 이 --rail-w 를 관리
     // 내정보는 항상 펼친 사이드바(프로필 섹션 + 메뉴)
-    document.documentElement.style.setProperty('--rail-w', inProfile ? '14rem' : open ? '14rem' : '0rem')
-  }, [open, inAdmin, inProfile])
+    document.documentElement.style.setProperty('--rail-w', inStudio ? '0rem' : inProfile ? '14rem' : open ? '14rem' : '0rem')   // 스튜디오는 사이드바 없음 — 여백도 0
+  }, [open, inAdmin, inProfile, inStudio])
 
   useEffect(() => {
     if (!inStudio) return

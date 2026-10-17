@@ -201,13 +201,13 @@ export default function StudioPage() {
       </section>
 
       {/* 내 프로젝트 */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+      <section className="relative z-10 w-full px-4 sm:px-6 lg:px-8 pb-20">
         {/* 배경 오라 — 스튜디오 파랑 톤 (필터 없이 그라데이션만) */}
         <div aria-hidden className="absolute inset-x-0 -top-10 h-[30rem] -z-10 pointer-events-none overflow-hidden">
           <div className="absolute -left-24 top-0 w-[28rem] h-[28rem] rounded-full bg-[radial-gradient(closest-side,rgba(37,99,235,0.12),transparent)]" />
           <div className="absolute -right-24 top-20 w-[28rem] h-[28rem] rounded-full bg-[radial-gradient(closest-side,rgba(6,182,212,0.12),transparent)]" />
         </div>
-        <div className="rounded-3xl bg-white/95 border border-[#e3ecfb] shadow-[0_20px_44px_-30px_rgba(37,99,235,0.4)] p-4 sm:p-6">
+        <div className="py-2">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div>
             <h2 className="text-[20px] font-extrabold text-[#0f1b33]">내 프로젝트 <span className="bg-gradient-to-r from-[#2563eb] to-[#06b6d4] bg-clip-text text-transparent">{projects.length}</span></h2>
@@ -223,7 +223,7 @@ export default function StudioPage() {
         {loadError ? (
           <p className="text-red-500 text-xs border border-red-200 bg-red-50 px-3 py-2">{s.listError}</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-start">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 items-start">
             {/* 첫 카드 — 새 게임 추가 (+) */}
             <button
               onClick={() => setChooser(true)}
