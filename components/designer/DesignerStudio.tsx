@@ -88,13 +88,13 @@ export default function DesignerStudio() {
       {/* 빛의 입자 — 작은 빛이 모여 모양을 이루고 흩어진다 */}
       <ParticleField />
       {/* 상단 바 */}
-      <div className="app-top-pad sticky top-0 z-30 flex items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(37,99,235,0.08),0_8px_30px_-18px_rgba(37,99,235,0.35)] px-4 h-11 box-content">
-        <nav className="flex items-center gap-1.5 shrink-0 min-w-0 text-[12px]">
+      <div className="app-top-pad sticky top-0 z-30 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(37,99,235,0.08),0_8px_30px_-18px_rgba(37,99,235,0.35)] px-4 h-11 box-content">
+        <nav className="flex items-center gap-1.5 min-w-0 text-[12px]">
           <Link href="/studio" className="font-pixel text-[11px] text-[#4b5563] hover:text-[#2563eb] tracking-widest transition-colors">‹ STUDIO</Link>
-          {isDesigner && <><span className="text-[#cbd2de]">/</span><Decode key={section} text={NAV.find(([k]) => k === section)?.[2] ?? ''} className="font-bold text-[#1f2937] truncate" /></>}
+          {isDesigner && <><span className="text-[#cbd2de]">/</span><span className="font-bold text-[#1f2937] truncate">{NAV.find(([k]) => k === section)?.[2] ?? ''}</span></>}
         </nav>
-        <div className="flex-1 flex justify-center min-w-0 overflow-x-auto scrollbar-hide"><AiModeToggle /></div>
-        <Link href="/credits" className="hover:opacity-80 transition-opacity shrink-0" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>
+        <div className="flex justify-center min-w-0"><AiModeToggle /></div>
+        <Link href="/credits" className="justify-self-end hover:opacity-80 transition-opacity shrink-0" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>
       </div>
 
       {!isDesigner ? (
