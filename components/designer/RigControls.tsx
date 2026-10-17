@@ -24,7 +24,7 @@ export function RigButton({ driveKey, onDone }: { driveKey: string; onDone: (f: 
       await new Promise((ok) => setTimeout(ok, 4000))
       const s = await fetch('/api/designer/rig?token=' + encodeURIComponent(j.token)).then((x) => x.json()).catch(() => null)
       if (!s) continue
-      if (s.status === 'done') { setJob(null); onDone({ key: s.key, name: s.name, url: s.url }); return }
+      if (s.status === 'done') { setJob(null); if (s.updatedPublished) alert(`갤러리에 공개된 이 모델도 움직이는 버전으로 바꿨어요 (${s.updatedPublished}개) — 이 모델을 쓰는 게임도 이제 움직여요.`); onDone({ key: s.key, name: s.name, url: s.url }); return }
       if (s.status === 'failed') { setJob(null); setErr(s.error); return }
       setJob(s.elapsed ?? 0)
     }

@@ -74,5 +74,13 @@ export async function GET(req: Request) {
   const up = await store.upload(key, glb, { contentType: 'model/gltf-binary' })
   if (up.error) return Response.json({ status: 'running', elapsed, note: up.error.message })
   await store.copy(t.key + '.t', key + '.t').catch(() => null)   // 원본 썸네일을 같이
-  return Response.json({ status: 'done', key, name, url: store.getPublicUrl(key).data.publicUrl })
+  // 이 원본으로 갤러리에 공개한 3D 모델이 있으면 파일을 움직이는 버전으로 바꾼다 → 그 모델을 쓰는 게임도 그대로 움직인다
+  let updated = 0
+  const { data: pubs } = await g.admin.from('media_assets').select('id,path,meta').eq('kind', 'model3d').eq('designer_id', g.user.id).eq('meta->>drive_key', t.key)
+  for (const a of (pubs ?? []) as { id: string; path: string | null; meta: Record<string, unknown> | null }[]) {
+    if (!a.path) continue
+    const { error } = await store.upload(a.path, glb, { contentType: 'model/gltf-binary', upsert: true, cacheControl: '60' })
+    if (!error) { await g.admin.from('media_assets').update({ bytes: glb.length, meta: { ...(a.meta ?? {}), rigged: true, drive_key: key } } as never).eq('id', a.id); updated++ }
+  }
+  return Response.json({ status: 'done', key, name, url: store.getPublicUrl(key).data.publicUrl, updatedPublished: updated })
 }

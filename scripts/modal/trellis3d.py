@@ -87,7 +87,123 @@ def rig_glb(glb: bytes) -> bytes:
         _run(["bash", "launch/inference/merge.sh", "--source", skin, "--target", src, "--output", out])
         if not os.path.exists(out):
             raise RuntimeError("merge produced no output")
+        # 움직임 클립을 GLB 안에 굽는다 — 실패해도 뼈대만 있는 GLB 는 돌려준다
+        anim = os.path.join(d, "animated.glb")
+        open(os.path.join(d, "bake.py"), "w").write(BAKE)
+        try:
+            _run(["python", os.path.join(d, "bake.py"), out, anim])
+            if os.path.exists(anim) and os.path.getsize(anim) > 1000:
+                return open(anim, "rb").read()
+        except Exception as e:  # noqa: BLE001
+            print("bake failed:", e)
         return open(out, "rb").read()
+
+
+# Blender(bpy) 로 뼈대 구조에서 다리·팔·머리를 찾아 idle·walk·run·jump·attack·happy·hit 클립을 키프레임으로 만든다.
+# (Blender 는 Z 위, 앞은 -Y) 이름 없는 자동 리깅 뼈(bone_N)라 위치·구조로 판별 — 게임 쪽 THREE.makeAlive 와 같은 규칙
+BAKE = r"""
+import sys, math, bpy
+from mathutils import Vector, Quaternion
+src, dst = sys.argv[1], sys.argv[2]
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=src)
+arm = next(o for o in bpy.data.objects if o.type == 'ARMATURE')
+for a in list(bpy.data.actions): bpy.data.actions.remove(a)
+M = arm.matrix_world
+B = arm.data.bones
+pos = {b.name: M @ b.tail_local for b in B}
+leaves = [b for b in B if not b.children]
+zs = [M @ b.head_local for b in B] + list(pos.values())   # 뼈 위치로 범위를 잡는다(메시 좌표계는 다를 수 있다)
+root = next(b for b in B if b.parent is None)
+zmin, zmax = min(v.z for v in zs), max(v.z for v in zs)
+xmin, xmax = min(v.x for v in zs), max(v.x for v in zs)
+h, w, cx = max(1e-3, zmax - zmin), max(1e-3, xmax - xmin), (M @ root.head_local).x
+top = max(leaves, key=lambda b: pos[b.name].z)
+low = [b for b in leaves if (pos[b.name].z - zmin) / h < 0.3]
+legL = min([b for b in low if pos[b.name].x >= cx] or [None], key=lambda b: pos[b.name].z if b else 0)
+legR = min([b for b in low if pos[b.name].x < cx] or [None], key=lambda b: pos[b.name].z if b else 0)
+rest = [b for b in leaves if b not in (legL, legR, top) and abs(pos[b.name].x - cx) > w * 0.05]
+armL = max([b for b in rest if pos[b.name].x > cx] or [None], key=lambda b: pos[b.name].x if b else 0)
+armR = min([b for b in rest if pos[b.name].x < cx] or [None], key=lambda b: pos[b.name].x if b else 0)
+def path(b):
+    p = []
+    while b: p.insert(0, b); b = b.parent
+    return p
+def after(a, b):
+    pa, pb = path(a), path(b) if b else []
+    i = 0
+    while i < len(pa) and i < len(pb) and pa[i] == pb[i]: i += 1
+    return pa[i:]
+def chain(a, b, drop=False):
+    if not a: return []
+    c = after(a, b) if b else path(a)[-2:]
+    return c[1:] if drop and len(c) >= 3 else c
+LL, LR = chain(legL, legR), chain(legR, legL)
+AL, AR = chain(armL, armR or top, True), chain(armR, armL or top, True)
+HEAD = [top.parent or top] if top else []
+SPINE = [b for b in path(top)[:3]] if top else []
+PB = arm.pose.bones
+def q(bone, axis, ang):
+    loc = (M.to_3x3() @ bone.matrix_local.to_3x3()).inverted() @ Vector(axis)
+    return Quaternion(loc.normalized(), ang)
+FPS = 30
+bpy.context.scene.render.fps = FPS
+def clip(name, seconds, fn):
+    act = bpy.data.actions.new(name); act.use_fake_user = True
+    arm.animation_data_create(); arm.animation_data.action = act
+    n = max(2, int(seconds * FPS))
+    for f in range(n + 1):
+        t = f / n
+        poses = fn(t)
+        for b in B:
+            pb = PB[b.name]; pb.rotation_mode = 'QUATERNION'
+            r = Quaternion()
+            for (bone, axis, ang) in poses.get(b.name, []): r = q(bone, axis, ang) @ r
+            pb.rotation_quaternion = r
+            pb.keyframe_insert('rotation_quaternion', frame=f + 1)
+    tr = arm.animation_data.nla_tracks.new(); tr.name = name; tr.strips.new(name, 1, act)
+    arm.animation_data.action = None
+def put(d, bones, axis, ang, idx=0):
+    if len(bones) > idx: d.setdefault(bones[idx].name, []).append((bones[idx], axis, ang))
+X, Y, Z = (1, 0, 0), (0, 1, 0), (0, 0, 1)
+def gait(sw, knee):
+    def fn(t):
+        s = math.sin(t * 2 * math.pi); d = {}
+        put(d, LL, X, -s * sw); put(d, LR, X, s * sw)
+        put(d, LL, X, max(0, s) * knee, 1); put(d, LR, X, max(0, -s) * knee, 1)
+        put(d, AL, X, s * sw * 0.8); put(d, AR, X, -s * sw * 0.8)
+        for sp in SPINE[1:2]: put(d, [sp], Z, s * 0.06)
+        return d
+    return fn
+def idle(t):
+    s = math.sin(t * 2 * math.pi); d = {}
+    put(d, HEAD, Z, s * 0.15); put(d, AL, X, s * 0.05); put(d, AR, X, -s * 0.05)
+    for sp in SPINE[1:2]: put(d, [sp], X, s * 0.03)
+    return d
+def jump(t):
+    e = math.sin(t * math.pi); d = {}
+    put(d, LL, X, -0.5 * e); put(d, LR, X, -0.5 * e); put(d, LL, X, 0.9 * e, 1); put(d, LR, X, 0.9 * e, 1)
+    put(d, AL, Y, -1.4 * e); put(d, AR, Y, 1.4 * e)
+    return d
+def attack(t):
+    e = math.sin(min(1, t * 1.6) * math.pi); d = {}
+    put(d, AR, X, -1.9 * e); put(d, AL, X, 0.3 * e)
+    for sp in SPINE[1:2]: put(d, [sp], Z, -0.25 * e)
+    return d
+def happy(t):
+    e = abs(math.sin(t * 2 * math.pi)); d = {}
+    put(d, AL, Y, -2.2 * e); put(d, AR, Y, 2.2 * e); put(d, HEAD, X, -0.15 * e)
+    return d
+def hit(t):
+    e = math.sin(t * math.pi) * (1 - t * 0.5); d = {}
+    put(d, HEAD, X, 0.4 * e); put(d, AL, Y, -0.6 * e); put(d, AR, Y, 0.6 * e)
+    for sp in SPINE[1:2]: put(d, [sp], X, 0.25 * e)
+    return d
+clip('idle', 2.4, idle); clip('walk', 0.9, gait(0.5, 0.7)); clip('run', 0.55, gait(0.85, 1.1))
+clip('jump', 0.8, jump); clip('attack', 0.5, attack); clip('happy', 0.9, happy); clip('hit', 0.45, hit)
+bpy.ops.export_scene.gltf(filepath=dst, export_format='GLB', export_animations=True, export_animation_mode='NLA_TRACKS', export_force_sampling=True)
+print('baked', [a.name for a in bpy.data.actions])
+"""
 
 
 web_image = modal.Image.debian_slim(python_version="3.10").pip_install("fastapi[standard]")

@@ -1,6 +1,6 @@
 // THREE.makeAlive(model) — 뼈대(리깅) 없는 AI 3D 모델에 생기를 넣는 절차적 움직임.
 // 모델의 자식들을 발밑 기준 '안쪽 그룹'으로 옮겨 그 그룹만 흔든다 → 게임 코드는 model 의 위치·회전을 마음대로 바꿔도 된다.
-//   const alive = THREE.makeAlive(gltf.scene)
+//   const alive = THREE.makeAlive(gltf)   (gltf.scene 만 줘도 된다 — gltf 를 주면 파일에 든 움직임 클립을 쓴다)
 //   매 프레임: alive.update(dt, 'idle' | 'walk' | 'run' | 'jump' | 'fall')   (dt 초)
 //   순간 동작: alive.trigger('attack' | 'hit' | 'land' | 'spin' | 'happy')
 // 리깅된 모델(뼈대가 있으면, 예: 디자인 AI '움직이게 만들기')은 뼈대 모양으로 다리·팔·머리를 찾아 걷기·달리기·공격 때 팔다리를 흔든다.
@@ -56,8 +56,10 @@
     Q.setFromAxisAngle(AX, angle)
     b.quaternion.copy(Q).multiply(b.userData.rest)
   }
-  T.makeAlive = function (model, opts) {
+  T.makeAlive = function (arg, opts) {
     opts = opts || {}
+    var model = arg && arg.scene && arg.scene.isObject3D ? arg.scene : arg
+    var clips = (arg && arg.animations) || opts.animations || []
     var inner = new T.Group()
     inner.name = 'alive'
     while (model.children.length) inner.add(model.children[0])
@@ -68,17 +70,36 @@
     inner.children.forEach(function (c) { c.position.y -= box.min.y })
     inner.position.y = box.min.y
     var baseY = box.min.y
-    var limbs = findLimbs(model, box)
+    // GLB 안에 움직임 클립(idle·walk·run·jump·attack·happy·hit)이 있으면 그걸 틀고, 없으면 뼈대·몸을 직접 흔든다
+    var named = {}
+    clips.forEach(function (c) { named[String(c.name).toLowerCase()] = c })
+    var mixer = named.walk || named.idle ? new T.AnimationMixer(model) : null
+    var acts = {}, cur = null, oneAct = null
+    if (mixer) for (var cn in named) { acts[cn] = mixer.clipAction(named[cn]) }
+    var play = function (name) {
+      var a = acts[name] || (name === 'run' ? acts.walk : name === 'fall' ? acts.jump : null) || acts.idle
+      if (!a || a === cur) return
+      a.reset().setLoop(T.LoopRepeat, Infinity).fadeIn(0.18).play()
+      if (cur) cur.fadeOut(0.18)
+      cur = a
+    }
+    var limbs = mixer ? null : findLimbs(model, box)
     var mats = []
     model.traverse(function (n) { var m = n.material; (Array.isArray(m) ? m : m ? [m] : []).forEach(function (q) { if (q && q.emissive && mats.indexOf(q) < 0) mats.push(q) }) })
     var t = Math.random() * 10, state = 'idle', blend = 0, one = null, oneT = 0, prevAir = false
-    var amp = opts.amount == null ? (limbs ? 0.55 : 1) : opts.amount   // 팔다리가 움직이면 몸 흔들기는 줄인다
+    var amp = opts.amount == null ? (mixer ? 0.3 : limbs ? 0.55 : 1) : opts.amount   // 팔다리가 움직이면 몸 흔들기는 줄인다
     var s = { y: 0, sx: 1, sy: 1, rx: 0, rz: 0, ry: 0, z: 0 }
     var lerp = function (a, b, k) { return a + (b - a) * k }
     var api = {
       object: inner,
-      rigged: !!limbs,
-      trigger: function (name) { one = name; oneT = 0 },
+      rigged: !!(limbs || mixer),
+      animated: !!mixer,
+      mixer: mixer,
+      trigger: function (name) {
+        one = name; oneT = 0
+        var a = acts[name]
+        if (a) { if (oneAct) oneAct.stop(); a.reset().setLoop(T.LoopOnce, 1); a.clampWhenFinished = false; a.setEffectiveWeight(1).fadeIn(0.06).play(); oneAct = a }
+      },
       update: function (dt, st) {
         dt = Math.min(0.1, dt || 0.016); t += dt
         if (st) state = st
@@ -119,6 +140,11 @@
         inner.rotation.set(s.rx * amp, s.ry, s.rz * amp)
         inner.scale.set(lerp(1, s.sx, amp), lerp(1, s.sy, amp), lerp(1, s.sx, amp))
         for (var i = 0; i < mats.length; i++) mats[i].emissive.setRGB(flash * 0.9, flash * 0.1, flash * 0.1)
+        if (mixer) {
+          play(state)
+          if (oneAct && !oneAct.isRunning()) { oneAct.fadeOut(0.15); oneAct = null }
+          mixer.update(dt)
+        }
         if (limbs) {
           // 팔다리: 앞뒤 흔들기는 X 축, 옆으로 들기는 Z 축 (모델은 +Z 가 앞)
           var moving = state === 'walk' || state === 'run', fq = state === 'run' ? 13 : 8.5, sw = state === 'run' ? 0.85 : 0.5
