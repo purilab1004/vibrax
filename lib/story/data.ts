@@ -65,3 +65,31 @@ export const isUp = (iso: string | null | undefined) => !!iso && Date.now() - ne
 export const fmtDate = (iso: string | null) => { if (!iso) return ''; const d = new Date(iso); return `${String(d.getFullYear()).slice(2)}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}` }
 
 export const GENRE_KO: Record<string, string> = { action: '액션', adventure: '어드벤처', strategy: '전략', sports: '스포츠', arcade: '아케이드' }
+
+// ── 웹툰 — 크리에이터가 올린 컷 웹툰(webtoons 표). 자동 연재 글(웹소설)과 따로 ──
+export interface ToonEpisode { id: string; no: number; title: string; cuts: { url: string }[]; thumbnail_url: string | null; created_at: string; view_count: number }
+export interface ToonSeries { key: string; title: string; author: string; cover: string | null; genre: string | null; gameId: string | null; episodes: ToonEpisode[]; latestAt: string; views: number }
+type ToonRow = { id: string; title: string; intro: string | null; cuts: { url: string }[]; thumbnail_url: string | null; game_id: string | null; created_at: string; view_count: number; profiles: { username: string | null; agent_name: string | null } | null; games: { id: string; title: string; genre: string; thumbnail_url: string | null } | null }
+
+export const getToonData = unstable_cache(
+  async (): Promise<ToonSeries[]> => {
+    const { data } = await anon().from('webtoons')
+      .select('id, title, intro, cuts, thumbnail_url, game_id, created_at, view_count, profiles(username, agent_name), games(id, title, genre, thumbnail_url)')
+      .eq('published', true).order('created_at', { ascending: true })
+    const map = new Map<string, ToonSeries>()
+    for (const r of (data ?? []) as unknown as ToonRow[]) {
+      if (!Array.isArray(r.cuts) || r.cuts.length === 0) continue
+      const key = r.game_id ?? r.id
+      let s = map.get(key)
+      if (!s) {
+        s = { key, title: r.games?.title ?? r.title, author: r.profiles?.agent_name || r.profiles?.username || 'Vibrexcup', cover: r.games?.thumbnail_url ?? r.thumbnail_url ?? r.cuts[0]?.url ?? null, genre: r.games?.genre ?? null, gameId: r.game_id, episodes: [], latestAt: '', views: 0 }
+        map.set(key, s)
+      }
+      s.episodes.push({ id: r.id, no: s.episodes.length + 1, title: r.title, cuts: r.cuts, thumbnail_url: r.thumbnail_url ?? r.cuts[0]?.url ?? null, created_at: r.created_at, view_count: r.view_count })
+      s.views += r.view_count ?? 0
+      if (r.created_at > s.latestAt) s.latestAt = r.created_at
+    }
+    return [...map.values()].sort((a, b) => b.latestAt.localeCompare(a.latestAt))
+  },
+  ['story-toons'], { revalidate: 120 },
+)

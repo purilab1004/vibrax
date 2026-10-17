@@ -32,7 +32,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function EpisodePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ view?: string }> }) {
-  const toon = (await searchParams).view === 'toon'
+  void (await searchParams)
+  const toon = false
   const vq = toon ? '?view=toon' : ''
   const { id } = await params
   const d = await load(id)

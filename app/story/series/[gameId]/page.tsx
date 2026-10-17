@@ -38,8 +38,9 @@ export async function generateMetadata({ params }: { params: Promise<{ gameId: s
 export default async function SeriesPage({ params, searchParams }: { params: Promise<{ gameId: string }>; searchParams: Promise<{ order?: string; view?: string }> }) {
   const { gameId } = await params
   const { order, view } = await searchParams
-  const toon = view === 'toon'
-  const vq = toon ? '?view=toon' : ''
+  void view
+  const toon = false
+  const vq = ''
   const s = await getSeries(gameId)
   if (!s) notFound()
   const webtoons = await fetchWebtoons(gameId)
@@ -78,10 +79,6 @@ export default async function SeriesPage({ params, searchParams }: { params: Pro
             </div>
           </div>
           {(s.game.intro || s.game.teaser) && <p className="mt-4 md:mt-6 text-[13.5px] md:text-[15px] leading-relaxed text-white/85 max-w-2xl">{s.game.intro || s.game.teaser}</p>}
-          <div className="mt-4 inline-flex rounded-[6px] bg-white/15 p-0.5 text-[13px] font-bold">
-            <Link href={`/story/series/${gameId}?view=toon`} className={`px-3 h-8 inline-flex items-center rounded-[5px] ${toon ? 'bg-white text-[#1a1d24]' : 'text-white/80'}`}>웹툰으로</Link>
-            <Link href={`/story/series/${gameId}`} className={`px-3 h-8 inline-flex items-center rounded-[5px] ${!toon ? 'bg-white text-[#1a1d24]' : 'text-white/80'}`}>웹소설로</Link>
-          </div>
           <div className="mt-4 grid grid-cols-2 gap-2 md:flex md:gap-3">
             {first && <Link href={`/story/${first.id}${vq}`} className="h-12 md:px-8 inline-flex items-center justify-center rounded-[8px] bg-white text-[#1a1d24] text-[15px] font-extrabold hover:bg-white/90">1화부터 보기</Link>}
             <Link href={`/games/${s.game.id}`} className="h-12 md:px-8 inline-flex items-center justify-center gap-1.5 rounded-[8px] bg-[#1f6fff] text-white text-[15px] font-extrabold hover:bg-[#1a5fe0]">

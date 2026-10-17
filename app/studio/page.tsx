@@ -29,6 +29,7 @@ export default function StudioPage() {
   const [published, setPublished] = useState<Record<string, { id: string; thumbnail_url: string | null; view_count: number | null }>>({})
   const [userId, setUserId] = useState<string | null>(null)
   const [query, setQuery] = useState('') // 내 프로젝트 검색(제목·훅 문구)
+  const [tab, setTab] = useState<'all' | 'draft' | 'live'>('all')
 
   // 프로젝트 삭제 — 퍼블리싱된 게임이 있으면 게임까지 함께 삭제 (안내 후)
   const deleteProject = async (p: StudioProject) => {
@@ -223,75 +224,63 @@ export default function StudioPage() {
         {loadError ? (
           <p className="text-red-500 text-xs border border-red-200 bg-red-50 px-3 py-2">{s.listError}</p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 items-start">
-            {/* 첫 카드 — 새 게임 추가 (+) */}
-            <button
-              onClick={() => setChooser(true)}
-              disabled={creating}
-              className="group relative overflow-hidden border-2 border-dashed border-[#c9d9f5] bg-[#f7faff] hover:border-[#2563eb] hover:bg-white transition-colors flex flex-col items-center justify-center gap-3 aspect-[4/3.9] rounded-3xl disabled:opacity-50"
-            >
-              <span className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2563eb] to-[#06b6d4] text-white flex items-center justify-center shadow-[0_8px_24px_rgba(37,99,235,0.35)] group-hover:scale-105 transition-transform">
-                <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-              </span>
-              <span className="text-[16px] font-extrabold text-[#0f1b33]">{creating ? '만드는 중…' : '새 게임 추가'}</span>
-              <span className="text-[12px] text-[#8a9ab8] px-6 text-center">프롬프트 제작 · 외부 링크 등록 · 방송 추가</span>
-            </button>
+          <>
+            {/* 필터 — 전체 · 작업 중 · 게시됨 / 정렬 */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {([['all', '전체'], ['draft', '작업 중'], ['live', '게시됨']] as const).map(([v, l]) => {
+                const n = v === 'all' ? projects.length : projects.filter((p) => (v === 'live') === !!published[p.id]).length
+                return <button key={v} onClick={() => setTab(v)} className={`h-8 px-3.5 rounded-full text-[13px] font-bold border transition-colors ${tab === v ? 'bg-[#0f1b33] border-[#0f1b33] text-white' : 'bg-white border-[#e3ecfb] text-[#4b5563] hover:border-[#93c5fd]'}`}>{l} <span className="opacity-60 tabular-nums">{n}</span></button>
+              })}
+              <span className="flex-1" />
+              <button onClick={() => setChooser(true)} disabled={creating} className="h-9 px-4 rounded-full bg-gradient-to-r from-[#2563eb] to-[#06b6d4] text-white text-[13px] font-bold shadow-[0_6px_16px_rgba(37,99,235,0.28)] disabled:opacity-50">{creating ? '만드는 중…' : '+ 새 게임'}</button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-6">
             {projects.filter((p) => {
+              if (tab !== 'all' && (tab === 'live') !== !!published[p.id]) return false
               const q = query.trim().toLowerCase()
               if (!q) return true
               return (p.title || s.untitled).toLowerCase().includes(q) || (teasers[p.id] ?? '').toLowerCase().includes(q)
             }).map((p) => {
               const pub = published[p.id]
               const title = p.title || s.untitled
+              const d = new Date(p.created_at)
               return (
-                <div key={p.id} className="group relative rounded-3xl overflow-hidden bg-white ring-1 ring-[#e3ecfb] shadow-[0_14px_30px_-20px_rgba(37,99,235,0.35)] hover:shadow-[0_24px_50px_-20px_rgba(37,99,235,0.45)] hover:-translate-y-1 transition-all duration-300">
-                  {/* 포스터 — 게시된 게임은 썸네일, 아니면 오로라. 호버하면 큰 재생 버튼 */}
-                  <Link href={`/studio/${p.id}`} className="block relative aspect-[4/3] overflow-hidden" style={auroraOf(p.id)}>
-                    {pub?.thumbnail_url && (
+                <div key={p.id} className="group min-w-0">
+                  {/* 표지 — 누르면 이어서 만들기. 게시된 게임은 썸네일, 아니면 오로라 + 제목 */}
+                  <Link href={`/studio/${p.id}`} className="block relative aspect-[4/3] rounded-2xl overflow-hidden ring-1 ring-[#e3ecfb] group-hover:ring-[#93c5fd] group-hover:shadow-[0_18px_36px_-18px_rgba(37,99,235,0.5)] transition-all" style={auroraOf(p.id)}>
+                    {pub?.thumbnail_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={pub.thumbnail_url} alt={title} className="absolute inset-0 w-full h-full object-cover object-[center_30%] group-hover:scale-[1.06] transition-transform duration-700 ease-out" />
+                      <img src={pub.thumbnail_url} alt={title} loading="lazy" className="absolute inset-0 w-full h-full object-cover object-[center_30%] group-hover:scale-[1.04] transition-transform duration-500" />
+                    ) : (
+                      <span className={`${titleFont.className} absolute inset-0 flex items-center justify-center p-4 text-center text-white text-[18px] leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)] line-clamp-3`}>{title}</span>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/10" />
-                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-md ${pub ? 'bg-white/90 text-[#15803d]' : 'bg-black/35 text-white/90'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${pub ? 'bg-[#22c55e] shadow-[0_0_6px_#22c55e]' : 'bg-white/70'}`} />{pub ? '게시됨' : '작업 중'}
-                      </span>
-                      {pub && <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-black/40 text-white backdrop-blur-md"><svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></svg>{(pub.view_count ?? 0).toLocaleString()}</span>}
-                    </div>
-                    <div className="absolute inset-x-0 bottom-0 p-4">
-                      <h3 className={`${titleFont.className} text-white text-[21px] leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] line-clamp-2`}>{title}</h3>
-                      <div className="flex items-end justify-between gap-2 mt-0.5">
-                        <p className="text-[12px] text-white/80 truncate">{teasers[p.id] ? teasers[p.id] : '훅 문구를 수정에서 추가하세요'}</p>
-                        <span className="text-[10px] text-white/60 tabular-nums shrink-0 whitespace-nowrap">{(d => `${String(d.getFullYear()).slice(2)}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`)(new Date(p.created_at))}</span>
-                      </div>
-                    </div>
+                    <span className={`absolute left-2 top-2 inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md ${pub ? 'bg-white/90 text-[#15803d]' : 'bg-black/35 text-white/90'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${pub ? 'bg-[#22c55e]' : 'bg-white/70'}`} />{pub ? '게시됨' : '작업 중'}
+                    </span>
+                    {/* 호버 — 빠른 동작 */}
+                    <span className="absolute inset-x-0 bottom-0 p-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/55 to-transparent">
+                      <span className="h-8 px-3 rounded-full bg-white text-[#0f1b33] text-[12px] font-bold inline-flex items-center">이어서 만들기</span>
+                    </span>
                   </Link>
-                  {/* 액션 줄 — 프롬프트·플레이 필 + 조용한 아이콘(정보·삭제). 플레이는 아이콘들과 떨어진 왼쪽에 */}
-                  <div className="flex items-center gap-2 px-3 py-3">
-                    <Link href={`/studio/${p.id}`} className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-bold text-white bg-gradient-to-r from-[#2563eb] to-[#06b6d4] px-3.5 h-9 rounded-full shadow-[0_6px_16px_rgba(37,99,235,0.28)] hover:shadow-[0_8px_20px_rgba(37,99,235,0.4)] hover:brightness-105 transition-all">
-                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
-                      프롬프트
-                    </Link>
-                    {pub && (
-                      <Link href={`/games/${pub.id}`} aria-label="플레이" className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] font-bold text-white bg-[#0f1b33] px-3.5 h-9 rounded-full hover:bg-[#1e2d4d] transition-colors">
-                        <svg viewBox="0 0 24 24" className="w-3 h-3 -ml-0.5" fill="currentColor"><path d="M6.5 5.4v13.2c0 1.1 1.2 1.8 2.2 1.2l10-6.6a1.4 1.4 0 0 0 0-2.4l-10-6.6c-1-.6-2.2.1-2.2 1.2Z" /></svg>
-                        플레이
-                      </Link>
-                    )}
-                    <span className="flex-1" />
-                    <button onClick={() => setEditing(p)} title="정보 수정" aria-label="정보 수정" className="w-9 h-9 rounded-full text-[#9aa8c2] hover:text-[#2563eb] flex items-center justify-center transition-colors">
-                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" /></svg>
+                  {/* 정보 줄 — 제목 · 날짜·조회 / 오른쪽 작은 아이콘 */}
+                  <div className="mt-2 flex items-start gap-1">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] font-bold text-[#0f1b33] truncate" title={title}>{title}</p>
+                      <p className="text-[11.5px] text-[#8a9ab8] truncate tabular-nums">{`${String(d.getFullYear()).slice(2)}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`}{pub ? ` · 조회 ${(pub.view_count ?? 0).toLocaleString()}` : ''}{teasers[p.id] ? ` · ${teasers[p.id]}` : ''}</p>
+                    </div>
+                    {pub && <Link href={`/games/${pub.id}`} title="플레이" aria-label="플레이" className="w-8 h-8 shrink-0 rounded-full text-[#2563eb] hover:bg-[#eef4ff] flex items-center justify-center"><svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"><path d="M6.5 5.4v13.2c0 1.1 1.2 1.8 2.2 1.2l10-6.6a1.4 1.4 0 0 0 0-2.4l-10-6.6c-1-.6-2.2.1-2.2 1.2Z" /></svg></Link>}
+                    <button onClick={() => setEditing(p)} title="정보 수정" aria-label="정보 수정" className="w-8 h-8 shrink-0 rounded-full text-[#9aa8c2] hover:text-[#2563eb] hover:bg-[#eef4ff] flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
                     </button>
-                    <button onClick={() => deleteProject(p)} disabled={deletingId === p.id} title="삭제" aria-label="삭제" className="w-9 h-9 rounded-full text-[#e5a0a8] hover:text-red-500 flex items-center justify-center transition-colors disabled:opacity-50">
-                      {deletingId === p.id ? <span className="w-3.5 h-3.5 border-2 border-red-300 border-t-transparent rounded-full animate-spin" /> : (
-                        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" /></svg>
-                      )}
+                    <button onClick={() => deleteProject(p)} disabled={deletingId === p.id} title="삭제" aria-label="삭제" className="w-8 h-8 shrink-0 rounded-full text-[#d6b3b8] hover:text-red-500 hover:bg-red-50 flex items-center justify-center disabled:opacity-50">
+                      {deletingId === p.id ? <span className="w-3.5 h-3.5 border-2 border-red-300 border-t-transparent rounded-full animate-spin" /> : <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></svg>}
                     </button>
                   </div>
                 </div>
               )
             })}
-          </div>
+            </div>
+          </>
         )}
         </div>
       </section>

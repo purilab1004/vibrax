@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getStoryData, isUp, fmtDate, GENRE_KO, type StorySeries } from '@/lib/story/data'
+import { getStoryData, getToonData, isUp, fmtDate, GENRE_KO, type StorySeries, type ToonSeries } from '@/lib/story/data'
 
 // STORY 홈 — 웹툰 플랫폼처럼: 웹툰 · 웹소설 · 쇼츠 애니(준비 중) 를 나누고, 요일 연재 탭 → 추천 → 전체(정렬) + 실시간 인기.
 // 게임 = 작품, 제작자 = 작가. 웹툰 = 회차에 게임 장면 컷이 있는 작품(컷만 세로로 읽기), 웹소설 = 글로 읽기.
@@ -13,9 +13,16 @@ const DAY_KO = ['일', '월', '화', '수', '목', '금', '토']
 // 연재 요일 = 1화가 올라온 요일 (한국 시간)
 const dayOf = (s: StorySeries) => { const d = new Date(new Date(s.episodes[0]?.published_at ?? s.latestAt).getTime() + 9 * 3600_000); return d.getUTCDay() }
 const isNew = (s: StorySeries) => Date.now() - new Date(s.episodes[0]?.published_at ?? 0).getTime() < 14 * 86400_000
-const hasCuts = (s: StorySeries) => s.episodes.some(e => !!e.thumbnail_url)
 // 오늘 요일(한국 시간) — 서버 렌더(120초 캐시) 시점 기준
 const todayKo = () => DAY_KO[new Date(Date.now() + 9 * 3600_000).getUTCDay()]
+// 웹툰 시리즈를 같은 카드 모양으로 쓰기 위한 변환
+function toSeries(t: ToonSeries): StorySeries {
+  return {
+    game: { id: t.key, title: t.title, genre: t.genre ?? '', thumbnail_url: t.cover, teaser: null, intro: null, coin_cost: null, view_count: 0, studio_project_id: null },
+    author: t.author, cover: t.cover, latestAt: t.latestAt, views: t.views,
+    episodes: t.episodes.map((e) => ({ id: e.id, game_id: t.key, no: e.no, title: e.title, excerpt: '', thumbnail_url: e.thumbnail_url, published_at: e.created_at, view_count: e.view_count })),
+  }
+}
 const score = (s: StorySeries) => s.views + s.game.view_count
 
 function Cover({ s, className = '', fit = 'cover' }: { s: StorySeries; className?: string; fit?: 'cover' | 'contain' }) {
@@ -34,12 +41,16 @@ function Cover({ s, className = '', fit = 'cover' }: { s: StorySeries; className
 
 export default async function StoryPage({ searchParams }: { searchParams: Promise<{ type?: string; day?: string; sort?: string; q?: string; genre?: string }> }) {
   const sp = await searchParams
-  const kind: Kind = sp.type === 'novel' ? 'novel' : sp.type === 'shorts' ? 'shorts' : 'toon'
+  // 아직 웹툰이 하나도 없으면 첫 화면은 웹소설로
+  const anyToon = !sp.type ? (await getToonData()).length > 0 : true
+  const kind: Kind = sp.type === 'novel' || !anyToon ? 'novel' : sp.type === 'shorts' ? 'shorts' : 'toon'
   const day = DAYS.some(([d]) => d === sp.day) ? (sp.day as string) : ''
   const sort = sp.sort === 'update' || sp.sort === 'views' ? sp.sort : 'popular'
   const q = (sp.q ?? '').trim()
-  const all = await getStoryData()
-  const pool = kind === 'toon' ? all.filter(hasCuts) : all
+  // 웹툰 탭은 실제 웹툰(컷 원고)만, 웹소설 탭은 글 연재만 — 같은 작품이 둘 다면 각 탭에 따로 나온다
+  const toons = kind === 'toon' ? await getToonData() : []
+  const all: StorySeries[] = kind === 'toon' ? toons.map(toSeries) : await getStoryData()
+  const pool = all
   let list = pool
   if (day === 'new') list = list.filter(isNew)
   else if (day === 'done') list = []                       // 완결 작품은 아직 없음
@@ -52,9 +63,9 @@ export default async function StoryPage({ searchParams }: { searchParams: Promis
   const today = todayKo()
   const dayName = day === 'new' ? '신작' : day === 'done' ? '완결' : day ? `${DAY_KO[DAY_IDX[day]]}요` : '전체'
   const kindName = kind === 'toon' ? '웹툰' : kind === 'novel' ? '웹소설' : '쇼츠 애니'
-  const link = (o: Record<string, string>) => { const p = new URLSearchParams(); const v = { type: kind === 'toon' ? '' : kind, day, sort: sort === 'popular' ? '' : sort, q, ...o }; for (const [k, x] of Object.entries(v)) if (x) p.set(k, x); const s = p.toString(); return `/story${s ? '?' + s : ''}` }
+  const link = (o: Record<string, string>) => { const p = new URLSearchParams(); const v = { type: kind, day, sort: sort === 'popular' ? '' : sort, q, ...o }; for (const [k, x] of Object.entries(v)) if (x) p.set(k, x); const s = p.toString(); return `/story${s ? '?' + s : ''}` }
   // 웹툰은 컷만 보는 뷰어로, 웹소설은 글 뷰어로 — 작품 페이지에 방식 전달
-  const seriesHref = (s: StorySeries) => `/story/series/${s.game.id}${kind === 'toon' ? '?view=toon' : ''}`
+  const seriesHref = (s: StorySeries) => (kind === 'toon' ? `/story/toon/${s.game.id}` : `/story/series/${s.game.id}`)
 
   return (
     <div className="min-h-screen bg-white text-[#1a1d24]">
@@ -64,13 +75,13 @@ export default async function StoryPage({ searchParams }: { searchParams: Promis
           <Link href="/story" className="hidden md:inline text-[22px] font-black tracking-[-0.04em] shrink-0">STORY</Link>
           <nav className="flex items-center gap-3 md:gap-5 text-[14px] md:text-[16px] font-bold" aria-label="종류">
             {(['toon', 'novel', 'shorts'] as const).map((k) => (
-              <Link key={k} href={k === 'toon' ? '/story' : `/story?type=${k}`} className={`whitespace-nowrap ${kind === k ? 'text-[#1a1d24]' : 'text-[#a3a9b4] hover:text-[#1a1d24]'}`}>
+              <Link key={k} href={`/story?type=${k}`} className={`whitespace-nowrap ${kind === k ? 'text-[#1a1d24]' : 'text-[#a3a9b4] hover:text-[#1a1d24]'}`}>
                 {k === 'toon' ? '웹툰' : k === 'novel' ? '웹소설' : <>쇼츠 애니<sup className="ml-0.5 text-[9px] text-[#00c73c]">곧</sup></>}
               </Link>
             ))}
           </nav>
           <form action="/story" className="ml-auto hidden md:flex items-center gap-2 h-10 w-72 rounded-[4px] border border-[#dfe3ea] px-3 focus-within:border-[#1a1d24]">
-            {kind !== 'toon' && <input type="hidden" name="type" value={kind} />}
+            <input type="hidden" name="type" value={kind} />
             <input name="q" defaultValue={q} placeholder="제목/작가로 검색할 수 있습니다." aria-label="STORY 검색" className="flex-1 min-w-0 bg-transparent outline-none text-[14px] placeholder:text-[#a3a9b4]" />
             <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#1a1d24] shrink-0" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" strokeLinecap="round" /></svg>
           </form>
@@ -97,7 +108,7 @@ export default async function StoryPage({ searchParams }: { searchParams: Promis
 
           {/* 모바일 검색 */}
           <form action="/story" className="md:hidden mx-4 mt-4 flex items-center gap-2 h-11 rounded-[4px] border border-[#dfe3ea] px-3">
-            {kind !== 'toon' && <input type="hidden" name="type" value={kind} />}
+            <input type="hidden" name="type" value={kind} />
             <input name="q" defaultValue={q} placeholder="제목/작가 검색" aria-label="STORY 검색" className="flex-1 min-w-0 bg-transparent outline-none text-[15px] placeholder:text-[#a3a9b4]" />
           </form>
 
@@ -144,7 +155,7 @@ export default async function StoryPage({ searchParams }: { searchParams: Promis
                   </div>
                 </div>
                 {sorted.length === 0 ? (
-                  <div className="py-20 text-center text-[14px] text-[#6b7280]">{day === 'done' ? '아직 완결된 작품이 없어요.' : q ? '검색 결과가 없어요.' : `이 요일에 연재되는 ${kindName}이 아직 없어요.`}</div>
+                  <div className="py-20 text-center text-[14px] text-[#6b7280]">{day === 'done' ? '아직 완결된 작품이 없어요.' : q ? '검색 결과가 없어요.' : kind === 'toon' && pool.length === 0 ? '아직 연재 중인 웹툰이 없어요. 게임 장면 컷으로 웹툰을 올리면 여기에 연재돼요.' : `이 요일에 연재되는 ${kindName}이 아직 없어요.`}</div>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-3 gap-y-6">
                     {sorted.map(s => (
