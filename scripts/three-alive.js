@@ -2,7 +2,8 @@
 // 모델의 자식들을 발밑 기준 '안쪽 그룹'으로 옮겨 그 그룹만 흔든다 → 게임 코드는 model 의 위치·회전을 마음대로 바꿔도 된다.
 //   const alive = THREE.makeAlive(gltf)   (gltf.scene 만 줘도 된다 — gltf 를 주면 파일에 든 움직임 클립을 쓴다)
 //   매 프레임: alive.update(dt, 'idle' | 'walk' | 'run' | 'jump' | 'fall')   (dt 초)
-//   순간 동작: alive.trigger('attack' | 'hit' | 'land' | 'spin' | 'happy')
+//   순간 동작: alive.trigger('attack' | 'hit' | 'land' | 'spin' | 'happy' | 'talk')   말하기: alive.update(dt, 'talk') 또는 alive.say(초)
+//   얼굴(파일에 __face_blink·__face_mouth·__face_both 판이 있으면): 몇 초마다 눈 깜박, 말하기·공격·기쁨·맞기 때 입을 연다
 // 리깅된 모델(뼈대가 있으면, 예: 디자인 AI '움직이게 만들기')은 뼈대 모양으로 다리·팔·머리를 찾아 걷기·달리기·공격 때 팔다리를 흔든다.
 // three-addons.js 끝에 붙는다 (scripts/build-three-addons.mjs).
 ;(function () {
@@ -84,6 +85,22 @@
       cur = a
     }
     var limbs = mixer ? null : findLimbs(model, box)
+    // 얼굴 판(눈 감음·입 벌림 텍스처) — 숨겨 두고 본 메시의 텍스처를 바꿔 낀다
+    var face = null
+    ;(function () {
+      var alt = {}, main = null
+      model.traverse(function (n) {
+        if (!n.isMesh) return
+        if (/^__face_/.test(n.name)) { alt[n.name.slice(7)] = n.material && n.material.map; n.visible = false; return }
+        if (!main || n.geometry.attributes.position.count > main.geometry.attributes.position.count) main = n
+      })
+      if (main && main.material && main.material.map && alt.blink && alt.mouth) {
+        var base = main.material.map
+        ;[alt.blink, alt.mouth, alt.both].forEach(function (tx) { if (tx) { tx.flipY = base.flipY; tx.encoding = base.encoding; if ('colorSpace' in base) tx.colorSpace = base.colorSpace } })
+        face = { mesh: main, base: base, alt: alt, cur: base, nextBlink: 1.5 + Math.random() * 2.5, blinkT: 0 }
+      }
+    })()
+    var talkLeft = 0
     var mats = []
     model.traverse(function (n) { var m = n.material; (Array.isArray(m) ? m : m ? [m] : []).forEach(function (q) { if (q && q.emissive && mats.indexOf(q) < 0) mats.push(q) }) })
     var t = Math.random() * 10, state = 'idle', blend = 0, one = null, oneT = 0, prevAir = false
@@ -95,7 +112,10 @@
       rigged: !!(limbs || mixer),
       animated: !!mixer,
       mixer: mixer,
+      face: !!face,
+      say: function (sec) { talkLeft = Math.max(talkLeft, sec == null ? 1.6 : sec) },
       trigger: function (name) {
+        if (name === 'talk') { api.say(1.6); return }
         one = name; oneT = 0
         var a = acts[name]
         if (a) { if (oneAct) oneAct.stop(); a.reset().setLoop(T.LoopOnce, 1); a.clampWhenFinished = false; a.setEffectiveWeight(1).fadeIn(0.06).play(); oneAct = a }
@@ -118,6 +138,8 @@
           tg.sy = 1.12; tg.sx = 0.93; tg.rx = -0.06
         } else if (state === 'fall') {
           tg.sy = 1.05; tg.sx = 0.97; tg.rx = 0.05
+        } else if (state === 'talk' || talkLeft > 0) {
+          tg.rx = Math.sin(t * 9) * 0.04; tg.ry = Math.sin(t * 2) * 0.1; tg.sy = 1 + Math.sin(t * 9) * 0.015
         } else { // idle: 숨쉬기 + 살짝 흔들림
           tg.sy = 1 + Math.sin(t * 2.2) * 0.025; tg.sx = 1 - Math.sin(t * 2.2) * 0.012
           tg.rz = Math.sin(t * 1.1) * 0.035; tg.ry = Math.sin(t * 0.6) * 0.08
@@ -140,8 +162,20 @@
         inner.rotation.set(s.rx * amp, s.ry, s.rz * amp)
         inner.scale.set(lerp(1, s.sx, amp), lerp(1, s.sy, amp), lerp(1, s.sx, amp))
         for (var i = 0; i < mats.length; i++) mats[i].emissive.setRGB(flash * 0.9, flash * 0.1, flash * 0.1)
+        // 얼굴: 눈 깜박 + 입
+        if (talkLeft > 0) talkLeft -= dt
+        var talking = state === 'talk' || talkLeft > 0
+        if (face) {
+          face.nextBlink -= dt
+          if (face.nextBlink <= 0) { face.blinkT = 0.14; face.nextBlink = 2 + Math.random() * 3.5 }
+          if (face.blinkT > 0) face.blinkT -= dt
+          var eyesShut = face.blinkT > 0 || one === 'hit'
+          var mouthOpen = (talking && Math.sin(t * 22) > -0.2) || one === 'attack' || one === 'happy' || one === 'hit'
+          var tx = eyesShut && mouthOpen ? (face.alt.both || face.alt.blink) : eyesShut ? face.alt.blink : mouthOpen ? face.alt.mouth : face.base
+          if (tx !== face.cur) { face.mesh.material.map = tx; face.mesh.material.needsUpdate = true; face.cur = tx }
+        }
         if (mixer) {
-          play(state)
+          play(talking && acts.talk ? 'talk' : state)
           if (oneAct && !oneAct.isRunning()) { oneAct.fadeOut(0.15); oneAct = null }
           mixer.update(dt)
         }

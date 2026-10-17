@@ -9,7 +9,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 const SALT = 'vibrex-rig'
 const DEFAULT_COST = 3   // A10G 약 1~2분
-interface Tok { u: string; rid: string; ref: string; cost: number; key: string; at: number }
+interface Tok { u: string; rid: string; ref: string; cost: number; key: string; at: number; face?: boolean }
 
 async function costOf() {
   const { data } = await createAdminClient().from('site_settings').select('value').eq('key', 'rig_cost').maybeSingle()
@@ -20,10 +20,11 @@ async function costOf() {
 export async function POST(req: Request) {
   const g = await requireDesigner(); if ('error' in g) return g.error
   if (!modalReady()) return Response.json({ error: '리깅 서버가 아직 준비되지 않았어요' }, { status: 503 })
-  const body = await req.json().catch(() => null) as { key?: string } | null
+  const body = await req.json().catch(() => null) as { key?: string; face?: boolean } | null
+  const faceOnly = body?.face === true
   const key = String(body?.key ?? '')
   if (!key.startsWith(root(g.user.id) + '/') || key.includes('..') || !/\.glb$/i.test(dec(key.split('/').pop() ?? ''))) return Response.json({ error: '드라이브의 3D 모델(GLB)을 골라 주세요' }, { status: 400 })
-  const cost = await costOf()
+  const cost = faceOnly ? Math.min(2, await costOf()) : await costOf()
   const ref = `rig:${crypto.randomUUID()}`
   if (cost > 0) {
     const { error } = await g.supabase.rpc('spend_credits', { p_amount: cost, p_ref: ref } as never)
@@ -32,12 +33,12 @@ export async function POST(req: Request) {
       return Response.json({ error: insufficient ? `프롬코인이 부족해요 (${cost} 필요)` : '결제 실패' }, { status: insufficient ? 402 : 500 })
     }
   }
-  const r = await modalSubmit({ mode: 'rig', glb_url: g.admin.storage.from(BUCKET).getPublicUrl(key).data.publicUrl }).catch(() => ({ ok: false, id: undefined }))
+  const r = await modalSubmit({ mode: 'rig', face_only: faceOnly, glb_url: g.admin.storage.from(BUCKET).getPublicUrl(key).data.publicUrl }).catch(() => ({ ok: false, id: undefined }))
   if (!r.ok || !r.id) {
     if (cost > 0) await g.admin.rpc('refund_credits', { p_user_id: g.user.id, p_amount: cost, p_ref: ref } as never)
     return Response.json({ error: '리깅 요청 실패 — 프롬코인은 돌려드렸어요' }, { status: 502 })
   }
-  return Response.json({ token: signToken<Tok>(SALT, { u: g.user.id, rid: r.id, ref, cost, key, at: Date.now() }), cost })
+  return Response.json({ token: signToken<Tok>(SALT, { u: g.user.id, rid: r.id, ref, cost, key, at: Date.now(), face: faceOnly }), cost })
 }
 
 export async function GET(req: Request) {
@@ -49,7 +50,7 @@ export async function GET(req: Request) {
   const store = g.admin.storage.from(BUCKET)
   const dir = t.key.slice(0, t.key.lastIndexOf('/'))
   const base = dec(t.key.split('/').pop()!).replace(/\.glb$/i, '')
-  const outName = `${base} (움직임).glb`
+  const outName = t.face ? `${base.replace(/ \(움직임\)$/, '')} (표정).glb` : `${base} (움직임).glb`
   const refund = async (why: string) => {
     if (t.cost > 0) {
       const { data: already } = await g.admin.from('credit_ledger').select('id').eq('user_id', g.user.id).eq('ref_id', t.ref).gt('amount', 0).limit(1)
@@ -59,7 +60,7 @@ export async function GET(req: Request) {
   }
   const s = await modalStatus(t.rid)
   const elapsed = Math.round((Date.now() - t.at) / 1000)
-  if (s?.status === 'failed') return refund('뼈대를 넣지 못했어요(모양이 복잡하거나 사람·동물 형태가 아닐 수 있어요)')
+  if (s?.status === 'failed') return refund(t.face ? '얼굴(눈·입)을 찾지 못했어요 — 눈이 또렷한 정면 얼굴이어야 해요' : '뼈대를 넣지 못했어요(모양이 복잡하거나 사람·동물 형태가 아닐 수 있어요)')
   if (s?.status !== 'done') {
     if (Date.now() - t.at > 20 * 60_000) return refund('너무 오래 걸려 취소했어요')
     return Response.json({ status: 'running', elapsed })
@@ -80,7 +81,7 @@ export async function GET(req: Request) {
   for (const a of (pubs ?? []) as { id: string; path: string | null; meta: Record<string, unknown> | null }[]) {
     if (!a.path) continue
     const { error } = await store.upload(a.path, glb, { contentType: 'model/gltf-binary', upsert: true, cacheControl: '60' })
-    if (!error) { await g.admin.from('media_assets').update({ bytes: glb.length, meta: { ...(a.meta ?? {}), rig: 'anim', drive_key: key } } as never).eq('id', a.id); updated++ }
+    if (!error) { await g.admin.from('media_assets').update({ bytes: glb.length, meta: { ...(a.meta ?? {}), rig: 'face', drive_key: key } } as never).eq('id', a.id); updated++ }
   }
   return Response.json({ status: 'done', key, name, url: store.getPublicUrl(key).data.publicUrl, updatedPublished: updated })
 }

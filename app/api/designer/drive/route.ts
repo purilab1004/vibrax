@@ -8,7 +8,7 @@ import { MEDIA_KINDS, toAssetName, type MediaKind } from '@/lib/media/assets'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-interface FileOut { key: string; name: string; url: string; thumb: string | null; size: number; mime: string; created_at: string | null; rig?: 'anim' | 'bones' | 'none' | null }
+interface FileOut { key: string; name: string; url: string; thumb: string | null; size: number; mime: string; created_at: string | null; rig?: 'face' | 'anim' | 'bones' | 'none' | null }
 
 export async function GET(req: Request) {
   const g = await requireDesigner(); if ('error' in g) return g.error

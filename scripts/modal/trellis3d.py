@@ -50,7 +50,7 @@ edit_image = (
     .env({"HF_HOME": f"{CACHE}/hf", "HF_HUB_ENABLE_HF_TRANSFER": "1", "U2NET_HOME": f"{CACHE}/u2net"})
 )
 VOLUMIZE = ("Turn this 2D drawing into a high-quality 3D rendered figurine of the same character: rounded volumetric body and head, "
-            "soft vinyl toy material, same design, colors, face and proportions, full body, front view, centered, "
+            "soft vinyl toy material, same design, colors, face and proportions, full body, front view, standing in a relaxed A-pose with arms held slightly away from the body and legs slightly apart, centered, "
             "plain pure white background, soft studio lighting, no outlines, no text.")
 
 # 자동 리깅 — VAST UniRig(MIT): GLB → 뼈대 예측 → 스킨 가중치 → 원본에 합쳐 리깅된 GLB (bpy 4.2 로 입출력)
@@ -90,11 +90,242 @@ def rig_glb(glb: bytes) -> bytes:
         # 움직임 클립을 GLB 안에 굽는다 — 실패해도 뼈대만 있는 GLB 는 돌려준다
         anim = os.path.join(d, "animated.glb")
         open(os.path.join(d, "bake.py"), "w").write(BAKE)
+        open(os.path.join(d, "face.py"), "w").write(FACE)
         # Blender 는 드라코 라이브러리 경고 등을 stderr 로 내므로 결과 파일로만 성공을 판단한다
-        r = subprocess.run(["python", os.path.join(d, "bake.py"), out, anim], cwd=UNIRIG, capture_output=True, text=True)
+        r = subprocess.run(["python", os.path.join(d, "bake.py"), out, anim, os.path.join(d, "face.py")], cwd=UNIRIG, capture_output=True, text=True)
+        print("bake:", (r.stdout or "")[-400:])
         if os.path.exists(anim) and os.path.getsize(anim) > 1000:
             return open(anim, "rb").read()
         print("bake failed:", (r.stdout or "")[-800:], (r.stderr or "")[-1500:])
+        return open(out, "rb").read()
+
+
+FACE = r"""
+# 얼굴(눈·입) 찾기 + 블렌드셰이프(blink, mouth_open) — 이미 불러온 장면에서 동작. 결과는 FACE_INFO 딕셔너리
+import bpy, numpy as np
+from mathutils import Vector
+FACE_INFO = {'ok': False}
+def add_face():
+    meshes = [o for o in bpy.data.objects if o.type == 'MESH']
+    if not meshes: return
+    ob = max(meshes, key=lambda o: len(o.data.vertices))
+    me = ob.data
+    # 텍스처
+    img = None
+    for m in me.materials:
+        if m and m.use_nodes:
+            for n in m.node_tree.nodes:
+                if n.type == 'TEX_IMAGE' and n.image: img = n.image; break
+        if img: break
+    if img is None: return
+    W, H = img.size
+    px = np.array(img.pixels[:], dtype=np.float32).reshape(H, W, img.channels)[:, :, :3]
+    # 정점 위치·법선(월드)·UV
+    n = len(me.vertices)
+    co = np.array([ob.matrix_world @ v.co for v in me.vertices])
+    nm = np.array([(ob.matrix_world.to_3x3() @ v.normal).normalized() for v in me.vertices])
+    uv = np.zeros((n, 2)); cnt = np.zeros(n)
+    uvl = me.uv_layers.active.data
+    for loop in me.loops:
+        uv[loop.vertex_index] += uvl[loop.index].uv; cnt[loop.vertex_index] += 1
+    uv /= np.maximum(cnt, 1)[:, None]
+    col = px[np.clip((uv[:, 1] * (H - 1)).astype(int), 0, H - 1), np.clip((uv[:, 0] * (W - 1)).astype(int), 0, W - 1)]
+    lum = col @ np.array([0.299, 0.587, 0.114])
+    zmin, zmax = co[:, 2].min(), co[:, 2].max(); h = zmax - zmin
+    # 앞을 보는 정점 (Blender 앞 = -Y), 위쪽(머리) 영역
+    front = (nm[:, 1] < -0.35) & (co[:, 2] > zmin + h * 0.28)   # 모자·머리가 크면 얼굴이 낮게 있다
+    idx = np.where(front)[0]
+    if len(idx) < 50: return
+    # 앞에서 본 그림을 텍스처로 직접 그린다(소프트웨어 래스터) — 정점만으론 얼굴이 너무 성겨 눈·입이 안 보인다
+    tris_all = [(p_.index, p_.vertices[0], p_.vertices[i], p_.vertices[i + 1], p_.loop_indices[0], p_.loop_indices[i], p_.loop_indices[i + 1]) for p_ in me.polygons for i in range(1, len(p_.vertices) - 1)]
+    head = [t for t in tris_all if front[t[1]] or front[t[2]] or front[t[3]]]
+    P3 = co[idx]
+    x0, x1, z0, z1 = P3[:, 0].min(), P3[:, 0].max(), P3[:, 2].min(), P3[:, 2].max()
+    G = 192
+    sx = (G - 1) / max(1e-6, x1 - x0); sz = (G - 1) / max(1e-6, z1 - z0)
+    depth = np.full((G, G), 1e9); colmap = np.zeros((G, G, 3)); posmap = np.zeros((G, G, 3)); have = np.zeros((G, G), bool); tri_id = -np.ones((G, G), int)
+    for ti, (pi, a, b, c_, la, lb, lc) in enumerate(head):
+        P = co[[a, b, c_]]
+        if np.cross(P[1] - P[0], P[2] - P[0])[1] > 0: continue   # 뒤를 보는 면
+        X = (P[:, 0] - x0) * sx; Z = (P[:, 2] - z0) * sz
+        gx0, gx1 = max(0, int(np.floor(X.min()))), min(G - 1, int(np.ceil(X.max())))
+        gz0, gz1 = max(0, int(np.floor(Z.min()))), min(G - 1, int(np.ceil(Z.max())))
+        if gx1 < gx0 or gz1 < gz0: continue
+        us_, vs_ = np.meshgrid(np.arange(gx0, gx1 + 1), np.arange(gz0, gz1 + 1))
+        den = (Z[1] - Z[2]) * (X[0] - X[2]) + (X[2] - X[1]) * (Z[0] - Z[2])
+        if abs(den) < 1e-9: continue
+        w1 = ((Z[1] - Z[2]) * (us_ - X[2]) + (X[2] - X[1]) * (vs_ - Z[2])) / den
+        w2 = ((Z[2] - Z[0]) * (us_ - X[2]) + (X[0] - X[2]) * (vs_ - Z[2])) / den
+        w3 = 1 - w1 - w2
+        ins = (w1 >= -1e-3) & (w2 >= -1e-3) & (w3 >= -1e-3)
+        if not ins.any(): continue
+        Y = w1 * P[0, 1] + w2 * P[1, 1] + w3 * P[2, 1]
+        UVt = np.array([uvl[la].uv[:], uvl[lb].uv[:], uvl[lc].uv[:]])
+        uu = w1 * UVt[0, 0] + w2 * UVt[1, 0] + w3 * UVt[2, 0]; vv = w1 * UVt[0, 1] + w2 * UVt[1, 1] + w3 * UVt[2, 1]
+        gzz, gxx = vs_[ins], us_[ins]
+        closer = Y[ins] < depth[gzz, gxx]
+        gzz, gxx = gzz[closer], gxx[closer]
+        depth[gzz, gxx] = Y[ins][closer]
+        colmap[gzz, gxx] = px[np.clip((vv[ins][closer] * (H - 1)).astype(int), 0, H - 1), np.clip((uu[ins][closer] * (W - 1)).astype(int), 0, W - 1)]
+        posmap[gzz, gxx, 0] = (w1 * P[0, 0] + w2 * P[1, 0] + w3 * P[2, 0])[ins][closer]
+        posmap[gzz, gxx, 1] = Y[ins][closer]
+        posmap[gzz, gxx, 2] = (w1 * P[0, 2] + w2 * P[1, 2] + w3 * P[2, 2])[ins][closer]
+        have[gzz, gxx] = True; tri_id[gzz, gxx] = ti
+    VISIBLE = set(np.unique(tri_id[tri_id >= 0]).tolist())
+    L = np.where(have, colmap @ np.array([0.299, 0.587, 0.114]), np.nan)
+    global FRONT_MAP, FRONT_TF; FRONT_MAP = colmap; FRONT_TF = (x0, z0, sx, sz, G)
+    med = np.nanmedian(L)
+    dark = have & (L < min(med * 0.55, med - 0.18))
+    best = np.where(have, 1, -1)
+    # 이웃 연결 덩어리
+    lab = np.zeros((G, G), dtype=int); comps = []; c = 0
+    for i in range(G):
+        for j in range(G):
+            if dark[i, j] and not lab[i, j]:
+                c += 1; st = [(i, j)]; lab[i, j] = c; cells = []
+                while st:
+                    a, b = st.pop(); cells.append((a, b))
+                    for da, db in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        u, v = a + da, b + db
+                        if 0 <= u < G and 0 <= v < G and dark[u, v] and not lab[u, v]: lab[u, v] = c; st.append((u, v))
+                if len(cells) >= 3: comps.append(cells)
+    if not comps: return
+    def info(cells):
+        a = np.array(cells)
+        p = posmap[a[:, 0], a[:, 1]]
+        r0, r1, c0, c1 = a[:, 0].min(), a[:, 0].max(), a[:, 1].min(), a[:, 1].max()
+        hh_, ww_ = r1 - r0 + 1, c1 - c0 + 1
+        # 둘레(덩어리 크기만큼 넓힌 테두리)의 밝기 — 눈은 밝은 피부·흰자에 둘러싸여 있다
+        R0, R1, C0, C1 = max(0, r0 - hh_), min(G - 1, r1 + hh_), max(0, c0 - ww_), min(G - 1, c1 + ww_)
+        ring = L[R0:R1 + 1, C0:C1 + 1].copy(); ring[r0 - R0:r1 - R0 + 1, c0 - C0:c1 - C0 + 1] = np.nan
+        return {'x': p[:, 0].mean(), 'z': p[:, 2].mean(), 'y': p[:, 1].min(), 'w': np.ptp(p[:, 0]) + 1e-4, 'hh': np.ptp(p[:, 2]) + 1e-4, 'n': len(cells),
+                'asp': ww_ / hh_, 'gr': c0 + ww_ / 2, 'ring': np.nanmedian(ring) if np.isfinite(ring).any() else 0, 'lum': np.nanmean(L[a[:, 0], a[:, 1]])}
+    C = [info(cc) for cc in comps if len(cc) < G * G * 0.03]
+    span = x1 - x0
+    cx = (x0 + x1) / 2
+    # 눈: 좌우 한 쌍 — 비슷한 높이·크기, 둥근 모양, 밝은 둘레, 적당한 간격
+    pair, score = None, -1
+    for a_ in C:
+        for b_ in C:
+            if not (a_['x'] < b_['x']): continue
+            gap = b_['x'] - a_['x']
+            if not (span * 0.12 < gap < span * 0.65): continue
+            if abs(a_['z'] - b_['z']) > max(a_['hh'], b_['hh']) * 0.8 + span * 0.02: continue
+            if max(a_['n'], b_['n']) > 2.5 * min(a_['n'], b_['n']): continue
+            if not all(0.35 < q['asp'] < 2.8 and q['ring'] > q['lum'] + 0.2 for q in (a_, b_)): continue
+            if abs((a_['x'] + b_['x']) / 2 - cx) > span * 0.2: continue
+            rnd = min(min(q['asp'], 1 / q['asp']) for q in (a_, b_))   # 둥글수록
+            s_ = min(a_['n'], b_['n']) ** 0.5 * min(a_['ring'], b_['ring']) ** 3 * rnd   # 크기보다 '밝은 둘레·둥근 모양' 을 중시(머리카락 덩어리 배제)
+            if s_ > score: score, pair = s_, (a_, b_)
+    if not pair: return
+    eL, eR = pair
+    ez = (eL['z'] + eR['z']) / 2; spread = eR['x'] - eL['x']
+    mouth = None; mid = (eL['x'] + eR['x']) / 2; want = ez - spread * 0.62
+    for m_ in C:
+        if m_ is eL or m_ is eR: continue
+        if ez - spread * 1.2 < m_['z'] < ez - spread * 0.3 and abs(m_['x'] - mid) < spread * 0.22:
+            if not mouth or abs(m_['z'] - want) < abs(mouth['z'] - want): mouth = m_
+    if mouth is None:
+        mouth = {'x': (eL['x'] + eR['x']) / 2, 'z': ez - spread * 0.55, 'y': min(eL['y'], eR['y']), 'w': spread * 0.35, 'hh': spread * 0.08, 'n': 0}
+    # ── 텍스처에 '눈 감음'·'입 벌림' 을 칠한 판을 만든다 (얼굴 메시는 성겨서 정점을 움직여도 눈·입 그림이 거의 안 바뀐다)
+    fr = nm[:, 1] < -0.05
+    def paint(base, regions):
+        out = base.copy()
+        for (cx_, cz_, rx, rz, fy, fn) in regions:
+            for ti in VISIBLE:
+                pi_, a_, b_, c2, la, lb, lc = head[ti]
+                t = (a_, b_, c2); tuv = (tuple(uvl[la].uv[:]), tuple(uvl[lb].uv[:]), tuple(uvl[lc].uv[:]))
+                P = co[list(t)]
+                if ((((P[:, 0] - cx_) / rx) ** 2 + ((P[:, 2] - cz_) / rz) ** 2)).min() > 1.6: continue
+                if P[:, 1].min() > fy + spread * 0.22: continue   # 얼굴 앞면만 (뒤통수·안쪽 면 제외)
+                U = np.array(tuv) * np.array([W - 1, H - 1])
+                u0, v0 = np.floor(U.min(0)).astype(int); u1, v1 = np.ceil(U.max(0)).astype(int)
+                if u1 - u0 > W * 0.3 or v1 - v0 > H * 0.3: continue
+                us, vs = np.meshgrid(np.arange(u0, u1 + 1), np.arange(v0, v1 + 1))
+                A, B, Cc = U
+                den = (B[1] - Cc[1]) * (A[0] - Cc[0]) + (Cc[0] - B[0]) * (A[1] - Cc[1])
+                if abs(den) < 1e-9: continue
+                w1 = ((B[1] - Cc[1]) * (us - Cc[0]) + (Cc[0] - B[0]) * (vs - Cc[1])) / den
+                w2 = ((Cc[1] - A[1]) * (us - Cc[0]) + (A[0] - Cc[0]) * (vs - Cc[1])) / den
+                w3 = 1 - w1 - w2
+                ins = (w1 >= -0.02) & (w2 >= -0.02) & (w3 >= -0.02)
+                if not ins.any(): continue
+                X = w1 * P[0, 0] + w2 * P[1, 0] + w3 * P[2, 0]; Z = w1 * P[0, 2] + w2 * P[1, 2] + w3 * P[2, 2]
+                dx, dz = (X - cx_) / rx, (Z - cz_) / rz
+                m = ins & (dx * dx + dz * dz <= 1)
+                if not m.any(): continue
+                uu, vv = us[m], vs[m]
+                ok = (uu >= 0) & (uu < W) & (vv >= 0) & (vv < H)
+                out[vv[ok], uu[ok]] = fn(dx[m][ok], dz[m][ok], out[vv[ok], uu[ok]])
+        return out
+    # 눈 둘레 피부색
+    def ring_color(e):
+        # 눈 바로 아래 볼(앞에서 본 그림)의 밝은 피부색
+        gx = int((e['x'] - x0) * sx); gz = int((e['z'] - z0) * sz); dh = max(2, int(e['hh'] * sz)); dw = max(2, int(e['w'] * sx))
+        reg = colmap[max(0, gz - dh * 2):max(1, gz - dh), max(0, gx - dw // 2):gx + dw // 2 + 1].reshape(-1, 3)
+        lum_ = reg @ np.array([0.299, 0.587, 0.114])
+        good = reg[lum_ > np.percentile(lum_, 40)] if len(reg) else reg
+        return np.median(good, axis=0) if len(good) else np.array([0.95, 0.8, 0.7])
+    regions_blink = []
+    for e in (eL, eR):
+        skin = ring_color(e); rx, rz = max(e['w'], spread * 0.16) * 0.75, max(e['hh'], spread * 0.1) * 0.75
+        lash = np.array([0.12, 0.08, 0.07])
+        def fn(dx, dz, cur, skin=skin, lash=lash):
+            o = np.tile(skin, (len(dx), 1))
+            line = np.abs(dz + 0.15 - 0.25 * dx * dx) < 0.18   # 살짝 웃는 곡선의 속눈썹 선
+            o[line] = lash
+            return o
+        regions_blink.append((e['x'], e['z'], rx, rz, e['y'], fn))
+    mrx, mrz = max(mouth['w'], spread * 0.22) * 0.75, spread * 0.13
+    def mfn(dx, dz, cur):
+        o = np.tile(np.array([0.32, 0.05, 0.08]), (len(dx), 1))
+        o[dz < -0.35] = np.array([0.85, 0.42, 0.45])   # 혀
+        o[(dx * dx + dz * dz) > 0.78] = np.array([0.45, 0.12, 0.12])   # 입술 테두리
+        return o
+    regions_mouth = [(mouth['x'], mouth['z'] - mrz * 0.35, mrx, mrz, mouth['y'], mfn)]
+    t_blink = paint(px, regions_blink); t_mouth = paint(px, regions_mouth); t_both = paint(t_blink, regions_mouth)
+    def mkimg(name, arr):
+        im = bpy.data.images.new(name, W, H, alpha=False)
+        a4 = np.concatenate([arr, np.ones((H, W, 1), dtype=np.float32)], axis=2)
+        im.pixels.foreach_set(a4.ravel()); im.file_format = 'JPEG'; im.pack()
+        return im
+    # 숨긴 아주 작은 메시에 붙여 GLB 안에 같이 들어가게 (게임의 makeAlive 가 이름으로 찾아 바꿔 낀다)
+    for nm_, arr in (('face_blink', t_blink), ('face_mouth', t_mouth), ('face_both', t_both)):
+        im = mkimg(nm_, arr)
+        mat = bpy.data.materials.new(nm_); mat.use_nodes = True
+        tex = mat.node_tree.nodes.new('ShaderNodeTexImage'); tex.image = im
+        mat.node_tree.links.new(tex.outputs['Color'], mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'])
+        mesh = bpy.data.meshes.new('__' + nm_)
+        c0 = ob.matrix_world @ Vector((0, 0, 0))
+        e = 1e-4
+        mesh.from_pydata([(0, 0, 0), (e, 0, 0), (0, 0, e)], [], [(0, 1, 2)]); mesh.materials.append(mat)
+        mesh.uv_layers.new()
+        o2 = bpy.data.objects.new('__' + nm_, mesh); o2.location = c0
+        bpy.context.scene.collection.objects.link(o2)
+    FACE_INFO.update({'ok': True, 'eyes': [(eL['x'], eL['z']), (eR['x'], eR['z'])], 'mouth': (mouth['x'], mouth['z']), 'found_mouth': mouth['n'] > 0})
+"""
+
+FACE_ONLY = r"""
+import sys, bpy
+exec(open(sys.argv[3]).read())
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=sys.argv[1])
+for a in bpy.data.actions: a.use_fake_user = True
+add_face()
+print('face', FACE_INFO)
+bpy.ops.export_scene.gltf(filepath=sys.argv[2], export_format='GLB', export_animations=True, export_animation_mode='ACTIONS', export_force_sampling=True, export_image_format='JPEG', export_jpeg_quality=88)
+"""
+
+
+def face_glb(glb: bytes) -> bytes:
+    with tempfile.TemporaryDirectory() as d:
+        src, out = os.path.join(d, "in.glb"), os.path.join(d, "face.glb")
+        open(src, "wb").write(glb)
+        open(os.path.join(d, "f.py"), "w").write(FACE_ONLY); open(os.path.join(d, "face.py"), "w").write(FACE)
+        r = subprocess.run(["python", os.path.join(d, "f.py"), src, out, os.path.join(d, "face.py")], cwd=UNIRIG, capture_output=True, text=True)
+        print("face:", (r.stdout or "")[-400:], (r.stderr or "")[-600:])
+        if not os.path.exists(out) or "'ok': True" not in (r.stdout or ""):
+            raise RuntimeError("얼굴(눈·입)을 찾지 못했어요")
         return open(out, "rb").read()
 
 
@@ -104,6 +335,7 @@ BAKE = r"""
 import sys, math, bpy
 from mathutils import Vector, Quaternion
 src, dst = sys.argv[1], sys.argv[2]
+FACE_SRC = open(sys.argv[3]).read() if len(sys.argv) > 3 else ''
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=src)
 arm = next(o for o in bpy.data.objects if o.type == 'ARMATURE')
@@ -199,8 +431,18 @@ def hit(t):
     for sp in SPINE[1:2]: put(d, [sp], X, 0.25 * e)
     return d
 clip('idle', 2.4, idle); clip('walk', 0.9, gait(0.5, 0.7)); clip('run', 0.55, gait(0.85, 1.1))
-clip('jump', 0.8, jump); clip('attack', 0.5, attack); clip('happy', 0.9, happy); clip('hit', 0.45, hit)
-bpy.ops.export_scene.gltf(filepath=dst, export_format='GLB', export_animations=True, export_animation_mode='NLA_TRACKS', export_force_sampling=True)
+def talk(t):
+    s2 = math.sin(t * 4 * math.pi); d = {}
+    put(d, HEAD, X, -0.08 * s2); put(d, HEAD, Z, 0.06 * math.sin(t * 2 * math.pi))
+    put(d, AR, X, -0.35 - 0.25 * math.sin(t * 2 * math.pi)); put(d, AR, Y, 0.25)
+    for sp in SPINE[1:2]: put(d, [sp], Z, 0.05 * math.sin(t * 2 * math.pi))
+    return d
+clip('jump', 0.8, jump); clip('attack', 0.5, attack); clip('happy', 0.9, happy); clip('hit', 0.45, hit); clip('talk', 1.6, talk)
+try:
+    exec(FACE_SRC); add_face(); print('face', FACE_INFO)
+except Exception as e:
+    print('face failed', e)
+bpy.ops.export_scene.gltf(filepath=dst, export_format='GLB', export_animations=True, export_animation_mode='NLA_TRACKS', export_force_sampling=True, export_image_format='JPEG', export_jpeg_quality=88)
 print('baked', [a.name for a in bpy.data.actions])
 """
 
@@ -300,7 +542,7 @@ class Volumize:
 
 
 # 이미지 생성 — Qwen-Image (Apache 2.0, gated 아님, 한국어·영어 프롬프트 이해). AI 이미지와 글 → 3D 의 첫 단계에 쓴다
-FIGURE = ("A high-quality 3D rendered figurine of {p}. Full body, single character, front view, standing, centered, "
+FIGURE = ("A high-quality 3D rendered figurine of {p}. Full body, single character, front view, standing in a relaxed A-pose with arms held slightly away from the body and legs slightly apart, hands not touching the body, centered, "
           "rounded volumetric shapes, soft vinyl toy material, plain pure white background, soft studio lighting, no text.")
 
 
@@ -336,6 +578,10 @@ class QwenImage:
 
 @app.cls(image=rig_image, gpu="A10G", volumes={"/cache": cache}, timeout=900, scaledown_window=120, max_containers=2)
 class Rigger:
+    @modal.method()
+    def face(self, glb: bytes) -> dict:
+        return {"glb": face_glb(glb)}
+
     @modal.method()
     def rig(self, glb: bytes) -> dict:
         out = rig_glb(glb)
@@ -400,7 +646,7 @@ def api():
             glb = base64.b64decode(body["glb_b64"]) if body.get("glb_b64") else urllib.request.urlopen(str(body.get("glb_url")), timeout=60).read()
             if not glb or len(glb) > 40_000_000:
                 raise HTTPException(400, "glb required")
-            call = Rigger().rig.spawn(glb)
+            call = (Rigger().face if body.get("face_only") else Rigger().rig).spawn(glb)
             return {"id": call.object_id}
         if body.get("mode") == "img":  # 이미지 생성
             prompt = str(body.get("prompt") or "")[:1000]

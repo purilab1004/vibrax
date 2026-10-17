@@ -22,6 +22,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
   const [view, setView] = useState<DriveFile | null>(null)
   const [motion, setMotion] = useState('idle')
   const [rigged, setRigged] = useState(false)
+  const [hasFace, setHasFace] = useState(false)
   const [publish, setPublish] = useState<DriveFile | null>(null)
   const [pub, setPub] = useState({ kind: 'character', title: '', tags: '', description: '' })
   const fileRef = useRef<HTMLInputElement>(null)
@@ -145,7 +146,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
               {shown.map((f) => (
                 <div key={f.key} className={`group relative rounded-xl overflow-hidden bg-white border transition-all ${sel.has(f.key) ? 'border-[#2563eb] ring-2 ring-[#2563eb]/25' : 'border-[#ebe4d6] hover:border-[#cfc4ab] hover:shadow-md'}`}>
-                  <button onClick={() => { setRigged(f.rig === 'anim' || f.rig === 'bones'); setMotion(f.rig === 'anim' ? 'all' : 'idle'); setView(f) }} className={`block w-full aspect-square ${ui.checker} flex items-center justify-center overflow-hidden`}>
+                  <button onClick={() => { setRigged(f.rig === 'face' || f.rig === 'anim' || f.rig === 'bones'); setHasFace(f.rig === 'face'); setMotion(f.rig === 'anim' || f.rig === 'face' ? 'all' : 'idle'); setView(f) }} className={`block w-full aspect-square ${ui.checker} flex items-center justify-center overflow-hidden`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {isImage(f.name) ? <img src={f.url} alt={f.name} loading="lazy" className="w-full h-full object-contain" />
                       // eslint-disable-next-line @next/next/no-img-element
@@ -181,7 +182,8 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
               <p className="text-[12px] text-[#9d9280]">{fmtSize(view.size)} · {view.mime}{isGlb(view.name) ? (rigged ? ' · 🦴 뼈대 있음 (팔다리까지 움직여요)' : ' · 뼈대 없음 (몸 전체만 움직여요)') : ''}</p>
               {isGlb(view.name) && <div className="mt-2"><MotionChips value={motion} onChange={setMotion} /></div>}
               <div className="mt-3 flex flex-wrap gap-2">
-                {isGlb(view.name) && !rigged && <RigButton driveKey={view.key} onDone={(f) => { load(); setRigged(true); setMotion('all'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
+                {isGlb(view.name) && rigged && !hasFace && <RigButton face driveKey={view.key} onDone={(f) => { load(); setHasFace(true); setMotion('talk'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
+                {isGlb(view.name) && !rigged && <RigButton driveKey={view.key} onDone={(f) => { load(); setRigged(true); setHasFace(true); setMotion('all'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
                 {isImage(view.name) && <button onClick={() => { onMake3D({ kind: 'drive', key: view.key, url: view.url, name: view.name }); setView(null) }} className={ui.primary}>🧊 3D로 만들기</button>}
                 {!isAudio(view.name) && <button onClick={() => { setPub({ kind: 'character', title: view.name.replace(/\.[a-z0-9]+$/i, ''), tags: '', description: '' }); setPublish(view); setView(null) }} className={ui.ghost}>🌐 갤러리에 공개 신청</button>}
                 <a href={view.url} download={view.name} className={ui.ghost}>⬇ 다운로드</a>

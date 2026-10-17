@@ -67,9 +67,9 @@ export function GlbViewer({ url, motion, onRigged }: { url: string; motion?: str
         if (alive) {
           let m = motionRef.current ?? 'idle'
           if (m === 'all') {   // 전체 동작 차례로 (각 2.4초)
-            const seq = ['idle', 'walk', 'run', 'jump', 'attack', 'happy', 'hit'], k = Math.floor(now / 2400) % seq.length
+            const seq = ['idle', 'talk', 'walk', 'run', 'jump', 'attack', 'happy', 'hit'], k = Math.floor(now / 2400) % seq.length
             m = seq[k]
-            const nm = ({ idle: '가만히', walk: '걷기', run: '달리기', jump: '점프', attack: '공격', happy: '기쁨', hit: '맞기' } as Record<string, string>)[m]
+            const nm = ({ idle: '가만히', talk: '말하기', walk: '걷기', run: '달리기', jump: '점프', attack: '공격', happy: '기쁨', hit: '맞기' } as Record<string, string>)[m]
             if (nm !== labelRef.current) { labelRef.current = nm; setLabel(nm) }
           } else if (labelRef.current) { labelRef.current = null; setLabel(null) }
           if (['attack', 'hit', 'happy', 'spin'].includes(m)) { if (now - lastTrig > 1100) { alive.trigger(m); lastTrig = now } alive.update(dt, 'idle') }
