@@ -1,5 +1,6 @@
 'use client'
 // AI 이미지 생성 — 프롬프트(한국어 가능) + 용도·스타일·비율 4장. 마음에 드는 것만 드라이브에 저장하거나 바로 3D 로.
+import CubeLoader from './CubeLoader'
 import { useEffect, useState } from 'react'
 import { ui, type Source3D } from './shared'
 import { fieldSay } from './ParticleField'
@@ -83,7 +84,7 @@ export default function ImageGen({ onSaved, onMake3D }: { onSaved: () => void; o
         )}
         {!job && batches.length === 0 && (
           <div className={`${ui.card} py-20 flex flex-col items-center text-center`}>
-            <span className="vx-orb" aria-hidden />
+            <CubeLoader size={52} />
             <p className="mt-2 text-[15px] font-bold text-[#1f2937]">만든 이미지가 여기 나타나요</p>
             <p className="mt-1 text-[12.5px] text-[#8a93a6]">마음에 드는 것만 골라 드라이브에 저장하거나 바로 3D 모델로 만들 수 있어요</p>
           </div>

@@ -111,7 +111,7 @@ export default function DesignerStudio() {
           <div className={`${ui.card} mt-6 p-5 md:p-7`}>
             {status === 'pending' ? (
               <div className="text-center py-6">
-                <span className="vx-orb" aria-hidden />
+                <CubeLoader size={52} />
                 <p className="mt-2 text-[17px] font-extrabold text-[#1f2937]">접수 확인 중이에요</p>
                 <p className="mt-1 text-[13px] text-[#4b5563]">관리자가 승인하면 이 화면이 바로 디자이너 작업 공간으로 바뀌어요. 메일로도 알려드려요.</p>
               </div>

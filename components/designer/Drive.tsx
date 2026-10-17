@@ -158,7 +158,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
         {files === null ? <div className="py-20 flex justify-center"><CubeLoader label="드라이브 여는 중" /></div>
           : shown.length === 0 ? (
             <div className="py-16 flex flex-col items-center text-center rounded-[4px] border-2 border-dashed border-[#bfdbfe] bg-white/35 backdrop-blur-sm">
-              <span className="vx-orb" aria-hidden />
+              <CubeLoader size={52} />
               <p className="mt-2 text-[14px] font-bold text-[#1f2937]">{q ? '찾는 파일이 없어요' : '아직 파일이 없어요'}</p>
               <p className="mt-1 text-[12.5px] text-[#8a93a6]">이미지·GLB·오디오를 끌어 놓거나, AI 로 만들어 저장해 보세요</p>
             </div>
@@ -170,8 +170,8 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {isImage(f.name) ? <img src={f.url} alt={f.name} loading="lazy" className="w-full h-full object-contain" />
                       // eslint-disable-next-line @next/next/no-img-element
-                      : isGlb(f.name) ? (f.thumb ? <img src={f.thumb} alt={f.name} loading="lazy" className="w-full h-full object-contain" /> : <span className="vx-orb" aria-hidden />)
-                      : <span className="vx-orb" aria-hidden />}
+                      : isGlb(f.name) ? (f.thumb ? <img src={f.thumb} alt={f.name} loading="lazy" className="w-full h-full object-contain" /> : <CubeLoader size={52} />)
+                      : <CubeLoader size={52} />}
                   </button>
                   <input type="checkbox" checked={sel.has(f.key)} onChange={() => toggle(f.key)} aria-label="선택"
                     className={`absolute top-2 left-2 w-4.5 h-4.5 accent-[#2563eb] ${sel.size ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} />
@@ -197,7 +197,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {isImage(view.name) ? <img src={view.url} alt={view.name} className="max-w-full max-h-full object-contain" />
                 : isGlb(view.name) ? <div className="w-full h-full"><GlbViewer key={view.url} url={view.url} motion={motion} onRigged={setRigged} onBody={setBody} /></div>
-                : isAudio(view.name) ? <audio src={view.url} controls className="w-[90%]" /> : <span className="vx-orb" aria-hidden />}
+                : isAudio(view.name) ? <audio src={view.url} controls className="w-[90%]" /> : <CubeLoader size={52} />}
             </div>
             <div className="p-4">
               <p className="text-[15px] font-extrabold text-[#1f2937] truncate">{view.name}</p>

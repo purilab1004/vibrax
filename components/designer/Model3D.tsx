@@ -230,7 +230,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
                   </div>
                 </div>
               )
-              : (<><span className="vx-orb" aria-hidden /><p className="mt-5 vx-glyph text-[11px] text-[#2563eb]">{'// STAGE'}</p><p className="mt-1 text-[14px] text-[#4b5563]">완성된 3D 모델이 이 무대에 나타나요</p><p className="text-[12px] text-[#8a93a6]">오른쪽 내 3D 모델을 누르면 여기서 움직여 볼 수 있어요</p></>)}
+              : (<><CubeLoader size={52} /><p className="mt-5 vx-glyph text-[11px] text-[#2563eb]">{'// STAGE'}</p><p className="mt-1 text-[14px] text-[#4b5563]">완성된 3D 모델이 이 무대에 나타나요</p><p className="text-[12px] text-[#8a93a6]">오른쪽 내 3D 모델을 누르면 여기서 움직여 볼 수 있어요</p></>)}
           </div>
         )}
       </div>
