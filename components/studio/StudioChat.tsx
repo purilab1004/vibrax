@@ -286,7 +286,7 @@ export default function StudioChat({
                   {(snds.length > 0 || assets.some(x => !(x.url && /^(character|background|tile|item|ui|effect|sprite)$/.test(x.kind)))) && (
                     <div className="flex flex-wrap gap-1 mb-2">
                       {snds.map((n, j) => <span key={'s' + j} className="text-[11px] bg-white/20 rounded-full px-2 py-0.5">🔊 {n}</span>)}
-                      {assets.filter(x => !(x.url && /^(character|background|tile|item|ui|effect|sprite)$/.test(x.kind))).map((x, j) => <span key={'k' + j} className="text-[11px] bg-white/20 rounded-full px-2 py-0.5">{x.kind === 'audio' ? '🔊' : '📦'} {x.name}</span>)}
+                      {assets.filter(x => !(x.url && /^(character|background|tile|item|ui|effect|sprite)$/.test(x.kind))).map((x, j) => <span key={'k' + j} className="text-[11px] bg-white/20 rounded-full px-2 py-0.5">{x.kind === 'audio' ? '🔊' : x.kind === 'model3d' ? '🧊 3D 모델 ·' : '📦'} {x.name}</span>)}
                     </div>
                   )}
                   {a.text}
@@ -433,7 +433,14 @@ export default function StudioChat({
             <div className="flex flex-wrap gap-2 px-4 pb-1">
               {picked.map(a => (
                 <div key={a.id} className="flex items-center gap-1.5 rounded-full bg-[#eef4ff] pl-1 pr-1.5 py-0.5 border border-[#cfdcff]">
-                  {a.kind === 'audio' ? <span className="text-[13px] px-1">🎵</span> : /* eslint-disable-next-line @next/next/no-img-element */ <img src={a.url} alt="" className="w-6 h-6 rounded object-contain bg-white" />}
+                  {a.kind === 'audio' ? <span className="text-[13px] px-1">🎵</span>
+                    : a.kind === 'model3d' ? (
+                      <span className="relative w-6 h-6 rounded bg-white flex items-center justify-center overflow-hidden" title="3D 모델 (GLB)">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        {a.thumb ? <img src={a.thumb} alt="" className="w-full h-full object-contain" /> : <span className="text-[13px]">🧊</span>}
+                      </span>
+                    ) : /* eslint-disable-next-line @next/next/no-img-element */ <img src={a.url} alt="" className="w-6 h-6 rounded object-contain bg-white" />}
+                  {a.kind === 'model3d' && <span className="text-[9.5px] font-extrabold bg-[#241f17] text-white rounded px-1 leading-[14px]">3D</span>}
                   <span className="text-[11.5px] text-[#1e3a8a] max-w-[120px] truncate">{a.title}</span>
                   <button type="button" onClick={() => setPicked(prev => prev.filter(x => x.id !== a.id))} className="w-4 h-4 rounded-full bg-[#241f17] text-white text-[9px] flex items-center justify-center" aria-label="에셋 제거">✕</button>
                 </div>

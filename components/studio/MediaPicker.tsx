@@ -2,7 +2,7 @@
 // 스튜디오 미디어 선택기 — 관리자가 모아둔 라이브러리에서 캐릭터·배경·아이템·오디오를 골라 생성 요청에 붙인다.
 import { useEffect, useRef, useState } from 'react'
 
-export interface PickedAsset { id: string; kind: string; name: string; title: string; url: string }
+export interface PickedAsset { id: string; kind: string; name: string; title: string; url: string; thumb?: string | null }
 interface Item extends PickedAsset { credit_cost?: number; description: string | null; genres: string[]; tags: string[]; width: number | null; height: number | null; uses: number; bytes: number; meta?: { role?: string; thumb?: string | null } }
 const ROLE: Record<string, string> = { bgm: '배경음', jump: '점프', hit: '타격', coin: '획득', shoot: '발사', explosion: '폭발', powerup: '파워업', gameover: '게임오버', clear: '클리어', click: 'UI', ambient: '환경음', other: '기타' }
 
@@ -53,7 +53,7 @@ export default function MediaPicker({ open, onClose, picked, onChange }: { open:
   const has = (id: string) => picked.some(p => p.id === id)
   const toggle = (it: Item) => {
     if (has(it.id)) onChange(picked.filter(p => p.id !== it.id))
-    else if (picked.length < 10) onChange([...picked, { id: it.id, kind: it.kind, name: it.name, title: it.title, url: it.url }])
+    else if (picked.length < 10) onChange([...picked, { id: it.id, kind: it.kind, name: it.name, title: it.title, url: it.url, thumb: it.meta?.thumb ?? null }])
   }
   return (
     <div className="fixed inset-0 z-[90] bg-[#241f17]/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={close}>
