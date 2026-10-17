@@ -145,7 +145,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
               {shown.map((f) => (
                 <div key={f.key} className={`group relative rounded-xl overflow-hidden bg-white border transition-all ${sel.has(f.key) ? 'border-[#2563eb] ring-2 ring-[#2563eb]/25' : 'border-[#ebe4d6] hover:border-[#cfc4ab] hover:shadow-md'}`}>
-                  <button onClick={() => setView(f)} className={`block w-full aspect-square ${ui.checker} flex items-center justify-center overflow-hidden`}>
+                  <button onClick={() => { setRigged(f.rig === 'anim' || f.rig === 'bones'); setMotion('idle'); setView(f) }} className={`block w-full aspect-square ${ui.checker} flex items-center justify-center overflow-hidden`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {isImage(f.name) ? <img src={f.url} alt={f.name} loading="lazy" className="w-full h-full object-contain" />
                       // eslint-disable-next-line @next/next/no-img-element
