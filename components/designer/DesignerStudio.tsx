@@ -1,6 +1,6 @@
 'use client'
 // 스튜디오 › 디자인 AI — 승인된 디자이너의 작업 공간.
-// 접수(→ 관리자 승인 → 직분 designer) 전에는 접수 화면, 승인되면 내 드라이브 · AI 이미지 · 3D 모델 · 갤러리 검색 · 공개 작품.
+// 접수(관리자 승인 직분 designer) 전에는 접수 화면, 승인되면 내 드라이브 · AI 이미지 · 3D 모델 · 갤러리 검색 · 공개 작품.
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -13,15 +13,18 @@ import ImageGen from './ImageGen'
 import Model3D from './Model3D'
 import GallerySearch from './GallerySearch'
 import MyWorks from './MyWorks'
-import ParticleField from './ParticleField'
+import ParticleField, { fieldSay } from './ParticleField'
+import Decode from './Decode'
+
+const WORD: Record<string, string> = { drive: 'DRIVE', search: 'GALLERY', image: 'IMAGINE', model3d: 'FORM', works: 'SIGNAL' }
 import { ui, type Section, type Source3D } from './shared'
 
 const NAV: [Section, string, string, string][] = [
-  ['drive', '🗂', '내 드라이브', '내가 저장한 이미지·3D·오디오'],
-  ['search', '🖼', '전체 갤러리', '공개된 모든 디자인 보기·검색'],
-  ['image', '🎨', 'AI 이미지', '프롬프트로 캐릭터·배경·아이템'],
-  ['model3d', '🧊', '3D 모델', '이미지·글 → 3D(GLB)'],
-  ['works', '🌐', '공개 작품', '승인 상태 · 크레딧'],
+  ['drive', '', '내 드라이브', '내가 저장한 이미지·3D·오디오'],
+  ['search', '', '전체 갤러리', '공개된 모든 디자인 보기·검색'],
+  ['image', '', 'AI 이미지', '프롬프트로 캐릭터·배경·아이템'],
+  ['model3d', '', '3D 모델', '이미지·글을 3D(GLB)로'],
+  ['works', '', '공개 작품', '승인 상태 · 크레딧'],
 ]
 
 export default function DesignerStudio() {
@@ -53,6 +56,8 @@ export default function DesignerStudio() {
     return () => { clearTimeout(t); window.removeEventListener('hashchange', sync) }
   }, [])
   const go = (s: Section) => { setSection(s); history.replaceState(null, '', '#' + s) }
+  // 메뉴를 옮기면 빛 입자가 그 영역의 이름으로 모인다
+  useEffect(() => { const t = setTimeout(() => fieldSay({ word: WORD[section] }), 350); return () => clearTimeout(t) }, [section])
   const make3D = (s: Source3D) => { setSource3d({ ...s }); go('model3d') }
   const saved = () => setRefresh((n) => n + 1)
 
@@ -76,7 +81,7 @@ export default function DesignerStudio() {
       <ParticleField />
       {/* 상단 바 */}
       <div className="app-top-pad sticky top-0 z-30 flex items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(99,102,241,0.08),0_8px_30px_-18px_rgba(79,70,229,0.35)] px-4 h-14 box-content">
-        <Link href="/studio" className="font-pixel text-[11px] text-[#4b5277] hover:text-[#4f46e5] tracking-widest transition-colors shrink-0">← STUDIO</Link>
+        <Link href="/studio" className="font-pixel text-[11px] text-[#4b5277] hover:text-[#4f46e5] tracking-widest transition-colors shrink-0">‹ STUDIO</Link>
         <div className="flex-1 flex justify-center min-w-0 overflow-x-auto scrollbar-hide"><AiModeToggle /></div>
         <Link href="/credits" className="hover:opacity-80 transition-opacity shrink-0" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>
       </div>
@@ -95,7 +100,7 @@ export default function DesignerStudio() {
           <div className={`${ui.card} mt-6 p-5 md:p-7`}>
             {status === 'pending' ? (
               <div className="text-center py-6">
-                <p className="text-[40px]">⏳</p>
+                <span className="vx-orb" aria-hidden />
                 <p className="mt-2 text-[17px] font-extrabold text-[#1f2340]">접수 확인 중이에요</p>
                 <p className="mt-1 text-[13px] text-[#4b5277]">관리자가 승인하면 이 화면이 바로 디자이너 작업 공간으로 바뀌어요. 메일로도 알려드려요.</p>
               </div>
@@ -110,7 +115,7 @@ export default function DesignerStudio() {
                   <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="어떤 디자인을 만드시나요? (선택)" rows={3} className={`${ui.input} h-auto py-3 sm:col-span-2 resize-none`} />
                 </div>
                 {msg && <p className="mt-3 text-[13px] font-semibold text-[#dc2626]">{msg}</p>}
-                <button onClick={apply} disabled={busy || !form.name.trim() || !form.email.trim()} className={`${ui.primary} mt-4 w-full h-12 text-[14px]`}>{busy ? '접수 중…' : '✍️ 디자이너 접수하기'}</button>
+                <button onClick={apply} disabled={busy || !form.name.trim() || !form.email.trim()} className={`${ui.primary} mt-4 w-full h-12 text-[14px]`}>{busy ? '접수 중…' : '디자이너 접수하기'}</button>
               </>
             )}
           </div>
@@ -123,13 +128,16 @@ export default function DesignerStudio() {
             <nav className="flex md:flex-col gap-1 p-2 md:p-3 overflow-x-auto scrollbar-hide">
               {NAV.map(([k, i, t, d]) => (
                 <button key={k} onClick={() => go(k)} className={`shrink-0 flex items-center gap-2.5 rounded-xl px-3 h-10 md:h-auto md:py-2.5 text-left transition-all ${section === k ? 'bg-gradient-to-r from-[#4f46e5] to-[#06b6d4] text-white shadow-[0_8px_24px_-8px_rgba(79,70,229,0.7)]' : 'text-[#3b4166] hover:bg-white/60'}`}>
-                  <span className="text-[17px]">{i}</span>
-                  <span className="min-w-0"><span className="block text-[13px] font-bold whitespace-nowrap">{t}</span><span className={`hidden md:block text-[10.5px] truncate ${section === k ? 'text-white/75' : 'text-[#8a90b2]'}`}>{d}</span></span>
+                  <span className="min-w-0"><Decode text={t} className="block text-[13px] font-bold whitespace-nowrap" /><span className={`hidden md:block text-[10.5px] truncate ${section === k ? 'text-white/75' : 'text-[#8a90b2]'}`}>{d}</span></span>
                 </button>
               ))}
             </nav>
           </aside>
           <main className="flex-1 min-w-0 p-4 md:p-6">
+            <header className="mb-4 flex items-end gap-3">
+              <h1 className="text-[22px] md:text-[26px] font-black tracking-tight text-[#1f2340]"><Decode key={section} text={NAV.find(([k]) => k === section)?.[2] ?? ''} replayOnHover /></h1>
+              <span className="vx-glyph mb-1.5 text-[10px] font-bold bg-gradient-to-r from-[#4f46e5] to-[#06b6d4] bg-clip-text text-transparent">{'// ' + WORD[section]}</span>
+            </header>
             {section === 'drive' && <Drive refresh={refresh} onMake3D={make3D} />}
             {section === 'image' && <ImageGen onSaved={saved} onMake3D={make3D} />}
             {section === 'model3d' && <Model3D source={source3d} onSaved={saved} />}

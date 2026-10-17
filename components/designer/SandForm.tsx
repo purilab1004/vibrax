@@ -1,6 +1,6 @@
 'use client'
 // 3D 생성 대기 화면 — 모래알 수천 개가 소용돌이치다 하나씩 모여 형태를 이루는 효과.
-// 원본 이미지가 있으면 그 실루엣·색으로, 없으면(글 → 3D) 기본 피규어 모양으로 모인다. 시간이 갈수록 더 많이 모여 진행 표시가 된다.
+// 원본 이미지가 있으면 그 실루엣·색으로, 없으면(글 3D) 기본 피규어 모양으로 모인다. 시간이 갈수록 더 많이 모여 진행 표시가 된다.
 import { useEffect, useRef } from 'react'
 import { loadThree } from './GlbViewer'
 
@@ -10,7 +10,7 @@ const SAND: [number, number, number] = [0.91, 0.76, 0.48]
 
 interface Target { pos: Float32Array; col: Float32Array }
 
-// 이미지 → 실루엣 위의 점들(가장자리에서 멀수록 두껍게 = 입체감) + 그 자리 색
+// 이미지 실루엣 위의 점들(가장자리에서 멀수록 두껍게 = 입체감) + 그 자리 색
 async function fromImage(src: string): Promise<Target | null> {
   const img = await new Promise<HTMLImageElement | null>((ok) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src })
   if (!img) return null
@@ -29,7 +29,7 @@ async function fromImage(src: string): Promise<Target | null> {
     const r = px[p * 4], gg = px[p * 4 + 1], b = px[p * 4 + 2], a = px[p * 4 + 3]
     inside[p] = transparent ? (a > 60 ? 1 : 0) : (Math.abs(r - bgc[0]) + Math.abs(gg - bgc[1]) + Math.abs(b - bgc[2]) > 60 ? 1 : 0)
   }
-  // 가장자리까지 거리(두 번 훑는 근사) → 두께
+  // 가장자리까지 거리(두 번 훑는 근사) 두께
   const d = new Float32Array(GRID * GRID).fill(0)
   for (let p = 0; p < GRID * GRID; p++) d[p] = inside[p] ? 1e9 : 0
   for (let y = 0; y < GRID; y++) for (let x = 0; x < GRID; x++) { const p = y * GRID + x; if (!inside[p]) continue; d[p] = Math.min(d[p], (x ? d[p - 1] : 0) + 1, (y ? d[p - GRID] : 0) + 1) }
@@ -49,7 +49,7 @@ async function fromImage(src: string): Promise<Target | null> {
   return { pos, col }
 }
 
-// 글 → 3D: 둥근 머리 + 몸통 피규어 모양
+// 글 3D: 둥근 머리 + 몸통 피규어 모양
 function figure(): Target {
   const pos = new Float32Array(N * 3), col = new Float32Array(N * 3)
   for (let i = 0; i < N; i++) {

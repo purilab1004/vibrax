@@ -1,6 +1,6 @@
 'use client'
 // 내 드라이브 — 구글 드라이브처럼 폴더·파일(이미지·3D·오디오)을 보관. 끌어 놓기 업로드, 이름 바꾸기·이동·삭제,
-// 이미지 → 3D 만들기, 갤러리 공개 신청(관리자 승인 후 공개)
+// 이미지 3D 만들기, 갤러리 공개 신청(관리자 승인 후 공개)
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { GlbViewer } from './GlbViewer'
@@ -99,14 +99,14 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
       <div className="flex flex-wrap items-center gap-2">
         <nav className="flex items-center gap-1 text-[15px] font-extrabold text-[#1f2340] mr-auto min-w-0">
           <button onClick={() => setFolder('')} className={folder ? 'text-[#8a90b2] hover:text-[#1f2340]' : ''}>내 드라이브</button>
-          {folder && <><span className="text-[#a5b4fc]">›</span><span className="truncate">📁 {folder}</span></>}
+          {folder && <><span className="text-[#a5b4fc]">›</span><span className="truncate">{folder}</span></>}
         </nav>
         <div className="relative w-full sm:w-[220px] order-last sm:order-none">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="파일 이름 검색" className={`${ui.input} h-10 pl-9`} />
           <svg viewBox="0 0 24 24" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a3a8c3]" fill="none" stroke="currentColor" strokeWidth={2.2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
         </div>
         <button onClick={mkdir} className={ui.ghost}>＋ 새 폴더</button>
-        <button onClick={() => fileRef.current?.click()} disabled={!!busy} className={ui.primary}>⬆ 업로드</button>
+        <button onClick={() => fileRef.current?.click()} disabled={!!busy} className={ui.primary}>업로드</button>
         <input ref={fileRef} type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif,.glb,audio/*" className="hidden" onChange={(e) => { if (e.target.files) upload(e.target.files); e.target.value = '' }} />
       </div>
 
@@ -115,7 +115,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           {folders.map((f) => (
             <button key={f.name} onClick={() => setFolder(f.name)} className="flex items-center gap-2.5 h-12 px-3.5 rounded-xl bg-white border border-[#e3e7f6] hover:border-[#4f46e5] hover:bg-[#f5f8ff] text-left transition-colors">
-              <span className="text-[20px]">📁</span><span className="text-[13px] font-bold text-[#1f2340] truncate">{f.name}</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#06b6d4] shadow-[0_0_10px_rgba(79,70,229,0.6)]" aria-hidden /><span className="text-[13px] font-bold text-[#1f2340] truncate">{f.name}</span>
             </button>
           ))}
         </div>
@@ -139,7 +139,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
         {files === null ? <p className="py-20 text-center text-[13px] text-[#8a90b2]">불러오는 중…</p>
           : shown.length === 0 ? (
             <div className="py-16 flex flex-col items-center text-center rounded-2xl border-2 border-dashed border-[#c7d2fe] bg-white/35 backdrop-blur-sm">
-              <p className="text-[40px]">🗂</p>
+              <span className="vx-orb" aria-hidden />
               <p className="mt-2 text-[14px] font-bold text-[#1f2340]">{q ? '찾는 파일이 없어요' : '아직 파일이 없어요'}</p>
               <p className="mt-1 text-[12.5px] text-[#8a90b2]">이미지·GLB·오디오를 끌어 놓거나, AI 로 만들어 저장해 보세요</p>
             </div>
@@ -151,8 +151,8 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {isImage(f.name) ? <img src={f.url} alt={f.name} loading="lazy" className="w-full h-full object-contain" />
                       // eslint-disable-next-line @next/next/no-img-element
-                      : isGlb(f.name) ? (f.thumb ? <img src={f.thumb} alt={f.name} loading="lazy" className="w-full h-full object-contain" /> : <span className="text-[40px]">🧊</span>)
-                      : <span className="text-[40px]">{isAudio(f.name) ? '🎵' : '📄'}</span>}
+                      : isGlb(f.name) ? (f.thumb ? <img src={f.thumb} alt={f.name} loading="lazy" className="w-full h-full object-contain" /> : <span className="vx-orb" aria-hidden />)
+                      : <span className="vx-orb" aria-hidden />}
                   </button>
                   <input type="checkbox" checked={sel.has(f.key)} onChange={() => toggle(f.key)} aria-label="선택"
                     className={`absolute top-2 left-2 w-4.5 h-4.5 accent-[#4f46e5] ${sel.size ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} />
@@ -176,18 +176,18 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {isImage(view.name) ? <img src={view.url} alt={view.name} className="max-w-full max-h-full object-contain" />
                 : isGlb(view.name) ? <div className="w-full h-full"><GlbViewer key={view.url} url={view.url} motion={motion} onRigged={setRigged} onBody={setBody} /></div>
-                : isAudio(view.name) ? <audio src={view.url} controls className="w-[90%]" /> : <span className="text-[48px]">📄</span>}
+                : isAudio(view.name) ? <audio src={view.url} controls className="w-[90%]" /> : <span className="vx-orb" aria-hidden />}
             </div>
             <div className="p-4">
               <p className="text-[15px] font-extrabold text-[#1f2340] truncate">{view.name}</p>
-              <p className="text-[12px] text-[#8a90b2]">{fmtSize(view.size)} · {view.mime}{isGlb(view.name) ? (rigged ? ' · 🦴 뼈대 있음 (팔다리까지 움직여요)' : ' · 뼈대 없음 (몸 전체만 움직여요)') : ''}</p>
+              <p className="text-[12px] text-[#8a90b2]">{fmtSize(view.size)} · {view.mime}{isGlb(view.name) ? (rigged ? ' · 뼈대 있음 (팔다리까지 움직여요)' : ' · 뼈대 없음 (몸 전체만 움직여요)') : ''}</p>
               {isGlb(view.name) && <div className="mt-2"><MotionChips value={motion} onChange={setMotion} body={body} /></div>}
               <div className="mt-3 flex flex-wrap gap-2">
                 {isGlb(view.name) && rigged && !hasFace && <RigButton face driveKey={view.key} onDone={(f) => { load(); setHasFace(true); setMotion('talk'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
                 {isGlb(view.name) && !rigged && <RigButton driveKey={view.key} onDone={(f) => { load(); setRigged(true); setHasFace(true); setMotion('all'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
-                {isImage(view.name) && <button onClick={() => { onMake3D({ kind: 'drive', key: view.key, url: view.url, name: view.name }); setView(null) }} className={ui.primary}>🧊 3D로 만들기</button>}
-                {!isAudio(view.name) && <button onClick={() => { setPub({ kind: 'character', title: view.name.replace(/\.[a-z0-9]+$/i, ''), tags: '', description: '' }); setPublish(view); setView(null) }} className={ui.ghost}>🌐 갤러리에 공개 신청</button>}
-                <a href={view.url} download={view.name} className={ui.ghost}>⬇ 다운로드</a>
+                {isImage(view.name) && <button onClick={() => { onMake3D({ kind: 'drive', key: view.key, url: view.url, name: view.name }); setView(null) }} className={ui.primary}>3D로 만들기</button>}
+                {!isAudio(view.name) && <button onClick={() => { setPub({ kind: 'character', title: view.name.replace(/\.[a-z0-9]+$/i, ''), tags: '', description: '' }); setPublish(view); setView(null) }} className={ui.ghost}>갤러리에 공개 신청</button>}
+                <a href={view.url} download={view.name} className={ui.ghost}>다운로드</a>
                 <button onClick={() => rename(view)} className={ui.ghost}>이름 바꾸기</button>
                 <button onClick={() => { move([view.key]); setView(null) }} className={ui.ghost}>옮기기</button>
                 <button onClick={() => del([view.key])} className={`${ui.ghost} !text-[#b91c1c]`}>삭제</button>

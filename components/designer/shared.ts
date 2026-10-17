@@ -1,7 +1,7 @@
 // 디자이너 작업 공간 공용 타입·스타일
 export interface DriveFile { key: string; name: string; url: string; thumb: string | null; size: number; mime: string; created_at: string | null; rig?: 'face' | 'anim' | 'bones' | 'none' | null }
 /** 3D 모델 뼈대 배지 */
-export const rigBadge = (rig?: string | null) => rig === 'face' ? '🦴 움직임 · 😀 표정' : rig === 'anim' ? '🦴 움직임' : rig === 'bones' ? '🦴 뼈대' : null
+export const rigBadge = (rig?: string | null) => rig === 'face' ? '움직임 · 표정' : rig === 'anim' ? '움직임' : rig === 'bones' ? '뼈대' : null
 /** 3D 생성으로 넘기는 원본 */
 export type Source3D = { kind: 'drive'; key: string; url: string; name: string } | { kind: 'media'; id: string; url: string; title: string }
 export type Section = 'drive' | 'image' | 'model3d' | 'search' | 'works'

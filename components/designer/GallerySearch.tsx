@@ -57,8 +57,8 @@ export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) =>
               <p className="text-[15px] font-extrabold text-[#1f2340]">{view.title}</p>
               <p className="text-[12px] text-[#8a90b2]">{view.name}{view.width ? ` · ${view.width}×${view.height}` : ''}{view.designer_name ? ` · by ${view.designer_name}` : ''}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {view.kind !== 'model3d' && <button onClick={() => { onMake3D({ kind: 'media', id: view.id, url: view.url ?? view.preview ?? '', title: view.title }); setView(null) }} className={ui.primary}>🧊 3D로 만들기</button>}
-                {view.kind === 'model3d' && view.url && <a href={view.url} download className={ui.primary}>⬇ GLB 받기</a>}
+                {view.kind !== 'model3d' && <button onClick={() => { onMake3D({ kind: 'media', id: view.id, url: view.url ?? view.preview ?? '', title: view.title }); setView(null) }} className={ui.primary}>3D로 만들기</button>}
+                {view.kind === 'model3d' && view.url && <a href={view.url} download className={ui.primary}>GLB 받기</a>}
                 <button onClick={async () => { try { await navigator.clipboard.writeText(view.name); setCopied(true); setTimeout(() => setCopied(false), 1200) } catch { /* 무시 */ } }} className={ui.ghost}>{copied ? '복사됨 ✓' : '코드 키 복사'}</button>
                 <button onClick={() => setView(null)} className={ui.ghost}>닫기</button>
               </div>

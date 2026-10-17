@@ -39,7 +39,7 @@ export default function MyWorks({ refresh }: { refresh: number }) {
             <div key={a.id} className="rounded-xl overflow-hidden border border-[#e3e7f6] bg-white">
               <div className={`aspect-square ${ui.checker} flex items-center justify-center`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {a.kind === 'audio' ? <span className="text-3xl">🎵</span> : a.kind === 'model3d' ? (a.meta?.thumb ? <img src={a.meta.thumb} alt={a.title} className="w-full h-full object-contain" /> : <span className="text-3xl">🧊</span>) : <img src={a.url} alt={a.title} className="w-full h-full object-contain" />}
+                {a.kind === 'audio' ? <span className="text-3xl"></span> : a.kind === 'model3d' ? (a.meta?.thumb ? <img src={a.meta.thumb} alt={a.title} className="w-full h-full object-contain" /> : <span className="text-3xl"></span>) : <img src={a.url} alt={a.title} className="w-full h-full object-contain" />}
               </div>
               <div className="px-2.5 py-2">
                 <div className="flex items-center justify-between gap-1"><p className="text-[12.5px] font-bold text-[#1f2340] truncate">{a.title}</p><span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${STATUS[a.status]?.cls ?? ''}`}>{STATUS[a.status]?.label ?? a.status}</span></div>

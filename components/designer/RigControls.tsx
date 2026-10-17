@@ -1,12 +1,12 @@
 'use client'
-// 3D 모델 움직임 — '🦴 움직이게 만들기'(자동 리깅) 버튼과 움직임 미리보기 고르기
+// 3D 모델 움직임 — '움직이게 만들기'(자동 리깅) 버튼과 움직임 미리보기 고르기
 import { useEffect, useState } from 'react'
 import { ui } from './shared'
 
 // 미리보기 동작 — 기본·무기(두 발)·네 발
-export const MOTIONS: [string, string][] = [['all', '▶ 전체 동작 보기'], ['talk', '말하기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['sit', '앉기'], ['strafe_left', '왼쪽 옆걸음'], ['strafe_right', '오른쪽 옆걸음'], ['attack', '공격'], ['happy', '기쁨'], ['hit', '맞기'], ['die', '쓰러지기']]
-export const WEAPON_MOTIONS: [string, string][] = [['sword', '🗡 칼 들기'], ['slash', '🗡 칼 베기'], ['block', '🛡 칼·방패 막기'], ['greatsword', '⚔ 양손검 내려치기'], ['aim', '🔫 총 겨누기'], ['shoot', '🔫 총 쏘기']]
-export const QUAD_MOTIONS: [string, string][] = [['all', '▶ 전체 동작 보기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['attack', '물기 공격'], ['happy', '기쁨(꼬리)'], ['hit', '맞기'], ['talk', '짖기·말하기'], ['die', '쓰러지기']]
+export const MOTIONS: [string, string][] = [['all', '전체 동작 보기'], ['talk', '말하기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['sit', '앉기'], ['strafe_left', '왼쪽 옆걸음'], ['strafe_right', '오른쪽 옆걸음'], ['attack', '공격'], ['happy', '기쁨'], ['hit', '맞기'], ['die', '쓰러지기']]
+export const WEAPON_MOTIONS: [string, string][] = [['sword', '칼 들기'], ['slash', '칼 베기'], ['block', '칼·방패 막기'], ['greatsword', '양손검 내려치기'], ['aim', '총 겨누기'], ['shoot', '총 쏘기']]
+export const QUAD_MOTIONS: [string, string][] = [['all', '전체 동작 보기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['attack', '물기 공격'], ['happy', '기쁨(꼬리)'], ['hit', '맞기'], ['talk', '짖기·말하기'], ['die', '쓰러지기']]
 
 export function MotionChips({ value, onChange, body = 'biped' }: { value: string; onChange: (m: string) => void; body?: string }) {
   const chip = ([v, l]: [string, string]) => <button key={v} type="button" onClick={() => onChange(v)} className={ui.chip(value === v)}>{l}</button>
@@ -44,7 +44,7 @@ export function RigButton({ driveKey, onDone, face = false }: { driveKey: string
   return (
     <span className="inline-flex flex-col gap-1">
       <button type="button" onClick={start} disabled={job !== null} className={ui.primary} title="AI 가 뼈대를 넣어 팔·다리·머리가 움직이게 해요">
-        {job !== null ? (face ? `😀 표정 넣는 중… ${job}초` : `🦴 뼈대·표정 넣는 중… ${job}초`) : face ? `😀 표정·말하기 넣기${cost ? ` · ${cost} 프롬코인` : ''}` : `🦴 움직이게 만들기${cost ? ` · ${cost} 프롬코인` : ''}`}
+        {job !== null ? (face ? `표정 넣는 중… ${job}초` : `뼈대·표정 넣는 중… ${job}초`) : face ? `표정·말하기 넣기${cost ? ` · ${cost} 프롬코인` : ''}` : `움직이게 만들기${cost ? ` · ${cost} 프롬코인` : ''}`}
       </button>
       {err && <span className="text-[12px] text-[#dc2626]">{err}</span>}
     </span>

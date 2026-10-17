@@ -1,9 +1,10 @@
 'use client'
-// AI 이미지 생성 — 프롬프트(한국어 가능) + 용도·스타일·비율 → 4장. 마음에 드는 것만 드라이브에 저장하거나 바로 3D 로.
+// AI 이미지 생성 — 프롬프트(한국어 가능) + 용도·스타일·비율 4장. 마음에 드는 것만 드라이브에 저장하거나 바로 3D 로.
 import { useEffect, useState } from 'react'
 import { ui, type Source3D } from './shared'
+import { fieldSay } from './ParticleField'
 
-const PRESETS: [string, string, boolean][] = [['character', '🧍 캐릭터', true], ['item', '🗡 아이템', true], ['background', '🏞 배경', false], ['tile', '🧱 타일', false], ['ui', '🔘 UI', true], ['effect', '✨ 이펙트', false], ['free', '자유', false]]
+const PRESETS: [string, string, boolean][] = [['character', '캐릭터', true], ['item', '아이템', true], ['background', '배경', false], ['tile', '타일', false], ['ui', 'UI', true], ['effect', '이펙트', false], ['free', '자유', false]]
 const STYLES: [string, string][] = [['auto', '알아서'], ['cartoon', '카툰'], ['pixel', '픽셀'], ['anime', '애니'], ['3d', '3D 렌더'], ['realistic', '사실적'], ['watercolor', '수채화']]
 const RATIOS = ['1:1', '3:4', '4:3', '9:16', '16:9']
 interface Batch { token: string; prompt: string; images: string[]; saved: Record<number, string> }
@@ -25,16 +26,16 @@ export default function ImageGen({ onSaved, onMake3D }: { onSaved: () => void; o
   const pickPreset = (p: string) => { setPreset(p); setTransparent(PRESETS.find((x) => x[0] === p)?.[2] ?? false); if (p === 'background') setRatio('9:16') }
 
   const start = async () => {
-    setErr(null); setJob({ elapsed: 0 })
+    setErr(null); setJob({ elapsed: 0 }); fieldSay({ busy: true })
     const r = await fetch('/api/designer/image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, preset, style, ratio, transparent }) })
     const j = await r.json().catch(() => ({}))
-    if (!r.ok) { setJob(null); setErr(j.error ?? '요청 실패'); return }
+    if (!r.ok) { fieldSay({ busy: false }); setJob(null); setErr(j.error ?? '요청 실패'); return }
     for (let i = 0; i < 200; i++) {
       await new Promise((ok) => setTimeout(ok, 3000))
       const s = await fetch('/api/designer/image?token=' + encodeURIComponent(j.token)).then((x) => x.json()).catch(() => null)
       if (!s) continue
-      if (s.status === 'done') { setJob(null); setBatches((b) => [{ token: j.token, prompt, images: s.images, saved: {} }, ...b].slice(0, 10)); return }
-      if (s.status === 'failed') { setJob(null); setErr(s.error); return }
+      if (s.status === 'done') { fieldSay({ busy: false }); setJob(null); setBatches((b) => [{ token: j.token, prompt, images: s.images, saved: {} }, ...b].slice(0, 10)); return }
+      if (s.status === 'failed') { fieldSay({ busy: false }); setJob(null); setErr(s.error); return }
       setJob({ elapsed: s.elapsed ?? 0 })
     }
     setJob(null); setErr('시간이 오래 걸리고 있어요. 잠시 후 다시 시도해 주세요.')
@@ -82,7 +83,7 @@ export default function ImageGen({ onSaved, onMake3D }: { onSaved: () => void; o
         )}
         {!job && batches.length === 0 && (
           <div className={`${ui.card} py-20 flex flex-col items-center text-center`}>
-            <p className="text-[44px]">🎨</p>
+            <span className="vx-orb" aria-hidden />
             <p className="mt-2 text-[15px] font-bold text-[#1f2340]">만든 이미지가 여기 나타나요</p>
             <p className="mt-1 text-[12.5px] text-[#8a90b2]">마음에 드는 것만 골라 드라이브에 저장하거나 바로 3D 모델로 만들 수 있어요</p>
           </div>
@@ -96,8 +97,8 @@ export default function ImageGen({ onSaved, onMake3D }: { onSaved: () => void; o
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={src} alt="" className="w-full aspect-square object-contain cursor-zoom-in" onClick={() => setZoom(src)} />
                   <div className="absolute inset-x-0 bottom-0 p-2 flex gap-1.5 bg-gradient-to-t from-black/55 to-transparent sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => save(b, i)} disabled={!!b.saved[i]} className="h-8 px-3 rounded-lg bg-white text-[#1f2340] text-[12px] font-bold disabled:bg-[#dcfce7] disabled:text-[#15803d]">{b.saved[i] ? '저장됨 ✓' : '💾 저장'}</button>
-                    <button onClick={() => save(b, i, true)} className="h-8 px-3 rounded-lg bg-[#4f46e5] text-white text-[12px] font-bold">🧊 3D로</button>
+                    <button onClick={() => save(b, i)} disabled={!!b.saved[i]} className="h-8 px-3 rounded-lg bg-white text-[#1f2340] text-[12px] font-bold disabled:bg-[#dcfce7] disabled:text-[#15803d]">{b.saved[i] ? '저장됨 ✓' : '저장'}</button>
+                    <button onClick={() => save(b, i, true)} className="h-8 px-3 rounded-lg bg-[#4f46e5] text-white text-[12px] font-bold">3D로</button>
                   </div>
                 </div>
               ))}

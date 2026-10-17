@@ -48,7 +48,7 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
       const labelRef = { current: null as string | null }
       new T.GLTFLoader().load(url, (g: any) => {
         if (stop) return
-        // 금속 맵 없이 metalness 1(glTF 기본값)인 AI 모델은 환경광이 없으면 검게 보인다 → 비금속으로
+        // 금속 맵 없이 metalness 1(glTF 기본값)인 AI 모델은 환경광이 없으면 검게 보인다 비금속으로
         g.scene.traverse((n: any) => { const m = n.material; (Array.isArray(m) ? m : m ? [m] : []).forEach((q: any) => { if (q && q.metalness > 0.5 && !q.metalnessMap) { q.metalness = 0; q.roughness = Math.max(q.roughness || 0, 0.8); q.needsUpdate = true } }) })
         const obj = g.scene, b = new T.Box3().setFromObject(obj), size = b.getSize(new T.Vector3()), c = b.getCenter(new T.Vector3())
         obj.position.sub(c); scene.add(obj)
@@ -96,7 +96,7 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
   }, [url])
   return (
     <div ref={box} className="relative w-full h-full min-h-[280px] rounded-2xl bg-[radial-gradient(circle_at_50%_40%,#ffffff,#e4e8f0)] overflow-hidden cursor-grab active:cursor-grabbing">
-      {label && <span className="absolute left-3 top-3 z-10 text-[12.5px] font-extrabold bg-[#1f2340]/85 text-white rounded-full px-3 py-1">▶ {label}</span>}
+      {label && <span className="absolute left-3 top-3 z-10 text-[12.5px] font-extrabold bg-[#1f2340]/85 text-white rounded-full px-3 py-1">{label}</span>}
       {loading && !err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#8a90b2]">모델 불러오는 중…</p>}
       {err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#f87171]">{err}</p>}
     </div>
