@@ -12,31 +12,47 @@ interface FileOut { key: string; name: string; url: string; thumb: string | null
 
 export async function GET(req: Request) {
   const g = await requireDesigner(); if ('error' in g) return g.error
-  const folder = cleanName(new URL(req.url).searchParams.get('folder') ?? '')
+  const u = new URL(req.url)
+  const folder = cleanName(u.searchParams.get('folder') ?? '')
+  const offset = Math.max(0, Number(u.searchParams.get('offset') ?? 0) | 0)
+  const limit = Math.min(100, Math.max(1, Number(u.searchParams.get('limit') ?? 30) | 0))
   const store = g.admin.storage.from(BUCKET)
-  const dir = folderPath(g.user.id, folder)
-  const { data, error } = await store.list(dir, { limit: 1000, sortBy: { column: 'created_at', order: 'desc' } })
-  if (error) return Response.json({ error: error.message }, { status: 500 })
-  const names = new Set((data ?? []).map((f) => f.name))
   const pub = (k: string) => store.getPublicUrl(k).data.publicUrl
-  const folders: { name: string }[] = []
-  const files: FileOut[] = []
-  for (const f of data ?? []) {
-    if (!f.id) { if (!folder) folders.push({ name: dec(f.name) }); continue }  // 폴더
-    if (f.name === '.keep' || f.name.endsWith('.t') || f.name.endsWith(RIG_MARK)) continue
-    const key = `${dir}/${f.name}`
-    files.push({ key, name: dec(f.name), url: pub(key), thumb: names.has(f.name + '.t') ? pub(key + '.t') : null, size: Number((f.metadata as { size?: number } | null)?.size ?? 0), mime: String((f.metadata as { mimetype?: string } | null)?.mimetype ?? mimeOf(dec(f.name))), created_at: f.created_at ?? null })
+  type Raw = { name: string; id: string | null; created_at?: string | null; metadata?: unknown }
+  const listDir = async (dir: string) => {
+    const { data, error } = await store.list(dir, { limit: 1000, sortBy: { column: 'created_at', order: 'desc' } })
+    if (error) throw new Error(error.message)
+    return (data ?? []) as Raw[]
   }
-  // 3D 모델: 뼈대·움직임 여부 (표식이 없으면 GLB 앞부분을 읽어 확인하고 표식을 남긴다)
-  await Promise.all(files.filter((f) => /\.glb$/i.test(f.name)).map(async (f) => {
-    const base = f.key.split('/').pop()!
-    const mark = (data ?? []).find((x) => x.name === base + RIG_MARK)
-    if (mark) { const r = await store.download(f.key + RIG_MARK).then((x) => x.data?.text()).catch(() => null); f.rig = (r as FileOut['rig']) ?? null; return }
-    f.rig = await glbRig(f.url)
-    if (f.rig) await store.upload(f.key + RIG_MARK, Buffer.from(f.rig), { contentType: 'text/plain', upsert: true })
-  }))
-  folders.sort((a, b) => a.name.localeCompare(b.name, 'ko'))
-  return Response.json({ folder, folders, files })
+  const toFiles = (dir: string, data: Raw[], folderName: string) => {
+    const names = new Set(data.map((f) => f.name))
+    const out: (FileOut & { folder: string; _mark: boolean })[] = []
+    for (const f of data) {
+      if (!f.id || f.name === '.keep' || f.name.endsWith('.t') || f.name.endsWith(RIG_MARK)) continue
+      const key = `${dir}/${f.name}`
+      out.push({ key, name: dec(f.name), url: pub(key), thumb: names.has(f.name + '.t') ? pub(key + '.t') : null, size: Number((f.metadata as { size?: number } | null)?.size ?? 0), mime: String((f.metadata as { mimetype?: string } | null)?.mimetype ?? mimeOf(dec(f.name))), created_at: f.created_at ?? null, folder: folderName, _mark: names.has(f.name + RIG_MARK) })
+    }
+    return out
+  }
+  try {
+    const rootData = await listDir(folderPath(g.user.id, folder))
+    const folders = folder ? [] : rootData.filter((f) => !f.id).map((f) => ({ name: dec(f.name) })).sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+    let all = toFiles(folderPath(g.user.id, folder), rootData, folder)
+    // 맨 위(내 드라이브)는 모든 폴더의 파일까지 한꺼번에 — 최신순
+    if (!folder) {
+      const subs = await Promise.all(folders.map(async (fo) => toFiles(folderPath(g.user.id, fo.name), await listDir(folderPath(g.user.id, fo.name)), fo.name)))
+      all = all.concat(...subs)
+      all.sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))
+    }
+    const page = all.slice(offset, offset + limit)
+    // 3D 모델: 뼈대·움직임 여부 (표식이 없으면 GLB 앞부분을 읽어 확인하고 표식을 남긴다) — 이번 페이지만
+    await Promise.all(page.filter((f) => /\.glb$/i.test(f.name)).map(async (f) => {
+      if (f._mark) { const r = await store.download(f.key + RIG_MARK).then((x) => x.data?.text()).catch(() => null); f.rig = (r as FileOut['rig']) ?? null; return }
+      f.rig = await glbRig(f.url)
+      if (f.rig) await store.upload(f.key + RIG_MARK, Buffer.from(f.rig), { contentType: 'text/plain', upsert: true })
+    }))
+    return Response.json({ folder, folders, files: page.map(({ _mark, ...f }) => { void _mark; return f }), total: all.length, hasMore: offset + limit < all.length })
+  } catch (e) { return Response.json({ error: (e as Error).message }, { status: 500 }) }
 }
 
 export async function POST(req: Request) {

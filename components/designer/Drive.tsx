@@ -28,12 +28,30 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
   const [pub, setPub] = useState({ kind: 'character', title: '', tags: '', description: '' })
   const fileRef = useRef<HTMLInputElement>(null)
 
+  // 30개씩 — 맨 위(내 드라이브)는 모든 폴더의 파일을 최신순으로, 아래로 내리면 더 불러온다
+  const [hasMore, setHasMore] = useState(false)
+  const [total, setTotal] = useState(0)
+  const loadingMore = useRef(false)
   const load = useCallback(async (f = folder) => {
-    const j = await fetch('/api/designer/drive?folder=' + encodeURIComponent(f)).then((r) => r.json()).catch(() => null)
+    const j = await fetch('/api/designer/drive?limit=30&folder=' + encodeURIComponent(f)).then((r) => r.json()).catch(() => null)
     if (!j || j.error) { setMsg(j?.error ?? '불러오지 못했어요'); setFiles([]); return }
     if (!f) setFolders(j.folders ?? [])
-    setFiles(j.files ?? []); setSel(new Set())
+    setFiles(j.files ?? []); setHasMore(!!j.hasMore); setTotal(j.total ?? 0); setSel(new Set())
   }, [folder])
+  const more = useCallback(async () => {
+    if (loadingMore.current || !hasMore || !files) return
+    loadingMore.current = true
+    const j = await fetch(`/api/designer/drive?limit=30&offset=${files.length}&folder=${encodeURIComponent(folder)}`).then((r) => r.json()).catch(() => null)
+    loadingMore.current = false
+    if (!j || j.error) return
+    setFiles((cur) => [...(cur ?? []), ...((j.files ?? []) as DriveFile[]).filter((x) => !(cur ?? []).some((c) => c.key === x.key))]); setHasMore(!!j.hasMore)
+  }, [files, hasMore, folder])
+  const sentinel = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = sentinel.current; if (!el) return
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) void more() }, { rootMargin: '400px' })
+    io.observe(el); return () => io.disconnect()
+  }, [more])
   useEffect(() => { const t = setTimeout(() => { void load(folder) }, 0); return () => clearTimeout(t) }, [folder, refresh, load])
   // 폴더 목록은 루트에서 받는다
   useEffect(() => { if (folder) fetch('/api/designer/drive').then((r) => r.json()).then((j) => setFolders(j.folders ?? [])).catch(() => {}) }, [folder, refresh])
@@ -159,13 +177,15 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
                   {isGlb(f.name) && <span className="absolute top-2 right-2 flex gap-1">{rigBadge(f.rig) && <span className="text-[10px] font-extrabold bg-[#16a34a] text-white rounded px-1.5 py-0.5">{rigBadge(f.rig)}</span>}<span className="text-[10px] font-extrabold bg-[#1f2937] text-white rounded px-1.5 py-0.5">3D</span></span>}
                   <div className="px-2.5 py-2">
                     <p className="text-[12.5px] font-bold text-[#1f2937] truncate" title={f.name}>{f.name}</p>
-                    <p className="text-[10.5px] text-[#8a93a6]">{fmtSize(f.size)}{f.created_at ? ` · ${new Date(f.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}` : ''}</p>
+                    <p className="text-[10.5px] text-[#8a93a6]">{!folder && (f as DriveFile & { folder?: string }).folder ? `${(f as DriveFile & { folder?: string }).folder} · ` : ''}{fmtSize(f.size)}{f.created_at ? ` · ${new Date(f.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}` : ''}</p>
                   </div>
                 </div>
               ))}
             </div>
           )}
       </div>
+      <div ref={sentinel} className="h-1" aria-hidden />
+      {files !== null && files.length > 0 && <p className="text-center text-[11.5px] text-[#8a93a6]">{hasMore ? '더 불러오는 중…' : `${total.toLocaleString()}개 모두 보여 드렸어요`}</p>}
       {folder && <button onClick={rmdir} className="self-start text-[12px] text-[#b91c1c] hover:underline">이 폴더 지우기</button>}
 
       {/* 미리보기 */}
