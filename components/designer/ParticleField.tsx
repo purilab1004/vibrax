@@ -73,11 +73,11 @@ void main() {
 const FRAG = `
 varying float vSeed; varying float vAlpha;
 void main() {
-  vec2 c = gl_PointCoord - 0.5; float r = length(c);
-  if (r > 0.5) discard;
-  vec3 a = vec3(0.31, 0.27, 0.90), b = vec3(0.02, 0.71, 0.83), v = vec3(0.65, 0.45, 0.98);
+  vec2 c = gl_PointCoord - 0.5; float r = max(abs(c.x), abs(c.y));   // 네모난 입자
+  if (r > 0.42) discard;
+  vec3 a = vec3(0.55, 0.40, 0.22), b = vec3(0.80, 0.64, 0.40), v = vec3(0.36, 0.26, 0.15);   // 모래: 황갈·밝은 모래·짙은 흙
   vec3 col = mix(mix(a, b, vSeed), v, smoothstep(0.6, 1.0, vSeed));
-  gl_FragColor = vec4(col, vAlpha * smoothstep(0.5, 0.1, r));
+  gl_FragColor = vec4(col, vAlpha * smoothstep(0.42, 0.2, r));
 }`
 
 export default function ParticleField() {
@@ -180,8 +180,8 @@ export default function ParticleField() {
         p.x += p.vx * devicePixelRatio; p.y += p.vy * devicePixelRatio; p.l -= 0.022
         if (p.l <= 0) continue
         const r = (1.2 + 2.2 * p.l) * devicePixelRatio
-        g.fillStyle = `rgba(${Math.round(79 + p.h * 60)},${Math.round(70 + p.h * 110)},${Math.round(229 - p.h * 20)},${(p.l * 0.55).toFixed(3)})`
-        g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2); g.fill()
+        g.fillStyle = `rgba(${Math.round(150 + p.h * 60)},${Math.round(110 + p.h * 55)},${Math.round(60 + p.h * 40)},${(p.l * 0.6).toFixed(3)})`
+        g.fillRect(p.x - r, p.y - r, r * 2, r * 2)   // 네모난 모래알
       }
       for (let i = P.length - 1; i >= 0; i--) if (P[i].l <= 0) P.splice(i, 1)
     }

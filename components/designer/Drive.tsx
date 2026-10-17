@@ -97,13 +97,13 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
       onDrop={(e) => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files.length) upload(e.dataTransfer.files) }}>
       {/* 도구 줄 */}
       <div className="flex flex-wrap items-center gap-2">
-        <nav className="flex items-center gap-1 text-[15px] font-extrabold text-[#1f2340] mr-auto min-w-0">
-          <button onClick={() => setFolder('')} className={folder ? 'text-[#8a90b2] hover:text-[#1f2340]' : ''}>내 드라이브</button>
-          {folder && <><span className="text-[#a5b4fc]">›</span><span className="truncate">{folder}</span></>}
+        <nav className="flex items-center gap-1 text-[15px] font-extrabold text-[#2b2419] mr-auto min-w-0">
+          <button onClick={() => setFolder('')} className={folder ? 'text-[#9a8b72] hover:text-[#2b2419]' : ''}>내 드라이브</button>
+          {folder && <><span className="text-[#d9c3a0]">›</span><span className="truncate">{folder}</span></>}
         </nav>
         <div className="relative w-full sm:w-[220px] order-last sm:order-none">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="파일 이름 검색" className={`${ui.input} h-10 pl-9`} />
-          <svg viewBox="0 0 24 24" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a3a8c3]" fill="none" stroke="currentColor" strokeWidth={2.2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <svg viewBox="0 0 24 24" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#b3a68e]" fill="none" stroke="currentColor" strokeWidth={2.2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
         </div>
         <button onClick={mkdir} className={ui.ghost}>＋ 새 폴더</button>
         <button onClick={() => fileRef.current?.click()} disabled={!!busy} className={ui.primary}>업로드</button>
@@ -114,39 +114,39 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
       {!folder && folders.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           {folders.map((f) => (
-            <button key={f.name} onClick={() => setFolder(f.name)} className="flex items-center gap-2.5 h-12 px-3.5 rounded-xl bg-white border border-[#e3e7f6] hover:border-[#4f46e5] hover:bg-[#f5f8ff] text-left transition-colors">
-              <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#06b6d4] shadow-[0_0_10px_rgba(79,70,229,0.6)]" aria-hidden /><span className="text-[13px] font-bold text-[#1f2340] truncate">{f.name}</span>
+            <button key={f.name} onClick={() => setFolder(f.name)} className="flex items-center gap-2.5 h-12 px-3.5 rounded-[4px] bg-white border border-[#ece2d0] hover:border-[#a8783f] hover:bg-[#f5f8ff] text-left transition-colors">
+              <span className="w-2.5 h-2.5 rounded-[4px] bg-gradient-to-br from-[#a8783f] to-[#d6b47a] shadow-[0_0_10px_rgba(168,120,63,0.6)]" aria-hidden /><span className="text-[13px] font-bold text-[#2b2419] truncate">{f.name}</span>
             </button>
           ))}
         </div>
       )}
 
-      {(msg || busy) && <p className="text-[12.5px] font-semibold text-[#4f46e5]">{busy ?? msg}</p>}
+      {(msg || busy) && <p className="text-[12.5px] font-semibold text-[#a8783f]">{busy ?? msg}</p>}
 
       {/* 선택 동작 */}
       {sel.size > 0 && (
-        <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-xl bg-[#1f2340] text-white px-3 py-2">
+        <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-[4px] bg-[#2b2419] text-white px-3 py-2">
           <span className="text-[13px] font-bold mr-auto">{sel.size}개 선택</span>
-          <button onClick={() => move([...sel])} className="h-8 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-[12.5px] font-bold">폴더로 옮기기</button>
-          <button onClick={() => del([...sel])} className="h-8 px-3 rounded-lg bg-[#dc2626] text-[12.5px] font-bold">삭제</button>
+          <button onClick={() => move([...sel])} className="h-8 px-3 rounded-[4px] bg-white/10 hover:bg-white/20 text-[12.5px] font-bold">폴더로 옮기기</button>
+          <button onClick={() => del([...sel])} className="h-8 px-3 rounded-[4px] bg-[#dc2626] text-[12.5px] font-bold">삭제</button>
           <button onClick={() => setSel(new Set())} className="h-8 px-2 text-[12.5px] text-white/70">취소</button>
         </div>
       )}
 
       {/* 파일 */}
-      <div className={`relative rounded-2xl min-h-[360px] transition-colors ${drag ? 'bg-[#eef4ff] ring-2 ring-dashed ring-[#4f46e5]' : ''}`}>
-        {drag && <p className="absolute inset-0 z-10 flex items-center justify-center text-[15px] font-extrabold text-[#4f46e5]">여기에 놓으면 {folder ? `‘${folder}’ 에` : '내 드라이브에'} 올라가요</p>}
-        {files === null ? <p className="py-20 text-center text-[13px] text-[#8a90b2]">불러오는 중…</p>
+      <div className={`relative rounded-[4px] min-h-[360px] transition-colors ${drag ? 'bg-[#f8f0e2] ring-2 ring-dashed ring-[#a8783f]' : ''}`}>
+        {drag && <p className="absolute inset-0 z-10 flex items-center justify-center text-[15px] font-extrabold text-[#a8783f]">여기에 놓으면 {folder ? `‘${folder}’ 에` : '내 드라이브에'} 올라가요</p>}
+        {files === null ? <p className="py-20 text-center text-[13px] text-[#9a8b72]">불러오는 중…</p>
           : shown.length === 0 ? (
-            <div className="py-16 flex flex-col items-center text-center rounded-2xl border-2 border-dashed border-[#c7d2fe] bg-white/35 backdrop-blur-sm">
+            <div className="py-16 flex flex-col items-center text-center rounded-[4px] border-2 border-dashed border-[#e3d4bb] bg-white/35 backdrop-blur-sm">
               <span className="vx-orb" aria-hidden />
-              <p className="mt-2 text-[14px] font-bold text-[#1f2340]">{q ? '찾는 파일이 없어요' : '아직 파일이 없어요'}</p>
-              <p className="mt-1 text-[12.5px] text-[#8a90b2]">이미지·GLB·오디오를 끌어 놓거나, AI 로 만들어 저장해 보세요</p>
+              <p className="mt-2 text-[14px] font-bold text-[#2b2419]">{q ? '찾는 파일이 없어요' : '아직 파일이 없어요'}</p>
+              <p className="mt-1 text-[12.5px] text-[#9a8b72]">이미지·GLB·오디오를 끌어 놓거나, AI 로 만들어 저장해 보세요</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
               {shown.map((f) => (
-                <div key={f.key} className={`group relative rounded-xl overflow-hidden bg-white border transition-all ${sel.has(f.key) ? 'border-[#4f46e5] ring-2 ring-[#4f46e5]/25' : 'border-[#e3e7f6] hover:border-[#a5b4fc] hover:shadow-md'}`}>
+                <div key={f.key} className={`group relative rounded-[4px] overflow-hidden bg-white border transition-all ${sel.has(f.key) ? 'border-[#a8783f] ring-2 ring-[#a8783f]/25' : 'border-[#ece2d0] hover:border-[#d9c3a0] hover:shadow-md'}`}>
                   <button onClick={() => { setRigged(f.rig === 'face' || f.rig === 'anim' || f.rig === 'bones'); setHasFace(f.rig === 'face'); setMotion(f.rig === 'anim' || f.rig === 'face' ? 'all' : 'idle'); setView(f) }} className={`block w-full aspect-square ${ui.checker} flex items-center justify-center overflow-hidden`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {isImage(f.name) ? <img src={f.url} alt={f.name} loading="lazy" className="w-full h-full object-contain" />
@@ -155,11 +155,11 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
                       : <span className="vx-orb" aria-hidden />}
                   </button>
                   <input type="checkbox" checked={sel.has(f.key)} onChange={() => toggle(f.key)} aria-label="선택"
-                    className={`absolute top-2 left-2 w-4.5 h-4.5 accent-[#4f46e5] ${sel.size ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} />
-                  {isGlb(f.name) && <span className="absolute top-2 right-2 flex gap-1">{rigBadge(f.rig) && <span className="text-[10px] font-extrabold bg-[#16a34a] text-white rounded px-1.5 py-0.5">{rigBadge(f.rig)}</span>}<span className="text-[10px] font-extrabold bg-[#1f2340] text-white rounded px-1.5 py-0.5">3D</span></span>}
+                    className={`absolute top-2 left-2 w-4.5 h-4.5 accent-[#a8783f] ${sel.size ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} />
+                  {isGlb(f.name) && <span className="absolute top-2 right-2 flex gap-1">{rigBadge(f.rig) && <span className="text-[10px] font-extrabold bg-[#16a34a] text-white rounded px-1.5 py-0.5">{rigBadge(f.rig)}</span>}<span className="text-[10px] font-extrabold bg-[#2b2419] text-white rounded px-1.5 py-0.5">3D</span></span>}
                   <div className="px-2.5 py-2">
-                    <p className="text-[12.5px] font-bold text-[#1f2340] truncate" title={f.name}>{f.name}</p>
-                    <p className="text-[10.5px] text-[#8a90b2]">{fmtSize(f.size)}{f.created_at ? ` · ${new Date(f.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}` : ''}</p>
+                    <p className="text-[12.5px] font-bold text-[#2b2419] truncate" title={f.name}>{f.name}</p>
+                    <p className="text-[10.5px] text-[#9a8b72]">{fmtSize(f.size)}{f.created_at ? ` · ${new Date(f.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}` : ''}</p>
                   </div>
                 </div>
               ))}
@@ -171,7 +171,7 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
       {/* 미리보기 */}
       {view && (
         <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" onClick={() => setView(null)}>
-          <div className="w-full max-w-2xl bg-white rounded-2xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-2xl bg-white rounded-[4px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className={`${ui.checker} flex items-center justify-center h-[52vh] max-h-[460px]`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {isImage(view.name) ? <img src={view.url} alt={view.name} className="max-w-full max-h-full object-contain" />
@@ -179,8 +179,8 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
                 : isAudio(view.name) ? <audio src={view.url} controls className="w-[90%]" /> : <span className="vx-orb" aria-hidden />}
             </div>
             <div className="p-4">
-              <p className="text-[15px] font-extrabold text-[#1f2340] truncate">{view.name}</p>
-              <p className="text-[12px] text-[#8a90b2]">{fmtSize(view.size)} · {view.mime}{isGlb(view.name) ? (rigged ? ' · 뼈대 있음 (팔다리까지 움직여요)' : ' · 뼈대 없음 (몸 전체만 움직여요)') : ''}</p>
+              <p className="text-[15px] font-extrabold text-[#2b2419] truncate">{view.name}</p>
+              <p className="text-[12px] text-[#9a8b72]">{fmtSize(view.size)} · {view.mime}{isGlb(view.name) ? (rigged ? ' · 뼈대 있음 (팔다리까지 움직여요)' : ' · 뼈대 없음 (몸 전체만 움직여요)') : ''}</p>
               {isGlb(view.name) && <div className="mt-2"><MotionChips value={motion} onChange={setMotion} body={body} /></div>}
               <div className="mt-3 flex flex-wrap gap-2">
                 {isGlb(view.name) && rigged && !hasFace && <RigButton face driveKey={view.key} onDone={(f) => { load(); setHasFace(true); setMotion('talk'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
@@ -200,9 +200,9 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
       {/* 공개 신청 */}
       {publish && (
         <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" onClick={() => setPublish(null)}>
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-[18px] font-extrabold text-[#1f2340]">갤러리에 공개 신청</h3>
-            <p className="text-[12.5px] text-[#4b5277] mt-1" style={{ wordBreak: 'keep-all' }}>관리자가 확인하면 갤러리에 공개되고, 회원이 게임에 쓸 때마다 크레딧이 100% 쌓여요.</p>
+          <div className="w-full max-w-md bg-white rounded-[4px] shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-[18px] font-extrabold text-[#2b2419]">갤러리에 공개 신청</h3>
+            <p className="text-[12.5px] text-[#5f523f] mt-1" style={{ wordBreak: 'keep-all' }}>관리자가 확인하면 갤러리에 공개되고, 회원이 게임에 쓸 때마다 크레딧이 100% 쌓여요.</p>
             <div className="mt-4 space-y-2">
               {!isGlb(publish.name) && <div className="flex flex-wrap gap-1.5">{KINDS.map(([v, l]) => <button key={v} onClick={() => setPub({ ...pub, kind: v })} className={ui.chip(pub.kind === v)}>{l}</button>)}</div>}
               <input value={pub.title} onChange={(e) => setPub({ ...pub, title: e.target.value })} placeholder="제목" className={ui.input} />

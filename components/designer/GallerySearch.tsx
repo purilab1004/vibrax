@@ -21,32 +21,37 @@ export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) =>
   return (
     <div className="space-y-4">
       <div className="relative">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="갤러리에서 찾기 — 드래곤, 숲, 픽셀, 우주…" className={`${ui.input} h-12 pl-11 text-[14.5px] rounded-2xl`} />
-        <svg viewBox="0 0 24 24" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8a90b2]" fill="none" stroke="currentColor" strokeWidth={2.2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="갤러리에서 찾기 — 드래곤, 숲, 픽셀, 우주…" className={`${ui.input} h-12 pl-11 text-[14.5px] rounded-[4px]`} />
+        <svg viewBox="0 0 24 24" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9a8b72]" fill="none" stroke="currentColor" strokeWidth={2.2}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
       </div>
       <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">{KINDS.map(([v, l]) => <button key={v} onClick={() => setKind(v)} className={ui.chip(kind === v)}>{l}</button>)}</div>
       <div className="flex items-center gap-2">
-        <p className="text-[14px] text-[#1f2340]"><b>{q.trim() ? `‘${q.trim()}’` : '전체 갤러리'}</b> <span className="text-[#8a90b2]">{items ? `${items.length.toLocaleString()}개` : ''}</span></p>
-        <div className="ml-auto inline-flex rounded-lg border border-[#dfe3f5] bg-white p-0.5">
-          {([['new', '최신순'], ['popular', '인기순']] as const).map(([v, l]) => <button key={v} onClick={() => setSort(v)} className={`h-8 px-3 rounded-md text-[12.5px] font-bold ${sort === v ? 'bg-[#1f2340] text-white' : 'text-[#4b5277]'}`}>{l}</button>)}
+        <p className="text-[14px] text-[#2b2419]"><b>{q.trim() ? `‘${q.trim()}’` : '전체 갤러리'}</b> <span className="text-[#9a8b72]">{items ? `${items.length.toLocaleString()}개` : ''}</span></p>
+        <div className="ml-auto inline-flex rounded-[4px] border border-[#e6dac4] bg-white p-0.5">
+          {([['new', '최신순'], ['popular', '인기순']] as const).map(([v, l]) => <button key={v} onClick={() => setSort(v)} className={`h-8 px-3 rounded-[4px] text-[12.5px] font-bold ${sort === v ? 'bg-[#2b2419] text-white' : 'text-[#5f523f]'}`}>{l}</button>)}
         </div>
       </div>
-      {items === null ? <p className="py-20 text-center text-[13px] text-[#8a90b2]">불러오는 중…</p>
-        : items.length === 0 ? <p className="py-20 text-center text-[13px] text-[#8a90b2]">찾는 디자인이 없어요</p>
+      {items === null ? <p className="py-20 text-center text-[13px] text-[#9a8b72]">불러오는 중…</p>
+        : items.length === 0 ? <p className="py-20 text-center text-[13px] text-[#9a8b72]">찾는 디자인이 없어요</p>
         : (
-          <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-3 [&>*]:mb-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3">
             {(sort === 'popular' ? [...items].sort((a, b) => (b.uses ?? 0) - (a.uses ?? 0)) : items).map((a) => (
-              <button key={a.id} onClick={() => setView(a)} className={`group relative block w-full break-inside-avoid rounded-xl overflow-hidden border border-[#e3e7f6] hover:border-[#a5b4fc] hover:shadow-lg transition-all ${ui.checker}`}>
-                {a.kind === 'model3d' && <span className="absolute top-2 left-2 z-10 flex gap-1"><span className="text-[10px] font-extrabold bg-[#1f2340] text-white rounded px-1.5 py-0.5">3D</span>{rigBadge(a.meta?.rig) && <span className="text-[10px] font-extrabold bg-[#16a34a] text-white rounded px-1.5 py-0.5">{rigBadge(a.meta?.rig)}</span>}</span>}
+              <button key={a.id} onClick={() => setView(a)} className="group relative block w-full aspect-[3/4] rounded-[4px] overflow-hidden border border-[#ece2d0] bg-[linear-gradient(160deg,#fffaf2_0%,#f1e4cc_60%,#e2cfab_100%)] hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(120,84,40,0.55)] transition-all text-left">
+                {a.kind === 'model3d' && <span className="absolute top-2 left-2 z-10 flex gap-1"><span className="text-[10px] font-extrabold bg-[#2b2419] text-white rounded-[2px] px-1.5 py-0.5">3D</span>{rigBadge(a.meta?.rig) && <span className="text-[10px] font-extrabold bg-[#a8783f] text-white rounded-[2px] px-1.5 py-0.5">{rigBadge(a.meta?.rig)}</span>}</span>}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={a.preview ?? a.url ?? ''} alt={a.title} loading="lazy" className="w-full h-auto object-contain group-hover:scale-[1.03] transition-transform duration-500" style={a.width && a.height ? { aspectRatio: `${a.width}/${a.height}` } : undefined} />
+                <img src={a.preview ?? a.url ?? ''} alt={a.title} loading="lazy" className="absolute inset-0 w-full h-full object-contain p-3 pb-12 group-hover:scale-[1.04] transition-transform duration-500" />
+                <span className="absolute inset-x-0 bottom-0 flex items-center gap-2 px-2.5 py-2 bg-gradient-to-t from-[#2b2419]/80 via-[#2b2419]/45 to-transparent">
+                  <span className="w-5 h-5 shrink-0 bg-gradient-to-br from-[#e8d3a8] to-[#a8783f] rounded-[2px]" aria-hidden />
+                  <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-white truncate">{a.title}</span><span className="block text-[10.5px] text-white/70 truncate">{a.designer_name ?? 'Vibrex'}</span></span>
+                  <span className="shrink-0 text-[10.5px] font-bold text-white/80 tabular-nums">{(a.uses ?? 0).toLocaleString()}회</span>
+                </span>
               </button>
             ))}
           </div>
         )}
       {view && (
         <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" onClick={() => setView(null)}>
-          <div className="w-full max-w-xl bg-white rounded-2xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-xl bg-white rounded-[4px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className={`${ui.checker} flex items-center justify-center h-[50vh] max-h-[440px]`}>
               {view.kind === 'model3d' && view.url ? <div className="w-full h-full"><GlbViewer url={view.url} /></div> : (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -54,8 +59,8 @@ export default function GallerySearch({ onMake3D }: { onMake3D: (s: Source3D) =>
               )}
             </div>
             <div className="p-4">
-              <p className="text-[15px] font-extrabold text-[#1f2340]">{view.title}</p>
-              <p className="text-[12px] text-[#8a90b2]">{view.name}{view.width ? ` · ${view.width}×${view.height}` : ''}{view.designer_name ? ` · by ${view.designer_name}` : ''}</p>
+              <p className="text-[15px] font-extrabold text-[#2b2419]">{view.title}</p>
+              <p className="text-[12px] text-[#9a8b72]">{view.name}{view.width ? ` · ${view.width}×${view.height}` : ''}{view.designer_name ? ` · by ${view.designer_name}` : ''}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {view.kind !== 'model3d' && <button onClick={() => { onMake3D({ kind: 'media', id: view.id, url: view.url ?? view.preview ?? '', title: view.title }); setView(null) }} className={ui.primary}>3D로 만들기</button>}
                 {view.kind === 'model3d' && view.url && <a href={view.url} download className={ui.primary}>GLB 받기</a>}

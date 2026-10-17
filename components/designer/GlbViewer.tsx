@@ -95,9 +95,9 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
     return () => { stop = true; cleanup() }
   }, [url])
   return (
-    <div ref={box} className="relative w-full h-full min-h-[280px] rounded-2xl bg-[radial-gradient(circle_at_50%_40%,#ffffff,#e4e8f0)] overflow-hidden cursor-grab active:cursor-grabbing">
-      {label && <span className="absolute left-3 top-3 z-10 text-[12.5px] font-extrabold bg-[#1f2340]/85 text-white rounded-full px-3 py-1">{label}</span>}
-      {loading && !err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#8a90b2]">모델 불러오는 중…</p>}
+    <div ref={box} className="relative w-full h-full min-h-[280px] rounded-[4px] bg-[radial-gradient(circle_at_50%_40%,#ffffff,#e4e8f0)] overflow-hidden cursor-grab active:cursor-grabbing">
+      {label && <span className="absolute left-3 top-3 z-10 text-[12.5px] font-extrabold bg-[#2b2419]/85 text-white rounded-[4px] px-3 py-1">{label}</span>}
+      {loading && !err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#9a8b72]">모델 불러오는 중…</p>}
       {err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#f87171]">{err}</p>}
     </div>
   )

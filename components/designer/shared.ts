@@ -7,12 +7,12 @@ export type Source3D = { kind: 'drive'; key: string; url: string; name: string }
 export type Section = 'drive' | 'image' | 'model3d' | 'search' | 'works'
 
 export const ui = {
-  card: 'rounded-2xl bg-white/65 backdrop-blur-xl border border-white/80 shadow-[0_10px_40px_-18px_rgba(79,70,229,0.35)]',
-  input: 'w-full h-11 rounded-xl bg-white/80 border border-[#dfe3f5] focus:border-[#6366f1] focus:ring-2 focus:ring-[#6366f1]/20 px-3.5 text-[13.5px] text-[#1f2340] outline-none placeholder:text-[#a3a8c3] transition',
-  primary: 'inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-gradient-to-r from-[#4f46e5] to-[#06b6d4] hover:brightness-110 text-white text-[13px] font-bold shadow-[0_8px_22px_-10px_rgba(79,70,229,0.8)] disabled:opacity-40 transition',
-  ghost: 'inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-white/70 border border-[#dfe3f5] hover:bg-white text-[#3b4166] text-[13px] font-semibold disabled:opacity-40 transition-colors',
-  chip: (on: boolean) => `shrink-0 h-8 px-3 rounded-full text-[12.5px] font-bold border transition-all ${on ? 'bg-gradient-to-r from-[#4f46e5] to-[#06b6d4] border-transparent text-white shadow-[0_6px_16px_-8px_rgba(79,70,229,0.8)]' : 'bg-white/70 border-[#dfe3f5] text-[#4b5277] hover:border-[#a5b4fc]'}`,
-  checker: 'bg-[repeating-conic-gradient(#eef1f8_0_25%,#fff_0_50%)] bg-[length:14px_14px]',
+  card: 'rounded-[4px] bg-white/65 backdrop-blur-xl border border-white/80 shadow-[0_10px_40px_-18px_rgba(168,120,63,0.35)]',
+  input: 'w-full h-11 rounded-[4px] bg-white/80 border border-[#e6dac4] focus:border-[#b8894f] focus:ring-2 focus:ring-[#b8894f]/20 px-3.5 text-[13.5px] text-[#2b2419] outline-none placeholder:text-[#b3a68e] transition',
+  primary: 'inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-[4px] bg-gradient-to-r from-[#a8783f] to-[#d6b47a] hover:brightness-110 text-white text-[13px] font-bold shadow-[0_8px_22px_-10px_rgba(168,120,63,0.8)] disabled:opacity-40 transition',
+  ghost: 'inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-[4px] bg-white/70 border border-[#e6dac4] hover:bg-white text-[#4a3f30] text-[13px] font-semibold disabled:opacity-40 transition-colors',
+  chip: (on: boolean) => `shrink-0 h-8 px-3 rounded-[4px] text-[12.5px] font-bold border transition-all ${on ? 'bg-gradient-to-r from-[#a8783f] to-[#d6b47a] border-transparent text-white shadow-[0_6px_16px_-8px_rgba(168,120,63,0.8)]' : 'bg-white/70 border-[#e6dac4] text-[#5f523f] hover:border-[#d9c3a0]'}`,
+  checker: 'bg-[repeating-conic-gradient(#f4ede1_0_25%,#fff_0_50%)] bg-[length:14px_14px]',
 }
 export const isImage = (name: string) => /\.(png|jpe?g|webp|gif)$/i.test(name)
 export const isGlb = (name: string) => /\.glb$/i.test(name)
