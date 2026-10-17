@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { GlbViewer, shrink } from './GlbViewer'
 import SandForm from './SandForm'
+import { MotionChips, RigButton } from './RigControls'
 import { ui, isImage, type DriveFile, type Source3D } from './shared'
 
 type Mode = 'image' | 'text' | 'drive'
@@ -23,6 +24,8 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   const [saved, setSaved] = useState<string | null>(null)
   const [savedKey, setSavedKey] = useState<string | null>(null)
   const [published, setPublished] = useState<string | null>(null)
+  const [motion, setMotion] = useState('idle')
+  const [riggedUrl, setRiggedUrl] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [anim, setAnim] = useState<{ src: string | null; expected: number } | null>(null)   // 모래 효과: 원본 이미지 · 예상 시간
   const fileRef = useRef<HTMLInputElement>(null)
@@ -45,7 +48,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
   const start = async () => {
     if (result && !saved && !confirm('지금 모델을 저장하지 않았어요. 버리고 새로 만들까요?')) return
     if (result && !saved) discard(true)
-    setErr(null); setResult(null); setSaved(null); setSavedKey(null); setPublished(null); setJob({ status: 'submitting' })
+    setErr(null); setResult(null); setSaved(null); setSavedKey(null); setPublished(null); setRiggedUrl(null); setMotion('idle'); setJob({ status: 'submitting' })
     setAnim({ src: mode === 'image' ? image : mode === 'drive' ? pick?.url ?? null : null, expected: mode === 'text' || volumize ? 120 : 60 })
     const body = mode === 'text' ? { mode: 'text', prompt, title } : mode === 'image' ? { mode: 'image', image, title, volumize }
       : pick?.kind === 'drive' ? { mode: 'drive', driveKey: pick.key, title, volumize } : { mode: 'media', assetId: pick?.kind === 'media' ? pick.id : '', title, volumize }
@@ -140,7 +143,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
         {result ? (
           <>
             <div className="relative flex-1 min-h-[420px]">
-              <GlbViewer url={result.preview.url} />
+              <GlbViewer key={riggedUrl ?? result.preview.url} url={riggedUrl ?? result.preview.url} motion={motion} />
               {result.preview.ref && (
                 <figure className="absolute left-3 top-3 w-28 rounded-xl overflow-hidden bg-white border border-[#ebe4d6] shadow-md">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -157,7 +160,9 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
               )}
               {!saved && <button onClick={save} className={ui.primary}>💾 드라이브에 저장</button>}
               {!saved && <button onClick={() => discard()} className={ui.ghost}>🗑 버리기</button>}
-              {saved && !published && <button onClick={publish} className={ui.primary}>🌐 갤러리에 공개 신청</button>}
+              {saved && savedKey && !riggedUrl && <RigButton driveKey={savedKey} onDone={(f) => { setRiggedUrl(f.url); setSavedKey(f.key); setSaved(f.name); setMotion('walk'); onSaved() }} />}
+              {saved && !published && <button onClick={publish} className={ui.ghost}>🌐 갤러리에 공개 신청</button>}
+              <div className="w-full flex items-center gap-2"><span className="text-[12px] font-bold text-[#6b6152]">움직임 미리보기{riggedUrl ? ' 🦴' : ''}</span><MotionChips value={motion} onChange={setMotion} /></div>
               {saved && <a href={result.preview.url} download className={ui.ghost}>⬇ GLB</a>}
               {published && <p className="w-full text-[12.5px] font-bold text-[#2563eb]">{published}</p>}
             </div>

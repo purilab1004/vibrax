@@ -53,6 +53,43 @@ VOLUMIZE = ("Turn this 2D drawing into a high-quality 3D rendered figurine of th
             "soft vinyl toy material, same design, colors, face and proportions, full body, front view, centered, "
             "plain pure white background, soft studio lighting, no outlines, no text.")
 
+# 자동 리깅 — VAST UniRig(MIT): GLB → 뼈대 예측 → 스킨 가중치 → 원본에 합쳐 리깅된 GLB (bpy 4.2 로 입출력)
+import subprocess  # noqa: E402
+import tempfile  # noqa: E402
+
+UNIRIG = "/UniRig"
+rig_image = (
+    modal.Image.from_registry("nvidia/cuda:12.1.1-devel-ubuntu22.04", add_python="3.11")
+    .apt_install("git", "git-lfs", "libgl1", "libegl1", "libglib2.0-0", "libxrender1", "libxi6", "libxkbcommon0", "libsm6", "libxext6", "libxfixes3", "libxxf86vm1", "libusb-1.0-0", "libgomp1", "build-essential")
+    .pip_install("torch==2.3.1", "torchvision==0.18.1", index_url="https://download.pytorch.org/whl/cu121")
+    .pip_install("https://github.com/Dao-AILab/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu123torch2.3cxx11abiFALSE-cp311-cp311-linux_x86_64.whl")
+    .pip_install("torch_scatter", "torch_cluster", find_links="https://data.pyg.org/whl/torch-2.3.0+cu121.html")
+    .pip_install("transformers==4.51.3", "python-box", "einops", "omegaconf", "pytorch_lightning", "lightning", "addict", "timm",
+                 "fast-simplification", "bpy==4.2", "trimesh", "open3d", "pyrender", "huggingface_hub", "spconv-cu120", "scipy", "numpy==1.26.4")
+    .run_commands(f"GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/VAST-AI-Research/UniRig {UNIRIG}")
+    .env({"HF_HOME": "/cache/hf", "PYOPENGL_PLATFORM": "egl"})
+)
+
+
+def _run(cmd: list[str]):
+    r = subprocess.run(cmd, cwd=UNIRIG, capture_output=True, text=True)
+    if r.returncode != 0 or "Traceback" in (r.stderr or ""):
+        raise RuntimeError(f"{' '.join(cmd[:3])} failed:\n{(r.stdout or '')[-1500:]}\n{(r.stderr or '')[-3000:]}")
+    return r
+
+
+def rig_glb(glb: bytes) -> bytes:
+    with tempfile.TemporaryDirectory() as d:
+        src, skel, skin, out = (os.path.join(d, n) for n in ("in.glb", "skeleton.fbx", "skin.fbx", "rigged.glb"))
+        open(src, "wb").write(glb)
+        _run(["bash", "launch/inference/generate_skeleton.sh", "--input", src, "--output", skel])
+        _run(["bash", "launch/inference/generate_skin.sh", "--input", skel, "--output", skin])
+        _run(["bash", "launch/inference/merge.sh", "--source", skin, "--target", src, "--output", out])
+        if not os.path.exists(out):
+            raise RuntimeError("merge produced no output")
+        return open(out, "rb").read()
+
+
 web_image = modal.Image.debian_slim(python_version="3.10").pip_install("fastapi[standard]")
 
 
@@ -182,6 +219,15 @@ class QwenImage:
         return {"images": out, "seed": seed}
 
 
+@app.cls(image=rig_image, gpu="A10G", volumes={"/cache": cache}, timeout=900, scaledown_window=120, max_containers=2)
+class Rigger:
+    @modal.method()
+    def rig(self, glb: bytes) -> dict:
+        out = rig_glb(glb)
+        cache.commit()
+        return {"glb": out}
+
+
 @app.function(image=web_image, timeout=1500)
 def text_then_3d(prompt: str, seed: int = 1) -> dict:
     """글 → 피규어 렌더 이미지(Qwen-Image) → TRELLIS. TRELLIS 자체 글→3D 는 짧은 영어만 알아들어 설명과 다른 모양이 나온다"""
@@ -217,6 +263,12 @@ def api():
     @web.post("/submit")
     def submit(body: dict, authorization: str | None = Header(None)):
         auth(authorization)
+        if body.get("mode") == "rig":  # 자동 리깅
+            glb = base64.b64decode(body["glb_b64"]) if body.get("glb_b64") else urllib.request.urlopen(str(body.get("glb_url")), timeout=60).read()
+            if not glb or len(glb) > 40_000_000:
+                raise HTTPException(400, "glb required")
+            call = Rigger().rig.spawn(glb)
+            return {"id": call.object_id}
         if body.get("mode") == "img":  # 이미지 생성
             prompt = str(body.get("prompt") or "")[:1000]
             if not prompt:

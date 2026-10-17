@@ -14,10 +14,15 @@ export function loadThree(): Promise<void> {
 }
 
 /** GLB 를 돌려 볼 수 있는 미리보기 (마우스 드래그 회전·휠 확대, 자동 회전) */
-export function GlbViewer({ url }: { url: string }) {
+/** motion 을 주면 THREE.makeAlive 로 움직임을 미리 본다 (뼈대가 있으면 팔다리까지). onRigged: 뼈대가 있는지 알려 준다 */
+export function GlbViewer({ url, motion, onRigged }: { url: string; motion?: string; onRigged?: (rigged: boolean) => void }) {
   const box = useRef<HTMLDivElement>(null)
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const motionRef = useRef(motion)
+  useEffect(() => { motionRef.current = motion }, [motion])
+  const riggedCb = useRef(onRigged)
+  useEffect(() => { riggedCb.current = onRigged }, [onRigged])
   useEffect(() => {
     let stop = false, raf = 0
     let cleanup = () => {}
@@ -34,20 +39,33 @@ export function GlbViewer({ url }: { url: string }) {
       const scene = new T.Scene(), cam = new T.PerspectiveCamera(40, w / h, 0.01, 100)
       scene.add(new T.HemisphereLight(0xffffff, 0x8890a0, 1.6))
       const sun = new T.DirectionalLight(0xffffff, 2.2); sun.position.set(3, 5, 4); scene.add(sun)
-      const ctl = new T.OrbitControls(cam, renderer.domElement); ctl.enableDamping = true; ctl.autoRotate = true; ctl.autoRotateSpeed = 1.6
+      const ctl = new T.OrbitControls(cam, renderer.domElement); ctl.enableDamping = true; ctl.autoRotate = !motionRef.current; ctl.autoRotateSpeed = 1.6
+      let alive: any = null, last = performance.now(), lastTrig = 0
       new T.GLTFLoader().load(url, (g: any) => {
         if (stop) return
         // 금속 맵 없이 metalness 1(glTF 기본값)인 AI 모델은 환경광이 없으면 검게 보인다 → 비금속으로
         g.scene.traverse((n: any) => { const m = n.material; (Array.isArray(m) ? m : m ? [m] : []).forEach((q: any) => { if (q && q.metalness > 0.5 && !q.metalnessMap) { q.metalness = 0; q.roughness = Math.max(q.roughness || 0, 0.8); q.needsUpdate = true } }) })
         const obj = g.scene, b = new T.Box3().setFromObject(obj), size = b.getSize(new T.Vector3()), c = b.getCenter(new T.Vector3())
         obj.position.sub(c); scene.add(obj)
+        let bones = 0; obj.traverse((n: any) => { if (n.isBone) bones++ })
+        riggedCb.current?.(bones >= 4)
+        if (motionRef.current !== undefined && T.makeAlive) alive = T.makeAlive(obj)
         const r = Math.max(size.x, size.y, size.z) || 1
         cam.position.set(r * 1.1, r * 0.7, r * 1.6); cam.near = r / 100; cam.far = r * 50; cam.updateProjectionMatrix(); ctl.update()
         setLoading(false)
       }, undefined, () => { setErr('모델을 불러오지 못했어요'); setLoading(false) })
       const onResize = () => { const W = el.clientWidth, H = el.clientHeight; renderer.setSize(W, H); cam.aspect = W / H; cam.updateProjectionMatrix() }
       window.addEventListener('resize', onResize)
-      const loop = () => { raf = requestAnimationFrame(loop); ctl.update(); renderer.render(scene, cam) }
+      const loop = () => {
+        raf = requestAnimationFrame(loop)
+        const now = performance.now(), dt = (now - last) / 1000; last = now
+        if (alive) {
+          const m = motionRef.current ?? 'idle'
+          if (['attack', 'hit', 'happy', 'spin'].includes(m)) { if (now - lastTrig > 1100) { alive.trigger(m); lastTrig = now } alive.update(dt, 'idle') }
+          else alive.update(dt, m === 'jump' ? (Math.floor(now / 700) % 2 ? 'jump' : 'idle') : m)
+        }
+        ctl.update(); renderer.render(scene, cam)
+      }
       loop()
       cleanup = () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); ctl.dispose(); renderer.dispose(); renderer.domElement.remove() }
       /* eslint-enable @typescript-eslint/no-explicit-any */

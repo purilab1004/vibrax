@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { GlbViewer } from './GlbViewer'
+import { MotionChips, RigButton } from './RigControls'
 import { ui, isImage, isGlb, isAudio, fmtSize, type DriveFile, type Source3D } from './shared'
 
 const KINDS: [string, string][] = [['character', '캐릭터'], ['background', '배경'], ['tile', '타일·맵'], ['item', '아이템'], ['ui', 'UI'], ['effect', '이펙트'], ['sprite', '스프라이트']]
@@ -19,6 +20,8 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
   const [busy, setBusy] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
   const [view, setView] = useState<DriveFile | null>(null)
+  const [motion, setMotion] = useState('idle')
+  const [rigged, setRigged] = useState(false)
   const [publish, setPublish] = useState<DriveFile | null>(null)
   const [pub, setPub] = useState({ kind: 'character', title: '', tags: '', description: '' })
   const fileRef = useRef<HTMLInputElement>(null)
@@ -170,13 +173,15 @@ export default function Drive({ refresh, onMake3D }: { refresh: number; onMake3D
             <div className={`${ui.checker} flex items-center justify-center h-[52vh] max-h-[460px]`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {isImage(view.name) ? <img src={view.url} alt={view.name} className="max-w-full max-h-full object-contain" />
-                : isGlb(view.name) ? <div className="w-full h-full"><GlbViewer url={view.url} /></div>
+                : isGlb(view.name) ? <div className="w-full h-full"><GlbViewer key={view.url} url={view.url} motion={motion} onRigged={setRigged} /></div>
                 : isAudio(view.name) ? <audio src={view.url} controls className="w-[90%]" /> : <span className="text-[48px]">📄</span>}
             </div>
             <div className="p-4">
               <p className="text-[15px] font-extrabold text-[#241f17] truncate">{view.name}</p>
-              <p className="text-[12px] text-[#9d9280]">{fmtSize(view.size)} · {view.mime}</p>
+              <p className="text-[12px] text-[#9d9280]">{fmtSize(view.size)} · {view.mime}{isGlb(view.name) ? (rigged ? ' · 🦴 뼈대 있음 (팔다리까지 움직여요)' : ' · 뼈대 없음 (몸 전체만 움직여요)') : ''}</p>
+              {isGlb(view.name) && <div className="mt-2"><MotionChips value={motion} onChange={setMotion} /></div>}
               <div className="mt-3 flex flex-wrap gap-2">
+                {isGlb(view.name) && !rigged && <RigButton driveKey={view.key} onDone={(f) => { load(); setRigged(true); setMotion('walk'); setView({ ...view, key: f.key, name: f.name, url: f.url }) }} />}
                 {isImage(view.name) && <button onClick={() => { onMake3D({ kind: 'drive', key: view.key, url: view.url, name: view.name }); setView(null) }} className={ui.primary}>🧊 3D로 만들기</button>}
                 {!isAudio(view.name) && <button onClick={() => { setPub({ kind: 'character', title: view.name.replace(/\.[a-z0-9]+$/i, ''), tags: '', description: '' }); setPublish(view); setView(null) }} className={ui.ghost}>🌐 갤러리에 공개 신청</button>}
                 <a href={view.url} download={view.name} className={ui.ghost}>⬇ 다운로드</a>
