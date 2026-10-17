@@ -100,9 +100,9 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
         <div className="flex flex-wrap gap-1.5">{tab('image', '🖼 이미지 올리기')}{tab('text', '✍ 글로 설명')}{tab('drive', '🗂 드라이브·갤러리')}</div>
         {mode === 'image' && (
           <button type="button" onClick={() => fileRef.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={async (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f?.type.startsWith('image/')) setImage(await shrink(f)) }}
-            className="w-full aspect-[4/3] rounded-xl border-2 border-dashed border-[#ddd3bf] hover:border-[#2563eb] bg-[#faf8f3] flex items-center justify-center overflow-hidden">
+            className="w-full aspect-[4/3] rounded-xl border-2 border-dashed border-[#dfe3f5] hover:border-[#4f46e5] bg-[#f6f8ff] flex items-center justify-center overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {image ? <img src={image} alt="" className="max-w-full max-h-full object-contain" /> : <span className="text-center text-[#9d9280] text-[13px] leading-relaxed">🖼<br />이미지를 끌어 놓거나 눌러서 고르세요<br /><span className="text-[11.5px]">물체 하나가 정면으로, 배경이 단순할수록 잘 나와요</span></span>}
+            {image ? <img src={image} alt="" className="max-w-full max-h-full object-contain" /> : <span className="text-center text-[#8a90b2] text-[13px] leading-relaxed">🖼<br />이미지를 끌어 놓거나 눌러서 고르세요<br /><span className="text-[11.5px]">물체 하나가 정면으로, 배경이 단순할수록 잘 나와요</span></span>}
           </button>
         )}
         <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setImage(await shrink(f)); e.target.value = '' }} />
@@ -116,12 +116,12 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
                 <p className="text-[12.5px] font-bold text-[#1e3a8a] truncate">{pick.kind === 'drive' ? pick.name : pick.title}<span className="block text-[11px] font-normal text-[#6b7fb3]">{pick.kind === 'drive' ? '내 드라이브' : '갤러리'}</span></p>
               </div>
             )}
-            <div className="h-[230px] overflow-y-auto rounded-xl bg-[#faf8f3] border border-[#ebe4d6] p-2 grid grid-cols-4 gap-1.5 content-start">
-              {driveImgs === null ? <p className="col-span-full text-center text-[#9d9280] text-[12.5px] py-10">불러오는 중…</p>
-                : driveImgs.length === 0 ? <p className="col-span-full text-center text-[#9d9280] text-[12.5px] py-10">드라이브에 이미지가 없어요.<br />갤러리 검색에서 ‘3D로’ 를 눌러도 돼요.</p>
+            <div className="h-[230px] overflow-y-auto rounded-xl bg-[#f6f8ff] border border-[#e3e7f6] p-2 grid grid-cols-4 gap-1.5 content-start">
+              {driveImgs === null ? <p className="col-span-full text-center text-[#8a90b2] text-[12.5px] py-10">불러오는 중…</p>
+                : driveImgs.length === 0 ? <p className="col-span-full text-center text-[#8a90b2] text-[12.5px] py-10">드라이브에 이미지가 없어요.<br />갤러리 검색에서 ‘3D로’ 를 눌러도 돼요.</p>
                 : driveImgs.map((f) => (
                   <button key={f.key} type="button" onClick={() => { setPick({ kind: 'drive', key: f.key, url: f.url, name: f.name }); setTitle(f.name.replace(/\.[a-z0-9]+$/i, '')) }} title={f.name}
-                    className={`aspect-square rounded-lg bg-white border-2 overflow-hidden ${pick?.kind === 'drive' && pick.key === f.key ? 'border-[#2563eb]' : 'border-transparent hover:border-[#cfc4ab]'}`}>
+                    className={`aspect-square rounded-lg bg-white border-2 overflow-hidden ${pick?.kind === 'drive' && pick.key === f.key ? 'border-[#4f46e5]' : 'border-transparent hover:border-[#a5b4fc]'}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={f.url} alt={f.name} loading="lazy" className="w-full h-full object-contain" />
                   </button>
@@ -131,25 +131,25 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
         )}
         <input value={title} onChange={(e) => setTitle(e.target.value.slice(0, 60))} placeholder="모델 이름 (선택) — 무엇인지 적으면 입체 모양을 더 잘 잡아요" className={ui.input} />
         <div>
-          <p className="text-[12px] font-extrabold text-[#6b6152] mb-1.5">체형 <span className="font-normal text-[#9d9280]">— 움직이는 캐릭터면 뼈대·움직임·표정까지 넣어요 (+{rigExtra} 프롬코인)</span></p>
+          <p className="text-[12px] font-extrabold text-[#4b5277] mb-1.5">체형 <span className="font-normal text-[#8a90b2]">— 움직이는 캐릭터면 뼈대·움직임·표정까지 넣어요 (+{rigExtra} 프롬코인)</span></p>
           <div className="flex flex-wrap gap-1.5">
             {([['biped', '🧍 두 발 (사람형)'], ['quad', '🐕 네 발 (동물)'], ['prop', '📦 소품 (움직임 없음)']] as const).map(([v, l]) => (
               <button key={v} type="button" onClick={() => { setBodyType(v); setRig(v !== 'prop') }} className={ui.chip(bodyType === v)}>{l}</button>
             ))}
           </div>
-          <p className="mt-1 text-[11.5px] text-[#9d9280]">{bodyType === 'biped' ? '걷기·달리기·점프·앉기·옆걸음·말하기 + 칼·방패·양손검·총 동작, 쓰러지기까지 들어가요.' : bodyType === 'quad' ? '네 발 걷기·달리기, 물기 공격, 점프, 꼬리 흔들기, 쓰러지기가 들어가요. 네 다리가 잘 보이게 비스듬한 앞모습으로 만들어요.' : '칼·나무·집 같은 물건 — 뼈대 없이 모양만 만들어요.'}</p>
+          <p className="mt-1 text-[11.5px] text-[#8a90b2]">{bodyType === 'biped' ? '걷기·달리기·점프·앉기·옆걸음·말하기 + 칼·방패·양손검·총 동작, 쓰러지기까지 들어가요.' : bodyType === 'quad' ? '네 발 걷기·달리기, 물기 공격, 점프, 꼬리 흔들기, 쓰러지기가 들어가요. 네 다리가 잘 보이게 비스듬한 앞모습으로 만들어요.' : '칼·나무·집 같은 물건 — 뼈대 없이 모양만 만들어요.'}</p>
         </div>
         {mode !== 'text' && (
-          <label className="flex items-start gap-2 text-[13px] text-[#4a4337] cursor-pointer select-none">
-            <input type="checkbox" checked={volumize} onChange={(e) => setVolumize(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#2563eb]" />
-            <span><b>입체로 다시 그려서 만들기</b> <span className="text-[#9d9280]">+{volExtra} 프롬코인</span><br /><span className="text-[11.5px] text-[#9d9280]">2D 그림·캐릭터면 켜 두세요. AI 가 얼굴·몸의 둥근 모양을 상상해 피규어처럼 다시 그린 뒤 3D 로 만들어요. 사진·실물 이미지면 꺼도 돼요.</span></span>
+          <label className="flex items-start gap-2 text-[13px] text-[#3b4166] cursor-pointer select-none">
+            <input type="checkbox" checked={volumize} onChange={(e) => setVolumize(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#4f46e5]" />
+            <span><b>입체로 다시 그려서 만들기</b> <span className="text-[#8a90b2]">+{volExtra} 프롬코인</span><br /><span className="text-[11.5px] text-[#8a90b2]">2D 그림·캐릭터면 켜 두세요. AI 가 얼굴·몸의 둥근 모양을 상상해 피규어처럼 다시 그린 뒤 3D 로 만들어요. 사진·실물 이미지면 꺼도 돼요.</span></span>
           </label>
         )}
         <button type="button" onClick={start} disabled={busy || !ready} className={`${ui.primary} w-full h-12 text-[14px]`}>
           {busy ? status : `3D 모델 만들기${total ? ` · ${total} 프롬코인` : cost === 0 ? ' · 무료' : ''}`}
         </button>
         {err && <p className="text-[12.5px] text-[#dc2626]">{err}{/부족/.test(err) && <> · <a href="/credits" className="underline">충전</a></>}</p>}
-        <p className="text-[11.5px] text-[#9d9280]">보통 1~2분(처음 한 번은 서버가 켜지느라 3~5분). 실패하면 프롬코인은 자동으로 돌려드려요.</p>
+        <p className="text-[11.5px] text-[#8a90b2]">보통 1~2분(처음 한 번은 서버가 켜지느라 3~5분). 실패하면 프롬코인은 자동으로 돌려드려요.</p>
       </div>
 
       <div className="flex flex-col gap-3 min-h-[420px]">
@@ -158,10 +158,10 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
             <div className="relative flex-1 min-h-[420px]">
               <GlbViewer key={riggedUrl ?? result.preview.url} url={riggedUrl ?? result.preview.url} motion={motion} onBody={setViewBody} />
               {result.preview.ref && (
-                <figure className="absolute left-3 top-3 w-28 rounded-xl overflow-hidden bg-white border border-[#ebe4d6] shadow-md">
+                <figure className="absolute left-3 top-3 w-28 rounded-xl overflow-hidden bg-white border border-[#e3e7f6] shadow-md">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={result.preview.ref} alt="" className="w-full aspect-square object-contain" />
-                  <figcaption className="px-1.5 py-1 text-[10px] text-[#6b6152] text-center">AI 가 먼저 그린 모습</figcaption>
+                  <figcaption className="px-1.5 py-1 text-[10px] text-[#4b5277] text-center">AI 가 먼저 그린 모습</figcaption>
                 </figure>
               )}
             </div>
@@ -169,29 +169,29 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
               {saved ? (
                 <p className="text-[13.5px] font-bold text-[#15803d] mr-auto">✓ 드라이브 ‘3D 모델’ 폴더에 저장했어요 — {saved}</p>
               ) : (
-                <p className="text-[13.5px] font-bold text-[#241f17] mr-auto">마음에 드나요? <span className="font-normal text-[#9d9280] text-[12px]">저장하지 않으면 사라져요</span></p>
+                <p className="text-[13.5px] font-bold text-[#1f2340] mr-auto">마음에 드나요? <span className="font-normal text-[#8a90b2] text-[12px]">저장하지 않으면 사라져요</span></p>
               )}
               {!saved && <button onClick={save} className={ui.primary}>💾 드라이브에 저장</button>}
               {!saved && <button onClick={() => discard()} className={ui.ghost}>🗑 버리기</button>}
               {saved && savedKey && !riggedUrl && !result.preview.rigged && <RigButton driveKey={savedKey} onDone={(f) => { setRiggedUrl(f.url); setSavedKey(f.key); setSaved(f.name); setMotion('all'); onSaved() }} />}
               {saved && !published && <button onClick={publish} className={ui.ghost}>🌐 갤러리에 공개 신청</button>}
-              <div className="w-full flex items-center gap-2"><span className="text-[12px] font-bold text-[#6b6152]">움직임 미리보기{riggedUrl || result.preview.rigged ? ' 🦴' : ''}</span><MotionChips value={motion} onChange={setMotion} body={viewBody} /></div>
+              <div className="w-full flex items-center gap-2"><span className="text-[12px] font-bold text-[#4b5277]">움직임 미리보기{riggedUrl || result.preview.rigged ? ' 🦴' : ''}</span><MotionChips value={motion} onChange={setMotion} body={viewBody} /></div>
               {saved && <a href={result.preview.url} download className={ui.ghost}>⬇ GLB</a>}
-              {published && <p className="w-full text-[12.5px] font-bold text-[#2563eb]">{published}</p>}
+              {published && <p className="w-full text-[12.5px] font-bold text-[#4f46e5]">{published}</p>}
             </div>
           </>
         ) : (
-          <div className={`relative flex-1 min-h-[420px] ${ui.card} flex flex-col items-center justify-center text-center p-6 bg-[radial-gradient(circle_at_50%_40%,#ffffff,#eef1f6)]`}>
+          <div className={`relative flex-1 min-h-[420px] ${ui.card} flex flex-col items-center justify-center text-center p-6 !bg-white/20 !backdrop-blur-[2px]`}>
             {busy ? (
               <div className="absolute inset-0 overflow-hidden rounded-2xl">
                 <SandForm image={anim?.src} expected={anim?.expected ?? 90} />
                 <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-white/95 via-white/70 to-transparent">
-                  <p className="text-[14px] font-bold text-[#241f17]">{status}</p>
-                  <p className="mt-0.5 text-[12px] text-[#9d9280]">모래알이 하나씩 모여 모양을 만들고 있어요 — AI 가 앞·옆·뒤 모양을 추측하는 중</p>
+                  <p className="text-[14px] font-bold text-[#1f2340]">{status}</p>
+                  <p className="mt-0.5 text-[12px] text-[#8a90b2]">모래알이 하나씩 모여 모양을 만들고 있어요 — AI 가 앞·옆·뒤 모양을 추측하는 중</p>
                 </div>
               </div>
             )
-              : (<><p className="text-[44px]">🧊</p><p className="mt-2 text-[14px] text-[#6b6152]">완성된 3D 모델이 여기 나타나요 — 드래그로 돌려 보고 저장할지 정하세요</p></>)}
+              : (<><p className="text-[44px]">🧊</p><p className="mt-2 text-[14px] text-[#4b5277]">완성된 3D 모델이 여기 나타나요 — 드래그로 돌려 보고 저장할지 정하세요</p></>)}
           </div>
         )}
       </div>

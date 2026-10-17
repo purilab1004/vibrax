@@ -13,6 +13,7 @@ import ImageGen from './ImageGen'
 import Model3D from './Model3D'
 import GallerySearch from './GallerySearch'
 import MyWorks from './MyWorks'
+import ParticleField from './ParticleField'
 import { ui, type Section, type Source3D } from './shared'
 
 const NAV: [Section, string, string, string][] = [
@@ -70,36 +71,38 @@ export default function DesignerStudio() {
   const status = me.application?.status
 
   return (
-    <div className="min-h-[100svh] bg-[#fcfaf5]">
+    <div className="relative min-h-[100svh] bg-[radial-gradient(1200px_700px_at_80%_10%,#e9f3ff_0%,transparent_60%),radial-gradient(900px_600px_at_10%_90%,#f3ecff_0%,transparent_60%),radial-gradient(700px_500px_at_95%_95%,#e3fbf7_0%,transparent_60%),linear-gradient(180deg,#fbfcff,#f4f6ff)]">
+      {/* 빛의 입자 — 작은 빛이 모여 모양을 이루고 흩어진다 */}
+      <ParticleField />
       {/* 상단 바 */}
-      <div className="app-top-pad sticky top-0 z-30 flex items-center gap-3 border-b border-[#ebe4d6] bg-white/70 backdrop-blur-xl px-4 h-14 box-content">
-        <Link href="/studio" className="font-pixel text-[11px] text-[#6b6152] hover:text-[#2563eb] tracking-widest transition-colors shrink-0">← STUDIO</Link>
+      <div className="app-top-pad sticky top-0 z-30 flex items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(99,102,241,0.08),0_8px_30px_-18px_rgba(79,70,229,0.35)] px-4 h-14 box-content">
+        <Link href="/studio" className="font-pixel text-[11px] text-[#4b5277] hover:text-[#4f46e5] tracking-widest transition-colors shrink-0">← STUDIO</Link>
         <div className="flex-1 flex justify-center min-w-0 overflow-x-auto scrollbar-hide"><AiModeToggle /></div>
         <Link href="/credits" className="hover:opacity-80 transition-opacity shrink-0" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>
       </div>
 
       {!isDesigner ? (
         /* ── 접수 / 승인 대기 ── */
-        <div className="max-w-3xl mx-auto px-4 py-10 md:py-16">
+        <div className="relative z-10 max-w-3xl mx-auto px-4 py-10 md:py-16">
           <div className="text-center" style={{ wordBreak: 'keep-all' }}>
             <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#ec4899]/10 to-[#f59e0b]/10 border border-[#f9c4d8] px-3.5 py-1.5 text-[11px] font-extrabold tracking-[0.2em] text-[#be185d]">DESIGN AI</span>
-            <h1 className="mt-4 text-[28px] md:text-[38px] font-black text-[#241f17] leading-tight">디자이너를 위한 작업 공간</h1>
-            <p className="mt-3 text-[14.5px] text-[#6b6152] leading-relaxed">AI 로 캐릭터·배경·아이템 이미지를 그리고, 3D 모델로 만들고, 내 드라이브에 모아 갤러리에 공개하세요.<br className="hidden md:block" />회원이 내 디자인으로 게임을 만들면 그 크레딧은 <b className="text-[#241f17]">100% 디자이너에게</b> 쌓여요.</p>
+            <h1 className="mt-4 text-[28px] md:text-[38px] font-black text-[#1f2340] leading-tight">디자이너를 위한 작업 공간</h1>
+            <p className="mt-3 text-[14.5px] text-[#4b5277] leading-relaxed">AI 로 캐릭터·배경·아이템 이미지를 그리고, 3D 모델로 만들고, 내 드라이브에 모아 갤러리에 공개하세요.<br className="hidden md:block" />회원이 내 디자인으로 게임을 만들면 그 크레딧은 <b className="text-[#1f2340]">100% 디자이너에게</b> 쌓여요.</p>
           </div>
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            {NAV.slice(0, 4).map(([k, i, t, d]) => <div key={k} className={`${ui.card} p-4`}><p className="text-[24px]">{i}</p><p className="mt-1 text-[14px] font-extrabold text-[#241f17]">{t}</p><p className="text-[12px] text-[#9d9280] mt-0.5">{d}</p></div>)}
+            {NAV.slice(0, 4).map(([k, i, t, d]) => <div key={k} className={`${ui.card} p-4`}><p className="text-[24px]">{i}</p><p className="mt-1 text-[14px] font-extrabold text-[#1f2340]">{t}</p><p className="text-[12px] text-[#8a90b2] mt-0.5">{d}</p></div>)}
           </div>
           <div className={`${ui.card} mt-6 p-5 md:p-7`}>
             {status === 'pending' ? (
               <div className="text-center py-6">
                 <p className="text-[40px]">⏳</p>
-                <p className="mt-2 text-[17px] font-extrabold text-[#241f17]">접수 확인 중이에요</p>
-                <p className="mt-1 text-[13px] text-[#6b6152]">관리자가 승인하면 이 화면이 바로 디자이너 작업 공간으로 바뀌어요. 메일로도 알려드려요.</p>
+                <p className="mt-2 text-[17px] font-extrabold text-[#1f2340]">접수 확인 중이에요</p>
+                <p className="mt-1 text-[13px] text-[#4b5277]">관리자가 승인하면 이 화면이 바로 디자이너 작업 공간으로 바뀌어요. 메일로도 알려드려요.</p>
               </div>
             ) : (
               <>
-                <h2 className="text-[18px] font-extrabold text-[#241f17]">디자이너 접수</h2>
-                <p className="text-[12.5px] text-[#6b6152] mt-1">{status === 'rejected' ? '지난 접수는 반려됐어요. 포트폴리오를 보강해 다시 접수할 수 있어요.' : '일반 회원 누구나 접수할 수 있어요. 관리자가 확인한 뒤 승인하면 디자인 AI 가 열려요.'}</p>
+                <h2 className="text-[18px] font-extrabold text-[#1f2340]">디자이너 접수</h2>
+                <p className="text-[12.5px] text-[#4b5277] mt-1">{status === 'rejected' ? '지난 접수는 반려됐어요. 포트폴리오를 보강해 다시 접수할 수 있어요.' : '일반 회원 누구나 접수할 수 있어요. 관리자가 확인한 뒤 승인하면 디자인 AI 가 열려요.'}</p>
                 <div className="mt-4 grid sm:grid-cols-2 gap-2.5">
                   <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="이름 또는 활동명" className={ui.input} />
                   <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="연락받을 이메일" type="email" className={ui.input} />
@@ -114,13 +117,14 @@ export default function DesignerStudio() {
         </div>
       ) : (
         /* ── 작업 공간 ── */
-        <div className="flex flex-col md:flex-row">
-          <aside className="md:w-[220px] shrink-0 md:min-h-[calc(100svh-3.5rem)] md:border-r border-[#ebe4d6] bg-white/60 md:sticky md:top-14 md:self-start">
+        <div className="relative z-10 flex flex-col md:flex-row">
+          <aside className="md:w-[220px] shrink-0 md:min-h-[calc(100svh-3.5rem)] md:border-r border-white/70 bg-white/35 backdrop-blur-2xl md:sticky md:top-14 md:self-start">
+            <p className="hidden md:block px-5 pt-5 pb-1 text-[10px] font-extrabold tracking-[0.3em] bg-gradient-to-r from-[#4f46e5] via-[#7c3aed] to-[#06b6d4] bg-clip-text text-transparent">VIBREX · DESIGN LAB</p>
             <nav className="flex md:flex-col gap-1 p-2 md:p-3 overflow-x-auto scrollbar-hide">
               {NAV.map(([k, i, t, d]) => (
-                <button key={k} onClick={() => go(k)} className={`shrink-0 flex items-center gap-2.5 rounded-xl px-3 h-10 md:h-auto md:py-2.5 text-left transition-colors ${section === k ? 'bg-[#241f17] text-white' : 'text-[#4a4337] hover:bg-[#f1ede4]'}`}>
+                <button key={k} onClick={() => go(k)} className={`shrink-0 flex items-center gap-2.5 rounded-xl px-3 h-10 md:h-auto md:py-2.5 text-left transition-all ${section === k ? 'bg-gradient-to-r from-[#4f46e5] to-[#06b6d4] text-white shadow-[0_8px_24px_-8px_rgba(79,70,229,0.7)]' : 'text-[#3b4166] hover:bg-white/60'}`}>
                   <span className="text-[17px]">{i}</span>
-                  <span className="min-w-0"><span className="block text-[13px] font-bold whitespace-nowrap">{t}</span><span className={`hidden md:block text-[10.5px] truncate ${section === k ? 'text-white/60' : 'text-[#9d9280]'}`}>{d}</span></span>
+                  <span className="min-w-0"><span className="block text-[13px] font-bold whitespace-nowrap">{t}</span><span className={`hidden md:block text-[10.5px] truncate ${section === k ? 'text-white/75' : 'text-[#8a90b2]'}`}>{d}</span></span>
                 </button>
               ))}
             </nav>

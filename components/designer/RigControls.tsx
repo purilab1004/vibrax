@@ -14,7 +14,7 @@ export function MotionChips({ value, onChange, body = 'biped' }: { value: string
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap gap-1.5">{MOTIONS.map(chip)}</div>
-      <div className="flex flex-wrap gap-1.5 items-center"><span className="text-[11px] font-bold text-[#9d9280] mr-0.5">무기</span>{WEAPON_MOTIONS.map(chip)}</div>
+      <div className="flex flex-wrap gap-1.5 items-center"><span className="text-[11px] font-bold text-[#8a90b2] mr-0.5">무기</span>{WEAPON_MOTIONS.map(chip)}</div>
     </div>
   )
 }
