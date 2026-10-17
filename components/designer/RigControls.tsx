@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ui } from './shared'
 
-export const MOTIONS: [string, string][] = [['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['attack', '공격'], ['happy', '기쁨'], ['hit', '맞기']]
+export const MOTIONS: [string, string][] = [['all', '▶ 전체 동작 보기'], ['idle', '가만히'], ['walk', '걷기'], ['run', '달리기'], ['jump', '점프'], ['attack', '공격'], ['happy', '기쁨'], ['hit', '맞기']]
 
 export function MotionChips({ value, onChange }: { value: string; onChange: (m: string) => void }) {
   return <div className="flex flex-wrap gap-1.5">{MOTIONS.map(([v, l]) => <button key={v} type="button" onClick={() => onChange(v)} className={ui.chip(value === v)}>{l}</button>)}</div>

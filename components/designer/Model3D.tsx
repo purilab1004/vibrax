@@ -61,7 +61,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
       await new Promise((ok) => setTimeout(ok, 4000))
       const s = await fetch('/api/gallery/model3d?token=' + encodeURIComponent(j.token)).then((x) => x.json()).catch(() => null)
       if (!s) continue
-      if (s.status === 'done') { setJob(null); setResult({ token: j.token, preview: s.preview }); setTitle((t) => t || s.preview.title); if (s.preview.rigged) setMotion('walk'); return }
+      if (s.status === 'done') { setJob(null); setResult({ token: j.token, preview: s.preview }); setTitle((t) => t || s.preview.title); if (s.preview.rigged) setMotion('all'); return }
       if (s.status === 'failed') { setJob(null); setErr(s.error); return }
       setJob({ status: s.status, elapsed: s.elapsed, stage: s.stage })
     }
@@ -166,7 +166,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
               )}
               {!saved && <button onClick={save} className={ui.primary}>💾 드라이브에 저장</button>}
               {!saved && <button onClick={() => discard()} className={ui.ghost}>🗑 버리기</button>}
-              {saved && savedKey && !riggedUrl && !result.preview.rigged && <RigButton driveKey={savedKey} onDone={(f) => { setRiggedUrl(f.url); setSavedKey(f.key); setSaved(f.name); setMotion('walk'); onSaved() }} />}
+              {saved && savedKey && !riggedUrl && !result.preview.rigged && <RigButton driveKey={savedKey} onDone={(f) => { setRiggedUrl(f.url); setSavedKey(f.key); setSaved(f.name); setMotion('all'); onSaved() }} />}
               {saved && !published && <button onClick={publish} className={ui.ghost}>🌐 갤러리에 공개 신청</button>}
               <div className="w-full flex items-center gap-2"><span className="text-[12px] font-bold text-[#6b6152]">움직임 미리보기{riggedUrl || result.preview.rigged ? ' 🦴' : ''}</span><MotionChips value={motion} onChange={setMotion} /></div>
               {saved && <a href={result.preview.url} download className={ui.ghost}>⬇ GLB</a>}
