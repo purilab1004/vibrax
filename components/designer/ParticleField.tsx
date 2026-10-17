@@ -133,8 +133,8 @@ export default function ParticleField() {
       }
       const onField = (e: Event) => {
         const d = (e as CustomEvent).detail ?? {}
-        if (d.busy === true) { el.style.zIndex = '40'; busy = true; goTo(coreShape(N), 1e9, true); uni.uPulse.value = 0 }
-        else if (d.busy === false) { setTimeout(() => { el.style.zIndex = '' }, 1600); busy = false; uni.uPulse.value = 0; uni.uBurst.value = 1; next = (cur + 1) % S.length; goTo(S[next], HOLD, false) }
+        if (d.busy === true) { busy = true; uni.uPulse.value = 0.6 }
+        else if (d.busy === false) { busy = false; uni.uPulse.value = 0; uni.uBurst.value = 0.6 }
         if (d.burst) uni.uBurst.value = 1
         if (d.word && !busy) goTo(textShape(String(d.word).slice(0, 10).toUpperCase(), N), 4.2, true)
       }
@@ -149,10 +149,9 @@ export default function ParticleField() {
         // 글자·핵일 땐 정면을 보고 고요하게, 평소엔 천천히 돈다
         // 자리·크기: 만드는 중이면 오른쪽 위로 작게, 심장처럼 두 번씩 뛴다(쿵-쿵 … 쉼)
         {
-          const tgt = busy ? heart : home, k = Math.min(1, dt * 2.2)
+          const tgt = home, k = Math.min(1, dt * 2.2)
           pts.position.x += (tgt.x - pts.position.x) * k; pts.position.y += (tgt.y - pts.position.y) * k
-          let sc = tgt.s
-          if (busy) { const ph = (uni.uTime.value % 1.1) / 1.1; const beat = Math.exp(-Math.pow((ph - 0.08) / 0.05, 2)) + 0.6 * Math.exp(-Math.pow((ph - 0.28) / 0.05, 2)); sc *= 1 + 0.22 * beat }
+          const sc = tgt.s
           const cs = pts.scale.x; pts.scale.setScalar(cs + (sc - cs) * (busy ? Math.min(1, dt * 12) : k))
         }
         if (special) { const ry = ((pts.rotation.y + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; pts.rotation.y = ry * (1 - Math.min(1, dt * 2.5)); pts.rotation.x *= 1 - Math.min(1, dt * 2.5); uni.uCalm.value = Math.min(1, uni.uCalm.value + dt * 1.5) }

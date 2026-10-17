@@ -4,6 +4,7 @@ import CubeLoader from './CubeLoader'
 import { useEffect, useRef, useState } from 'react'
 import { GlbViewer, shrink } from './GlbViewer'
 import SandForm from './SandForm'
+import ParticleCube from './ParticleCube'
 import { fieldSay } from './ParticleField'
 import { MotionChips, RigButton } from './RigControls'
 import { ui, isImage, type DriveFile, type Source3D } from './shared'
@@ -214,6 +215,7 @@ export default function Model3D({ source, onSaved }: { source: Source3D | null; 
             {busy ? (
               <div className="absolute inset-0 overflow-hidden rounded-[4px]">
                 <SandForm image={anim?.src} expected={anim?.expected ?? 90} />
+                <div className="absolute right-2 top-2 z-10"><ParticleCube size={56} /></div>
                 <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-white/95 via-white/70 to-transparent">
                   <p className="text-[14px] font-bold text-[#1f2937]">{status}</p>
                   <p className="mt-0.5 text-[12px] text-[#8a93a6]">모래알이 하나씩 모여 모양을 만들고 있어요 — AI 가 앞·옆·뒤 모양을 추측하는 중</p>

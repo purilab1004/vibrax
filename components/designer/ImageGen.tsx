@@ -4,6 +4,7 @@ import CubeLoader from './CubeLoader'
 import { useEffect, useState } from 'react'
 import { ui, type Source3D } from './shared'
 import { fieldSay } from './ParticleField'
+import ParticleCube from './ParticleCube'
 
 const PRESETS: [string, string, boolean][] = [['character', '캐릭터', true], ['item', '아이템', true], ['background', '배경', false], ['tile', '타일', false], ['ui', 'UI', true], ['effect', '이펙트', false], ['free', '자유', false]]
 const STYLES: [string, string][] = [['auto', '알아서'], ['cartoon', '카툰'], ['pixel', '픽셀'], ['anime', '애니'], ['3d', '3D 렌더'], ['realistic', '사실적'], ['watercolor', '수채화']]
@@ -80,7 +81,7 @@ export default function ImageGen({ onSaved, onMake3D }: { onSaved: () => void; o
       {/* 결과 */}
       <div className="space-y-5 min-w-0">
         {job && (
-          <div className="grid grid-cols-2 gap-3">{[0, 1, 2, 3].map((i) => <div key={i} className="aspect-square rounded-[4px] bg-gradient-to-br from-[#eef2f8] to-[#e8eefb] animate-pulse" />)}</div>
+          <div className="relative grid grid-cols-2 gap-3"><div className="absolute -top-2 -right-2 z-10"><ParticleCube size={52} /></div>{[0, 1, 2, 3].map((i) => <div key={i} className="aspect-square rounded-[4px] bg-gradient-to-br from-[#eef2f8] to-[#e8eefb] animate-pulse" />)}</div>
         )}
         {!job && batches.length === 0 && (
           <div className={`${ui.card} py-20 flex flex-col items-center text-center`}>
