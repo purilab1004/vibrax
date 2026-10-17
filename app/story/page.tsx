@@ -1,186 +1,187 @@
 import Link from 'next/link'
 import { getStoryData, isUp, fmtDate, GENRE_KO, type StorySeries } from '@/lib/story/data'
 
-// STORY 홈 — 웹소설 플랫폼(리디 웹소설) 구성: 배너 캐러셀 → 새 회차 가로 줄 → 실시간 랭킹 → 전체 작품.
-// 게임 = 작품, 제작자 = 작가, 장르 = 카테고리 탭. 서버 렌더 + 캐시(JS 없이 동작).
+// STORY 홈 — 웹툰 플랫폼처럼: 웹툰 · 웹소설 · 쇼츠 애니(준비 중) 를 나누고, 요일 연재 탭 → 추천 → 전체(정렬) + 실시간 인기.
+// 게임 = 작품, 제작자 = 작가. 웹툰 = 회차에 게임 장면 컷이 있는 작품(컷만 세로로 읽기), 웹소설 = 글로 읽기.
 export const revalidate = 120
 
-const GENRES = ['action', 'adventure', 'strategy', 'sports', 'arcade'] as const
+type Kind = 'toon' | 'novel' | 'shorts'
+const DAYS = [['', '요일전체'], ['mon', '월'], ['tue', '화'], ['wed', '수'], ['thu', '목'], ['fri', '금'], ['sat', '토'], ['sun', '일'], ['new', '신작'], ['done', '완결']] as const
+const DAY_IDX: Record<string, number> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 }
+const DAY_KO = ['일', '월', '화', '수', '목', '금', '토']
 
-function Cover({ s, className = '' }: { s: StorySeries; className?: string }) {
+// 연재 요일 = 1화가 올라온 요일 (한국 시간)
+const dayOf = (s: StorySeries) => { const d = new Date(new Date(s.episodes[0]?.published_at ?? s.latestAt).getTime() + 9 * 3600_000); return d.getUTCDay() }
+const isNew = (s: StorySeries) => Date.now() - new Date(s.episodes[0]?.published_at ?? 0).getTime() < 14 * 86400_000
+const hasCuts = (s: StorySeries) => s.episodes.some(e => !!e.thumbnail_url)
+// 오늘 요일(한국 시간) — 서버 렌더(120초 캐시) 시점 기준
+const todayKo = () => DAY_KO[new Date(Date.now() + 9 * 3600_000).getUTCDay()]
+const score = (s: StorySeries) => s.views + s.game.view_count
+
+function Cover({ s, className = '', fit = 'cover' }: { s: StorySeries; className?: string; fit?: 'cover' | 'contain' }) {
   return (
     <div className={`relative overflow-hidden rounded-[6px] bg-[#eef1f6] ${className}`}>
       {s.cover ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={s.cover} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={s.cover} alt="" loading="lazy" className={`absolute inset-0 w-full h-full object-${fit} group-hover:scale-[1.03] transition-transform duration-500`} />
       ) : (
         <div className="absolute inset-0 grid place-items-center text-[28px] font-black text-[#1a1d24]/15">{s.game.title.charAt(0)}</div>
       )}
-      <div className="absolute left-1.5 top-1.5 flex gap-1">
-        {isUp(s.latestAt) && <span className="px-1.5 h-[18px] inline-flex items-center rounded-[3px] bg-[#ff3b47] text-white text-[10.5px] font-extrabold">UP</span>}
-      </div>
-      <span className="absolute left-0 bottom-0 px-1.5 py-[3px] rounded-tr-[5px] bg-black/60 text-white text-[10.5px] font-bold tabular-nums">{s.episodes.length}화</span>
+      {isUp(s.latestAt) && <span className="absolute left-1.5 top-1.5 px-1.5 h-[18px] inline-flex items-center rounded-[3px] bg-[#00c73c] text-white text-[10.5px] font-extrabold">UP</span>}
     </div>
   )
 }
 
-function SeriesCard({ s }: { s: StorySeries }) {
-  return (
-    <Link href={`/story/series/${s.game.id}`} className="group block min-w-0">
-      <Cover s={s} className="aspect-[9/16] ring-1 ring-black/5" />
-      <p className="mt-2.5 text-[15px] md:text-[16px] font-bold leading-snug text-[#1a1d24] line-clamp-2 group-hover:text-[#1f6fff]">{s.game.title}</p>
-      <p className="mt-0.5 text-[12px] text-[#7a808c] truncate">{s.author}</p>
-      <p className="mt-0.5 text-[12px] text-[#1f6fff] font-semibold">연재 중 · {GENRE_KO[s.game.genre] ?? s.game.genre}</p>
-    </Link>
-  )
-}
-
-function SectionHead({ title, sub }: { title: string; sub?: string }) {
-  return (
-    <div className="flex items-end justify-between gap-3 mb-3.5 md:mb-4">
-      <h2 className="text-[18px] md:text-[21px] font-extrabold tracking-[-0.02em] text-[#1a1d24]">{title}</h2>
-      {sub && <span className="text-[12.5px] text-[#9097a3]">{sub}</span>}
-    </div>
-  )
-}
-
-export default async function StoryPage({ searchParams }: { searchParams: Promise<{ genre?: string; q?: string }> }) {
-  const { genre, q: qRaw } = await searchParams
-  const q = (qRaw ?? '').trim()
+export default async function StoryPage({ searchParams }: { searchParams: Promise<{ type?: string; day?: string; sort?: string; q?: string; genre?: string }> }) {
+  const sp = await searchParams
+  const kind: Kind = sp.type === 'novel' ? 'novel' : sp.type === 'shorts' ? 'shorts' : 'toon'
+  const day = DAYS.some(([d]) => d === sp.day) ? (sp.day as string) : ''
+  const sort = sp.sort === 'update' || sp.sort === 'views' ? sp.sort : 'popular'
+  const q = (sp.q ?? '').trim()
   const all = await getStoryData()
-  const byGenre = genre ? all.filter(s => s.game.genre === genre) : all
-  const list = q ? byGenre.filter(s => `${s.game.title} ${s.author} ${s.episodes.map(e => e.title).join(' ')}`.toLowerCase().includes(q.toLowerCase())) : byGenre
-  const banners = list.slice(0, 6)
-  const fresh = list.flatMap(s => s.episodes.slice(-1).map(e => ({ s, e }))).sort((a, b) => (b.e.published_at ?? '').localeCompare(a.e.published_at ?? '')).slice(0, 12)
-  const ranking = [...list].sort((a, b) => (b.views + b.game.view_count) - (a.views + a.game.view_count)).slice(0, 9)
-  const tabs = [{ id: '', name: '전체' }, ...GENRES.filter(g => all.some(s => s.game.genre === g)).map(g => ({ id: g, name: GENRE_KO[g] }))]
-  const href = (g: string) => (g ? `/story?genre=${g}` : '/story')
+  const pool = kind === 'toon' ? all.filter(hasCuts) : all
+  let list = pool
+  if (day === 'new') list = list.filter(isNew)
+  else if (day === 'done') list = []                       // 완결 작품은 아직 없음
+  else if (day) list = list.filter(s => dayOf(s) === DAY_IDX[day])
+  if (sp.genre) list = list.filter(s => s.game.genre === sp.genre)
+  if (q) list = list.filter(s => `${s.game.title} ${s.author} ${s.episodes.map(e => e.title).join(' ')}`.toLowerCase().includes(q.toLowerCase()))
+  const sorted = [...list].sort((a, b) => sort === 'update' ? b.latestAt.localeCompare(a.latestAt) : sort === 'views' ? b.views - a.views : score(b) - score(a))
+  const recommend = [...list].sort((a, b) => score(b) - score(a)).slice(0, 3)
+  const hot = [...pool].sort((a, b) => score(b) - score(a)).slice(0, 10)
+  const today = todayKo()
+  const dayName = day === 'new' ? '신작' : day === 'done' ? '완결' : day ? `${DAY_KO[DAY_IDX[day]]}요` : '전체'
+  const kindName = kind === 'toon' ? '웹툰' : kind === 'novel' ? '웹소설' : '쇼츠 애니'
+  const link = (o: Record<string, string>) => { const p = new URLSearchParams(); const v = { type: kind === 'toon' ? '' : kind, day, sort: sort === 'popular' ? '' : sort, q, ...o }; for (const [k, x] of Object.entries(v)) if (x) p.set(k, x); const s = p.toString(); return `/story${s ? '?' + s : ''}` }
+  // 웹툰은 컷만 보는 뷰어로, 웹소설은 글 뷰어로 — 작품 페이지에 방식 전달
+  const seriesHref = (s: StorySeries) => `/story/series/${s.game.id}${kind === 'toon' ? '?view=toon' : ''}`
 
   return (
     <div className="min-h-screen bg-white text-[#1a1d24]">
-      {/* ── 상단: 제목 · 장르 탭 · 검색 ── */}
-      <div className="border-b border-[#e8eaef] bg-white">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-8">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h1 className="text-[26px] md:text-[34px] font-black tracking-[-0.035em] leading-none">STORY</h1>
-              <p className="mt-1.5 text-[13px] md:text-[14px] text-[#6b7280]">게임마다 연재되는 웹소설. 다 읽으면 바로 그 게임을 플레이하세요.</p>
-            </div>
-            <form action="/story" className="hidden md:flex items-center gap-2 h-10 w-72 rounded-full bg-[#f3f5f8] px-4 focus-within:ring-2 focus-within:ring-[#1f6fff]/40">
-              {genre && <input type="hidden" name="genre" value={genre} />}
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#9097a3] shrink-0" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" strokeLinecap="round" /></svg>
-              <input name="q" defaultValue={q} placeholder="작품·작가·회차 검색" aria-label="STORY 검색" className="flex-1 min-w-0 bg-transparent outline-none text-[14px] placeholder:text-[#a3a9b4]" />
-            </form>
-          </div>
-          <nav className="mt-4 flex gap-5 md:gap-7 overflow-x-auto no-scrollbar" aria-label="장르">
-            {tabs.map(t => {
-              const on = (genre ?? '') === t.id
-              return <Link key={t.id || 'all'} href={href(t.id)} className={`shrink-0 pb-3 text-[15px] md:text-[16px] font-bold border-b-[3px] ${on ? 'text-[#1a1d24] border-[#1a1d24]' : 'text-[#9097a3] border-transparent hover:text-[#1a1d24]'}`}>{t.name}</Link>
-            })}
+      {/* ── 1단: 로고 · 종류 · 검색 ── */}
+      <header className="border-b border-[#e8eaef]">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center gap-4 md:gap-6">
+          <Link href="/story" className="text-[20px] md:text-[22px] font-black tracking-[-0.04em] shrink-0">STORY</Link>
+          <nav className="flex items-center gap-3 md:gap-5 text-[14px] md:text-[16px] font-bold" aria-label="종류">
+            {(['toon', 'novel', 'shorts'] as const).map((k) => (
+              <Link key={k} href={k === 'toon' ? '/story' : `/story?type=${k}`} className={`whitespace-nowrap ${kind === k ? 'text-[#1a1d24]' : 'text-[#a3a9b4] hover:text-[#1a1d24]'}`}>
+                {k === 'toon' ? '웹툰' : k === 'novel' ? '웹소설' : <>쇼츠 애니<sup className="ml-0.5 text-[9px] text-[#00c73c]">곧</sup></>}
+              </Link>
+            ))}
           </nav>
+          <form action="/story" className="ml-auto hidden md:flex items-center gap-2 h-10 w-72 rounded-[4px] border border-[#dfe3ea] px-3 focus-within:border-[#1a1d24]">
+            {kind !== 'toon' && <input type="hidden" name="type" value={kind} />}
+            <input name="q" defaultValue={q} placeholder="제목/작가로 검색할 수 있습니다." aria-label="STORY 검색" className="flex-1 min-w-0 bg-transparent outline-none text-[14px] placeholder:text-[#a3a9b4]" />
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#1a1d24] shrink-0" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" strokeLinecap="round" /></svg>
+          </form>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-6 pb-20">
-        {/* 모바일 검색 */}
-        <form action="/story" className="md:hidden mt-4 flex items-center gap-2 h-11 rounded-full bg-[#f3f5f8] px-4">
-          {genre && <input type="hidden" name="genre" value={genre} />}
-          <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#9097a3] shrink-0" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" strokeLinecap="round" /></svg>
-          <input name="q" defaultValue={q} placeholder="작품·작가·회차 검색" aria-label="STORY 검색" className="flex-1 min-w-0 bg-transparent outline-none text-[15px] placeholder:text-[#a3a9b4]" />
-        </form>
-
-        {q && <p className="mt-5 text-[14px] text-[#6b7280]">‘<b className="text-[#1a1d24]">{q}</b>’ 검색 결과 {list.length}작품</p>}
-
-        {list.length === 0 ? (
-          <div className="py-28 text-center">
-            <p className="text-[15px] text-[#6b7280]">{q ? '검색 결과가 없어요. 다른 단어로 찾아보세요.' : '아직 연재 중인 작품이 없어요. 게임을 게시하면 1화가 자동으로 올라옵니다.'}</p>
-            <Link href="/studio" className="mt-4 inline-flex h-10 items-center px-5 rounded-full bg-[#1f6fff] text-white text-[14px] font-bold">게임 만들기</Link>
+      {kind === 'shorts' ? (
+        <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-28 text-center">
+          <p className="text-[22px] md:text-[28px] font-black">쇼츠 애니 준비 중</p>
+          <p className="mt-2 text-[14px] text-[#6b7280]">게임 속 장면이 짧은 애니메이션으로 연재될 예정이에요.</p>
+          <Link href="/story" className="mt-5 inline-flex h-10 items-center px-5 rounded-[4px] bg-[#1a1d24] text-white text-[14px] font-bold">웹툰 보러 가기</Link>
+        </div>
+      ) : (
+        <>
+          {/* ── 2단: 요일 탭 ── */}
+          <div className="border-b border-[#e8eaef] sticky top-0 z-20 bg-white/95 backdrop-blur">
+            <nav className="max-w-[1200px] mx-auto px-4 md:px-6 flex gap-4 md:gap-7 overflow-x-auto no-scrollbar" aria-label="연재 요일">
+              {DAYS.map(([d, name]) => {
+                const on = day === d
+                return <Link key={d || 'all'} href={link({ day: d })} className={`shrink-0 py-3 text-[14px] md:text-[15px] font-bold border-b-[3px] ${on ? 'text-[#1a1d24] border-[#00c73c]' : 'text-[#6b7280] border-transparent hover:text-[#1a1d24]'}`}>{name}{name === today && !on ? <span className="ml-0.5 text-[10px] text-[#00c73c]">●</span> : null}</Link>
+              })}
+            </nav>
           </div>
-        ) : (
-          <>
-            {/* ── 배너 캐러셀 — 스크롤 스냅(모바일 1장, PC 2장씩) ── */}
-            {!q && (
-              <section className="mt-5 md:mt-7 -mx-4 md:mx-0" aria-label="추천 작품">
-                <div className="flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar px-4 md:px-0 scroll-px-4 md:scroll-px-0">
-                  {banners.map(s => {
-                    const last = s.episodes[s.episodes.length - 1]
-                    return (
-                      <Link key={s.game.id} href={`/story/series/${s.game.id}`} className="group snap-start shrink-0 w-[86%] sm:w-[62%] md:w-[calc(50%-8px)] relative overflow-hidden rounded-[14px] bg-[#1a1d24] aspect-[4/3] md:aspect-[16/10]">
-                        {/* 표지(9:16 쇼츠 썸네일)는 자르지 않고 오른쪽에 통째로, 배경은 같은 그림을 흐리게 */}
-                        {s.cover && (
-                          <>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={s.cover} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-60" />
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={s.cover} alt="" className="absolute right-3 md:right-5 top-3 md:top-5 bottom-3 md:bottom-5 h-[calc(100%-24px)] md:h-[calc(100%-40px)] w-auto aspect-[9/16] object-cover rounded-[8px] shadow-[0_14px_36px_-10px_rgba(0,0,0,0.7)] group-hover:scale-[1.02] transition-transform duration-500" />
-                          </>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
-                        <div className="absolute left-0 bottom-0 right-[42%] md:right-[36%] p-4 md:p-6 text-white">
-                          <div className="flex gap-1.5 mb-2">
-                            {isUp(s.latestAt) && <span className="px-1.5 h-5 inline-flex items-center rounded-[3px] bg-[#ff3b47] text-[11px] font-extrabold">UP</span>}
-                            <span className="px-1.5 h-5 inline-flex items-center rounded-[3px] bg-white/20 text-[11px] font-bold backdrop-blur-sm">{s.episodes.length}화 연재 중</span>
-                          </div>
-                          <p className="text-[21px] md:text-[27px] font-black leading-tight tracking-[-0.03em] line-clamp-2">{s.game.title}</p>
-                          <p className="mt-1 text-[13px] md:text-[14px] text-white/80 line-clamp-1">{last ? `${last.no}화 ${last.title}` : s.game.teaser}</p>
-                          <p className="mt-0.5 text-[12px] text-white/60">{s.author}</p>
-                        </div>
+
+          {/* 모바일 검색 */}
+          <form action="/story" className="md:hidden mx-4 mt-4 flex items-center gap-2 h-11 rounded-[4px] border border-[#dfe3ea] px-3">
+            {kind !== 'toon' && <input type="hidden" name="type" value={kind} />}
+            <input name="q" defaultValue={q} placeholder="제목/작가 검색" aria-label="STORY 검색" className="flex-1 min-w-0 bg-transparent outline-none text-[15px] placeholder:text-[#a3a9b4]" />
+          </form>
+
+          <div className="max-w-[1200px] mx-auto px-4 md:px-6 pb-20">
+            {q && <p className="mt-6 text-[14px] text-[#6b7280]">‘<b className="text-[#1a1d24]">{q}</b>’ 검색 결과 {list.length}작품</p>}
+
+            {/* ── 추천 + 오른쪽 배너 ── */}
+            {!q && recommend.length > 0 && (
+              <section className="mt-7 md:mt-9">
+                <h2 className="text-[19px] md:text-[21px] font-extrabold tracking-[-0.02em] mb-3.5">추천 {dayName === '전체' ? '' : dayName + ' '}{kindName}</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+                  <div className="grid grid-cols-3 gap-3 md:gap-4">
+                    {recommend.map(s => {
+                      const last = s.episodes[s.episodes.length - 1]
+                      return (
+                        <Link key={s.game.id} href={seriesHref(s)} className="group block min-w-0">
+                          <Cover s={s} className="aspect-[4/3] ring-1 ring-black/5" />
+                          <p className="mt-2.5 text-[14.5px] md:text-[16px] font-bold leading-snug line-clamp-1 group-hover:underline">{s.game.title}</p>
+                          <p className="mt-0.5 text-[12.5px] text-[#4b5563] truncate">{s.author}</p>
+                          <p className="mt-0.5 text-[12px] text-[#6b7280] truncate">{last ? `${last.no}화` : ''}</p>
+                          <p className="mt-0.5 text-[12px] text-[#9097a3]">★ {(9 + Math.min(0.99, score(s) / 5000)).toFixed(2)}</p>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                  <Link href="/studio" className="hidden lg:flex relative overflow-hidden rounded-[6px] bg-gradient-to-br from-[#1f2937] via-[#2563eb] to-[#38bdf8] p-6 flex-col justify-end text-white min-h-[240px]">
+                    <span className="absolute right-4 top-4 text-[11px] font-bold bg-white/20 px-2 py-0.5 rounded-[3px]">CREATOR</span>
+                    <p className="text-[24px] font-black leading-tight">내 게임으로<br />연재 시작하기</p>
+                    <p className="mt-2 text-[13px] text-white/80">게임을 게시하면 1화가 자동으로 올라와요</p>
+                  </Link>
+                </div>
+              </section>
+            )}
+
+            {/* ── 전체 + 실시간 인기 ── */}
+            <div className="mt-10 md:mt-12 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
+              <section>
+                <div className="flex items-end justify-between gap-3 mb-3.5">
+                  <h2 className="text-[19px] md:text-[21px] font-extrabold tracking-[-0.02em]">{q ? '검색 결과' : `${dayName} ${kindName}`}</h2>
+                  <div className="flex items-center gap-1.5 text-[13px]">
+                    {([['popular', '인기순'], ['update', '업데이트순'], ['views', '조회순']] as const).map(([v, l], i) => (
+                      <span key={v} className="flex items-center gap-1.5">{i > 0 && <span className="text-[#d1d5db]">·</span>}<Link href={link({ sort: v === 'popular' ? '' : v })} className={sort === v ? 'text-[#00c73c] font-bold' : 'text-[#6b7280] hover:text-[#1a1d24]'}>{l}</Link></span>
+                    ))}
+                  </div>
+                </div>
+                {sorted.length === 0 ? (
+                  <div className="py-20 text-center text-[14px] text-[#6b7280]">{day === 'done' ? '아직 완결된 작품이 없어요.' : q ? '검색 결과가 없어요.' : `이 요일에 연재되는 ${kindName}이 아직 없어요.`}</div>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-3 gap-y-6">
+                    {sorted.map(s => (
+                      <Link key={s.game.id} href={seriesHref(s)} className="group block min-w-0">
+                        <Cover s={s} className="aspect-[3/4] ring-1 ring-black/5" />
+                        <p className="mt-2 text-[13.5px] md:text-[14.5px] font-bold leading-snug line-clamp-1 group-hover:underline">{s.game.title}</p>
+                        <p className="mt-0.5 text-[12px] text-[#6b7280] truncate">{s.author}</p>
+                        <p className="mt-0.5 text-[11.5px] text-[#9097a3] truncate">{GENRE_KO[s.game.genre] ?? s.game.genre} · {s.episodes.length}화 · {fmtDate(s.latestAt)}</p>
                       </Link>
-                    )
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
               </section>
-            )}
 
-            {/* ── 새로 올라온 회차 — 가로 줄 ── */}
-            {!q && fresh.length > 0 && (
-              <section className="mt-9 md:mt-12">
-                <SectionHead title="새로 올라온 회차" sub="최신 순" />
-                <div className="-mx-4 md:mx-0 px-4 md:px-0 flex gap-3 md:gap-4 overflow-x-auto no-scrollbar">
-                  {fresh.map(({ s, e }) => (
-                    <Link key={e.id} href={`/story/${e.id}`} className="group shrink-0 w-[160px] md:w-[220px]">
-                      <Cover s={s} className="aspect-[9/16] ring-1 ring-black/5" />
-                      <p className="mt-2.5 text-[14.5px] md:text-[15px] font-bold leading-snug line-clamp-1 group-hover:text-[#1f6fff]">{s.game.title}</p>
-                      <p className="mt-0.5 text-[12px] text-[#6b7280] line-clamp-2 leading-snug">{e.no}화 {e.title}</p>
-                      <p className="mt-0.5 text-[11.5px] text-[#a3a9b4] tabular-nums">{fmtDate(e.published_at)}</p>
-                    </Link>
-                  ))}
+              <aside>
+                <div className="flex items-end justify-between mb-3.5">
+                  <h2 className="text-[19px] md:text-[21px] font-extrabold tracking-[-0.02em]">실시간 인기{kindName}</h2>
                 </div>
-              </section>
-            )}
-
-            {/* ── 실시간 랭킹 — 번호는 순위 ── */}
-            {ranking.length > 1 && (
-              <section className="mt-9 md:mt-12">
-                <SectionHead title="많이 보는 작품" sub="조회 기준" />
-                <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 md:gap-y-5">
-                  {ranking.map((s, i) => (
+                <ol className="divide-y divide-[#f0f2f5] border-t border-[#e8eaef]">
+                  {hot.map((s, i) => (
                     <li key={s.game.id}>
-                      <Link href={`/story/series/${s.game.id}`} className="group flex items-center gap-3">
-                        <Cover s={s} className="w-[96px] md:w-[120px] shrink-0 aspect-[9/16] ring-1 ring-black/5" />
-                        <span className={`w-7 shrink-0 text-center text-[22px] font-black tabular-nums ${i < 3 ? 'text-[#1f6fff]' : 'text-[#1a1d24]'}`}>{i + 1}</span>
+                      <Link href={seriesHref(s)} className="group flex items-center gap-3 py-2.5">
+                        <Cover s={s} className="w-[54px] aspect-[3/4] shrink-0" />
+                        <span className={`w-5 shrink-0 text-center text-[17px] font-black tabular-nums ${i < 3 ? 'text-[#00c73c]' : 'text-[#1a1d24]'}`}>{i + 1}</span>
                         <span className="min-w-0">
-                          <span className="block text-[16px] md:text-[17px] font-bold leading-snug line-clamp-2 group-hover:text-[#1f6fff]">{s.game.title}</span>
-                          <span className="block mt-0.5 text-[12.5px] text-[#7a808c] truncate">{s.author}</span>
-                          <span className="block mt-0.5 text-[12px] text-[#a3a9b4]">{GENRE_KO[s.game.genre] ?? s.game.genre} · {s.episodes.length}화</span>
+                          <span className="block text-[14px] font-bold truncate group-hover:underline">{s.game.title}</span>
+                          <span className="block text-[12px] text-[#6b7280] truncate">{s.author}</span>
                         </span>
                       </Link>
                     </li>
                   ))}
                 </ol>
-              </section>
-            )}
-
-            {/* ── 전체 작품 ── */}
-            <section className="mt-9 md:mt-12">
-              <SectionHead title={q ? '검색 결과' : genre ? `${GENRE_KO[genre] ?? genre} 작품` : '전체 작품'} sub={`${list.length}작품`} />
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 md:gap-x-5 gap-y-7">
-                {list.map(s => <SeriesCard key={s.game.id} s={s} />)}
-              </div>
-            </section>
-          </>
-        )}
-      </div>
+              </aside>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

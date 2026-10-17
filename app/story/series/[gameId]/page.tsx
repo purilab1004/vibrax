@@ -35,9 +35,11 @@ export async function generateMetadata({ params }: { params: Promise<{ gameId: s
   }
 }
 
-export default async function SeriesPage({ params, searchParams }: { params: Promise<{ gameId: string }>; searchParams: Promise<{ order?: string }> }) {
+export default async function SeriesPage({ params, searchParams }: { params: Promise<{ gameId: string }>; searchParams: Promise<{ order?: string; view?: string }> }) {
   const { gameId } = await params
-  const { order } = await searchParams
+  const { order, view } = await searchParams
+  const toon = view === 'toon'
+  const vq = toon ? '?view=toon' : ''
   const s = await getSeries(gameId)
   if (!s) notFound()
   const webtoons = await fetchWebtoons(gameId)
@@ -76,8 +78,12 @@ export default async function SeriesPage({ params, searchParams }: { params: Pro
             </div>
           </div>
           {(s.game.intro || s.game.teaser) && <p className="mt-4 md:mt-6 text-[13.5px] md:text-[15px] leading-relaxed text-white/85 max-w-2xl">{s.game.intro || s.game.teaser}</p>}
-          <div className="mt-5 grid grid-cols-2 gap-2 md:flex md:gap-3">
-            {first && <Link href={`/story/${first.id}`} className="h-12 md:px-8 inline-flex items-center justify-center rounded-[8px] bg-white text-[#1a1d24] text-[15px] font-extrabold hover:bg-white/90">1화부터 보기</Link>}
+          <div className="mt-4 inline-flex rounded-[6px] bg-white/15 p-0.5 text-[13px] font-bold">
+            <Link href={`/story/series/${gameId}?view=toon`} className={`px-3 h-8 inline-flex items-center rounded-[5px] ${toon ? 'bg-white text-[#1a1d24]' : 'text-white/80'}`}>웹툰으로</Link>
+            <Link href={`/story/series/${gameId}`} className={`px-3 h-8 inline-flex items-center rounded-[5px] ${!toon ? 'bg-white text-[#1a1d24]' : 'text-white/80'}`}>웹소설로</Link>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2 md:flex md:gap-3">
+            {first && <Link href={`/story/${first.id}${vq}`} className="h-12 md:px-8 inline-flex items-center justify-center rounded-[8px] bg-white text-[#1a1d24] text-[15px] font-extrabold hover:bg-white/90">1화부터 보기</Link>}
             <Link href={`/games/${s.game.id}`} className="h-12 md:px-8 inline-flex items-center justify-center gap-1.5 rounded-[8px] bg-[#1f6fff] text-white text-[15px] font-extrabold hover:bg-[#1a5fe0]">
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden><path d="M8 5v14l11-7-11-7Z" /></svg>지금 플레이하기
             </Link>
@@ -91,14 +97,14 @@ export default async function SeriesPage({ params, searchParams }: { params: Pro
           <div className="flex items-center justify-between border-b border-[#1a1d24] pb-3">
             <h2 className="text-[17px] md:text-[19px] font-extrabold">회차 <span className="text-[#9097a3] font-bold tabular-nums">{s.episodes.length}</span></h2>
             <div className="flex gap-3 text-[13px] font-semibold">
-              <Link href={`/story/series/${gameId}`} className={order === 'new' ? 'text-[#9097a3]' : 'text-[#1a1d24]'}>1화부터</Link>
-              <Link href={`/story/series/${gameId}?order=new`} className={order === 'new' ? 'text-[#1a1d24]' : 'text-[#9097a3]'}>최신화부터</Link>
+              <Link href={`/story/series/${gameId}${vq}`} className={order === 'new' ? 'text-[#9097a3]' : 'text-[#1a1d24]'}>1화부터</Link>
+              <Link href={`/story/series/${gameId}?order=new${toon ? '&view=toon' : ''}`} className={order === 'new' ? 'text-[#1a1d24]' : 'text-[#9097a3]'}>최신화부터</Link>
             </div>
           </div>
           <ul className="divide-y divide-[#eef0f4]">
             {eps.map(e => (
               <li key={e.id}>
-                <Link href={`/story/${e.id}`} className="group flex items-center gap-3 md:gap-4 py-3.5">
+                <Link href={`/story/${e.id}${vq}`} className="group flex items-center gap-3 md:gap-4 py-3.5">
                   <span className="relative w-[64px] md:w-[88px] shrink-0 aspect-[4/3] rounded-[5px] overflow-hidden bg-[#eef1f6]">
                     {(e.thumbnail_url ?? s.cover) && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -118,7 +124,7 @@ export default async function SeriesPage({ params, searchParams }: { params: Pro
             ))}
           </ul>
           {latest && latest.id !== first?.id && (
-            <Link href={`/story/${latest.id}`} className="mt-3 flex h-12 items-center justify-center rounded-[8px] border border-[#dfe3ea] text-[14.5px] font-bold hover:border-[#1a1d24]">최신화 {latest.no}화 보기</Link>
+            <Link href={`/story/${latest.id}${vq}`} className="mt-3 flex h-12 items-center justify-center rounded-[8px] border border-[#dfe3ea] text-[14.5px] font-bold hover:border-[#1a1d24]">최신화 {latest.no}화 보기</Link>
           )}
         </section>
 

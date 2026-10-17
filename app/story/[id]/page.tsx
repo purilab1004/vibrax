@@ -31,7 +31,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function EpisodePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EpisodePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ view?: string }> }) {
+  const toon = (await searchParams).view === 'toon'
+  const vq = toon ? '?view=toon' : ''
   const { id } = await params
   const d = await load(id)
   if (!d) redirect('/story')   // 지워진 옛 BLOG 글 링크 등 — STORY 홈으로
@@ -83,7 +85,19 @@ export default async function EpisodePage({ params }: { params: Promise<{ id: st
         </header>
         <hr className="mt-7 mb-8 w-10 mx-auto border-t-2 border-[#1a1d24]" />
         {/* content 는 RLS 로 관리자·서버만 쓴다 — 신뢰 경계 안의 HTML */}
-        <div className="story-body" dangerouslySetInnerHTML={{ __html: post.content }} />
+        {toon ? (
+          // 웹툰 보기 — 글은 빼고 컷만 세로로 이어서
+          <div className="-mx-5 md:mx-0 flex flex-col">
+            {(post.content.match(/<img[^>]+src="([^"]+)"/g) ?? []).map((tag, i) => {
+              const src = tag.match(/src="([^"]+)"/)?.[1] ?? ''
+              // eslint-disable-next-line @next/next/no-img-element
+              return <img key={i} src={src} alt={`${post.title} ${i + 1}컷`} loading={i < 2 ? 'eager' : 'lazy'} className="w-full h-auto block" />
+            })}
+            {!/<img/.test(post.content) && <p className="py-16 text-center text-[14px] text-[#6b7280]">이 화에는 컷이 없어요. <Link href={`/story/${post.id}`} className="underline">웹소설로 읽기</Link></p>}
+          </div>
+        ) : (
+          <div className="story-body" dangerouslySetInnerHTML={{ __html: post.content }} />
+        )}
 
         <div className="mt-10 flex justify-center"><StoryActions postId={post.id} size="md" /></div>
 
@@ -109,9 +123,9 @@ export default async function EpisodePage({ params }: { params: Promise<{ id: st
       {series && (
         <nav className="border-t border-[#eef0f4]" aria-label="회차 이동">
           <div className="max-w-[720px] mx-auto px-4 py-4 grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-            {prev ? <Link href={`/story/${prev.id}`} className="h-11 inline-flex items-center justify-center rounded-[8px] border border-[#dfe3ea] text-[14px] font-bold hover:border-[#1a1d24]">이전화</Link> : <span className="h-11 inline-flex items-center justify-center rounded-[8px] border border-[#eef0f4] text-[14px] font-bold text-[#c3c8d0]">첫 화</span>}
-            <Link href={`/story/series/${series.game.id}`} className="h-11 px-4 inline-flex items-center justify-center rounded-[8px] text-[14px] font-bold text-[#6b7280] hover:text-[#1a1d24]">목록</Link>
-            {next ? <Link href={`/story/${next.id}`} className="h-11 inline-flex items-center justify-center rounded-[8px] bg-[#1a1d24] text-white text-[14px] font-bold">다음화</Link> : <span className="h-11 inline-flex items-center justify-center rounded-[8px] bg-[#f3f5f8] text-[13px] font-bold text-[#9097a3]">다음 화 준비 중</span>}
+            {prev ? <Link href={`/story/${prev.id}${vq}`} className="h-11 inline-flex items-center justify-center rounded-[8px] border border-[#dfe3ea] text-[14px] font-bold hover:border-[#1a1d24]">이전화</Link> : <span className="h-11 inline-flex items-center justify-center rounded-[8px] border border-[#eef0f4] text-[14px] font-bold text-[#c3c8d0]">첫 화</span>}
+            <Link href={`/story/series/${series.game.id}${vq}`} className="h-11 px-4 inline-flex items-center justify-center rounded-[8px] text-[14px] font-bold text-[#6b7280] hover:text-[#1a1d24]">목록</Link>
+            {next ? <Link href={`/story/${next.id}${vq}`} className="h-11 inline-flex items-center justify-center rounded-[8px] bg-[#1a1d24] text-white text-[14px] font-bold">다음화</Link> : <span className="h-11 inline-flex items-center justify-center rounded-[8px] bg-[#f3f5f8] text-[13px] font-bold text-[#9097a3]">다음 화 준비 중</span>}
           </div>
         </nav>
       )}
