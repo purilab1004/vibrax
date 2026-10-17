@@ -1064,9 +1064,9 @@ h1,h2,h3,h4,.feed-snap p,.feed-snap span,.keep-all { word-break: keep-all; overf
 
 /* ── 디자인 AI: 모래빛 큐브(빈 화면 표시) ── */
 .vx-orb { display: inline-block; width: 40px; height: 40px; position: relative; transform: rotate(45deg);
-  background: linear-gradient(135deg, #fffaf0 0%, #e8d3a8 45%, #b8894f 100%);
-  box-shadow: 0 0 22px 4px rgba(184, 137, 79, 0.28); animation: vx-orb 3.4s ease-in-out infinite; }
-.vx-orb::after { content: ''; position: absolute; inset: -9px; border: 1px solid rgba(168, 120, 63, 0.45); animation: vx-ring 3.4s ease-out infinite; }
+  background: linear-gradient(135deg, #ffffff 0%, #bfdbfe 45%, #2563eb 100%);
+  box-shadow: 0 0 22px 4px rgba(37, 99, 235, 0.28); animation: vx-orb 3.4s ease-in-out infinite; }
+.vx-orb::after { content: ''; position: absolute; inset: -9px; border: 1px solid rgba(37, 99, 235, 0.45); animation: vx-ring 3.4s ease-out infinite; }
 @keyframes vx-orb { 0%, 100% { transform: rotate(45deg) scale(0.92); } 50% { transform: rotate(135deg) scale(1.04); } }
 @keyframes vx-ring { 0% { transform: scale(0.7); opacity: 0.9; } 100% { transform: scale(1.7); opacity: 0; } }
 .vx-glyph { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.18em; }

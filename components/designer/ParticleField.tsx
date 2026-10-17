@@ -76,7 +76,9 @@ void main() {
   vec2 c = gl_PointCoord - 0.5; float r = length(c);   // 둥근 입자
   if (r > 0.5) discard;
   // 여러 빛깔: 씨앗 값으로 색상환을 돈다(무지개 파스텔보다 조금 진하게)
-  vec3 col = 0.55 + 0.42 * cos(6.28318 * (vSeed + vec3(0.0, 0.33, 0.67)));
+  // 파랑 계열로 좁힌 빛깔: 하늘·파랑·남보라
+  vec3 sky = vec3(0.22, 0.74, 0.97), blue = vec3(0.15, 0.39, 0.92), ind = vec3(0.49, 0.36, 0.96);
+  vec3 col = vSeed < 0.5 ? mix(sky, blue, vSeed * 2.0) : mix(blue, ind, (vSeed - 0.5) * 2.0);
   gl_FragColor = vec4(col, vAlpha * smoothstep(0.5, 0.15, r));
 }`
 
@@ -180,7 +182,7 @@ export default function ParticleField() {
         p.x += p.vx * devicePixelRatio; p.y += p.vy * devicePixelRatio; p.l -= 0.022
         if (p.l <= 0) continue
         const r = (1.2 + 2.2 * p.l) * devicePixelRatio
-        g.fillStyle = `hsla(${Math.round(p.h * 360)},80%,60%,${(p.l * 0.6).toFixed(3)})`
+        g.fillStyle = `hsla(${Math.round(200 + p.h * 60)},85%,60%,${(p.l * 0.6).toFixed(3)})`
         g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2); g.fill()
       }
       for (let i = P.length - 1; i >= 0; i--) if (P[i].l <= 0) P.splice(i, 1)

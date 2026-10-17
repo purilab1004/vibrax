@@ -101,12 +101,12 @@ export function GlbViewer({ url, motion, onRigged, onBody }: { url: string; moti
   }, [url])
   return (
     <div ref={box} className="relative w-full h-full min-h-[280px] rounded-[4px] bg-[radial-gradient(circle_at_50%_40%,#ffffff,#e4e8f0)] overflow-hidden cursor-grab active:cursor-grabbing">
-      <label className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-[4px] bg-white/85 backdrop-blur px-2.5 py-1.5 text-[11px] font-bold text-[#5f523f] shadow-sm" onPointerDown={(e) => e.stopPropagation()}>
+      <label className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-[4px] bg-white/85 backdrop-blur px-2.5 py-1.5 text-[11px] font-bold text-[#4b5563] shadow-sm" onPointerDown={(e) => e.stopPropagation()}>
         밝기
-        <input type="range" min={0.15} max={1.4} step={0.05} value={light} onChange={(e) => setLight(Number(e.target.value))} className="w-24 accent-[#a8783f]" aria-label="밝기" />
+        <input type="range" min={0.15} max={1.4} step={0.05} value={light} onChange={(e) => setLight(Number(e.target.value))} className="w-24 accent-[#2563eb]" aria-label="밝기" />
       </label>
-      {label && <span className="absolute left-3 top-3 z-10 text-[12.5px] font-extrabold bg-[#2b2419]/85 text-white rounded-[4px] px-3 py-1">{label}</span>}
-      {loading && !err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#9a8b72]">모델 불러오는 중…</p>}
+      {label && <span className="absolute left-3 top-3 z-10 text-[12.5px] font-extrabold bg-[#1f2937]/85 text-white rounded-[4px] px-3 py-1">{label}</span>}
+      {loading && !err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#8a93a6]">모델 불러오는 중…</p>}
       {err && <p className="absolute inset-0 flex items-center justify-center text-[13px] text-[#f87171]">{err}</p>}
     </div>
   )

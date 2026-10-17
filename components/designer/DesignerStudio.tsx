@@ -88,10 +88,10 @@ export default function DesignerStudio() {
       {/* 빛의 입자 — 작은 빛이 모여 모양을 이루고 흩어진다 */}
       <ParticleField />
       {/* 상단 바 */}
-      <div className="app-top-pad sticky top-0 z-30 flex items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(168,120,63,0.08),0_8px_30px_-18px_rgba(168,120,63,0.35)] px-4 h-11 box-content">
+      <div className="app-top-pad sticky top-0 z-30 flex items-center gap-3 border-b border-white/70 bg-white/45 backdrop-blur-2xl shadow-[0_1px_0_rgba(37,99,235,0.08),0_8px_30px_-18px_rgba(37,99,235,0.35)] px-4 h-11 box-content">
         <nav className="flex items-center gap-1.5 shrink-0 min-w-0 text-[12px]">
-          <Link href="/studio" className="font-pixel text-[11px] text-[#5f523f] hover:text-[#a8783f] tracking-widest transition-colors">‹ STUDIO</Link>
-          {isDesigner && <><span className="text-[#c9b99c]">/</span><Decode key={section} text={NAV.find(([k]) => k === section)?.[2] ?? ''} className="font-bold text-[#2b2419] truncate" /></>}
+          <Link href="/studio" className="font-pixel text-[11px] text-[#4b5563] hover:text-[#2563eb] tracking-widest transition-colors">‹ STUDIO</Link>
+          {isDesigner && <><span className="text-[#cbd2de]">/</span><Decode key={section} text={NAV.find(([k]) => k === section)?.[2] ?? ''} className="font-bold text-[#1f2937] truncate" /></>}
         </nav>
         <div className="flex-1 flex justify-center min-w-0 overflow-x-auto scrollbar-hide"><AiModeToggle /></div>
         <Link href="/credits" className="hover:opacity-80 transition-opacity shrink-0" title="프롬코인 충전"><PromptCreditBadge amount={balance} size="sm" compact /></Link>
@@ -102,23 +102,23 @@ export default function DesignerStudio() {
         <div className="relative z-10 max-w-3xl mx-auto px-4 py-10 md:py-16">
           <div className="text-center" style={{ wordBreak: 'keep-all' }}>
             <span className="inline-flex items-center gap-2 rounded-[4px] bg-gradient-to-r from-[#ec4899]/10 to-[#f59e0b]/10 border border-[#f9c4d8] px-3.5 py-1.5 text-[11px] font-extrabold tracking-[0.2em] text-[#be185d]">DESIGN AI</span>
-            <h1 className="mt-4 text-[28px] md:text-[38px] font-black text-[#2b2419] leading-tight">디자이너를 위한 작업 공간</h1>
-            <p className="mt-3 text-[14.5px] text-[#5f523f] leading-relaxed">AI 로 캐릭터·배경·아이템 이미지를 그리고, 3D 모델로 만들고, 내 드라이브에 모아 갤러리에 공개하세요.<br className="hidden md:block" />회원이 내 디자인으로 게임을 만들면 그 크레딧은 <b className="text-[#2b2419]">100% 디자이너에게</b> 쌓여요.</p>
+            <h1 className="mt-4 text-[28px] md:text-[38px] font-black text-[#1f2937] leading-tight">디자이너를 위한 작업 공간</h1>
+            <p className="mt-3 text-[14.5px] text-[#4b5563] leading-relaxed">AI 로 캐릭터·배경·아이템 이미지를 그리고, 3D 모델로 만들고, 내 드라이브에 모아 갤러리에 공개하세요.<br className="hidden md:block" />회원이 내 디자인으로 게임을 만들면 그 크레딧은 <b className="text-[#1f2937]">100% 디자이너에게</b> 쌓여요.</p>
           </div>
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            {NAV.slice(0, 4).map(([k, i, t, d]) => <div key={k} className={`${ui.card} p-4`}><p className="text-[24px]">{i}</p><p className="mt-1 text-[14px] font-extrabold text-[#2b2419]">{t}</p><p className="text-[12px] text-[#9a8b72] mt-0.5">{d}</p></div>)}
+            {NAV.slice(0, 4).map(([k, i, t, d]) => <div key={k} className={`${ui.card} p-4`}><p className="text-[24px]">{i}</p><p className="mt-1 text-[14px] font-extrabold text-[#1f2937]">{t}</p><p className="text-[12px] text-[#8a93a6] mt-0.5">{d}</p></div>)}
           </div>
           <div className={`${ui.card} mt-6 p-5 md:p-7`}>
             {status === 'pending' ? (
               <div className="text-center py-6">
                 <span className="vx-orb" aria-hidden />
-                <p className="mt-2 text-[17px] font-extrabold text-[#2b2419]">접수 확인 중이에요</p>
-                <p className="mt-1 text-[13px] text-[#5f523f]">관리자가 승인하면 이 화면이 바로 디자이너 작업 공간으로 바뀌어요. 메일로도 알려드려요.</p>
+                <p className="mt-2 text-[17px] font-extrabold text-[#1f2937]">접수 확인 중이에요</p>
+                <p className="mt-1 text-[13px] text-[#4b5563]">관리자가 승인하면 이 화면이 바로 디자이너 작업 공간으로 바뀌어요. 메일로도 알려드려요.</p>
               </div>
             ) : (
               <>
-                <h2 className="text-[18px] font-extrabold text-[#2b2419]">디자이너 접수</h2>
-                <p className="text-[12.5px] text-[#5f523f] mt-1">{status === 'rejected' ? '지난 접수는 반려됐어요. 포트폴리오를 보강해 다시 접수할 수 있어요.' : '일반 회원 누구나 접수할 수 있어요. 관리자가 확인한 뒤 승인하면 디자인 AI 가 열려요.'}</p>
+                <h2 className="text-[18px] font-extrabold text-[#1f2937]">디자이너 접수</h2>
+                <p className="text-[12.5px] text-[#4b5563] mt-1">{status === 'rejected' ? '지난 접수는 반려됐어요. 포트폴리오를 보강해 다시 접수할 수 있어요.' : '일반 회원 누구나 접수할 수 있어요. 관리자가 확인한 뒤 승인하면 디자인 AI 가 열려요.'}</p>
                 <div className="mt-4 grid sm:grid-cols-2 gap-2.5">
                   <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="이름 또는 활동명" className={ui.input} />
                   <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="연락받을 이메일" type="email" className={ui.input} />
@@ -139,9 +139,9 @@ export default function DesignerStudio() {
             <nav className="flex md:flex-col items-center gap-1 p-1.5 md:pt-3 overflow-x-auto scrollbar-hide">
               {NAV.map(([k, , t, d]) => (
                 <button key={k} onClick={() => go(k)} title={`${t} — ${d}`}
-                  className={`group shrink-0 flex md:flex-col items-center justify-center gap-1.5 md:gap-1 rounded-[4px] px-3 md:px-0 h-10 md:h-[50px] md:w-[50px] transition-all ${section === k ? 'bg-gradient-to-br from-[#a8783f] to-[#d6b47a] text-white shadow-[0_8px_24px_-8px_rgba(168,120,63,0.75)]' : 'text-[#4a3f30] hover:bg-white/70 border border-transparent hover:border-[#e6dac4]'}`}>
+                  className={`group shrink-0 flex md:flex-col items-center justify-center gap-1.5 md:gap-1 rounded-[4px] px-3 md:px-0 h-10 md:h-[50px] md:w-[50px] transition-all ${section === k ? 'bg-gradient-to-br from-[#2563eb] to-[#38bdf8] text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.75)]' : 'text-[#374151] hover:bg-white/70 border border-transparent hover:border-[#dde3ee]'}`}>
                   <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] shrink-0" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="miter" aria-hidden>{ICON[k]}</svg>
-                  <span className={`text-[9.5px] font-bold whitespace-nowrap md:tracking-tight ${section === k ? 'text-white/90' : 'text-[#7c6d55]'}`}>{t.replace('내 ', '').replace('전체 ', '').replace(' 작품', '')}</span>
+                  <span className={`text-[9.5px] font-bold whitespace-nowrap md:tracking-tight ${section === k ? 'text-white/90' : 'text-[#6b7280]'}`}>{t.replace('내 ', '').replace('전체 ', '').replace(' 작품', '')}</span>
                 </button>
               ))}
             </nav>
