@@ -1,7 +1,7 @@
 // scripts/build-three-addons.mjs — 게임 샌드박스용 three.js addons 번들 만들기.
 // 게임은 CSP 샌드박스라 우리 도메인 스크립트만 불러올 수 있다. /vendor/three.min.js 는 r149 '코어' 뿐이라
 // GLTFLoader 같은 addons 가 없다 → 같은 r149 의 addons 를 전역 THREE 에 붙는 한 파일로 묶는다.
-//   결과: public/vendor/three-addons.js   (GLTFLoader · DRACOLoader · OrbitControls · SkeletonUtils + THREE.loadGLB)
+//   결과: public/vendor/three-addons.js   (GLTFLoader · DRACOLoader · OrbitControls · SkeletonUtils + THREE.loadGLB · THREE.makeAlive)
 //   실행: node scripts/build-three-addons.mjs   (three@0.149 소스 필요 — SRC 경로)
 import fs from 'node:fs'
 import path from 'node:path'
@@ -58,5 +58,8 @@ else {
 
 execFileSync('node_modules/.bin/esbuild', [path.join(TMP, 'entry.js'), '--bundle', '--format=iife', '--minify',
   `--alias:three=${path.join(TMP, 'three-global.js')}`, `--outfile=${OUT}`], { stdio: 'inherit' })
+// 뼈대 없는 AI 3D 모델용 절차적 움직임 THREE.makeAlive 를 끝에 붙인다
+execFileSync('node_modules/.bin/esbuild', ['scripts/three-alive.js', '--minify', '--log-level=error', `--outfile=${path.join(TMP, 'alive.js')}`], { stdio: 'inherit' })
+fs.appendFileSync(OUT, fs.readFileSync(path.join(TMP, 'alive.js')))
 fs.rmSync(TMP, { recursive: true, force: true })
 console.log('✓', OUT, (fs.statSync(OUT).size / 1024).toFixed(0) + 'KB', '| 코어 export', uniq.length, '개 연결')

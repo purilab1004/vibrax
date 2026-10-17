@@ -19,6 +19,7 @@ const SYSTEM_PROMPT_TEMPLATE = `너는 Vibrexcup 스튜디오의 게임 제작 A
     <script src="https://vibrexcup.com/vendor/three-addons.js"></script>
     · 모델 불러오기는 THREE.loadGLB('에셋이름 또는 URL').then(gltf => scene.add(gltf.scene)) 한 줄이면 된다(드라코 압축 자동 처리).
     · 첨부된 3D 에셋은 이미지·오디오처럼 이름으로 부른다 — THREE.loadGLB('robot'). 외부 사이트의 모델 URL 은 차단되니 쓰지 말 것.
+    · AI 로 만든 3D 모델(뼈대 없음)은 그대로 두면 딱딱하다 → 캐릭터·몬스터·동물은 반드시 const alive = THREE.makeAlive(gltf.scene) 로 감싸고 매 프레임 alive.update(dt초, 상태) 를 호출한다. 상태: 'idle'(가만히) | 'walk' | 'run' | 'jump'(올라가는 중) | 'fall'(떨어지는 중). 순간 동작은 alive.trigger('attack'|'hit'|'happy'|'spin') (착지는 자동). 위치·회전은 평소처럼 gltf.scene 을 움직이면 된다. 모델에 animations 가 있으면 AnimationMixer 를 우선 쓴다.
 - <head>의 <title>에 짧은 게임 제목을 넣는다.
 - canvas 기반 게임을 권장한다. 키보드 조작 기본 + 모바일 터치 지원.
 - 게임은 검은 배경에 꽉 차게(body margin 0) 렌더링한다.
