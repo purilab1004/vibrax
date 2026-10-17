@@ -90,12 +90,11 @@ def rig_glb(glb: bytes) -> bytes:
         # 움직임 클립을 GLB 안에 굽는다 — 실패해도 뼈대만 있는 GLB 는 돌려준다
         anim = os.path.join(d, "animated.glb")
         open(os.path.join(d, "bake.py"), "w").write(BAKE)
-        try:
-            _run(["python", os.path.join(d, "bake.py"), out, anim])
-            if os.path.exists(anim) and os.path.getsize(anim) > 1000:
-                return open(anim, "rb").read()
-        except Exception as e:  # noqa: BLE001
-            print("bake failed:", e)
+        # Blender 는 드라코 라이브러리 경고 등을 stderr 로 내므로 결과 파일로만 성공을 판단한다
+        r = subprocess.run(["python", os.path.join(d, "bake.py"), out, anim], cwd=UNIRIG, capture_output=True, text=True)
+        if os.path.exists(anim) and os.path.getsize(anim) > 1000:
+            return open(anim, "rb").read()
+        print("bake failed:", (r.stdout or "")[-800:], (r.stderr or "")[-1500:])
         return open(out, "rb").read()
 
 
@@ -345,21 +344,39 @@ class Rigger:
 
 
 @app.function(image=web_image, timeout=1500)
-def text_then_3d(prompt: str, seed: int = 1) -> dict:
-    """글 → 피규어 렌더 이미지(Qwen-Image) → TRELLIS. TRELLIS 자체 글→3D 는 짧은 영어만 알아들어 설명과 다른 모양이 나온다"""
+def text_then_3d(prompt: str, seed: int = 1, rig: bool = False) -> dict:
+    """글 → 피규어 렌더 이미지(Qwen-Image) → TRELLIS (→ 자동 리깅). TRELLIS 자체 글→3D 는 짧은 영어만 알아들어 설명과 다른 모양이 나온다"""
     ref = QwenImage().generate.remote(FIGURE.format(p=prompt), 1, 1024, 1024, False, seed, "PNG")["images"][0]
     r = Trellis().generate.remote("image", ref, "", seed)
     r["ref"] = ref
+    return _maybe_rig(r, rig)
+
+
+def _maybe_rig(r: dict, rig: bool) -> dict:
+    """뼈대·움직임 클립까지 — 실패하면(사람·동물 모양이 아닌 경우 등) 움직임 없는 모델을 그대로 돌려준다"""
+    if not rig:
+        return r
+    try:
+        r["glb"] = Rigger().rig.remote(r["glb"])["glb"]
+        r["rigged"] = True
+    except Exception as e:  # noqa: BLE001
+        print("rig failed:", str(e)[:500])
+        r["rigged"] = False
     return r
 
 
 @app.function(image=web_image, timeout=1500)
-def volumize_then_3d(image_bytes: bytes, hint: str = "", seed: int = 1) -> dict:
+def image_then_3d(image_bytes: bytes, seed: int = 1, rig: bool = False) -> dict:
+    return _maybe_rig(Trellis().generate.remote("image", image_bytes, "", seed), rig)
+
+
+@app.function(image=web_image, timeout=1500)
+def volumize_then_3d(image_bytes: bytes, hint: str = "", seed: int = 1, rig: bool = False) -> dict:
     """2D → 입체 렌더 이미지 → TRELLIS. 결과에 입체 렌더 이미지(ref)도 담는다"""
     ref = Volumize().edit.remote(image_bytes, hint)
     r = Trellis().generate.remote("image", ref, "", seed)
     r["ref"] = ref
-    return r
+    return _maybe_rig(r, rig)
 
 
 @app.function(image=web_image, secrets=[modal.Secret.from_name("vibrex-3d")])
@@ -406,11 +423,11 @@ def api():
         if mode == "text" and not prompt:
             raise HTTPException(400, "prompt required")
         if mode == "text":
-            call = text_then_3d.spawn(prompt, int(body.get("seed") or 1))
+            call = text_then_3d.spawn(prompt, int(body.get("seed") or 1), bool(body.get("rig")))
         elif mode == "image" and body.get("volumize"):
-            call = volumize_then_3d.spawn(img, str(body.get("hint") or "")[:200], int(body.get("seed") or 1))
+            call = volumize_then_3d.spawn(img, str(body.get("hint") or "")[:200], int(body.get("seed") or 1), bool(body.get("rig")))
         else:
-            call = Trellis().generate.spawn(mode, img, prompt, int(body.get("seed") or 1))
+            call = image_then_3d.spawn(img, int(body.get("seed") or 1), bool(body.get("rig")))
         return {"id": call.object_id}
 
     def result(id: str):
@@ -430,7 +447,7 @@ def api():
             return {"status": "running"}
         if "images" in r:
             return {"status": "done", "images": len(r["images"]), "seed": r.get("seed")}
-        return {"status": "done", "glb_bytes": len(r["glb"]), "thumb": bool(r.get("thumb")), "ref": bool(r.get("ref"))}
+        return {"status": "done", "glb_bytes": len(r["glb"]), "thumb": bool(r.get("thumb")), "ref": bool(r.get("ref")), "rigged": r.get("rigged")}
 
     @web.get("/result/{id}/{part}")
     def file(id: str, part: str, authorization: str | None = Header(None)):

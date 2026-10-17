@@ -13,8 +13,9 @@ export const maxDuration = 60
 
 const SALT = 'vibrex-model3d'
 const DEFAULT_COST = 3                              // Modal 원가 한 개 약 $0.01~0.02
+const RIG_EXTRA = 3                                 // 자동 리깅(뼈대·움직임 클립) A10G 약 2분
 const VOLUMIZE_EXTRA = 2                            // 2D 그림 → 입체 렌더로 다시 그리기(H100 약 1분) 추가분
-interface Tok { u: string; rid: string; ref: string; cost: number; mode: string; title: string; prompt: string; at: number; vol?: boolean }
+interface Tok { u: string; rid: string; ref: string; cost: number; mode: string; title: string; prompt: string; at: number; vol?: boolean; rig?: boolean }
 const tmpId = (rid: string) => rid.replace(/[^\w-]/g, '')
 const tmp = (rid: string) => `model3d/tmp/${tmpId(rid)}`
 
@@ -26,7 +27,7 @@ async function costOf() {
 
 export async function POST(req: Request) {
   const g = await requireDesigner(); if ('error' in g) return g.error
-  const body = await req.json().catch(() => null) as { action?: string; token?: string; folder?: string; mode?: string; image?: string; prompt?: string; assetId?: string; driveKey?: string; title?: string; volumize?: boolean; hint?: string } | null
+  const body = await req.json().catch(() => null) as { action?: string; token?: string; folder?: string; mode?: string; image?: string; prompt?: string; assetId?: string; driveKey?: string; title?: string; volumize?: boolean; hint?: string; rig?: boolean } | null
   const store = g.admin.storage.from(BUCKET)
 
   // 저장 / 버리기
@@ -71,7 +72,10 @@ export async function POST(req: Request) {
   // 2D 그림을 입체 렌더로 다시 그린 뒤 3D 로 · 글 → 3D 는 항상 '그림 먼저 그리고' 3D 로
   const vol = mode === 'text' || body?.volumize !== false
   if (vol && mode !== 'text') payload = { ...payload, volumize: true, hint: await toEnglish(cleanName(body?.hint || title || '', 120)) }
-  const cost = (await costOf()) + (vol ? VOLUMIZE_EXTRA : 0)
+  // 움직이는 캐릭터로 — 3D 를 만든 뒤 자동 리깅(뼈대 + idle·walk·run·jump·attack·happy·hit 클립)까지
+  const rig = body?.rig !== false
+  payload = { ...payload, rig }
+  const cost = (await costOf()) + (vol ? VOLUMIZE_EXTRA : 0) + (rig ? RIG_EXTRA : 0)
   const ref = `m3d:${crypto.randomUUID()}`
   if (cost > 0) {
     const { error } = await g.supabase.rpc('spend_credits', { p_amount: cost, p_ref: ref } as never)
@@ -84,7 +88,7 @@ export async function POST(req: Request) {
   try {
     const r = await modalSubmit(payload)
     if (!r.ok || !r.id) { await refund(); return Response.json({ error: '3D 생성 요청 실패 — 프롬코인은 돌려드렸어요', detail: r.detail }, { status: 502 }) }
-    return Response.json({ token: signToken<Tok>(SALT, { u: g.user.id, rid: r.id, ref, cost, mode, title, prompt, at: Date.now(), vol }), cost })
+    return Response.json({ token: signToken<Tok>(SALT, { u: g.user.id, rid: r.id, ref, cost, mode, title, prompt, at: Date.now(), vol, rig }), cost })
   } catch (e) {
     await refund()
     return Response.json({ error: '3D 생성 요청 실패 — 프롬코인은 돌려드렸어요', detail: String((e as Error).message) }, { status: 502 })
@@ -93,7 +97,7 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   const u = new URL(req.url)
-  if (u.searchParams.get('info')) return Response.json({ cost: await costOf(), volumizeExtra: VOLUMIZE_EXTRA, ready: modalReady() })
+  if (u.searchParams.get('info')) return Response.json({ cost: await costOf(), volumizeExtra: VOLUMIZE_EXTRA, rigExtra: RIG_EXTRA, ready: modalReady() })
   const g = await requireDesigner(); if ('error' in g) return g.error
   const t = verifyToken<Tok>(SALT, u.searchParams.get('token') ?? '')
   if (!t || t.u !== g.user.id) return Response.json({ error: 'bad token' }, { status: 400 })
@@ -104,7 +108,7 @@ export async function GET(req: Request) {
   // 이미 받아 둔 경우 (새로고침·중복 호출)
   const { data: have } = await store.list('model3d/tmp', { search: tmpId(t.rid) })
   const has = (n: string) => (have ?? []).some((f) => f.name === `${tmpId(t.rid)}${n}`)
-  if (has('.glb')) return Response.json({ status: 'done', preview: preview(has('.png'), has('.ref.png')) })
+  if (has('.glb')) return Response.json({ status: 'done', preview: { ...preview(has('.png'), has('.ref.png')), rigged: !!t.rig } })
 
   const elapsed = Math.round((Date.now() - t.at) / 1000)
   const s = await modalStatus(t.rid)
@@ -118,7 +122,7 @@ export async function GET(req: Request) {
   if (s?.status === 'failed') return refundOnce('3D 모델을 만들지 못했어요')
   if (s?.status !== 'done') {
     if (Date.now() - t.at > 20 * 60_000) return refundOnce('3D 생성이 너무 오래 걸려 취소했어요')
-    return Response.json({ status: 'running', elapsed, stage: t.vol && elapsed < 90 ? 'volumize' : '3d' })
+    return Response.json({ status: 'running', elapsed, stage: t.vol && elapsed < 90 ? 'volumize' : t.rig && elapsed > (t.vol ? 150 : 70) ? 'rig' : '3d' })
   }
   const glb = await modalFile(t.rid, 'glb')
   if (!glb) return Response.json({ status: 'running', elapsed })
@@ -129,5 +133,5 @@ export async function GET(req: Request) {
   if (s.ref) { const rb = await modalFile(t.rid, 'ref'); if (rb) refImg = !(await store.upload(`${base}.ref.png`, rb, { contentType: 'image/png', upsert: true })).error }
   const up = await store.upload(`${base}.glb`, glb, { contentType: 'model/gltf-binary', upsert: true })
   if (up.error) return Response.json({ status: 'running', elapsed, note: up.error.message })
-  return Response.json({ status: 'done', preview: preview(thumb, refImg) })
+  return Response.json({ status: 'done', preview: { ...preview(thumb, refImg), rigged: !!s.rigged } })
 }
